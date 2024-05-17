@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
-import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
@@ -21,8 +20,6 @@ abstract class KotlinControlFlowExpressionSurrounderBase : KotlinExpressionSurro
 
         val newElement = psiFactory.createExpressionByPattern(getPattern(), expression.text)
         val replaced = expression.replaced(newElement)
-
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(replaced)
 
         getRange(context, replaced, updater)?.let {
             updater.select(it)

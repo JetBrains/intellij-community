@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.NlsSafe;
@@ -33,8 +32,6 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
         innerExpression.replace(expression);
 
         expression = (KtExpression) expression.replace(stringTemplateExpression);
-
-        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
 
         int offset = expression.getTextRange().getEndOffset();
         updater.moveCaretTo(offset);

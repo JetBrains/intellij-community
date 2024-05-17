@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +28,6 @@ public class KotlinParenthesesSurrounder extends KotlinExpressionSurrounder {
         expressionWithoutParentheses.replace(expression);
 
         expression = (KtExpression) expression.replace(parenthesizedExpression);
-
-        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
 
         int offset = expression.getTextRange().getEndOffset();
         updater.moveCaretTo(offset);

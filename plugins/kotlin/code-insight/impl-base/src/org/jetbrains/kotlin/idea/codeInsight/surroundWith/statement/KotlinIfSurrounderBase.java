@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
@@ -46,10 +45,6 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
 
         // Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);
-
-        ifExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifExpression);
-        if (ifExpression == null) return;
-
         applyNavigationAndDropCondition(updater, ifExpression);
     }
 

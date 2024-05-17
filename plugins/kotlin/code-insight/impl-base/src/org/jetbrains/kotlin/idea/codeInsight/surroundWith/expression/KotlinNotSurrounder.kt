@@ -41,7 +41,6 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         )
         expressionWithoutParentheses.replace(expression)
         val expr = expression.replace(prefixExpr) as KtExpression
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
         updater.moveCaretTo(expr.textRange.endOffset)
     }
 }
