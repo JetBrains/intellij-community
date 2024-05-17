@@ -4,6 +4,7 @@ public abstract annotation A {
 }
 
 public class Foo {
+    @test.pkg.A
     public fun Foo() {
     }
     public fun foo1() : int {
