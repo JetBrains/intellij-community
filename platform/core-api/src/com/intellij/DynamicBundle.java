@@ -73,7 +73,7 @@ public class DynamicBundle extends AbstractBundle {
                                                                @NotNull Locale locale,
                                                                @NotNull BiFunction<? super @NotNull ClassLoader, ? super Locale, ? extends @NotNull ResourceBundle> bundleResolver) {
     Path bundlePath = FileSystems.getDefault().getPath(FileUtil.toCanonicalPath(defaultPath, '.'));
-    ClassLoader pluginClassLoader = DefaultBundleService.isDefaultBundle() ? null: LocalizationUtil.INSTANCE.getPluginClassLoader();
+    ClassLoader pluginClassLoader = DefaultBundleService.isDefaultBundle() ? null: LocalizationUtil.INSTANCE.getPluginClassLoader(bundleClassLoader);
     List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPaths(bundlePath, locale);
     Map<LocalizationOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
@@ -156,7 +156,7 @@ public class DynamicBundle extends AbstractBundle {
 
   private static void reorderParents(@NotNull Map<LocalizationOrder, ResourceBundle> bundleOrderMap) {
     ResourceBundle resourceBundle = null;
-    for (LocalizationOrder localizationOrder : LocalizationOrder.values()) {
+    for (LocalizationOrder localizationOrder : LocalizationOrder.getEntries()) {
       ResourceBundle parentBundle = bundleOrderMap.get(localizationOrder);
       if (parentBundle != null && parentBundle != resourceBundle) {
         if (resourceBundle != null) {

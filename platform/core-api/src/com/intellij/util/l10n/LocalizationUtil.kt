@@ -22,8 +22,17 @@ object LocalizationUtil {
   @Volatile
   var isL10nPluginInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
-  const val LOCALIZATION_REGISTRY = "i18n.locale"
-    fun getPluginClassLoader(): ClassLoader? = findLanguageBundle()?.pluginDescriptor?.classLoader
+  private const val LOCALIZATION_REGISTRY = "i18n.locale"
+
+  @JvmOverloads
+  fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
+    val langBundle = findLanguageBundle()
+    if (langBundle == null) {
+      return null
+    }
+    val pluginDescriptor = langBundle.pluginDescriptor
+    return pluginDescriptor?.classLoader ?: defaultLoader
+  }
 
   private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {
       var result = Path(LOCALIZATION_FOLDER_NAME).resolve(locale.language)
@@ -124,10 +133,6 @@ object LocalizationUtil {
 
   private fun getLocaleOrNullForDefault(): Locale? {
     val locale = getLocale()
-
-  fun getLocaleOrNullForDefault(): Locale? {
-    val languageTag = Registry.get("i18n.locale").asString()
-    val locale = Locale.forLanguageTag(languageTag)
     if (Locale.ENGLISH.language == locale.language) {
       return null
     }
@@ -154,7 +159,7 @@ object LocalizationUtil {
     }
   }
 
-  fun getAllLanguageBundleExtensions(): List<DynamicBundle.LanguageBundleEP> {
+  private fun getAllLanguageBundleExtensions(): List<DynamicBundle.LanguageBundleEP> {
     try {
       if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
         return emptyList()
@@ -173,18 +178,5 @@ object LocalizationUtil {
       LOG.error(e)
       return emptyList()
     }
-  }
-
-  private fun languagePluginClassLoader(bundleClassLoader: ClassLoader, locale: Locale): ClassLoader? {
-    val langBundle = findLanguageBundle()
-    if (langBundle == null) {
-      return null
-    }
-    if (locale.language != getLocale().language ||
-        (locale.country != null && locale.country != getLocale().country)) {
-      return null
-    }
-    val pluginDescriptor = langBundle.pluginDescriptor
-    return pluginDescriptor?.classLoader ?: bundleClassLoader
   }
 }
