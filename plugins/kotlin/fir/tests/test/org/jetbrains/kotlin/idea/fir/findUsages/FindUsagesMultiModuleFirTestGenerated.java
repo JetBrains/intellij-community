@@ -108,6 +108,11 @@ public class FindUsagesMultiModuleFirTestGenerated extends AbstractFindUsagesMul
         runTest("../../idea/tests/testData/multiModuleFindUsages/findExpectPropertyInJvm/");
     }
 
+    @TestMetadata("findFunctionsByImportAlias")
+    public void testFindFunctionsByImportAlias() throws Exception {
+        runTest("../../idea/tests/testData/multiModuleFindUsages/findFunctionsByImportAlias/");
+    }
+
     @TestMetadata("findImplFromHeader")
     public void testFindImplFromHeader() throws Exception {
         runTest("../../idea/tests/testData/multiModuleFindUsages/findImplFromHeader/");
