@@ -4958,6 +4958,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/VariableComparedWithNull.java");
         }
 
+        @TestMetadata("VariableDeclaredSeparatelyInitializedWithNullable.java")
+        public void testVariableDeclaredSeparatelyInitializedWithNullable() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/VariableDeclaredSeparatelyInitializedWithNullable.java");
+        }
+
         @TestMetadata("VariableInitializedWithNull.java")
         public void testVariableInitializedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/VariableInitializedWithNull.java");
