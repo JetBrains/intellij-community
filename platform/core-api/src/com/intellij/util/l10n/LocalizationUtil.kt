@@ -22,7 +22,8 @@ object LocalizationUtil {
   @Volatile
   var isL10nPluginInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
-    fun getPluginClassLoader(): ClassLoader? = findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
+  const val LOCALIZATION_REGISTRY = "i18n.locale"
+    fun getPluginClassLoader(): ClassLoader? = findLanguageBundle()?.pluginDescriptor?.classLoader
 
   private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {
       var result = Path(LOCALIZATION_FOLDER_NAME).resolve(locale.language)
@@ -121,6 +122,9 @@ object LocalizationUtil {
       .map { FileUtil.toSystemIndependentName(it.toString()) }
   }
 
+  private fun getLocaleOrNullForDefault(): Locale? {
+    val locale = getLocale()
+
   fun getLocaleOrNullForDefault(): Locale? {
     val languageTag = Registry.get("i18n.locale").asString()
     val locale = Locale.forLanguageTag(languageTag)
@@ -131,7 +135,7 @@ object LocalizationUtil {
   }
 
   fun getLocale(): Locale {
-    val languageTag = Registry.get("i18n.locale").asString()
+    val languageTag = System.getProperty(LOCALIZATION_REGISTRY).ifEmpty { Registry.get(LOCALIZATION_REGISTRY).asString() }
     val locale = Locale.forLanguageTag(languageTag)
     return locale
   }

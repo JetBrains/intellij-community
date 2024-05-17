@@ -122,7 +122,7 @@ private fun getSystemPropertiesForSearchableOptions(langTag: String): VmProperti
   else {
     return VmProperties(mapOf(
       "intellij.searchableOptions.i18n.enabled" to "true",
-      "intellij.searchableOptions.i18n.locale" to langTag //TODO: use corresponding property after IJPL-148813
+      "i18n.locale" to langTag
     ))
   }
 }
