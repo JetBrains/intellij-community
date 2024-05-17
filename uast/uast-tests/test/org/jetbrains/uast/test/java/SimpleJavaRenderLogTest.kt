@@ -81,6 +81,9 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest(), RenderLogTestBase {
   fun testTypeUseAnnotations() = doTest("Simple/TypeUseAnnotations.java")
 
   @Test
+  fun testTypeAndConstructorAnnotations() = doTest("Simple/TypeAndConstructorAnnotations.java")
+
+  @Test
   fun testInstanceOfTypeTestPattern() = doTest("Simple/InstanceOfTypeTestPattern.java")
 
   @Test
