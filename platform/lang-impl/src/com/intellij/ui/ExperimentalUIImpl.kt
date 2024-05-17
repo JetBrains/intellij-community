@@ -67,6 +67,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
     else if (!prevNewUi && newUi) {
       isResetLaf.set(true)
+      wasThemeReset = true
 
       enabled = true
       setNewUiUsed()

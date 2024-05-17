@@ -34,6 +34,7 @@ abstract class ExperimentalUI {
     // Should be unset by the client, or it will be unset on the IDE close.
     const val NEW_UI_SWITCH: String = "experimental.ui.switch"
     var forcedSwitchedUi: Boolean = false
+    var wasThemeReset = false
 
     @Internal
     val EP_LISTENER: ExtensionPointName<Listener> = ExtensionPointName("com.intellij.uiChangeListener")
