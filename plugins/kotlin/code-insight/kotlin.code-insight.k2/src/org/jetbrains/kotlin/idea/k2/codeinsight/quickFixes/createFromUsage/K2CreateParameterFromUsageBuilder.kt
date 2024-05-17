@@ -11,7 +11,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -75,7 +74,7 @@ object K2CreateParameterFromUsageBuilder {
         }
     }
 
-    internal class CreateParameterFromUsageAction(refExpr: KtExpression, private val propertyName: String, val valVar: CreateParameterUtil.ValVar, container: KtNamedDeclaration) : IntentionAction {
+    internal class CreateParameterFromUsageAction(refExpr: KtExpression, private val propertyName: String, private val valVar: CreateParameterUtil.ValVar, container: KtNamedDeclaration) : IntentionAction {
         private val originalExprPointer: SmartPsiElementPointer<KtExpression> = SmartPointerManager.createPointer(refExpr)
         private val containerPointer: SmartPsiElementPointer<KtNamedDeclaration> = SmartPointerManager.createPointer(container)
         override fun getText(): String =
@@ -145,5 +144,4 @@ object K2CreateParameterFromUsageBuilder {
             KotlinFirIntroduceParameterHandler(helper).addParameter(project, editor, originalExpression, container, { getExpectedType(originalExpression) }, { _ -> listOf(name) })
         }
     }
-
 }

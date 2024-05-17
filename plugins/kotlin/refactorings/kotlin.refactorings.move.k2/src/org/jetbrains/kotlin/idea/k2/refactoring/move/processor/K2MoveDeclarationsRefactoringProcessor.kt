@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsage
  * K2 move refactoring processor that moves declarations inside a new target according to the passed [descriptor]. The main difference
  * between this refactoring processor and [K2MoveFilesOrDirectoriesRefactoringProcessor] is that this processor moves declarations
  * individually and regenerates the imports that are required for the move. While in [K2MoveFilesOrDirectoriesRefactoringProcessor] the
- * whole file, including imports is moved, then imports are adjusted when necessary.
+ * whole file, including imports, is moved, then imports are adjusted when necessary.
  */
 class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.Declarations) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
@@ -58,15 +58,18 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
-        val elementsToMove = descriptor.source.elements
-        val targetFile = descriptor.target.getOrCreateTarget()
-        val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
-        val oldToNewMap = elementsToMove.moveInto(targetFile)
-        descriptor.source.elements.forEach(PsiElement::deleteSingle)
-        retargetUsagesAfterMove(usages.toList(), oldToNewMap)
-        for (sourceFile in sourceFiles) {
-            if (sourceFile.declarations.isEmpty()) sourceFile.delete()
+    override fun performRefactoring(usages: Array<out UsageInfo>) {
+        allowAnalysisOnEdt {
+            val elementsToMove = descriptor.source.elements
+
+            val targetFile = descriptor.target.getOrCreateTarget()
+            val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
+            val oldToNewMap = elementsToMove.moveInto(targetFile)
+            descriptor.source.elements.forEach(PsiElement::deleteSingle)
+            retargetUsagesAfterMove(usages.toList(), oldToNewMap)
+            for (sourceFile in sourceFiles) {
+                if (sourceFile.declarations.isEmpty()) sourceFile.delete()
+            }
         }
     }
 
