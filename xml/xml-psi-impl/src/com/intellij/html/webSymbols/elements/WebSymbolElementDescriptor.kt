@@ -14,7 +14,9 @@ import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.nameSegments
@@ -34,15 +36,12 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
 
   }
 
-  fun runNameMatchQuery(namespace: SymbolNamespace,
-                        kind: SymbolKind,
-                        name: String,
+  fun runNameMatchQuery(qualifiedName: WebSymbolQualifiedName,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false): List<WebSymbol> =
     WebSymbolsQueryExecutorFactory.create(tag)
-      .runNameMatchQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), virtualSymbols, abstractSymbols, strictScope,
-                         listOf(symbol))
+      .runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
   fun runListSymbolsQuery(qualifiedKind: WebSymbolQualifiedKind,
                           expandPatterns: Boolean,
