@@ -315,7 +315,8 @@ internal class WindowsDistributionBuilder(
       val launcherProperties = mutableListOf(
         "CompanyName" to appInfo.companyName,
         "LegalCopyright" to "Copyright 2000-${LocalDate.now().year} ${appInfo.companyName}",
-        "ProductName" to appInfo.fullProductName,
+        "FileDescription" to appInfo.productNameWithEdition,
+        "ProductName" to appInfo.productNameWithEdition,
         "ProductVersion" to "${productVersion}.0-${appInfo.productCode}", // "242.1234.56.0-IU"
       )
       if (!customizer.useXPlatLauncher) {
