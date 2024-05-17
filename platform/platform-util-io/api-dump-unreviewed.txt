@@ -349,7 +349,6 @@ c:com.intellij.execution.process.CapturingProcessRunner
 a:com.intellij.execution.process.ColoredOutputTypeRegistry
 - <init>():V
 - s:getInstance():com.intellij.execution.process.ColoredOutputTypeRegistry
-- a:getOutputType(com.intellij.execution.process.AnsiTerminalEmulator,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 - a:getOutputType(java.lang.String,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 c:com.intellij.execution.process.ColoredProcessHandler
 - com.intellij.execution.process.KillableProcessHandler
