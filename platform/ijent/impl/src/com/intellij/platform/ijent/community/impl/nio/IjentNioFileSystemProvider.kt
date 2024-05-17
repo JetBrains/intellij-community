@@ -8,8 +8,6 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.FsAndUs
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
-import com.intellij.platform.ijent.fs.IjentFileSystemApi.SameFile
-import com.intellij.platform.ijent.fs.IjentFileSystemApi.Stat
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
 import java.io.InputStream
@@ -134,10 +132,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     return nioFs.fsBlocking {
       // TODO listDirectoryWithAttrs+sun.nio.fs.BasicFileAttributesHolder
-      val childrenNames = when (val v = nioFs.ijent.fs.listDirectory(ensurePathIsAbsolute(dir.ijentPath))) {
-        is IjentFileSystemApi.ListDirectory.Ok -> v.value
-        is IjentFsResult.Error -> v.throwFileSystemException()
-      }
+      val childrenNames = nioFs.ijent.fs.listDirectory(ensurePathIsAbsolute(dir.ijentPath)).getOrThrowFileSystemException()
 
       val nioPathList = childrenNames.asSequence()
         .map { childName ->
@@ -177,12 +172,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureIjentNioPath(path2)
     val nioFs = path.nioFs
 
-    return nioFs.fsBlocking {
-      when (val v = nioFs.ijent.fs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))) {
-        is SameFile.Ok -> v.value
-        is IjentFsResult.Error -> v.throwFileSystemException()
+    return nioFs
+      .fsBlocking {
+        nioFs.ijent.fs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))
       }
-    }
+      .getOrThrowFileSystemException()
   }
 
   override fun isHidden(path: Path): Boolean {
@@ -200,47 +194,43 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       when (val ijent = fs.ijent) {
         is FsAndUserApi.Posix -> {
           // According to the javadoc, this method must follow symlinks.
-          when (val v = ijent.fs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true)) {
-            is Stat.Ok -> {
-              // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
-              val filePermissionBranch = when {
-                ijent.userInfo.uid == v.value.permissions.owner -> OWNER
-                ijent.userInfo.gid == v.value.permissions.group -> GROUP
-                else -> OTHER
-              }
+          val fileInfo = ijent.fs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true).getOrThrowFileSystemException()
+          // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
+          val filePermissionBranch = when {
+            ijent.userInfo.uid == fileInfo.permissions.owner -> OWNER
+            ijent.userInfo.gid == fileInfo.permissions.group -> GROUP
+            else -> OTHER
+          }
 
-              if (AccessMode.READ in modes) {
-                val canRead = when (filePermissionBranch) {
-                  OWNER -> v.value.permissions.ownerCanRead
-                  GROUP -> v.value.permissions.groupCanRead
-                  OTHER -> v.value.permissions.otherCanRead
-                }
-                if (!canRead) {
-                  IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: read").throwFileSystemException()
-                }
-              }
-              if (AccessMode.WRITE in modes) {
-                val canWrite = when (filePermissionBranch) {
-                  OWNER -> v.value.permissions.ownerCanWrite
-                  GROUP -> v.value.permissions.groupCanWrite
-                  OTHER -> v.value.permissions.otherCanWrite
-                }
-                if (!canWrite) {
-                  IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: write").throwFileSystemException()
-                }
-              }
-              if (AccessMode.EXECUTE in modes) {
-                val canExecute = when (filePermissionBranch) {
-                  OWNER -> v.value.permissions.ownerCanExecute
-                  GROUP -> v.value.permissions.groupCanExecute
-                  OTHER -> v.value.permissions.otherCanExecute
-                }
-                if (!canExecute) {
-                  IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: execute").throwFileSystemException()
-                }
-              }
+          if (AccessMode.READ in modes) {
+            val canRead = when (filePermissionBranch) {
+              OWNER -> fileInfo.permissions.ownerCanRead
+              GROUP -> fileInfo.permissions.groupCanRead
+              OTHER -> fileInfo.permissions.otherCanRead
             }
-            is IjentFsResult.Error -> v.throwFileSystemException()
+            if (!canRead) {
+              (IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: read") as IjentFsError).throwFileSystemException()
+            }
+          }
+          if (AccessMode.WRITE in modes) {
+            val canWrite = when (filePermissionBranch) {
+              OWNER -> fileInfo.permissions.ownerCanWrite
+              GROUP -> fileInfo.permissions.groupCanWrite
+              OTHER -> fileInfo.permissions.otherCanWrite
+            }
+            if (!canWrite) {
+              (IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: write") as IjentFsError).throwFileSystemException()
+            }
+          }
+          if (AccessMode.EXECUTE in modes) {
+            val canExecute = when (filePermissionBranch) {
+              OWNER -> fileInfo.permissions.ownerCanExecute
+              GROUP -> fileInfo.permissions.groupCanExecute
+              OTHER -> fileInfo.permissions.otherCanExecute
+            }
+            if (!canExecute) {
+              (IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: execute") as IjentFsError).throwFileSystemException()
+            }
           }
         }
         is FsAndUserApi.Windows -> TODO()
@@ -268,14 +258,13 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     return result as A
   }
 
-  private tailrec suspend fun statPosix(path: IjentPath, fsApi: IjentFileSystemPosixApi, resolveSymlinks: Boolean): IjentPosixFileInfo =
-    when (val v = fsApi.stat(ensurePathIsAbsolute(path), resolveSymlinks = resolveSymlinks)) {
-      is Stat.Ok -> when (val t = v.value.type) {
-        is Directory, is Other, is Regular, is Symlink.Unresolved -> v.value
-        is Symlink.Resolved -> statPosix(t.result, fsApi, resolveSymlinks)
-      }
-      is IjentFsResult.Error -> v.throwFileSystemException()
+  private tailrec suspend fun statPosix(path: IjentPath, fsApi: IjentFileSystemPosixApi, resolveSymlinks: Boolean): IjentPosixFileInfo {
+    val stat = fsApi.stat(ensurePathIsAbsolute(path), resolveSymlinks = resolveSymlinks).getOrThrowFileSystemException()
+    return when (val type = stat.type) {
+      is Directory, is Other, is Regular, is Symlink.Unresolved -> stat
+      is Symlink.Resolved -> statPosix(type.result, fsApi, resolveSymlinks)
     }
+  }
 
   override fun readAttributes(path: Path, attributes: String, vararg options: LinkOption): MutableMap<String, Any> {
     TODO("Not yet implemented")

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.CoroutineScope
 import java.nio.ByteBuffer
@@ -27,15 +28,9 @@ sealed interface IjentFileSystemApi {
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
-  suspend fun listDirectory(path: IjentPath.Absolute): ListDirectory
-
-  @Suppress("unused")
-  sealed interface ListDirectory : IjentFsResult {
-    interface Ok : ListDirectory, IjentFsResult.Ok<Collection<String>>
-    sealed interface DoesNotExist : ListDirectory, IjentFsResult.Error
-    sealed interface PermissionDenied : ListDirectory, IjentFsResult.Error
-    sealed interface NotDirectory : ListDirectory, IjentFsResult.Error
-  }
+  suspend fun listDirectory(path: IjentPath.Absolute): IjentFsResult<
+    Collection<String>,
+    ListDirectoryError>
 
   /**
    * Returns names of files in a directory and the attributes of the corresponding files.
@@ -48,65 +43,67 @@ sealed interface IjentFileSystemApi {
   suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean = true,
-  ): ListDirectoryWithAttrs<out IjentFileInfo>
+  ): IjentFsResult<
+    out Collection<Pair<String, IjentFileInfo>>,
+    ListDirectoryError>
 
   @Suppress("unused")
-  sealed interface ListDirectoryWithAttrs<FI : IjentFileInfo> : IjentFsResult {
-    interface Ok<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Ok<Collection<Pair<String, FI>>>
-    sealed interface DoesNotExist<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
-    sealed interface PermissionDenied<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
-    sealed interface NotDirectory<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
-    sealed interface NotFile<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
+  sealed interface ListDirectoryError : IjentFsError {
+    interface DoesNotExist : ListDirectoryError, IjentFsError.DoesNotExist
+    interface PermissionDenied : ListDirectoryError, IjentFsError.PermissionDenied
+    interface NotDirectory : ListDirectoryError, IjentFsError.NotDirectory
   }
 
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
-  suspend fun canonicalize(path: IjentPath.Absolute): Canonicalize
+  suspend fun canonicalize(path: IjentPath.Absolute): IjentFsResult<
+    IjentPath.Absolute,
+    CanonicalizeError>
 
-  sealed interface Canonicalize : IjentFsResult {
-    interface Ok : Canonicalize, IjentFsResult.Ok<IjentPath.Absolute>
-    sealed interface DoesNotExist : Canonicalize, IjentFsResult.Error
-    sealed interface PermissionDenied : Canonicalize, IjentFsResult.Error
-    sealed interface NotDirectory : Canonicalize, IjentFsResult.Error
-    sealed interface NotFile : Canonicalize, IjentFsResult.Error
+  sealed interface CanonicalizeError : IjentFsError {
+    interface DoesNotExist : CanonicalizeError, IjentFsError.DoesNotExist
+    interface PermissionDenied : CanonicalizeError, IjentFsError.PermissionDenied
+    interface NotDirectory : CanonicalizeError, IjentFsError.NotDirectory
+    interface NotFile : CanonicalizeError, IjentFsError.NotFile
   }
 
   /**
    * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
    */
-  suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): Stat<out IjentFileInfo>
+  suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<out IjentFileInfo, StatError>
 
-  sealed interface Stat<FI : IjentFileInfo> : IjentFsResult {
-    interface Ok<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Ok<FI>
-    sealed interface DoesNotExist<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
-    sealed interface PermissionDenied<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
-    sealed interface NotDirectory<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
-    sealed interface NotFile<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
+  sealed interface StatError : IjentFsError {
+    interface DoesNotExist : StatError, IjentFsError.DoesNotExist
+    interface PermissionDenied : StatError, IjentFsError.PermissionDenied
+    interface NotDirectory : StatError, IjentFsError.NotDirectory
+    interface NotFile : StatError, IjentFsError.NotFile
   }
 
   /**
    * on Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
-  suspend fun sameFile(source: IjentPath.Absolute, target: IjentPath.Absolute): SameFile
+  suspend fun sameFile(source: IjentPath.Absolute, target: IjentPath.Absolute): IjentFsResult<
+    Boolean,
+    SameFileError>
 
-  sealed interface SameFile : IjentFsResult {
-    interface Ok : SameFile, IjentFsResult.Ok<Boolean>
-    sealed interface DoesNotExist : SameFile, IjentFsResult.Error
-    sealed interface PermissionDenied : SameFile, IjentFsResult.Error
-    sealed interface NotDirectory : SameFile, IjentFsResult.Error
-    sealed interface NotFile : SameFile, IjentFsResult.Error
+  sealed interface SameFileError : IjentFsError {
+    interface DoesNotExist : SameFileError, IjentFsError.DoesNotExist
+    interface PermissionDenied : SameFileError, IjentFsError.PermissionDenied
+    interface NotDirectory : SameFileError, IjentFsError.NotDirectory
+    interface NotFile : SameFileError, IjentFsError.NotFile
   }
 
-  suspend fun fileReader(path: IjentPath.Absolute): FileReader
+  suspend fun fileReader(path: IjentPath.Absolute): IjentFsResult<
+    IjentOpenedFile.Reader,
+    FileReaderError>
 
-  sealed interface FileReader : IjentFsResult {
-    interface Ok : FileReader, IjentFsResult.Ok<IjentOpenedFile.Reader>
-    sealed interface DoesNotExist : FileReader, IjentFsResult.Error
-    sealed interface PermissionDenied : FileReader, IjentFsResult.Error
-    sealed interface NotDirectory : FileReader, IjentFsResult.Error
-    sealed interface NotFile : FileReader, IjentFsResult.Error
+  sealed interface FileReaderError : IjentFsError {
+    interface DoesNotExist : FileReaderError, IjentFsError.DoesNotExist
+    interface PermissionDenied : FileReaderError, IjentFsError.PermissionDenied
+    interface NotDirectory : FileReaderError, IjentFsError.NotDirectory
+    interface NotFile : FileReaderError, IjentFsError.NotFile
   }
 
   /**
@@ -116,14 +113,15 @@ sealed interface IjentFileSystemApi {
     path: IjentPath.Absolute,
     append: Boolean = false,
     creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE,
-  ): FileWriter
+  ): IjentFsResult<
+    IjentOpenedFile.Writer,
+    FileWriterError>
 
-  sealed interface FileWriter : IjentFsResult {
-    interface Ok : FileWriter, IjentFsResult.Ok<IjentOpenedFile.Writer>
-    sealed interface DoesNotExist : FileWriter, IjentFsResult.Error
-    sealed interface PermissionDenied : FileWriter, IjentFsResult.Error
-    sealed interface NotDirectory : FileWriter, IjentFsResult.Error
-    sealed interface NotFile : FileWriter, IjentFsResult.Error
+  sealed interface FileWriterError : IjentFsError {
+    interface DoesNotExist : FileWriterError, IjentFsError.DoesNotExist
+    interface PermissionDenied : FileWriterError, IjentFsError.PermissionDenied
+    interface NotDirectory : FileWriterError, IjentFsError.NotDirectory
+    interface NotFile : FileWriterError, IjentFsError.NotFile
   }
 
   enum class FileWriterCreationMode {
@@ -137,27 +135,35 @@ sealed interface IjentOpenedFile {
   @Throws(CloseException::class)
   suspend fun close()
 
-  class CloseException(override val error: CloseError) : IjentFsResult.IjentFsIOException() {
-    sealed interface CloseError : IjentFsResult.ErrorBase {
-      sealed interface DoesNotExist : CloseError, IjentFsResult.Error
-      sealed interface PermissionDenied : CloseError, IjentFsResult.Error
-      sealed interface NotDirectory : CloseError, IjentFsResult.Error
-      sealed interface NotFile : CloseError, IjentFsResult.Error
-    }
+  sealed class CloseException(
+    where: IjentPath.Absolute,
+    additionalMessage: @NlsSafe String,
+  ) : IjentFsIOException(where, additionalMessage) {
+    class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      : CloseException(where, additionalMessage), IjentFsError.DoesNotExist
+
+    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      : CloseException(where, additionalMessage), IjentFsError.PermissionDenied
+
+    class NotDirectory(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      : CloseException(where, additionalMessage), IjentFsError.NotDirectory
+
+    class NotFile(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      : CloseException(where, additionalMessage), IjentFsError.NotFile
   }
 
   fun tell(): Long
 
-  suspend fun seek(offset: Long, whence: SeekWhence): Seek
+  suspend fun seek(offset: Long, whence: SeekWhence): IjentFsResult<
+    Long,
+    SeekError>
 
-  sealed interface Seek : IjentFsResult {
-    interface Ok : IjentFsResult.Ok<Long>, Seek
-    sealed interface DoesNotExist : Seek, IjentFsResult.Error
-    sealed interface PermissionDenied : Seek, IjentFsResult.Error
-    sealed interface NotDirectory : Seek, IjentFsResult.Error
-    sealed interface NotFile : Seek, IjentFsResult.Error
-
-    interface InvalidValue : Seek, IjentFsResult.Error
+  sealed interface SeekError : IjentFsError {
+    interface DoesNotExist : SeekError, IjentFsError.DoesNotExist
+    interface PermissionDenied : SeekError, IjentFsError.PermissionDenied
+    interface NotDirectory : SeekError, IjentFsError.NotDirectory
+    interface NotFile : SeekError, IjentFsError.NotFile
+    interface InvalidValue : SeekError, IjentFsError
   }
 
   enum class SeekWhence {
@@ -165,26 +171,28 @@ sealed interface IjentOpenedFile {
   }
 
   interface Reader : IjentOpenedFile {
-    suspend fun read(buf: ByteBuffer): Read
+    suspend fun read(buf: ByteBuffer): IjentFsResult<
+      Int,
+      ReadError>
 
-    sealed interface Read : IjentFsResult {
-      interface Ok : Read, IjentFsResult.Ok<Int>
-      sealed interface DoesNotExist : Read, IjentFsResult.Error
-      sealed interface PermissionDenied : Read, IjentFsResult.Error
-      sealed interface NotDirectory : Read, IjentFsResult.Error
-      sealed interface NotFile : Read, IjentFsResult.Error
+    sealed interface ReadError : IjentFsError {
+      interface DoesNotExist : ReadError, IjentFsError.DoesNotExist
+      interface PermissionDenied : ReadError, IjentFsError.PermissionDenied
+      interface NotDirectory : ReadError, IjentFsError.NotDirectory
+      interface NotFile : ReadError, IjentFsError.NotFile
     }
   }
 
   interface Writer : IjentOpenedFile {
-    suspend fun write(buf: ByteBuffer): Write
+    suspend fun write(buf: ByteBuffer): IjentFsResult<
+      Int,
+      WriteError>
 
-    sealed interface Write : IjentFsResult {
-      interface Ok : Write, IjentFsResult.Ok<Int>
-      sealed interface DoesNotExist : Write, IjentFsResult.Error
-      sealed interface PermissionDenied : Write, IjentFsResult.Error
-      sealed interface NotDirectory : Write, IjentFsResult.Error
-      sealed interface NotFile : Write, IjentFsResult.Error
+    sealed interface WriteError : IjentFsError {
+      interface DoesNotExist : WriteError, IjentFsError.DoesNotExist
+      interface PermissionDenied : WriteError, IjentFsError.PermissionDenied
+      interface NotDirectory : WriteError, IjentFsError.NotDirectory
+      interface NotFile : WriteError, IjentFsError.NotFile
     }
 
     // There's no flush(). It's supposed that `write` flushes.
@@ -192,13 +200,21 @@ sealed interface IjentOpenedFile {
     @Throws(TruncateException::class)
     suspend fun truncate()
 
-    class TruncateException(override val error: TruncateError) : IjentFsResult.IjentFsIOException() {
-      sealed interface TruncateError : IjentFsResult.ErrorBase {
-        sealed interface DoesNotExist : TruncateError, IjentFsResult.Error
-        sealed interface PermissionDenied : TruncateError, IjentFsResult.Error
-        sealed interface NotDirectory : TruncateError, IjentFsResult.Error
-        sealed interface NotFile : TruncateError, IjentFsResult.Error
-      }
+    sealed class TruncateException(
+      where: IjentPath.Absolute,
+      additionalMessage: @NlsSafe String,
+    ) : IjentFsIOException(where, additionalMessage) {
+      class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+        : TruncateException(where, additionalMessage), IjentFsError.DoesNotExist
+
+      class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+        : TruncateException(where, additionalMessage), IjentFsError.PermissionDenied
+
+      class NotDirectory(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+        : TruncateException(where, additionalMessage), IjentFsError.NotDirectory
+
+      class NotFile(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+        : TruncateException(where, additionalMessage), IjentFsError.NotFile
     }
   }
 }
@@ -207,9 +223,13 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
-  ): IjentFileSystemApi.ListDirectoryWithAttrs<IjentPosixFileInfo>
+  ): IjentFsResult<
+    Collection<Pair<String, IjentPosixFileInfo>>,
+    IjentFileSystemApi.ListDirectoryError>
 
-  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFileSystemApi.Stat<IjentPosixFileInfo>
+  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
+    IjentPosixFileInfo,
+    IjentFileSystemApi.StatError>
 }
 
 interface IjentFileSystemWindowsApi : IjentFileSystemApi {
@@ -218,7 +238,11 @@ interface IjentFileSystemWindowsApi : IjentFileSystemApi {
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
-  ): IjentFileSystemApi.ListDirectoryWithAttrs<IjentWindowsFileInfo>
+  ): IjentFsResult<
+    Collection<Pair<String, IjentWindowsFileInfo>>,
+    IjentFileSystemApi.ListDirectoryError>
 
-  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFileSystemApi.Stat<IjentWindowsFileInfo>
+  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
+    IjentWindowsFileInfo,
+    IjentFileSystemApi.StatError>
 }

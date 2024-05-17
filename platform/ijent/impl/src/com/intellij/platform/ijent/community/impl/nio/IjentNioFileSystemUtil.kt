@@ -30,12 +30,19 @@ fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
 }
 
 @Throws(FileSystemException::class)
-internal fun IjentFsResult.Error.throwFileSystemException(): Nothing {
+internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemException(): T =
+  when (this) {
+    is IjentFsResult.Ok -> value
+    is IjentFsResult.Error -> error.throwFileSystemException()
+  }
+
+@Throws(FileSystemException::class)
+internal fun IjentFsError.throwFileSystemException(): Nothing {
   throw when (this) {
-    is IjentFsResult.DoesNotExist, is IjentFsResult.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
-    is IjentFsResult.NotDirectory -> NotDirectoryException(where.toString())
-    is IjentFsResult.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
-    is IjentOpenedFile.Seek.InvalidValue -> TODO()
+    is IjentFsError.DoesNotExist, is IjentFsError.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
+    is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
+    is IjentOpenedFile.SeekError.InvalidValue -> TODO()
   }
 }
 

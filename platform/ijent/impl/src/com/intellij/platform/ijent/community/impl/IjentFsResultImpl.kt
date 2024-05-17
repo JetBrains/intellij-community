@@ -5,55 +5,49 @@ import com.intellij.platform.ijent.fs.*
 
 @Suppress("unused") // Usages are to be implemented later.
 object IjentFsResultImpl {
-  data class DoesNotExist(override val where: IjentPath.Absolute, override val message: String) : IjentFsResult.DoesNotExist
+  data class Ok<T, E : IjentFsError>(override val value: T) : IjentFsResult.Ok<T, E>
+  data class Error<T, E : IjentFsError>(override val error: E) : IjentFsResult.Error<T, E>
 
-  data class PermissionDenied(override val where: IjentPath.Absolute, override val message: String) : IjentFsResult.PermissionDenied
+  data class DoesNotExist(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.FileReaderError.DoesNotExist,
+    IjentFileSystemApi.FileWriterError.DoesNotExist,
+    IjentFileSystemApi.ListDirectoryError.DoesNotExist,
+    IjentFileSystemApi.SameFileError.DoesNotExist,
+    IjentFileSystemApi.StatError.DoesNotExist,
+    IjentOpenedFile.Reader.ReadError.DoesNotExist,
+    IjentOpenedFile.SeekError.DoesNotExist,
+    IjentOpenedFile.Writer.WriteError.DoesNotExist,
+    IjentFileSystemApi.CanonicalizeError.DoesNotExist
 
-  data class NotDirectory(override val where: IjentPath.Absolute, override val message: String) : IjentFsResult.NotDirectory
+  class PermissionDenied(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.CanonicalizeError.PermissionDenied,
+    IjentFileSystemApi.FileReaderError.PermissionDenied,
+    IjentFileSystemApi.FileWriterError.PermissionDenied,
+    IjentFileSystemApi.ListDirectoryError.PermissionDenied,
+    IjentFileSystemApi.SameFileError.PermissionDenied,
+    IjentFileSystemApi.StatError.PermissionDenied,
+    IjentOpenedFile.Reader.ReadError.PermissionDenied,
+    IjentOpenedFile.SeekError.PermissionDenied,
+    IjentOpenedFile.Writer.WriteError.PermissionDenied
 
-  data class NotFile(override val where: IjentPath.Absolute, override val message: String) : IjentFsResult.NotFile
+  data class NotDirectory(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.CanonicalizeError.NotDirectory,
+    IjentFileSystemApi.FileReaderError.NotDirectory,
+    IjentFileSystemApi.FileWriterError.NotDirectory,
+    IjentFileSystemApi.ListDirectoryError.NotDirectory,
+    IjentFileSystemApi.SameFileError.NotDirectory,
+    IjentFileSystemApi.StatError.NotDirectory,
+    IjentOpenedFile.Reader.ReadError.NotDirectory,
+    IjentOpenedFile.SeekError.NotDirectory,
+    IjentOpenedFile.Writer.WriteError.NotDirectory
 
-  object ListDirectory {
-    data class Ok(override val value: Collection<String>) :
-      IjentFileSystemApi.ListDirectory.Ok
-  }
-
-  object ListDirectoryWithAttrs {
-    data class Ok<FI : IjentFileInfo>(override val value: Collection<Pair<String, FI>>) :
-      IjentFileSystemApi.ListDirectoryWithAttrs.Ok<FI>
-  }
-
- object SameFile {
-   data class Ok(override val value: Boolean) :
-     IjentFileSystemApi.SameFile.Ok
- }
-
-  object FileReader {
-    data class Ok(override val value: IjentOpenedFile.Reader) :
-      IjentFileSystemApi.FileReader.Ok
-  }
-
-  object FileWriter {
-    data class Ok(override val value: IjentOpenedFile.Writer) :
-      IjentFileSystemApi.FileWriter.Ok
-  }
-
-  object Reader {
-    object Read {
-      data class Ok(override val value: Int) :
-        IjentOpenedFile.Reader.Read.Ok
-    }
-  }
-
-  object Writer {
-    object Write {
-      data class Ok(override val value: Int) :
-        IjentOpenedFile.Writer.Write.Ok
-    }
-  }
-
-  object Stat {
-    data class Ok<FI : IjentFileInfo>(override val value: FI) :
-      IjentFileSystemApi.Stat.Ok<FI>
-  }
+  data class NotFile(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.CanonicalizeError.NotFile,
+    IjentFileSystemApi.FileReaderError.NotFile,
+    IjentFileSystemApi.FileWriterError.NotFile,
+    IjentFileSystemApi.SameFileError.NotFile,
+    IjentFileSystemApi.StatError.NotFile,
+    IjentOpenedFile.Reader.ReadError.NotFile,
+    IjentOpenedFile.SeekError.NotFile,
+    IjentOpenedFile.Writer.WriteError.NotFile
 }
