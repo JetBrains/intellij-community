@@ -267,6 +267,8 @@
             order="after propertyKeys"/>
 
     <iconMapper mappingFile="KotlinIconMappings.json"/>
+
+    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.KotlinNotebookSuggestionProvider"/>
   </extensions>
 
   <!-- Templates -->
