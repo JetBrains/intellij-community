@@ -24,7 +24,7 @@ class KotlinQuoteHandler : QuoteHandler {
     override fun isOpeningQuote(iterator: HighlighterIterator, offset: Int): Boolean {
         val tokenType = iterator.tokenType
 
-        if (tokenType == KtTokens.OPEN_QUOTE || tokenType == KtTokens.CHARACTER_LITERAL) {
+        if (tokenType == KtTokens.INTERPOLATION_PREFIX || tokenType == KtTokens.OPEN_QUOTE || tokenType == KtTokens.CHARACTER_LITERAL) {
             val start = iterator.start
             return offset == start
         }
@@ -38,6 +38,7 @@ class KotlinQuoteHandler : QuoteHandler {
     override fun isInsideLiteral(iterator: HighlighterIterator): Boolean {
         val tokenType = iterator.tokenType
         return tokenType == KtTokens.REGULAR_STRING_PART ||
+                tokenType == KtTokens.INTERPOLATION_PREFIX ||
                 tokenType == KtTokens.OPEN_QUOTE ||
                 tokenType == KtTokens.CLOSING_QUOTE ||
                 tokenType == KtTokens.SHORT_TEMPLATE_ENTRY_START ||
