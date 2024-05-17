@@ -46,15 +46,15 @@ public interface Difference {
 
   interface Specifier<T, D extends Difference> {
     default Iterable<T> added() {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
 
     default Iterable<T> removed() {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
 
     default Iterable<Change<T, D>> changed() {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
 
     default boolean unchanged() {

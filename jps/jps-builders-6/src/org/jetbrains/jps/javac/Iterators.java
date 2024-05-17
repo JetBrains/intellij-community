@@ -41,7 +41,7 @@ public final class Iterators {
       return ((Collection<?>)iterable).size();
     }
     int count = 0;
-    for (Object obj: iterable) {
+    for (Iterator<?> it = iterable.iterator(); it.hasNext(); it.next()) {
       count += 1;
     }
     return count;
