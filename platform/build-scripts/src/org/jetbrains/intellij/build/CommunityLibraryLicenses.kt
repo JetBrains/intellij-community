@@ -617,6 +617,7 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/jruby/jcodings/blob/master/LICENSE.txt"),
     LibraryLicense(name = "JDOM (JetBrains's fork)", version = "2", attachedTo = "intellij.platform.util.jdom",
                    url = "https://github.com/JetBrains/intellij-deps-jdom/",
+                   license = "JDOM License",
                    licenseUrl = "https://github.com/JetBrains/intellij-deps-jdom/blob/master/LICENSE.txt")
       .forkedFrom(sourceCodeUrl = "https://github.com/hunterhacker/jdom",
                   mavenRepositoryUrl = "https://repo1.maven.org/maven2",
