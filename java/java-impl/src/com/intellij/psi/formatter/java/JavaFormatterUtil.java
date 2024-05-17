@@ -295,7 +295,7 @@ public final class JavaFormatterUtil {
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER &&
               isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
               isAnnotationAfterKeyword(last) ||
-              isSingleTypeAnnoBeforeTypeInMethod(prev, child, parent)
+              isTypeAnnotationsBeforeTypeInMethodWithoutModifiers(last)
           ) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
@@ -314,7 +314,7 @@ public final class JavaFormatterUtil {
         if (prev instanceof PsiKeyword) {
           return null;
         }
-        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent)) {
+        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent) || isTypeAnnotationsBeforeTypeInMethodWithoutModifiers(child)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
 
@@ -516,16 +516,23 @@ public final class JavaFormatterUtil {
     return CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 
-  private static boolean isSingleTypeAnnoBeforeTypeInMethod(@NotNull ASTNode modifierList, @NotNull ASTNode typeNode, @NotNull ASTNode parent) {
-    if (parent.getElementType() != JavaElementType.METHOD) return false;
-    if (typeNode.getElementType() != JavaElementType.TYPE && typeNode.getElementType() != JavaElementType.TYPE_PARAMETER_LIST) return false;
-    if (modifierList.getFirstChildNode() != modifierList.getLastChildNode()) return false;
+  private static boolean isTypeAnnotationsBeforeTypeInMethodWithoutModifiers(@NotNull ASTNode node) {
+    ASTNode parent = node.getTreeParent();
+    if (parent == null || parent.getElementType() != JavaElementType.MODIFIER_LIST) return false;
 
-    PsiElement element = modifierList.getFirstChildNode().getPsi();
-    if (element instanceof PsiAnnotation psiAnnotation) {
-      return KNOWN_TYPE_ANNOTATIONS.contains(psiAnnotation.getQualifiedName());
+    ASTNode grandParent = parent.getTreeParent();
+    if (grandParent == null || grandParent.getElementType() != JavaElementType.METHOD) return false;
+
+    ASTNode rightParentSibling = FormatterUtil.getNextNonWhitespaceSibling(parent);
+    if (rightParentSibling == null || (rightParentSibling.getElementType() != JavaElementType.TYPE_PARAMETER_LIST && rightParentSibling.getElementType() != JavaElementType.TYPE)) return false;
+
+    for (ASTNode currentChild = parent.getFirstChildNode(); currentChild != null; currentChild = FormatterUtil.getNextNonWhitespaceSibling(currentChild)) {
+      if (currentChild.getElementType() != JavaElementType.ANNOTATION) return false;
+      PsiElement psiElement = currentChild.getPsi();
+      if (!(psiElement instanceof PsiAnnotation psiAnnotation) || !KNOWN_TYPE_ANNOTATIONS.contains(psiAnnotation.getQualifiedName())) return false;
     }
-    return false;
+
+    return true;
   }
 
   private static boolean isAnnoInsideModifierListWithAtLeastOneKeyword(@NotNull ASTNode current, @NotNull ASTNode parent) {

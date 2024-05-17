@@ -1238,7 +1238,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.PACKAGE_KEYWORD) {
       myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
-    else if (myRole2 == ChildRole.TYPE
+    else if ((myRole2 == ChildRole.TYPE || myRole2 == ChildRole.TYPE_PARAMETER_LIST)
              && myChild1.getLastChildNode() != null
              && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION
              || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE
