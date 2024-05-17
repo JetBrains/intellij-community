@@ -369,7 +369,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void setLine(final int line, boolean visualLineMightBeChanged) {
     if (getLine() != line) {
-      if (visualLineMightBeChanged && !myType.changeLine(this, line, getProject())) {
+      if (visualLineMightBeChanged && !myType.lineShouldBeChanged(this, line, getProject())) {
         return;
       }
       var oldLine = getLine();
