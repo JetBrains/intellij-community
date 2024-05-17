@@ -28779,9 +28779,9 @@ f:com.intellij.usageView.impl.SelectInEditorHandler
 - s:selectInEditor(javax.swing.JComponent):V
 f:com.intellij.usageView.impl.UsageContextCallHierarchyPanel
 - com.intellij.usages.impl.UsageContextPanelBase
-- <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation):V
+- <init>(com.intellij.usages.UsageViewPresentation):V
 - dispose():V
-- updateLayoutLater(java.util.List):V
+- updateLayoutLater(com.intellij.openapi.project.Project,java.util.List):V
 f:com.intellij.usageView.impl.UsageContextCallHierarchyPanel$Provider
 - com.intellij.usages.UsageContextPanel$Provider
 - <init>():V
