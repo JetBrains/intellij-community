@@ -4,10 +4,12 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.ProductIcons
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
@@ -71,13 +73,16 @@ internal abstract class UltimateInstaller(
   }
 
   fun notifyAndOfferStart(installationResult: InstallationResult, suggestedIde: SuggestedIde, pluginId: PluginId?) {
+    val currentIde = ApplicationInfo.getInstance().fullApplicationName
+    
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Ultimate Installed")
       .createNotification(
-        IdeBundle.message("notification.group.advertiser.try.ultimate.installed"),
+        IdeBundle.message("notification.group.advertiser.try.ultimate.installed.title", suggestedIde.name),
+        IdeBundle.message("notification.group.advertiser.try.ultimate.installed.content", currentIde),
         NotificationType.INFORMATION
       )
       .setSuggestionType(true)
-      .addAction(object : NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.switch.ide", suggestedIde.name)) {
+      .addAction(object : NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.start.trial")) {
         override fun actionPerformed(e: AnActionEvent, notification: com.intellij.notification.Notification) {
           scope.launch {
             val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
@@ -91,6 +96,8 @@ internal abstract class UltimateInstaller(
           }
         }
       })
+    
+    notification.setIcon(ProductIcons.getInstance().productIcon)
 
     notification.notify(project)
   }
