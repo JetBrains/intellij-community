@@ -47,7 +47,7 @@ internal fun LocalHistoryFacade.createDifferenceReverter(project: Project, gatew
 }
 
 private fun getRevertCommandName(item: ChangeSetActivityItem?, isOldContentUsed: Boolean): @Nls String? {
-  if (item == null) return LocalHistoryBundle.message("system.label.revert")
+  if (item == null) return LocalHistoryBundle.message("activity.name.revert")
   return getRevertCommandName(item.name, item.timestamp, isOldContentUsed)
 }
 
@@ -55,12 +55,12 @@ internal fun getRevertCommandName(name: @NlsSafe String?, timestamp: Long, isOld
   val date = DateFormatUtil.formatDateTime(timestamp)
   if (isOldContentUsed) {
     if (name != null) {
-      return LocalHistoryBundle.message("system.label.revert.change.date", name, date)
+      return LocalHistoryBundle.message("activity.name.revert.change.date", name, date)
     }
-    return LocalHistoryBundle.message("system.label.revert.date", date)
+    return LocalHistoryBundle.message("activity.name.revert.date", date)
   }
   if (name != null) {
-    return LocalHistoryBundle.message("system.label.revert.to.change.date", name, date)
+    return LocalHistoryBundle.message("activity.name.revert.to.change.date", name, date)
   }
-  return LocalHistoryBundle.message("system.label.revert.to.date", date)
+  return LocalHistoryBundle.message("activity.name.revert.to.date", date)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.ActivityId;
@@ -236,7 +236,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void afterRefreshFinish(boolean asynchronous) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"), null);
+      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("activity.name.external.change"), null);
     }
   }
 
