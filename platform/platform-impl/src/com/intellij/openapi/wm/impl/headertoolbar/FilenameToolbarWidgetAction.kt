@@ -132,7 +132,7 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
 
     fun update(presentation: Presentation) {
       isOpaque = false
-      if (!(presentation.icon === leftIcons.firstOrNull() || leftIcons.firstOrNull() == presentation.icon)) leftIcons = listOf(presentation.icon!!)
+      if (leftIcons.firstOrNull() != presentation.icon) leftIcons = listOf(presentation.icon!!)
       foreground = presentation.getClientProperty(FILE_COLOR)
       toolTipText = presentation.description
       val path = presentation.getClientProperty(FILE_FULL_PATH)
