@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -41,17 +43,33 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.CliKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.UastAnalysisHandlerExtension
-import org.jetbrains.uast.test.kotlin.env.AbstractUastTest
+import org.jetbrains.uast.test.kotlin.env.AbstractTestWithCoreEnvironment
 import java.io.File
 
-abstract class AbstractKotlinUastTest : AbstractUastTest() {
+abstract class AbstractKotlinUastTest : AbstractTestWithCoreEnvironment() {
 
     private lateinit var compilerConfiguration: CompilerConfiguration
     private var kotlinCoreEnvironment: KotlinCoreEnvironment? = null
 
     open var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
-    override fun getVirtualFile(testName: String): VirtualFile {
+    protected fun doTest(
+        testName: String,
+        checkCallback: (String, UFile) -> Unit = ::check,
+    ) {
+        val virtualFile = getVirtualFile(testName)
+
+        val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
+        val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
+        checkCallback(testName, uFile as UFile)
+    }
+
+    protected abstract fun check(
+        testName: String,
+        file: UFile,
+    )
+
+    protected fun getVirtualFile(testName: String): VirtualFile {
         val testFile = testDataDir.listFiles { pathname -> pathname.nameWithoutExtension == testName }.first()
 
         super.initializeEnvironment(testFile)
