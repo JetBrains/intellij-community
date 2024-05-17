@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -310,7 +310,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             newParameterName = suggestedNames.first().quoteIfNeeded(),
             newParameterTypeText = analyze(physicalExpression) {
                 replacementType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-                    functionalTypeRenderer = KtFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+                    functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
                 }, position = Variance.IN_VARIANCE)
             },
             argumentValue = originalExpression,

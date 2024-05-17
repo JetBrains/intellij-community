@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
@@ -98,10 +98,10 @@ internal class ShadowedCallablesFilter {
                         // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
                         // explicit simple importing scope, then it won't shadow target callable after import is inserted
                         when ((shadowingCallableOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
-                            is KtScopeKind.PackageMemberScope,
-                            is KtScopeKind.DefaultSimpleImportingScope,
-                            is KtScopeKind.ExplicitStarImportingScope,
-                            is KtScopeKind.DefaultStarImportingScope -> {
+                            is KaScopeKind.PackageMemberScope,
+                            is KaScopeKind.DefaultSimpleImportingScope,
+                            is KaScopeKind.ExplicitStarImportingScope,
+                            is KaScopeKind.DefaultStarImportingScope -> {
                                 processSignature(callable, symbolOrigin, considerContainer = true, isVariableCall, typeArgumentsAreRequired)
                             }
 
@@ -280,8 +280,8 @@ private sealed class SimplifiedSignature {
             val callableId = callableIdIfNonLocal ?: return null
             return when (symbolKind) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
-                KtSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
-                KtSymbolKind.CLASS_MEMBER -> {
+                KaSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
+                KaSymbolKind.CLASS_MEMBER -> {
                     val classId = callableId.classId ?: return null
                     val classKind = getClassOrObjectSymbolByClassId(classId)?.classKind
 

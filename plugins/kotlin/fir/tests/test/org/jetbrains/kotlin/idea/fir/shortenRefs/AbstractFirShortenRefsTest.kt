@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -35,7 +35,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
     override fun isFirPlugin(): Boolean = true
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun doTest(file: KtFile): String? = allowAnalysisOnEdt {
         val strategyName = InTextDirectivesUtils.findStringWithPrefixes(file.text, STRATEGY_DIRECTIVE)
         val (classShortenStrategy, callableShortenStrategy) = if (strategyName == null) {

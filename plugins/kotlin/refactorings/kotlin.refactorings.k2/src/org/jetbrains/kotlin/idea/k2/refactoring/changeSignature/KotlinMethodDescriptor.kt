@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.refactoring.changeSignature.MethodDescriptor.ReadWriteOption
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -21,21 +21,21 @@ import org.jetbrains.kotlin.types.Variance
 class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility> {
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     internal val oldReturnType: String = allowAnalysisOnEdt {
         analyze(callable) {
             (callable as? KtCallableDeclaration)?.getReturnKtType()?.render(position = Variance.INVARIANT) ?: ""
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     internal val oldReceiverType: String? = allowAnalysisOnEdt {
         analyze(callable) {
             (callable as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(position = Variance.INVARIANT)
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override var receiver: KotlinParameterInfo? = (callable as? KtCallableDeclaration)?.receiverTypeReference?.let {
         allowAnalysisOnEdt {
             analyze(callable) {
@@ -62,7 +62,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     private val parameters: MutableList<KotlinParameterInfo>
 
     init {
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         parameters = allowAnalysisOnEdt {
             analyze(callable) {
                 val params = mutableListOf< KotlinParameterInfo>()
@@ -94,7 +94,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
         return (callable as? KtCallableDeclaration)?.valueParameters?.size ?: 0
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
             (callable.getSymbol() as? KtSymbolWithVisibility)?.visibility ?: Visibilities.Public

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtClassTypeQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +30,7 @@ internal fun getCommentText(comment: PsiComment): String {
 context(KtAnalysisSession)
 internal fun KtType.renderNames(): Array<String> = arrayOf(
     render(KtTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = KtClassTypeQualifierRenderer.WITH_SHORT_NAMES
+        classIdRenderer = KaClassTypeQualifierRenderer.WITH_SHORT_NAMES
     }, Variance.INVARIANT),
     render(KtTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
     render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)

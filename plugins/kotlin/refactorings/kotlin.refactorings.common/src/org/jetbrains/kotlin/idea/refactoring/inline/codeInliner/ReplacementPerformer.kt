@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -171,7 +171,7 @@ class ExpressionReplacementPerformer(
                 // NB: Unit is never used as expression
                 val stub = elementToBeReplaced.replaced(psiFactory.createExpression("0"))
 
-                @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+                @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
                 val canDropElementToBeReplaced = allowAnalysisFromWriteAction {
                     allowAnalysisOnEdt {
                         analyze(stub) {
@@ -234,7 +234,7 @@ class ExpressionReplacementPerformer(
     /**
      * Returns statement in a block to insert statement before it
      */
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private fun findOrCreateBlockToInsertStatement(): KtExpression {
         for (element in elementToBeReplaced.parentsWithSelf) {
             val parent = element.parent

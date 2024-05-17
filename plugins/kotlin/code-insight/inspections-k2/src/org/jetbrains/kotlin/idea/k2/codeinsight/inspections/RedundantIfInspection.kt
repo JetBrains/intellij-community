@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
@@ -15,7 +15,7 @@ internal class RedundantIfInspection : RedundantIfInspectionBase() {
         expression.getKtType()?.isBoolean == true
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun invertEmptinessCheck(condition: KtExpression): KtExpression? =
         allowAnalysisOnEdt {
             analyze(condition) {

@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -23,17 +23,17 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 
 internal object SurroundWithNullCheckFixFactory {
 
-    val argumentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         if (!diagnostic.isMismatchDueToNullability) return@ModCommandBased emptyList()
         createQuickFixIfApplicableToTypeMismatch(diagnostic)
     }
 
-    val assignmentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         if (!diagnostic.isMismatchDueToNullability) return@ModCommandBased emptyList()
         createQuickFixIfApplicableToTypeMismatch(diagnostic)
     }
 
-    val iteratorOnNullableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.IteratorOnNullable ->
+    val iteratorOnNullableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
         val nullableExpression = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
         val forExpression = SurroundWithNullCheckUtils.getForExpressionIfApplicable(nullableExpression)
             ?: return@ModCommandBased emptyList()
@@ -44,35 +44,35 @@ internal object SurroundWithNullCheckFixFactory {
     }
 
     val nullabilityMismatchBasedOnJavaAnnotationsFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NullabilityMismatchBasedOnJavaAnnotations ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullabilityMismatchBasedOnJavaAnnotations ->
             createQuickFixIfApplicableToTypeMismatch(diagnostic)
         }
 
     val receiverNullabilityMismatchBasedOnJavaAnnotationsFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ReceiverNullabilityMismatchBasedOnJavaAnnotations ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReceiverNullabilityMismatchBasedOnJavaAnnotations ->
             createQuickFixIfApplicableToUnsafeCall(diagnostic)
         }
 
-    val unsafeCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeCall ->
+    val unsafeCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    val unsafeImplicitInvokeCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeImplicitInvokeCall ->
+    val unsafeImplicitInvokeCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeImplicitInvokeCall ->
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    val unsafeInfixCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
+    val unsafeInfixCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    val unsafeOperatorCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
+    val unsafeOperatorCallFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
     context(KtAnalysisSession)
-    private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KtFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
+    private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val element = when (diagnostic) {
-            is KtFirDiagnostic.UnsafeCall -> diagnostic.receiverExpression
+            is KaFirDiagnostic.UnsafeCall -> diagnostic.receiverExpression
             else -> diagnostic.psi
         } ?: return emptyList()
 
@@ -103,7 +103,7 @@ internal object SurroundWithNullCheckFixFactory {
     }
 
     context(KtAnalysisSession)
-    private fun createQuickFixIfApplicableToTypeMismatch(diagnostic: KtFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
+    private fun createQuickFixIfApplicableToTypeMismatch(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val nullableExpression = diagnostic.psi as? KtReferenceExpression ?: return emptyList()
         val root = SurroundWithNullCheckUtils.getRootExpressionIfApplicable(nullableExpression) ?: return emptyList()
         val elementContext = ElementContext(nullableExpression.createSmartPointer())

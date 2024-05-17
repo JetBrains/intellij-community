@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
@@ -18,7 +18,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
     val factory = KotlinQuickFixFactory.IntentionBased(::createQuickFixes)
 
     context (KtAnalysisSession)
-    private fun createQuickFixes(diagnostic: KtFirDiagnostic.ActualAnnotationsNotMatchExpect): List<QuickFixActionBase<*>> {
+    private fun createQuickFixes(diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect): List<QuickFixActionBase<*>> {
         val expectAnnotationEntry = diagnostic.incompatibilityType.expectAnnotation.psi as? KtAnnotationEntry
             ?: return emptyList()
 
@@ -30,7 +30,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
 
     context (KtAnalysisSession)
     private fun createCopyAndReplaceAnnotationFixes(
-        diagnostic: KtFirDiagnostic.ActualAnnotationsNotMatchExpect,
+        diagnostic: KaFirDiagnostic.ActualAnnotationsNotMatchExpect,
         expectAnnotationEntry: KtAnnotationEntry,
     ): List<QuickFixActionBase<*>> {
         val expectDeclaration = diagnostic.expectSymbol.psi as? KtNamedDeclaration ?: return emptyList()

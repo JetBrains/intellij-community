@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -211,7 +211,7 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
      * Since [ExpressionWeigher]s are executed on EDT in K1 plugin, we have to use [allowAnalysisOnEdt] to be able to perform the [analyze].
      * With K2 plugin, there will be no such issue.
      */
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun calculateCallExtensionsWeight(namedFunction: KtNamedFunction): Int {
         return allowAnalysisOnEdt {
             analyze(element) {

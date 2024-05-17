@@ -6,11 +6,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.*
 
 internal object SpecifyOverrideExplicitlyFixFactory {
     val specifyOverrideExplicitlyFixFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.DelegatedMemberHidesSupertypeOverride ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.DelegatedMemberHidesSupertypeOverride ->
             val ktClass = diagnostic.psi
             if (ktClass.superTypeListEntries.any {
                     it is KtDelegatedSuperTypeEntry && it.delegateExpression !is KtNameReferenceExpression
@@ -91,8 +91,8 @@ internal object SpecifyOverrideExplicitlyFixFactory {
     }
 
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-        returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
-        valueParameterRenderer = KtValueParameterSymbolRenderer.TYPE_ONLY
+        returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+        valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
         keywordsRenderer = keywordsRenderer.with {
             keywordFilter = KtRendererKeywordFilter.without(
                 KtTokens.FUN_KEYWORD

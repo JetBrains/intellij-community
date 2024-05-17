@@ -13,7 +13,7 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -232,7 +232,7 @@ sealed class K2MoveRenameUsageInfo(
          * In [markInternalUsages] we marked all internal usages, but some of these usages don't need to be updated.
          * Like, for example, instance methods.
          */
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         fun unMarkNonUpdatableUsages(containing: KtElement) = allowAnalysisFromWriteAction {
             containing.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
                 val usageInfo = refExpr.internalUsageInfo ?: return@forEachDescendantOfType

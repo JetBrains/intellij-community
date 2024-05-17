@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
  * Origin of [KtSymbol] used in completion suggestion
  */
 internal sealed class CompletionSymbolOrigin {
-    class Scope(val kind: KtScopeKind) : CompletionSymbolOrigin()
+    class Scope(val kind: KaScopeKind) : CompletionSymbolOrigin()
 
     object Index : CompletionSymbolOrigin()
 
@@ -49,11 +49,11 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = sequence {
     val indexedImplicitReceivers = scopeContext.implicitReceivers.associateBy { it.scopeIndexInTower }
-    val scopes = scopeContext.scopes.filter { it.kind is KtScopeKind.LocalScope || it.kind is KtScopeKind.TypeScope }
+    val scopes = scopeContext.scopes.filter { it.kind is KaScopeKind.LocalScope || it.kind is KaScopeKind.TypeScope }
 
     for (scopeWithKind in scopes) {
         val kind = scopeWithKind.kind
-        val isImplicitReceiverScope = kind is KtScopeKind.TypeScope && kind.indexInTower in indexedImplicitReceivers
+        val isImplicitReceiverScope = kind is KaScopeKind.TypeScope && kind.indexInTower in indexedImplicitReceivers
 
         val nonExtensions = if (isImplicitReceiverScope) {
             val implicitReceiver = indexedImplicitReceivers.getValue(kind.indexInTower)
@@ -82,7 +82,7 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
-    .filterNot { it.kind is KtScopeKind.LocalScope || it.kind is KtScopeKind.TypeScope }
+    .filterNot { it.kind is KaScopeKind.LocalScope || it.kind is KaScopeKind.TypeScope }
     .flatMap { scopeWithKind ->
         collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter)
             .map { KtCallableSignatureWithContainingScopeKind(it, scopeWithKind.kind) }
@@ -116,7 +116,7 @@ internal fun collectNonExtensionsForType(
     val scopeIndex = indexInTower ?: CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
     return nonExtensionsFromType
-        .map { KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.TypeScope(scopeIndex)) }
+        .map { KtCallableSignatureWithContainingScopeKind(it, KaScopeKind.TypeScope(scopeIndex)) }
         .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
 }
 

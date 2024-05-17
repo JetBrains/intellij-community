@@ -19,7 +19,7 @@ import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.analysis.api.types.KtType;
+import org.jetbrains.kotlin.analysis.api.types.KaType;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*;
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
@@ -137,7 +137,7 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
         functionNameLabel.setLabelFor(functionNameField);
 
         KtElement context = originalDescriptor.getDescriptor().getContext();
-        List<KtType> possibleReturnTypes = ExtractableCodeDescriptorKt.getPossibleReturnTypes(extractableCodeDescriptor.getControlFlow());
+        List<KaType> possibleReturnTypes = ExtractableCodeDescriptorKt.getPossibleReturnTypes(extractableCodeDescriptor.getControlFlow());
         if (!possibleReturnTypes.isEmpty()) {
             List<KtTypeCodeFragment> fragments = ContainerUtil.map(possibleReturnTypes,
                                                                    t -> new KtPsiFactory(project).createTypeCodeFragment(
@@ -278,7 +278,7 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
             @Nullable KtModifierKeywordToken newVisibility,
             @Nullable FirExtractFunctionParameterTablePanel.ParameterInfo newReceiverInfo,
             @NotNull List<FirExtractFunctionParameterTablePanel.ParameterInfo> newParameterInfos,
-            @Nullable KtType returnType
+            @Nullable KaType returnType
     ) {
         Map<Parameter, Parameter> oldToNewParameters = new LinkedHashMap<>();
         for (FirExtractFunctionParameterTablePanel.ParameterInfo parameterInfo : newParameterInfos) {

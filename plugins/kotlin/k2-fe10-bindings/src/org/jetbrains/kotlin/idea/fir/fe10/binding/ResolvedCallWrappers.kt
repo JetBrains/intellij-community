@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -69,13 +69,13 @@ internal abstract class Fe10WrapperResolvedCall<C : KtCallableMemberCall<*, *>>(
     override fun getStatus(): ResolutionStatus {
         if (diagnostic == null) return ResolutionStatus.SUCCESS
         return when (diagnostic) {
-            is KtFirDiagnostic.NamedArgumentsNotAllowed,
-            is KtFirDiagnostic.NonVarargSpread,
-            is KtFirDiagnostic.ArgumentPassedTwice,
-            is KtFirDiagnostic.TooManyArguments,
-            is KtFirDiagnostic.NoValueForParameter,
-            is KtFirDiagnostic.NamedParameterNotFound,
-            is KtFirDiagnostic.NameForAmbiguousParameter
+            is KaFirDiagnostic.NamedArgumentsNotAllowed,
+            is KaFirDiagnostic.NonVarargSpread,
+            is KaFirDiagnostic.ArgumentPassedTwice,
+            is KaFirDiagnostic.TooManyArguments,
+            is KaFirDiagnostic.NoValueForParameter,
+            is KaFirDiagnostic.NamedParameterNotFound,
+            is KaFirDiagnostic.NameForAmbiguousParameter
             -> ResolutionStatus.ARGUMENTS_MAPPING_ERROR
 
             else -> context.implementationPostponed(diagnostic.toString())

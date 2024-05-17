@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -27,24 +27,24 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 internal object OptInFixFactories {
 
-    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInUsage ->
+    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsage ->
         createQuickFix(diagnostic)
     }
 
-    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInUsageError ->
+    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInOverride ->
+    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverride ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInOverrideError ->
+    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverrideError ->
         createQuickFix(diagnostic)
     }
 
     context(KtAnalysisSession)
-    private fun createQuickFix(diagnostic: KtFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
+    private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
         val element = diagnostic.psi.findParentOfType<KtElement>(strict = false) ?: return emptyList()
         val annotationClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return emptyList()
 
@@ -81,8 +81,8 @@ internal object OptInFixFactories {
         return result
     }
 
-    private fun isOverrideError(diagnostic: KtFirDiagnostic<PsiElement>): Boolean =
-        diagnostic is KtFirDiagnostic.OptInOverride || diagnostic is KtFirDiagnostic.OptInOverrideError
+    private fun isOverrideError(diagnostic: KaFirDiagnostic<PsiElement>): Boolean =
+        diagnostic is KaFirDiagnostic.OptInOverride || diagnostic is KaFirDiagnostic.OptInOverrideError
 }
 
 private object OptInGeneralUtils : OptInGeneralUtilsBase() {

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -240,7 +240,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                     it.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                         .map { it.diagnosticClass }
                 }
-                .any { it == KtFirDiagnostic.IllegalSuspendFunctionCall::class || it == KtFirDiagnostic.IllegalSuspendPropertyAccess::class }
+                .any { it == KaFirDiagnostic.IllegalSuspendFunctionCall::class || it == KaFirDiagnostic.IllegalSuspendPropertyAccess::class }
         }
         if (illegalSuspendInside) {
             descriptor = descriptor.copy(modifiers = listOf(KtTokens.SUSPEND_KEYWORD))
@@ -385,8 +385,8 @@ private fun ExtractableCodeDescriptor.validateTempResult(
         ) return
 
         if (diagnostics.any {
-                it.diagnosticClass == KtFirDiagnostic.UnresolvedReference::class ||
-                        it.diagnosticClass == KtFirDiagnostic.UnresolvedReferenceWrongReceiver::class
+                it.diagnosticClass == KaFirDiagnostic.UnresolvedReference::class ||
+                        it.diagnosticClass == KaFirDiagnostic.UnresolvedReferenceWrongReceiver::class
             }
             || (currentDescriptor != null
                     && currentDescriptor != resolveResult.descriptor
@@ -399,11 +399,11 @@ private fun ExtractableCodeDescriptor.validateTempResult(
         }
 
         diagnostics.firstOrNull {
-            it.diagnosticClass == KtFirDiagnostic.InvisibleReference::class ||
-                    it.diagnosticClass == KtFirDiagnostic.InvisibleSetter::class
+            it.diagnosticClass == KaFirDiagnostic.InvisibleReference::class ||
+                    it.diagnosticClass == KaFirDiagnostic.InvisibleSetter::class
         }?.let {
             val message = when (it.diagnosticClass) {
-                KtFirDiagnostic.InvisibleSetter::class ->
+                KaFirDiagnostic.InvisibleSetter::class ->
                     getDeclarationMessage(resolveResult.declaration, "setter.of.0.will.become.invisible.after.extraction", false)
 
                 else ->
@@ -419,7 +419,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
             override fun visitUserType(userType: KtUserType) {
                 val refExpr = userType.referenceExpression ?: return
                 val diagnostics = refExpr.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-                diagnostics.firstOrNull { it.diagnosticClass == KtFirDiagnostic.InvisibleReference::class }?.let {
+                diagnostics.firstOrNull { it.diagnosticClass == KaFirDiagnostic.InvisibleReference::class }?.let {
                     val declaration = refExpr.mainReference.resolve() as? PsiNamedElement ?: return
                     conflicts.putValue(declaration, getDeclarationMessage(declaration, "0.will.become.invisible.after.extraction"))
                 }

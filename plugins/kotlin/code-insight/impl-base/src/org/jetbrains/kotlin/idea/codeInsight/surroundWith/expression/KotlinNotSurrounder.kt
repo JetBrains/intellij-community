@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
@@ -19,7 +19,7 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         return CodeInsightBundle.message("surround.with.not.template")
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     public override fun isApplicable(expression: KtExpression): Boolean {
         if (!super.isApplicable(expression)) return false
         allowAnalysisOnEdt {

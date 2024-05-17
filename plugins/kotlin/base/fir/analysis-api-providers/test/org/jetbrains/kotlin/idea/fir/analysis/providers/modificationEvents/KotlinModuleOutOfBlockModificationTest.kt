@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -433,7 +433,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         trackerD.assertNotModified()
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun `test code fragment out-of-block modification does not happen after body modification`() {
         val contextModule = createModuleInTmpDir("ctx") {
             val contextFile = FileWithText(

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
 
 internal object AddStarProjectionsFixFactory {
-    val addStarProjectionsFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NoTypeArgumentsOnRhs ->
+    val addStarProjectionsFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoTypeArgumentsOnRhs ->
         val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
         val classSymbol = diagnostic.classifier as? KtNamedClassOrObjectSymbol
 

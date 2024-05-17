@@ -10,7 +10,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -156,12 +156,12 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeCall ->
+    val forUnsafeCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
         val nullableExpression = diagnostic.receiverExpression
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(nullableExpression)
     }
 
-    val forUnsafeImplicitInvokeCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeImplicitInvokeCall ->
+    val forUnsafeImplicitInvokeCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeImplicitInvokeCall ->
         val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true)
             ?: return@ModCommandBased emptyList()
         val callingFunctionalVariableInLocalScope =
@@ -179,7 +179,7 @@ object WrapWithSafeLetCallFixFactories {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
-        val functionalVariableSymbol = (calleeExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>())?.symbol ?: return false
+        val functionalVariableSymbol = (calleeExpression.resolveCall()?.singleCallOrNull<KaSimpleVariableAccessCall>())?.symbol ?: return false
         val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
@@ -188,15 +188,15 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeInfixCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
+    val forUnsafeInfixCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forUnsafeOperatorCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
+    val forUnsafeOperatorCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forArgumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val forArgumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         if (diagnostic.isMismatchDueToNullability) createWrapWithSafeLetCallInputForNullableExpression(diagnostic.psi.wrappingExpressionOrSelf)
         else emptyList()
     }

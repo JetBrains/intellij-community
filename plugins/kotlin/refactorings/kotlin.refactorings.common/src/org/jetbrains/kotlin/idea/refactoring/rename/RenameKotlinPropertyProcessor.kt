@@ -16,7 +16,7 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
@@ -374,7 +374,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
       }
     }
 
-      val (adjustedUsages, refKindUsages) = @OptIn(KtAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
+      val (adjustedUsages, refKindUsages) = @OptIn(KaAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
           val adjustedUsages = if (element is KtParameter) {
               usages.filterNot {
                   val refTarget = it.reference?.resolve()

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
@@ -63,12 +63,12 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
     }
 
     val assigningSingleElementToVarargInNamedFormFunction =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
     val assigningSingleElementToVarargInNamedFormFunctionWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
