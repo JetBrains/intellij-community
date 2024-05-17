@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -76,7 +75,6 @@ object K2CreateParameterFromUsageBuilder {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
     internal class CreateParameterFromUsageAction(refExpr: KtExpression, private val propertyName: String, val valVar: CreateParameterUtil.ValVar, container: KtNamedDeclaration) : IntentionAction {
         private val originalExprPointer: SmartPsiElementPointer<KtExpression> = SmartPointerManager.createPointer(refExpr)
         private val containerPointer: SmartPsiElementPointer<KtNamedDeclaration> = SmartPointerManager.createPointer(container)
@@ -92,9 +90,7 @@ object K2CreateParameterFromUsageBuilder {
             if (!ReadonlyStatusHandler.ensureFilesWritable(project, PsiUtil.getVirtualFile(container))) {
                 return
             }
-            allowAnalysisOnEdt {
-                runChangeSignature(project, editor!!, container, valVar, propertyName, originalExpression)
-            }
+            runChangeSignature(project, editor!!, container, valVar, propertyName, originalExpression)
         }
 
         override fun startInWriteAction(): Boolean = false
