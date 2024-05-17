@@ -511,7 +511,8 @@ private suspend fun processAndGetProductPluginContentModules(
 private val excludedPaths = java.util.Set.of(
   "/META-INF/ultimate.xml",
   "/META-INF/RdServer.xml",
-  "/META-INF/unattendedHost.xml"
+  "/META-INF/unattendedHost.xml",
+  "/META-INF/codeWithMe.xml",
 )
 
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
