@@ -1,19 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.l10n.LocalizationOrder;
 import com.intellij.util.l10n.LocalizationUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.*;
@@ -32,9 +29,6 @@ import java.util.function.BiFunction;
 
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
-
-  //TODO: this is a temporary solutions, should be done better in IJPL-148813
-  private static @NotNull String ourLangTag = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
   private boolean isInitializedBeforeL10Plugin;
@@ -79,15 +73,15 @@ public class DynamicBundle extends AbstractBundle {
                                                                @NotNull Locale locale,
                                                                @NotNull BiFunction<? super @NotNull ClassLoader, ? super Locale, ? extends @NotNull ResourceBundle> bundleResolver) {
     Path bundlePath = FileSystems.getDefault().getPath(FileUtil.toCanonicalPath(defaultPath, '.'));
-    ClassLoader pluginClassLoader = languagePluginClassLoader(bundleClassLoader, locale);
+    ClassLoader pluginClassLoader = DefaultBundleService.isDefaultBundle() ? null: LocalizationUtil.INSTANCE.getPluginClassLoader();
     List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPaths(bundlePath, locale);
-    Map<BundleOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
+    Map<LocalizationOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
       resolveBundleOrder(pluginClassLoader, true, bundlePath, paths, bundleOrderMap, bundleResolver, locale);
     }
     resolveBundleOrder(baseLoader, false, bundlePath, paths, bundleOrderMap, bundleResolver, locale);
     reorderParents(bundleOrderMap);
-    Optional<Map.Entry<BundleOrder, ResourceBundle>> resourceBundleEntry = bundleOrderMap.entrySet().stream().min(Map.Entry.comparingByKey());
+    Optional<Map.Entry<LocalizationOrder, ResourceBundle>> resourceBundleEntry = bundleOrderMap.entrySet().stream().min(Map.Entry.comparingByKey());
     if (!resourceBundleEntry.isPresent()) {
       throw new RuntimeException("No such resource bundle: " + bundlePath);
     }
@@ -115,22 +109,6 @@ public class DynamicBundle extends AbstractBundle {
     return resourceBundles;
   }
 
-  private static @Nullable ClassLoader languagePluginClassLoader(@NotNull ClassLoader bundleClassLoader, @NotNull Locale locale) {
-    if (DefaultBundleService.isDefaultBundle()) {
-      return null;
-    }
-    LanguageBundleEP langBundle = findLanguageBundle();
-    if (langBundle == null) {
-      return null;
-    }
-    if (!Objects.equals(locale.getLanguage(), getLocale().getLanguage()) ||
-        (locale.getCountry() != null && !Objects.equals(locale.getCountry(), getLocale().getCountry()))) {
-      return null;
-    }
-    PluginDescriptor pluginDescriptor = langBundle.pluginDescriptor;
-    return pluginDescriptor == null ? bundleClassLoader : pluginDescriptor.getClassLoader();
-  }
-
   private static ResourceBundle getParent(@NotNull ResourceBundle bundle) throws Throwable {
     return (ResourceBundle)DynamicBundleInternal.GET_PARENT.invokeWithArguments(bundle);
   }
@@ -139,7 +117,7 @@ public class DynamicBundle extends AbstractBundle {
                                          boolean isPluginClassLoader,
                                          @NotNull Path pathToBundle,
                                          @NotNull List<? extends Path> orderedPaths,
-                                         @NotNull Map<? super BundleOrder, ? super ResourceBundle> bundleOrderMap,
+                                         @NotNull Map<? super LocalizationOrder, ? super ResourceBundle> bundleOrderMap,
                                          @NotNull BiFunction<? super @NotNull ClassLoader, ? super Locale, ? extends @NotNull ResourceBundle> bundleResolver,
                                          @NotNull Locale locale) {
     ResourceBundle bundle = bundleResolver.apply(loader, locale);
@@ -158,7 +136,7 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static void putBundleOrder(@NotNull ResourceBundle bundle,
-                                     @NotNull Map<? super BundleOrder, ? super ResourceBundle> bundleOrderMap,
+                                     @NotNull Map<? super LocalizationOrder, ? super ResourceBundle> bundleOrderMap,
                                      @NotNull List<? extends Path> orderedPaths,
                                      boolean isPluginClassLoader) {
     String bundlePath = FileUtil.toCanonicalPath(bundle.getBaseBundleName(), '.');
@@ -166,20 +144,20 @@ public class DynamicBundle extends AbstractBundle {
       bundlePath += "_" + bundle.getLocale().toString();
     }
     Path path = FileSystems.getDefault().getPath(bundlePath);
-    BundleOrder bundleOrder = BundleOrder.getBundleOrder(orderedPaths, path, isPluginClassLoader);
-    if (bundleOrder == null) {
+    LocalizationOrder localizationOrder = LocalizationOrder.Companion.getLocalizationOrder(orderedPaths, path, isPluginClassLoader);
+    if (localizationOrder == null) {
       LOG.debug("Order cannot be defined for the bundle: " + path +
                 "; Current locale: " + getLocale() +
                 "; Paths for locale: " + orderedPaths);
       return;
     }
-    bundleOrderMap.put(bundleOrder, bundle);
+    bundleOrderMap.put(localizationOrder, bundle);
   }
 
-  private static void reorderParents(@NotNull Map<BundleOrder, ResourceBundle> bundleOrderMap) {
+  private static void reorderParents(@NotNull Map<LocalizationOrder, ResourceBundle> bundleOrderMap) {
     ResourceBundle resourceBundle = null;
-    for (BundleOrder bundleOrder : BundleOrder.values()) {
-      ResourceBundle parentBundle = bundleOrderMap.get(bundleOrder);
+    for (LocalizationOrder localizationOrder : LocalizationOrder.values()) {
+      ResourceBundle parentBundle = bundleOrderMap.get(localizationOrder);
       if (parentBundle != null && parentBundle != resourceBundle) {
         if (resourceBundle != null) {
           try {
@@ -217,28 +195,6 @@ public class DynamicBundle extends AbstractBundle {
       catch (ReflectiveOperationException e) {
         throw new RuntimeException(e);
       }
-    }
-  }
-
-  // todo: one language per application
-  public static @Nullable LanguageBundleEP findLanguageBundle() {
-    try {
-      if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-        return null;
-      }
-
-      Application app = ApplicationManager.getApplication();
-      if (app == null || !app.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
-        return null;
-      }
-      return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
     }
   }
 
@@ -349,22 +305,8 @@ public class DynamicBundle extends AbstractBundle {
     };
   }
 
-  public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
-    if (langBundle != null) {
-      ourLangTag = langBundle.locale;
-      ourCache.clear();
-      return;
-    }
-    // TODO: this is a temporary solutions, should be done better in IJPL-148813
-    String i18Locale = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
-    if (!Locale.ENGLISH.toLanguageTag().equals(i18Locale)) {
-      ourLangTag = i18Locale;
-      ourCache.clear();
-    }
-  }
-
   public static @NotNull Locale getLocale() {
-    return Locale.forLanguageTag(ourLangTag);
+    return LocalizationUtil.INSTANCE.getLocale();
   }
 
   @ApiStatus.Internal
@@ -373,23 +315,4 @@ public class DynamicBundle extends AbstractBundle {
     return Collections.unmodifiableMap(bundles);
   }
 
-  private enum BundleOrder {
-    FOLDER_REGION_LEVEL_PLUGIN, //localization/zh/CN/
-    FOLDER_REGION_LEVEL_PLATFORM,
-    SUFFIX_REGION_LEVEL_PLUGIN, //name_zh_CN.properties
-    SUFFIX_REGION_LEVEL_PLATFORM,
-    FOLDER_LANGUAGE_LEVEL_PLUGIN, //localization/zh/
-    FOLDER_LANGUAGE_LEVEL_PLATFORM,
-    SUFFIX_LANGUAGE_LEVEL_PLUGIN, //name_zh.properties
-    SUFFIX_LANGUAGE_LEVEL_PLATFORM,
-    DEFAULT_PLUGIN, //name.properties
-    DEFAULT_PLATFORM;
-
-    @Nullable
-    static BundleOrder getBundleOrder(@NotNull List<? extends Path> orderedPaths, @NotNull Path bundlePath, boolean isPluginClassLoader) {
-      int order = orderedPaths.indexOf(bundlePath);
-      order = isPluginClassLoader ? order * 2 : order * 2 + 1;
-      return 0 <= order && order < values().length ? values()[order] : null;
-    }
-  }
 }
