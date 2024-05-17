@@ -370,12 +370,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public static void processGatheredCoverage(RunConfigurationBase<?> configuration) {
     final Project project = configuration.getProject();
     if (project.isDisposed()) return;
-    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
     final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
     if (coverageSuite != null) {
       ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);
-      coverageDataManager.coverageGathered(coverageSuite);
+      getInstance(project).coverageGathered(coverageSuite);
     }
   }
 

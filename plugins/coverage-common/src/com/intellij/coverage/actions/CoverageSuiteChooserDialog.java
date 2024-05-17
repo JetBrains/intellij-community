@@ -231,7 +231,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       for (CoverageSuitesBundle suitesBundle : myCoverageManager.activeSuites()) {
         myCoverageManager.closeSuitesBundle(suitesBundle);
       }
-      CoverageSuiteChooserDialog.this.close(DialogWrapper.OK_EXIT_CODE);
+      CoverageSuiteChooserDialog.this.close(OK_EXIT_CODE);
     }
   }
 

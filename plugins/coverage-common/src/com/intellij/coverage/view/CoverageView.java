@@ -157,7 +157,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
                                              KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH,
                                                                     ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
                                                                                              : InputEvent.CTRL_DOWN_MASK),
-                                             JComponent.WHEN_FOCUSED);
+                                             WHEN_FOCUSED);
     myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
     myTable.getTree().getInputMap(WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),

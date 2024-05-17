@@ -53,7 +53,7 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
 
     List<JComponent> extensionPanels = collectExtensionOptionsComponents();
 
-    if (extensionPanels.size() > 0) {
+    if (!extensionPanels.isEmpty()) {
       return createCompositePanel(extensionPanels);
     }
     else {

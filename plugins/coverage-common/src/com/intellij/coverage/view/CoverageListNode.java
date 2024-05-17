@@ -42,7 +42,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
                           @NotNull PsiNamedElement element,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean,
-                          boolean unused) {
+                          @SuppressWarnings("unused") boolean unused) {
     this(project, element, bundle, stateBean);
   }
 
@@ -127,7 +127,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
       final PsiNamedElement value = (PsiNamedElement)getValue();
-      if (requestFocus) {
+      if (requestFocus && value != null) {
         NavigationUtil.activateFileWithPsiElement(value, true);
       }
       else if (value instanceof NavigationItem navigationItem) {

@@ -17,7 +17,7 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
    * @deprecated use {@link #AbstractCoverageProjectViewNodeDecorator()} instead
    */
   @Deprecated
-  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
+  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @NotNull Project project) {
   }
 
   /**

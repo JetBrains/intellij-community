@@ -42,6 +42,7 @@ final class SelectInCoverageView implements SelectInTarget {
     for (CoverageSuitesBundle suitesBundle : manager.activeSuites()) {
       final CoverageViewManager coverageViewManager = CoverageViewManager.getInstance(myProject);
       final CoverageView coverageView = coverageViewManager.getView(suitesBundle);
+      if (coverageView == null) return;
       coverageView.select(context.getVirtualFile());
       if (requestFocus) {
         ApplicationManager.getApplication().invokeLater(() -> coverageViewManager.activateToolwindow(coverageView));
