@@ -398,6 +398,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/PreferKotlinx/");
     }
 
+    @TestMetadata("PreferKotlinxFlow")
+    public void testPreferKotlinxFlow() throws Exception {
+        runTest("../testData/basic/multifile/PreferKotlinxFlow/");
+    }
+
     @TestMetadata("PreferMemberToExtension")
     public void testPreferMemberToExtension() throws Exception {
         runTest("../testData/basic/multifile/PreferMemberToExtension/");

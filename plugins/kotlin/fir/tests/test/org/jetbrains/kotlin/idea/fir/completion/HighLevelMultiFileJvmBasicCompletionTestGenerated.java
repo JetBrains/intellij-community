@@ -398,6 +398,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/PreferKotlinx/");
     }
 
+    @TestMetadata("PreferKotlinxFlow")
+    public void testPreferKotlinxFlow() throws Exception {
+        runTest("../../completion/testData/basic/multifile/PreferKotlinxFlow/");
+    }
+
     @TestMetadata("PreferMemberToExtension")
     public void testPreferMemberToExtension() throws Exception {
         runTest("../../completion/testData/basic/multifile/PreferMemberToExtension/");
