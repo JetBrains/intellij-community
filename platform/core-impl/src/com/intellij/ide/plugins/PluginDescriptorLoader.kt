@@ -606,13 +606,19 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     val descriptorSize = input.readInt()
     val descriptorStart = data.size - byteInput.available()
     input.skipBytes(descriptorSize)
+    // Gateway will be removed soon
     result.add(async {
       loadCoreProductPlugin(
         path = PluginManagerCore.PLUGIN_XML_PATH,
         context = context,
         pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
         useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader"),
-        reader = createXmlStreamReader(data, descriptorStart, descriptorSize),
+        reader = if (PlatformUtils.isGateway()) {
+          getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader = mainClassLoader)!!
+        }
+        else {
+          createXmlStreamReader(data, descriptorStart, descriptorSize)
+        },
       )
     })
 
