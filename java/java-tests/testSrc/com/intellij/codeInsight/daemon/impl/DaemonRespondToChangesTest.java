@@ -2214,4 +2214,22 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     // now A2222 is no longer unused
     assertEmpty(doHighlighting(HighlightSeverity.WARNING));
   }
+
+  // test the other type of PSI change: child remove/child add
+  public void testTypingInsideCodeBlockCanAffectUnusedDeclarationInTheOtherClass2() {
+    enableInspectionTool(new UnusedSymbolLocalInspection());
+    enableDeadCodeInspection();
+    configureByFiles(null, BASE_PATH+getTestName(true)+"/p1/A1111.java", BASE_PATH+getTestName(true)+"/p2/A2222.java");
+    assertEquals("A1111.java", getFile().getName());
+    makeEditorWindowVisible(new Point(0, 1000), myEditor);
+    HighlightInfo info = assertOneElement(doHighlighting(HighlightSeverity.WARNING));
+    assertEquals("Method 'foo()' is never used", info.getDescription());
+
+    Document document2222 = getFile().getParent().findFile("A2222.java").getFileDocument();
+    // uncomment (inside codeblock) the reference to A1111
+    WriteCommandAction.writeCommandAction(myProject).run(()->document2222.deleteString(document2222.getText().indexOf("//"), document2222.getText().indexOf("//")+2));
+
+    // now foo() is no longer unused
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
+  }
 }

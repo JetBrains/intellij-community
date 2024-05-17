@@ -215,7 +215,11 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       return true;
     }
     PsiElement newChild = event.getNewChild();
-    return newChild != null && newChild != oldChild && hasReferenceInside(newChild);
+    if (newChild != null && newChild != oldChild && hasReferenceInside(newChild)) {
+      return true;
+    }
+    PsiElement child = event.getChild();
+    return child != null && child != oldChild && child != newChild && hasReferenceInside(child);
   }
 
   private void queueElement(@NotNull PsiElement child, boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
