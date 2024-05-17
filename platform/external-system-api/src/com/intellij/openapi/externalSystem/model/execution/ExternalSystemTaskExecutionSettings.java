@@ -25,18 +25,16 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
-  @NotNull
-  private List<String> myTaskNames = new ArrayList<>();
-  @NotNull
-  private List<String> myTaskDescriptions = new ArrayList<>();
+  private @NotNull List<String> myTaskNames = new ArrayList<>();
+  private @NotNull List<String> myTaskDescriptions = new ArrayList<>();
 
-  @Nullable @Nls private String myExecutionName;
+  private @Nullable @Nls String myExecutionName;
   private String myExternalSystemIdString;
   private String myExternalProjectPath;
   private String myVmOptions;
   private String myScriptParameters;
-  @NotNull
-  private Map<String, String> myEnv = new HashMap<>();
+
+  private @NotNull Map<String, String> myEnv = new HashMap<>();
   private boolean myPassParentEnvs = true;
 
   public ExternalSystemTaskExecutionSettings() {
@@ -69,15 +67,15 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myExecutionName = executionName;
   }
 
-  public @NonNls String getExternalSystemIdString() {
+  public @NonNls @NotNull String getExternalSystemIdString() {
     return myExternalSystemIdString;
   }
 
-  public ProjectSystemId getExternalSystemId() {
+  public @NotNull ProjectSystemId getExternalSystemId() {
     return new ProjectSystemId(myExternalSystemIdString);
   }
 
-  public void setExternalSystemIdString(@NonNls String externalSystemIdString) {
+  public void setExternalSystemIdString(@NotNull String externalSystemIdString) {
     myExternalSystemIdString = externalSystemIdString;
   }
 
