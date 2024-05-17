@@ -94,7 +94,7 @@ object CodeWithMeClientDownloader {
   }
 
   private const val minimumClientBuildWithBundledJre = "223.4374"
-  fun isClientWithBundledJre(clientBuildNumber: String) = VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
+  fun isClientWithBundledJre(clientBuildNumber: String) = clientBuildNumber.contains("SNAPSHOT") || VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
 
   @ApiStatus.Internal
   class DownloadableFileData(
@@ -144,6 +144,7 @@ object CodeWithMeClientDownloader {
   val buildNumberRegex = Regex(buildNumberPattern)
 
   private fun getClientDistributionName(clientBuildVersion: String) = when {
+    clientBuildVersion.contains("SNAPSHOT") -> "JetBrainsClient"
     VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
     VersionComparatorUtil.compare(clientBuildVersion, "213.5318") < 0 -> "CodeWithMeGuest"
     else -> "JetBrainsClient"
