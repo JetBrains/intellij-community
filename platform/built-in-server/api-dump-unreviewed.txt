@@ -224,6 +224,7 @@ a:org.jetbrains.ide.RestService
 - pf:getGson():com.google.gson.Gson
 - sf:getIntParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):I
 - sf:getLastFocusedOrOpenedProject():com.intellij.openapi.project.Project
+- p:getMaxRequestsPerMinute():I
 - p:getReportErrorsAsPlainText():Z
 - p:getRequesterId(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.Object
 - pa:getServiceName():java.lang.String
