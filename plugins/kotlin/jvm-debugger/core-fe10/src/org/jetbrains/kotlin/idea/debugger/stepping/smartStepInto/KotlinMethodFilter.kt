@@ -69,16 +69,16 @@ open class KotlinMethodFilter(
 
         // Element is lost. But we know that name matches, so stop.
         val element = elementPtr?.element ?: return true
+        if (element !is KtDeclaration) return false
 
-        val psiManager = currentDeclaration.manager
-        if (psiManager.areElementsEquivalent(currentDeclaration, element)) {
+        if (areElementsEquivalent(element, currentDeclaration)) {
             return true
         }
 
         if (currentSymbol !is KtCallableSymbol) return false
         for (overriddenSymbol in currentSymbol.getAllOverriddenSymbols()) {
-            val overriddenDeclaration = overriddenSymbol.psi ?: continue
-            if (psiManager.areElementsEquivalent(element, overriddenDeclaration)) return true
+            val overriddenDeclaration = overriddenSymbol.psi as? KtDeclaration ?: continue
+            if (areElementsEquivalent(element, overriddenDeclaration)) return true
         }
 
         return false

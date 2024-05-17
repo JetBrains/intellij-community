@@ -253,7 +253,10 @@ class SmartStepTargetVisitor(
     }
 
     private fun countExistingMethodCalls(declaration: KtDeclaration): Int =
-        consumer.filterIsInstance<KotlinMethodSmartStepTarget>().count { declaration === it.getDeclaration() }
+        consumer.filterIsInstance<KotlinMethodSmartStepTarget>().count {
+            val targetDeclaration = it.getDeclaration() ?: return@count false
+            areElementsEquivalent(declaration, targetDeclaration)
+        }
 
     private fun countExistingMethodCalls(psiMethod: PsiMethod): Int =
         consumer.filterIsInstance<MethodSmartStepTarget>().count { psiMethod === it.method }

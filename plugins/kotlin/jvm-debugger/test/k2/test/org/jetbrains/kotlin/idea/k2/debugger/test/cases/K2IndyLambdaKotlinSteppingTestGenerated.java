@@ -1563,6 +1563,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/simpleConditionalBreakpoint.kt");
         }
 
+        @TestMetadata("smartStepIntoAsyncLambda.kt")
+        public void testSmartStepIntoAsyncLambda() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoAsyncLambda.kt");
+        }
+
         @TestMetadata("smartStepIntoClassMethodReference.kt")
         public void testSmartStepIntoClassMethodReference() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoClassMethodReference.kt");
@@ -1676,6 +1681,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @TestMetadata("smartStepIntoLambdasOnOneLine.kt")
         public void testSmartStepIntoLambdasOnOneLine() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoLambdasOnOneLine.kt");
+        }
+
+        @TestMetadata("smartStepIntoLibraryOverridenCall.kt")
+        public void testSmartStepIntoLibraryOverridenCall() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoLibraryOverridenCall.kt");
         }
 
         @TestMetadata("smartStepIntoMethodReference.kt")
