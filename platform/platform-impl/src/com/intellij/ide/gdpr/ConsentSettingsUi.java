@@ -117,15 +117,11 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       ConsentStateSupplier stateSupplier = new ConsentStateSupplier(consent, () -> cb.isSelected());
-      if (dataSharingDisabledExternally) {
+      if (dataSharingDisabledExternally || dataSharingEnabledByFreeLicense) {
         cb.setEnabled(false);
-        cb.setSelected(false);
         stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
-      }
-      else if (dataSharingEnabledByFreeLicense) {
-        cb.setEnabled(false);
-        cb.setSelected(true);
-        stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
+        if (dataSharingDisabledExternally) cb.setSelected(false);
+        else if (dataSharingEnabledByFreeLicense) cb.setSelected(true);
       }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
