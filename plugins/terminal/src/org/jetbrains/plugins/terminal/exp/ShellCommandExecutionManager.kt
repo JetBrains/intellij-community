@@ -33,6 +33,8 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   /** Access to this field is synchronized using `lock` */
   private val scheduledGenerators: Queue<Generator> = LinkedList()
+
+  /** Access to this field is synchronized using `lock` */
   private val scheduledKeyBindings: Queue<KeyBinding> = LinkedList()
 
   /** Access to this field is synchronized using `lock` */
@@ -92,7 +94,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }, session)
   }
 
-  private fun cancelGenerators(registrar: AfterLockActionRegistrar, incompatibleCondition: String) {
+  private fun cancelGenerators(registrar: Lock.AfterLockActionRegistrar, incompatibleCondition: String) {
     runningGenerator?.let { runningGenerator ->
       registrar.afterLock {
         val msg = "Unexpectedly running $runningGenerator, but $incompatibleCondition"
@@ -284,9 +286,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   internal class KeyBinding(val bytes: ByteArray)
 
   /**
-   * A wrapper for invoking code in synchronized section.
-   * Allows executing a lambda under the lock.
-   * Allows collecting the tasks to be executed after the lock is released.
+   * A wrapper around `synchronized` section with ability to run actions after the section.
    */
   private class Lock {
     private val lock: Any = Any()
@@ -305,6 +305,10 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       finally {
         afterLockBlocks.forEach { it() }
       }
+    }
+
+    interface AfterLockActionRegistrar {
+      fun afterLock(block: () -> Unit)
     }
   }
 
@@ -334,10 +338,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       }
     }
   }
-}
-
-private interface AfterLockActionRegistrar {
-  fun afterLock(block: () -> Unit)
 }
 
 internal interface ShellCommandSentListener {
