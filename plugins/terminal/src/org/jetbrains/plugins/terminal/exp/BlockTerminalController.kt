@@ -58,9 +58,10 @@ internal class BlockTerminalController(
     session.commandManager.commandExecutionManager.addListener(object : ShellCommandSentListener {
       override fun userCommandSent(userCommand: String) {
         invokeLaterIfNeeded(getDisposed(), ModalityState.any()) {
-          // Since `commandFinished` event leads to sending the next user command and
-          // finishing the previous command block, and these actions occur in an unspecified order,
-          // we need `doWhenNextBlockCanBeStarted` to ensure that the previous block is finished.
+          // If `userCommandSent` is triggered by the `commandFinished` event,
+          // the previous command block might not have finished yet (because
+          // both listen to `commandFinished` event, so they are called in an
+          // unspecified order). Use `doWhenNextBlockCanBeStarted` to fix the race.
           outputController.doWhenNextBlockCanBeStarted {
             startCommandBlock(userCommand)
           }
