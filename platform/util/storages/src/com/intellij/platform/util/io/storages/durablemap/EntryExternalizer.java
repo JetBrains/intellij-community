@@ -51,7 +51,7 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
 
   record Entry<K, V>(@NotNull K key,
                      @Nullable V value) {
-    boolean isValueVoid() {
+    public boolean isValueVoid() {
       return value == null;
     }
   }
