@@ -30,10 +30,13 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
@@ -52,7 +55,8 @@ import org.jetbrains.uast.kotlin.internal.CliKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.UastAnalysisHandlerExtension
 import java.io.File
 
-abstract class AbstractKotlinUastTest : TestCase() {
+abstract class AbstractKotlinUastTest : TestCase(),
+                                        ExpectedPluginModeProvider {
 
     private lateinit var testRootDisposable: Disposable
     private lateinit var compilerConfiguration: CompilerConfiguration
@@ -68,6 +72,9 @@ abstract class AbstractKotlinUastTest : TestCase() {
         get() = PsiManager.getInstance(project)
 
     open var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     protected fun doTest(
         testName: String,
@@ -174,7 +181,7 @@ abstract class AbstractKotlinUastTest : TestCase() {
 
     override fun setUp() {
         testRootDisposable = Disposer.newDisposable()
-        super.setUp()
+        setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     }
 
     @Suppress("SSBasedInspection")
