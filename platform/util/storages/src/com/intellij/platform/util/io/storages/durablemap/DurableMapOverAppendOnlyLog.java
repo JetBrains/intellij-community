@@ -219,6 +219,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
     });
   }
 
+  @Override
   public boolean forEachEntry(@NotNull BiPredicate<? super K, ? super V> processor) throws IOException {
     return keyHashToIdMap.forEach((keyHash, recordId) -> {
       Entry<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
@@ -320,7 +321,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
   @Override
   public void closeAndUnsafelyUnmap() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      IOException.class, () -> new IOException("Can't closeAndClean " + keyValuesLog + "/" + keyHashToIdMap),
+      IOException.class, () -> new IOException("Can't unmap " + keyValuesLog + "/" + keyHashToIdMap),
 
       () -> {
         if (keyValuesLog instanceof Unmappable unmappable) {

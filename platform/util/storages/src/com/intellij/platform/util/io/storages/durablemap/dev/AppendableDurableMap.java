@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * Analog {@link AppendablePersistentMap}, but with different API design: map explicitly states
@@ -19,6 +20,9 @@ public interface AppendableDurableMap<K, VItem> extends DurableMap<K, Set<VItem>
 
   @Nullable
   Items<VItem> items(@NotNull K key) throws IOException;
+
+  @Override
+  boolean forEachEntry(@NotNull BiPredicate<? super K, ? super Set<VItem>> processor) throws IOException;
 
   interface Items<VItem> {
 
