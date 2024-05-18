@@ -2315,6 +2315,8 @@ com.intellij.openapi.editor.colors.EditorColors
 - sf:SELECTION_BACKGROUND_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:SELECTION_FOREGROUND_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:SOFT_WRAP_SIGN_COLOR:com.intellij.openapi.editor.colors.ColorKey
+- sf:STICKY_LINES_BACKGROUND:com.intellij.openapi.editor.colors.ColorKey
+- sf:STICKY_LINES_HOVERED_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:STRING_CONTENT_INDENT_GUIDE_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:TABS_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:TAB_SELECTED:com.intellij.openapi.editor.colors.TextAttributesKey
