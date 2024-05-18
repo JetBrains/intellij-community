@@ -10,6 +10,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -94,9 +95,11 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     val lineHeight = lineHeight()
     val gutterWidth = editor.gutterComponentEx.width
     val textWidth = lineWidth() - gutterWidth
+    val editorBackground = editor.backgroundColor
+    var isBackgroundChanged = false
     (editor as EditorImpl).isStickyLinePainting = true
     try {
-      editor.isStickyLineHovered = isHovered
+      isBackgroundChanged = setStickyLineBackgroundColor()
       if (graphicsOrDumb != null) {
         val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
         graphicsOrDumb.translate(0, -editorStartY)
@@ -107,7 +110,24 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       }
     } finally {
       editor.isStickyLinePainting = false
+      if (isBackgroundChanged) {
+        editor.backgroundColor = editorBackground
+      }
     }
+  }
+
+  private fun setStickyLineBackgroundColor(): Boolean {
+    val backgroundColorKey = if (isHovered) {
+      EditorColors.STICKY_LINES_HOVERED_COLOR
+    } else {
+      EditorColors.STICKY_LINES_BACKGROUND
+    }
+    val backgroundColor = editor.colorsScheme.getColor(backgroundColorKey)
+    if (backgroundColor != null) {
+      editor.backgroundColor = backgroundColor
+      return true
+    }
+    return false
   }
 
   private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {

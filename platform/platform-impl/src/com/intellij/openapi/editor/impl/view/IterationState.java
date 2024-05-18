@@ -676,11 +676,9 @@ public final class IterationState {
   }
 
   private @Nullable TextAttributes getCaretRowAttributes(boolean isInCaretRow) {
-    if (myEditor instanceof EditorImpl editor) {
-      if (editor.isStickyLinePainting()) {
-        // suppress caret row background if not hovered on sticky lines panel
-        return editor.isStickyLineHovered() ? myCaretRowAttributes : null;
-      }
+    if (myEditor instanceof EditorImpl editor && editor.isStickyLinePainting()) {
+      // suppress caret row background on sticky lines panel
+      return null;
     }
     return isInCaretRow ? myCaretRowAttributes : null;
   }
