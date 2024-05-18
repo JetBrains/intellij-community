@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
+import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
@@ -70,8 +71,7 @@ internal class BlockTerminalController(
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
     // The prompt is empty for the initial block, but better to use explicit null here
-    outputController.startCommandBlock(command = null, prompt = null)
-    session.model.isCommandRunning = true
+    startCommandBlock(command = null, prompt = null)
   }
 
   fun resize(newSize: TermSize) {
@@ -93,8 +93,8 @@ internal class BlockTerminalController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun startCommandBlock(command: String) {
-    outputController.startCommandBlock(command, promptController.model.promptRenderingInfo)
+  private fun startCommandBlock(command: String?, prompt: PromptRenderingInfo? = promptController.model.promptRenderingInfo) {
+    outputController.startCommandBlock(command, prompt)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
     // So it will look like it was not hidden at all.
@@ -111,8 +111,7 @@ internal class BlockTerminalController(
   private fun finishCommandBlock(exitCode: Int) {
     outputController.finishCommandBlock(exitCode)
 
-    val model = session.model
-    model.isCommandRunning = false
+    session.model.isCommandRunning = false
 
     invokeLater(getDisposed(), ModalityState.any()) {
       promptController.model.reset()
