@@ -36,6 +36,7 @@
       "profileRed.svg": "actions/profileRed.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
+      "selectAll.svg": "actions/selectall.svg",
       "shortcutFilter.svg": "actions/shortcutFilter.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
@@ -49,7 +50,8 @@
       "showImportStatements.svg": "actions/showImportStatements.svg",
       "suggestedRefactoringBulb.svg": "actions/suggestedRefactoringBulb.svg",
       "toggleVisibility.svg": "actions/toggleVisibility.svg",
-      "undeploy.svg": "nodes/undeploy.svg"
+      "undeploy.svg": "nodes/undeploy.svg",
+      "unselectAll.svg": "actions/unselectall.svg"
     },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
