@@ -29165,6 +29165,7 @@ c:com.intellij.ui.popup.ActionPopupStep
 f:com.intellij.ui.popup.BalloonPopupBuilderImpl
 - com.intellij.openapi.ui.popup.BalloonBuilder
 - <init>(java.util.Map,javax.swing.JComponent):V
+- <init>(javax.swing.JComponent):V
 - createBalloon():com.intellij.openapi.ui.popup.Balloon
 - setAnimationCycle(I):com.intellij.openapi.ui.popup.BalloonBuilder
 - setBlockClicksThroughBalloon(Z):com.intellij.openapi.ui.popup.BalloonBuilder
