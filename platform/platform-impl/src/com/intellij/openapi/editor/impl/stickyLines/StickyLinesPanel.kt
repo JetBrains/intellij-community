@@ -6,8 +6,6 @@ import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
@@ -269,15 +267,8 @@ internal class StickyLinesPanel(
   private fun bottomBorder(): SideBorder {
     return object : SideBorder(null, BOTTOM) {
       override fun getLineColor(): Color {
-        val borderColor = ClientProperty.get(
-          this@StickyLinesPanel,
-          FileEditorManager.SEPARATOR_COLOR
-        )
-        if (borderColor != null) {
-          return borderColor
-        }
         val scheme = editor.getColorsScheme()
-        return scheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) ?: scheme.defaultBackground
+        return scheme.getColor(EditorColors.STICKY_LINES_BORDER_COLOR) ?: scheme.defaultBackground
       }
     }
   }

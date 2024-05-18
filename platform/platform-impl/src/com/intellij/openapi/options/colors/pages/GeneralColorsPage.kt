@@ -183,6 +183,8 @@ $customSeveritiesDemoText"""
                       EditorColors.STICKY_LINES_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.sticky.lines.hovered.color"),
                       EditorColors.STICKY_LINES_HOVERED_COLOR, ColorDescriptor.Kind.BACKGROUND),
+      ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.sticky.lines.border.color"),
+                      EditorColors.STICKY_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb.while.scrolling"),
                       ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb"),
