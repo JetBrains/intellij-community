@@ -518,18 +518,24 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     // that. But in .force() we write file status and other header fields, and without .closed
     // flag we'll do that even on already closed storage, which leads to exception.
     if (!closed.get()) {
-      putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_PROPERLY_CLOSED);
+      //Class in general doesn't provide thread-safety guarantees, and need external synchronization if used in
+      // multithreading. But since it uses mmapped files, concurrency errors in closing/reclaiming may lead to
+      // JVM crash, not just program bugs -- hence, a bit of protection do no harm:
+      synchronized (this) {//also ensures updateNextRecordId() is finished
+        if (!closed.get()) {
+          putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_PROPERLY_CLOSED);
 
-      force();
+          force();
 
-      closed.set(true);
+          closed.set(true);
 
-      openTelemetryCallback.close();
+          openTelemetryCallback.close();
 
-      synchronized (this) {//ensure updateNextRecordId() is finished
-        headerPage = null;
+          headerPage = null;
+
+          storage.close();
+        }
       }
-      storage.close();
     }
   }
 
