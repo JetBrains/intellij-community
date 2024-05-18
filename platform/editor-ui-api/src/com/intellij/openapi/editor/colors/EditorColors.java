@@ -101,6 +101,7 @@ public interface EditorColors {
 
   ColorKey STICKY_LINES_BACKGROUND = ColorKey.createColorKey("STICKY_LINES_BACKGROUND");
   ColorKey STICKY_LINES_HOVERED_COLOR = ColorKey.createColorKeyWithFallback("STICKY_LINES_HOVERED_COLOR", CARET_ROW_COLOR);
+  ColorKey STICKY_LINES_BORDER_COLOR = ColorKey.createColorKeyWithFallback("STICKY_LINES_BORDER_COLOR", RIGHT_MARGIN_COLOR);
 
   static @NotNull TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
     Stack<Language> languages = new Stack<>();
