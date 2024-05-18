@@ -3,13 +3,16 @@ package com.intellij.platform.util.io.storages.durablemap.dev;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
-import com.intellij.platform.util.io.storages.durablemap.DurableMap;
-import com.intellij.platform.util.io.storages.durablemap.DurableMapOverAppendOnlyLog;
-import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.durablemap.*;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
@@ -23,8 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.function.BiPredicate;
+
+import static com.intellij.platform.util.io.storages.durablemap.DurableMapFactory.MAP_FILE_SUFFIX;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
 
 /**
  * FIXME this implementation is an experiment -- quick-n-dirty prototype for a 'appendable DurableMap over memory-mapped files',
@@ -179,6 +186,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
 
   //TODO RC: append is a bad API -- much better would be 'modify()' there old value-buffer could be modified in any way,
   //         including the append
+
   /** key must already exists in the map, otherwise IOException is thrown */
   public void append(@NotNull K key,
                      @NotNull KnownSizeRecordWriter appender) throws IOException {
@@ -444,6 +452,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
     if (recordSize > maxPayloadSupported) {
       throw new IOException("[" + key + "].recordSize(=" + recordSize + ") > max supported payload size(=" + maxPayloadSupported + ")");
     }
+
     return keyValuesStorage.writeToRecord(
       foundRecordId,
       buffer -> {
@@ -464,18 +473,21 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
           .limit(recordSize);
         return toWrite;
       },
-      recordSize
+      recordSize,
+      /*leaveRedirect: */ false
     );
   }
 
   private int appendToEntry(int foundRecordId,
                             @NotNull K key,
-                            @NotNull KnownSizeRecordWriter appender) throws IOException {
-    int recordSize = appender.recordSize();
+                            @NotNull KnownSizeRecordWriter valueAppender) throws IOException {
+    //TODO RC: how to create new entry, if key is not yet exists? 
+    int recordSize = valueAppender.recordSize();
     int maxPayloadSupported = keyValuesStorage.maxPayloadSupported();
     if (recordSize > maxPayloadSupported) {
       throw new IOException("[" + key + "].recordSize(=" + recordSize + ") > max supported payload size(=" + maxPayloadSupported + ")");
     }
+
     return keyValuesStorage.writeToRecord(
       foundRecordId,
       buffer -> {
@@ -493,12 +505,67 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
         toWrite.position(currentRecordSize)
           .limit(newRecordSize);
 
-        appender.write(toWrite);
+        valueAppender.write(toWrite);
 
         toWrite.position(newRecordSize)
           .limit(newRecordSize);
         return toWrite;
-      }
+      },
+      /*expectedRecordSizeHint: */ -1,
+      /*leaveRedirect: */ false
     );
+  }
+
+  public static class Factory<K, V> implements StorageFactory<DurableMapOverBlobStorage<K, V>> {
+    private final StorageFactory<? extends StreamlinedBlobStorage> keyValuesStorageFactory;
+    private final StorageFactory<? extends ExtendibleHashMap> mapFactory;
+
+    private final @NotNull EqualityPolicy<? super K> keyEquality;
+
+    private final @NotNull EntryExternalizer<K, V> entryExternalizer;
+
+    private Factory(@NotNull StorageFactory<? extends StreamlinedBlobStorage> keyValuesStorageFactory,
+                    @NotNull StorageFactory<? extends ExtendibleHashMap> mapFactory,
+                    @NotNull EqualityPolicy<? super K> keyEquality,
+                    @NotNull EntryExternalizer<K, V> entryExternalizer) {
+      this.keyValuesStorageFactory = keyValuesStorageFactory;
+      this.mapFactory = mapFactory;
+      this.keyEquality = keyEquality;
+      this.entryExternalizer = entryExternalizer;
+    }
+
+    public static <K, V> Factory<K, V> defaults(@NotNull StorageFactory<? extends StreamlinedBlobStorage> keyValuesStorageFactory,
+                                                @NotNull KeyDescriptorEx<K> keyDescriptor,
+                                                @NotNull DataExternalizerEx<V> valueExternalizer) {
+      ExtendibleMapFactory mapFactory = ExtendibleMapFactory
+        .mediumSize()
+        .cleanIfFileIncompatible()
+        .ifNotClosedProperly(IGNORE_AND_HOPE_FOR_THE_BEST);
+      return new Factory<>(
+        keyValuesStorageFactory,
+        mapFactory,
+        keyDescriptor,
+        DurableMapFactory.entryExternalizerFor(keyDescriptor, valueExternalizer)
+      );
+    }
+
+    @Override
+    public @NotNull DurableMapOverBlobStorage<K, V> open(@NotNull Path storagePath) throws IOException {
+      Path mapPath = storagePath.resolveSibling(storagePath.getFileName() + MAP_FILE_SUFFIX);
+      return mapFactory.wrapStorageSafely(
+        mapPath,
+        keyHashToIdsMap -> keyValuesStorageFactory.wrapStorageSafely(
+          storagePath,
+          keyValuesStorage -> {
+            return new DurableMapOverBlobStorage<>(
+              keyValuesStorage,
+              keyHashToIdsMap,
+              keyEquality,
+              /*valueEquality: */ null,
+              entryExternalizer
+            );
+          })
+      );
+    }
   }
 }
