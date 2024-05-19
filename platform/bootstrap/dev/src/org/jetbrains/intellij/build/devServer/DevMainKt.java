@@ -11,6 +11,9 @@ import java.util.Collection;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
 public final class DevMainKt {
+
+  private DevMainKt() { }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] rawArgs) throws Throwable {
     long start = System.currentTimeMillis();

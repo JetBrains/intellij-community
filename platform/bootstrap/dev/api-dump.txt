@@ -1,3 +1,2 @@
 f:org.jetbrains.intellij.build.devServer.DevMainKt
-- <init>():V
 - s:main(java.lang.String[]):V
