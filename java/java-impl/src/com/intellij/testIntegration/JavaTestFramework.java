@@ -6,7 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmLanguageDumbAware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -114,7 +114,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   private static boolean supportDumbMode(@NotNull PsiElement psiElement) {
-    return psiElement.getLanguage() == JavaLanguage.INSTANCE || JavaTestFrameworkInDumbMode.isSupported(psiElement);
+    return JvmLanguageDumbAware.isSupported(psiElement);
   }
 
   @Override

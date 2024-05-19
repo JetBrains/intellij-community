@@ -47,7 +47,11 @@
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.testFramework.java.dumbMode" interface="com.intellij.testIntegration.JavaTestFrameworkInDumbMode" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.dumb.mode.supported" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.jvm.JvmLanguageDumbAware"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
                     interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
@@ -139,6 +143,7 @@
     <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
     <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
                  description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
+    <lang.dumb.mode.supported language="JAVA" implementationClass="com.intellij.lang.java.JavaLanguageDumbAware"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
