@@ -16036,7 +16036,6 @@ f:com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.fileEditor.FileEditorComposite
-- sf:Companion:com.intellij.openapi.fileEditor.impl.EditorComposite$Companion
 - f:addBottomComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V
 - f:addEditor(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):V
 - f:addListener(com.intellij.openapi.fileEditor.impl.EditorCompositeListener,com.intellij.openapi.Disposable):V
@@ -16057,7 +16056,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:getSelectedWithProvider():com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 - getTabs():com.intellij.ui.tabs.JBTabs
 - f:getTopComponents(com.intellij.openapi.fileEditor.FileEditor):java.util.List
-- sf:isEditorComposite(java.awt.Component):Z
 - f:isModified():Z
 - f:isPinned():Z
 - isPreview():Z
@@ -16070,9 +16068,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.FileEditor):V
 - setSelectedEditor(com.intellij.openapi.fileEditor.ex.FileEditorWithProvider):V
 - f:setSelectedEditor(java.lang.String):V
-f:com.intellij.openapi.fileEditor.impl.EditorComposite$Companion
-- f:isEditorComposite(java.awt.Component):Z
-- f:retrofit(com.intellij.openapi.fileEditor.FileEditorComposite):com.intellij.openapi.util.Pair
 c:com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 - <init>():V
 - p:advertiseActions(javax.swing.JComponent,com.intellij.util.ui.UIUtil$TextPainter):V
@@ -16223,7 +16218,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - bs:closeAllFiles$default(com.intellij.openapi.fileEditor.impl.EditorsSplitters,Z,I,java.lang.Object):V
 - f:closeFile(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:containsWindow(com.intellij.openapi.fileEditor.impl.EditorWindow):Z
-- f:findEditorComposites(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - sf:focusDefaultComponentInSplittersIfPresent(com.intellij.openapi.project.Project):Z
 - f:getAllComposites():java.util.List
 - f:getAllComposites(com.intellij.openapi.vfs.VirtualFile):java.util.List

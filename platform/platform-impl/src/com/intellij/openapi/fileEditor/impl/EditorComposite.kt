@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
@@ -41,6 +40,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -122,23 +122,6 @@ open class EditorComposite internal constructor(
     val editor = fileEditorWithProviderList.single().fileEditor
     val component = createEditorComponent(editor)
     compositePanel.setComponent(component, focusComponent = { editor.preferredFocusedComponent })
-  }
-
-  companion object {
-    @JvmStatic
-    fun isEditorComposite(component: Component): Boolean = component is EditorCompositePanel
-
-    /**
-     * A mapper for old API with arrays and pairs
-     */
-    fun retrofit(composite: FileEditorComposite?): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-      if (composite == null) {
-        return Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
-      }
-      else {
-        return Pair(composite.allEditors.toTypedArray(), composite.allProviders.toTypedArray())
-      }
-    }
   }
 
   @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"), level = DeprecationLevel.ERROR)
@@ -598,4 +581,19 @@ private fun calcComponentInsertionIndex(newComponent: JComponent, container: JCo
     i++
   }
   return -1
+}
+
+internal fun isEditorComposite(component: Component): Boolean = component is EditorCompositePanel
+
+/**
+ * A mapper for old API with arrays and pairs
+ */
+@Internal
+fun retrofitEditorComposite(composite: FileEditorComposite?): com.intellij.openapi.util.Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  if (composite == null) {
+    return com.intellij.openapi.util.Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+  }
+  else {
+    return com.intellij.openapi.util.Pair(composite.allEditors.toTypedArray(), composite.allProviders.toTypedArray())
+  }
 }

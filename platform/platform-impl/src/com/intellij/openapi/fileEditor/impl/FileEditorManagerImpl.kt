@@ -42,7 +42,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.isSingletonFileEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
@@ -1633,7 +1632,7 @@ open class FileEditorManagerImpl(
 
   @RequiresEdt
   override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return retrofit(getComposite(file))
+    return retrofitEditorComposite(getComposite(file))
   }
 
   @RequiresEdt

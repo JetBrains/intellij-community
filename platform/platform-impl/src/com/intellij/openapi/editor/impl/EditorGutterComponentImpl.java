@@ -56,7 +56,7 @@ import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorCompositeKt;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1021,7 +1021,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return;
     }
 
-    Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorComposite.isEditorComposite(c));
+    Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorCompositeKt.isEditorComposite(c));
     if (outerContainer == null) return;
 
     EditorSettings settings = myEditor.getSettings();
@@ -1193,7 +1193,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public @NotNull List<Pair<GutterMark, Rectangle>> getGutterRenderersAndRectangles(int visualLine) {
     List<GutterMark> renderers = getGutterRenderers(visualLine);
     int lineY = myEditor.visualLineToY(visualLine);
-    List<Pair<GutterMark, Rectangle>> result = new ArrayList<Pair<GutterMark, Rectangle>>();
+    List<Pair<GutterMark, Rectangle>> result = new ArrayList<>();
     processIconsRowForY(lineY, renderers, (x, y, renderer) -> {
       result.add(Pair.pair(renderer, new Rectangle(x, y, renderer.getIcon().getIconWidth(), renderer.getIcon().getIconHeight())));
     });
