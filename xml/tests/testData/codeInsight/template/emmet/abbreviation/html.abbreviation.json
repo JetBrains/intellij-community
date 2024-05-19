@@ -111,7 +111,7 @@
   "html:xt": "!!!xt+doc4[xmlns=http://www.w3.org/1999/xhtml xml:lang=en]",
   "html:xs": "!!!xs+doc4[xmlns=http://www.w3.org/1999/xhtml xml:lang=en]",
   "html:xxs": "!!!xxs+doc4[xmlns=http://www.w3.org/1999/xhtml xml:lang=en]",
-  "html:5": "!!!+doc[lang=en]",
+  "html:5": "!!!+doc",
 
   "bq": "blockquote",
   "fig": "figure",
@@ -152,7 +152,7 @@
   "!!!xs":  "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
   "!!!xxs": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">",
 
-  "doc": "<html>\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0\">\n<meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\">\n<title>Document</title>\n</head>\n<body>\n\n</body>\n</html>",
+  "doc": "<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Document</title>\n</head>\n<body>\n\n</body>\n</html>",
   "doc4": "<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html;charset=UTF-8\">\n<title>Document</title>\n</head>\n<body>\n\n</body>\n</html>",
 
   "c": "<!-- | -->",
