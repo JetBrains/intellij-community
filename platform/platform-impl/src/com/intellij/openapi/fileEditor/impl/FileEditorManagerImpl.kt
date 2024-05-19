@@ -1126,7 +1126,7 @@ open class FileEditorManagerImpl(
                     file = file,
                     fileEditorStateProvider = null,
                     options = effectiveOptions,
-                    providerWithBuilderList = providers)
+                    providerWithBuilderList = CompletableDeferred(providers))
     }
   }
 
@@ -1233,7 +1233,7 @@ open class FileEditorManagerImpl(
     providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
   ): EditorComposite? {
     if (forbidSplitFor(file) && openedComposites.any { it.file == file }) {
-      LOG.debug("Cancelled 'createComposite' for $file - file is already opened")
+      LOG.debug { "Cancelled 'createComposite' for $file - file is already opened" }
       return null
     }
 
@@ -2171,7 +2171,7 @@ open class FileEditorManagerImpl(
         file = file,
         fileEditorStateProvider = fileEditorStateProvider,
         options = options,
-        providerWithBuilderList = providerWithBuilderList.await(),
+        providerWithBuilderList = providerWithBuilderList,
       )
     }
   }
@@ -2182,7 +2182,7 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     fileEditorStateProvider: FileEditorStateProvider?,
     options: FileEditorOpenOptions,
-    providerWithBuilderList: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
+    providerWithBuilderList: Deferred<List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>>,
   ): FileEditorComposite {
     val startTime = System.nanoTime()
     val isNewEditor = existingComposite == null
@@ -2214,7 +2214,7 @@ open class FileEditorManagerImpl(
           span("file opening in EDT") {
             var composite: EditorComposite? = existingComposite
             if (isNewEditor) {
-              composite = createComposite(file = file, providers = providerWithBuilderList)
+              composite = createComposite(file = file, providers = providerWithBuilderList.await())
               if (composite != null) {
                 span("beforeFileOpened event executing") {
                   beforePublisher!!.beforeFileOpened(this@FileEditorManagerImpl, file)
