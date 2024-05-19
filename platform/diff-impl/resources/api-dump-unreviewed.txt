@@ -3294,7 +3294,6 @@ c:com.intellij.diff.util.DiffDrawUtil$MarkerRange
 - component1():I
 - component2():I
 c:com.intellij.diff.util.DiffEditorHighlighterUpdater
-- com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.editor.ex.EditorEx,com.intellij.diff.contents.DocumentContent):V
 - p:createHighlighter(Z):com.intellij.openapi.editor.highlighter.EditorHighlighter
 - p:setupHighlighter(com.intellij.openapi.editor.highlighter.EditorHighlighter):V

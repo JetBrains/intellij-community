@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -49,6 +49,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
+private val LOG = logger<EditorComposite>()
+
 /**
  * An abstraction over one or several file editors opened in the same tab (e.g., designer and code-behind).
  * It's a composite that can be pinned in the tab list or opened as a preview, not concrete file editors.
@@ -58,7 +60,7 @@ import javax.swing.SwingConstants
 open class EditorComposite internal constructor(
   val file: VirtualFile,
   fileEditorWithProviderList: List<FileEditorWithProvider>,
-  internal val project: Project,
+  @JvmField internal val project: Project,
 ) : FileEditorComposite, Disposable {
   private val clientId: ClientId
 
@@ -69,7 +71,7 @@ open class EditorComposite internal constructor(
   /**
    * Currently selected editor
    */
-  protected val selectedEditorWithProviderMutable: MutableStateFlow<FileEditorWithProvider?> = MutableStateFlow(null)
+  private val selectedEditorWithProviderMutable: MutableStateFlow<FileEditorWithProvider?> = MutableStateFlow(null)
   internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = selectedEditorWithProviderMutable.asStateFlow()
 
   private val topComponents = HashMap<FileEditor, JComponent>()
@@ -123,49 +125,8 @@ open class EditorComposite internal constructor(
   }
 
   companion object {
-    private val LOG = logger<EditorComposite>()
-
-    private fun calcComponentInsertionIndex(newComponent: JComponent, container: JComponent): Int {
-      var i = 0
-      val max = container.componentCount
-      while (i < max) {
-        val childWrapper = container.getComponent(i)
-        val childComponent = if (childWrapper is Wrapper) childWrapper.targetComponent else childWrapper
-        val weighted1 = newComponent is Weighted
-        val weighted2 = childComponent is Weighted
-        if (!weighted2) {
-          i++
-          continue
-        }
-        if (!weighted1) return i
-        val w1 = (newComponent as Weighted).weight
-        val w2 = (childComponent as Weighted).weight
-        if (w1 < w2) return i
-        i++
-      }
-      return -1
-    }
-
     @JvmStatic
     fun isEditorComposite(component: Component): Boolean = component is EditorCompositePanel
-
-    private fun createTopBottomSideBorder(top: Boolean, borderColor: Color?): SideBorder {
-      return object : SideBorder(null, if (top) BOTTOM else TOP) {
-        override fun getLineColor(): Color {
-          if (borderColor != null) {
-            return borderColor
-          }
-
-          val scheme = EditorColorsManager.getInstance().globalScheme
-          if (ExperimentalUI.isNewUI()) {
-            return scheme.defaultBackground
-          }
-          else {
-            return scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.BLACK
-          }
-        }
-      }
-    }
 
     /**
      * A mapper for old API with arrays and pairs
@@ -598,4 +559,43 @@ private class TopBottomPanel : JPanel() {
       return globalScheme.getColor(EditorColors.GUTTER_BACKGROUND) ?: EditorColors.GUTTER_BACKGROUND.defaultColor
     }
   }
+}
+
+private fun createTopBottomSideBorder(top: Boolean, borderColor: Color?): SideBorder {
+  return object : SideBorder(null, if (top) BOTTOM else TOP) {
+    override fun getLineColor(): Color {
+      if (borderColor != null) {
+        return borderColor
+      }
+
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      if (ExperimentalUI.isNewUI()) {
+        return scheme.defaultBackground
+      }
+      else {
+        return scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.BLACK
+      }
+    }
+  }
+}
+
+private fun calcComponentInsertionIndex(newComponent: JComponent, container: JComponent): Int {
+  var i = 0
+  val max = container.componentCount
+  while (i < max) {
+    val childWrapper = container.getComponent(i)
+    val childComponent = if (childWrapper is Wrapper) childWrapper.targetComponent else childWrapper
+    val weighted1 = newComponent is Weighted
+    val weighted2 = childComponent is Weighted
+    if (!weighted2) {
+      i++
+      continue
+    }
+    if (!weighted1) return i
+    val w1 = (newComponent as Weighted).weight
+    val w2 = (childComponent as Weighted).weight
+    if (w1 < w2) return i
+    i++
+  }
+  return -1
 }

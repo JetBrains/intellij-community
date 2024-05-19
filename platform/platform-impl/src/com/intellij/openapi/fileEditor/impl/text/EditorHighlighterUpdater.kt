@@ -28,7 +28,9 @@ import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.SimpleMessageBusConnection
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 open class EditorHighlighterUpdater(
   @JvmField protected val project: Project,
   parentDisposable: Disposable,
