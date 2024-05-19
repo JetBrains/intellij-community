@@ -3,9 +3,7 @@
 
 package com.intellij.platform.backend.observation
 
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 
 /**
@@ -39,10 +37,6 @@ import org.jetbrains.annotations.Nls
  * It means that if there is a configuration process ongoing, the method [isInProgress] will be invoked at least two times.
  */
 interface ActivityTracker {
-
-  companion object {
-    val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")
-  }
 
   /**
    * The user-visible name of this tracker.

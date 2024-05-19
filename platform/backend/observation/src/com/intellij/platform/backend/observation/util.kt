@@ -5,6 +5,7 @@
 package com.intellij.platform.backend.observation
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -59,3 +60,5 @@ fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineConte
   val blockingJob = currentThreadContext()[BlockingJob] ?: EmptyCoroutineContext
   launch(context + blockingJob, CoroutineStart.DEFAULT, block)
 }
+
+internal val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")
