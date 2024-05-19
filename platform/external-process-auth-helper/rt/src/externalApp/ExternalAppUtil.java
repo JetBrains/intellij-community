@@ -21,6 +21,9 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 public final class ExternalAppUtil {
+
+  private ExternalAppUtil() { }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @NotNull
   public static Result sendIdeRequest(@NotNull String entryPoint, int idePort, @NotNull String handlerId, @Nullable String bodyContent) {

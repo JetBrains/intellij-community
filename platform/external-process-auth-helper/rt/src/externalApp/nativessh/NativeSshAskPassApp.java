@@ -11,6 +11,9 @@ import externalApp.ExternalAppUtil;
  * <p>ssh expects the reply from the program's standard output.</p>
  */
 public class NativeSshAskPassApp implements ExternalApp {
+
+  private NativeSshAskPassApp() { }
+
   public static void main(String[] args) {
     ExternalAppUtil.handleAskPassInvocation(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
                                             NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV,
