@@ -671,12 +671,6 @@ open class EditorsSplitters internal constructor(
 
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.getComposites() }
 
-  @Suppress("DEPRECATION")
-  @Deprecated("Use {@link #getAllComposites(VirtualFile)}", level = DeprecationLevel.ERROR)
-  fun findEditorComposites(file: VirtualFile): List<EditorWithProviderComposite> {
-    return windows.asSequence().mapNotNull { it.getComposite(file) }.filterIsInstance<EditorWithProviderComposite>().toList()
-  }
-
   @RequiresEdt
   fun getAllComposites(file: VirtualFile): List<EditorComposite> = getWindowSequence().mapNotNull { it.getComposite(file) }.toList()
 
