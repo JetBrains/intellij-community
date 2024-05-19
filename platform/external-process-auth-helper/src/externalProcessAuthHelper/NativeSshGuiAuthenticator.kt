@@ -21,7 +21,7 @@ class NativeSshGuiAuthenticator(private val project: Project,
                                 private val authenticationGate: AuthenticationGate,
                                 private val authenticationMode: AuthenticationMode,
                                 private val doNotRememberPasswords: Boolean) : NativeSshAskPassAppHandler {
-  companion object {
+  private companion object {
     private val LOG = logger<NativeSshGuiAuthenticator>()
   }
 
