@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -11,7 +12,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.GraphicsEnvironment
+import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLayer
@@ -42,6 +46,10 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
         updateMouseOverCell(editorEx.gutterComponentEx, it)
       }
     }
+  }
+
+  override fun getStructureViewBuilder(): StructureViewBuilder? {
+    return original.structureViewBuilder
   }
 
   private fun setupScrollingPositionKeeper() {
