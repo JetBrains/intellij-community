@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.TreeSet
 
@@ -40,6 +41,7 @@ private fun assertInnocentThreadToWait() {
   ApplicationManager.getApplication().assertReadAccessNotAllowed()
 }
 
+@ApiStatus.Internal
 suspend fun yieldThroughInvokeLater() {
   assertInnocentThreadToWait()
 
@@ -59,7 +61,7 @@ private suspend fun completeJustSubmittedDumbServiceTasks(project: Project) {
   }
 }
 
-suspend fun yieldAndWaitForDumbModeEnd(project: Project) {
+internal suspend fun yieldAndWaitForDumbModeEnd(project: Project) {
   assertInnocentThreadToWait()
   completeJustSubmittedDumbServiceTasks(project)
 
@@ -70,7 +72,7 @@ suspend fun yieldAndWaitForDumbModeEnd(project: Project) {
   yieldThroughInvokeLater()
 }
 
-suspend fun checkProjectRoots(project: Project) {
+internal suspend fun checkProjectRoots(project: Project) {
   runTaskAndLogTime("check project roots") {
     val errors = TreeSet<String>()
     val missingSDKs = TreeSet<String>()
@@ -102,7 +104,7 @@ suspend fun checkProjectRoots(project: Project) {
 }
 
 
-suspend fun getProjectFile(args: OpenProjectArgs): VirtualFile {
+internal suspend fun getProjectFile(args: OpenProjectArgs): VirtualFile {
   val vfsProject = blockingContext {
     VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
     ?: throw RuntimeException("Project path ${args.projectDir} is not found")
@@ -117,7 +119,7 @@ suspend fun getProjectFile(args: OpenProjectArgs): VirtualFile {
   return vfsProject
 }
 
-suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
+internal suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
   if (!projectArgs.convertProject) {
     return
   }

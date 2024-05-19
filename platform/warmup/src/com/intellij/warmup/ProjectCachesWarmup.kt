@@ -59,7 +59,6 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
 
     runWarmupActivity {
       val loggingJob = initLogger(args)
-      waitIndexInitialization()
       val project = try {
         importOrOpenProjectAsync(commandArgs)
       }
@@ -75,7 +74,6 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       buildProject(project, commandArgs)
 
       if (!isPredicateBasedWarmup()) {
-        waitUntilProgressTasksAreFinishedOrFail()
         waitForRefreshQueue()
       }
       ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = true)

@@ -1,49 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
-import com.intellij.conversion.ConversionListener
-import com.intellij.conversion.ConversionService
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineProgressReporterElement
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import com.intellij.warmup.impl.getCommandLineReporter
+import com.intellij.warmup.waitIndexInitialization
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 import java.util.*
-
-fun importOrOpenProject(args: OpenProjectArgs): Project {
-  WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
-  // most of the sensible operations would run in the same thread
-  return runUnderModalProgressIfIsEdt {
-    runTaskAndLogTime("open project") {
-      importOrOpenProjectImpl0(args)
-    }
-  }
-}
 
 suspend fun importOrOpenProjectAsync(args: OpenProjectArgs): Project {
   WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
@@ -56,6 +34,7 @@ suspend fun importOrOpenProjectAsync(args: OpenProjectArgs): Project {
 private suspend fun importOrOpenProjectImpl0(args: OpenProjectArgs): Project {
   val currentStatus = WarmupStatus.currentStatus()
   WarmupStatus.statusChanged(WarmupStatus.InProgress)
+  waitIndexInitialization()
   try {
     return if (isPredicateBasedWarmup()) {
       configureProjectByActivities(args)
