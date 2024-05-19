@@ -14149,12 +14149,13 @@ f:com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager$ResizePolicy
 - s:none():com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager$ResizePolicy
 f:com.intellij.openapi.editor.impl.EditorFactoryImpl
 - com.intellij.openapi.editor.EditorFactory
+- sf:Companion:com.intellij.openapi.editor.impl.EditorFactoryImpl$Companion
 - <init>():V
 - addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
-- createDocument(java.lang.CharSequence,Z,Z):com.intellij.openapi.editor.Document
-- createDocument(Z):com.intellij.openapi.editor.Document
+- f:createDocument(java.lang.CharSequence,Z,Z):com.intellij.openapi.editor.Document
+- f:createDocument(Z):com.intellij.openapi.editor.Document
 - createDocument(C[]):com.intellij.openapi.editor.Document
 - createEditor(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
 - createEditor(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
@@ -14167,12 +14168,14 @@ f:com.intellij.openapi.editor.impl.EditorFactoryImpl
 - createViewer(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.openapi.editor.EditorKind):com.intellij.openapi.editor.Editor
 - editors(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):java.util.stream.Stream
 - getAllEditors():com.intellij.openapi.editor.Editor[]
+- getEditorList():java.util.List
 - getEventMulticaster():com.intellij.openapi.editor.event.EditorEventMulticaster
 - refreshAllEditors():V
 - releaseEditor(com.intellij.openapi.editor.Editor):V
 - removeEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
-- s:throwNotReleasedError(com.intellij.openapi.editor.Editor):V
-- validateEditorsAreReleased(com.intellij.openapi.project.Project,Z):V
+- f:validateEditorsAreReleased(com.intellij.openapi.project.Project,Z):V
+f:com.intellij.openapi.editor.impl.EditorFactoryImpl$Companion
+- f:throwNotReleasedError(com.intellij.openapi.editor.Editor):V
 f:com.intellij.openapi.editor.impl.EditorFilteringMarkupModelEx
 - com.intellij.openapi.editor.ex.MarkupModelEx
 - addLineHighlighter(I,I,com.intellij.openapi.editor.markup.TextAttributes):com.intellij.openapi.editor.markup.RangeHighlighter

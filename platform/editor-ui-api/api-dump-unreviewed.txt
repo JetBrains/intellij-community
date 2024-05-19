@@ -1792,6 +1792,7 @@ a:com.intellij.openapi.editor.EditorFactory
 - f:editors(com.intellij.openapi.editor.Document):java.util.stream.Stream
 - a:editors(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):java.util.stream.Stream
 - a:getAllEditors():com.intellij.openapi.editor.Editor[]
+- a:getEditorList():java.util.List
 - f:getEditors(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor[]
 - f:getEditors(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor[]
 - a:getEventMulticaster():com.intellij.openapi.editor.event.EditorEventMulticaster

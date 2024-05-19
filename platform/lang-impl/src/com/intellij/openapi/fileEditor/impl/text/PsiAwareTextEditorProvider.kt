@@ -31,7 +31,6 @@ import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
-import java.util.function.Consumer
 import java.util.function.Supplier
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
@@ -119,7 +118,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       object : AsyncFileEditorProvider.Builder() {
         override fun build(): FileEditor {
-          val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter, Consumer {
+          val editor = factory.createMainEditor(document = effectiveDocument, project = project, file = file, highlighter = highlighter, afterCreation = {
             it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
           })
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -165,6 +166,8 @@ public abstract class EditorFactory {
    * Returns the list of all currently open editors.
    */
   public abstract Editor @NotNull [] getAllEditors();
+
+  public abstract @NotNull List<Editor> getEditorList();
 
   /**
    * Registers a listener for receiving notifications when editor instances are created

@@ -2,7 +2,7 @@
 package git4idea.performanceTesting
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.editor.impl.EditorFactoryImpl
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.AbstractVcs
@@ -23,8 +23,10 @@ class ShowFileAnnotationCommand(text: String, line: Int) : PerformanceCommandCor
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val editor = EditorFactoryImpl.getInstance().allEditors
-    if (editor.isEmpty() || editor.size > 1) throw RuntimeException("Expected only one editor can be opened at the moment")
+    val editor = EditorFactory.getInstance().getEditorList()
+    if (editor.isEmpty() || editor.size > 1) {
+      throw RuntimeException("Expected only one editor can be opened at the moment")
+    }
 
     val file = FileDocumentManager.getInstance().getFile(editor[0].getDocument())
     if (file == null) throw RuntimeException("No open file found")

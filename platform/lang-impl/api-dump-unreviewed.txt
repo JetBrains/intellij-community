@@ -2991,14 +2991,6 @@ f:com.intellij.codeInsight.codeVision.EditorCodeVisionContextKt
 - sf:getLensContext(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.codeVision.EditorCodeVisionContext
 com.intellij.codeInsight.codeVision.GenericPlaceholderCollector
 - a:collectPlaceholders(com.intellij.openapi.editor.Editor):java.util.List
-f:com.intellij.codeInsight.codeVision.ProjectEditorLiveList
-- com.intellij.openapi.editor.event.EditorFactoryListener
-- <init>(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project):V
-- editorCreated(com.intellij.openapi.editor.event.EditorFactoryEvent):V
-- editorReleased(com.intellij.openapi.editor.event.EditorFactoryEvent):V
-- f:getEditorList():com.jetbrains.rd.util.reactive.IViewableSet
-- f:getLifetime():com.jetbrains.rd.util.lifetime.Lifetime
-- f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V

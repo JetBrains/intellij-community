@@ -1,346 +1,294 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl
 
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ModalityStateListener;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.ActionPlan;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
-import com.intellij.openapi.editor.impl.view.EditorPainter;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.util.text.CharArrayCharSequence;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.injected.editor.DocumentWindow
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ModalityStateListener
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.actionSystem.ActionPlan
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler
+import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.event.EditorEventMulticaster
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
+import com.intellij.openapi.editor.impl.view.EditorPainter
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.text.CharArrayCharSequence
+import org.jetbrains.annotations.ApiStatus
+import java.util.stream.Stream
+import kotlin.streams.asSequence
+import kotlin.streams.asStream
 
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+private val EP = ExtensionPointName<EditorFactoryListener>("com.intellij.editorFactoryListener")
+private val LOG = logger<EditorFactoryImpl>()
 
-public final class EditorFactoryImpl extends EditorFactory {
-  private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
+class EditorFactoryImpl : EditorFactory() {
+  private val editorEventMulticaster = EditorEventMulticasterImpl()
+  private val editorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener::class.java)
 
-  private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
-  private final EditorEventMulticasterImpl editorEventMulticaster = new EditorEventMulticasterImpl();
-  private final EventDispatcher<EditorFactoryListener> editorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
-
-  public EditorFactoryImpl() {
-    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-      @Override
-      public void projectClosed(@NotNull Project project) {
+  init {
+    val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
-        Disposer.register(project, () -> {
-          Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-          boolean isLastProjectClosed = openProjects.length == 0;
+        Disposer.register(project) {
+          val isLastProjectClosed = ProjectManager.getInstance().openProjects.isEmpty()
           // EditorTextField.releaseEditorLater defer releasing its editor; invokeLater to avoid false positives about such editors.
-          ApplicationManager.getApplication().invokeLater(() -> {
-            try {
-              validateEditorsAreReleased(project, isLastProjectClosed);
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
-          }, ModalityState.any());
-        });
+          ApplicationManager.getApplication().invokeLater({
+                                                            try {
+                                                              validateEditorsAreReleased(project, isLastProjectClosed)
+                                                            }
+                                                            catch (e: Throwable) {
+                                                              LOG.error(e)
+                                                            }
+                                                          }, ModalityState.any())
+        }
       }
-    });
-    connection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
-    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, (id, __, __1) -> {
-      if (id.equals(EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN) ||
-          id.equals(EditorPainter.EDITOR_TAB_PAINTING) ||
-          id.equals(SettingsImplKt.EDITOR_SHOW_SPECIAL_CHARS)) {
-        refreshAllEditors();
+    })
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { refreshAllEditors() })
+    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+      override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+        if (id == EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN || id == EditorPainter.EDITOR_TAB_PAINTING || id == EDITOR_SHOW_SPECIAL_CHARS) {
+          refreshAllEditors()
+        }
       }
-    });
+    })
 
-    LaterInvocator.addModalityStateListener(new ModalityStateListener() {
-      @Override
-      public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
-        collectAllEditors().forEach(editor -> ((EditorImpl)editor).beforeModalityStateChanged());
+    LaterInvocator.addModalityStateListener(object : ModalityStateListener {
+      override fun beforeModalityStateChanged(entering: Boolean, modalEntity: Any) {
+        collectAllEditors().forEach { (it as EditorImpl).beforeModalityStateChanged() }
       }
-    }, ApplicationManager.getApplication());
+    }, ApplicationManager.getApplication())
   }
 
-  public void validateEditorsAreReleased(@NotNull Project project, boolean isLastProjectClosed) {
-    collectAllEditors().forEach(editor -> {
-      if (editor.getProject() == project || (editor.getProject() == null && isLastProjectClosed)) {
+  companion object {
+    fun throwNotReleasedError(editor: Editor) {
+      if (editor is EditorImpl) {
+        editor.throwDisposalError("Editor $editor hasn't been released:")
+      }
+      throw RuntimeException("""Editor of ${editor.javaClass} and the following text hasn't been released: ${editor.document.text}""")
+    }
+  }
+
+  fun validateEditorsAreReleased(project: Project, isLastProjectClosed: Boolean) {
+    for (editor in collectAllEditors()) {
+      if (editor.project === project || (editor.project == null && isLastProjectClosed)) {
         try {
-          throwNotReleasedError(editor);
+          throwNotReleasedError(editor)
         }
         finally {
-          releaseEditor(editor);
-        }
-      }
-    });
-  }
-
-  @NonNls
-  public static void throwNotReleasedError(@NotNull Editor editor) {
-    if (editor instanceof EditorImpl) {
-      ((EditorImpl)editor).throwDisposalError("Editor " + editor + " hasn't been released:");
-    }
-    throw new RuntimeException("Editor of " + editor.getClass() +
-                               " and the following text hasn't been released:\n" + editor.getDocument().getText());
-  }
-
-  @Override
-  public @NotNull Document createDocument(char @NotNull [] text) {
-    return createDocument(new CharArrayCharSequence(text));
-  }
-
-  @Override
-  public @NotNull Document createDocument(@NotNull CharSequence text) {
-    DocumentEx document = new DocumentImpl(text);
-    editorEventMulticaster.registerDocument(document);
-    return document;
-  }
-
-  public @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction) {
-    DocumentEx document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
-    editorEventMulticaster.registerDocument(document);
-    return document;
-  }
-
-  public @NotNull Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
-    DocumentEx document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
-    editorEventMulticaster.registerDocument(document);
-    return document;
-  }
-
-  @Override
-  public void refreshAllEditors() {
-    for (ClientEditorManager clientEditorManager : ClientEditorManager.getAllInstances()) {
-      for (Editor editor : clientEditorManager.getEditors()) {
-        //noinspection deprecation
-        if (AsyncEditorLoader.isEditorLoaded(editor)) {
-          ((EditorEx)editor).reinitSettings();
+          releaseEditor(editor)
         }
       }
     }
   }
 
-  @Override
-  public Editor createEditor(@NotNull Document document) {
-    return createEditor(document, false, null, EditorKind.UNTYPED);
+  override fun createDocument(text: CharArray): Document = createDocument(CharArrayCharSequence(*text))
+
+  override fun createDocument(text: CharSequence): Document {
+    val document = DocumentImpl(text)
+    editorEventMulticaster.registerDocument(document)
+    return document
   }
 
-  @Override
-  public Editor createViewer(@NotNull Document document) {
-    return createEditor(document, true, null, EditorKind.UNTYPED);
+  fun createDocument(allowUpdatesWithoutWriteAction: Boolean): Document {
+    val document = DocumentImpl("", allowUpdatesWithoutWriteAction)
+    editorEventMulticaster.registerDocument(document)
+    return document
   }
 
-  @Override
-  public Editor createEditor(@NotNull Document document, Project project) {
-    return createEditor(document, false, project, EditorKind.UNTYPED);
+  fun createDocument(text: CharSequence, acceptsSlashR: Boolean, allowUpdatesWithoutWriteAction: Boolean): Document {
+    val document = DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction)
+    editorEventMulticaster.registerDocument(document)
+    return document
   }
 
-  @Override
-  public Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind) {
-    return createEditor(document, false, project, kind);
+  override fun refreshAllEditors() {
+    for (clientEditorManager in ClientEditorManager.getAllInstances()) {
+      for (editor in clientEditorManager.editors) {
+        if (isEditorLoaded(editor)) {
+          (editor as EditorEx).reinitSettings()
+        }
+      }
+    }
   }
 
-  @Override
-  public Editor createViewer(@NotNull Document document, Project project) {
-    return createEditor(document, true, project, EditorKind.UNTYPED);
+  override fun createEditor(document: Document): Editor {
+    return createEditor(document = document, isViewer = false, project = null, kind = EditorKind.UNTYPED)
   }
 
-  @Override
-  public Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind) {
-    return createEditor(document, true, project, kind);
+  override fun createViewer(document: Document): Editor {
+    return createEditor(document = document, isViewer = true, project = null, kind = EditorKind.UNTYPED)
   }
 
-  @Override
-  public Editor createEditor(final @NotNull Document document, final Project project, final @NotNull FileType fileType, final boolean isViewer) {
-    EditorEx editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
-    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType));
-    return editor;
+  override fun createEditor(document: Document, project: Project?): Editor {
+    return createEditor(document = document, isViewer = false, project = project, kind = EditorKind.UNTYPED)
   }
 
-  @Override
-  public Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer) {
-    EditorEx editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
-    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
-    return editor;
+  override fun createEditor(document: Document, project: Project?, kind: EditorKind): Editor {
+    return createEditor(document = document, isViewer = false, project = project, kind = kind)
   }
 
-  @Override
-  public Editor createEditor(@NotNull Document document,
-                             Project project,
-                             @NotNull VirtualFile file,
-                             boolean isViewer,
-                             @NotNull EditorKind kind) {
-    EditorEx editor = createEditor(document, isViewer, project, kind);
-    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file));
-    return editor;
+  override fun createViewer(document: Document, project: Project?): Editor {
+    return createEditor(document = document, isViewer = true, project = project, kind = EditorKind.UNTYPED)
   }
 
-  private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, @Nullable Project project, @NotNull EditorKind kind) {
-    Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    return doCreateEditor(project, hostDocument, isViewer, kind, null, null, null);
+  override fun createViewer(document: Document, project: Project?, kind: EditorKind): Editor {
+    return createEditor(document = document, isViewer = true, project = project, kind = kind)
+  }
+
+  override fun createEditor(document: Document, project: Project, fileType: FileType, isViewer: Boolean): Editor {
+    val editor = createEditor(document = document, isViewer = isViewer, project = project, kind = EditorKind.UNTYPED)
+    editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType)
+    return editor
+  }
+
+  override fun createEditor(document: Document, project: Project, file: VirtualFile, isViewer: Boolean): Editor {
+    val editor = createEditor(document = document, isViewer = isViewer, project = project, kind = EditorKind.UNTYPED)
+    editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file)
+    return editor
+  }
+
+  override fun createEditor(document: Document, project: Project, file: VirtualFile, isViewer: Boolean, kind: EditorKind): Editor {
+    val editor = createEditor(document = document, isViewer = isViewer, project = project, kind = kind)
+    editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file)
+    return editor
+  }
+
+  private fun createEditor(document: Document, isViewer: Boolean, project: Project?, kind: EditorKind): EditorImpl {
+    val hostDocument = if (document is DocumentWindow) document.delegate else document
+    return doCreateEditor(project = project, document = hostDocument, isViewer = isViewer, kind = kind, file = null, highlighter = null, afterCreation = null)
   }
 
   @ApiStatus.Internal
-  public @NotNull EditorImpl createMainEditor(
-    @NotNull Document document,
-    @NotNull Project project,
-    @NotNull VirtualFile file,
-    @Nullable EditorHighlighter highlighter,
-    @Nullable Consumer<EditorImpl> afterCreation
-    ) {
-    assert !(document instanceof DocumentWindow);
-    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file, highlighter, afterCreation);
+  fun createMainEditor(document: Document, project: Project, file: VirtualFile, highlighter: EditorHighlighter?, afterCreation: ((EditorImpl) -> Unit)?): EditorImpl {
+    assert(document !is DocumentWindow)
+    return doCreateEditor(project = project, document = document, isViewer = false, kind = EditorKind.MAIN_EDITOR, file = file, highlighter = highlighter, afterCreation = afterCreation)
   }
 
-  private @NotNull EditorImpl doCreateEditor(
-    @Nullable Project project,
-    @NotNull Document document,
-    boolean isViewer,
-    @NotNull EditorKind kind,
-    @Nullable VirtualFile file,
-    @Nullable EditorHighlighter highlighter,
-    @Nullable Consumer<EditorImpl> afterCreation
-  ) {
-    EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file, highlighter);
+  private fun doCreateEditor(
+    project: Project?,
+    document: Document,
+    isViewer: Boolean,
+    kind: EditorKind,
+    file: VirtualFile?,
+    highlighter: EditorHighlighter?,
+    afterCreation: ((EditorImpl) -> Unit)?,
+  ): EditorImpl {
+    val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
     // must be _before_ event firing
-    if (afterCreation != null) {
-      afterCreation.accept(editor);
-    }
+    afterCreation?.invoke(editor)
 
-    ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
-    editorManager.editorCreated(editor);
-    editorEventMulticaster.registerEditor(editor);
+    val editorManager = ClientEditorManager.getCurrentInstance()
+    editorManager.editorCreated(editor)
+    editorEventMulticaster.registerEditor(editor)
 
-    EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
-    editorFactoryEventDispatcher.getMulticaster().editorCreated(event);
-    EP.forEachExtensionSafe(it -> it.editorCreated(event));
+    val event = EditorFactoryEvent(this, editor)
+    editorFactoryEventDispatcher.multicaster.editorCreated(event)
+    EP.forEachExtensionSafe { it.editorCreated(event) }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("number of editors after create: " + editorManager.editors().count());
-    }
-    return editor;
+    LOG.debug { "number of editors after create: ${editorManager.editors().count()}" }
+    return editor
   }
 
-  @Override
   @RequiresEdt
-  public void releaseEditor(@NotNull Editor editor) {
+  override fun releaseEditor(editor: Editor) {
     try {
-      EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
-      editorFactoryEventDispatcher.getMulticaster().editorReleased(event);
-      EP.forEachExtensionSafe(it -> it.editorReleased(event));
+      val event = EditorFactoryEvent(this, editor)
+      editorFactoryEventDispatcher.multicaster.editorReleased(event)
+      EP.forEachExtensionSafe { it.editorReleased(event) }
     }
     finally {
       try {
-        if (editor instanceof EditorImpl) {
-          ((EditorImpl)editor).release();
+        if (editor is EditorImpl) {
+          editor.release()
         }
       }
       finally {
-        for (ClientEditorManager clientEditors : ClientEditorManager.getAllInstances()) {
+        for (clientEditors in ClientEditorManager.getAllInstances()) {
           if (clientEditors.editorReleased(editor)) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("number of Editors after release: " + clientEditors.editors().count());
-            }
+            LOG.debug { "number of Editors after release: ${clientEditors.editors().count()}" }
             if (clientEditors != ClientEditorManager.getCurrentInstance()) {
-              LOG.warn("Released editor didn't belong to current session");
+              LOG.warn("Released editor didn't belong to current session")
             }
-            break;
+            break
           }
         }
       }
     }
   }
 
-  @Override
-  public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
+  override fun editors(document: Document, project: Project?): Stream<Editor> {
     return collectAllEditors()
-      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
+      .filter { editor -> editor.document == document && (project == null || project == editor.project) }
+      .asStream()
   }
 
-  private static @NotNull Stream<Editor> collectAllEditors() {
-    return ClientEditorManager.getAllInstances().stream().flatMap(ClientEditorManager::editors);
+  override fun getEditorList(): List<Editor> = collectAllEditors().toList()
+
+  override fun getAllEditors(): Array<Editor> {
+    val list = getEditorList()
+    return if (list.isEmpty()) Editor.EMPTY_ARRAY else list.toTypedArray()
   }
 
-  @Override
-  public Editor @NotNull [] getAllEditors() {
-    return collectAllEditors().toArray(value -> value == 0 ? Editor.EMPTY_ARRAY : new Editor[value]);
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
+  override fun addEditorFactoryListener(listener: EditorFactoryListener) {
+    editorFactoryEventDispatcher.addListener(listener)
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  @Deprecated
-  public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
-    editorFactoryEventDispatcher.addListener(listener);
+  override fun addEditorFactoryListener(listener: EditorFactoryListener, parentDisposable: Disposable) {
+    editorFactoryEventDispatcher.addListener(listener, parentDisposable)
   }
 
-  @Override
-  public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
-    editorFactoryEventDispatcher.addListener(listener, parentDisposable);
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
+  override fun removeEditorFactoryListener(listener: EditorFactoryListener) {
+    editorFactoryEventDispatcher.removeListener(listener)
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  @Deprecated
-  public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
-    editorFactoryEventDispatcher.removeListener(listener);
-  }
+  override fun getEventMulticaster(): EditorEventMulticaster = editorEventMulticaster
+}
 
-  @Override
-  public @NotNull EditorEventMulticaster getEventMulticaster() {
-    return editorEventMulticaster;
-  }
-
-  @SuppressWarnings("unused")
-  private static final class MyRawTypedHandler implements TypedActionHandlerEx {
-    private final TypedActionHandler delegate;
-
-    private MyRawTypedHandler(TypedActionHandler delegate) {
-      this.delegate = delegate;
+@Suppress("unused")
+private class MyRawTypedHandler(private val delegate: TypedActionHandler) : TypedActionHandlerEx {
+  override fun execute(editor: Editor, charTyped: Char, dataContext: DataContext) {
+    editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, true)
+    try {
+      delegate.execute(editor, charTyped, dataContext)
     }
-
-    @Override
-    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-      editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, Boolean.TRUE);
-      try {
-        delegate.execute(editor, charTyped, dataContext);
-      }
-      finally {
-        editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null);
-      }
-    }
-
-    @Override
-    public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-      if (delegate instanceof TypedActionHandlerEx d) {
-        d.beforeExecute(editor, c, context, plan);
-      }
+    finally {
+      editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null)
     }
   }
+
+  override fun beforeExecute(editor: Editor, c: Char, context: DataContext, plan: ActionPlan) {
+    if (delegate is TypedActionHandlerEx) {
+      delegate.beforeExecute(editor, c, context, plan)
+    }
+  }
+}
+
+private fun collectAllEditors(): Sequence<Editor> {
+  return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editors().asSequence() }
 }

@@ -42,7 +42,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
-import java.util.function.Consumer
 import javax.swing.JComponent
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
@@ -263,7 +262,7 @@ private class AsyncEditorLoaderScopeHolder(@JvmField val coroutineScope: Corouti
 @Internal
 fun createEditorImpl(project: Project, file: VirtualFile, asyncLoader: AsyncEditorLoader): Pair<EditorImpl, AsyncEditorLoader> {
   val document = FileDocumentManager.getInstance().getDocument(file, project)!!
-  return (EditorFactory.getInstance() as EditorFactoryImpl).createMainEditor(document, project, file, null, Consumer {
+  return (EditorFactory.getInstance() as EditorFactoryImpl).createMainEditor(document = document, project = project, file = file, highlighter = null, afterCreation = {
     it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
   }) to asyncLoader
 }
