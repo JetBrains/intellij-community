@@ -26,7 +26,7 @@ import java.io.IOException;
 
 /**
  * Tests from https://github.com/emmetio/emmet/blob/master/test/expandAbbreviation.js
- * and from https://github.com/emmetio/emmet/blob/master/lib/snippets.json
+ * and from https://github.com/emmetio/emmet/blob/master/src/snippets/css.json
  *
  * The new one: https://github.com/emmetio/snippets/blob/047c644a3d29f75f7cbb8183ebb91ab3fbcd143b/html.json
  */

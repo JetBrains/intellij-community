@@ -93,7 +93,6 @@
   "menu:t|menu:toolbar": "menu[type=toolbar]",
   "video": "video[src]",
   "audio": "audio[src]",
-  "html:xml": "html[xmlns=http://www.w3.org/1999/xhtml]",
   "keygen": "keygen/",
   "command": "command/",
   "btn:s|button:s|button:submit" : "button[type=submit]",
@@ -105,12 +104,7 @@
   "ri:v|ri:viewport": "img:z",
   "ri:a|ri:art": "pic>src:m+img",
   "ri:t|ri:type": "pic>src:t+img",
-  
-  "html:4t": "!!!4t+doc4[lang=en]",
-  "html:4s": "!!!4s+doc4[lang=en]",
-  "html:xt": "!!!xt+doc4[xmlns=http://www.w3.org/1999/xhtml xml:lang=en]",
-  "html:xs": "!!!xs+doc4[xmlns=http://www.w3.org/1999/xhtml xml:lang=en]",
-  "html:xxs": "!!!xxs+doc4[xmlns=http://www.w3.org/1999/xhtml xml:lang=en]",
+
   "html:5": "!!!+doc",
 
   "bq": "blockquote",

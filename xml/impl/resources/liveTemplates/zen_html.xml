@@ -1216,14 +1216,6 @@
       <option name="TSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;...&lt;/html&gt;" name="html:xml" toReformat="true"
-            toShortenFQNames="true" value="&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;$END$&lt;/html&gt;">
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
-    </context>
-  </template>
   <template description="&lt;keygen&gt;" name="keygen" toReformat="true" toShortenFQNames="true" value="&lt;keygen&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
@@ -1742,56 +1734,6 @@
     </context>
   </template>
   
-  <template description="" name="html:4t" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
-    </context>
-  </template>
-  <template description="" name="html:4s" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot; &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
-    </context>
-  </template>
-  <template description="" name="html:xt" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
-    </context>
-  </template>
-  <template description="" name="html:xs" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
-    </context>
-  </template>
-  <template description="" name="html:xxs" toReformat="true" toShortenFQNames="true"
-            value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot; &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;&lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;Document&quot;" expression="" name="TITLE"/>
-    <context>
-      <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
-    </context>
-  </template>
   <template description="" name="html:5" toReformat="true" toShortenFQNames="true"
             value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta charset=&quot;$CHARSET$&quot;&gt;&#10;
             &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;&#10;
