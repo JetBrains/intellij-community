@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.util
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 
-class DummyGeneratorCommandsRunner : ShellGeneratorCommandsRunner {
+internal class DummyGeneratorCommandsRunner : ShellGeneratorCommandsRunner {
   override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
     return ShellCommandResult.create("", 0)
   }

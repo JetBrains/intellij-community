@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class RightPromptAndCommandLayoutTest {
+internal class RightPromptAndCommandLayoutTest {
   private val promptAttributes: TextAttributesProvider = TestTextAttributesProvider("prompt")
   private val rightPromptAttributes: TextAttributesProvider = TestTextAttributesProvider("right prompt")
   private val commandAttributes: TextAttributesProvider = TestTextAttributesProvider("command")

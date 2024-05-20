@@ -35,7 +35,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 @RunWith(Parameterized::class)
-class BlockTerminalTest(private val shellPath: Path) {
+internal class BlockTerminalTest(private val shellPath: Path) {
 
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule = DisposableRule()

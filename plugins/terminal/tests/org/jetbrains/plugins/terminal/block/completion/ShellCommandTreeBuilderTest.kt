@@ -18,7 +18,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 
 @RunWith(JUnit4::class)
-class ShellCommandTreeBuilderTest {
+internal class ShellCommandTreeBuilderTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
 

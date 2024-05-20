@@ -36,7 +36,7 @@ import kotlin.io.path.createTempDirectory
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
-class ShellBaseGeneratorsTest(private val shellPath: Path) {
+internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule = DisposableRule()
 

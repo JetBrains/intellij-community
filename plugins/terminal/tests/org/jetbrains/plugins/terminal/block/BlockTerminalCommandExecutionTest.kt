@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @RunsInEdt
 @RunWith(Parameterized::class)
-class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
+internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule = DisposableRule()

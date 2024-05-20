@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase() {
+internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase() {
   private lateinit var promptModel: TerminalPromptModel
 
   @Test

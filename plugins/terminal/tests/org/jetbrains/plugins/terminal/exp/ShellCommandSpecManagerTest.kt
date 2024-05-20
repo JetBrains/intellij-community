@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class ShellCommandSpecManagerTest : BasePlatformTestCase() {
+internal class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   private val commandName: String = "main"
 
   private val commandSpecsManager: ShellCommandSpecsManagerImpl

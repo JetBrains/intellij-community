@@ -33,7 +33,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 @RunWith(JUnit4::class)
-class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
+internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
   private lateinit var session: BlockTerminalSession
 
   override fun setUp() {

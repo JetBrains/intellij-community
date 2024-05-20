@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.testApps
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 
-object MoveCursorToLineEndAndPrint {
+internal object MoveCursorToLineEndAndPrint {
 
   @JvmStatic
   fun main(arg: Array<String>) {

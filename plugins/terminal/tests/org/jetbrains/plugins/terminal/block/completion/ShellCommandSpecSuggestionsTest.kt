@@ -19,7 +19,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 
 @RunWith(JUnit4::class)
-class ShellCommandSpecSuggestionsTest {
+internal class ShellCommandSpecSuggestionsTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
 

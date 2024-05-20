@@ -8,7 +8,7 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalSessionInfo
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 
-class TestTerminalSessionInfo(
+internal class TestTerminalSessionInfo(
   override val terminalSize: TermSize = TermSize(80, 20)
 ) : TerminalSessionInfo {
   override val settings: JBTerminalSystemSettingsProviderBase = JBTerminalSystemSettingsProvider()

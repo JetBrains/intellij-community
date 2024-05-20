@@ -5,7 +5,7 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 
-class TestGeneratorsExecutor : ShellDataGeneratorsExecutor {
+internal class TestGeneratorsExecutor : ShellDataGeneratorsExecutor {
   override suspend fun <T> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
     return generator.generate(context)
   }
