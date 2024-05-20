@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
@@ -42,6 +40,15 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionR
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  /**
+   * Promote only if this action is in the list.
+   * It allows external actions to suppress this action and execute their own instead.
+   * For example, [com.intellij.ml.llm.terminal.TerminalTextToCommandAction].
+   */
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
+    return actions.filterIsInstance<TerminalEscapeAction>()
+  }
 
   private interface TerminalEscapeHandler {
     fun execute(e: AnActionEvent)
