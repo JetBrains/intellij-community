@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.google.common.collect.HashMultiset
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -213,6 +214,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   private inner class LibraryTablesListener : LibraryTable.Listener {
     // Library identifier as a key
     private val libToModuleMap = MultiMap.createSet<String, ModuleId>()
+    private val libraryLevels = HashMultiset.create<String>() // TODO replace with non-guava multiset
 
     fun addTrackedLibrary(moduleEntity: ModuleEntity,
                           libraryTable: LibraryTable,
@@ -228,6 +230,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         }
       }
       libToModuleMap.putValue(libraryIdentifier, moduleEntity.symbolicId)
+      libraryLevels.add(libraryTable.tableLevel)
     }
 
     fun unTrackLibrary(moduleEntity: ModuleEntity,
@@ -238,15 +241,16 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
       libToModuleMap.remove(libraryIdentifier, moduleEntity.symbolicId)
+      libraryLevels.remove(libraryTable.tableLevel)
       if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
         eventDispatcher.multicaster.removedDependencyOn(library)
         library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
       }
     }
 
-    fun isEmpty(libraryLevel: String) = libToModuleMap.keySet().none { it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
+    fun isEmpty(libraryLevel: String): Boolean = !libraryLevels.contains(libraryLevel)
 
-    fun getLibraryLevels() = libToModuleMap.keySet().mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
+    fun getLibraryLevels(): Set<String> = libraryLevels.elementSet()
 
     override fun afterLibraryAdded(newLibrary: Library) {
       if (hasDependencyOn(newLibrary)) {
