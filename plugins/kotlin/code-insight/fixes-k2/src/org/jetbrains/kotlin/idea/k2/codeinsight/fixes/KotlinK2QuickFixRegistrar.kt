@@ -125,6 +125,12 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeToLabeledReturnFixFactory.returnTypeMismatch)
     }
 
+    private val insertDelegationCall = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(InsertDelegationCallFixFactory.primaryConstructorDelegationCallExpected)
+        registerFactory(InsertDelegationCallFixFactory.explicitDelegationCallRequiredSuper)
+        registerFactory(InsertDelegationCallFixFactory.explicitDelegationCallRequiredThis)
+    }
+
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(InitializePropertyQuickFixFactories.mustBeInitialized)
         registerFactory(InitializePropertyQuickFixFactories.mustBeInitializedWarning)
@@ -373,6 +379,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         addFinal,
         addInline,
         changeToLabeledReturn,
+        insertDelegationCall,
         propertyInitialization,
         overrides,
         imports,

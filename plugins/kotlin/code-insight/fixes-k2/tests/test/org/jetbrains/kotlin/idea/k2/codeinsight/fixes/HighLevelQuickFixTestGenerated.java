@@ -5373,7 +5373,58 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/insertDelegationCall")
+    public static class InsertDelegationCall extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("cyclicCallDefaultParam.kt")
+        public void testCyclicCallDefaultParam() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/cyclicCallDefaultParam.kt");
+        }
+
+        @TestMetadata("nonApplicableInsertSuper.kt")
+        public void testNonApplicableInsertSuper() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/nonApplicableInsertSuper.kt");
+        }
+
+        @TestMetadata("nonApplicableInsertThis.kt")
+        public void testNonApplicableInsertThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/nonApplicableInsertThis.kt");
+        }
+
+        @TestMetadata("nonApplicableOnEmpty.kt")
+        public void testNonApplicableOnEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/nonApplicableOnEmpty.kt");
+        }
+
+        @TestMetadata("nonApplicableWithOneConstructor.kt")
+        public void testNonApplicableWithOneConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/nonApplicableWithOneConstructor.kt");
+        }
+
+        @TestMetadata("primaryRequiredNoSuper.kt")
+        public void testPrimaryRequiredNoSuper() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/primaryRequiredNoSuper.kt");
+        }
+
+        @TestMetadata("primaryRequiredParameterless.kt")
+        public void testPrimaryRequiredParameterless() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/primaryRequiredParameterless.kt");
+        }
+
+        @TestMetadata("primaryRequiredWithBody.kt")
+        public void testPrimaryRequiredWithBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/primaryRequiredWithBody.kt");
+        }
+
+        @TestMetadata("primaryRequiredWithParameter.kt")
+        public void testPrimaryRequiredWithParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/insertDelegationCall/primaryRequiredWithParameter.kt");
+        }
+    }
 
 
 

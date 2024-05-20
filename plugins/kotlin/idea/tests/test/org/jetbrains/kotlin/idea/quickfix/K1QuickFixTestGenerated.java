@@ -9351,6 +9351,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("cyclicCallDefaultParam.kt")
+        public void testCyclicCallDefaultParam() throws Exception {
+            runTest("testData/quickfix/insertDelegationCall/cyclicCallDefaultParam.kt");
+        }
+
         @TestMetadata("nonApplicableInsertSuper.kt")
         public void testNonApplicableInsertSuper() throws Exception {
             runTest("testData/quickfix/insertDelegationCall/nonApplicableInsertSuper.kt");

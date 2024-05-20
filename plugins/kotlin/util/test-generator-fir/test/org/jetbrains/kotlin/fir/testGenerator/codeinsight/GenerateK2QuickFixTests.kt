@@ -124,7 +124,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/initializeWithConstructorParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/inlineClass", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/inlineTypeParameterFix", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/insertDelegationCall", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/insertDelegationCall", pattern = pattern)
             model("$idea/quickfix/isEnumEntry", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/javaClassOnCompanion", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern, isIgnored = true)
