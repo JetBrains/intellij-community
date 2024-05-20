@@ -85,6 +85,19 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     Assert.assertEquals(fooItem.count, links.size)
   }
 
+  @Test
+  fun `command with empty output`() {
+    val (session, view) = startSessionAndCreateView()
+    val commandLine = listOf("cd", ".").toCommandLine(session)
+
+    view.sendCommandToExecute(commandLine)
+    val outputModel = view.outputView.controller.outputModel
+    awaitBlocksFinalized(outputModel, 1)
+    val expected = listOf(CommandResult(commandLine, ""))
+    val actual = view.outputView.controller.outputModel.collectCommandResults()
+    Assert.assertEquals(expected, actual)
+  }
+
   private fun startSessionAndCreateView(): Pair<BlockTerminalSession, BlockTerminalView> {
     val session = startBlockTerminalSession()
     val view = BlockTerminalView(projectRule.project, session, JBTerminalSystemSettingsProvider(), TerminalTitle())
@@ -122,7 +135,14 @@ private fun TerminalOutputModel.collectCommandResults(): List<CommandResult> {
       null // skip the initial block
     }
     else {
-      CommandResult(command!!, editor.document.getText(TextRange(commandBlock.outputStartOffset, commandBlock.endOffset)))
+      CommandResult(command!!, run {
+        if (commandBlock.withOutput) {
+          editor.document.getText(TextRange(commandBlock.outputStartOffset, commandBlock.endOffset))
+        }
+        else {
+          ""
+        }
+      })
     }
   }
 }

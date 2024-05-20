@@ -99,11 +99,11 @@ internal class TerminalOutputController(
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    val output = scraper.scrapeOutput().dropLastBlankLine(session.shellIntegration.shellType)
+    val output = scraper.scrapeOutput()
     val terminalWidth = session.model.withContentLock { session.model.width }
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = doWithScrollingAware {
-        updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
+        updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output), true)
       }
       disposeRunningCommandInteractivity()
       if (editor.document.getText(block.textRange).isBlank()) {
@@ -163,7 +163,7 @@ internal class TerminalOutputController(
         invokeLater(editor.getDisposed(), ModalityState.any()) {
           if (runningCommandContext != null) {
             doWithScrollingAware {
-              updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
+              updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output), false)
             }
           }
         }
@@ -172,14 +172,15 @@ internal class TerminalOutputController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun updateCommandOutput(snapshot: TerminalOutputSnapshot): CommandBlock {
+  private fun updateCommandOutput(snapshot: TerminalOutputSnapshot, finished: Boolean): CommandBlock {
     val activeBlock = outputModel.getActiveBlock() ?: run {
       // If there is no active block, it means that it is the first content update. Create the new block here.
       blockCreationAlarm.cancelAllRequests()
       val context = runningCommandContext ?: error("No running command context")
       createNewBlock(context, snapshot.width)
     }
-    updateBlock(activeBlock, toHighlightedCommandOutput(snapshot.output, baseOffset = activeBlock.outputStartOffset))
+    val output = if (finished) snapshot.output.dropLastBlankLine(session.shellIntegration.shellType) else snapshot.output
+    updateBlock(activeBlock, toHighlightedCommandOutput(output, baseOffset = activeBlock.outputStartOffset), finished)
     return activeBlock
   }
 
@@ -197,7 +198,7 @@ internal class TerminalOutputController(
     })
   }
 
-  private fun updateBlock(block: CommandBlock, output: TextWithHighlightings) {
+  private fun updateBlock(block: CommandBlock, output: TextWithHighlightings, finished: Boolean) {
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
     val highlightings = outputModel.getHighlightings(block).asSequence()
       .filter { it.endOffset <= block.outputStartOffset }
@@ -205,9 +206,10 @@ internal class TerminalOutputController(
       .toList()
     outputModel.putHighlightings(block, highlightings)
 
-    // add leading \n here, because \n is not added after command in `startCommandBlock`
-    val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
-    editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
+    // add \n between command and output here (postponed from `TerminalOutputModel.createBlock`)
+    val isPostponedNewLine = block.withPrompt || block.withCommand
+    val result = if (isPostponedNewLine && (!finished || output.text.isNotEmpty())) "\n" + output.text else output.text
+    editor.document.replaceString(block.outputStartOffset - if (isPostponedNewLine) 1 else 0, block.endOffset, result)
     outputModel.trimOutput()
     hyperlinkHighlighter.highlightHyperlinks(block)
 

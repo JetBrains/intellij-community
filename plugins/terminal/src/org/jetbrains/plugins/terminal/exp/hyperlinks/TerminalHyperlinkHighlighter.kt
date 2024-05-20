@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.CommandBlock
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel
+import org.jetbrains.plugins.terminal.exp.withOutput
 
 internal class TerminalHyperlinkHighlighter(project: Project,
                                             private val outputModel: TerminalOutputModel,
@@ -50,9 +51,11 @@ internal class TerminalHyperlinkHighlighter(project: Project,
 
     hyperlinkSupport.clearHyperlinks(block.outputStartOffset, block.endOffset)
 
-    val startLine = document.getLineNumber(block.outputStartOffset)
-    val endLine = document.getLineNumber(block.endOffset)
-    hyperlinkSupport.highlightHyperlinksLater(filter, startLine, endLine, expirableTokenProvider.createExpirable())
+    if (block.withOutput) {
+      val startLine = document.getLineNumber(block.outputStartOffset)
+      val endLine = document.getLineNumber(block.endOffset)
+      hyperlinkSupport.highlightHyperlinksLater(filter, startLine, endLine, expirableTokenProvider.createExpirable())
+    }
   }
 
 }
