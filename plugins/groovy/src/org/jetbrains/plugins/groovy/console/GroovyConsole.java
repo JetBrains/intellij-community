@@ -66,8 +66,8 @@ public final class GroovyConsole {
 
   private void doExecute(@NotNull String command) {
     for (String line : command.trim().split("\n")) {
-      myConsoleView.print("> ", ConsoleViewContentType.USER_INPUT);
-      myConsoleView.print(line, ConsoleViewContentType.USER_INPUT);
+      myConsoleView.print("> ", ConsoleViewContentType.NON_INTERACTIVE_USER_INPUT);
+      myConsoleView.print(line, ConsoleViewContentType.NON_INTERACTIVE_USER_INPUT);
       myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     ApplicationManager.getApplication().executeOnPooledThread(
