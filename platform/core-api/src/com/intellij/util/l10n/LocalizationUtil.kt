@@ -131,7 +131,8 @@ object LocalizationUtil {
       .map { FileUtil.toSystemIndependentName(it.toString()) }
   }
 
-  private fun getLocaleOrNullForDefault(): Locale? {
+
+  fun getLocaleOrNullForDefault(): Locale? {
     val locale = getLocale()
     if (Locale.ENGLISH.language == locale.language) {
       return null
