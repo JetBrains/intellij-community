@@ -112,7 +112,7 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    FileDocumentManager.getInstance().saveAllDocuments()
+    FileDocumentManager.getInstance().saveAllDocuments() // TODO remove, this is a workaround until IJPL-149853 is fixed
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets
