@@ -4,6 +4,12 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents the specification of the Shell option with [names].
+ *
+ * Shell options are also can be named as keys or flags in the shell command.
+ * Usually, the option is starting with `-` for a short option or `--` for a long one.
+ * For example `-a`, `-l` are the short options, while `--long` is a more verbose option.
+ * But generally, any meaningful string can be an option, even without `-`.
+ * Shell options can have its own arguments.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -29,13 +35,14 @@ interface ShellOptionSpec : ShellCompletionSuggestion {
    * The separator between the option name and the argument value (if option has an argument).
    * For example, in case of `--opt=value`, the separator should be `=`.
    *
-   * Null (no separator) by default.
+   * Whitespace is used as a separator by default (but the value of the property is null in this case).
    */
   val separator: String?
 
   /**
-   * The amount of times this option can be present in the command line.
+   * The maximum amount of times this option can be present in the command line.
    * Zero value means that it can be repeated infinitely.
+   * If the option is already present this number of times in the command, it won't be shown in the completion popup anymore.
    *
    * One by default.
    */
@@ -43,6 +50,7 @@ interface ShellOptionSpec : ShellCompletionSuggestion {
 
   /**
    * Names of the options with those this option cannot be used.
+   * If any of such options is used in the command, this option won't be shown in the completion popup.
    *
    * Empty list by default.
    */
@@ -50,6 +58,7 @@ interface ShellOptionSpec : ShellCompletionSuggestion {
 
   /**
    * Names of the options required to use this option.
+   * Until all such options are used in the command, this option won't be shown in the completion popup.
    *
    * Empty list by default.
    */

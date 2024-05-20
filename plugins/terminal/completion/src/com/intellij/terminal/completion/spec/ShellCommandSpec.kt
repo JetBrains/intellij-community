@@ -6,6 +6,11 @@ import org.jetbrains.annotations.ApiStatus
  * Represents the specification of the Shell command with [names]: its subcommands, options, arguments, and some settings.
  * These command specifications are used for providing command completion in the New Terminal.
  *
+ * Shell command is either the main command or the subcommand of some command.
+ * For example, `git` is a command, `branch` is a subcommand of the command `git`.
+ * Both `git` and `branch` can be represented using this interface.
+ * Commands can have its own subcommands, options, and arguments.
+ *
  * **Please do not override this interface**, use [helper function][org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec]
  * to create the instance of it.
  */

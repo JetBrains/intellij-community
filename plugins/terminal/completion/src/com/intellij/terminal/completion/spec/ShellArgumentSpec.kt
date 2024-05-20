@@ -5,6 +5,10 @@ import org.jetbrains.annotations.Nls
 
 /**
  * Represents the specification of the Shell argument.
+ *
+ * Shell argument is the value of the parameter used in the Shell command or option.
+ * For example, `ls` command has an argument, that should be a file name.
+ * Or `-d` option of the `git branch` command accepts branch name as an argument.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

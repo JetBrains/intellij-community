@@ -7,6 +7,11 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * DSL for declaring subcommands, option and arguments of the Shell command.
+ *
+ * Shell command is either the main command or the subcommand of some command.
+ * For example, `git` is a command, `branch` is a subcommand of the command `git`.
+ * Both `git` and `branch` can be declared using this part of the DSL.
+ * Commands can have its own subcommands, options, and arguments.
  */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl

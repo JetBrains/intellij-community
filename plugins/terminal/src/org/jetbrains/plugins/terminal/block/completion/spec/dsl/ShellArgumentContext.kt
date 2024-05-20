@@ -8,6 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
+/**
+ * DSL for declaring the Shell argument: the rules of its usage and how to get the values of it.
+ *
+ * Shell argument is the value of the parameter used in the Shell command or option.
+ * For example, `ls` command has an argument, that should be a file name.
+ * Or `-d` option of the `git branch` command accepts branch name as an argument.
+ */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 sealed interface ShellArgumentContext {
