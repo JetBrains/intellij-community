@@ -456,11 +456,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !nullabilityChanged() && !visibilityChanged() && !customAccessorAdded();
+      return !typeChanged() && !visibilityChanged() && !customAccessorAdded();
     }
 
-    public boolean nullabilityChanged() {
-      return Attributes.isNullable(past.getReturnType()) != Attributes.isNullable(now.getReturnType());
+    public boolean typeChanged() {
+      return !kmTypesEqual(past.getReturnType(), now.getReturnType());
     }
 
     public boolean becameNullable() {
