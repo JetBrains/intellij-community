@@ -7,6 +7,9 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinImportBlockRangeProvider : ImportBlockRangeProvider {
+
+    override fun isEnabledForFile(file: PsiFile): Boolean = file is KtFile
+
     override fun getImportBlockRange(file: PsiFile): TextRange? {
         if (file !is KtFile) return null
         return file.importList?.textRange

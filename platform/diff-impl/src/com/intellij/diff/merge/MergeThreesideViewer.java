@@ -920,24 +920,33 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private @NotNull List<ProcessorData<?>> getReferenceData(@NotNull ThreeSide sourceSide, @NotNull List<MergeLineFragment> fragments) {
-    if (myProject == null) return Collections.emptyList();
-    if (!getTextSettings().isAutoResolveImportConflicts()) return Collections.emptyList();
-    Document sourceDocument = getContent(sourceSide).getDocument();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(sourceDocument);
-    if (file == null) return Collections.emptyList();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    if (psiFile == null) return Collections.emptyList();
+    try {
+      if (myProject == null) return Collections.emptyList();
+      if (!getTextSettings().isAutoResolveImportConflicts()) return Collections.emptyList();
+      Document sourceDocument = getContent(sourceSide).getDocument();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(sourceDocument);
+      if (file == null) return Collections.emptyList();
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+      if (psiFile == null) return Collections.emptyList();
 
-    int[] startOffsets = fragments.stream().mapToInt(fragment -> sourceDocument.getLineStartOffset(fragment.getStartLine(sourceSide)))
-      .toArray();
-    int[] endOffsets = fragments.stream().mapToInt(fragment -> sourceDocument.getLineEndOffset(fragment.getEndLine(sourceSide)))
-      .toArray();
+      int[] startOffsets = fragments.stream().mapToInt(fragment -> sourceDocument.getLineStartOffset(fragment.getStartLine(sourceSide)))
+        .toArray();
+      int[] endOffsets = fragments.stream().mapToInt(fragment -> sourceDocument.getLineEndOffset(fragment.getEndLine(sourceSide) - 1))
+        .toArray();
 
-    return ContainerUtil.mapNotNull(CopyPastePostProcessor.EP_NAME.getExtensionList(), processor -> {
-      return processor instanceof ReferenceCopyPasteProcessor
-             ? createProcessorData(processor, sourceSide, psiFile, startOffsets, endOffsets)
-             : null;
-    });
+      return ContainerUtil.mapNotNull(CopyPastePostProcessor.EP_NAME.getExtensionList(), processor -> {
+        return processor instanceof ReferenceCopyPasteProcessor
+               ? createProcessorData(processor, sourceSide, psiFile, startOffsets, endOffsets)
+               : null;
+      });
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return Collections.emptyList();
+    }
   }
 
   private @NotNull <T extends TextBlockTransferableData>

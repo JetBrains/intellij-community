@@ -3333,9 +3333,11 @@ com.intellij.lang.imports.ImportBlockRangeProvider
 - s:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - a:getImportBlockRange(com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
 - s:getRange(com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+- a:isEnabledForFile(com.intellij.psi.PsiFile):Z
 f:com.intellij.lang.imports.ImportBlockRangeProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getRange(com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+- f:isFileSupported(com.intellij.psi.PsiFile):Z
 com.intellij.lang.injection.ConcatenationAwareInjector
 - a:getLanguagesToInject(com.intellij.lang.injection.MultiHostRegistrar,com.intellij.psi.PsiElement[]):V
 f:com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper

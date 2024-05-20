@@ -7,11 +7,17 @@ import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.fragments.MergeLineFragment
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.ThreeSide
+import com.intellij.idea.ActionsBundle
 import com.intellij.lang.imports.ImportBlockRangeProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -85,6 +91,13 @@ class MergeImportUtil {
       return LineRange(document.getLineNumber(range.startOffset),
                        document.getLineNumber(range.endOffset) + 1)
     }
+
+    fun isEnabledFor(project: Project?, document: Document): Boolean {
+      if (project == null) return false
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return false
+      val psiFile = PsiManager.getInstance(project).findFile(file) ?: return false
+      return ImportBlockRangeProvider.isFileSupported(psiFile)
+    }
   }
 }
 
@@ -111,4 +124,36 @@ data class ProcessorData<T : TextBlockTransferableData>(val processor: CopyPaste
 class MergeReferenceData(private val left: List<ProcessorData<*>>,
                          private val right: List<ProcessorData<*>>) {
   fun getReferenceData(side: ThreeSide): List<ProcessorData<*>> = side.selectNotNull(left, emptyList(), right)
+}
+
+internal class ResolveConflictsInImportsToggleAction : ToggleAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    val viewer = getMergeViewer(e)
+    if (viewer == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    e.presentation.isEnabledAndVisible = MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return getMergeViewer(e)?.textSettings?.isAutoResolveImportConflicts ?: false
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    getMergeViewer(e)?.textSettings?.isAutoResolveImportConflicts = state
+  }
+
+  private fun getMergeViewer(e: AnActionEvent): MergeThreesideViewer? {
+    val textMergeViewer = e.getData(DiffDataKeys.MERGE_VIEWER) as? TextMergeViewer
+    return textMergeViewer?.viewer
+  }
 }

@@ -7,7 +7,6 @@ import com.intellij.diff.tools.util.base.HighlightingLevel;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffBundle;
@@ -187,7 +186,6 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     actions.add(Separator.getInstance());
 
     if (e != null && e.getData(DiffDataKeys.MERGE_VIEWER) != null) {
-      actions.add(new ResolveConflictsInImportsToggleAction());
       actions.add(Separator.getInstance());
       actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
     }
@@ -345,26 +343,5 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
   private interface EditorSettingAction {
     void applyDefaults(@NotNull List<? extends Editor> editors);
-  }
-
-  private class ResolveConflictsInImportsToggleAction extends ToggleAction implements DumbAware {
-    private ResolveConflictsInImportsToggleAction() {
-      super(ActionsBundle.message("action.EditorToggleResolveConflictsInImports.text"));
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myTextSettings.isAutoResolveImportConflicts();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myTextSettings.setAutoResolveImportConflicts(state);
-    }
   }
 }

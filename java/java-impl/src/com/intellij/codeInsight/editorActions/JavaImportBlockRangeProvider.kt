@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 
 class JavaImportBlockRangeProvider : ImportBlockRangeProvider {
+  override fun isEnabledForFile(file: PsiFile): Boolean  = file is PsiJavaFile
 
   override fun getImportBlockRange(file: PsiFile): TextRange? {
     if (file !is PsiJavaFile) return null
