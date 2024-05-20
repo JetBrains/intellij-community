@@ -8,9 +8,9 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class ShellCommandSpecImpl(
-  name: String,
+  override val name: String,
   override val displayName: String? = null,
-  descriptionSupplier: Supplier<@Nls String>? = null,
+  private val descriptionSupplier: Supplier<@Nls String>? = null,
   override val insertValue: String? = null,
   override val priority: Int = 50,
   override val requiresSubcommand: Boolean = false,
@@ -18,9 +18,12 @@ internal class ShellCommandSpecImpl(
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = emptyListGenerator(),
   private val optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() },
   private val argumentsSupplier: () -> List<ShellArgumentSpec> = { emptyList() }
-) : ShellCompletionSuggestionBase(name, descriptionSupplier), ShellCommandSpec {
+) : ShellCommandSpec {
   override val options: List<ShellOptionSpec> by lazy { optionsSupplier() }
   override val arguments: List<ShellArgumentSpec> by lazy { argumentsSupplier() }
+
+  override val description: String?
+    get() = descriptionSupplier?.get()
 
   // the icon of command will be specified in the completion logic
   override val icon: Icon? = null

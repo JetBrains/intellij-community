@@ -8,9 +8,9 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class ShellOptionSpecImpl(
-  name: String,
+  override val name: String,
   override val displayName: String?,
-  descriptionSupplier: Supplier<@Nls String>?,
+  private val descriptionSupplier: Supplier<@Nls String>?,
   override val insertValue: String?,
   override val priority: Int,
   override val isRequired: Boolean,
@@ -20,7 +20,10 @@ internal class ShellOptionSpecImpl(
   override val exclusiveOn: List<String>,
   override val dependsOn: List<String>,
   override val arguments: List<ShellArgumentSpec>
-) : ShellCompletionSuggestionBase(name, descriptionSupplier), ShellOptionSpec {
+) : ShellOptionSpec {
+  override val description: String?
+    get() = descriptionSupplier?.get()
+
   // the icon of option will be specified in the completion logic
   override val icon: Icon? = null
 

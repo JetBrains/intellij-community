@@ -10,7 +10,6 @@ import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandCont
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandSpecDsl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCompletionSuggestionImpl
-import java.util.function.Supplier
 import javax.swing.Icon
 
 /**
@@ -45,7 +44,7 @@ fun ShellCompletionSuggestion(
   name: String,
   type: ShellSuggestionType = ShellSuggestionType.ARGUMENT,
   displayName: String? = null,
-  description: Supplier<@Nls String>? = null,
+  description: @Nls String? = null,
   insertValue: String? = null,
   priority: Int = 50,
   icon: Icon? = null,
