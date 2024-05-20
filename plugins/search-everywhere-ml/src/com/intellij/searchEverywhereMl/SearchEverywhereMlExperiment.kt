@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.Companion.VERSION
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.util.MathUtil
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.VisibleForTesting
  */
 class SearchEverywhereMlExperiment {
   companion object {
-    const val VERSION = 1
+    const val VERSION = 2
     const val NUMBER_OF_GROUPS = 4
   }
 
