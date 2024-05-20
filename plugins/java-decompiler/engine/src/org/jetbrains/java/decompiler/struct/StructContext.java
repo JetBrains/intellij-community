@@ -164,4 +164,20 @@ public class StructContext {
   public Map<String, StructClass> getClasses() {
     return classes;
   }
-}
+
+  public IResultSaver getSaver() {
+    return saver;
+  }
+
+  public IDecompiledData getDecompiledData() {
+    return decompiledData;
+  }
+
+  public LazyLoader getLoader() {
+    return loader;
+  }
+
+  public Map<String, ContextUnit> getUnits() {
+    return units;
+  }
+}}
