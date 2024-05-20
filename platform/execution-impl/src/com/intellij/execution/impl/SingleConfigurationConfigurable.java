@@ -151,7 +151,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       RunConfiguration oldRunConfiguration = runConfiguration.clone();
 
       performApply(settings, runConfiguration);
-      
+
       ((FusCollectSettingChangesRunConfiguration)runConfiguration)
         .collectSettingChangesOnApply((FusCollectSettingChangesRunConfiguration)oldRunConfiguration);
     }
@@ -319,7 +319,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return new ValidationResult(
       e.getLocalizedMessage(),
       e instanceof RuntimeConfigurationException ? e.getTitle() : ExecutionBundle.message("invalid.data.dialog.title"),
-      getQuickFix(snapshot, e));
+      getQuickFix(snapshot, e),
+      e instanceof RuntimeConfigurationWarning
+    );
   }
 
   private @Nullable Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
@@ -530,6 +532,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         mySeparator.setVisible(true);
         myWarningLabel.setVisible(true);
         myWarningLabel.setText(generateWarningLabelText(configurationException));
+        myWarningLabel.setIcon(configurationException.isWarning() ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
         final Runnable quickFix = configurationException.getQuickFix();
         if (quickFix == null) {
           myFixButton.setVisible(false);

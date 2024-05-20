@@ -1367,10 +1367,11 @@ f:com.intellij.execution.impl.UnknownBeforeRunTaskProvider$UnknownTask
 - readExternal(org.jdom.Element):V
 - writeExternal(org.jdom.Element):V
 f:com.intellij.execution.impl.ValidationResult
-- <init>(java.lang.String,java.lang.String,java.lang.Runnable):V
+- <init>(java.lang.String,java.lang.String,java.lang.Runnable,Z):V
 - getMessage():java.lang.String
 - getQuickFix():java.lang.Runnable
 - getTitle():java.lang.String
+- isWarning():Z
 f:com.intellij.execution.impl.statistics.FragmentedStatisticsServiceImpl
 - com.intellij.execution.ui.FragmentStatisticsService
 - <init>():V
