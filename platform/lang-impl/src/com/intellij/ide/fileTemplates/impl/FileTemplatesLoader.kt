@@ -35,7 +35,6 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.text.MessageFormat
 import java.util.*
 import java.util.function.BiPredicate
 import java.util.function.Function
@@ -127,25 +126,8 @@ private fun getDescriptionPath(pathPrefix: String,
                                templateName: String,
                                templateExtension: String,
                                descriptionPaths: Set<String>): String? {
-  val locale = Locale.getDefault()
-  var name = MessageFormat.format("{0}.{1}_{2}_{3}$DESCRIPTION_EXTENSION_SUFFIX",
-                                  templateName,
-                                  templateExtension,
-                                  locale.language,
-                                  locale.country)
-  var path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
-  if (descriptionPaths.contains(path)) {
-    return path
-  }
-
-  name = MessageFormat.format("{0}.{1}_{2}$DESCRIPTION_EXTENSION_SUFFIX", templateName, templateExtension, locale.language)
-  path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
-  if (descriptionPaths.contains(path)) {
-    return path
-  }
-
-  name = "$templateName.$templateExtension$DESCRIPTION_EXTENSION_SUFFIX"
-  path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+  val name = "$templateName.$templateExtension$DESCRIPTION_EXTENSION_SUFFIX"
+  val path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
   return if (descriptionPaths.contains(path)) path else null
 }
 
@@ -241,6 +223,7 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
 
 private fun loadDefaultsFromJar(module: PluginDescriptor, url: URL, prefixes: List<String>, result: FileTemplateLoadResult) {
   val children = UrlUtil.getChildPathsFromJar(url)
+  val classLoader = module.classLoader
   if (children.isEmpty()) {
     return
   }
@@ -248,13 +231,13 @@ private fun loadDefaultsFromJar(module: PluginDescriptor, url: URL, prefixes: Li
   val descriptionPaths = HashSet<String>()
   for (path in children) {
     if (path.endsWith("includes/default.html")) {
-      result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { loadTemplate(url, it) } }
+      result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { loadTemplate(classLoader, url, it) } }
     }
     else if (path.endsWith("default.html")) {
-      result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { loadTemplate(url, it) } }
+      result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { loadTemplate(classLoader, url, it) } }
     }
     else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
-      val filePath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path).invariantSeparatorsPathString
+      val filePath = Path.of(path).invariantSeparatorsPathString
       descriptionPaths.add(filePath)
     }
   }
@@ -265,8 +248,8 @@ private fun loadDefaultsFromJar(module: PluginDescriptor, url: URL, prefixes: Li
     prefixes = prefixes,
     descriptionPaths = descriptionPaths,
     result = result,
-    descriptionLoader = { loadTemplate(url, it) },
-    dataLoader = { loadTemplate(url, it) },
+    descriptionLoader = { loadTemplate(classLoader, url, it) },
+    dataLoader = { loadTemplate(classLoader, url, it) },
   )
 }
 
@@ -319,15 +302,16 @@ private fun loadDefaultsFromDirectory(module: PluginDescriptor, root: URL, resul
   val templateFiles = mutableListOf<String>()
   val pathToFileTemplate = urlToPath(root)
   val rootFolder = pathToFileTemplate.parent
+  val classLoader = module.classLoader
   Files.find(pathToFileTemplate, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use { stream ->
     stream.forEach { file ->
       val path = pathToFileTemplate.relativize(file).invariantSeparatorsPathString
       when {
         path.endsWith("includes/default.html") -> {
-          result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
+          result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(classLoader, rootFolder, filePath) } }
         }
         path.endsWith("default.html") -> {
-          result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
+          result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(classLoader, rootFolder, filePath) } }
         }
         path.endsWith(DESCRIPTION_EXTENSION_SUFFIX) -> {
           descriptionPaths.add(path)
@@ -345,14 +329,14 @@ private fun loadDefaultsFromDirectory(module: PluginDescriptor, root: URL, resul
     prefixes = prefixes,
     descriptionPaths = descriptionPaths,
     result = result,
-    descriptionLoader = { loadFileContent(rootFolder, it) },
-    dataLoader = { loadFileContent(rootFolder, it) },
+    descriptionLoader = { loadFileContent(classLoader, rootFolder, it) },
+    dataLoader = { loadFileContent(classLoader, rootFolder, it) },
   )
 }
 
 private fun getLocalizedContent(path: String, pathResolver: Function<String, String?>): String {
   val fullPath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path)
-  if (LocalizationUtil.getLocaleFromPlugin() != null) {
+  if (LocalizationUtil.getLocaleOrNullForDefault() != null) {
     val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath).map { it.invariantSeparatorsPathString }
     for (localizedPath in localizedPaths) {
       pathResolver.apply(localizedPath)?.let { return it }
@@ -366,16 +350,17 @@ private fun getLocalizedContent(path: String, pathResolver: Function<String, Str
   return result
 }
 
-private fun loadFileContent(root: Path, filePath: String): String? {
+private fun loadFileContent(classLoader: ClassLoader, root: Path, filePath: String): String? {
   try {
     val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
-    return pluginClassLoader?.let {
+    val fileContent = (pluginClassLoader?.let {
       ResourceUtil.getResourceAsBytesSafely(filePath, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
-    } ?: ResourceUtil.getResourceAsBytesSafely(filePath, FileTemplatesLoader::class.java.classLoader)?.toString(StandardCharsets.UTF_8)
-           ?: Files.readString(root.resolve(filePath))
+    } ?: ResourceUtil.getResourceAsBytesSafely(filePath, classLoader)?.toString(StandardCharsets.UTF_8)
+                       ?: Files.readString(root.resolve(filePath)))
+    return fileContent
   }
   catch (e: IOException) {
-    logger<FileTemplatesLoader>().info(e)
+    logger<FileTemplatesLoader>().info(e.message)
   }
   return null
 }
@@ -406,14 +391,12 @@ private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>
   fun getManager(kind: String) = managers.get(kind)!!
 }
 
-private fun loadTemplate(root: URL, path: String): String? {
+private fun loadTemplate(classLoader: ClassLoader, root: URL, path: String): String? {
   try {
     val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
     val result = pluginClassLoader?.let {
       ResourceUtil.getResourceAsBytesSafely(path, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
-    } ?: FileTemplatesLoader::class.java.classLoader.let {
-      ResourceUtil.getResourceAsBytesSafely(path, it)?.toString(StandardCharsets.UTF_8)
-    }
+    } ?: ResourceUtil.getResourceAsBytesSafely(path, classLoader)?.toString(StandardCharsets.UTF_8)
     if (result == null) {
       val url = URL(root.protocol, root.host, root.port, root.path.replace(DEFAULT_TEMPLATES_ROOT, path))
       return ResourceUtil.loadText(url.openStream())
@@ -421,7 +404,7 @@ private fun loadTemplate(root: URL, path: String): String? {
     return result
   }
   catch (e: IOException) {
-    logger<FileTemplatesLoader>().info(e)
+    logger<FileTemplatesLoader>().info(e.message)
   }
   return null
 }

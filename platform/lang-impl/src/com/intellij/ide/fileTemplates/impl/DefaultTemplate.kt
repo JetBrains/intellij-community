@@ -32,7 +32,7 @@ class DefaultTemplate constructor(
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
     if (text != null) return text
-    val locale = LocalizationUtil.getLocaleFromPlugin()
+    val locale = LocalizationUtil.getLocaleOrNullForDefault()
     if (locale != null) {
       val localizedPaths = LocalizationUtil.getLocalizedPaths(templatePath).map { it.invariantSeparatorsPathString }
       for (path in localizedPaths) {
@@ -62,12 +62,14 @@ class DefaultTemplate constructor(
 
     val fullPath = descriptionPath?.let { Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(it) }
     try {
-      if (LocalizationUtil.getLocaleFromPlugin() != null && fullPath != null) {
+      if (LocalizationUtil.getLocaleOrNullForDefault() != null && fullPath != null) {
         val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath)
           val localizedPathStrings = localizedPaths.map { it.invariantSeparatorsPathString }
           for (path in localizedPathStrings) {
             text = descriptionLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
-            if (text != null) break
+            if (text != null) {
+              break
+            }
           }
       }
 
