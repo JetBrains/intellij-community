@@ -31,10 +31,7 @@ import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.DIFF_PLACE
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.ProgressBarLoadingDecorator
-import com.intellij.ui.components.TextComponentEmptyText
+import com.intellij.ui.components.*
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
@@ -48,8 +45,10 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
+import javax.swing.text.JTextComponent
 
 class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope,
                    private val isFrameDiffPreview: Boolean = false) :
@@ -82,7 +81,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     frameDiffPreview?.setToolbarVerticalSizeReferent(toolbarComponent)
 
     val filterProgress = searchField.let { field ->
-      object : ProgressBarLoadingDecorator(field, this@ActivityView, 500) {
+      object : ProgressBarLoadingDecorator(field.containerComponent, this@ActivityView, 500) {
         override fun isOnTop() = false
       }.also {
         toolbarComponent.add(it.component, BorderLayout.CENTER)
@@ -142,7 +141,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     isFocusCycleRoot = true
     focusTraversalPolicy = object: ComponentsListFocusTraversalPolicy() {
       override fun getOrderedComponents(): List<Component> {
-        return listOfNotNull(activityList, changesBrowser?.preferredFocusedComponent, searchField.textArea,
+        return listOfNotNull(activityList, changesBrowser?.preferredFocusedComponent, searchField.textComponent,
                              frameDiffPreview?.preferredFocusedComponent)
       }
     }
@@ -202,39 +201,39 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return diffViewer
   }
 
-  private fun createSearchField(): SearchTextArea {
-    val textArea = JBTextArea()
-    textArea.emptyText.text = when (model.filterKind) {
-      FilterKind.FILE -> LocalHistoryBundle.message("activity.filter.empty.text.fileName")
-      FilterKind.CONTENT -> LocalHistoryBundle.message("activity.filter.empty.text.content")
-    }
-    TextComponentEmptyText.setupPlaceholderVisibility(textArea)
+  private fun createSearchField(): SearchFieldComponent {
+    val searchField = when (model.filterKind) {
+      FilterKind.FILE -> SearchFieldComponent.SingleLine().also { field ->
+        field.textComponent.emptyText.text = LocalHistoryBundle.message("activity.filter.empty.text.fileName")
+      }
+      FilterKind.CONTENT -> SearchFieldComponent.MultiLine().also { field ->
+        field.containerComponent.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT),
+                                                              field.containerComponent.border))
+        field.textComponent.emptyText.text = LocalHistoryBundle.message("activity.filter.empty.text.content")
 
-    val searchTextArea = SearchTextArea(textArea, true)
-    searchTextArea.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT), searchTextArea.border))
-
-    if (model.filterKind == FilterKind.CONTENT) {
-      dumbAwareAction { selectNextOccurence(true) }.registerCustomShortcutSet(Utils.shortcutSetOf(
-        Utils.shortcutsOf(IdeActions.ACTION_FIND_NEXT) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-      ), searchTextArea)
-      dumbAwareAction { selectNextOccurence(false) }.registerCustomShortcutSet(Utils.shortcutSetOf(
-        Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
-      ), searchTextArea)
+        dumbAwareAction { selectNextOccurence(true) }.registerCustomShortcutSet(Utils.shortcutSetOf(
+          Utils.shortcutsOf(IdeActions.ACTION_FIND_NEXT) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+        ), field.containerComponent)
+        dumbAwareAction { selectNextOccurence(false) }.registerCustomShortcutSet(Utils.shortcutSetOf(
+          Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+        ), field.containerComponent)
+      }
     }
+    TextComponentEmptyText.setupPlaceholderVisibility(searchField.textComponent)
     dumbAwareAction {
-      IdeFocusManager.getInstance(project).requestFocus(searchTextArea.textArea, true)
+      IdeFocusManager.getInstance(project).requestFocus(searchField.textComponent, true)
     }.registerCustomShortcutSet(Utils.shortcutSetOf(Utils.shortcutsOf(IdeActions.ACTION_FIND)), activityList)
     dumbAwareAction {
-      searchTextArea.textArea.text = ""
+      searchField.textComponent.text = ""
       IdeFocusManager.getInstance(project).requestFocus(activityList, true)
-    }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), searchTextArea.textArea)
-    searchTextArea.textArea.document.addDocumentListener(object : DocumentAdapter() {
+    }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), searchField.textComponent)
+    searchField.textComponent.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         if (!model.isFilterSet) LocalHistoryCounter.logFilterUsed(activityScope)
-        model.setFilter(searchTextArea.textArea.getText())
+        model.setFilter(searchField.textComponent.text)
       }
     })
-    return searchTextArea
+    return searchField
   }
 
   private fun getDiffComponent(): JComponent? {
@@ -248,7 +247,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     val diffComponent = getDiffComponent() ?: return
     val editor = FileHistoryDialog.findLeftEditor(diffComponent) ?: return
 
-    FileHistoryDialog.updateEditorSearch(project, searchField, editor)
+    FileHistoryDialog.updateEditorSearch(project, searchField.textComponent, editor)
   }
 
   private fun selectNextOccurence(forward: Boolean) {
@@ -372,5 +371,19 @@ class ActivityService(val coroutineScope: CoroutineScope)
 private fun dumbAwareAction(runnable: () -> Unit): DumbAwareAction {
   return object : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) = runnable()
+  }
+}
+
+private sealed interface SearchFieldComponent {
+  val containerComponent: JPanel
+  val textComponent: JTextComponent
+  class SingleLine: SearchFieldComponent {
+    override val containerComponent = SearchTextField("Lvcs.FileFilter.History")
+    override val textComponent: JBTextField get() = containerComponent.textEditor
+  }
+  class MultiLine: SearchFieldComponent {
+    private val textArea = JBTextArea()
+    override val containerComponent = SearchTextArea(textArea, true)
+    override val textComponent = textArea
   }
 }

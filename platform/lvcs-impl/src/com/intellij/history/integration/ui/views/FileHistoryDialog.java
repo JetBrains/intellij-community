@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -171,18 +172,18 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private void updateEditorSearch() {
     Editor editor = findLeftEditor();
     if (editor == null) return;
-    updateEditorSearch(myProject, mySearchTextArea, editor);
+    updateEditorSearch(myProject, mySearchTextArea.getTextArea(), editor);
   }
 
-  public static void updateEditorSearch(@NotNull Project project, @NotNull SearchTextArea searchTextArea, @NotNull Editor editor) {
-    String filter = searchTextArea.getTextArea().getText();
+  public static void updateEditorSearch(@NotNull Project project, @NotNull JTextComponent searchTextComponent, @NotNull Editor editor) {
+    String filter = searchTextComponent.getText();
     EditorSearchSession session = EditorSearchSession.get(editor);
     if (StringUtil.isEmpty(filter)) {
       if (session != null) {
-        boolean focused = searchTextArea.getTextArea().isFocusOwner();
+        boolean focused = searchTextComponent.isFocusOwner();
         session.close();
         if (focused) {
-          IdeFocusManager.getInstance(project).requestFocus(searchTextArea.getTextArea(), false);
+          IdeFocusManager.getInstance(project).requestFocus(searchTextComponent, false);
         }
       }
       return;

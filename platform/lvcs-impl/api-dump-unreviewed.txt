@@ -707,7 +707,7 @@ c:com.intellij.history.integration.ui.views.FileHistoryDialog
 - s:findLeftEditor(javax.swing.JComponent):com.intellij.openapi.editor.Editor
 - p:getHelpId():java.lang.String
 - p:setDiffBorder(javax.swing.border.Border):V
-- s:updateEditorSearch(com.intellij.openapi.project.Project,com.intellij.find.SearchTextArea,com.intellij.openapi.editor.Editor):V
+- s:updateEditorSearch(com.intellij.openapi.project.Project,javax.swing.text.JTextComponent,com.intellij.openapi.editor.Editor):V
 a:com.intellij.history.integration.ui.views.HistoryDialog
 - com.intellij.openapi.ui.FrameWrapper
 - pf:myFile:com.intellij.openapi.vfs.VirtualFile
