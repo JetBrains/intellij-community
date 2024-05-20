@@ -80,10 +80,6 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
             if (value.isNotBlank()) {
               if (!name.endsWith(":"))
                 append(':')
-              // Workaround misalignment of monospace font
-              if (value.contains("<code")) {
-                append("<code> </code>")
-              }
               append(DocumentationMarkup.SECTION_SEPARATOR)
                 .append(value)
             }
