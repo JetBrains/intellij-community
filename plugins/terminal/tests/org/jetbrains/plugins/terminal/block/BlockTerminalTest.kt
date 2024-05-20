@@ -9,8 +9,8 @@ import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContext
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
@@ -103,8 +103,8 @@ class BlockTerminalTest(private val shellPath: Path) {
         // At first, schedule the generator
         val generatorCommandSent = createCommandSentDeferred(session)
         // Create generator and context each time, because default implementations are caching
-        val generatorsExecutor = IJShellGeneratorsExecutor(session)
-        val context = IJShellRuntimeContext(
+        val generatorsExecutor = ShellDataGeneratorsExecutorImpl(session)
+        val context = ShellRuntimeContextImpl(
           "",
           "",
           session.shellIntegration.shellType.toShellName(),

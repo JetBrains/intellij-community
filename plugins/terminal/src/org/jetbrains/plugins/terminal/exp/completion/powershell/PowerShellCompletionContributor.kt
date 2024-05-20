@@ -12,8 +12,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import org.jetbrains.plugins.terminal.TerminalIcons
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil
@@ -25,8 +25,8 @@ import kotlin.math.min
 internal class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
-    val runtimeContextProvider = parameters.editor.getUserData(IJShellRuntimeContextProvider.KEY)
-    val generatorsExecutor = parameters.editor.getUserData(IJShellGeneratorsExecutor.KEY)
+    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY)
+    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY)
     val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||

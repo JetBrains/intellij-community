@@ -6,7 +6,7 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 
-internal class IJShellRuntimeContext(
+internal class ShellRuntimeContextImpl(
   override val currentDirectory: String,
   override val typedPrefix: String,
   override val shellName: ShellName,

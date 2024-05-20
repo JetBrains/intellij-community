@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators
-import org.jetbrains.plugins.terminal.exp.completion.IJShellCommandSpecsManager
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
 import java.io.File
 
 @ApiStatus.Experimental
@@ -49,7 +49,7 @@ object ShellDataGenerators {
     return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "commands") { context ->
       val shellEnv = ShellEnvBasedGenerators.getShellEnv(context)
                      ?: return@ShellRuntimeDataGenerator emptyList()
-      val commandSpecManager = IJShellCommandSpecsManager.getInstance()
+      val commandSpecManager = ShellCommandSpecsManagerImpl.getInstance()
       val commands = sequence {
         yieldAll(shellEnv.keywords)
         yieldAll(shellEnv.builtins)

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeDataGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeDataGeneratorImpl
 
 /**
  * Creates a [ShellRuntimeDataGenerator] that provides the result of type [T] with the help of [ShellRuntimeContext].
@@ -20,7 +20,7 @@ fun <T> ShellRuntimeDataGenerator(
   cacheKeyAndDebugName: String? = null,
   generate: suspend (ShellRuntimeContext) -> T
 ): ShellRuntimeDataGenerator<T> {
-  return IJShellRuntimeDataGenerator(cacheKeyAndDebugName, { cacheKeyAndDebugName }, generate)
+  return ShellRuntimeDataGeneratorImpl(cacheKeyAndDebugName, { cacheKeyAndDebugName }, generate)
 }
 
 /**
@@ -39,5 +39,5 @@ fun <T> ShellRuntimeDataGenerator(
   getCacheKey: (ShellRuntimeContext) -> String? = { null },
   generate: suspend (ShellRuntimeContext) -> T
 ): ShellRuntimeDataGenerator<T> {
-  return IJShellRuntimeDataGenerator(debugName, getCacheKey, generate)
+  return ShellRuntimeDataGeneratorImpl(debugName, getCacheKey, generate)
 }

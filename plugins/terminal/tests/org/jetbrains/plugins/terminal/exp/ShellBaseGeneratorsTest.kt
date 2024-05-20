@@ -14,8 +14,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContext
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
@@ -118,8 +118,8 @@ class ShellBaseGeneratorsTest(private val shellPath: Path) {
     generator: ShellRuntimeDataGenerator<T>,
     typedPrefix: String = ""
   ) = runBlocking {
-    val executor = IJShellGeneratorsExecutor(session)
-    val context = IJShellRuntimeContext(
+    val executor = ShellDataGeneratorsExecutorImpl(session)
+    val context = ShellRuntimeContextImpl(
       currentDirectory = "",
       typedPrefix,
       session.shellIntegration.shellType.toShellName(),

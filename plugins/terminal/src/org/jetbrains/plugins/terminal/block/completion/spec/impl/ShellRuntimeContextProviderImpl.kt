@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
 
-internal class IJShellRuntimeContextProvider(
+internal class ShellRuntimeContextProviderImpl(
   private val project: Project,
   private val session: BlockTerminalSession
 ) : ShellRuntimeContextProvider {
@@ -30,7 +30,7 @@ internal class IJShellRuntimeContextProvider(
   }
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
-    return IJShellRuntimeContext(
+    return ShellRuntimeContextImpl(
       curDirectory,
       typedPrefix,
       session.shellIntegration.shellType.toShellName(),
@@ -41,6 +41,6 @@ internal class IJShellRuntimeContextProvider(
   }
 
   companion object {
-    val KEY: Key<IJShellRuntimeContextProvider> = Key.create("IJShellRuntimeContextProvider")
+    val KEY: Key<ShellRuntimeContextProviderImpl> = Key.create("IJShellRuntimeContextProvider")
   }
 }

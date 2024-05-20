@@ -10,8 +10,8 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
@@ -48,10 +48,10 @@ internal class TerminalPromptController(
     editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
     editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
-    val shellRuntimeContextProvider = IJShellRuntimeContextProvider(project, session)
-    editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
-    val shellGeneratorsExecutor = IJShellGeneratorsExecutor(session)
-    editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)
+    val shellRuntimeContextProvider = ShellRuntimeContextProviderImpl(project, session)
+    editor.putUserData(ShellRuntimeContextProviderImpl.KEY, shellRuntimeContextProvider)
+    val shellGeneratorsExecutor = ShellDataGeneratorsExecutorImpl(session)
+    editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, shellGeneratorsExecutor)
 
     commandHistoryManager = CommandHistoryManager(session)
 

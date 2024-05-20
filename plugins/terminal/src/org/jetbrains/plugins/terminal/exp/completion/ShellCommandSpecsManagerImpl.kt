@@ -51,7 +51,7 @@ import java.time.Duration
  * So, to get the full version of this spec, [getFullCommandSpec] method should be used.
  */
 @Service
-internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
+internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
   /**
    * Cache for all **Light** json-based and code based specs with resolved conflicts.
    * Key is the name of the command.
@@ -250,8 +250,8 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
 
   companion object {
     @JvmStatic
-    fun getInstance(): IJShellCommandSpecsManager = service()
+    fun getInstance(): ShellCommandSpecsManagerImpl = service()
 
-    private val LOG: Logger = logger<IJShellCommandSpecsManager>()
+    private val LOG: Logger = logger<ShellCommandSpecsManagerImpl>()
   }
 }

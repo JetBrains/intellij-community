@@ -17,8 +17,8 @@ import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
 import org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
@@ -161,8 +161,8 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
     myFixture.configureByText(PlainTextFileType.INSTANCE, command)
     editor.putUserData(BlockTerminalSession.KEY, session)
     editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModel(editor as EditorEx, TestTerminalSessionInfo()))
-    editor.putUserData(IJShellRuntimeContextProvider.KEY, IJShellRuntimeContextProvider(project, session))
-    editor.putUserData(IJShellGeneratorsExecutor.KEY, IJShellGeneratorsExecutor(session))
+    editor.putUserData(ShellRuntimeContextProviderImpl.KEY, ShellRuntimeContextProviderImpl(project, session))
+    editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, ShellDataGeneratorsExecutorImpl(session))
 
     myFixture.completeBasic()
     return myFixture.lookupElementStrings

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.util
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContext
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 
 internal class TestRuntimeContextProvider(
@@ -13,6 +13,6 @@ internal class TestRuntimeContextProvider(
   private val generatorCommandsRunner: ShellGeneratorCommandsRunner = DummyGeneratorCommandsRunner()
 ) : ShellRuntimeContextProvider {
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
-    return IJShellRuntimeContext(directory, typedPrefix, shellName, generatorCommandsRunner)
+    return ShellRuntimeContextImpl(directory, typedPrefix, shellName, generatorCommandsRunner)
   }
 }

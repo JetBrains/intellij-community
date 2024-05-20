@@ -8,7 +8,7 @@ internal interface ShellCacheableDataGenerator<T> : ShellRuntimeDataGenerator<T>
   fun getCacheKey(context: ShellRuntimeContext): String?
 }
 
-internal class IJShellRuntimeDataGenerator<T>(
+internal class ShellRuntimeDataGeneratorImpl<T>(
   private val debugName: String?,
   private val cacheKeyFunc: (ShellRuntimeContext) -> String?,
   private val generatorFunc: suspend (ShellRuntimeContext) -> T

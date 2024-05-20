@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import java.time.Duration
 
-internal class IJShellGeneratorsExecutor(session: BlockTerminalSession) : ShellDataGeneratorsExecutor {
+internal class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : ShellDataGeneratorsExecutor {
   private val cache: Cache<String, Any> = Caffeine.newBuilder()
     .maximumSize(10)
     .expireAfterAccess(Duration.ofMinutes(5))
@@ -60,8 +60,8 @@ internal class IJShellGeneratorsExecutor(session: BlockTerminalSession) : ShellD
   }
 
   companion object {
-    private val LOG: Logger = logger<IJShellGeneratorsExecutor>()
+    private val LOG: Logger = logger<ShellDataGeneratorsExecutorImpl>()
 
-    val KEY: Key<IJShellGeneratorsExecutor> = Key.create("IJShellGeneratorsExecutor")
+    val KEY: Key<ShellDataGeneratorsExecutorImpl> = Key.create("IJShellGeneratorsExecutor")
   }
 }

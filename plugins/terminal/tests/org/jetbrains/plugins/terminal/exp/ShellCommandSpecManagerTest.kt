@@ -10,10 +10,10 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContext
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
 import org.jetbrains.plugins.terminal.block.util.DummyGeneratorCommandsRunner
-import org.jetbrains.plugins.terminal.exp.completion.IJShellCommandSpecsManager
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.exp.util.TestCommandSpecsProvider
 import org.jetbrains.plugins.terminal.exp.util.TestJsonCommandSpecsProvider
 import org.junit.Test
@@ -24,8 +24,8 @@ import org.junit.runners.JUnit4
 class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   private val commandName: String = "main"
 
-  private val commandSpecsManager: IJShellCommandSpecsManager
-    get() = IJShellCommandSpecsManager.getInstance()
+  private val commandSpecsManager: ShellCommandSpecsManagerImpl
+    get() = ShellCommandSpecsManagerImpl.getInstance()
 
   /** In this test, real context is not required */
   private val runtimeContext: ShellRuntimeContext = createDummyRuntimeContext()
@@ -162,6 +162,6 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   }
 
   private fun createDummyRuntimeContext(): ShellRuntimeContext {
-    return IJShellRuntimeContext("", "", ShellName("dummy"), DummyGeneratorCommandsRunner())
+    return ShellRuntimeContextImpl("", "", ShellName("dummy"), DummyGeneratorCommandsRunner())
   }
 }
