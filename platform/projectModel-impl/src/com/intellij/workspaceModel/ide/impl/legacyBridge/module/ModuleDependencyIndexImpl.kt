@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
@@ -28,6 +29,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
@@ -250,8 +253,15 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    fun hasDependencyOn(library: Library) = libToModuleMap.containsKey(getLibraryIdentifier(library))
-    fun hasDependencyOn(libraryId: LibraryId) = libToModuleMap.containsKey(getLibraryIdentifier(libraryId))
+    fun hasDependencyOn(library: Library): Boolean {
+      return when (library) {
+        is LibraryBridge -> hasDependencyOn(library.libraryId)
+        is LibraryModifiableModelBridge -> hasDependencyOn(library.libraryId)
+        else -> error("Unexpected type of library ${library::class.java}: $library")
+      }
+    }
+
+    fun hasDependencyOn(libraryId: LibraryId) = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java).any()
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
       val libraryTable = library.table

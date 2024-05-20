@@ -122,6 +122,9 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) originalLibrary.entityId = entityId
   }
 
+  override val libraryId: LibraryId
+    get() = entityId
+
   private fun update(updater: LibraryEntity.Builder.() -> Unit) {
     diff.modifyEntity(currentLibrary.libraryEntity, updater)
   }
