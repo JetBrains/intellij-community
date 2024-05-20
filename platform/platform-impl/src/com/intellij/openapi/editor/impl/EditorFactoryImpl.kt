@@ -39,6 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -89,6 +90,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     }
   }
 
+  @VisibleForTesting
   fun validateEditorsAreReleased(project: Project, isLastProjectClosed: Boolean) {
     for (editor in collectAllEditors()) {
       if (editor.project === project || (editor.project == null && isLastProjectClosed)) {

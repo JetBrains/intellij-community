@@ -14150,7 +14150,7 @@ f:com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager$ResizePolicy
 f:com.intellij.openapi.editor.impl.EditorFactoryImpl
 - com.intellij.openapi.editor.EditorFactory
 - sf:Companion:com.intellij.openapi.editor.impl.EditorFactoryImpl$Companion
-- <init>():V
+- <init>(kotlinx.coroutines.CoroutineScope):V
 - addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
