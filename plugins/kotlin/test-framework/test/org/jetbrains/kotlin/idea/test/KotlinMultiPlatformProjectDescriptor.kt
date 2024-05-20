@@ -94,11 +94,20 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             val descriptorsFromCommonToPlatform =
                 topologicalSort(PlatformDescriptor.entries, reverseOrder = true, PlatformDescriptor::refinementDependencies)
 
+            // create libraries beforehand to avoid duplicates
+            val projectLibraries = createProjectLibraries(project)
             val modulesByDescriptors = mutableMapOf<PlatformDescriptor, Module>()
+
             for (descriptor in descriptorsFromCommonToPlatform) {
                 val newModule = makeModule(project, descriptor)
                 descriptor.refinementDependencies.forEach { refinementDependencyDescriptor ->
                     ModuleRootModificationUtil.addDependency(newModule, modulesByDescriptors.getValue(refinementDependencyDescriptor))
+                }
+                descriptor.libraryDependencies.forEach { kmpLibraryDependency ->
+                    ModuleRootModificationUtil.updateModel(newModule) { model ->
+                        val library = projectLibraries.getValue(kmpLibraryDependency)
+                        model.addLibraryEntry(library)
+                    }
                 }
 
                 modulesByDescriptors[descriptor] = newModule
@@ -107,7 +116,27 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
         IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
-    private fun makeModule(project: Project, descriptor: PlatformDescriptor): Module {
+    private fun createProjectLibraries(project: Project): Map<KmpAwareLibraryDependency, Library> {
+        val allUniqueDependencies = PlatformDescriptor.entries.flatMap(PlatformDescriptor::libraryDependencies).toSet()
+
+        return allUniqueDependencies.associateWith { kmpDependency ->
+            createLibraryFromCoordinates(project, kmpDependency)
+        }
+    }
+
+    private fun createLibraryFromCoordinates(project: Project, dependency: KmpAwareLibraryDependency): Library {
+        val dependencyRoot = KmpLightFixtureDependencyDownloader.resolveDependency(dependency)?.toFile()
+            ?: error("Unable to download library ${dependency.coordinates}")
+        return ConfigLibraryUtil.addProjectLibrary(project = project, name = dependency.coordinates.toString()) {
+            addRoot(dependencyRoot, OrderRootType.CLASSES)
+            commit()
+        }
+    }
+
+    private fun makeModule(
+        project: Project,
+        descriptor: PlatformDescriptor,
+    ): Module {
         val path = "${FileUtil.getTempDirectory()}/${descriptor.moduleName}.iml"
         val module = createModule(project, path)
         ModuleRootModificationUtil.updateModel(module) { configureModule(module, it, descriptor) }
@@ -127,19 +156,6 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
             pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
         )
-        for (libraryCoordinates in descriptor.libraryDependencies) {
-            val library = setUpLibraryFromCoordinates(module.project, libraryCoordinates)
-            model.addLibraryEntry(library)
-        }
-    }
-
-    private fun setUpLibraryFromCoordinates(project: Project, dependency: KmpAwareLibraryDependency): Library {
-        val dependencyRoot = KmpLightFixtureDependencyDownloader.resolveDependency(dependency)?.toFile()
-            ?: error("Unable to download library ${dependency.coordinates}")
-        return ConfigLibraryUtil.addProjectLibrary(project = project, name = dependency.coordinates.toString()) {
-            addRoot(dependencyRoot, OrderRootType.CLASSES)
-            commit()
-        }
     }
 
     private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
