@@ -9,12 +9,16 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.serialization.impl.JpsLibraryEntitiesSerializer
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -22,6 +26,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 internal class CustomLibraryTableBridgeImpl(private val level: String, private val presentation: LibraryTablePresentation)
   : CustomLibraryTableBridge, CustomLibraryTable, Disposable {
+  private var tmpEntityStorage: EntityStorage? = null
   private val entitySource = LegacyCustomLibraryEntitySource(tableLevel)
   private val libraryTableId = LibraryTableId.GlobalLibraryTableId(tableLevel)
   private val libraryTableDelegate = GlobalLibraryTableDelegate(this, libraryTableId)
@@ -43,11 +48,22 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     libraryTableDelegate.handleChangedEvents(event)
   }
 
-  override fun getLibraries(): Array<Library> = libraryTableDelegate.getLibraries()
+  override fun getLibraries(): Array<Library> {
+    return tmpEntityStorage?.entities(LibraryEntity::class.java)
+             ?.filter { it.tableId == libraryTableId }
+             ?.mapNotNull { tmpEntityStorage?.libraryMap?.getDataByEntity(it) }
+             ?.toList()
+             ?.toTypedArray()
+           ?: libraryTableDelegate.getLibraries()
+  }
 
   override fun getLibraryIterator(): Iterator<Library> = getLibraries().iterator()
 
-  override fun getLibraryByName(name: String): Library? = libraryTableDelegate.getLibraryByName(name)
+  override fun getLibraryByName(name: String): Library? {
+    return tmpEntityStorage?.resolve(LibraryId(name, libraryTableId))?.let { entity ->
+      tmpEntityStorage?.libraryMap?.getDataByEntity(entity)
+    } ?: libraryTableDelegate.getLibraryByName(name)
+  }
 
   override fun createLibrary(): Library = createLibrary(null)
 
@@ -93,20 +109,38 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun readExternal(libraryTableTag: Element) {
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     val mutableEntityStorage = MutableEntityStorage.create()
+
     libraryTableTag.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG).forEach { libraryTag ->
       val name = libraryTag.getAttributeValue(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
       val libraryEntity = JpsLibraryEntitiesSerializer.loadLibrary(name, libraryTag, libraryTableId, entitySource,
-                                                                   GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager())
+                                                                   globalWorkspaceModel.getVirtualFileUrlManager())
       mutableEntityStorage.addEntity(libraryEntity)
     }
 
     if (!(mutableEntityStorage as MutableEntityStorageInstrumentation).hasChanges()) return
 
+    // Based on the assumption that no one changes the application library file manually, we can reuse existing bridges
+    val storageOnBuilder = VersionedEntityStorageOnBuilder(mutableEntityStorage)
+    mutableEntityStorage.entities(LibraryEntity::class.java).forEach { libraryEntity ->
+      val originalLibrary = globalWorkspaceModel.currentSnapshot.resolve(libraryEntity.symbolicId) ?: return@forEach
+      val libraryBridge = originalLibrary.findLibraryBridge(globalWorkspaceModel.currentSnapshot) ?: LibraryBridgeImpl(
+        libraryTable = this,
+        project = null,
+        initialId = libraryEntity.symbolicId,
+        initialEntityStorage = storageOnBuilder,
+        targetBuilder = null
+      )
+      mutableEntityStorage.mutableLibraryMap.addMapping(libraryEntity, libraryBridge as LibraryBridge)
+    }
+    tmpEntityStorage = mutableEntityStorage
+
     val runnable: () -> Unit = {
-      GlobalWorkspaceModel.getInstance().updateModel("Custom library table ${libraryTableId.level} update") { builder ->
+      globalWorkspaceModel.updateModel("Custom library table ${libraryTableId.level} update") { builder ->
         builder.replaceBySource({ it == entitySource }, mutableEntityStorage)
       }
+      tmpEntityStorage = null
     }
 
     val application = ApplicationManager.getApplication()
@@ -114,7 +148,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
       runnable.invoke()
     }
     else {
-      application.invokeAndWait {
+      application.invokeLater {
         application.runWriteAction {
           runnable.invoke()
         }
