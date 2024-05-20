@@ -2,6 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.ShutDownTracker
@@ -140,6 +141,10 @@ open class ManagedPersistentCache<K, V>(
       } catch (e: Exception) {
         // e.g., storage is already registered
         exception = e
+        break
+      }
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        // IJPL-149672 do not delete files in test mode
         break
       }
       IOUtil.deleteAllFilesStartingWith(mapBuilder.file)
