@@ -143,7 +143,7 @@ open class FileEditorManagerImpl(
   internal val initJob: Job
 
   private val dockable = lazy {
-    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope.childScope())
+    DockableEditorTabbedContainer(splitters = mainSplitters, disposeWhenEmpty = false, coroutineScope = coroutineScope.childScope("DockableEditorTabbedContainer"))
   }
 
   private val selectionHistory = SelectionHistory()
@@ -186,7 +186,15 @@ open class FileEditorManagerImpl(
   /**
    * Updates file tooltip
    */
-  private val editorCompositeListener = MyEditorCompositeListener()
+
+  /**
+   * Listen for preview status change to update file tooltip
+   */
+  private val editorCompositeListener = object : EditorCompositeListener {
+    override fun isPreviewChanged(composite: EditorComposite, value: Boolean) {
+      updateFileName(composite.file)
+    }
+  }
 
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
@@ -498,7 +506,7 @@ open class FileEditorManagerImpl(
     if (contentFactory != null) {
       return
     }
-    contentFactory = DockableEditorContainerFactory(fileEditorManager = this, coroutineScope = coroutineScope.childScope())
+    contentFactory = DockableEditorContainerFactory(fileEditorManager = this, coroutineScope = coroutineScope.childScope("DockableEditorContainerFactory"))
     DockManager.getInstance(project).register(DockableEditorContainerFactory.TYPE, contentFactory!!, this)
   }
 
@@ -1681,15 +1689,16 @@ open class FileEditorManagerImpl(
       return null
     }
 
-    return splitters.currentWindow?.getComposite(originalFile)
-           ?: openedComposites.firstOrNull { it.file == originalFile }
+    return splitters.currentWindow?.getComposite(originalFile) ?: openedComposites.firstOrNull { it.file == originalFile }
   }
 
   fun getAllComposites(file: VirtualFile): List<EditorComposite> {
-    if (!ClientId.isCurrentlyUnderLocalId) {
+    if (ClientId.isCurrentlyUnderLocalId) {
+      return getAllSplitters().flatMap { it.getAllComposites(file) }
+    }
+    else {
       return clientFileEditorManager?.getAllComposites(file) ?: emptyList()
     }
-    return getAllSplitters().flatMap { it.getAllComposites(file) }
   }
 
   override fun getAllEditors(): Array<FileEditor> {
@@ -2078,15 +2087,6 @@ open class FileEditorManagerImpl(
       coroutineScope.launch {
         withContext(Dispatchers.EDT) { getActiveSplittersAsync() }.await()?.updateFileName(updatedFile = null)
       }
-    }
-  }
-
-  /**
-   * Listen for preview status change to update file tooltip
-   */
-  private inner class MyEditorCompositeListener : EditorCompositeListener {
-    override fun isPreviewChanged(composite: EditorComposite, value: Boolean) {
-      updateFileName(composite.file)
     }
   }
 
@@ -2520,11 +2520,12 @@ internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
 }
 
 internal inline fun <T> runBulkTabChange(splitters: EditorsSplitters, task: () -> T): T {
-  if (!EDT.isCurrentThreadEdt()) {
+  if (EDT.isCurrentThreadEdt()) {
+    return runBulkTabChangeInEdt(splitters, task)
+  }
+  else {
     return task()
   }
-
-  return runBulkTabChangeInEdt(splitters, task)
 }
 
 @RequiresEdt
