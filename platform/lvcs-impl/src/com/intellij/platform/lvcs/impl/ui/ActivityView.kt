@@ -346,6 +346,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       LocalHistoryCounter.logLocalHistoryOpened(activityScope)
 
       val activityView = ActivityView(project, gateway, activityScope, isFrameDiffPreview = true)
+      activityView.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
 
       val dialog = FrameWrapper(project,
                                 title = LocalHistoryBundle.message("activity.dialog.title", activityScope.presentableName),
