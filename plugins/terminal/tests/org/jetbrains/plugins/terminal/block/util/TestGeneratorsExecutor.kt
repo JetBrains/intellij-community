@@ -5,8 +5,12 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 
-internal class TestGeneratorsExecutor : ShellDataGeneratorsExecutor {
+internal class TestGeneratorsExecutor(
+  private val mockGeneratorResult: suspend (context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<*>) -> Any = { context, generator -> generator.generate(context)!! }
+) : ShellDataGeneratorsExecutor {
   override suspend fun <T> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
-    return generator.generate(context)
+    val result = mockGeneratorResult(context, generator)
+    @Suppress("UNCHECKED_CAST") // Client should be responsible to match the result type with the generator return type.
+    return result as? T ?: error("Mocked result type is not the same as the generator result type. Generator: $generator, result: $result")
   }
 }
