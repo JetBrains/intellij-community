@@ -50,6 +50,6 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
             }
 
             val classOrObject = lightClassBase?.kotlinOrigin ?: return@runReadAction null
-            mainFunctionDetector.findMain(classOrObject)?.toLightMethods()?.firstOrNull() // если разрешить в dumb mode стреляет тут
+            mainFunctionDetector.findMain(classOrObject)?.toLightMethods()?.firstOrNull()
         }
 }
