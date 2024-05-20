@@ -268,8 +268,7 @@ class EditorTabbedContainer internal constructor(
     composite: EditorComposite,
     parentDisposable: Disposable,
   ) {
-    val existing = editorTabs.findInfo(file)
-    if (existing != null) {
+    editorTabs.findInfo(file)?.let {
       return
     }
 

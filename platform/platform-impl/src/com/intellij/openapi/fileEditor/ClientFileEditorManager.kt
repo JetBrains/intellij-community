@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.codeWithMe.ClientId
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * Per-client version of file editor manager
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
+@Experimental
 interface ClientFileEditorManager {
   companion object {
     @JvmStatic
