@@ -6,13 +6,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Tracker of library levels presented in the project.
  * If a module has a library dependency, the library level of this library will be tracked by this service.
  */
 @Service(Service.Level.PROJECT)
-internal class LibraryLevelsTracker {
+@ApiStatus.Internal
+class LibraryLevelsTracker {
 
   // This is, in fact, a multiset
   private val libraryLevels = Object2IntOpenHashMap<String>().also { it.defaultReturnValue(0) }
