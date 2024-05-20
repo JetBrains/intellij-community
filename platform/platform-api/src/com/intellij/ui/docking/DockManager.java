@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.docking;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public abstract class DockManager {
-
   public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);
 
   public abstract void register(@NotNull String id, @NotNull DockContainerFactory factory, @NotNull Disposable parentDisposable);

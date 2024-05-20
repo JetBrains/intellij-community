@@ -34,6 +34,7 @@ import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -379,8 +380,8 @@ open class EditorComposite internal constructor(
     focusWatcher?.deinstall(focusWatcher.topComponent)
   }
 
+  @RequiresEdt
   fun addEditor(editor: FileEditor, provider: FileEditorProvider) {
-    ThreadingAssertions.assertEventDispatchThread()
     val editorWithProvider = FileEditorWithProvider(editor, provider)
     fileEditorWithProviderList.add(editorWithProvider)
     FileEditor.FILE_KEY.set(editor, file)

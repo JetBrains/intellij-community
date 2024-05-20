@@ -454,7 +454,9 @@ open class FileEditorManagerImpl(
         Triple(file, newProviders, editorTypeIdsToRemove)
       }
     }
-    if (providerChanges.isEmpty()) return
+    if (providerChanges.isEmpty()) {
+      return
+    }
 
     for ((file, newProviders, editorTypeIdsToRemove) in providerChanges) {
       updateFileEditorProviders(file, newProviders, editorTypeIdsToRemove)
@@ -467,22 +469,25 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     newProviders: List<FileEditorProvider>,
     editorTypeIdsToRemove: List<String> = emptyList(),
-  ) = withContext(Dispatchers.EDT) {
-    val composites = getAllComposites(file)
-    for (composite in composites) {
-      for (editorTypeId in editorTypeIdsToRemove) {
-        composite.removeEditor(editorTypeId)
+  ) {
+    withContext(Dispatchers.EDT) {
+      val composites = getAllComposites(file)
+      for (composite in composites) {
+        for (editorTypeId in editorTypeIdsToRemove) {
+          composite.removeEditor(editorTypeId)
+        }
       }
-    }
 
-    for (composite in composites) {
-      for (provider in newProviders) {
-        val editor = provider.createEditor(project, file)
-        composite.addEditor(editor = editor, provider = provider)
+      for (composite in composites) {
+        for (provider in newProviders) {
+          composite.addEditor(editor = provider.createEditor(project, file), provider = provider)
+        }
+      }
+      updateFileBackgroundColor(file)
+      for (each in getAllSplitters()) {
+        each.updateTabPaneActions(file)
       }
     }
-    updateFileBackgroundColor(file)
-    updateTabPaneActions(file)
   }
 
   private fun getEditorTypeIds(composites: List<EditorComposite>): Set<String> =
@@ -501,10 +506,19 @@ open class FileEditorManagerImpl(
     get() = mainSplitters
 
   fun getAllSplitters(): Set<EditorsSplitters> {
+    if (!initJob.isCompleted) {
+      return emptySet()
+    }
+
+    val dockContainers = project.serviceIfCreated<DockManager>()?.containers ?: emptyList()
+    if (dockContainers.isEmpty() || (dockContainers.singleOrNull() as? DockableEditorTabbedContainer)?.splitters === mainSplitters) {
+      return setOf(mainSplitters)
+    }
+
     // ordered
-    val result = LinkedHashSet<EditorsSplitters>()
+    val result = LinkedHashSet<EditorsSplitters>(dockContainers.size + 1)
     result.add(mainSplitters)
-    for (container in DockManager.getInstance(project).containers) {
+    for (container in dockContainers) {
       if (container is DockableEditorTabbedContainer) {
         result.add(container.splitters)
       }
@@ -589,12 +603,6 @@ open class FileEditorManagerImpl(
   private fun updateFileBackgroundColor(file: VirtualFile) {
     for (each in getAllSplitters()) {
       each.updateFileBackgroundColorAsync(file)
-    }
-  }
-
-  private fun updateTabPaneActions(file: VirtualFile) {
-    for (each in getAllSplitters()) {
-      each.updateTabPaneActions(file)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
@@ -46,7 +46,7 @@ import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
 class DockableEditorTabbedContainer internal constructor(
-  internal val splitters: EditorsSplitters,
+  @JvmField internal val splitters: EditorsSplitters,
   private val disposeWhenEmpty: Boolean,
   private val coroutineScope: CoroutineScope,
 ) : DockContainer.Persistent, Activatable, Disposable {
