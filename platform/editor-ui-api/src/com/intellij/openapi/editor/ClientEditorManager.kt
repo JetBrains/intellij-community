@@ -1,99 +1,83 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor;
+package com.intellij.openapi.editor
 
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.ClientKind;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.List;
-import java.util.stream.Stream;
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.WeakList
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Manages editors for particular clients. Take a look a {@link com.intellij.openapi.client.ClientSession}
+ * Manages editors for particular clients. Take a look a [com.intellij.openapi.client.ClientSession]
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public final class ClientEditorManager {
-  public static @NotNull ClientEditorManager getCurrentInstance() {
-    return ApplicationManager.getApplication().getService(ClientEditorManager.class);
-  }
+class ClientEditorManager {
+  private val clientId = current
 
-  public static @NotNull List<ClientEditorManager> getAllInstances() {
-    return ApplicationManager.getApplication().getServices(ClientEditorManager.class, ClientKind.ALL);
-  }
+  val editors: MutableList<Editor> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  /**
-   * @return clientId of a user that the editor corresponds to.
-   */
-  public static @Nullable ClientId getClientId(@NotNull Editor editor) {
-    return CLIENT_ID.get(editor);
-  }
+  companion object {
+    fun getCurrentInstance(): ClientEditorManager = ApplicationManager.getApplication().getService(ClientEditorManager::class.java)
 
-  public static @NotNull Editor getClientEditor(@NotNull Editor editor, @Nullable ClientId clientId) {
-    var editors = COPIED_EDITORS.get(editor);
-    if (clientId == null || editors == null) {
-      return editor;
-    }
-    for (Editor copiedEditor : editors) {
-      if (clientId.equals(getClientId(copiedEditor))) {
-        return copiedEditor;
+    fun getAllInstances(): List<ClientEditorManager> = ApplicationManager.getApplication().getServices(ClientEditorManager::class.java, ClientKind.ALL)
+
+    /**
+     * @return clientId of a user that the editor corresponds to.
+     */
+    @JvmStatic
+    fun getClientId(editor: Editor): ClientId? = CLIENT_ID.get(editor)
+
+    @JvmStatic
+    fun getClientEditor(editor: Editor, clientId: ClientId?): Editor {
+      val editors = COPIED_EDITORS.get(editor)
+      if (clientId == null || editors == null) {
+        return editor
       }
+      return editors.firstOrNull { clientId == getClientId(it) } ?: editor
     }
-    return editor;
-  }
 
-  @ApiStatus.Internal
-  public static void assignClientId(@NotNull Editor editor, @Nullable ClientId clientId) {
-    CLIENT_ID.set(editor, clientId);
-  }
-
-  @ApiStatus.Internal
-  public static void addCopiedEditor(@NotNull Editor from, @NotNull Editor to) {
-    var list = COPIED_EDITORS.get(from);
-    if (list == null) {
-      list = new WeakList<>();
-      COPIED_EDITORS.set(from, list);
+    @ApiStatus.Internal
+    fun assignClientId(editor: Editor, clientId: ClientId?) {
+      CLIENT_ID.set(editor, clientId)
     }
-    list.add(to);
-  }
 
-  private static final Key<ClientId> CLIENT_ID = Key.create("CLIENT_ID");
-  private static final Key<WeakList<Editor>> COPIED_EDITORS = Key.create("COPIED_EDITORS");
-  private final ClientId myClientId = ClientId.getCurrent();
-  private final List<Editor> editors = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  public @NotNull Stream<Editor> editors() {
-    return editors.stream();
-  }
-
-  public @NotNull @Unmodifiable List<Editor> getEditors() {
-    return editors;
-  }
-
-  public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
-    return editors()
-      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
-  }
-
-  public void editorCreated(@NotNull Editor editor) {
-    if (!ClientId.isLocal(myClientId)) {
-      CLIENT_ID.set(editor, myClientId);
+    @ApiStatus.Internal
+    fun addCopiedEditor(from: Editor, to: Editor) {
+      var list = COPIED_EDITORS.get(from)
+      if (list == null) {
+        list = WeakList()
+        COPIED_EDITORS.set(from, list)
+      }
+      list.add(to)
     }
-    editors.add(editor);
+
+    private val CLIENT_ID = Key.create<ClientId>("CLIENT_ID")
+    private val COPIED_EDITORS = Key.create<WeakList<Editor>>("COPIED_EDITORS")
   }
 
-  public boolean editorReleased(@NotNull Editor editor) {
-    if (!ClientId.isLocal(myClientId)) {
-      CLIENT_ID.set(editor, null);
+  fun editors(): Sequence<Editor> = editors.asSequence()
+
+  fun editors(document: Document, project: Project?): Sequence<Editor> {
+    return editors.asSequence().filter { editor -> editor.document == document && (project == null || project == editor.project) }
+  }
+
+  fun editorCreated(editor: Editor) {
+    if (!clientId.isLocal) {
+      CLIENT_ID.set(editor, clientId)
     }
-    return editors.remove(editor);
+    editors.add(editor)
+  }
+
+  fun editorReleased(editor: Editor): Boolean {
+    if (!clientId.isLocal) {
+      CLIENT_ID.set(editor, null)
+    }
+    return editors.remove(editor)
   }
 }

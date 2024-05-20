@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeWithMe.ClientId;
@@ -601,7 +601,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   private static @NotNull ClientHintManager getClientManager(@NotNull Editor editor) {
-    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.Companion.getClientId(editor))) {
       return ClientHintManager.getCurrentInstance();
     }
   }

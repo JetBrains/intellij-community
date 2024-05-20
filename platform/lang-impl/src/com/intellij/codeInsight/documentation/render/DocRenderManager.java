@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,8 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 import static com.intellij.codeWithMe.ClientId.withClientId;
 
@@ -20,7 +23,7 @@ public final class DocRenderManager {
   private static final Key<Boolean> DOC_RENDER_ENABLED = Key.create("doc.render.enabled");
 
   /**
-   * Allows to override global doc comments rendering setting for a specific editor. Passing {@code null} as {@code value} makes editor use
+   * Allows overriding global doc comments rendering setting for a specific editor. Passing {@code null} as {@code value} makes editor use
    * the global setting again.
    */
   public static void setDocRenderingEnabled(@NotNull Editor editor, @Nullable Boolean value) {
@@ -53,9 +56,10 @@ public final class DocRenderManager {
    *
    * @see #isDocRenderingEnabled(Editor)
    */
+  @RequiresEdt
   public static void resetAllEditorsToDefaultState() {
-    ThreadingAssertions.assertEventDispatchThread();
-    for (Editor editor : ClientEditorManager.getCurrentInstance().editors().toList()) {
+    for (Iterator<Editor> it = ClientEditorManager.Companion.getCurrentInstance().editors().iterator(); it.hasNext(); ) {
+      Editor editor = it.next();
       DocRenderItemManager.getInstance().resetToDefaultState(editor);
       DocRenderPassFactory.forceRefreshOnNextPass(editor);
     }
@@ -69,8 +73,8 @@ public final class DocRenderManager {
    *
    * @see #isDocRenderingEnabled(Editor)
    */
+  @RequiresEdt
   public static void resetEditorToDefaultState(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
     DocRenderItemManager.getInstance().resetToDefaultState(editor);
     DocRenderPassFactory.forceRefreshOnNextPass(editor);
     Project project = editor.getProject();

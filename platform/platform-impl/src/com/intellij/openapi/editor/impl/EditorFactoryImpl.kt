@@ -38,7 +38,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.CharArrayCharSequence
 import org.jetbrains.annotations.ApiStatus
 import java.util.stream.Stream
-import kotlin.streams.asSequence
 import kotlin.streams.asStream
 
 private val EP = ExtensionPointName<EditorFactoryListener>("com.intellij.editorFactoryListener")
@@ -88,7 +87,7 @@ class EditorFactoryImpl : EditorFactory() {
       if (editor is EditorImpl) {
         editor.throwDisposalError("Editor $editor hasn't been released:")
       }
-      throw RuntimeException("""Editor of ${editor.javaClass} and the following text hasn't been released: ${editor.document.text}""")
+      throw RuntimeException("""Editor of ${editor.javaClass} and the following text hasn't been released: ${editor.document.getImmutableCharSequence()}""")
     }
   }
 
@@ -290,5 +289,5 @@ private class MyRawTypedHandler(private val delegate: TypedActionHandler) : Type
 }
 
 private fun collectAllEditors(): Sequence<Editor> {
-  return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editors().asSequence() }
+  return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editors() }
 }
