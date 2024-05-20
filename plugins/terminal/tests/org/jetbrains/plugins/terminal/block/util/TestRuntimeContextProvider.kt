@@ -10,7 +10,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorC
 internal class TestRuntimeContextProvider(
   private val directory: String = "",
   private val shellName: ShellName = ShellName("dummy"),
-  private val generatorCommandsRunner: ShellGeneratorCommandsRunner = DummyGeneratorCommandsRunner()
+  private val generatorCommandsRunner: ShellGeneratorCommandsRunner = TestGeneratorCommandsRunner.DUMMY
 ) : ShellRuntimeContextProvider {
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(directory, typedPrefix, shellName, generatorCommandsRunner)

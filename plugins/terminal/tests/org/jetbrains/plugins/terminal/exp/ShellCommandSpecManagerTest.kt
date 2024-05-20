@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
-import org.jetbrains.plugins.terminal.block.util.DummyGeneratorCommandsRunner
+import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.exp.util.TestCommandSpecsProvider
 import org.jetbrains.plugins.terminal.exp.util.TestJsonCommandSpecsProvider
@@ -162,6 +162,6 @@ internal class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   }
 
   private fun createDummyRuntimeContext(): ShellRuntimeContext {
-    return ShellRuntimeContextImpl("", "", ShellName("dummy"), DummyGeneratorCommandsRunner())
+    return ShellRuntimeContextImpl("", "", ShellName("dummy"), TestGeneratorCommandsRunner.DUMMY)
   }
 }

@@ -4,8 +4,16 @@ package org.jetbrains.plugins.terminal.block.util
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 
-internal class DummyGeneratorCommandsRunner : ShellGeneratorCommandsRunner {
+internal class TestGeneratorCommandsRunner(
+  private val mockCommandResult: suspend (command: String) -> ShellCommandResult
+) : ShellGeneratorCommandsRunner {
   override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
-    return ShellCommandResult.create("", 0)
+    return mockCommandResult(command)
+  }
+
+  companion object {
+    val DUMMY: ShellGeneratorCommandsRunner = TestGeneratorCommandsRunner {
+      ShellCommandResult.create("", 0)
+    }
   }
 }
