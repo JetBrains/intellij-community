@@ -23,6 +23,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import com.intellij.util.EventDispatcher
@@ -99,7 +100,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     LOG.debug { "Add tracked global libraries and SDK for all modules" }
     val currentStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
-      addTrackedLibrariesAndSdks(moduleEntity.dependencies, moduleEntity)
+      addTrackedLibrariesAndSdks(moduleEntity.dependencies, moduleEntity, null)
     }
   }
 
@@ -128,24 +129,26 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       when (change) {
         is EntityChange.Added -> {
           LOG.debug { "Add tracked global libraries and SDK from ${change.entity.name}" }
-          addTrackedLibrariesAndSdks(change.entity.dependencies, change.entity)
+          addTrackedLibrariesAndSdks(change.entity.dependencies, change.entity, event.storageBefore)
         }
         is EntityChange.Removed -> {
           LOG.debug { "Removed tracked global libraries and SDK from ${change.entity.name}" }
-          removeTrackedLibrariesAndSdks(change.entity.dependencies, change.entity)
+          removeTrackedLibrariesAndSdks(change.entity.dependencies, change.entity, event.storageAfter)
         }
         is EntityChange.Replaced -> {
           val removedDependencies = change.oldEntity.dependencies - change.newEntity.dependencies.toSet()
           val addedDependencies = change.newEntity.dependencies - change.oldEntity.dependencies.toSet()
           LOG.debug { "Update tracked global libraries and SDK for ${change.newEntity.name}: ${removedDependencies.size} removed, ${addedDependencies.size} added" }
-          removeTrackedLibrariesAndSdks(removedDependencies, change.oldEntity)
-          addTrackedLibrariesAndSdks(addedDependencies, change.newEntity)
+          removeTrackedLibrariesAndSdks(removedDependencies, change.oldEntity, event.storageAfter)
+          addTrackedLibrariesAndSdks(addedDependencies, change.newEntity, event.storageBefore)
         }
       }
     }
   }
 
-  private fun addTrackedLibrariesAndSdks(dependencies: List<ModuleDependencyItem>, moduleEntity: ModuleEntity) {
+  private fun addTrackedLibrariesAndSdks(dependencies: List<ModuleDependencyItem>,
+                                         moduleEntity: ModuleEntity,
+                                         storageBefore: ImmutableEntityStorage?) {
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     dependencies.forEach {
       when {
@@ -154,7 +157,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
           if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.addListener(libraryTablesListener)
-          libraryTablesListener.addTrackedLibrary(moduleEntity, libraryTable, libraryName)
+          libraryTablesListener.addTrackedLibrary(moduleEntity, libraryTable, libraryName, it.library, storageBefore)
         }
         it is SdkDependency || it is InheritedSdkDependency -> {
           jdkChangeListener.addTrackedJdk(it, moduleEntity)
@@ -163,7 +166,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
   }
 
-  private fun removeTrackedLibrariesAndSdks(dependencies: List<ModuleDependencyItem>, moduleEntity: ModuleEntity) {
+  private fun removeTrackedLibrariesAndSdks(dependencies: List<ModuleDependencyItem>, moduleEntity: ModuleEntity, currentStorage: ImmutableEntityStorage) {
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     dependencies.forEach {
       when {
@@ -171,7 +174,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           val libraryName = it.library.name
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          libraryTablesListener.unTrackLibrary(moduleEntity, libraryTable, libraryName)
+          libraryTablesListener.unTrackLibrary(moduleEntity, libraryTable, libraryName, it.library, currentStorage)
           if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
         }
         it is SdkDependency || it is InheritedSdkDependency -> {
@@ -211,9 +214,13 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     // Library identifier as a key
     private val libToModuleMap = MultiMap.createSet<String, ModuleId>()
 
-    fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
+    fun addTrackedLibrary(moduleEntity: ModuleEntity,
+                          libraryTable: LibraryTable,
+                          libraryName: String,
+                          libraryId: LibraryId,
+                          storageBefore: ImmutableEntityStorage?) {
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      if (!libToModuleMap.containsKey(libraryIdentifier)) {
+      if (storageBefore == null || storageBefore.referrers(libraryId, ModuleEntity::class.java).none()) {
         val library = libraryTable.getLibraryByName(libraryName)
         if (library != null) {
           library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
@@ -223,11 +230,15 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       libToModuleMap.putValue(libraryIdentifier, moduleEntity.symbolicId)
     }
 
-    fun unTrackLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
+    fun unTrackLibrary(moduleEntity: ModuleEntity,
+                       libraryTable: LibraryTable,
+                       libraryName: String,
+                       libraryId: LibraryId,
+                       currentStorage: ImmutableEntityStorage) {
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
       libToModuleMap.remove(libraryIdentifier, moduleEntity.symbolicId)
-      if (!libToModuleMap.containsKey(libraryIdentifier) && library != null) {
+      if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
         eventDispatcher.multicaster.removedDependencyOn(library)
         library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
       }
