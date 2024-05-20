@@ -5256,7 +5256,68 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/changeToLabeledReturn")
+    public static class ChangeToLabeledReturn extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("constantExpectedTypeMismatch.kt")
+        public void testConstantExpectedTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/constantExpectedTypeMismatch.kt");
+        }
+
+        @TestMetadata("multipleInner.kt")
+        public void testMultipleInner() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/multipleInner.kt");
+        }
+
+        @TestMetadata("multipleOuter.kt")
+        public void testMultipleOuter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/multipleOuter.kt");
+        }
+
+        @TestMetadata("noCandidates.kt")
+        public void testNoCandidates() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/noCandidates.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/normal.kt");
+        }
+
+        @TestMetadata("nullForNonnullType.kt")
+        public void testNullForNonnullType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/nullForNonnullType.kt");
+        }
+
+        @TestMetadata("nullForNonnullType2.kt")
+        public void testNullForNonnullType2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/nullForNonnullType2.kt");
+        }
+
+        @TestMetadata("returnNotAllowedInClass.kt")
+        public void testReturnNotAllowedInClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/returnNotAllowedInClass.kt");
+        }
+
+        @TestMetadata("returnNotAllowedInObject.kt")
+        public void testReturnNotAllowedInObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/returnNotAllowedInObject.kt");
+        }
+
+        @TestMetadata("typeMismatch.kt")
+        public void testTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/typeMismatch.kt");
+        }
+
+        @TestMetadata("typeMismatch2.kt")
+        public void testTypeMismatch2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToLabeledReturn/typeMismatch2.kt");
+        }
+    }
 
 
 
