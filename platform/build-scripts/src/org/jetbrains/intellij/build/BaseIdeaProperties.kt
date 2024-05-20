@@ -7,7 +7,6 @@ import com.intellij.util.containers.withAll
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
-import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -145,8 +144,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       layout.withModule("intellij.java.rt", "idea_rt.jar")
       // for compatibility with user projects which refer to IDEA_HOME/lib/annotations.jar
       layout.withProjectLibrary("jetbrains-annotations", "annotations.jar")
-      // for compatibility with user projects which refer to IDEA_HOME/lib/junit.jar
-      layout.withProjectLibrary("JUnit3", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
 
       layout.withoutProjectLibrary("Ant")
       // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
