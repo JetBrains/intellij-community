@@ -9,7 +9,9 @@ import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.konan.file.unzipTo
+import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -36,6 +38,17 @@ object KmpLightFixtureDependencyDownloader {
         val coordinates = kmpDependency.coordinates
         val kmpDependencyKind = kmpDependency.kind
 
+        return when (coordinates) {
+            is MavenKmpCoordinates -> resolveMavenDependency(coordinates, kmpDependencyKind, directoryForTransformedDependencies)
+            is NativePrebuiltKmpCoordinates -> resolveKotlinNativePrebuiltDependency(coordinates)
+        }
+    }
+
+    private fun resolveMavenDependency(
+        coordinates: MavenKmpCoordinates,
+        kmpDependencyKind: DependencyKind,
+        directoryForTransformedDependencies: Path?,
+    ): Path? {
         val resolvedDependencyArtifact = resolveArtifact(coordinates, kmpDependencyKind.artifactKind) ?: return null
 
         return when (kmpDependencyKind) {
@@ -44,10 +57,23 @@ object KmpLightFixtureDependencyDownloader {
                 check(coordinates.sourceSet != null) { "Unable to resolve a metadata KLIB without a source set, coordinates: $coordinates" }
                 resolveSourceSetKlib(resolvedDependencyArtifact, coordinates, directoryForTransformedDependencies)
             }
+            DependencyKind.KOTLIN_NATIVE_PREBUILT -> error("Should not resolve Kotlin/Native prebuilt as Maven dependency")
         }
     }
 
-    private fun resolveArtifact(coordinates: KmpCoordinates, artifactKind: ArtifactKind): Path? {
+    private fun resolveKotlinNativePrebuiltDependency(
+        coordinates: NativePrebuiltKmpCoordinates,
+    ): Path? {
+        return try {
+            TestKotlinArtifacts.getNativeLib(coordinates.version, library = coordinates.libraryPart).toPath()
+        } catch (_: TargetSupportException) {
+            // Hack: use the linuxX64 version of K/N distribution, if the host doesn't support it.
+            // This is necessary for Linux ARM64 agents, see KT-36871.
+            TestKotlinArtifacts.getNativeLib(coordinates.version, platform = "linux-x86_64", library = coordinates.libraryPart).toPath()
+        }
+    }
+
+    private fun resolveArtifact(coordinates: MavenKmpCoordinates, artifactKind: ArtifactKind): Path? {
         val mavenLocalDir = File(SystemProperties.getUserHome(), ".m2/repository")
 
         val remoteRepositories = listOf(
@@ -70,7 +96,7 @@ object KmpLightFixtureDependencyDownloader {
 
     private fun resolveSourceSetKlib(
         resolvedArtifactPath: Path,
-        kmpCoordinates: KmpCoordinates,
+        kmpCoordinates: MavenKmpCoordinates,
         directoryForTransformedDependencies: Path?
     ): Path? {
         val sourceSet = kmpCoordinates.sourceSet
@@ -111,14 +137,28 @@ enum class DependencyKind(val artifactKind: ArtifactKind) {
      * This format is used by older KMP libraries, such as kotlin-stdlib and a few others.
      */
     ALL_METADATA_JAR(ArtifactKind.ALL),
+
+    /**
+     * Part of the Kotlin/Native distribution, which is a multi-KLIB with several platform-specific artifacts inside.
+     * Artifacts include the Kotlin/Native standard library, shared by all the native targets.
+     * At the moment of writing, it is not a Maven publication.
+     */
+    KOTLIN_NATIVE_PREBUILT(ArtifactKind.KLIB),
 }
 
-class KmpCoordinates(
+sealed class KmpCoordinates
+
+data class NativePrebuiltKmpCoordinates(
+    val libraryPart: String,
+    val version: String,
+) : KmpCoordinates()
+
+data class MavenKmpCoordinates(
     val group: String,
     val artifact: String,
     val version: String,
     val sourceSet: String?,
-) {
+) : KmpCoordinates() {
     override fun toString(): String {
         val sourceSetIfNotNull = sourceSet?.let { ":$sourceSet" }.orEmpty()
         return "$group:$artifact$sourceSetIfNotNull:$version"
@@ -129,6 +169,15 @@ class KmpAwareLibraryDependency private constructor(
     val coordinates: KmpCoordinates,
     val kind: DependencyKind,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is KmpAwareLibraryDependency) return false
+        return kind == other.kind && coordinates == other.coordinates
+    }
+
+    override fun hashCode(): Int {
+        return 31 * coordinates.hashCode() + kind.hashCode()
+    }
+
     companion object {
         // expected format: org.example:some:1.2.3
         fun klib(coordinates: String) = createFromCoordinates(coordinates, DependencyKind.PLATFORM_KLIB)
@@ -142,16 +191,24 @@ class KmpAwareLibraryDependency private constructor(
         // expected format: org.example:some:commonMain:1.2.3
         fun allMetadataJar(coordinates: String) = createFromCoordinates(coordinates, DependencyKind.ALL_METADATA_JAR)
 
+        // expected format: path/to/library/part:1.2.3
+        fun kotlinNativePrebuilt(coordinates: String) = createFromCoordinates(coordinates, DependencyKind.KOTLIN_NATIVE_PREBUILT)
+
         private fun createFromCoordinates(coordinatesString: String, kind: DependencyKind): KmpAwareLibraryDependency {
             return when (kind) {
                 DependencyKind.JAR, DependencyKind.PLATFORM_KLIB -> {
                     val (group, artifact, version) = coordinatesString.split(":").also { check(it.size == 3) }
-                    KmpAwareLibraryDependency(KmpCoordinates(group, artifact, version, null), kind)
+                    KmpAwareLibraryDependency(MavenKmpCoordinates(group, artifact, version, null), kind)
                 }
 
                 DependencyKind.COMMON_METADATA_JAR, DependencyKind.ALL_METADATA_JAR -> {
                     val (group, artifact, sourceSet, version) = coordinatesString.split(":").also { check(it.size == 4) }
-                    KmpAwareLibraryDependency(KmpCoordinates(group, artifact, version, sourceSet), kind)
+                    KmpAwareLibraryDependency(MavenKmpCoordinates(group, artifact, version, sourceSet), kind)
+                }
+
+                DependencyKind.KOTLIN_NATIVE_PREBUILT -> {
+                    val (library, version) = coordinatesString.split(":").also { check(it.size == 2) }
+                    KmpAwareLibraryDependency(NativePrebuiltKmpCoordinates(library, version), kind)
                 }
             }
         }

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import org.jetbrains.kotlin.idea.base.test.ModuleStructureSplitter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import java.io.File
 
@@ -28,7 +29,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
      * Configures the module structure based on the given file.
      *
      * File is expected to have the following structure:
-     * // PLATFORM: (Common|Jvm|Js) [org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor]
+     * // PLATFORM: <platform descriptor name> [org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor]
      * files
      *
      * // FILE: relativePath.kt (relative to the platform's source root)
@@ -44,21 +45,17 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
         var mainFile: VirtualFile? = null
         val allFiles: MutableList<VirtualFile> = mutableListOf()
         map.forEach { (platform, files) ->
-            val platformDescriptor = when (platform) {
-                "Common" -> KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.COMMON
-                "Jvm" -> KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.JVM
-                "Js" -> KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.JS
-                else -> null
-            }
-            if (platformDescriptor != null) {
-                for (testFile in files) {
-                    val virtualFile = VfsTestUtil.createFile(platformDescriptor.sourceRoot()!!, testFile.relativePath, testFile.text)
-                    allFiles.add(virtualFile)
-                    if (testFile.isMain) {
-                        mainFile = virtualFile
-                    }
-                    myFixture.configureFromExistingVirtualFile(virtualFile)
+            val platformDescriptor = PlatformDescriptor.entries.firstOrNull { it.moduleName.lowercase() == platform.lowercase() }
+                ?: error("Unrecognized platform: $platform. Expected one of " +
+                                 PlatformDescriptor.entries.joinToString(prefix = "[", postfix = "]") { it.moduleName })
+
+            for (testFile in files) {
+                val virtualFile = VfsTestUtil.createFile(platformDescriptor.sourceRoot()!!, testFile.relativePath, testFile.text)
+                allFiles.add(virtualFile)
+                if (testFile.isMain) {
+                    mainFile = virtualFile
                 }
+                myFixture.configureFromExistingVirtualFile(virtualFile)
             }
         }
         return TestProjectFiles(allFiles, mainFile)

@@ -133,12 +133,12 @@ object TestKotlinArtifacts {
     }
 
     @Throws(TargetSupportException::class)
-    private fun getNativeLib(
+    fun getNativeLib(
         version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
         platform: String = HostManager.platformName(),
         library: String
     ): File {
-        if (!isNativeHostSupported())
+        if (!isNativeHostSupported() && platform == HostManager.platformName())
             throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
 
         val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")

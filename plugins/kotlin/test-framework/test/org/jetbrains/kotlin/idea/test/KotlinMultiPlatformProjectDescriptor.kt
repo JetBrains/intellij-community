@@ -20,24 +20,40 @@ import org.jetbrains.kotlin.container.topologicalSort
 import org.jetbrains.kotlin.idea.artifacts.KmpAwareLibraryDependency
 import org.jetbrains.kotlin.idea.artifacts.KmpLightFixtureDependencyDownloader
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
 /**
- * The project is created with three modules: Common, Jvm -> Common, Js -> Common.
+ * The project is created with the following module structure:
+ * Common --- Js
+ *       \--- Jvm
+ *       \--- Native --- MinGW
+ *                  \--- Linux --- LinuxX64
+ *                            \--- LinuxArm64
  *
  * Standard library and kotlinx-coroutines-core of fixed versions are added to all modules.
  *
- * Since we can't use Gradle in light fixture tests due to performance reasons, correct libraries should be mapped to modules manually.
+ * Apple targets require a Mac host and therefore are not included in the test project.
+ * The limited set of native targets allows running tests on any host.
+ *
+ * Host-specific Kotlin/Native distribution library dependencies are not added.
+ * One exception is the Kotlin/Native stdlib itself as it's shared by all native targets.
+ *
+ * Since we can't use Gradle in light fixture tests due to performance reasons, correct libraries are mapped to modules manually.
  */
 object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
         val targetPlatform: TargetPlatform,
-        val isKotlinSdkUsed: Boolean = true,
-        val refinementDependencies: List<PlatformDescriptor> = emptyList(),
-        val libraryDependencies: List<KmpAwareLibraryDependency> = emptyList(),
+        // if true, stub Kotlin SDK is used as module's JDK
+        val isKotlinSdkUsed: Boolean,
+        // ordered transitive closure of refinement dependencies from platform to common
+        val refinementDependencies: List<PlatformDescriptor>,
+        // ordered list of library dependencies; transitive dependencies should be listed explicitly
+        val libraryDependencies: List<KmpAwareLibraryDependency>,
     ) {
         COMMON(
             moduleName = "Common",
@@ -47,9 +63,11 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
                     JsPlatforms.defaultJsPlatform.single()
                 )
             ),
+            isKotlinSdkUsed = true,
+            refinementDependencies = emptyList(),
             libraryDependencies = listOf(
-                KmpAwareLibraryDependency.allMetadataJar("org.jetbrains.kotlin:kotlin-stdlib:commonMain:1.9.23"), // TODO (KTIJ-29725): sliding version
-                KmpAwareLibraryDependency.metadataKlib("org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0")
+                LibraryDependencies.stdlibCommon,
+                LibraryDependencies.coroutinesCommonMain,
             ),
         ),
         JVM(
@@ -58,19 +76,88 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             isKotlinSdkUsed = false,
             refinementDependencies = listOf(COMMON),
             libraryDependencies = listOf(
-                KmpAwareLibraryDependency.jar("org.jetbrains.kotlin:kotlin-stdlib:1.9.23"),
-                KmpAwareLibraryDependency.jar("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"),
-                KmpAwareLibraryDependency.jar("org.jetbrains:annotations:23.0.0"),
+                LibraryDependencies.stdlibJvm,
+                LibraryDependencies.coroutinesJvm,
+                LibraryDependencies.jbAnnotationsJvm,
             ),
         ),
         JS(
             moduleName = "Js",
             targetPlatform = JsPlatforms.defaultJsPlatform,
+            isKotlinSdkUsed = true,
             refinementDependencies = listOf(COMMON),
             libraryDependencies = listOf(
-                KmpAwareLibraryDependency.klib("org.jetbrains.kotlin:kotlin-stdlib-js:1.9.23"),
-                KmpAwareLibraryDependency.klib("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.8.0"),
-                KmpAwareLibraryDependency.klib("org.jetbrains.kotlinx:atomicfu-js:0.23.1"),
+                LibraryDependencies.stdlibJs,
+                LibraryDependencies.coroutinesJs,
+                LibraryDependencies.atomicFuJs,
+            ),
+        ),
+        NATIVE(
+            moduleName = "Native",
+            isKotlinSdkUsed = true,
+            targetPlatform = NativePlatforms.nativePlatformByTargets(
+                listOf(KonanTarget.LINUX_X64, KonanTarget.LINUX_ARM64, KonanTarget.MINGW_X64)
+            ),
+            refinementDependencies = listOf(COMMON),
+            libraryDependencies = listOf(
+                LibraryDependencies.stdlibNative,
+                LibraryDependencies.stdlibCommon,
+                LibraryDependencies.coroutinesNative,
+                LibraryDependencies.coroutinesCommonMain,
+                LibraryDependencies.coroutinesConcurrent,
+                LibraryDependencies.atomicFuNative,
+                LibraryDependencies.atomicFuCommon,
+            ),
+        ),
+        MINGW(
+            moduleName = "MinGW",
+            isKotlinSdkUsed = true,
+            targetPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MINGW_X64),
+            refinementDependencies = listOf(NATIVE, COMMON),
+            libraryDependencies = listOf(
+                LibraryDependencies.stdlibNative,
+                LibraryDependencies.coroutinesMingw,
+                LibraryDependencies.atomicFuMingw,
+            ),
+        ),
+        LINUX(
+            moduleName = "Linux",
+            targetPlatform = NativePlatforms.nativePlatformByTargets(
+                listOf(KonanTarget.LINUX_X64, KonanTarget.LINUX_ARM64)
+            ),
+            isKotlinSdkUsed = true,
+            refinementDependencies = listOf(NATIVE, COMMON),
+            libraryDependencies = listOf(
+                LibraryDependencies.stdlibNative,
+                LibraryDependencies.stdlibCommon,
+                LibraryDependencies.coroutinesNative,
+                LibraryDependencies.coroutinesCommonMain,
+                LibraryDependencies.coroutinesConcurrent,
+                LibraryDependencies.coroutinesNativeOther,
+                LibraryDependencies.atomicFuNative,
+                LibraryDependencies.atomicFuCommon,
+            ),
+        ),
+        LINUX_X64(
+            moduleName = "LinuxX64",
+            targetPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64),
+            isKotlinSdkUsed = true,
+            refinementDependencies = listOf(LINUX, NATIVE, COMMON),
+            libraryDependencies = listOf(
+                LibraryDependencies.stdlibNative,
+                LibraryDependencies.coroutinesLinuxX64,
+                LibraryDependencies.atomicFuLinuxX64,
+            ),
+        ),
+        LINUX_ARM64(
+            moduleName = "LinuxArm64",
+            targetPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_ARM64),
+            isKotlinSdkUsed = true,
+            refinementDependencies = listOf(LINUX, NATIVE, COMMON),
+            libraryDependencies = listOf(
+                LibraryDependencies.stdlibNative,
+                LibraryDependencies.coroutinesLinuxArm64,
+                LibraryDependencies.atomicFuLinuxArm64,
             ),
         );
 
@@ -178,4 +265,43 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             .flatMap { it.children.asSequence() }
             .forEach { it.delete(this) }
     }
+}
+
+private object LibraryDependencies {
+    // TODO (KTIJ-29725): sliding version
+    private const val STDLIB_VERSION = "1.9.23"
+    private const val COROUTINES_VERSION = "1.8.0"
+    private const val ATOMIC_FU_VERSION = "0.23.1"
+    private const val JB_ANNOTATIONS_VERSION = "23.0.0"
+
+    private const val KOTLIN_GROUP = "org.jetbrains.kotlin"
+    private const val KOTLINX_GROUP = "org.jetbrains.kotlinx"
+
+    private const val STDLIB_ARTIFACT = "kotlin-stdlib"
+    private const val COROUTINES_ARTIFACT = "kotlinx-coroutines-core"
+    private const val ATOMICFU_ARTIFACT = "atomicfu"
+
+    val stdlibCommon = KmpAwareLibraryDependency.allMetadataJar("$KOTLIN_GROUP:$STDLIB_ARTIFACT:commonMain:$STDLIB_VERSION")
+    val stdlibJvm = KmpAwareLibraryDependency.jar("$KOTLIN_GROUP:$STDLIB_ARTIFACT:$STDLIB_VERSION")
+    val stdlibJs = KmpAwareLibraryDependency.klib("$KOTLIN_GROUP:$STDLIB_ARTIFACT-js:$STDLIB_VERSION")
+    val stdlibNative = KmpAwareLibraryDependency.kotlinNativePrebuilt("klib/common/stdlib:$STDLIB_VERSION")
+
+    val coroutinesCommonMain = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:commonMain:$COROUTINES_VERSION")
+    val coroutinesConcurrent = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:concurrentMain:$COROUTINES_VERSION")
+    val coroutinesNative = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:nativeMain:$COROUTINES_VERSION")
+    val coroutinesNativeOther = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:nativeOtherMain:$COROUTINES_VERSION")
+    val coroutinesJs = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-js:$COROUTINES_VERSION")
+    val coroutinesJvm = KmpAwareLibraryDependency.jar("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-jvm:$COROUTINES_VERSION")
+    val coroutinesMingw = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-mingwx64:$COROUTINES_VERSION")
+    val coroutinesLinuxX64 = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-linuxx64:$COROUTINES_VERSION")
+    val coroutinesLinuxArm64 = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT-linuxarm64:$COROUTINES_VERSION")
+
+    val atomicFuCommon = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$ATOMICFU_ARTIFACT:commonMain:$ATOMIC_FU_VERSION")
+    val atomicFuNative = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$ATOMICFU_ARTIFACT:nativeMain:$ATOMIC_FU_VERSION")
+    val atomicFuJs = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$ATOMICFU_ARTIFACT-js:$ATOMIC_FU_VERSION")
+    val atomicFuMingw = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$ATOMICFU_ARTIFACT-mingwx64:$ATOMIC_FU_VERSION")
+    val atomicFuLinuxX64 = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$ATOMICFU_ARTIFACT-linuxx64:$ATOMIC_FU_VERSION")
+    val atomicFuLinuxArm64 = KmpAwareLibraryDependency.klib("$KOTLINX_GROUP:$ATOMICFU_ARTIFACT-linuxarm64:$ATOMIC_FU_VERSION")
+
+    val jbAnnotationsJvm = KmpAwareLibraryDependency.jar("org.jetbrains:annotations:$JB_ANNOTATIONS_VERSION")
 }
