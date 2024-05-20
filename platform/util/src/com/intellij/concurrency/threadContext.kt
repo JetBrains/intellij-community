@@ -89,6 +89,7 @@ private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) ->
   if (!useImplicitBlockingContext) {
     return tlCoroutineContext.get().context
   }
+  @OptIn(InternalCoroutinesApi::class)
   val suspendingContext = IntellijCoroutines.currentThreadCoroutineContext()
   val (snapshot, overridingContext) = tlCoroutineContext.get()
   if (suspendingContext === snapshot) {
@@ -239,6 +240,7 @@ internal fun warnAccidentalCancellation() {
   if (Cancellation.isInNonCancelableSection()) {
     return
   }
+  @OptIn(InternalCoroutinesApi::class)
   val kotlinCoroutineContext = IntellijCoroutines.currentThreadCoroutineContext()
   val (snapshot, _) = tlCoroutineContext.get()
   if (snapshot === kotlinCoroutineContext) {
@@ -262,6 +264,7 @@ If this behavior is unexpected, please consult the documentation for com.intelli
  */
 fun resetThreadContext(): AccessToken {
   return withThreadLocal(tlCoroutineContext) { _ ->
+    @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     InstalledThreadContext(currentSnapshot, null)
   }
@@ -308,6 +311,7 @@ fun <T> escapeCancellation(job: Job, action: () -> T): T {
  */
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
   return withThreadLocal(tlCoroutineContext) { previousContext ->
+    @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
       LOG.error("Thread context was already set: $previousContext. \n Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack.")

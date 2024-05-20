@@ -15,6 +15,7 @@ import io.kotest.mpp.atomics.AtomicReference
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
+@OptIn(InternalCoroutinesApi::class)
 @TestApplication
 @ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class ImplicitBlockingContextTest {
