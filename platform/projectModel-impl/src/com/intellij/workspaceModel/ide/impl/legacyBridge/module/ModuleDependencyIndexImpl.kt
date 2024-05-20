@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.google.common.collect.HashMultiset
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -157,7 +156,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           val libraryName = it.library.name
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.addListener(libraryTablesListener)
+          if (LibraryLevelsTracker.getInstance(project).isEmpty(libraryLevel)) libraryTable.addListener(libraryTablesListener)
           libraryTablesListener.addTrackedLibrary(moduleEntity, libraryTable, libraryName, it.library, storageBefore)
         }
         it is SdkDependency || it is InheritedSdkDependency -> {
@@ -176,7 +175,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
           libraryTablesListener.unTrackLibrary(moduleEntity, libraryTable, libraryName, it.library, currentStorage)
-          if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
+          if (LibraryLevelsTracker.getInstance(project).isEmpty(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
         }
         it is SdkDependency || it is InheritedSdkDependency -> {
           jdkChangeListener.removeTrackedJdk(it, moduleEntity)
@@ -214,7 +213,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   private inner class LibraryTablesListener : LibraryTable.Listener {
     // Library identifier as a key
     private val libToModuleMap = MultiMap.createSet<String, ModuleId>()
-    private val libraryLevels = HashMultiset.create<String>() // TODO replace with non-guava multiset
 
     fun addTrackedLibrary(moduleEntity: ModuleEntity,
                           libraryTable: LibraryTable,
@@ -230,7 +228,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         }
       }
       libToModuleMap.putValue(libraryIdentifier, moduleEntity.symbolicId)
-      libraryLevels.add(libraryTable.tableLevel)
+      LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelAdded(libraryTable.tableLevel)
     }
 
     fun unTrackLibrary(moduleEntity: ModuleEntity,
@@ -241,16 +239,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
       libToModuleMap.remove(libraryIdentifier, moduleEntity.symbolicId)
-      libraryLevels.remove(libraryTable.tableLevel)
+      LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelRemoved(libraryTable.tableLevel)
       if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
         eventDispatcher.multicaster.removedDependencyOn(library)
         library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
       }
     }
-
-    fun isEmpty(libraryLevel: String): Boolean = !libraryLevels.contains(libraryLevel)
-
-    fun getLibraryLevels(): Set<String> = libraryLevels.elementSet()
 
     override fun afterLibraryAdded(newLibrary: Library) {
       if (hasDependencyOn(newLibrary)) {
@@ -317,7 +311,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     fun unsubscribe(fireEvents: Boolean) {
       val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-      libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
+      LibraryLevelsTracker.getInstance(project).getLibraryLevels().forEach { libraryLevel ->
         val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
         libraryTable?.libraryIterator?.forEach {
           if (fireEvents && hasDependencyOn(it)) {
@@ -334,11 +328,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           }
         }
       }
+      LibraryLevelsTracker.getInstance(project).clear()
       libToModuleMap.clear()
     }
 
     fun unsubscribeFromCustomTableOnDispose(libraryTable: LibraryTable) {
-      libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
+      LibraryLevelsTracker.getInstance(project).getLibraryLevels().forEach { libraryLevel ->
         if (libraryTable.tableLevel != libraryLevel) return@forEach
         libraryTable.libraryIterator.forEach {
           it.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
