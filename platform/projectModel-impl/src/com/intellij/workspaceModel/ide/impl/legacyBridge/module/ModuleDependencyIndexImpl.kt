@@ -45,7 +45,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private val changedListenerTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val changedListenerTimeCounter = meter.counterBuilder("module.dependency.index.workspace.model.listener.on.changed.ms").buildObserver()
+      val changedListenerTimeCounter = meter.counterBuilder("jps.module.dependency.index.workspace.model.listener.on.changed.ms").buildObserver()
 
       meter.batchCallback(
         {
