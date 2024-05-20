@@ -31,7 +31,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   private final DebugProcessImpl myDebugProcess;
 
-  public int suspends = 0;
+  private int suspends = 0;
 
   public SuspendManagerImpl(@NotNull DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
