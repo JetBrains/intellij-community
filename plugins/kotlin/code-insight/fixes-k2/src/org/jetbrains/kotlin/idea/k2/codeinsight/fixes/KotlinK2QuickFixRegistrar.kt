@@ -92,6 +92,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeToStarProjectionFixFactory.uncheckedCastFactory)
         registerFactory(ChangeToStarProjectionFixFactory.cannotCheckForErased)
         registerFactory(AddStarProjectionsFixFactory.addStarProjectionsFixFactory)
+        registerFactory(AddTypeAnnotationToValueParameterFixFactory.addTypeAnnotationToValueParameterFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

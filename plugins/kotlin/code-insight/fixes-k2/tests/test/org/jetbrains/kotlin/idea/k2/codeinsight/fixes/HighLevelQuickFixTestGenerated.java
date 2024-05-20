@@ -5191,7 +5191,48 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter")
+    public static class AddTypeAnnotationToValueParameter extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("annotationWithArrayLiteralDouble.kt")
+        public void testAnnotationWithArrayLiteralDouble() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/annotationWithArrayLiteralDouble.kt");
+        }
+
+        @TestMetadata("annotationWithArrayLiteralInt.kt")
+        public void testAnnotationWithArrayLiteralInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/annotationWithArrayLiteralInt.kt");
+        }
+
+        @TestMetadata("annotationWithArrayLiteralString.kt")
+        public void testAnnotationWithArrayLiteralString() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/annotationWithArrayLiteralString.kt");
+        }
+
+        @TestMetadata("annotationWithVarargDoubleArray.kt")
+        public void testAnnotationWithVarargDoubleArray() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/annotationWithVarargDoubleArray.kt");
+        }
+
+        @TestMetadata("annotationWithVarargIntArray.kt")
+        public void testAnnotationWithVarargIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/annotationWithVarargIntArray.kt");
+        }
+
+        @TestMetadata("noDefaultValue.kt")
+        public void testNoDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/noDefaultValue.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/simple.kt");
+        }
+    }
 
 
 
