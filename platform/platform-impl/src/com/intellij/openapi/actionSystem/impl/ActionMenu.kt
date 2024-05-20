@@ -37,6 +37,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.ComponentEvent
@@ -49,6 +50,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
+import kotlin.math.abs
 
 @Suppress("RedundantConstructorKeyword")
 class ActionMenu constructor(private val context: DataContext?,
@@ -431,6 +433,8 @@ class ActionMenu constructor(private val context: DataContext?,
 private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
   private var component: Component?
   private var startMousePoint: Point?
+  private var xClosestToTargetSoFar = 0
+  private var closestHorizontalDistanceSoFar = 0
   private var upperTargetPoint: Point? = null
   private var lowerTargetPoint: Point? = null
   private var callbackAlarm: SingleAlarm? = null
@@ -448,6 +452,7 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
     val info = MouseInfo.getPointerInfo()
     startMousePoint = info?.location
     if (startMousePoint != null) {
+      xClosestToTargetSoFar = startMousePoint!!.x
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
       getInstance().addDispatcher(this, this)
     }
@@ -470,10 +475,12 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
       if (startMousePoint!!.x < bounds.x) {
         upperTargetPoint = Point(bounds.x, bounds.y)
         lowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
+        closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
       }
       if (startMousePoint!!.x > bounds.x + bounds.width) {
         upperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
         lowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
+        closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
       }
     }
   }
@@ -491,10 +498,18 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
     val point = e.locationOnScreen
     val bounds = component!!.bounds
     bounds.location = component!!.locationOnScreen
-    val isMouseMovingTowardsSubmenu = bounds.contains(point) ||
-                                      Polygon(intArrayOf(startMousePoint!!.x, upperTargetPoint!!.x, lowerTargetPoint!!.x),
-                                              intArrayOf(startMousePoint!!.y, upperTargetPoint!!.y, lowerTargetPoint!!.y), 3)
-                                        .contains(point)
+    val insideTarget = bounds.contains(point)
+    val horizontalDistance = abs(upperTargetPoint!!.x - point.x)
+    if (!insideTarget && horizontalDistance < closestHorizontalDistanceSoFar) {
+      closestHorizontalDistanceSoFar = horizontalDistance
+    }
+    val startedToMoveAway = !insideTarget && horizontalDistance >= closestHorizontalDistanceSoFar + JBUI.scale(MOVING_AWAY_THRESHOLD)
+    val isMouseMovingTowardsSubmenu = insideTarget || (
+      !startedToMoveAway &&
+      Polygon(intArrayOf(startMousePoint!!.x, upperTargetPoint!!.x, lowerTargetPoint!!.x),
+              intArrayOf(startMousePoint!!.y, upperTargetPoint!!.y, lowerTargetPoint!!.y), 3)
+        .contains(point)
+    )
     eventToRedispatch = e
     if (!isMouseMovingTowardsSubmenu) {
       callbackAlarm.request()
@@ -514,6 +529,8 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
     Toolkit.getDefaultToolkit().removeAWTEventListener(this)
   }
 }
+
+private const val MOVING_AWAY_THRESHOLD = 16
 
 private class SubElementSelector(private val owner: ActionMenu) {
   companion object {
