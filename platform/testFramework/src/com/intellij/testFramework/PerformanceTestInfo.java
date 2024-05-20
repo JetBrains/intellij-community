@@ -143,7 +143,7 @@ public class PerformanceTestInfo {
   }
 
   /**
-   * Instruct to publish Telemetry meters (that is stored in .csv files)
+   * Instruct to publish Telemetry meters (stored in .json files)
    * Eg:
    * <pre>
    *   {@code
@@ -244,7 +244,7 @@ public class PerformanceTestInfo {
    * <br/>
    * Raw metrics are reported as TC artifacts and can be found on Artifacts tqb in dependency builds.<br/>
    * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a><br/>
-   * Last but not least: if metrics arent published or even not collected - probably TelemetryManager isntance isn't initialized correctly
+   * Last but not least: if metrics aren't published or even not collected - probably TelemetryManager instance isn't initialized correctly
    * or dependency on module intellij.tools.ide.metrics.benchmark isn't set.
    *
    * @see #start(String)
