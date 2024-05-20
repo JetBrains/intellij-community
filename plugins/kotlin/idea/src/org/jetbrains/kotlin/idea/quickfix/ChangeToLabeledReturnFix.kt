@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChangeToLabeledReturnUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
@@ -31,13 +32,7 @@ class ChangeToLabeledReturnFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val returnExpression = element ?: return
-        val factory = KtPsiFactory(project)
-        val returnedExpression = returnExpression.returnedExpression
-        val newExpression = if (returnedExpression == null)
-            factory.createExpression(labeledReturn)
-        else
-            factory.createExpressionByPattern("$0 $1", labeledReturn, returnedExpression)
-        returnExpression.replace(newExpression)
+        return ChangeToLabeledReturnUtils.applyTo(project, returnExpression, labeledReturn)
     }
 
     companion object : KotlinIntentionActionsFactory() {
