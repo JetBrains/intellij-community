@@ -21,8 +21,11 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +43,11 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
         if (!isTestClass(psiClass)) return null;
         String url = "java:suite://" + ClassUtil.getJVMClassName(psiClass);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        if (isIgnoredForGradleConfiguration(psiClass, null)) return null;
+        if (isGradleConfiguration(psiClass)) {
+          List<PsiMethod> testMethods =
+            ContainerUtil.filter(psiClass.getAllMethods(), method -> TestFrameworks.getInstance().isTestMethod(method));
+          if (ContainerUtil.all(testMethods, method -> isIgnoredForGradleConfiguration(psiClass, method))) return null;
+        }
         return getInfo(state, true, PsiMethodUtil.findMainInClass(psiClass) != null ? 1 : 0);
       }
       if (element instanceof PsiMethod psiMethod) {
@@ -55,20 +62,27 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
     return null;
   }
 
-  private static boolean isIgnoredForGradleConfiguration(@Nullable PsiClass psiClass, @Nullable PsiMethod psiMethod) {
-    if (psiClass == null) return false;
-    RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(psiClass.getProject()).getSelectedConfiguration();
-    if (currentConfiguration == null) return false;
-    ConfigurationType configurationType = currentConfiguration.getType();
-    if (!configurationType.getId().equals("GradleRunConfiguration")) return false;
+  /**
+   * Gradle can't run ignored methods while IDEA runner can, so when using a Gradle configuration, we don't want to show the line marker for
+   * ignored methods.
+   */
+  private static boolean isIgnoredForGradleConfiguration(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod) {
+    if (!isGradleConfiguration(psiClass)) return false;
     //now gradle doesn't support dumb mode
     if (DumbService.getInstance(psiClass.getProject()).isDumb()) return true;
     for (TestFramework testFramework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      if (testFramework.isTestClass(psiClass) && (psiMethod == null || testFramework.isIgnoredMethod(psiMethod))) {
+      if (testFramework.isTestClass(psiClass) && testFramework.isIgnoredMethod(psiMethod)) {
         return true;
       }
     }
     return false;
+  }
+
+  private static boolean isGradleConfiguration(@NotNull PsiClass psiClass) {
+    RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(psiClass.getProject()).getSelectedConfiguration();
+    if (currentConfiguration == null) return false;
+    ConfigurationType configurationType = currentConfiguration.getType();
+    return configurationType.getId().equals("GradleRunConfiguration");
   }
 
   private static boolean isTestClass(PsiClass clazz) {
