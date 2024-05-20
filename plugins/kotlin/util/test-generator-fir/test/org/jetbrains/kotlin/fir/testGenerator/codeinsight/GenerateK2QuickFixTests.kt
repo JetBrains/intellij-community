@@ -201,7 +201,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/useFullyqualifiedCall", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/variables", pattern = pattern, isRecursive = false, isIgnored = true)
             model("$idea/quickfix/variables/changeToPropertyAccess", pattern = pattern, isRecursive = false, isIgnored = true)
-            model("$idea/quickfix/variables/changeToFunctionInvocation", pattern = pattern, isRecursive = false, isIgnored = true)
+            model("$idea/quickfix/variables/changeToFunctionInvocation", pattern = pattern, isRecursive = false)
             model("$idea/quickfix/wrapArgumentWithParentheses", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/wrapWhenExpressionInParentheses", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern, isIgnored = true)
