@@ -66,6 +66,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.Dispatchers
@@ -311,6 +312,7 @@ object Switcher : BaseSwitcherAction(null) {
       popup = JBPopupFactory.getInstance().createComponentPopupBuilder(this,
                                                                        if (!files.isEmpty || toolWindows.isEmpty) files else toolWindows)
         .setResizable(pinned)
+        .setNormalWindowLevel(pinned && StartupUiUtil.isWaylandToolkit()) // On Wayland, only "normal" windows can be moved smoothly at the moment
         .setModalContext(false)
         .setFocusable(true)
         .setRequestFocus(true)
