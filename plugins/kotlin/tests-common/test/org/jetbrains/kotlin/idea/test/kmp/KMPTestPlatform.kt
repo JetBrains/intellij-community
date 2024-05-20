@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test.kmp
 
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeHostSupportDetector
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -23,6 +24,10 @@ enum class KMPTestPlatform(
     NativeLinux(directiveName = "NATIVE", testDataSuffix = "native") {
         override val targetPlatform
             get(): TargetPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
+
+        override fun isSupportedOnCurrentHost(): Boolean {
+            return KotlinNativeHostSupportDetector.isNativeHostSupported()
+        }
     },
     CommonNativeJvm(directiveName = "COMMON_NATIVE+JVM", testDataSuffix = "common_nj") {
         override val targetPlatform
@@ -40,6 +45,7 @@ enum class KMPTestPlatform(
 
     abstract val targetPlatform: TargetPlatform
 
+    open fun isSupportedOnCurrentHost(): Boolean = true
 
     companion object {
         val ALL_SPECIFIED: List<KMPTestPlatform>
