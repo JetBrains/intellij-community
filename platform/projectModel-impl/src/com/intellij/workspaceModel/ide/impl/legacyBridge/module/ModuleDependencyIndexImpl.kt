@@ -211,9 +211,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
   
   private inner class LibraryTablesListener : LibraryTable.Listener {
-    // Library identifier as a key
-    private val libToModuleMap = MultiMap.createSet<String, ModuleId>()
-
     fun addTrackedLibrary(moduleEntity: ModuleEntity,
                           libraryTable: LibraryTable,
                           libraryName: String,
@@ -227,7 +224,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           eventDispatcher.multicaster.addedDependencyOn(library)
         }
       }
-      libToModuleMap.putValue(libraryIdentifier, moduleEntity.symbolicId)
       LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelAdded(libraryTable.tableLevel)
     }
 
@@ -238,7 +234,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
                        currentStorage: ImmutableEntityStorage) {
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      libToModuleMap.remove(libraryIdentifier, moduleEntity.symbolicId)
       LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelRemoved(libraryTable.tableLevel)
       if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
         eventDispatcher.multicaster.removedDependencyOn(library)
@@ -276,18 +271,13 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val libraryTable = library.table
       val newName = library.name
       if (libraryTable != null && oldName != null && newName != null) {
-        val oldLibraryIdentifier = getLibraryIdentifier(libraryTable, oldName)
-        val affectedModules = libToModuleMap.get(oldLibraryIdentifier)
-        if (affectedModules.isNotEmpty()) {
-          // Update collection in advance to avoid redundant handling on `addTrackedLibrary`
-          val newLibraryIdentifier = getLibraryIdentifier(libraryTable, newName)
-          affectedModules.forEach { affectedModule -> libToModuleMap.putValue(newLibraryIdentifier, affectedModule) }
-          libToModuleMap.remove(oldLibraryIdentifier)
-
-          val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
+        val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
+        val libraryId = LibraryId(oldName, libraryTableId)
+        val affectedModules = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java)
+        if (affectedModules.any()) {
           WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
-            affectedModules.mapNotNull { builder.resolve(it) }.forEach { module ->
+            affectedModules.forEach { module ->
               val updated = module.dependencies.map {
                 when {
                   it is LibraryDependency && it.library.tableId == libraryTableId && it.library.name == oldName ->
@@ -329,7 +319,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         }
       }
       LibraryLevelsTracker.getInstance(project).clear()
-      libToModuleMap.clear()
     }
 
     fun unsubscribeFromCustomTableOnDispose(libraryTable: LibraryTable) {
