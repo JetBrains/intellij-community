@@ -16,6 +16,7 @@ import java.util.List;
 
 public class FindUsagesOptions implements Cloneable {
   public @NotNull SearchScope searchScope;
+  private @Nullable SearchScope searchScopeToRestore;
 
   public boolean isSearchForTextOccurrences = true;
 
@@ -46,6 +47,22 @@ public class FindUsagesOptions implements Cloneable {
       }
     }
     return ProjectScope.getProjectScope(project);
+  }
+
+  @ApiStatus.Internal
+  public void setSearchScopeTemporarily(@NotNull SearchScope scope) {
+    if (searchScopeToRestore == null) {
+      searchScopeToRestore = searchScope;
+    }
+    searchScope = scope;
+  }
+
+  @ApiStatus.Internal
+  public void resetTemporarilySetSearchScope() {
+    if (searchScopeToRestore != null) {
+      searchScope = searchScopeToRestore;
+      searchScopeToRestore = null;
+    }
   }
 
   @Override
