@@ -4,10 +4,9 @@ package com.intellij.openapi.editor.impl
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ModalityStateListener
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -36,6 +35,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.CharArrayCharSequence
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.stream.Stream
 import kotlin.streams.asStream
@@ -43,7 +45,7 @@ import kotlin.streams.asStream
 private val EP = ExtensionPointName<EditorFactoryListener>("com.intellij.editorFactoryListener")
 private val LOG = logger<EditorFactoryImpl>()
 
-class EditorFactoryImpl : EditorFactory() {
+class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
   private val editorEventMulticaster = EditorEventMulticasterImpl()
   private val editorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener::class.java)
 
@@ -53,16 +55,12 @@ class EditorFactoryImpl : EditorFactory() {
       override fun projectClosed(project: Project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
         Disposer.register(project) {
-          val isLastProjectClosed = ProjectManager.getInstance().openProjects.isEmpty()
           // EditorTextField.releaseEditorLater defer releasing its editor; invokeLater to avoid false positives about such editors.
-          ApplicationManager.getApplication().invokeLater({
-                                                            try {
-                                                              validateEditorsAreReleased(project, isLastProjectClosed)
-                                                            }
-                                                            catch (e: Throwable) {
-                                                              LOG.error(e)
-                                                            }
-                                                          }, ModalityState.any())
+          coroutineScope?.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            LOG.runCatching {
+              validateEditorsAreReleased(project = project, isLastProjectClosed = serviceAsync<ProjectManager>().openProjects.isEmpty())
+            }
+          }
         }
       }
     })

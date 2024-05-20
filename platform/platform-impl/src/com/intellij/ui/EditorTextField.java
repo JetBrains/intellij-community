@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -611,13 +611,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   void releaseEditorLater() {
-    // releasing an editor implies removing it from a component hierarchy
-    // invokeLater is required because releaseEditor() may be called from
-    // removeNotify(), so we need to let swing complete its removeNotify() chain
-    // and only then execute another removal from the hierarchy. Otherwise
-    // swing goes nuts because of nested removals and indices get corrupted
+    // releasing an editor implies removing it from a component hierarchy invokeLater is required because releaseEditor() may be called from
+    // removeNotify(), so we need to let swing complete its removeNotify() chain and only then execute another removal from the hierarchy.
+    // Otherwise, swing goes nuts because of nested removals and indices get corrupted
     if (scheduleEditorRelease()) {
-      ApplicationManager.getApplication().invokeLater(() -> releaseScheduledEditors(), ModalityState.stateForComponent(this));
+      ApplicationManager.getApplication().invokeLater(this::releaseScheduledEditors, ModalityState.stateForComponent(this));
     }
   }
 
