@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -174,6 +175,65 @@ class ModuleDependencyIndexTest {
         it.removeEntity(globalLib2)
       }
     }
+  }
+
+  @Test
+  fun `events on adding and removing dependencies on modules`() = runBlocking {
+    projectModel.project.workspaceModel.update {
+      it addEntity LibraryEntity("HeyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
+    }
+    val events = withDependencyListener {
+      projectModel.project.workspaceModel.update {
+        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
+        it addEntity ModuleEntity("MyModule", deps, MySource)
+      }
+    }
+    assertEquals("+HeyLib", events.single())
+
+    val events1 = withDependencyListener {
+      projectModel.project.workspaceModel.update {
+        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
+        it addEntity ModuleEntity("MyModule2", deps, MySource)
+      }
+    }
+    assertTrue(events1.isEmpty())
+
+    val events2 = withDependencyListener {
+      projectModel.project.workspaceModel.update {
+        it.removeEntity(it.resolve(ModuleId("MyModule"))!!)
+      }
+    }
+    assertTrue(events2.isEmpty())
+
+    val events3 = withDependencyListener {
+      projectModel.project.workspaceModel.update {
+        it.removeEntity(it.resolve(ModuleId("MyModule2"))!!)
+      }
+    }
+    assertEquals("-HeyLib", events3.single())
+  }
+
+  private suspend fun withDependencyListener(action: suspend () -> Unit): List<String> {
+    val events = mutableListOf<String>()
+
+    val listener = object : ModuleDependencyListener {
+      override fun addedDependencyOn(library: Library) {
+        events.add("+${library.name}")
+      }
+
+      override fun removedDependencyOn(library: Library) {
+        events.add("-${library.name}")
+      }
+    }
+
+    try {
+      index.addListener(listener)
+      action()
+    }
+    finally {
+      index.removeListener(listener)
+    }
+    return events
   }
 
   private object MySource : EntitySource
