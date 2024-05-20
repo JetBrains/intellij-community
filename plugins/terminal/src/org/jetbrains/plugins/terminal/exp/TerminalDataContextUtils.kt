@@ -22,7 +22,7 @@ object TerminalDataContextUtils {
     get() = getUserData(IS_OUTPUT_EDITOR_KEY) == true
   val Editor.isAlternateBufferEditor: Boolean
     get() = getUserData(IS_ALTERNATE_BUFFER_EDITOR_KEY) == true
-  internal val Editor.terminalPromptModel: TerminalPromptModel?
+  val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 
   val DataContext.editor: Editor?
