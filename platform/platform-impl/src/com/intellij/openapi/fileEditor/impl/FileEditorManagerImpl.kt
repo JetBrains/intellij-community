@@ -2302,7 +2302,7 @@ open class FileEditorManagerImpl(
       composite.setSelectedEditor(selectedProvider.editorTypeId)
     }
 
-    window.addComposite(composite, options)
+    window.addComposite(composite = composite, options = options, isNewEditor = isNewEditor)
 
     // notify editors about selection changes
     val splitters = window.owner

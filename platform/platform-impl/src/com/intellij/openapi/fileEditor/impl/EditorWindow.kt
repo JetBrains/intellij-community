@@ -289,7 +289,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   @RequiresEdt
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
-    val isNewEditor = findCompositeIndex(composite) == -1
+    addComposite(composite, options, isNewEditor = findCompositeIndex(composite) == -1)
+  }
+
+  @RequiresEdt
+  internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions, isNewEditor: Boolean) {
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
     if (isNewEditor) {
