@@ -491,20 +491,9 @@ public final class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      boolean isWellKnownPackage = ApplicationManager.getApplication()
-        .getService(PyPIPackageRanking.class)
-        .getPackageRank().containsKey(myPackageName);
-      boolean confirmationEnabled = PropertiesComponent.getInstance().getBoolean(CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true);
-      if (!isWellKnownPackage && confirmationEnabled) {
-        boolean confirmed = MessageDialogBuilder
-          .yesNo(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"),
-                 PyBundle.message("python.packaging.dialog.message.install.package.confirmation", myPackageName))
-          .icon(AllIcons.General.WarningDialog)
-          .doNotAsk(new ConfirmPackageInstallationDoNotAskOption())
-          .ask(project);
-        if (!confirmed) {
-          return;
-        }
+      boolean confirmed = PyPackageInstallUtils.INSTANCE.confirmInstall(project, myPackageName);
+      if (!confirmed) {
+        return;
       }
       
       PsiElement element = descriptor.getPsiElement();
