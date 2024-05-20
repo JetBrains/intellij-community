@@ -50,13 +50,12 @@ object KmpLightFixtureDependencyDownloader {
     private fun resolveArtifact(coordinates: KmpCoordinates, artifactKind: ArtifactKind): Path? {
         val mavenLocalDir = File(SystemProperties.getUserHome(), ".m2/repository")
 
-        val repositories = listOf(
-            RemoteRepository.Builder("mavenLocal", "default", "file://" + mavenLocalDir.absolutePath).build(),
+        val remoteRepositories = listOf(
             RemoteRepository.Builder("mavenCentral", "default", MAVEN_CENTRAL_CACHE_REDIRECTOR_URL).build(),
         )
 
         val resolvedDependencyArtifact = ArtifactRepositoryManager(
-            mavenLocalDir, repositories, ProgressConsumer.DEAF
+            mavenLocalDir, remoteRepositories, ProgressConsumer.DEAF
         ).resolveDependencyAsArtifact(
             /* groupId = */ coordinates.group,
             /* artifactId = */ coordinates.artifact,

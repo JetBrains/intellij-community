@@ -22,7 +22,7 @@ abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCod
     }
 
     fun doTest(path: String) {
-        val virtualFile = configureModuleStructure(path).second
+        val virtualFile = configureModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)

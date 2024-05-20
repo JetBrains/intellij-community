@@ -19,6 +19,11 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
         File(TestMetadataUtil.getTestDataPath(javaClass))
     }
 
+    data class TestProjectFiles(
+        val allFiles: List<VirtualFile>,
+        val mainFile: VirtualFile?,
+    )
+
     /**
      * Configures the module structure based on the given file.
      *
@@ -34,7 +39,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
      *
      * Returns a list of all files and a file which was marked as `MAIN` or `null` if it's absent.
      */
-    fun configureModuleStructure(abstractFilePath: String): Pair<List<VirtualFile>, VirtualFile?> {
+    fun configureModuleStructure(abstractFilePath: String): TestProjectFiles {
         val map = ModuleStructureSplitter.splitPerModule(File(abstractFilePath))
         var mainFile: VirtualFile? = null
         val allFiles: MutableList<VirtualFile> = mutableListOf()
@@ -56,19 +61,25 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
                 }
             }
         }
-        return allFiles to mainFile
+        return TestProjectFiles(allFiles, mainFile)
     }
+
+    private var isKotlinK2KmpEnabledBeforeTest: Boolean? = null
 
     override fun setUp() {
         super.setUp()
-        Registry.get("kotlin.k2.kmp.enabled").setValue(true)
+
+        Registry.get("kotlin.k2.kmp.enabled").let { registryValue ->
+            isKotlinK2KmpEnabledBeforeTest = registryValue.asBoolean()
+            registryValue.setValue(true)
+        }
     }
 
     override fun tearDown() {
         runAll(
             { KotlinMultiPlatformProjectDescriptor.cleanupSourceRoots() },
             { KotlinSdkType.removeKotlinSdkInTests() },
-            { Registry.get("kotlin.k2.kmp.enabled").setValue(false) },
+            { Registry.get("kotlin.k2.kmp.enabled").setValue(isKotlinK2KmpEnabledBeforeTest == true) },
             { super.tearDown() },
         )
     }

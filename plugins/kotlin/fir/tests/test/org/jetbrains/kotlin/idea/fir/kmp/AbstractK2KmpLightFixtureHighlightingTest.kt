@@ -8,7 +8,7 @@ abstract class AbstractK2KmpLightFixtureHighlightingTest : KotlinLightMultiplatf
     override fun isFirPlugin(): Boolean = true
 
     fun doTest(path: String) {
-        val allFiles = configureModuleStructure(path).first
+        val allFiles = configureModuleStructure(path).allFiles
         myFixture.testHighlightingAllFiles(true, false, false, *allFiles.toTypedArray())
     }
 }
