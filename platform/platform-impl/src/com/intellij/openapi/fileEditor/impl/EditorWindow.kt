@@ -42,7 +42,6 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
@@ -288,28 +287,27 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     addComposite(editor, FileEditorOpenOptions(requestFocus = focusEditor))
   }
 
-  internal fun setComposite(composite: EditorComposite, focusEditor: Boolean) {
-    addComposite(composite = composite, options = FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
-  }
-
+  @RequiresEdt
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
     val isNewEditor = findCompositeIndex(composite) == -1
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
     if (isNewEditor) {
       var indexToInsert = options.index
-      if (indexToInsert == -1 && isPreviewMode) {
-        indexToInsert = findPreviewIndex()
-      }
       if (indexToInsert == -1) {
-        indexToInsert = if (UISettings.getInstance().openTabsAtTheEnd) tabbedPane.tabCount else tabbedPane.selectedIndex + 1
+        if (isPreviewMode) {
+          indexToInsert = findPreviewIndex()
+        }
+        if (indexToInsert == -1) {
+          indexToInsert = if (UISettings.getInstance().openTabsAtTheEnd) tabbedPane.tabCount else tabbedPane.selectedIndex + 1
+        }
       }
+
       val file = composite.file
       val template = AllIcons.FileTypes.Text
-      val emptyIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
       tabbedPane.insertTab(
         file = file,
-        icon = emptyIcon,
+        icon = EmptyIcon.create(template.iconWidth, template.iconHeight),
         component = EditorWindowTopComponent(window = this, composite = composite),
         tooltip = null,
         indexToInsert = indexToInsert,
@@ -342,6 +340,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     owner.updateFileColorAsync(composite.file)
+
     if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
       if (options.selectAsCurrent) {
         setSelectedComposite(composite, options.requestFocus)
@@ -869,8 +868,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   internal fun findCompositeIndex(composite: EditorComposite): Int {
     for (i in 0 until tabCount) {
-      val compositeAt = getCompositeAt(i)
-      if (compositeAt === composite) {
+      if (getCompositeAt(i) === composite) {
         return i
       }
     }
