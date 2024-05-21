@@ -274,8 +274,14 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     override fun createStringLiteralExpression(text: String, context: PsiElement?): UExpression {
-        val literal = psiFactory(context).createExpression(StringUtil.wrapWithDoubleQuote(text)) as KtStringTemplateExpression
+        val literal = psiFactory(context).createExpression(StringUtil.wrapWithDoubleQuote(text.escape())) as KtStringTemplateExpression
         return KotlinStringTemplateUPolyadicExpression(literal, null)
+    }
+
+    private fun String.escape(): String {
+        val stringBuilder = StringBuilder()
+        StringUtil.escapeStringCharacters(this.length, this, "\"$", stringBuilder)
+        return stringBuilder.toString()
     }
 
     override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
