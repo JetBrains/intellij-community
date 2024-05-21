@@ -47,7 +47,6 @@ public class ConsoleViewContentType {
   public static final ConsoleViewContentType ERROR_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", ERROR_OUTPUT_KEY);
   public static final ConsoleViewContentType SYSTEM_OUTPUT = new ConsoleViewContentType("SYSTEM_OUTPUT", SYSTEM_OUTPUT_KEY);
   public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_INPUT", USER_INPUT_KEY);
-  public static final ConsoleViewContentType NON_INTERACTIVE_USER_INPUT = new ConsoleViewContentType("NON_INTERACTIVE_USER_INPUT", USER_INPUT_KEY);
 
   public static final ConsoleViewContentType[] OUTPUT_TYPES = {NORMAL_OUTPUT, ERROR_OUTPUT, USER_INPUT, SYSTEM_OUTPUT};
 

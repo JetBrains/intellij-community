@@ -980,13 +980,6 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
   }
 
-  public void testSupportsNonInteractiveUserInput() {
-    myConsole.print("> ", ConsoleViewContentType.NON_INTERACTIVE_USER_INPUT);
-    myConsole.print("input", ConsoleViewContentType.NON_INTERACTIVE_USER_INPUT);
-    myConsole.flushDeferredText();
-    assertMarkersEqual(getAllRangeHighlighters(), new ExpectedHighlighter(0, 7, ConsoleViewContentType.NON_INTERACTIVE_USER_INPUT));
-  }
-
   public void testTypingMustLeadToMergedUserInputTokensAtTheDocumentEnd() {
     myConsole.type(myConsole.getEditor(), "/");
     myConsole.flushDeferredText();

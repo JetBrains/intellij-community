@@ -89,7 +89,6 @@ c:com.intellij.execution.ui.ConsoleViewContentType
 - sf:LOG_VERBOSE_OUTPUT_KEY:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:LOG_WARNING_OUTPUT:com.intellij.execution.ui.ConsoleViewContentType
 - sf:LOG_WARNING_OUTPUT_KEY:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:NON_INTERACTIVE_USER_INPUT:com.intellij.execution.ui.ConsoleViewContentType
 - sf:NORMAL_OUTPUT:com.intellij.execution.ui.ConsoleViewContentType
 - sf:NORMAL_OUTPUT_KEY:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:OUTPUT_TYPES:com.intellij.execution.ui.ConsoleViewContentType[]
