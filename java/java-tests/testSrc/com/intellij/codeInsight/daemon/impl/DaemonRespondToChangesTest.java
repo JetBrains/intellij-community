@@ -2203,7 +2203,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     enableDeadCodeInspection();
     configureByFiles(null, BASE_PATH+getTestName(true)+"/p2/A2222.java", BASE_PATH+getTestName(true)+"/p1/A1111.java");
     assertEquals("A2222.java", getFile().getName());
-    makeEditorWindowVisible(new Point(0, 1000), myEditor);
+
     HighlightInfo info = assertOneElement(doHighlighting(HighlightSeverity.WARNING));
     assertEquals("Class 'A2222' is never used", info.getDescription());
 

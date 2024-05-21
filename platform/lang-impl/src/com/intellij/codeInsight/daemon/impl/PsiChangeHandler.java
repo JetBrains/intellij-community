@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -194,9 +195,11 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     psiElement.accept(new PsiRecursiveElementWalkingVisitor(){
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof PsiReference // reference was deleted/appeared, has to rehighlight all
-            || element instanceof PsiNameIdentifierOwner  // PsiMember, e.g. PsiClass or PsiMethod, was modified - no need to drill into because we have to rehighlight all anyway
-        ) {
+        if (element instanceof PsiReference) { // reference was deleted/appeared, has to rehighlight all
+          result[0] = true;
+          stopWalking();
+        }
+        if (element instanceof PsiNameIdentifierOwner) {  // PsiMember, e.g. PsiClass or PsiMethod, was modified - no need to drill into because we have to rehighlight all anyway
           result[0] = true;
           stopWalking();
         }
@@ -219,14 +222,15 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       return true;
     }
     PsiElement child = event.getChild();
-    return child != null && child != oldChild && child != newChild && hasReferenceInside(child);
+    boolean result = child != null && child != oldChild && child != newChild && hasReferenceInside(child);
+    return result;
   }
 
   private void queueElement(@NotNull PsiElement child, boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    PsiFile file = event.getFile();
-    if (file == null) file = child.getContainingFile();
-    if (file == null) {
+    PsiFile psiFile = event.getFile();
+    if (psiFile == null) psiFile = child.getContainingFile();
+    if (psiFile == null) {
       myFileStatusMap.markAllFilesDirty(child);
       return;
     }
@@ -234,8 +238,13 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (!child.isValid()) return;
 
     PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-    Document document = pdm.getCachedDocument(file);
+    Document document = pdm.getCachedDocument(psiFile);
     if (document != null) {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && ProjectFileIndex.getInstance(myProject).isExcluded(virtualFile)) {
+        // ignore changes in excluded files
+        return;
+      }
       if (pdm.getSynchronizer().getTransaction(document) == null) {
         // content reload, language level change or some other big change
         myFileStatusMap.markAllFilesDirty(child);
