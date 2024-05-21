@@ -63,6 +63,11 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     return PsiTypes.voidType().equals(type) ? JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter) : type;
   }
 
+  @Override
+  public boolean hasRawSubstitution() {
+    return mySubstitutionMap.containsValue(null);
+  }
+
   /**
    * @return type mapped to type parameter; null if type parameter is mapped to null; or PsiType.VOID if no mapping exists
    */

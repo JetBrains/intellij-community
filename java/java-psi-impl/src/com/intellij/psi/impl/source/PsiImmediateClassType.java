@@ -117,8 +117,10 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     PsiTypeParameterList list = myClass.getTypeParameterList();
     if (list == null) return 0;
     PsiTypeParameter[] parameters = list.getTypeParameters();
-    for (PsiTypeParameter parameter : parameters) {
-      if (mySubstitutor.substitute(parameter) == null) return 0;
+    if (mySubstitutor.hasRawSubstitution()) {
+      for (PsiTypeParameter parameter : parameters) {
+        if (mySubstitutor.substitute(parameter) == null) return 0;
+      }
     }
     return parameters.length;
   }
