@@ -16,10 +16,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
@@ -30,6 +27,7 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
+import kotlin.io.path.pathString
 
 internal class NewWorkspaceDialog(
   val project: Project,
@@ -37,9 +35,9 @@ internal class NewWorkspaceDialog(
 ) : DialogWrapper(project) {
   private lateinit var nameField: JBTextField
   private lateinit var locationField: TextFieldWithBrowseButton
-  private val listModel = CollectionListModel(initialProjects.map { Item(it.projectPath, it.handler.subprojectIcon) })
+  private val listModel = CollectionListModel(initialProjects.map { Item(it.name, it.projectPath, it.handler.subprojectIcon) })
   private val projectList = JBList(listModel).apply {
-    cellRenderer = Renderer()
+    cellRenderer = Renderer().apply { iconTextGap = 3 }
   }
 
   val projectName: String get() = nameField.text
@@ -118,17 +116,19 @@ internal class NewWorkspaceDialog(
     for (file in files) {
       if (allItems.any { it.path == file.path }) continue
       val handler = getHandlers(file).firstOrNull() ?: continue
-      listModel.add(Item(file.path, handler.subprojectIcon))
+      listModel.add(Item(file.name, file.path, handler.subprojectIcon))
     }
   }
 
-  private data class Item(@NlsSafe val path: String, val icon: Icon?)
+  private data class Item(@NlsSafe val name: String, @NlsSafe val path: String, val icon: Icon?)
 
   private class Renderer: ColoredListCellRenderer<Item>() {
     override fun customizeCellRenderer(list: JList<out Item>, value: Item?, index: Int, selected: Boolean, hasFocus: Boolean) {
       value ?: return
       icon = value.icon
-      append(value.path)
+      append(value.name + "   ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      @Suppress("HardCodedStringLiteral") val userHome = System.getProperty("user.home")
+      append(Path.of(value.path).parent.pathString.replaceFirst(userHome, "~"), SimpleTextAttributes.GRAY_ATTRIBUTES)
     }
   }
 }
