@@ -3,11 +3,14 @@ package com.intellij.tools.ide.starter.bus.shared
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.starter.bus.EventsFlow
 import com.intellij.tools.ide.starter.bus.events.Event
+import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.client.EventBusServerClient
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.time.Duration
+
+private val LOG = EventBusLoggerFactory.getLogger(SharedEventsFlow::class.java)
 
 class SharedEventsFlow(private val client: EventBusServerClient,
                        private val localEventsFlow: EventsFlow) : EventsFlow {
@@ -58,7 +61,7 @@ class SharedEventsFlow(private val client: EventBusServerClient,
                 }
                 catch (e: Throwable) {
                   //can’t throw an exception into the main thread (even if CoroutineExceptionHandler used), so log it
-                  println(e.stackTraceToString())
+                  LOG.info(e.stackTraceToString())
                 }
                 finally {
                   client.processedEvent(it.first)

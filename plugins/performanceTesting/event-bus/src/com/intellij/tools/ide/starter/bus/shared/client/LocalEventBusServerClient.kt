@@ -3,16 +3,18 @@ package com.intellij.tools.ide.starter.bus.shared.client
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.starter.bus.events.Event
+import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import com.intellij.tools.ide.starter.bus.shared.dto.SubscriberDto
 import com.intellij.tools.ide.starter.bus.shared.server.LocalEventBusServer
-import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.rmi.ServerException
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+
+private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServerClient::class.java)
 
 class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServerClient {
   private val objectMapper = jacksonObjectMapper()
@@ -41,7 +43,6 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
         }
       }
 
-      println("LocalEventBusServerClient: send new request.\nUrl: $url\nMethod: $method\nBody: $requestBody")
       connection.responseCode.also {
         if (it != HttpURLConnection.HTTP_OK) {
           throw ServerException("Code: $it. ${connection.responseMessage}")
@@ -61,6 +62,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
   }
 
   override fun postAndWaitProcessing(sharedEventDto: SharedEventDto): Boolean {
+    LOG.info("Post and wait $sharedEventDto")
     return post("postAndWaitProcessing", objectMapper.writeValueAsString(sharedEventDto)).toBoolean()
   }
 
@@ -69,7 +71,8 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     eventClassesLock.writeLock().withLock {
       eventClasses[simpleName] = eventClass.name
     }
-    println("LocalEventBusServerClient: new subscriber $simpleName")
+
+    LOG.info("New subscriber $simpleName")
     post("newSubscriber", objectMapper.writeValueAsString(SubscriberDto(simpleName, PROCESS_ID))).toBoolean()
   }
 
@@ -89,6 +92,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
   }
 
   override fun processedEvent(eventName: String) {
+    LOG.info("Processed event $eventName")
     post("processedEvent", eventName)
   }
 
@@ -98,7 +102,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
       post("clear")
     }
     catch (t: Throwable) {
-      println("Clear server exception: ${t.message}. $t")
+      LOG.info("Clear server exception: ${t.message}. $t")
     }
   }
 
@@ -110,10 +114,10 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     if (!server.startServer()) {
       try {
         val onStartEvents = getEvents()
-        println("Events on server start: $onStartEvents")
+        LOG.debug("Events on server start: $onStartEvents")
       }
       catch (t: Throwable) {
-        println("Server is running but we cannot get events")
+        LOG.info("Server is running but we cannot get events")
         throw t
       }
     }

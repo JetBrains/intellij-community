@@ -10,6 +10,7 @@ abstract class SharedEventsTest {
   @BeforeEach
   fun abstractBeforeEach() {
     try {
+      System.setProperty("eventbus.debug", "true")
       EventsBus.startServerProcess()
     }
     catch (t: Throwable) {
@@ -21,5 +22,6 @@ abstract class SharedEventsTest {
   fun abstractAfterEach() {
     EventsBus.unsubscribeAll()
     EventsBus.endServerProcess()
+    System.setProperty("eventbus.debug", "false")
   }
 }

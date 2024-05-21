@@ -1,10 +1,13 @@
 package com.intellij.tools.ide.starter.bus.shared.server.services
 
+import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import com.intellij.tools.ide.starter.bus.shared.dto.SubscriberDto
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+
+private val LOG = EventBusLoggerFactory.getLogger(EventsFlowService::class.java)
 
 class EventsFlowService {
   // Key is processId. Necessary to avoid sending old events for processes that signed up later
@@ -25,7 +28,7 @@ class EventsFlowService {
   fun postAndWaitProcessing(sharedEventDto: SharedEventDto) {
     synchronized(getLock(sharedEventDto.eventId)) {
       val latch = CountDownLatch(eventsPerProcessLock.readLock().withLock {
-        eventsPerProcess.values.filter {it[sharedEventDto.eventName] != null }.size
+        eventsPerProcess.values.filter { it[sharedEventDto.eventName] != null }.size
       })
       eventsLatchLock.writeLock().withLock { eventsLatch[sharedEventDto.eventId] = latch }
       eventsPerProcessLock.writeLock().withLock {
@@ -37,7 +40,7 @@ class EventsFlowService {
 
   fun newSubscriber(subscriber: SubscriberDto) {
     synchronized(subscriber.eventName) {
-      println("EventsFlowService: new subscriber $subscriber")
+      LOG.debug("New subscriber $subscriber")
       eventsPerProcessLock.writeLock().withLock {
         eventsPerProcess
           .computeIfAbsent(subscriber.processId) { HashMap() }
@@ -47,7 +50,6 @@ class EventsFlowService {
   }
 
   fun getEvents(processId: String): HashMap<String, MutableList<SharedEventDto>> {
-    println("EventsFlowService: getEvents for process $processId")
     return eventsPerProcessLock.readLock().withLock { eventsPerProcess.getOrDefault(processId, HashMap()) }
   }
 

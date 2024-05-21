@@ -4,6 +4,7 @@ import com.intellij.tools.ide.starter.bus.EventsFlow
 import com.intellij.tools.ide.starter.bus.Subscriber
 import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.starter.bus.exceptions.EventBusException
+import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.runBlocking
@@ -15,6 +16,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.jvm.internal.CallableReference
 import kotlin.time.Duration
+
+private val LOG = EventBusLoggerFactory.getLogger(LocalEventsFlow::class.java)
 
 class LocalEventsFlow : EventsFlow {
   // There is lock only on subscribers(HashMap).Subscriber list(subscribers.value)
@@ -36,7 +39,7 @@ class LocalEventsFlow : EventsFlow {
       // To avoid double subscriptions
       if (subscribers[eventClassName]?.any { it.subscriberName == subscriberObject } == true) return false
       val newSubscriber = Subscriber(subscriberObject, timeout, callback)
-      println("New subscriber $newSubscriber for $eventClassName")
+      LOG.debug("New subscriber $newSubscriber for $eventClassName")
       subscribers.computeIfAbsent(eventClassName) { CopyOnWriteArrayList() }.add(newSubscriber)
       return true
     }
@@ -49,11 +52,11 @@ class LocalEventsFlow : EventsFlow {
     }
     (subscribersForEvent as? CopyOnWriteArrayList<Subscriber<T>>)
       ?.map { subscriber ->
-        println("Post event $eventClassName for $subscriber.")
+        LOG.debug("Post event $eventClassName for $subscriber.")
         CompletableFuture.runAsync({
-                                     println("Start execution $eventClassName for $subscriber")
+                                     LOG.debug("Start execution $eventClassName for $subscriber")
                                      runBlocking { subscriber.callback(event) }
-                                     println("Finished execution $eventClassName for $subscriber")
+                                     LOG.debug("Finished execution $eventClassName for $subscriber")
                                    }, Dispatchers.IO.asExecutor())
           .orTimeout(subscriber.timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
           .exceptionally { throwable ->
