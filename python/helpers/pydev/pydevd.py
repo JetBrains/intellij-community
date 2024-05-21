@@ -560,6 +560,7 @@ class PyDB(object):
     def kill_active_value_resolve_threads(self):
         for t in self.value_resolve_thread_list:
             kill_thread(t)
+        self.value_resolve_thread_list.clear()
 
     def on_breakpoints_changed(self, removed=False):
         '''
