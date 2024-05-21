@@ -36,6 +36,8 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private String myInternalCanonicalText;
 
   private final ClassResolveResult myClassResolveResult = new ClassResolveResult() {
+    private ClassResolveResult myCapturedResult = null;
+    
     @Override
     public PsiClass getElement() {
       return myClass;
@@ -44,6 +46,15 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     @Override
     public @NotNull PsiSubstitutor getSubstitutor() {
       return mySubstitutor;
+    }
+
+    @Override
+    public ClassResolveResult resolveWithCapturedTopLevelWildcards() {
+      ClassResolveResult result = myCapturedResult;
+      if (result == null) {
+        myCapturedResult = result = ClassResolveResult.super.resolveWithCapturedTopLevelWildcards(); 
+      }
+      return result;
     }
 
     @Override

@@ -714,10 +714,10 @@ public final class PsiUtil extends PsiUtilCore {
     return equalOnEquivalentClasses(result1.getSubstitutor(), aClass, result2.getSubstitutor(), bClass);
   }
 
-  private static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1,
-                                                  @NotNull PsiClass aClass,
-                                                  @NotNull PsiSubstitutor s2,
-                                                  @NotNull PsiClass bClass) {
+  public static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1,
+                                                 @NotNull PsiClass aClass,
+                                                 @NotNull PsiSubstitutor s2,
+                                                 @NotNull PsiClass bClass) {
     if (s1 == s2 && aClass == bClass) return true;
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
