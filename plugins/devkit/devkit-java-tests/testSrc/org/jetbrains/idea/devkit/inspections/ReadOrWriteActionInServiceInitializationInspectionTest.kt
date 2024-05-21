@@ -167,6 +167,8 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
   }
 
   fun `test read and write actions are reported in an PersistentStateComponent lifecycle methods`() {
+    addNotNullAnnotation()
+    addNullableAnnotation()
     myFixture.configureByText(
       "TestSettings.java",
       // language=java
@@ -226,6 +228,7 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
   }
 
   fun `test read and write actions are not reported in an object literals and lambdas`() {
+    addNotNullAnnotation()
     myFixture.configureByText(
       "TestService.java",
       // language=java
@@ -272,6 +275,24 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
       """.trimIndent()
     )
     myFixture.checkHighlighting()
+  }
+
+  private fun addNullableAnnotation() {
+    myFixture.addClass("""
+      package org.jetbrains.annotations;
+      import java.lang.annotation.*;
+      @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+      public @interface Nullable {}
+    """.trimIndent())
+  }
+
+  private fun addNotNullAnnotation() {
+    myFixture.addClass("""
+      package org.jetbrains.annotations;
+      import java.lang.annotation.*;
+      @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+      public @interface NotNull {}
+    """.trimIndent())
   }
 
 }
