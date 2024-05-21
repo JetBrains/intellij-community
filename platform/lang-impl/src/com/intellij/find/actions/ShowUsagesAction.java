@@ -18,7 +18,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
-import com.intellij.idea.LoggerFactory;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -1641,7 +1640,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static void showUsagesInMaximalScope(@NotNull ShowUsagesParameters parameters,
                                                @NotNull ShowUsagesActionHandler actionHandler,
                                                @Nullable ShowUsagesPopupData showUsagesPopupData) {
-    cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
+    if (showUsagesPopupData != null) {
+      cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
+    }
     ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
     if (handler != null) {
       showElementUsages(parameters, handler);
