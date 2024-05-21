@@ -1,5 +1,6 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -78,4 +79,10 @@ public interface CoverageAnnotator {
 
   @ApiStatus.Internal
   void renewCoverageData(@NotNull CoverageSuitesBundle suite, @NotNull CoverageDataManager dataManager);
+
+  @ApiStatus.Internal
+  @Nullable
+  default ModifiedFilesFilter getModifiedFilesFilter() {
+    return null;
+  }
 }

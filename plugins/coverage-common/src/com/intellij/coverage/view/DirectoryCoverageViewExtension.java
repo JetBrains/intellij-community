@@ -2,6 +2,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +90,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
+  void onRootReset() {
+    ModifiedFilesFilter filter = myAnnotator.getModifiedFilesFilter();
+    if (filter != null) {
+      filter.resetFilteredFiles();
+    }
+  }
+
+  @Override
   public List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {
@@ -108,26 +116,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       for (PsiFile psiFile : psiFiles) {
         if (myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager) == null) continue;
         CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle);
+        VirtualFile file = e.getFile();
         CoverageViewManager.StateBean stateBean = CoverageViewManager.getInstance(myProject).getStateBean();
-        if (!stateBean.isShowOnlyModified() || isModified(e.getFileStatus())) {
+        ModifiedFilesFilter filter = myAnnotator.getModifiedFilesFilter();
+        if (!stateBean.isShowOnlyModified() || file == null || filter == null || filter.isFileModified(file)) {
           children.add(e);
-        }
-        else {
-          if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
-            baseCoverageAnnotator.setVcsFilteredChildren(true);
-          }
         }
       }
     }
     return children;
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public boolean hasVCSFilteredNodes() {
-    if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
-      return baseCoverageAnnotator.hasVcsFilteredChildren();
-    }
-    return super.hasVCSFilteredNodes();
   }
 }

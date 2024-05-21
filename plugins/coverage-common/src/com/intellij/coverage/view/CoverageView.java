@@ -3,6 +3,7 @@ package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -173,7 +174,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private void resetIfAllFiltered(AbstractTreeNode<?> root, ActionToolbar actionToolbar) {
     // This call must come first for correct hasVCSFilteredNodes call
     boolean hasChildren = myViewExtension.hasChildren(root);
-    if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
+    if (hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
       if (!hasChildren) {
         resetView(() -> myStateBean.setShowOnlyModified(false));
       }
@@ -188,6 +189,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }
     }
+  }
+
+  private boolean hasVCSFilteredNodes() {
+    CoverageAnnotator annotator = mySuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject);
+    ModifiedFilesFilter filter = annotator.getModifiedFilesFilter();
+    return filter != null && filter.getHasFilteredFiles();
   }
 
   private void setUpShowRootNode(ActionToolbar actionToolbar) {
@@ -256,7 +263,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void setUpEmptyText() {
-    boolean hasVcsFiltered = myViewExtension.hasVCSFilteredNodes();
     boolean hasFullyCovered = myViewExtension.hasFullyCoveredNodes();
     myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
@@ -277,7 +283,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       });
       emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
     }
-    if (hasVcsFiltered && myStateBean.isShowOnlyModified()) {
+    if (myStateBean.isShowOnlyModified() && hasVCSFilteredNodes()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
         resetView(() -> myStateBean.setShowOnlyModified(false));
       });

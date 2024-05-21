@@ -1,5 +1,6 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   private final Project myProject;
-  private boolean myHasVcsFilteredChildren;
+  private ModifiedFilesFilter myModifiedFilesFilter;
 
   @Nullable
   protected abstract Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager);
@@ -24,7 +25,9 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   }
 
   @Override
-  public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) { }
+  public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) {
+    myModifiedFilesFilter = null;
+  }
 
   @ApiStatus.Internal
   @Override
@@ -60,13 +63,11 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   }
 
   @ApiStatus.Internal
-  public boolean hasVcsFilteredChildren() {
-    return myHasVcsFilteredChildren;
-  }
-
-  @ApiStatus.Internal
-  public void setVcsFilteredChildren(boolean hasVcsFilteredChildren) {
-    myHasVcsFilteredChildren = hasVcsFilteredChildren;
+  @Override
+  public synchronized @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
+    if (myModifiedFilesFilter != null) return myModifiedFilesFilter;
+    myModifiedFilesFilter = ModifiedFilesFilter.create(myProject);
+    return myModifiedFilesFilter;
   }
 
   public static class FileCoverageInfo {

@@ -132,13 +132,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public boolean hasVCSFilteredNodes() {
-    CoverageClassStructure structure = myAnnotator.getStructure();
-    if (structure == null) return false;
-    return structure.getHasVCSFilteredChildren();
-  }
-
-  @Override
   public ColumnInfo[] createColumnInfos() {
     ArrayList<ColumnInfo> infos = new ArrayList<>();
     infos.add(new ElementColumnInfo());

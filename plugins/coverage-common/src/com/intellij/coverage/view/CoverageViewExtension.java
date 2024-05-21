@@ -7,7 +7,6 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -58,14 +57,12 @@ public abstract class CoverageViewExtension {
   @NotNull
   public abstract AbstractTreeNode<?> createRootNode();
 
-  @ApiStatus.Internal
-  public boolean hasChildren(AbstractTreeNode<?> node) {
-    return !node.getChildren().isEmpty();
+  void onRootReset() {
   }
 
   @ApiStatus.Internal
-  public boolean hasVCSFilteredNodes() {
-    return false;
+  public boolean hasChildren(AbstractTreeNode<?> node) {
+    return !node.getChildren().isEmpty();
   }
 
   @ApiStatus.Internal
@@ -147,11 +144,5 @@ public abstract class CoverageViewExtension {
   @Deprecated
   public String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
     return null;
-  }
-
-
-  @ApiStatus.Internal
-  public static boolean isModified(FileStatus status) {
-    return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
   }
 }
