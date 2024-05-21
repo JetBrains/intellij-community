@@ -203,6 +203,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
     }
 
+    @TestMetadata("kotlin/moveEscapedKeyword/moveEscapedKeyword.test")
+    public void testKotlin_moveEscapedKeyword_MoveEscapedKeyword() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveEscapedKeyword/moveEscapedKeyword.test");
+    }
+
     @TestMetadata("kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test")
     public void testKotlin_moveExtensionFunctionToFil_MoveExtensionFunctionToFil() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test");

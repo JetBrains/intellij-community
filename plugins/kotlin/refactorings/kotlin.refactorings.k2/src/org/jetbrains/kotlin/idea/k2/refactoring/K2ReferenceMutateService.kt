@@ -189,7 +189,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtCallExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val psiFactory = KtPsiFactory(project)
-        val newName = psiFactory.createSimpleName(fqName.shortName().asString())
+        val newName = psiFactory.createSimpleName(fqName.quoteIfNeeded().shortName().asString())
         val newCall = calleeExpression?.replaced(newName)?.parent as? KtCallExpression ?: return null
         val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true
         return if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
@@ -207,7 +207,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
-        val shortName = fqName.shortName().asString()
+        val shortName = fqName.quoteIfNeeded().shortName().asString()
         val isOperator = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.OPERATOR_KEYWORD)
         val isInfixFun = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.INFIX_KEYWORD)
         val newNameExpression = when {

@@ -412,6 +412,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
         }
 
+        @TestMetadata("kotlin/moveEscapedKeyword/moveEscapedKeyword.test")
+        public void testKotlin_moveEscapedKeyword_MoveEscapedKeyword() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveEscapedKeyword/moveEscapedKeyword.test");
+        }
+
         @TestMetadata("kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test")
         public void testKotlin_moveExtensionFunctionToFil_MoveExtensionFunctionToFil() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test");
