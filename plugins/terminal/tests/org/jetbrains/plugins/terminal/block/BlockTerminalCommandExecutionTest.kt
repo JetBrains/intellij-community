@@ -6,6 +6,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.Filter.ResultItem
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -135,16 +136,13 @@ private fun TerminalOutputModel.collectCommandResults(): List<CommandResult> {
       null // skip the initial block
     }
     else {
-      CommandResult(command!!, run {
-        if (commandBlock.withOutput) {
-          editor.document.getText(TextRange(commandBlock.outputStartOffset, commandBlock.endOffset))
-        }
-        else {
-          ""
-        }
-      })
+      CommandResult(command!!, editor.document.getCommandBlockOutput(commandBlock))
     }
   }
+}
+
+internal fun Document.getCommandBlockOutput(block: CommandBlock): String {
+  return if (block.withOutput) getText(TextRange(block.outputStartOffset, block.endOffset)) else ""
 }
 
 private open class MyHyperlinkFilter(val linkText: String) : Filter, DumbAware {
