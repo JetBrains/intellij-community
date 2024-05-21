@@ -3,10 +3,11 @@
 
 package git4idea.terminal
 
-import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 
 internal val gitOverrideSpec = ShellCommandSpec("git") {
+  addGitAliases()
+
   subcommands {
     // ...
   }
