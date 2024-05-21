@@ -20,9 +20,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -45,21 +43,15 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
-import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
-import java.awt.geom.IllegalPathStateException;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Supplier;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 
@@ -134,129 +126,6 @@ public class GradleExecutionHelper {
           throw externalSystemException;
         }
       });
-  }
-
-  public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
-                                     @NotNull String projectPath,
-                                     @NotNull GradleExecutionSettings settings,
-                                     @NotNull ExternalSystemTaskNotificationListener listener,
-                                     @NotNull CancellationToken cancellationToken) {
-    ensureInstalledWrapper(id, projectPath, settings, null, listener, cancellationToken);
-  }
-
-  public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
-                                     @NotNull String projectPath,
-                                     @NotNull GradleExecutionSettings settings,
-                                     @Nullable GradleVersion gradleVersion,
-                                     @NotNull ExternalSystemTaskNotificationListener listener,
-                                     @NotNull CancellationToken cancellationToken) {
-    if (!settings.getDistributionType().isWrapped()) {
-      return;
-    }
-    if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
-        GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
-      // Fleet cannot resolve Gradle wrappers from places other than the project root
-      if (!PlatformUtils.isFleetBackend()) return;
-    }
-    withGradleConnection(projectPath, id, settings, listener, cancellationToken, connection -> {
-      ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, connection, cancellationToken);
-      return null;
-    });
-  }
-
-  private void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
-                                      @NotNull String projectPath,
-                                      @NotNull GradleExecutionSettings settings,
-                                      @Nullable GradleVersion gradleVersion,
-                                      @NotNull ExternalSystemTaskNotificationListener listener,
-                                      @NotNull ProjectConnection connection,
-                                      @NotNull CancellationToken cancellationToken) {
-    long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-    Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-      .spanBuilder("EnsureInstalledWrapper")
-      .startSpan();
-    try (Scope ignore = span.makeCurrent()) {
-      settings.setRemoteProcessIdleTtlInMs(100);
-
-      if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) {
-        // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
-
-        Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
-        if (wrapperPropertiesFile != null) {
-          settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
-        }
-      }
-      else {
-        Supplier<String> propertiesFile = setupWrapperTaskInInitScript(gradleVersion, settings);
-
-        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
-
-        String wrapperPropertiesFile = propertiesFile.get();
-        if (wrapperPropertiesFile != null) {
-          settings.setWrapperPropertyFile(wrapperPropertiesFile);
-        }
-      }
-    }
-    catch (ProcessCanceledException e) {
-      span.recordException(e);
-      throw e;
-    }
-    catch (IOException e) {
-      LOG.warn("Can't update wrapper", e);
-      span.recordException(e);
-    }
-    catch (Throwable e) {
-      span.recordException(e);
-      span.setStatus(StatusCode.ERROR);
-      LOG.warn("Can't update wrapper", e);
-      Throwable rootCause = ExceptionUtil.getRootCause(e);
-      ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
-      externalSystemException.initCause(e);
-      throw externalSystemException;
-    }
-    finally {
-      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
-      span.end();
-      try {
-        // if autoimport is active, it should be notified of new files creation as early as possible,
-        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
-        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
-      }
-      catch (IllegalPathStateException ignore) {
-      }
-    }
-  }
-
-  private void executeWrapperTask(
-    @NotNull ExternalSystemTaskId id,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull String projectPath,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull ProjectConnection connection,
-    @NotNull CancellationToken cancellationToken
-  ) {
-    SystemPropertiesAdjuster.executeAdjusted(projectPath, () -> {
-      BuildLauncher launcher = getBuildLauncher(connection, id, List.of("wrapper"), settings, listener);
-      launcher.withCancellationToken(cancellationToken);
-      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExecuteWrapperTask", (ignore) -> launcher.run());
-      return null;
-    });
-  }
-
-  private static @NotNull Supplier<String> setupWrapperTaskInInitScript(
-    @Nullable GradleVersion gradleVersion,
-    @NotNull GradleExecutionSettings settings
-  ) throws IOException {
-    File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
-    File jarFile = new File(wrapperFilesLocation, "gradle-wrapper.jar");
-    File scriptFile = new File(wrapperFilesLocation, "gradlew");
-    File fileWithPathToProperties = new File(wrapperFilesLocation, "path.tmp");
-
-    var initScriptFile = GradleInitScriptUtil.createWrapperInitScript(gradleVersion, jarFile, scriptFile, fileWithPathToProperties);
-    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString());
-
-    return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
 
   public static void prepare(

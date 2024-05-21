@@ -65,6 +65,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncActionResultHandler;
@@ -170,7 +171,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
       if (resolverContext.getSettings() != null) {
-        myHelper.ensureInstalledWrapper(
+        GradleWrapperHelper.ensureInstalledWrapper(
           resolverContext.getExternalSystemTaskId(),
           resolverContext.getProjectPath(),
           resolverContext.getSettings(),

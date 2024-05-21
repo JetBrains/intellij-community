@@ -49,6 +49,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -112,7 +113,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     try {
       if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
         String rootProjectPath = determineRootProject(projectPath);
-        myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
+        GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
       }
       myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationToken, connection -> {
         executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationToken);
