@@ -173,6 +173,10 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                     cmd_id == CMD_STEP_INTO_MY_CODE:
                 # we received some command to make a single step
+
+                # The variable values can be stale, abrupt active resolve threads.
+                py_db.kill_active_value_resolve_threads()
+
                 t = pydevd_find_thread_by_id(text)
                 if t:
                     thread_id = get_thread_id(t)

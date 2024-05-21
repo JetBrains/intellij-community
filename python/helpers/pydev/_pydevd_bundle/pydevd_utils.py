@@ -1,5 +1,6 @@
 from __future__ import nested_scopes
 
+import ctypes
 import os
 import traceback
 
@@ -16,8 +17,10 @@ except:
     OrderedDict = dict
 
 import inspect
-from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_PY311
+from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, \
+    dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_PY311, \
+    IS_PY37_OR_GREATER
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
@@ -643,3 +646,27 @@ def eval_expression(expression, globals, locals):
         return eval_func(expression, globals, locals, False)
 
     return eval(expression, globals, locals)
+
+
+def kill_thread(thread):
+    if not thread.is_alive():
+        return
+
+    thread_id = thread.ident
+
+    if IS_PY37_OR_GREATER:
+        tid = ctypes.c_long(thread_id)
+    else:
+        tid = ctypes.c_ulong(thread_id)
+
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(SystemExit))
+
+    if res == 0:
+        pydev_log.debug("Thread with ID '%s' not found" % thread_id)
+    elif res > 1:
+        pydev_log.debug("More then one thread with ID '%s' found" % thread_id)
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+    else:
+        pydev_log.debug("Successfully raised an exception in thread with ID '%s'"
+                        % thread_id)
+    pydev_log.debug("Thread with ID '%s' is stopped" % thread_id)

@@ -62,7 +62,8 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
 from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep669_monitoring
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
-from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
+from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread, \
+    kill_thread
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
 from pydevd_file_utils import get_fullname, rPath, get_package_dir
@@ -514,6 +515,8 @@ class PyDB(object):
 
         self.is_pep669_monitoring_enabled = False
 
+        self.value_resolve_thread_list = []
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -553,6 +556,10 @@ class PyDB(object):
 
     def disable_tracing(self):
         pydevd_tracing.SetTrace(None)
+
+    def kill_active_value_resolve_threads(self):
+        for t in self.value_resolve_thread_list:
+            kill_thread(t)
 
     def on_breakpoints_changed(self, removed=False):
         '''
