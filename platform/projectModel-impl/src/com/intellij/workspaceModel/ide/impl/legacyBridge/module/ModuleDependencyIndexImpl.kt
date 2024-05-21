@@ -148,14 +148,10 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   private fun addTrackedLibrariesAndSdks(dependencies: List<ModuleDependencyItem>,
                                          moduleEntity: ModuleEntity,
                                          storageBefore: ImmutableEntityStorage?) {
-    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     dependencies.forEach {
       when {
         it is LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
-          val libraryLevel = it.library.tableId.level
-          val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          if (LibraryLevelsTracker.getInstance(project).isNotUsed(libraryLevel)) libraryTable.addListener(libraryTablesListener)
-          libraryTablesListener.addTrackedLibrary(libraryTable, it.library, storageBefore)
+          addTrackedLibrary(it.library, storageBefore)
         }
         it is SdkDependency || it is InheritedSdkDependency -> {
           jdkChangeListener.addTrackedJdk(it, moduleEntity)
@@ -165,14 +161,10 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   private fun removeTrackedLibrariesAndSdks(dependencies: List<ModuleDependencyItem>, moduleEntity: ModuleEntity, currentStorage: ImmutableEntityStorage) {
-    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     dependencies.forEach {
       when {
         it is LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
-          val libraryLevel = it.library.tableId.level
-          val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          libraryTablesListener.unTrackLibrary(libraryTable, it.library, currentStorage)
-          if (LibraryLevelsTracker.getInstance(project).isNotUsed(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
+          unTrackLibrary(it.library, currentStorage)
         }
         it is SdkDependency || it is InheritedSdkDependency -> {
           jdkChangeListener.removeTrackedJdk(it, moduleEntity)
@@ -206,32 +198,37 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
   }
-  
-  private inner class LibraryTablesListener : LibraryTable.Listener {
-    fun addTrackedLibrary(libraryTable: LibraryTable,
-                          libraryId: LibraryId,
-                          storageBefore: ImmutableEntityStorage?) {
-      if (storageBefore == null || storageBefore.referrers(libraryId, ModuleEntity::class.java).none()) {
-        val library = libraryTable.getLibraryByName(libraryId.name)
-        if (library != null) {
-          library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
-          eventDispatcher.multicaster.addedDependencyOn(library)
-        }
-      }
-      LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelAdded(libraryTable.tableLevel)
-    }
 
-    fun unTrackLibrary(libraryTable: LibraryTable,
-                       libraryId: LibraryId,
-                       currentStorage: ImmutableEntityStorage) {
+  private fun addTrackedLibrary(libraryId: LibraryId,
+                                storageBefore: ImmutableEntityStorage?) {
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val libraryLevel = libraryId.tableId.level
+    val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return
+    if (LibraryLevelsTracker.getInstance(project).isNotUsed(libraryLevel)) libraryTable.addListener(libraryTablesListener)
+    if (storageBefore == null || storageBefore.referrers(libraryId, ModuleEntity::class.java).none()) {
       val library = libraryTable.getLibraryByName(libraryId.name)
-      LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelRemoved(libraryTable.tableLevel)
-      if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
-        eventDispatcher.multicaster.removedDependencyOn(library)
-        library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
+      if (library != null) {
+        library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+        eventDispatcher.multicaster.addedDependencyOn(library)
       }
     }
+    LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelAdded(libraryTable.tableLevel)
+  }
 
+  private fun unTrackLibrary(libraryId: LibraryId, currentStorage: ImmutableEntityStorage) {
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val libraryLevel = libraryId.tableId.level
+    val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return
+    val library = libraryTable.getLibraryByName(libraryId.name)
+    LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelRemoved(libraryTable.tableLevel)
+    if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
+      eventDispatcher.multicaster.removedDependencyOn(library)
+      library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
+    }
+    if (LibraryLevelsTracker.getInstance(project).isNotUsed(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
+  }
+
+  private inner class LibraryTablesListener : LibraryTable.Listener {
     override fun afterLibraryAdded(newLibrary: Library) {
       if (hasDependencyOn(newLibrary)) {
         eventDispatcher.multicaster.referencedLibraryAdded(newLibrary)
