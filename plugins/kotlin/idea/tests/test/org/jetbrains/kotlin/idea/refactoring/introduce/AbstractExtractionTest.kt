@@ -312,7 +312,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     protected open fun doIntroducePropertyTest(unused: String) {
-        doTest { file ->
+        doTestIfNotDisabledByFileDirective { file ->
             file as KtFile
 
             val extractionTarget = propertyTargets.single {

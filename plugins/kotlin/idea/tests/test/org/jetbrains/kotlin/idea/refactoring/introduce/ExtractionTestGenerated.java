@@ -3235,6 +3235,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractWithParams.kt");
             }
 
+            @TestMetadata("functionalType.kt")
+            public void testFunctionalType() throws Exception {
+                runTest("testData/refactoring/introduceProperty/functionalType.kt");
+            }
+
             @TestMetadata("kt21530.kt")
             public void testKt21530() throws Exception {
                 runTest("testData/refactoring/introduceProperty/kt21530.kt");
