@@ -8891,6 +8891,7 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 *f:com.intellij.ide.settings.json.JsonSettingsModel$Companion
 - f:componentToSettingsModel(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):com.intellij.ide.settings.json.JsonSettingsModel
 - f:getInstance():com.intellij.ide.settings.json.JsonSettingsModel
+- f:toJsonName(java.lang.String):java.lang.String
 *f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
 - *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List):V
@@ -8989,7 +8990,6 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 - bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,java.lang.Object,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
 - equals(java.lang.Object):Z
 - f:getComponentName():java.lang.String
-- f:getControllerKey():java.lang.String
 - f:getMapTo():java.lang.String
 - f:getMappedValue():java.lang.String
 - f:getName():java.lang.String

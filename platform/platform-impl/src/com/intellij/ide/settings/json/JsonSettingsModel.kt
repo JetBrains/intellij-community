@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
+import java.util.function.IntPredicate
 
 private val logger = logger<JsonSettingsModel>()
 
@@ -85,8 +87,6 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       (value as? String)?.let { str ->
         variants.find { it.value == str }?.mapTo ?: value
       }
-
-    fun getControllerKey(): String = "${pluginId}:app:${normalizeComponentName(componentName)}.${mapTo}"
   }
 
   @Serializable
@@ -192,6 +192,16 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
         properties = listOf(propertyInfo)
       )
     }
+
+    fun toJsonName(original: String): String = allUpperCaseToLowerCase(original)
+
+    private fun allUpperCaseToLowerCase(name: String): String =
+      if (name.chars().allMatch(IntPredicate {
+          Character.isUpperCase(it) || !Character.isAlphabetic(it)
+        })) {
+        name.lowercase(Locale.ENGLISH)
+      }
+      else name
 
   }
 }

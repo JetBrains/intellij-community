@@ -9,8 +9,6 @@ import com.intellij.serialization.MutableAccessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.xmlb.getBeanAccessors
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
-import java.util.function.IntPredicate
 
 @VisibleForTesting
 fun buildComponentModel(): JsonSettingsModel.ComponentModel =
@@ -112,7 +110,7 @@ internal data class ComponentDescriptor(
       component.state?.let { componentState ->
         val accessors = getBeanAccessors(componentState::class.java)
         accessors.forEach {
-          val jsonName = allUpperCaseToLowerCase(it.name)
+          val jsonName = JsonSettingsModel.toJsonName(it.name)
           infoList += JsonSettingsModel.ComponentPropertyInfo(jsonName,
                                                               if (it.name == jsonName) null else it.name,
                                                               toModelType(it),
@@ -148,14 +146,6 @@ internal data class ComponentDescriptor(
     }
     return emptyList()
   }
-
-  private fun allUpperCaseToLowerCase(name: String): String =
-    if (name.chars().allMatch(IntPredicate {
-        Character.isUpperCase(it) || !Character.isAlphabetic(it)
-      })) {
-      name.lowercase(Locale.ENGLISH)
-    }
-    else name
 
 
   private fun getVariantString(original: String): String {
