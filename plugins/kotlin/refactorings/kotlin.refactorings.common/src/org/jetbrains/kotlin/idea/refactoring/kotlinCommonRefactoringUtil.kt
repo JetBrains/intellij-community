@@ -31,6 +31,15 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import java.util.*
 import kotlin.math.min
 
+/**
+ * Get the element that specifies the name of [this] element.
+ */
+fun PsiElement.nameDeterminant() = when {
+    this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
+    this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
+    else -> this
+} as PsiNamedElement
+
 fun PsiElement.getContainer(): PsiElement {
     return when (this) {
         is KtElement -> PsiTreeUtil.getParentOfType(

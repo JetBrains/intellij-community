@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parents
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -12,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtToken
@@ -37,12 +37,6 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
     ): PsiElement {
         val fqName = element.nameDeterminant().kotlinFqName ?: return simpleNameReference.expression
         return bindToFqName(simpleNameReference, fqName, shorteningMode, element)
-    }
-
-    protected fun PsiElement.nameDeterminant() = when {
-        this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
-        this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
-        else -> this
     }
 
     protected fun KtSimpleReference<KtNameReferenceExpression>.getAdjustedNewName(newElementName: String): Name? {

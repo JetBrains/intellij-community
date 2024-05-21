@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference

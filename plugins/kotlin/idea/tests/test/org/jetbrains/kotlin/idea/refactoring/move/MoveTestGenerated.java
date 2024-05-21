@@ -392,6 +392,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test");
         }
 
+        @TestMetadata("kotlin/moveClassToPackageFqnConstructor/moveClassToPackageFqnConstructor.test")
+        public void testKotlin_moveClassToPackageFqnConstructor_MoveClassToPackageFqnConstructor() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToPackageFqnConstructor/moveClassToPackageFqnConstructor.test");
+        }
+
         @TestMetadata("kotlin/moveClassToPackage/moveClassToPackage.test")
         public void testKotlin_moveClassToPackage_MoveClassToPackage() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToPackage/moveClassToPackage.test");

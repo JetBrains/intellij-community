@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -242,7 +243,7 @@ sealed class K2MoveRenameUsageInfo(
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
                     if (ref is KtSimpleNameReference) {
-                        Source(ref.element, ref, declaration, false)
+                        Source(ref.element, ref, declaration.nameDeterminant(), false)
                     } else {
                         val lightElements = declaration.toLightElements()
                         val lightElement = if (lightElements.size == 1) {
