@@ -18,8 +18,12 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.net.URL
 
-class RunWidgetStep : NewUiOnboardingStep {
+open class RunWidgetStep : NewUiOnboardingStep {
   private val ideHelpTopic = "run-debug-configuration.html"
+
+  protected open val animationPath: String = "newUiOnboarding/RunWidgetAnimation.json"
+  protected open val animationClassLoader: ClassLoader
+    get() = RunWidgetStep::class.java.classLoader
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val actionButton = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButtonWithText ->
@@ -47,7 +51,7 @@ class RunWidgetStep : NewUiOnboardingStep {
     builder.withHeader(NewUiOnboardingBundle.message("run.widget.step.header"))
 
     val lottiePageData = withContext(Dispatchers.IO) {
-      NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, RunWidgetStep::class.java.classLoader)
+      NewUiOnboardingUtil.createLottieAnimationPage(animationPath, animationClassLoader)
     }
     lottiePageData?.let { (html, size) ->
       builder.withBrowserPage(html, size, withBorder = true)
@@ -55,9 +59,5 @@ class RunWidgetStep : NewUiOnboardingStep {
 
     val point = NewUiOnboardingUtil.convertPointToFrame(project, runPopup.content, JBPoint(-4, 27)) ?: return null
     return NewUiOnboardingStepData(builder, point, Balloon.Position.atLeft)
-  }
-
-  companion object {
-    private const val LOTTIE_JSON_PATH = "newUiOnboarding/RunWidgetAnimation.json"
   }
 }
