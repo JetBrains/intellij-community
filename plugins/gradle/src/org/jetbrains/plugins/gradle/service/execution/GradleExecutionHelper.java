@@ -25,11 +25,9 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.task.RunConfigurationTaskState;
@@ -135,7 +133,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          return maybeFixSystemProperties(() -> f.fun(connection), projectDir);
+          return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
         }
         catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
@@ -148,58 +146,6 @@ public class GradleExecutionHelper {
           throw externalSystemException;
         }
       });
-  }
-
-  /** This method masks some system properties while computing the action.
-   * <p/>
-   * This is a workaround <a href="for">https://github.com/gradle/gradle/issues/17745</a><br>
-   * Gradle <7.6 will pass all TAPI client's system properties to Gradle daemon.
-   *
-   */
-  private static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, String projectDir) {
-    Map<String, String> keyToMask = ApplicationManager.getApplication().getService(SystemPropertiesAdjuster.class).getKeyToMask(projectDir);
-    Map<String, String> oldValues = new HashMap<>();
-    try {
-      keyToMask.forEach((key, newVal) -> {
-        String oldVal = System.getProperty(key);
-        oldValues.put(key, oldVal);
-        if (oldVal != null) {
-          SystemProperties.setProperty(key, newVal);
-        }
-      });
-      return action.compute();
-    }
-    finally {
-      // restore original properties
-      oldValues.forEach((k, v) -> {
-        if (v != null) {
-          System.setProperty(k, v);
-        }
-      });
-    }
-  }
-
-  /**
-   * Use with caution! IDE system properties will be changed for the period of running Gradle long-running operations.
-   * This is a workaround to fix leaking unwanted IDE system properties to Gradle process.
-   */
-  @ApiStatus.Internal
-  public static class SystemPropertiesAdjuster {
-    public SystemPropertiesAdjuster() {
-      LOG.info("Gradle system adjuster service: " + this.getClass().getName());
-    }
-
-    public Map<String, String> getKeyToMask(@NotNull String projectDir) {
-      Map<String, String> propertiesFixes = new HashMap<>();
-      if (Registry.is("gradle.tooling.adjust.user.dir", true)) {
-        propertiesFixes.put("user.dir", projectDir);
-      }
-      propertiesFixes.put("java.system.class.loader", null);
-      propertiesFixes.put("jna.noclasspath", null);
-      propertiesFixes.put("jna.boot.library.path", null);
-      propertiesFixes.put("jna.nosys", null);
-      return propertiesFixes;
-    }
   }
 
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
@@ -302,12 +248,12 @@ public class GradleExecutionHelper {
     @NotNull ProjectConnection connection,
     @NotNull CancellationToken cancellationToken
   ) {
-    maybeFixSystemProperties(() -> {
+    SystemPropertiesAdjuster.executeAdjusted(projectPath, () -> {
       BuildLauncher launcher = getBuildLauncher(connection, id, List.of("wrapper"), settings, listener);
       launcher.withCancellationToken(cancellationToken);
       ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExecuteWrapperTask", (ignore) -> launcher.run());
       return null;
-    }, projectPath);
+    });
   }
 
   private static @NotNull Supplier<String> setupWrapperTaskInInitScript(
