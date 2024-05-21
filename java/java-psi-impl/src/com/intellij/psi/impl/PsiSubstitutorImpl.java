@@ -7,8 +7,10 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.UnmodifiableHashMap;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public final class PsiSubstitutorImpl implements PsiSubstitutor {
@@ -30,7 +33,12 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
 
     @Override
     public boolean equals(PsiTypeParameter element1, PsiTypeParameter element2) {
-      return element1.getManager().areElementsEquivalent(element1, element2);
+      if (element1 == element2) return true;
+      if (element1 == null || element2 == null || element1 instanceof InferenceVariable || element2 instanceof InferenceVariable) return false;
+      if (!Objects.equals(element1.getName(), element2.getName())) return false;
+      if (element1.getIndex() != element2.getIndex()) return false;
+      if (TypeConversionUtil.areSameFreshVariables(element1, element2)) return true;
+      return element1.getManager().areElementsEquivalent(element1.getOwner(), element2.getOwner());
     }
   };
   private static final UnmodifiableHashMap<PsiTypeParameter, PsiType> EMPTY_MAP = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
