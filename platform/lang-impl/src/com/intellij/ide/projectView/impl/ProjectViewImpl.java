@@ -126,7 +126,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public boolean isAlwaysVisible() {
       var pane = getCurrentProjectViewPane();
-      return pane != null && pane.supportsAbbreviatePackageNames();
+      return pane != null && pane.supportsAbbreviatePackageNames() && flattenPackages.isEnabled(pane);
     }
 
     @Override
