@@ -340,7 +340,8 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
           totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
         }
         else {//current record is too small for new content -> relocate to a new place
-          final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordContent.capacity());
+          int newRecordCapacity = allocationStrategy.capacity(newRecordLength, newRecordContent.capacity());
+          final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordCapacity);
 
           final RecordLayout.MovedRecord movedRecordLayout = RecordLayout.MovedRecord.INSTANCE;
           //mark current record as either 'moved' or 'deleted'
