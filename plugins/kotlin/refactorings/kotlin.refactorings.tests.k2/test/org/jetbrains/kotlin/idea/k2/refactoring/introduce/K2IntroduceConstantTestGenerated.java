@@ -284,5 +284,10 @@ public abstract class K2IntroduceConstantTestGenerated extends AbstractK2Introdu
         public void testExtractWithNameClash() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceConstant/extractWithNameClash.kt");
         }
+
+        @TestMetadata("onlyCurrentOccurrence.kt")
+        public void testOnlyCurrentOccurrence() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceConstant/onlyCurrentOccurrence.kt");
+        }
     }
 }

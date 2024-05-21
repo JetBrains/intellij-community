@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
@@ -40,7 +41,8 @@ class KotlinInplacePropertyIntroducer(
     doNotChangeVar: Boolean,
     exprType: TypeInfo?,
     private var extractionResult: ExtractionResult,
-    private val availableTargets: List<ExtractionTarget>
+    private val availableTargets: List<ExtractionTarget>,
+    replaceAllByDefault: Boolean = true
 ) : AbstractKotlinInplaceVariableIntroducer<KtProperty, TypeInfo>(
     property, editor, project, title, KtExpression.EMPTY_ARRAY, null, false, property, false, doNotChangeVar, exprType, false
 ) {
@@ -64,7 +66,7 @@ class KotlinInplacePropertyIntroducer(
             updatePanelControls()
         }
 
-    private var replaceAll: Boolean = true
+    private var replaceAll: Boolean = replaceAllByDefault
 
     private var property: KtProperty
         get() = myDeclaration
@@ -155,9 +157,13 @@ class KotlinInplacePropertyIntroducer(
         return myElementToRename.parentsWithSelf.first { it is KtClassOrObject || it is KtFile }
     }
 
-    override fun performRefactoring(): Boolean {
+    public override fun performRefactoring(): Boolean {
         if (replaceAll) {
             processDuplicatesSilently(extractionResult.duplicateReplacers, myProject)
+        }
+        else {
+            val entry = extractionResult.duplicateReplacers.entries.first()
+            processDuplicatesSilently(mapOf(entry.key to entry.value), myProject)
         }
         return true
     }

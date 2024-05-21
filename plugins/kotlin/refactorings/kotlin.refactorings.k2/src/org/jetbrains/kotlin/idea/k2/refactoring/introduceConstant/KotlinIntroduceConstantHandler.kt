@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.valid
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinInplacePropertyIntroducer
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
@@ -98,10 +99,23 @@ class KotlinIntroduceConstantHandler(
                         return ExtractionDataAnalyzer(extractionData).performAnalysis()
                     }
                 }
-                engine.run(editor, extractionData) {
-                    val property = it.declaration as KtProperty
-                    val descriptor = it.config.descriptor
-                    val exprType = allowAnalysisOnEdt { analyze (property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.getReturnKtType()) } }
+                engine.run(editor, extractionData) { extractResult ->
+                    val property = extractResult.declaration as KtProperty
+                    val descriptor = extractResult.config.descriptor
+                    val exprType =
+                        allowAnalysisOnEdt { analyze(property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.getReturnKtType()) } }
+
+                    val introducer = KotlinInplacePropertyIntroducer(
+                        property = property,
+                        editor = editor,
+                        project = project,
+                        title = INTRODUCE_CONSTANT,
+                        doNotChangeVar = false,
+                        exprType = exprType,
+                        extractionResult = extractResult,
+                        availableTargets = listOf(ExtractionTarget.PROPERTY_WITH_GETTER),
+                        replaceAllByDefault = helper.replaceAllByDefault()
+                    )
 
                     editor.caretModel.moveToOffset(property.textOffset)
                     editor.selectionModel.removeSelection()
@@ -110,20 +124,9 @@ class KotlinIntroduceConstantHandler(
                             commitDocument(editor.document)
                             doPostponedOperationsAndUnblockDocument(editor.document)
                         }
-
-                        val introducer = KotlinInplacePropertyIntroducer(
-                            property = property,
-                            editor = editor,
-                            project = project,
-                            title = INTRODUCE_CONSTANT,
-                            doNotChangeVar = false,
-                            exprType = exprType,
-                            extractionResult = it,
-                            availableTargets = listOf(ExtractionTarget.PROPERTY_WITH_GETTER)
-                        )
                         introducer.performInplaceRefactoring(LinkedHashSet(getNameSuggestions(property) + descriptor.suggestedNames))
                     } else {
-                        processDuplicatesSilently(it.duplicateReplacers, project)
+                        introducer.performRefactoring()
                     }
                 }
             }

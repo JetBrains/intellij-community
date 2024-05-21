@@ -499,7 +499,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             ShortenReferencesFacility.getInstance().shorten(declaration)
         }
 
-        val duplicateReplacers = HashMap<KotlinPsiRange, () -> Unit>().apply {
+        val duplicateReplacers = LinkedHashMap<KotlinPsiRange, () -> Unit>().apply {
             if (generatorOptions.delayInitialOccurrenceReplacement) {
                 put(descriptor.extractionData.originalRange, replaceInitialOccurrence)
             }

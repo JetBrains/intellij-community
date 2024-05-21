@@ -4441,6 +4441,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testExtractWithNameClash() throws Exception {
                 runTest("testData/refactoring/introduceConstant/extractWithNameClash.kt");
             }
+
+            @TestMetadata("onlyCurrentOccurrence.kt")
+            public void testOnlyCurrentOccurrence() throws Exception {
+                runTest("testData/refactoring/introduceConstant/onlyCurrentOccurrence.kt");
+            }
         }
     }
 

@@ -70,6 +70,8 @@ abstract class IExtractionEngineHelper<KotlinType,
         descriptorWithConflicts: DescriptorWithConflicts,
         onFinish: (Result) -> Unit = {}
     )
+
+    open fun replaceAllByDefault(): Boolean = true
 }
 
 abstract class IExtractionEngine<KotlinType,
