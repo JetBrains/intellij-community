@@ -391,9 +391,10 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
 
   // ============================= infrastructure: ============================================================================ //
 
-  //logRecordId (long): id of record in AppendOnlyLog
+  //logRecordId (long): id of record in BlobStorage
   //storedId    (int):  id stored (as value) in the keyHashToIdMap
-
+  //RC: right now BlobStorage uses int for recordId, so the conversion is fake, but in future blob storage will have
+  //    larger (long) id range
   static int convertLogIdToStoredId(long logRecordId) {
     int intStoredId = (int)logRecordId;
     if (intStoredId != logRecordId) {

@@ -319,7 +319,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
 
     // do not pollute the cache with keys unique to indexed file
-    UpdatableValueContainer<Value> valueContainer = new ValueContainerImpl<>();
+    UpdatableValueContainer<Value> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.addValue(inputId, newValue);
     myMap.put(key, valueContainer);
   }
@@ -335,7 +335,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
 
     // do not pollute the cache with keys unique to indexed file
-    UpdatableValueContainer<Value> valueContainer = new ValueContainerImpl<>();
+    UpdatableValueContainer<Value> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.addValue(inputId, value);
     myMap.put(key, valueContainer);
   }
