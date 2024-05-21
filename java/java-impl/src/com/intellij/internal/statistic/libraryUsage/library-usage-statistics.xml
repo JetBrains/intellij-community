@@ -276,8 +276,8 @@
   <technology name="rsocket-kotlin" root="io.rsocket.kotlin"/>
   <technology name="ruoyi" root="com.ruoyi"/>
   <technology name="ruoyi-vue-pro" root="cn.iocoder.yudao"/>
-  <technology name="guns" root="cn.stylefeng.guns"/>
-  <technology name="roses" root="cn.stylefeng.roses.kernel"/>
+  <technology name="stylefeng-guns" root="cn.stylefeng.guns"/>
+  <technology name="stylefeng-roses" root="cn.stylefeng.roses.kernel"/>
   <technology name="jfinal" root="com.jfinal"/>
   <technology name="rxdownload" root="zlc.season.rxdownload2"/>
   <technology name="rxjava" root="io.reactivex"/>
