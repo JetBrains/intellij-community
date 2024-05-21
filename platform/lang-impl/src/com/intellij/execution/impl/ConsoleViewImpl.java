@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -1429,7 +1429,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       protected Editor getEditor(@NotNull AnActionEvent e) {
         var editor = ConsoleViewImpl.this.getEditor();
-        return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
+        return editor == null ? null : ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
       }
     };
     AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(getEditor());
