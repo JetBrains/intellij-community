@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -166,28 +167,17 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     if (name == null || name.isEmpty()) return null;
     String presentableText;
     String canonicalText;
-    if (value instanceof PsiType) {
-      canonicalText = ((PsiType)value).getCanonicalText() + ".class";
-      presentableText = ((PsiType)value).getPresentableText() + ".class";
+    if (value instanceof RefParameterImpl.ConstValue constValue) {
+      presentableText = constValue.presentableText();
+      canonicalText = constValue.canonicalText();
     }
     else {
-      if (value instanceof PsiField) {
-        canonicalText = PsiFormatUtil.formatVariable((PsiVariable)value,
-                                                     PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME,
-                                                     PsiSubstitutor.EMPTY);
-        presentableText = PsiFormatUtil.formatVariable((PsiVariable)value,
-                                                       PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
-                                                       PsiSubstitutor.EMPTY);
-      }
-      else {
-        canonicalText = presentableText = String.valueOf(value);
-      }
+      canonicalText = presentableText = (value instanceof Iterable it) ? Strings.join(it, ", ") : String.valueOf(value);
     }
     PsiElement anchor = ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter);
     if (!anchor.isPhysical()) return null;
     return manager.createProblemDescriptor(anchor,
-                                           JavaBundle.message("inspection.same.parameter.problem.descriptor",
-                                                              StringUtil.unquoteString(presentableText)),
+                                           JavaBundle.message("inspection.same.parameter.problem.descriptor", presentableText),
                                            suggestFix ? new InlineParameterValueFix(name, canonicalText) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
@@ -197,7 +187,15 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
     if (javaParameter == null) return null;
     if (javaParameter.isVarArgs()) return false;
-    return !(value instanceof PsiField) || PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter);
+    if (value instanceof RefParameterImpl.ConstValue constValue) {
+      PsiExpression expression =
+        JavaPsiFacade.getElementFactory(javaParameter.getProject()).createExpressionFromText(constValue.canonicalText(), javaParameter);
+      if (expression instanceof PsiReferenceExpression reference) {
+        PsiElement target = reference.resolve();
+        return target instanceof PsiMember member && PsiUtil.isMemberAccessibleAt(member, javaParameter);
+      }
+    }
+    return true;
   }
 
   public static final class InlineParameterValueFix implements LocalQuickFix {
@@ -377,7 +375,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
 
     @Override
     public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-      return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+      AbstractUastNonRecursiveVisitor visitor = new AbstractUastNonRecursiveVisitor() {
         private final UnusedDeclarationInspectionBase
           myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
 
@@ -402,43 +400,46 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
           Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           int[] usageCount = {0};
-          if (UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, null, info -> {
-              PsiElement element = info.getElement();
-              usageCount[0]++;
-              UElement uElement = UastContextKt.toUElement(element);
-              if (!(uElement instanceof UReferenceExpression)) {
-                return false;
-              }
-              if (uElement instanceof UCallableReferenceExpression) {
-                return false;
-              }
-              UElement parent = uElement.getUastParent();
-              if (!(parent instanceof UCallExpression methodCall)) {
-                return false;
-              }
-              if (methodCall.getValueArguments().size() < paramValues.length) return false;
+          boolean processed = UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, null, info -> {
+            PsiElement element = info.getElement();
+            usageCount[0]++;
+            UElement uElement = UastContextKt.toUElement(element);
+            if (!(uElement instanceof UReferenceExpression)) {
+              return false;
+            }
+            if (uElement instanceof UCallableReferenceExpression) {
+              return false;
+            }
+            UElement parent = uElement.getUastParent();
+            if (!(parent instanceof UCallExpression methodCall)) {
+              return false;
+            }
+            if (methodCall.getValueArguments().size() < paramValues.length) return false;
 
-              boolean needFurtherProcess = false;
-              for (int i = 0; i < paramValues.length; i++) {
-                UExpression arg = methodCall.getArgumentForParameter(i);
-                Object argValue = RefParameterImpl.getAccessibleExpressionValue(arg, () -> method.getSourcePsi());
-                Object paramValue = paramValues[i];
-                if (paramValue == VALUE_UNDEFINED) {
-                  paramValues[i] = argValue;
-                  if (argValue != VALUE_IS_NOT_CONST) {
-                    needFurtherProcess = true;
-                  }
-                } else if (paramValue != VALUE_IS_NOT_CONST) {
-                  if (!Comparing.equal(paramValue, argValue)) {
-                    paramValues[i] = VALUE_IS_NOT_CONST;
-                  } else {
-                    needFurtherProcess = true;
-                  }
+            boolean needFurtherProcess = false;
+            for (int i = 0; i < paramValues.length; i++) {
+              UExpression arg = methodCall.getArgumentForParameter(i);
+              Object argValue = RefParameterImpl.getAccessibleExpressionValue(arg, () -> method.getSourcePsi());
+              Object paramValue = paramValues[i];
+              if (paramValue == VALUE_UNDEFINED) {
+                paramValues[i] = argValue;
+                if (argValue != VALUE_IS_NOT_CONST) {
+                  needFurtherProcess = true;
                 }
               }
+              else if (paramValue != VALUE_IS_NOT_CONST) {
+                if (!Comparing.equal(paramValue, argValue)) {
+                  paramValues[i] = VALUE_IS_NOT_CONST;
+                }
+                else {
+                  needFurtherProcess = true;
+                }
+              }
+            }
 
-              return needFurtherProcess;
-            })) {
+            return needFurtherProcess;
+          });
+          if (processed) {
             if (myGlobal.minimalUsageCount != 0 && usageCount[0] < myGlobal.minimalUsageCount) return true;
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
@@ -459,7 +460,8 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
           }
           return true;
         }
-      }, new Class[]{UMethod.class});
+      };
+      return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), visitor, new Class[]{UMethod.class});
     }
   }
 }
