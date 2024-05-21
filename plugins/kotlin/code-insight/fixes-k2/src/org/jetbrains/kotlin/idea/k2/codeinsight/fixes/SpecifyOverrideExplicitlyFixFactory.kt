@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMemberInfo
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -86,8 +87,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
     context(KtAnalysisSession)
     private fun KtDelegatedSuperTypeEntry.getSymbol(): KtNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null
-        val declaration = nameReferenceExpression.reference?.resolve() as? KtDeclaration ?: return null
-        return declaration.getSymbol() as? KtNamedSymbol
+        return nameReferenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol
     }
 
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
