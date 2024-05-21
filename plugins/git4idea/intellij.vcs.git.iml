@@ -90,5 +90,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.terminal.completion" />
   </component>
 </module>
