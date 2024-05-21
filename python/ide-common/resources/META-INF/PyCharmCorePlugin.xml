@@ -6,7 +6,6 @@
   <content>
     <module name="intellij.notebooks.visualization"/>
     <module name="intellij.notebooks.ui"/>
-    <module name="intellij.notebooks.tables"/>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ml.embeddings"/>
     <module name="intellij.ide.startup.importSettings"/>

@@ -1,4 +1,4 @@
-package com.intellij.notebooks.tables
+package com.jetbrains.python.tables
 
 import com.intellij.openapi.util.IntellijInternalApi
 
