@@ -7536,6 +7536,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/annotation.kt");
         }
 
+        @TestMetadata("callableReferences.kt")
+        public void testCallableReferences() throws Exception {
+            runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/callableReferences.kt");
+        }
+
         @TestMetadata("JvmFieldOnParameter.kt")
         public void testJvmFieldOnParameter() throws Exception {
             runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnParameter.kt");
@@ -7544,6 +7549,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("JvmFieldOnProperty.kt")
         public void testJvmFieldOnProperty() throws Exception {
             runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnProperty.kt");
+        }
+
+        @TestMetadata("sameClassCallableReferences.kt")
+        public void testSameClassCallableReferences() throws Exception {
+            runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassCallableReferences.kt");
         }
 
         @TestMetadata("sameClassFunctionCall.kt")

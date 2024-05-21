@@ -1492,6 +1492,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/annotation.kt");
         }
 
+        @TestMetadata("callableReferences.kt")
+        public void testCallableReferences() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/callableReferences.kt");
+        }
+
         @TestMetadata("JvmFieldOnParameter.kt")
         public void testJvmFieldOnParameter() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnParameter.kt");
@@ -1500,6 +1505,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("JvmFieldOnProperty.kt")
         public void testJvmFieldOnProperty() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnProperty.kt");
+        }
+
+        @TestMetadata("sameClassCallableReferences.kt")
+        public void testSameClassCallableReferences() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassCallableReferences.kt");
         }
 
         @TestMetadata("sameClassFunctionCall.kt")
