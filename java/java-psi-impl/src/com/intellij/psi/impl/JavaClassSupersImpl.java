@@ -11,10 +11,13 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.psi.impl.PsiSubstitutorImpl.PSI_EQUIVALENCE;
 
 public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
@@ -99,7 +102,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
   }
 
   private static @NotNull PsiSubstitutor composeSubstitutors(PsiSubstitutor outer, PsiSubstitutor inner, PsiClass onClass) {
-    PsiSubstitutor answer = PsiSubstitutor.EMPTY;
+    UnmodifiableHashMap<PsiTypeParameter, PsiType> answer = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
     Map<PsiTypeParameter, PsiType> outerMap = outer.getSubstitutionMap();
     Map<PsiTypeParameter, PsiType> innerMap = inner.getSubstitutionMap();
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(onClass)) {
@@ -117,10 +120,10 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
         else {
           targetType = outer.substitute(innerType);
         }
-        answer = answer.put(parameter, targetType);
+        answer = answer.with(parameter, targetType);
       }
     }
-    return answer;
+    return PsiSubstitutor.EMPTY.putAll(answer);
   }
 
   /**

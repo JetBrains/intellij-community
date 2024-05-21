@@ -23,7 +23,7 @@ import java.util.Set;
 public final class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final Logger LOG = Logger.getInstance(PsiSubstitutorImpl.class);
 
-  private static final HashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new HashingStrategy<PsiTypeParameter>() {
+  static final HashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new HashingStrategy<PsiTypeParameter>() {
     @Override
     public int hashCode(PsiTypeParameter parameter) {
       return Comparing.hashcode(parameter.getName());
