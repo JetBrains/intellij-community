@@ -100,6 +100,7 @@ public class SpotlightPainter extends AbstractPainter implements ComponentHighli
     // The painter should only draw spotlights for components in the hierarchy of `myTarget`
     if (UIUtil.isAncestor(myTarget, component)) {
       myGlassPanel.addSpotlight(component);
+      component.scrollRectToVisible(component.getBounds());
     }
   }
 
