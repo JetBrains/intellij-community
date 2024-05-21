@@ -8,12 +8,13 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 
 
 class EditorCellRunButton(private val editor: EditorEx) {
+  // PY-72142 & PY-69788 & PY-72701 - adds "Run cell" button to the gutter
   private var cellRangeHighlighter: RangeHighlighter? = null
 
-  fun showRunButton(interval: NotebookCellLines.Interval, type: NotebookCellLines.CellType) {
+  fun showRunButton(interval: NotebookCellLines.Interval) {
     hideRunButton()
-    if (type != NotebookCellLines.CellType.CODE) return
 
+    if (interval.type != NotebookCellLines.CellType.CODE) return
     val linesRange = interval.lines
 
     val startOffset = editor.document.getLineStartOffset(linesRange.first)
@@ -36,7 +37,5 @@ class EditorCellRunButton(private val editor: EditorEx) {
     }
   }
 
-  fun dispose() {
-    hideRunButton()
-  }
+  fun dispose() = hideRunButton()
 }

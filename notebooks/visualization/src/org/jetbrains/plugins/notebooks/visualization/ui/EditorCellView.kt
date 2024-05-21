@@ -282,6 +282,7 @@ class EditorCellView(
   fun updateSelection(value: Boolean) {
     selected = value
     updateFolding()
+    updateRunButton()
     updateCellHighlight()
   }
 
