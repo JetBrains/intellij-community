@@ -1635,7 +1635,6 @@ c:com.intellij.codeInsight.template.impl.TemplateStateBase
 - getEditor():com.intellij.openapi.editor.Editor
 - p:getPredefinedVariableValues():java.util.Map
 - getProperties():java.util.Map
-- p:getSegments():com.intellij.codeInsight.template.impl.TemplateSegments
 - p:getSelectionBeforeTemplate():java.lang.String
 - p:getTemplate():com.intellij.codeInsight.template.impl.TemplateBase
 - getVariableValue(java.lang.String):com.intellij.codeInsight.template.TextResult
@@ -1643,7 +1642,6 @@ c:com.intellij.codeInsight.template.impl.TemplateStateBase
 - p:setDocument(com.intellij.openapi.editor.Document):V
 - p:setEditor(com.intellij.openapi.editor.Editor):V
 - p:setPredefinedVariableValues(java.util.Map):V
-- p:setSegments(com.intellij.codeInsight.template.impl.TemplateSegments):V
 - p:setTemplate(com.intellij.codeInsight.template.impl.TemplateBase):V
 f:com.intellij.codeInsight.template.impl.TemplateSubstitutionContext
 - getDocument():com.intellij.openapi.editor.Document
