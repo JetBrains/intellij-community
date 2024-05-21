@@ -179,7 +179,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       project.getMessageBus().simpleConnect().subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {
-          if (myModule == null) {
+          if (myModule == null || myModule.isDisposed()) {
             myModule = module;
           }
         }
