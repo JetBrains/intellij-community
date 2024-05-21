@@ -460,7 +460,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return getStructureFilter(myFilterModel.getFilter()) == myFilter;
+      return myFilter.equals(getStructureFilter(myFilterModel.getFilter()));
     }
 
     @Override
