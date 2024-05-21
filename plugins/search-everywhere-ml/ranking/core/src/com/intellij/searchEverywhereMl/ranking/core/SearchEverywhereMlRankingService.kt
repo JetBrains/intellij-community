@@ -136,6 +136,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     else {
       return settings.isSortingByMlEnabled(tab)
              || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.EXACT_MATCH_PRIORITIZATION
              || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION
     }
   }
