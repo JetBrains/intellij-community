@@ -69,13 +69,21 @@ public final class PathManager {
   private static Path ourOriginalLogDir;
   private static Map<String, String> ourArchivedCompiledClassesMapping;
 
-  // IDE installation paths
-
+  /**
+   * Returns paths to the directory where the IDE is installed, i.e., the directory containing 'lib', 'plugins' and other subdirectories.
+   * On macOS, it's {@code <product>.app/Contents} directory.
+   * <br>
+   * If the IDE is started from source code rather than installation, the method returns paths to the Git repository root.
+   * <br>
+   * The method is supposed to be called from the main IDE process. For other processes started from the IDE process (e.g., build process)
+   * use {@link #getHomePath(boolean)} with {@code false} argument.
+   */
   public static @NotNull String getHomePath() {
     return getHomePath(true);
   }
 
   /**
+   * A variant of {@link #getHomePath()} which also works inside additional processes started from the main IDE process.
    * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g., in a build process or a script)
    */
   @Contract("true -> !null")
