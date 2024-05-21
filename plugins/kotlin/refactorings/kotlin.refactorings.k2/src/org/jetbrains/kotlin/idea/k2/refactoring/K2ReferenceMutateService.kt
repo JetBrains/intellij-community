@@ -82,7 +82,6 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         targetElement: PsiElement?
     ): PsiElement = allowAnalysisOnEdt {
         allowAnalysisFromWriteAction {
-            simpleNameReference.expression
             val expression = simpleNameReference.expression
             if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
