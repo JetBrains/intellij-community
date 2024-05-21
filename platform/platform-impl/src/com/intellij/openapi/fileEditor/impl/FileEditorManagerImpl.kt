@@ -2282,35 +2282,23 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     options: FileEditorOpenOptions,
   ): EditorComposite? {
-    val isNewEditor = true
-    return span("file opening in EDT and repaint", Dispatchers.EDT) {
+    return withContext(Dispatchers.EDT) {
       val splitters = window.owner
       splitters.insideChange++
       try {
-        span("file opening in EDT") {
-          val composite = createCompositeByEditorWithProviderList(file = file, editorsWithProviders = emptyList())
-          if (composite != null) {
-            openedComposites.add(composite)
-          }
-
-          if (composite == null) {
-            null
-          }
-          else {
-            openInEdtImpl(
-              composite = composite,
-              window = window,
-              file = file,
-              options = options,
-              selectedProvider = null,
-              isNewEditor = isNewEditor,
-            )
-          }
+        val composite = createCompositeByEditorWithProviderList(file = file, editorsWithProviders = emptyList()) ?: return@withContext null
+        openedComposites.add(composite)
+        window.addComposite(composite = composite, options = options, isNewEditor = true, isOpenedInBulk = true)
+        openFileSetModificationCount.increment()
+        // update frame and tab title
+        updateFileName(file = file)
+        if (options.pin) {
+          window.setFilePinned(composite = composite, pinned = true)
         }
+        composite
       }
       finally {
-        splitters.insideChange--
-        if (!splitters.isInsideChange) {
+        if (--splitters.insideChange > 0) {
           splitters.validate()
           (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
         }
@@ -2366,7 +2354,6 @@ open class FileEditorManagerImpl(
             IdeFocusManager.getGlobalInstance().toFront(splitters)
           }
         }
-
       }
       else {
         composite.preferredFocusedComponent?.requestFocusInWindow()

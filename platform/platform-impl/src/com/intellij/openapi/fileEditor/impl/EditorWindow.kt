@@ -295,7 +295,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   @RequiresEdt
-  internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions, isNewEditor: Boolean) {
+  internal fun addComposite(
+    composite: EditorComposite,
+    options: FileEditorOpenOptions,
+    isNewEditor: Boolean,
+    isOpenedInBulk: Boolean = AsyncEditorLoader.isOpenedInBulk(composite.file),
+  ) {
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
     if (isNewEditor) {
@@ -319,7 +324,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         indexToInsert = indexToInsert,
         composite = composite,
         parentDisposable = composite,
-        isOpenedInBulk = AsyncEditorLoader.isOpenedInBulk(file),
+        isOpenedInBulk = isOpenedInBulk,
       )
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
@@ -348,7 +353,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
     owner.updateFileColorAsync(composite.file)
 
-    if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
+    if (!isOpenedInBulk) {
       if (options.selectAsCurrent) {
         setSelectedComposite(composite, options.requestFocus)
       }
@@ -905,7 +910,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       composite.isPreview = false
       owner.updateFileColorAsync(composite.file)
     }
-    if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread) {
+    if (wasPinned != pinned && EDT.isCurrentThreadEdt()) {
       (tabbedPane.tabs as? JBTabsImpl)?.doLayout()
     }
   }

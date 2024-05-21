@@ -246,7 +246,9 @@ open class EditorsSplitters internal constructor(
     withContext(Dispatchers.EDT) {
       removeAll()
     }
-    UiBuilder(this).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
+
+    val isLazyComposite = System.getProperty("idea.delayed.editor.composite").toBoolean()
+    UiBuilder(this, isLazyComposite = isLazyComposite).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
     withContext(Dispatchers.EDT) {
       validate()
 
@@ -266,7 +268,7 @@ open class EditorsSplitters internal constructor(
   @Internal
   suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    UiBuilder(this).process(state = state, requestFocus = true) { add(it, BorderLayout.CENTER) }
+    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = true) { add(it, BorderLayout.CENTER) }
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -859,7 +861,7 @@ class EditorSplitterState(element: Element) {
   }
 }
 
-private class UiBuilder(private val splitters: EditorsSplitters) {
+private class UiBuilder(private val splitters: EditorsSplitters, private val isLazyComposite: Boolean) {
   suspend fun process(state: EditorSplitterState, requestFocus: Boolean, addChild: (child: JComponent) -> Unit) {
     val splitState = state.splitters
     if (splitState == null) {
@@ -882,12 +884,15 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
         }
       }
-      processFiles(
-        fileEntries = trimmedFiles,
-        tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE,
-        addChild = addChild,
-        requestFocus = requestFocus,
-      )
+      coroutineScope {
+        processFiles(
+          fileEntries = trimmedFiles,
+          tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE,
+          addChild = addChild,
+          requestFocus = requestFocus,
+          coroutineScope = this,
+        )
+      }
     }
     else {
       val splitter = withContext(Dispatchers.EDT) {
@@ -912,102 +917,100 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
     tabSizeLimit: Int,
     addChild: (child: JComponent) -> Unit,
     requestFocus: Boolean,
+    coroutineScope: CoroutineScope,
   ) {
-    coroutineScope {
-      val windowDeferred = async(Dispatchers.EDT) {
-        splitters.insideChange++
+    val windowDeferred = coroutineScope.async(Dispatchers.EDT) {
+      splitters.insideChange++
+      try {
+        val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope("EditorWindow"))
+        splitters.addWindow(editorWindow)
+        editorWindow.component.isFocusable = false
+        if (tabSizeLimit != 1) {
+          editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+        }
+        addChild(editorWindow.component)
+        editorWindow
+      }
+      finally {
+        // do not call `validate` - will be called on editor `add` in any case
+        splitters.insideChange--
+      }
+    }
+
+    val fileEditorManager = splitters.manager
+    var fileDocumentManager: FileDocumentManager? = null
+    val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
+
+    fun weight(item: FileEntry) = (if (item.currentInTab) 1 else 0)
+
+    // open the selected tab first
+    val sorted = fileEntries.withIndex().sortedWith { o1, o2 ->
+      weight(o2.value) - weight(o1.value)
+    }
+
+    val virtualFileManager = VirtualFileManager.getInstance()
+    var focusedFile: VirtualFile? = null
+
+    // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
+    var isLazy = false
+
+    for ((index, fileEntry) in sorted) {
+      span("opening editor") {
+        val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
+        file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
         try {
-          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope("EditorWindow"))
-          splitters.addWindow(editorWindow)
-          editorWindow.component.isFocusable = false
-          if (tabSizeLimit != 1) {
-            editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+          if (isLazy) {
+            // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
+            // This enables painting the first editor as soon as it's ready (IJPL-687).
+            fileEditorManager.prepareEditorComposite(window = windowDeferred.await(), file = file, options = FileEditorOpenOptions(
+              selectAsCurrent = false,
+              pin = fileEntry.pinned,
+              index = index,
+              usePreviewTab = fileEntry.isPreview,
+            ))
           }
-          addChild(editorWindow.component)
-          editorWindow
+          else {
+            isLazy = isLazyComposite
+
+            val document = async {
+              var m = fileDocumentManager
+              if (m == null) {
+                m = serviceAsync<FileDocumentManager>()
+                fileDocumentManager = m
+              }
+              readAction {
+                m.getDocument(file)
+              }
+            }
+
+            openFile(
+              coroutineScope = coroutineScope,
+              file = file,
+              fileEntry = fileEntry,
+              fileEditorProviderManager = fileEditorProviderManager,
+              fileEditorManager = fileEditorManager,
+              document = document,
+              windowDeferred = windowDeferred,
+              index = index,
+            )
+            if (fileEntry.currentInTab) {
+              focusedFile = file
+            }
+          }
         }
         finally {
-          // do not call `validate` - will be called on editor `add` in any case
-          splitters.insideChange--
+          file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
         }
       }
+    }
 
-      val fileEditorManager = splitters.manager
-      var fileDocumentManager: FileDocumentManager? = null
-      val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
-
-      fun weight(item: FileEntry) = (if (item.currentInTab) 1 else 0)
-
-      // open the selected tab first
-      val sorted = fileEntries.withIndex().sortedWith { o1, o2 ->
-        weight(o2.value) - weight(o1.value)
-      }
-
-      val virtualFileManager = VirtualFileManager.getInstance()
-      var focusedFile: VirtualFile? = null
-
-      // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
-      val isLazyComposite = System.getProperty("idea.delayed.editor.composite").toBoolean()
-      var isLazy = false
-
-      for ((index, fileEntry) in sorted) {
-        span("opening editor") {
-          val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
-          file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
-          try {
-            if (isLazy) {
-              // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
-              // This enables painting the first editor as soon as it's ready (IJPL-687).
-              fileEditorManager.prepareEditorComposite(window = windowDeferred.await(), file = file, options = FileEditorOpenOptions(
-                selectAsCurrent = false,
-                pin = fileEntry.pinned,
-                index = index,
-                usePreviewTab = fileEntry.isPreview,
-              ))
-            }
-            else {
-              isLazy = isLazyComposite
-
-              val document = async {
-                var m = fileDocumentManager
-                if (m == null) {
-                  m = serviceAsync<FileDocumentManager>()
-                  fileDocumentManager = m
-                }
-                readAction {
-                  m.getDocument(file)
-                }
-              }
-
-              openFile(
-                coroutineScope = this@coroutineScope,
-                file = file,
-                fileEntry = fileEntry,
-                fileEditorProviderManager = fileEditorProviderManager,
-                fileEditorManager = fileEditorManager,
-                document = document,
-                windowDeferred = windowDeferred,
-                index = index,
-              )
-              if (fileEntry.currentInTab) {
-                focusedFile = file
-              }
-            }
-          }
-          finally {
-            file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
-          }
-        }
-      }
-
-      val window = windowDeferred.await()
-      splitters.coroutineScope.launch(Dispatchers.EDT) {
-        val composite = focusedFile?.let { window.getComposite(it) } ?: window.selectedComposite ?: return@launch
-        // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
-        // so these need to be fired even if the composite is already selected
-        window.selectOpenedCompositeOnStartup(composite = composite, requestFocus = requestFocus)
-        splitters.setCurrentWindowAndComposite(window = window)
-      }
+    val window = windowDeferred.await()
+    splitters.coroutineScope.launch(Dispatchers.EDT) {
+      val composite = focusedFile?.let { window.getComposite(it) } ?: window.selectedComposite ?: return@launch
+      // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
+      // so these need to be fired even if the composite is already selected
+      window.selectOpenedCompositeOnStartup(composite = composite, requestFocus = requestFocus)
+      splitters.setCurrentWindowAndComposite(window = window)
     }
   }
 }

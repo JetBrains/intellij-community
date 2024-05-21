@@ -505,17 +505,6 @@ pc:com.intellij.diff.impl.DiffRequestProcessor$MyPrevDifferenceAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.diff.impl.DiffRequestProcessorEditorState
-- com.intellij.openapi.fileEditor.impl.FileEditorStateWithPreferredOpenMode
-- <init>(java.util.List):V
-- canBeMergedWith(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.fileEditor.FileEditorStateLevel):Z
-- f:component1():java.util.List
-- f:copy(java.util.List):com.intellij.diff.impl.DiffRequestProcessorEditorState
-- bs:copy$default(com.intellij.diff.impl.DiffRequestProcessorEditorState,java.util.List,I,java.lang.Object):com.intellij.diff.impl.DiffRequestProcessorEditorState
-- equals(java.lang.Object):Z
-- f:getEmbeddedEditorStates():java.util.List
-- getOpenMode():com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$OpenMode
-- hashCode():I
 com.intellij.diff.impl.DiffRequestProcessorListener
 - java.util.EventListener
 - a:onViewerChanged():V
@@ -783,7 +772,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - *sf:Companion:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
 - a:createProcessor(java.lang.String):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - bs:createProcessor$default(com.intellij.diff.tools.combined.CombinedDiffManager,java.lang.String,I,java.lang.Object):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffManager
 *f:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffManager
 *:com.intellij.diff.tools.combined.CombinedDiffModelListener

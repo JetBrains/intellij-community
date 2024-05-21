@@ -2729,11 +2729,6 @@ com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
 - a:canCreate(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change):Z
 - a:isEquals(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.Change):com.intellij.util.ThreeState
 - a:process(com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl
-- com.intellij.diff.tools.combined.CombinedDiffManager
-- <init>(com.intellij.openapi.project.Project):V
-- createProcessor(java.lang.String):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImplKt
 - sf:prepareCombinedBlocksFromProducers(java.util.List):java.util.List
 - sf:prepareCombinedBlocksFromWrappers(com.intellij.openapi.project.Project,java.util.List):java.util.List
