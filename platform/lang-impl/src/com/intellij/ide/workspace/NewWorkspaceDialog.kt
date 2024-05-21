@@ -13,9 +13,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
@@ -25,16 +27,20 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
+import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JList
 
 internal class NewWorkspaceDialog(
   val project: Project,
-  initialProjects: List<String>
+  initialProjects: Collection<Subproject>
 ) : DialogWrapper(project) {
   private lateinit var nameField: JBTextField
   private lateinit var locationField: TextFieldWithBrowseButton
-  private val listModel = CollectionListModel(initialProjects)
-  private val projectList = JBList(listModel)
+  private val listModel = CollectionListModel(initialProjects.map { Item(it.projectPath, it.handler.subprojectIcon) })
+  private val projectList = JBList(listModel).apply {
+    cellRenderer = Renderer()
+  }
 
   val projectName: String get() = nameField.text
   val location: Path get() = Paths.get(locationField.text)
@@ -51,8 +57,8 @@ internal class NewWorkspaceDialog(
     init()
   }
 
-  val selectedPaths: List<String>
-    get()  = listModel.items
+  val projectPaths: List<String>
+    get()  = listModel.items.map { it.path }
 
   override fun createCenterPanel(): JComponent {
     val suggestLocation = RecentProjectsManager.getInstance().suggestNewProjectLocation()
@@ -110,9 +116,19 @@ internal class NewWorkspaceDialog(
     val files = browseForProjects(project)
     val allItems = listModel.items
     for (file in files) {
-      val path = file.path
-      if (allItems.contains(path)) continue
-      listModel.add(path)
+      if (allItems.any { it.path == file.path }) continue
+      val handler = getHandlers(file).firstOrNull() ?: continue
+      listModel.add(Item(file.path, handler.subprojectIcon))
+    }
+  }
+
+  private data class Item(@NlsSafe val path: String, val icon: Icon?)
+
+  private class Renderer: ColoredListCellRenderer<Item>() {
+    override fun customizeCellRenderer(list: JList<out Item>, value: Item?, index: Int, selected: Boolean, hasFocus: Boolean) {
+      value ?: return
+      icon = value.icon
+      append(value.path)
     }
   }
 }
@@ -121,7 +137,7 @@ private fun browseForProjects(project: Project): Array<out VirtualFile> {
   val handlers = SubprojectHandler.EP_NAME.extensionList
   val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
   descriptor.title = LangBundle.message("chooser.title.select.file.or.directory.to.import")
-  descriptor.withFileFilter { file -> handlers.any { it.canImportFromFile(project, file) } }
+  descriptor.withFileFilter { file -> handlers.any { it.canImportFromFile(file) } }
   return FileChooser.chooseFiles(descriptor, project, project.guessProjectDir()?.parent)
 }
 

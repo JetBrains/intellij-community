@@ -16,7 +16,7 @@ interface SubprojectHandler {
   }
 
   fun getSubprojects(project: Project): List<Subproject>
-  fun canImportFromFile(project: Project, file: VirtualFile): Boolean
+  fun canImportFromFile(file: VirtualFile): Boolean
   fun removeSubprojects(subprojects: List<Subproject>)
   fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
 

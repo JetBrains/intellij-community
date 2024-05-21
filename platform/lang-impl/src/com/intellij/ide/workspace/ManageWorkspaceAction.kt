@@ -11,19 +11,18 @@ internal class ManageWorkspaceAction: BaseWorkspaceAction(true) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = requireNotNull(e.project)
     val subprojects = SubprojectHandler.getAllSubprojects(project)
-    val subprojectPaths = subprojects.map { it.projectPath }
-    val dialog = NewWorkspaceDialog(project, subprojectPaths)
+    val dialog = NewWorkspaceDialog(project, subprojects)
     if (!dialog.showAndGet()) return
 
     if (dialog.projectName != project.name) {
       (project as ProjectEx).setProjectName(dialog.projectName)
       ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
     }
-    val set = dialog.selectedPaths.toSet()
+    val set = dialog.projectPaths.toSet()
     val removed = subprojects.filter { !set.contains(it.projectPath) }
     removeSubprojects(removed)
 
-    val added = dialog.selectedPaths.filter { !subprojectPaths.contains(it) }
+    val added = dialog.projectPaths.filter { !subprojects.any { subproject -> subproject.projectPath == it } }
     addToWorkspace(project, added)
   }
 

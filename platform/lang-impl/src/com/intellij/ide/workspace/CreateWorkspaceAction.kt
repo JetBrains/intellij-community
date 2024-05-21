@@ -43,7 +43,8 @@ internal open class CreateWorkspaceAction: BaseWorkspaceAction(false) {
 
 @RequiresEdt
 internal fun createWorkspace(project: Project): Boolean {
-  val dialog = NewWorkspaceDialog(project, listOf(requireNotNull(project.basePath)))
+  val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
+  val dialog = NewWorkspaceDialog(project, subprojects.values)
   if (!dialog.showAndGet()) return false
 
   val settings = importSettingsFromProject(project, true)
@@ -52,7 +53,7 @@ internal fun createWorkspace(project: Project): Boolean {
       for (importedSetting in settings) {
         importedSetting.applyTo(workspace)
       }
-      dialog.selectedPaths.forEach { linkToWorkspace(workspace, it) }
+      dialog.projectPaths.forEach { linkToWorkspace(workspace, it) }
     }
   }
   return true

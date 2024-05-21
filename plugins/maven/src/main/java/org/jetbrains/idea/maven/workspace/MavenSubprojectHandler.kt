@@ -24,7 +24,7 @@ internal class MavenSubprojectHandler : SubprojectHandler {
       .map { MavenSubproject(project, it, this) }
   }
 
-  override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
+  override fun canImportFromFile(file: VirtualFile): Boolean {
     return MavenOpenProjectProvider().canOpenProject(file)
   }
 

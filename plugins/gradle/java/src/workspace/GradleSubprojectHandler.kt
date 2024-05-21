@@ -22,7 +22,7 @@ import javax.swing.Icon
 
 internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstants.SYSTEM_ID) {
 
-  override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
+  override fun canImportFromFile(file: VirtualFile): Boolean {
     return canOpenGradleProject(file)
   }
 
