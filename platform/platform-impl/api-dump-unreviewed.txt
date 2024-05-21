@@ -6731,7 +6731,8 @@ f:com.intellij.ide.impl.ProjectUtil
 - f:confirmLoadingFromRemotePath(java.lang.String,java.lang.String,java.lang.String):Z
 - f:confirmOpenOrAttachProject():I
 - f:confirmOpenOrAttachProject(com.intellij.openapi.project.Project):I
-- bs:confirmOpenOrAttachProject$default(com.intellij.ide.impl.ProjectUtil,com.intellij.openapi.project.Project,I,java.lang.Object):I
+- f:confirmOpenOrAttachProject(com.intellij.openapi.project.Project,java.nio.file.Path):I
+- bs:confirmOpenOrAttachProject$default(com.intellij.ide.impl.ProjectUtil,com.intellij.openapi.project.Project,java.nio.file.Path,I,java.lang.Object):I
 - sf:findAndFocusExistingProjectForPath(java.nio.file.Path):com.intellij.openapi.project.Project
 - f:findProject(java.nio.file.Path):com.intellij.openapi.project.Project
 - sf:focusProjectWindow(com.intellij.openapi.project.Project,Z):V

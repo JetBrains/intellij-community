@@ -2691,11 +2691,11 @@ c:com.intellij.projectImport.ProjectAttachProcessor
 - getActionText(com.intellij.openapi.project.Project):java.lang.String
 - getDefaultOptionIndex():I
 - getDescription(com.intellij.openapi.project.Project):java.lang.String
-- sf:getProcessor(com.intellij.openapi.project.Project):com.intellij.projectImport.ProjectAttachProcessor
-- isEnabled(com.intellij.openapi.project.Project):Z
+- sf:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path):com.intellij.projectImport.ProjectAttachProcessor
+- isEnabled(com.intellij.openapi.project.Project,java.nio.file.Path):Z
 f:com.intellij.projectImport.ProjectAttachProcessor$Companion
 - f:canAttachToProject():Z
-- f:getProcessor(com.intellij.openapi.project.Project):com.intellij.projectImport.ProjectAttachProcessor
+- f:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path):com.intellij.projectImport.ProjectAttachProcessor
 com.intellij.projectImport.ProjectOpenedCallback
 - a:projectOpened(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):V
 c:com.intellij.ui.AnimatedIcon

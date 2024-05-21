@@ -126,7 +126,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
     }
     removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
     if (modules != null) {
-      ProjectAttachProcessor attachProcessor = ProjectAttachProcessor.getProcessor(null);
+      ProjectAttachProcessor attachProcessor = ProjectAttachProcessor.getProcessor(null, null);
       for (final Module module : modules) {
         if (attachProcessor != null) {
           attachProcessor.beforeDetach(module);
