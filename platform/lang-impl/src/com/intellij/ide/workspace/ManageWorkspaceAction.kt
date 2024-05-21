@@ -3,11 +3,12 @@ package com.intellij.ide.workspace
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.workspace.projectView.isWorkspaceNode
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.ex.ProjectEx
 
-internal class ManageWorkspaceAction: BaseWorkspaceAction(true) {
+internal open class ManageWorkspaceAction: BaseWorkspaceAction(true) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = requireNotNull(e.project)
     val subprojects = SubprojectHandler.getAllSubprojects(project)
@@ -27,9 +28,20 @@ internal class ManageWorkspaceAction: BaseWorkspaceAction(true) {
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     if (ActionPlaces.PROJECT_VIEW_POPUP == e.place) {
-      e.presentation.isEnabledAndVisible = isWorkspaceNode(e)
+      e.presentation.isEnabledAndVisible = false
     }
+    else {
+      super.update(e)
+    }
+  }
+}
+
+internal class ManageWorkspacePopupAction: ManageWorkspaceAction() {
+  init {
+    templatePresentation.text = ActionsBundle.message("action.ManageWorkspace.text")
+  }
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isWorkspaceNode(e)
   }
 }

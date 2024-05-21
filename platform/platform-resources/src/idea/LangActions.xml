@@ -1750,7 +1750,7 @@
 
     <group id="WorkspaceContextMenuGroup">
       <action id="AddToWorkspace" class="com.intellij.ide.workspace.AddProjectsToWorkspaceAction"/>
-      <reference ref="ManageWorkspace"/>
+      <action id="ManageWorkspacePopup" class="com.intellij.ide.workspace.ManageWorkspacePopupAction" use-shortcut-of="EditSource"/>
       <separator/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </group>
