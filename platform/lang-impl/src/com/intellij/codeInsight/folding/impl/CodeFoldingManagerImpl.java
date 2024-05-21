@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.impl.text.foldingGrave.FoldingState;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiCompiledFile;
@@ -44,9 +45,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
+  private static final Key<Boolean> ASYNC_FOLDING_UPDATE = Key.create("ASYNC_FOLDING_UPDATE");
+  private static final Key<Map<TextRange, Boolean>> ASYNC_FOLDING_CACHE = Key.create("ASYNC_FOLDING_CACHE");
+
   private final Project myProject;
   private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
@@ -189,6 +194,26 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   public void markForUpdate(FoldRegion region) {
     UpdateFoldRegionsOperation.UPDATE_REGION.set(region, Boolean.TRUE);
+  }
+
+  public void markUpdated(FoldRegion region) {
+    UpdateFoldRegionsOperation.UPDATE_REGION.set(region, null);
+  }
+
+  public static Map<TextRange, Boolean> getAsyncExpandStatusMap(@Nullable Editor editor) {
+    return ASYNC_FOLDING_CACHE.get(editor);
+  }
+
+  public static void setAsyncExpandStatusMap(@Nullable Editor editor, @Nullable Map<TextRange, Boolean> regionExpansionStates) {
+    ASYNC_FOLDING_CACHE.set(editor, regionExpansionStates);
+  }
+
+  public static void markAsAsyncFoldingUpdater(@Nullable Editor editor) {
+    ASYNC_FOLDING_UPDATE.set(editor, true);
+  }
+
+  public static boolean isAsyncFoldingUpdater(@Nullable Editor editor) {
+    return ASYNC_FOLDING_UPDATE.get(editor) == Boolean.TRUE;
   }
 
   @Override

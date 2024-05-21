@@ -89,9 +89,16 @@ final class UpdateFoldRegionsOperation implements Runnable {
     Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
     Map<FoldingGroup, Boolean> groupExpand = new HashMap<>();
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, zombieToExpandStatusMap, rangeToExpandStatusMap, shouldExpand, groupExpand);
-
+    if (CodeFoldingManagerImpl.isAsyncFoldingUpdater(myEditor)) {
+      Map<TextRange, Boolean> postponedExpansionMap = CodeFoldingManagerImpl.getAsyncExpandStatusMap(myEditor);
+      if (postponedExpansionMap != null) {
+        postponedExpansionMap.putAll(rangeToExpandStatusMap);
+      }
+      else {
+        CodeFoldingManagerImpl.setAsyncExpandStatusMap(myEditor, rangeToExpandStatusMap);
+      }
+    }
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
-
     foldingModel.clearDocumentRangesModificationStatus();
   }
 
