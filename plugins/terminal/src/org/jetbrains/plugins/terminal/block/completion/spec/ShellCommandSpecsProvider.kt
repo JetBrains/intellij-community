@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion.spec
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Entry point for providing shell command specifications, used for command completion in the New Terminal.
@@ -12,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
  * </extensions>
  * ```
  */
+@ApiStatus.Experimental
 interface ShellCommandSpecsProvider {
   /**
    * Provide the list of command specs.
