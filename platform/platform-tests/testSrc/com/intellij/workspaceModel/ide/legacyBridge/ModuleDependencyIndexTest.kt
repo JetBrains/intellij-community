@@ -72,6 +72,23 @@ class ModuleDependencyIndexTest {
   }
 
   @Test
+  fun `test add two modules with same library`() = runBlocking {
+    projectModel.project.workspaceModel.update {
+      it addEntity LibraryEntity("HeyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
+    }
+
+    val events = withDependencyListener {
+      projectModel.project.workspaceModel.update {
+        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
+        it addEntity ModuleEntity("MyModule", deps, MySource)
+        it addEntity ModuleEntity("MyModule2", deps, MySource)
+      }
+    }
+
+    assertEquals("+HeyLib", events.single())
+  }
+
+  @Test
   fun `test dependency on global library`() = runBlocking {
     try {
       writeAction {

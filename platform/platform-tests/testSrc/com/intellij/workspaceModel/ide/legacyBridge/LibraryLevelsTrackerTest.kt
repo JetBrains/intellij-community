@@ -66,5 +66,37 @@ class LibraryLevelsTrackerTest {
     assertTrue(tracker.isNotUsed(LibraryTableId.ProjectLibraryTableId.level))
   }
 
+  @Test
+  fun `add new modules in batch but remove one by one`() = runBlocking {
+    val tracker = LibraryLevelsTracker.getInstance(projectModel.project)
+
+    assertTrue(tracker.getLibraryLevels().isEmpty())
+
+    projectModel.project.workspaceModel.update {
+      it addEntity LibraryEntity("MyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
+
+      val deps = listOf(LibraryDependency(LibraryId("MyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
+      it addEntity ModuleEntity("MyModule1", deps, MySource)
+      it addEntity ModuleEntity("MyModule2", deps, MySource)
+    }
+
+    assertEquals(LibraryTableId.ProjectLibraryTableId.level, tracker.getLibraryLevels().single())
+    assertFalse(tracker.isNotUsed(LibraryTableId.ProjectLibraryTableId.level))
+
+    projectModel.project.workspaceModel.update {
+      it.removeEntity(it.resolve(ModuleId("MyModule1"))!!)
+    }
+
+    assertEquals(LibraryTableId.ProjectLibraryTableId.level, tracker.getLibraryLevels().single())
+    assertFalse(tracker.isNotUsed(LibraryTableId.ProjectLibraryTableId.level))
+
+    projectModel.project.workspaceModel.update {
+      it.removeEntity(it.resolve(ModuleId("MyModule2"))!!)
+    }
+
+    assertTrue(tracker.getLibraryLevels().isEmpty())
+    assertTrue(tracker.isNotUsed(LibraryTableId.ProjectLibraryTableId.level))
+  }
+
   private object MySource : EntitySource
 }
