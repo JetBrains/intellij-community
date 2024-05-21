@@ -828,8 +828,7 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - a:filterActivityList(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivityData,java.lang.String):java.util.Set
 - a:getActivityItemsChanged(com.intellij.platform.lvcs.impl.ActivityScope):kotlinx.coroutines.flow.Flow
 - a:getPresentation(com.intellij.platform.lvcs.impl.ActivityItem):com.intellij.platform.lvcs.impl.ActivityPresentation
-- a:isActivityFilterSupported(com.intellij.platform.lvcs.impl.ActivityScope):Z
-- a:isScopeFilterSupported(com.intellij.platform.lvcs.impl.ActivityScope):Z
+- a:getSupportedFilterKindFor(com.intellij.platform.lvcs.impl.ActivityScope):com.intellij.platform.lvcs.impl.FilterKind
 - a:loadActivityList(com.intellij.platform.lvcs.impl.ActivityScope,java.lang.String):com.intellij.platform.lvcs.impl.ActivityData
 - a:loadDiffData(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ActivityDiffData
 - a:loadSingleDiff(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.diff.chains.DiffRequestProducer
@@ -957,6 +956,13 @@ f:com.intellij.platform.lvcs.impl.ChangeSetSelectionKt
 - sf:getLeftRevision(com.intellij.platform.lvcs.impl.ChangeSetSelection):com.intellij.platform.lvcs.impl.RevisionId
 - sf:getRightRevision(com.intellij.platform.lvcs.impl.ChangeSetSelection):com.intellij.platform.lvcs.impl.RevisionId
 - sf:toChangeSetSelection(com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ChangeSetSelection
+*e:com.intellij.platform.lvcs.impl.FilterKind
+- java.lang.Enum
+- sf:CONTENT:com.intellij.platform.lvcs.impl.FilterKind
+- sf:FILE:com.intellij.platform.lvcs.impl.FilterKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.lvcs.impl.FilterKind
+- s:values():com.intellij.platform.lvcs.impl.FilterKind[]
 f:com.intellij.platform.lvcs.impl.LocalHistoryActivityProviderKt
 - sf:getACTIVITY_PRESENTATION_PROVIDER_EP():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.platform.lvcs.impl.RevisionId

@@ -23,14 +23,14 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   private val activityItemsFlow = MutableStateFlow(ActivityData.EMPTY)
   private val selectionFlow = MutableStateFlow<ActivitySelection?>(null)
 
-  private val scopeFilterFlow = MutableStateFlow<String?>(null)
-  private val activityFilterFlow = MutableStateFlow<String?>(null)
+  private val filterFlow = MutableStateFlow<String?>(null)
 
   private val isVisibleFlow = MutableStateFlow(true)
 
   init {
     coroutineScope.launch {
-      combine(activityProvider.getActivityItemsChanged(activityScope).debounce(500), scopeFilterFlow,
+      combine(activityProvider.getActivityItemsChanged(activityScope).debounce(500),
+              if (filterKind == FilterKind.FILE) filterFlow else flowOf(null),
               isVisibleFlow) { _, filter, isVisible -> filter to isVisible }
         .filter { (_, isVisible) -> isVisible }
         .map { it.first }
@@ -69,9 +69,9 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
       }
     }
 
-    if (activityProvider.isActivityFilterSupported(activityScope)) {
+    if (filterKind == FilterKind.CONTENT) {
       coroutineScope.launch {
-        combine(activityFilterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
+        combine(filterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
           if (filter.isNullOrEmpty()) {
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(null) }
             return@collect
@@ -91,18 +91,11 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   internal val selection get() = selectionFlow.value
 
   internal val isSingleDiffSupported get() = !activityScope.hasMultipleFiles
-  internal val isScopeFilterSupported get() = activityProvider.isScopeFilterSupported(activityScope)
-  internal val isActivityFilterSupported get() = activityProvider.isActivityFilterSupported(activityScope)
 
-  val isFilterSet: Boolean get() = !scopeFilterFlow.value.isNullOrEmpty() || !activityFilterFlow.value.isNullOrEmpty()
-
+  internal val filterKind get() = activityProvider.getSupportedFilterKindFor(activityScope)
+  val isFilterSet: Boolean get() = !filterFlow.value.isNullOrEmpty()
   fun setFilter(pattern: String?) {
-    if (isScopeFilterSupported) {
-      scopeFilterFlow.value = pattern
-    }
-    if (isActivityFilterSupported) {
-      activityFilterFlow.value = pattern
-    }
+    filterFlow.value = pattern
   }
 
   @RequiresEdt

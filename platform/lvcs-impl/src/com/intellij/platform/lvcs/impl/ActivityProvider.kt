@@ -9,14 +9,18 @@ import org.jetbrains.annotations.ApiStatus
 interface ActivityProvider {
   fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit>
 
-  fun loadActivityList(scope: ActivityScope, scopeFilter: String?): ActivityData
-  fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>?
+  fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData
+  fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>?
 
   fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData?
   fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer?
 
-  fun isScopeFilterSupported(scope: ActivityScope): Boolean
-  fun isActivityFilterSupported(scope: ActivityScope): Boolean
+  fun getSupportedFilterKindFor(scope: ActivityScope): FilterKind
 
   fun getPresentation(item: ActivityItem): ActivityPresentation?
+}
+
+@ApiStatus.Experimental
+enum class FilterKind {
+  FILE, CONTENT
 }
