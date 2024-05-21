@@ -53,7 +53,7 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
         val toContinue = showConflicts(conflicts, usages)
         if (!toContinue) return false
         unMarkNonUpdatableUsages(descriptor.source.elements)
-        refUsages.set(usages?.filterNotNull()?.filterUpdatable()?.toTypedArray() ?: return false)
+        refUsages.set(usages.toList().filterUpdatable().toTypedArray())
         return true
     }
 

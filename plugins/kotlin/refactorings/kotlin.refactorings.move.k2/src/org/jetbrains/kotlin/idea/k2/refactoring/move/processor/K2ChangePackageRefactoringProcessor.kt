@@ -44,7 +44,7 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
         val toContinue = showConflicts(conflicts, usages)
         if (!toContinue) return false
         unMarkNonUpdatableUsages(descriptor.files)
-        refUsages.set(usages?.filterNotNull()?.filterUpdatable()?.toTypedArray() ?: return false)
+        refUsages.set(usages.toList().filterUpdatable().toTypedArray())
         return true
     }
 
