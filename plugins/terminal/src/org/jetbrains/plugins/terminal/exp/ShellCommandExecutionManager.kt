@@ -164,7 +164,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   /**
    * Should be called without [lock].
    *
-   * Tries to progress the queue of terminal actions (e.g. commands, generators).
+   * Tries to process the queue of requests (commands, generators, keybindings).
    * Any command cancels all the generators.
    */
   private fun processQueueIfReady() {
@@ -286,7 +286,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   internal class KeyBinding(val bytes: ByteArray)
 
   /**
-   * A wrapper around `synchronized` section with ability to run actions after the section.
+   * A wrapper around `synchronized` section with the ability to run actions after the section.
    */
   private class Lock {
     private val lock: Any = Any()
@@ -316,6 +316,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     private val NEXT_REQUEST_ID = AtomicInteger(0)
     private const val GENERATOR_COMMAND = "__jetbrains_intellij_run_generator"
 
+    @Suppress("SpellCheckingInspection")
     private val pwshCharsToEscape: Map<Char, String> = mapOf(
       '`' to "``",
       '\"' to "`\"",
