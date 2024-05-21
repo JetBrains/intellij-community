@@ -46,7 +46,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoByDescriptor;
 
-final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
+public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
