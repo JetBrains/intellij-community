@@ -185,6 +185,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val libSourceFile = getFile("Comparator.kt")
         val libSourceModule = ktModuleWithAssertion<KtLibrarySourceModule>(libSourceFile)
         assertEquals(libraryModuleWithoutContext.librarySources, libSourceModule)
+
+        val libSourceModuleForBinaryFile = ktModuleWithAssertion<KtLibrarySourceModule>(libraryFile, contextualModule = libSourceModule)
+        assertEquals(libraryModuleWithoutContext.librarySources, libSourceModuleForBinaryFile)
     }
 
     fun `test module libraries with the same shared content`() {

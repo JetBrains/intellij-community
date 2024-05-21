@@ -185,7 +185,9 @@ class ModuleInfoProvider(private val project: Project) {
                     config = config,
                     extensionBlock = { collectByElement(element, containingFile, virtualFile) },
                 ) {
-                    val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
+                    val isLibrarySource =
+                        config.contextualModuleInfo is LibrarySourceInfo ||
+                                containingKtFile != null && isLibrarySource(containingKtFile, config)
                     collectByFile(virtualFile, isLibrarySource, config)
                 }
             } else {
