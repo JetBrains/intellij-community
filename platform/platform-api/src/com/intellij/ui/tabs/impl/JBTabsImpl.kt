@@ -1204,8 +1204,8 @@ open class JBTabsImpl(
     }
     if (!isDropTarget && fireEvents) {
       if (tabCount == 1) {
-        fireBeforeSelectionChanged(null, info)
-        fireSelectionChanged(null, info)
+        fireBeforeSelectionChanged(oldInfo = null, newInfo = info)
+        fireSelectionChanged(oldInfo = null, newInfo = info)
       }
     }
     revalidateAndRepaint(layoutNow = false)
@@ -3179,7 +3179,7 @@ private fun updateToolbarIfVisibilityChanged(toolbar: ActionToolbar?, previousBo
 
   val bounds = toolbar.component.bounds
   if (bounds.isEmpty != previousBounds.isEmpty) {
-    toolbar.updateActionsImmediately()
+    toolbar.updateActionsAsync()
   }
 }
 

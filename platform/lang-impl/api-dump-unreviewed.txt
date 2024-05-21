@@ -20624,7 +20624,9 @@ f:com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener
 - <init>(com.intellij.openapi.project.Project):V
 - virtualFileAppearanceChanged(com.intellij.openapi.vfs.VirtualFile):V
 c:com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl
-- com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.PersistentStateComponent
+- com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - getFileTooltipText(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.EditorWindow):java.lang.String
 - isProblem(com.intellij.openapi.vfs.VirtualFile):Z

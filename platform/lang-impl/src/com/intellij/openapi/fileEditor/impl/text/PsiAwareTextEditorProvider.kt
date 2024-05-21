@@ -42,8 +42,6 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
-    val isLazy = file.getUserData(AsyncEditorLoader.OPENED_IN_BULK) == true && file.getUserData(AsyncEditorLoader.FIRST_IN_BULK) != true
-
     val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file)
 
     val effectiveDocument = if (document == null) {
@@ -61,8 +59,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
       }
 
-      val highlighterDeferred = async(CoroutineName("editor highlighter creating"),
-                                      start = if (isLazy) CoroutineStart.LAZY else CoroutineStart.DEFAULT) {
+      val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
         val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
         readActionBlocking {

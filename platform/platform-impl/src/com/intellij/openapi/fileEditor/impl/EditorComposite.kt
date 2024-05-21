@@ -67,7 +67,7 @@ open class EditorComposite internal constructor(
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
   private var compositePanel: EditorCompositePanel
-  private val focusWatcher: FocusWatcher?
+  private val focusWatcher: FocusWatcher
 
   /**
    * Currently selected editor
@@ -84,7 +84,9 @@ open class EditorComposite internal constructor(
    */
   private val fileEditorWithProviderList = ContainerUtil.createLockFreeCopyOnWriteList(fileEditorWithProviderList)
   private val dispatcher = EventDispatcher.create(EditorCompositeListener::class.java)
-  private var selfBorder = false
+
+  internal var selfBorder: Boolean = false
+    private set
 
   init {
     EDT.assertIsEdt()
@@ -98,24 +100,24 @@ open class EditorComposite internal constructor(
     }
 
     compositePanel = EditorCompositePanel(composite = this)
-    when {
-      fileEditorWithProviderList.size > 1 -> {
-        tabbedPaneWrapper = createTabbedPaneWrapper(component = null)
-        setTabbedPaneComponent()
+    if (fileEditorWithProviderList.isNotEmpty()) {
+      if (fileEditorWithProviderList.size > 1) {
+        setTabbedPaneComponent(createTabbedPaneWrapper(component = null))
       }
-      fileEditorWithProviderList.size == 1 -> {
+      else {
         setEditorComponent()
       }
-      else -> throw IllegalArgumentException("editor array cannot be empty")
+
+      selectedEditorWithProviderMutable.value = fileEditorWithProviderList.get(0)
     }
 
-    selectedEditorWithProviderMutable.value = fileEditorWithProviderList[0]
     focusWatcher = FocusWatcher()
     focusWatcher.install(compositePanel)
   }
 
-  private fun setTabbedPaneComponent() {
-    val component = tabbedPaneWrapper!!.component
+  private fun setTabbedPaneComponent(tabbedPaneWrapper: TabbedPaneWrapper) {
+    val component = tabbedPaneWrapper.component
+    this.tabbedPaneWrapper = tabbedPaneWrapper
     compositePanel.setComponent(component, focusComponent = { component })
   }
 
@@ -211,13 +213,10 @@ open class EditorComposite internal constructor(
    */
   open val preferredFocusedComponent: JComponent?
     get() {
-      if (selectedEditorWithProvider.value == null) {
-        return null
-      }
-
-      val component = focusWatcher!!.focusedComponent
+      val editorWithProvider = selectedEditorWithProvider.value ?: return null
+      val component = focusWatcher.focusedComponent
       if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
-        return selectedEditor?.preferredFocusedComponent
+        return editorWithProvider.fileEditor.preferredFocusedComponent
       }
       else {
         return component
@@ -302,8 +301,6 @@ open class EditorComposite internal constructor(
     container.revalidate()
   }
 
-  fun selfBorder(): Boolean = selfBorder
-
   fun setDisplayName(editor: FileEditor, name: @NlsContexts.TabTitle String) {
     val index = fileEditorWithProviderList.indexOfFirst { it.fileEditor == editor }
     assert(index != -1)
@@ -377,7 +374,7 @@ open class EditorComposite internal constructor(
         Disposer.dispose(editor.fileEditor)
       }
     }
-    focusWatcher?.deinstall(focusWatcher.topComponent)
+    focusWatcher.deinstall(focusWatcher.topComponent)
   }
 
   @RequiresEdt
@@ -388,19 +385,22 @@ open class EditorComposite internal constructor(
     if (!clientId.isLocal) {
       assignClientId(editor, clientId)
     }
-    if (fileEditorWithProviderList.size == 1) {
-      setEditorComponent()
-      selectedEditorWithProviderMutable.value = fileEditorWithProviderList[0]
+
+    when {
+      fileEditorWithProviderList.size == 1 -> {
+        setEditorComponent()
+        selectedEditorWithProviderMutable.value = fileEditorWithProviderList.get(0)
+      }
+      tabbedPaneWrapper == null -> {
+        setTabbedPaneComponent(createTabbedPaneWrapper(compositePanel))
+      }
+      else -> {
+        val component = createEditorComponent(editor)
+        tabbedPaneWrapper!!.addTab(getDisplayName(editor), component)
+      }
     }
-    else if (tabbedPaneWrapper == null) {
-      tabbedPaneWrapper = createTabbedPaneWrapper(compositePanel)
-      setTabbedPaneComponent()
-    }
-    else {
-      val component = createEditorComponent(editor)
-      tabbedPaneWrapper!!.addTab(getDisplayName(editor), component)
-    }
-    focusWatcher!!.deinstall(focusWatcher.topComponent)
+
+    focusWatcher.deinstall(focusWatcher.topComponent)
     focusWatcher.install(compositePanel)
     if (fileEditorWithProviderList.size == 1) {
       preferredFocusedComponent?.requestFocusInWindow()
@@ -432,7 +432,7 @@ open class EditorComposite internal constructor(
     if (selectedEditorWithProvider.value?.provider?.editorTypeId == editorTypeId) {
       selectedEditorWithProviderMutable.value = fileEditorWithProviderList.firstOrNull()
     }
-    focusWatcher!!.deinstall(focusWatcher.topComponent)
+    focusWatcher.deinstall(focusWatcher.topComponent)
     focusWatcher.install(compositePanel)
     dispatcher.multicaster.editorRemoved(editorTypeId)
   }
@@ -483,7 +483,7 @@ open class EditorComposite internal constructor(
 }
 
 private class EditorCompositePanel(private val composite: EditorComposite) : JPanel(BorderLayout()), EdtDataProvider {
-  lateinit var focusComponent: () -> JComponent?
+  var focusComponent: () -> JComponent? = { null }
     private set
 
   init {

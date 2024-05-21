@@ -696,7 +696,7 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     if (!(viewer instanceof EditorDiffViewer)) return;
 
     var editors = ((EditorDiffViewer)viewer).getEditors();
-    var editorStates = processorState.getEmbeddedEditorStates();
+    var editorStates = processorState.embeddedEditorStates;
 
     TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
     for (int i = 0; i < Math.min(editorStates.size(), editors.size()); i++) {

@@ -46,6 +46,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.*
 import java.awt.geom.Rectangle2D
@@ -107,6 +108,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   val isShowing: Boolean
     get() = component.isShowing
 
+  @get:Internal
   val manager: FileEditorManagerImpl
     get() = owner.manager
 
@@ -289,7 +291,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   @RequiresEdt
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
-    addComposite(composite, options, isNewEditor = findCompositeIndex(composite) == -1)
+    addComposite(composite = composite, options = options, isNewEditor = findCompositeIndex(composite) == -1)
   }
 
   @RequiresEdt
@@ -317,6 +319,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         indexToInsert = indexToInsert,
         composite = composite,
         parentDisposable = composite,
+        isOpenedInBulk = AsyncEditorLoader.isOpenedInBulk(file),
       )
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)

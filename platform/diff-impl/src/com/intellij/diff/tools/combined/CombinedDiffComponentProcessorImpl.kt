@@ -39,7 +39,6 @@ interface CombinedDiffManager {
   fun createProcessor(diffPlace: String? = null): CombinedDiffComponentProcessor
 
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): CombinedDiffManager = project.service()
   }
 }
@@ -250,7 +249,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
 }
 
 @ApiStatus.Experimental
-data class CombinedDiffEditorState(
+internal data class CombinedDiffEditorState(
   val currentBlockIds: Set<CombinedBlockId>,
   val activeBlockId: CombinedBlockId?,
   val activeEditorStates: List<TextEditorState>

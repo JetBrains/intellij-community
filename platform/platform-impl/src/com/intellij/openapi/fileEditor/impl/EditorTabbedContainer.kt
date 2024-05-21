@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_IN
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.*
@@ -259,7 +258,7 @@ class EditorTabbedContainer internal constructor(
     return selectedInfo?.component?.let { (it as EditorWindowTopComponent).composite }
   }
 
-  fun insertTab(
+  internal fun insertTab(
     file: VirtualFile,
     icon: Icon?,
     component: JComponent,
@@ -267,6 +266,7 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     composite: EditorComposite,
     parentDisposable: Disposable,
+    isOpenedInBulk: Boolean,
   ) {
     editorTabs.findInfo(file)?.let {
       return
@@ -298,8 +298,11 @@ class EditorTabbedContainer internal constructor(
     val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
     val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
-    tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
-    if (AsyncEditorLoader.isOpenedInBulk(file) && !AsyncEditorLoader.isFirstInBulk(file)) {
+    composite.selectedEditor?.tabActions?.let {
+      tab.setTabPaneActions(it)
+    }
+
+    if (isOpenedInBulk) {
       editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
       editorTabs.updateListeners()
     }
@@ -602,7 +605,7 @@ private class EditorTabs(
 
   override fun shouldPaintBottomBorder(): Boolean {
     val info = selectedInfo ?: return true
-    return !(info.component as EditorWindowTopComponent).composite.selfBorder()
+    return !(info.component as EditorWindowTopComponent).composite.selfBorder
   }
 
   // return same instance to avoid unnecessary action toolbar updates

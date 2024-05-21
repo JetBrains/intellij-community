@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
@@ -103,10 +103,10 @@ object Switcher : BaseSwitcherAction(null) {
     val popup: JBPopup?
     val activity = SHOWN_TIME_ACTIVITY.started(project)
     var navigationData: SwitcherLogger.NavigationData? = null
-    val toolWindows: JBList<SwitcherListItem>
+    internal val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
-    val pathLabel: JLabel = HintUtil.createAdComponent(
+    private val pathLabel: JLabel = HintUtil.createAdComponent(
       " ",
       if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Advertiser.border()
       else JBUI.Borders.compound(
@@ -509,7 +509,7 @@ object Switcher : BaseSwitcherAction(null) {
       go(false)
     }
 
-    val selectedList: JBList<out SwitcherListItem>?
+    internal val selectedList: JBList<out SwitcherListItem>?
       get() = getSelectedList(files)
 
     private fun getSelectedList(preferable: JBList<out SwitcherListItem>?): JBList<out SwitcherListItem>? {
@@ -672,8 +672,12 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     private fun registerAction(shortcuts: ShortcutSet, action: (InputEvent?) -> Unit) {
-      if (shortcuts.shortcuts.size == 0) return  // ignore empty shortcut set
-      LightEditActionFactory.create { event: AnActionEvent ->
+      // ignore an empty shortcut set
+      if (shortcuts.shortcuts.isEmpty()) {
+        return
+      }
+
+      LightEditActionFactory.create { event ->
         if (popup != null && popup.isVisible) action(event.inputEvent)
       }.registerCustomShortcutSet(shortcuts, this, this)
     }
@@ -684,11 +688,13 @@ object Switcher : BaseSwitcherAction(null) {
 
     private fun registerToolWindowAction(window: SwitcherToolWindow) {
       val mnemonic = window.mnemonic
-      if (!StringUtil.isEmpty(mnemonic)) {
+      if (!mnemonic.isNullOrEmpty()) {
         registerAction(
-          if (speedSearch == null) onKeyRelease.getShortcuts(mnemonic!!)
-          else if (SystemInfo.isMac) CustomShortcutSet.fromString("alt $mnemonic", "alt control $mnemonic")
-          else CustomShortcutSet.fromString("alt $mnemonic")) {
+          when {
+            speedSearch == null -> onKeyRelease.getShortcuts(mnemonic)
+            SystemInfo.isMac -> CustomShortcutSet.fromString("alt $mnemonic", "alt control $mnemonic")
+            else -> CustomShortcutSet.fromString("alt $mnemonic")
+          }) {
           cancel()
           window.window.activate(null, true, true)
         }

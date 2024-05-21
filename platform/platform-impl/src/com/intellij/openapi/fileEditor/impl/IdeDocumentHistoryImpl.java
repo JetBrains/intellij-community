@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -52,6 +52,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -731,6 +732,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       return myIsPreviewTab;
     }
 
+    @ApiStatus.Internal
     public @Nullable FileEditorManagerImpl.OpenMode getOpenMode() {
       if (myNavigationState instanceof FileEditorStateWithPreferredOpenMode) {
         return ((FileEditorStateWithPreferredOpenMode)myNavigationState).getOpenMode();
