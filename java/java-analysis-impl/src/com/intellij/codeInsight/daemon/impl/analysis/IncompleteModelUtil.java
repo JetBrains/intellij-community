@@ -188,6 +188,35 @@ final class IncompleteModelUtil {
   }
 
   /**
+   * @param ref unresolved reference to find potential imports for
+   * @return list of import statements that potentially import the given unresolved reference
+   */
+  static List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref.getParent() instanceof PsiImportStatementBase) return List.of();
+    boolean call = ref.getParent() instanceof PsiMethodCallExpression;
+    if (!(ref.getContainingFile() instanceof PsiJavaFile file)) return List.of();
+    PsiImportList list = file.getImportList();
+    List<PsiImportStatementBase> imports = new ArrayList<>();
+    if (list != null) {
+      for (PsiImportStatementBase statement : list.getAllImportStatements()) {
+        if (statement instanceof PsiImportStaticStatement staticImport && staticImport.resolveTargetClass() != null) continue;
+        if (!statement.isOnDemand()) {
+          PsiJavaCodeReferenceElement reference = statement.getImportReference();
+          if (reference == null) continue;
+          String name = reference.getReferenceName();
+          if (name == null || !name.equals(ref.getReferenceName())) continue;
+          if (reference.resolve() != null) continue;
+        }
+        // Unqualified method call cannot be imported using non-static import
+        if (statement instanceof PsiImportStaticStatement || !call) {
+          imports.add(statement);
+        }
+      }
+    }
+    return imports;
+  }
+
+  /**
    * @param ref reference to check
    * @return true if the reference can be pending. A pending reference is an unresolved reference that can be potentially resolved
    * once the project dependencies are properly resolved. Not every reference can be pending. E.g., an unresolved method inside
@@ -202,24 +231,7 @@ final class IncompleteModelUtil {
           if (!isHierarchyResolved(psiClass)) return true;
           psiClass = ClassUtils.getContainingClass(psiClass);
         }
-        boolean call = ref.getParent() instanceof PsiMethodCallExpression;
-        PsiImportList list = ((PsiJavaFile)ref.getContainingFile()).getImportList();
-        if (list != null) {
-          for (PsiImportStatementBase statement : list.getAllImportStatements()) {
-            if (statement instanceof PsiImportStaticStatement staticImport && staticImport.resolveTargetClass() != null) continue;
-            if (!statement.isOnDemand()) {
-              PsiJavaCodeReferenceElement reference = statement.getImportReference();
-              if (reference == null) continue;
-              String name = reference.getReferenceName();
-              if (name == null || !name.equals(ref.getReferenceName())) continue;
-            }
-            // Unqualified method call cannot be imported using non-static import
-            if (statement instanceof PsiImportStaticStatement || !call) {
-              return true;
-            }
-          }
-        }
-        return false;
+        return !getPotentialImports(ref).isEmpty();
       }
       if (qualifier instanceof PsiReferenceExpression qualifierRef) {
         PsiElement qualifierTarget = qualifierRef.resolve();

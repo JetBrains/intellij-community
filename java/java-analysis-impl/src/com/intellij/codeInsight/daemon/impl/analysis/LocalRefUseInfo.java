@@ -360,10 +360,17 @@ public final class LocalRefUseInfo {
         registerImportStatement(ref, importStatement);
       }
       else if (refElement == null && ref instanceof PsiJavaReference javaReference) {
-        for (JavaResolveResult result : javaReference.multiResolve(true)) {
-          if (result.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatement) {
-            registerImportStatement(ref, importStatement);
-            break;
+        JavaResolveResult[] results = javaReference.multiResolve(true);
+        if (results.length > 0) {
+          for (JavaResolveResult result : results) {
+            if (result.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatement) {
+              registerImportStatement(ref, importStatement);
+              break;
+            }
+          }
+        } else if (ref instanceof PsiJavaCodeReferenceElement javaRef) {
+          for (PsiImportStatementBase potentialImport : IncompleteModelUtil.getPotentialImports(javaRef)) {
+            registerImportStatement(ref, potentialImport);
           }
         }
       }

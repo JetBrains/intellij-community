@@ -1,4 +1,5 @@
 import java.util.Map;
+import java.io.IOException;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">Anno</info>;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">MyInterface</info>;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">Cls</info>;
@@ -36,6 +37,10 @@ public class Simple {
   }
   
   void method(String s, Object obj) {}
+  
+  private void methodThrows() throws <warning descr="Exception 'java.io.IOException' is never thrown in the method">IOException</warning> {
+    System.out.println();
+  }
   
   void methodCall(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
     method("Hello", u);
