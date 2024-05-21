@@ -58,7 +58,12 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     new ClassFilter("javassist.*"),
     new ClassFilter("org.apache.webbeans.*"),
     new ClassFilter("com.ibm.ws.*"),
-    new ClassFilter("org.mockito.*")
+    new ClassFilter("org.mockito.*"),
+    new ClassFilter("android.*"),
+    new ClassFilter("com.android.*"),
+    new ClassFilter("libcore.*"),
+    new ClassFilter("dalvik.*"),
+    new ClassFilter("androidx.*"),
   };
 
   public boolean TRACING_FILTERS_ENABLED = true;
