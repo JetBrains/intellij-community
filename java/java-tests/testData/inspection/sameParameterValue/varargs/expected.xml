@@ -4,18 +4,18 @@
     <file>Test.java</file>
     <line>43</line>
     <problem_class>Method parameter always has the same value</problem_class>
-    <description>Actual value of parameter 'bar' is always 'null'</description>
+    <description>Value of parameter 'bar' is always 'null'</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>51</line>
     <problem_class>Method parameter always has the same value</problem_class>
-    <description>Actual value of parameter 'bar' is always '0'</description>
+    <description>Value of parameter 'bar' is always '0'</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>58</line>
     <problem_class>Method parameter always has the same value</problem_class>
-    <description>Actual value of parameter 'cs' is always 'String.class, Long.class'</description>
+    <description>Value of parameter 'cs' is always 'String.class, Long.class'</description>
   </problem>
 </problems>

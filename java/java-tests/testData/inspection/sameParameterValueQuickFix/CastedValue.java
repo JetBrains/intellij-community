@@ -1,5 +1,5 @@
 class SampleClazz {
-  private void handleTree(Short <warning descr="Actual value of parameter 'simflag' is always '(short)0'"><caret>simflag</warning>) {
+  private void handleTree(Short <warning descr="Value of parameter 'simflag' is always '(short)0'"><caret>simflag</warning>) {
     foo(simflag);
   }
 

@@ -4,13 +4,13 @@
     <file>Test.kt</file>
     <line>11</line>
     <problem_class>Actual method parameter is the same constant</problem_class>
-    <description>Actual value of parameter 'arg1' is always 'foo'</description>
+    <description>Value of parameter 'arg1' is always 'foo'</description>
   </problem>
   <problem>
     <file>Test.kt</file>
     <line>11</line>
     <problem_class>Actual method parameter is the same constant</problem_class>
-    <description>Actual value of parameter 'arg2' is always 'bar'</description>
+    <description>Value of parameter 'arg2' is always 'bar'</description>
   </problem>
 </problems>
 
