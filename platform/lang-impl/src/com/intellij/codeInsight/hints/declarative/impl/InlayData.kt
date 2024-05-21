@@ -33,7 +33,7 @@ data class InlayData(
 
     companion object {
       // increment on format changed
-      private const val SERDE_VERSION = 2
+      private const val SERDE_VERSION = 3
     }
 
     override fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -46,7 +46,6 @@ data class InlayData(
       writeUTF(output, inlayData.providerId)
       output.writeBoolean(inlayData.disabled)
       writePayloads(output, inlayData.payloads)
-      writeProviderClass(output, inlayData.providerClass)
       writeSourceId(output, inlayData.sourceId)
     }
 
@@ -58,7 +57,7 @@ data class InlayData(
       val providerId: String            = readUTF(input)
       val disabled: Boolean             = input.readBoolean()
       val payloads: List<InlayPayload>? = readPayloads(input)
-      val providerClass: Class<*>       = readProviderClass(input)
+      val providerClass: Class<*>       = ZombieInlayHintsProvider::class.java
       val sourceId: String              = readSourceId(input)
       return InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, sourceId)
     }
@@ -146,20 +145,12 @@ data class InlayData(
       return InlayPayload(payloadName, inlayActionPayload)
     }
 
-    private fun writeProviderClass(output: DataOutput, providerClass: Class<*>) {
-      writeUTF(output, providerClass.name)
-    }
-
-    private fun readProviderClass(input: DataInput): Class<*> {
-      readUTF(input) // TODO: remove when format changed
-      return ZombieInlayHintsProvider::class.java
-    }
-
     private fun writeSourceId(output: DataOutput, sourceId: String) {
       writeUTF(output, sourceId)
     }
 
-    private fun readSourceId(input: DataInput): String
-      = readUTF(input)
+    private fun readSourceId(input: DataInput): String {
+      return readUTF(input)
+    }
   }
 }
