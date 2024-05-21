@@ -95,8 +95,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return this;
   }
 
-  @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  @Nullable
+  private PyType getTargetExpressionType(@NotNull TypeEvalContext context) {
     if (PyNames.ALL.equals(getName())) {
       // no type for __all__, to avoid unresolved reference errors for expressions where a qualifier is a name
       // imported via __all__
@@ -181,6 +181,19 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     PyType excType = getTypeFromExcept();
     if (excType != null) {
       return excType;
+    }
+    return null;
+  }
+
+  @Override
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    PyType type = getTargetExpressionType(context);
+    if (type != null) {
+      Ref<PyType> typeFromDescriptors = PyDescriptorTypeUtil.getDescriptorType(this, type, context);
+      if (typeFromDescriptors != null) {
+        return typeFromDescriptors.get();
+      }
+      return type;
     }
     return null;
   }
