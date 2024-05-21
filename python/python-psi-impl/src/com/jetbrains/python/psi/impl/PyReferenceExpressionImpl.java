@@ -34,6 +34,7 @@ import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
+import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
 
 /**
  * Implements reference expression PSI.
@@ -203,7 +204,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualified && typeFromTargets instanceof PyNoneType) {
       return null;
     }
-    final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
+    final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDescriptorType(this, typeFromTargets, context);
     if (descriptorType != null) {
       return descriptorType.get();
     }
@@ -223,23 +224,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return getCalleeType(callExpression, PyResolveContext.defaultContext(context));
     }
     return null;
-  }
-
-  @Nullable
-  private Ref<PyType> getDescriptorType(@Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
-    if (!isQualified()) return null;
-    final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
-    if (targetType == null || targetType.isDefinition()) return null;
-    final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
-    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
-                                                                                resolveContext);
-    if (members == null || members.isEmpty()) return null;
-    final PyType type = StreamEx.of(members)
-      .map(RatedResolveResult::getElement)
-      .select(PyCallable.class)
-      .map(context::getReturnType)
-      .collect(PyTypeUtil.toUnion());
-    return Ref.create(type);
   }
 
   @Nullable

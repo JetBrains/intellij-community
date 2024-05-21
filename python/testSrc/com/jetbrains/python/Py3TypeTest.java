@@ -2541,6 +2541,204 @@ public class Py3TypeTest extends PyTestCase {
             """);
   }
 
+  // PY-26184
+  public void testGenericTypeFromDescriptor() {
+    doTest("list", """
+      import typing
+
+      class MyDescriptor[T]:
+          def __init__(self, requested_type: typing.Type[T]):
+              self.requested_type = requested_type
+          def __get__(self, instance: typing.Any, owner: typing.Any) -> T:
+              raise Exception("Not implemented")
+      
+      class Test:
+          member = MyDescriptor(list)
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorWithTypeAnnotationOnly() {
+    doTest("list", """
+      from typing import Type, Any
+      
+      class MyDescriptor[T]:
+          def __get__(self, instance: typing.Any, owner: typing.Any) -> T:
+              raise Exception("Not implemented")
+     
+      class Test:
+          member: MyDescriptor[list]
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorWithTypeAnnotationPriority() {
+    doTest("list", """
+      from typing import Type, Any
+      
+      class MyDescriptor[T]:
+          def __init__(self, requested_type: Type[T]):
+              self.requested_type = requested_type
+          def __get__(self, instance: Any, owner: Any) -> T:
+              raise Exception("Not implemented")
+      
+      class Test:
+          member: MyDescriptor[list] = MyDescriptor(str)
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstance() {
+    doTest("int", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> str: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> T: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      foo = Foo()
+      expr = foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstanceReturnsExplicitAny() {
+    doTest("Any", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> str: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> Any: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      foo = Foo()
+      expr = foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClass() {
+    doTest("int", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> T: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> str: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClassReturnsExplicitAny() {
+    doTest("Any", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> Any: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> str: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClassReturnsNothing() {
+    doTest("None", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any): # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> T: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromParameterizedOnInheritanceDescriptorWithTypeAnnotationOnly() {
+    doTest("str", """
+      from typing import Any
+      
+      class MyDescriptor[T]:
+          def __get__(self, instance: Any, owner: Any) -> T:
+              ...
+      
+      class StrDescriptor(MyDescriptor[str]):
+          pass
+      
+      class Test:
+          member: StrDescriptor
+      
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorDefinedWithTypeAnnotationInExternalFileAccessViaInstance() {
+    doMultiFileTest("str", """
+      from a import Test
+
+      test = Test()
+      expr = test.member
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
