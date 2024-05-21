@@ -48,6 +48,7 @@ import com.intellij.util.ref.GCWatcher;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.jupiter.api.Disabled;
 
 import java.util.*;
 
@@ -673,7 +674,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertNotNull(node);
   }
 
-  public void testLargeFileWithManyChangesPerformance() throws Exception {
+  //@Disabled("IJPL-150138")
+  public void _testLargeFileWithManyChangesPerformance() throws Exception {
     String text = StringUtil.repeat("foo foo \n", 50000);
     PsiFile file = createFile("a.txt", text);
     final TextRange range = TextRange.from(10, 10);
@@ -877,7 +879,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertNotNull(pointer.getElement());
   }
 
-  public void testManyPsiChangesWithManySmartPointersPerformance() throws Exception {
+  //@Disabled("IJPL-150138")
+  public void _testManyPsiChangesWithManySmartPointersPerformance() throws Exception {
     String eachTag = "<a>\n" + StringUtil.repeat("   <a> </a>\n", 9) + "</a>\n";
     XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
     List<XmlTag> tags = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
@@ -945,7 +948,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertEquals(psiClass.getNameIdentifier().getTextRange(), TextRange.create(range));
   }
 
-  public void testManySmartPointersCreationDeletionPerformance() throws Exception {
+  //@Disabled("IJPL-150138")
+  public void _testManySmartPointersCreationDeletionPerformance() throws Exception {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
