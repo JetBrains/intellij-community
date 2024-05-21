@@ -39,9 +39,9 @@ interface IncompleteDependenciesService {
 }
 
 @ApiStatus.Internal
-fun IncompleteDependenciesAccessToken.asAutoCloseable(): AutoCloseable = WriteActionAutoCloseable(this::finish)
+fun IncompleteDependenciesAccessToken.asAutoCloseable(): WriteActionAutoCloseable = WriteActionAutoCloseable(this::finish)
 
-private class WriteActionAutoCloseable(private val finish: () -> Unit) : AutoCloseable {
+class WriteActionAutoCloseable(private val finish: () -> Unit) : AutoCloseable {
   @RequiresBlockingContext
   override fun close() {
     ApplicationManager.getApplication().runWriteAction {

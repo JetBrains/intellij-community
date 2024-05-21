@@ -19,9 +19,6 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
     try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
       doTest(BASE_PATH + "/" + fileName, true, true);
     }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
   
   public void testSimple() { doTest(); }

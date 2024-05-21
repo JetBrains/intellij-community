@@ -2742,6 +2742,10 @@ com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:NO_RESCAN_NEEDED:com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:RESCAN_DEPENDENCIES_IF_NEEDED:com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:TOTAL_RESCAN:com.intellij.openapi.project.RootsChangeRescanningInfo
+f:com.intellij.openapi.project.WriteActionAutoCloseable
+- java.lang.AutoCloseable
+- <init>(kotlin.jvm.functions.Function0):V
+- close():V
 com.intellij.openapi.roots.ContentIterator
 - a:processFile(com.intellij.openapi.vfs.VirtualFile):Z
 *:com.intellij.openapi.roots.ContentIteratorEx
