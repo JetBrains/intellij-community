@@ -21402,19 +21402,9 @@ f:com.intellij.openapi.projectRoots.impl.JdkFinderImpl
 - <init>():V
 - defaultJavaLocation():java.lang.String
 - suggestHomePaths():java.util.List
-c:com.intellij.openapi.projectRoots.impl.LegacyProjectJdkTableDelegate
-- com.intellij.openapi.components.PersistentStateComponent
-- addNewSdk(com.intellij.openapi.projectRoots.Sdk):V
-- createSdk(java.lang.String,com.intellij.openapi.projectRoots.SdkTypeId,java.lang.String):com.intellij.openapi.projectRoots.Sdk
-- findSdkByName(java.lang.String):com.intellij.openapi.projectRoots.Sdk
-- getAllSdks():java.util.List
-- getState():org.jdom.Element
-- loadState(org.jdom.Element):V
-- removeSdk(com.intellij.openapi.projectRoots.Sdk):V
-- saveOnDisk():V
-- updateSdk(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.Sdk):V
 c:com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 - com.intellij.openapi.projectRoots.ProjectJdkTable
+- sf:Companion:com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl$Companion
 - <init>():V
 - addJdk(com.intellij.openapi.projectRoots.Sdk):V
 - createSdk(java.lang.String,com.intellij.openapi.projectRoots.SdkTypeId):com.intellij.openapi.projectRoots.Sdk
@@ -21427,6 +21417,7 @@ c:com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 - removeJdk(com.intellij.openapi.projectRoots.Sdk):V
 - saveOnDisk():V
 - updateJdk(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.Sdk):V
+f:com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl$Companion
 f:com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 - s:addSdk(com.intellij.openapi.projectRoots.Sdk):V
 - s:configureDirectoryProjectSdk(com.intellij.openapi.project.Project,java.util.Comparator,com.intellij.openapi.projectRoots.SdkType[]):V

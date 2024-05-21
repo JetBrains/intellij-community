@@ -15,6 +15,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
 open class ProjectJdkTableImpl: ProjectJdkTable() {
@@ -130,8 +131,13 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   private fun saveSdkAdditionalData(sdk: Sdk): Element? {
     val additionalData = sdk.sdkAdditionalData
     if (additionalData == null) return null
-    val additionalDataElement = Element(LegacyProjectJdkDelegate.ELEMENT_ADDITIONAL)
+    val additionalDataElement = Element(ELEMENT_ADDITIONAL)
     sdk.sdkType.saveAdditionalData(additionalData, additionalDataElement)
     return additionalDataElement
+  }
+
+  companion object {
+    @NonNls
+    private const val ELEMENT_ADDITIONAL: String = "additional"
   }
 }
