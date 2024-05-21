@@ -196,7 +196,6 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
           return classType;
         }
         if (result != null) {
-          PsiUtil.ensureValidType(result);
           if (result instanceof PsiClassType || result instanceof PsiArrayType || result instanceof PsiWildcardType) {
             return result.annotate(getMergedProvider(classType, result));
           }
