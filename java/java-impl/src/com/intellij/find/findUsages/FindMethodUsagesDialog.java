@@ -109,7 +109,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
   }
 
   protected boolean noSpecificOptions(PsiElement element) {
-    return element instanceof PsiMethod method && method.getContainingClass() != null;
+    return !(element instanceof PsiMethod method) || method.getContainingClass() == null;
   }
 
   protected boolean canSearchForOverridingMethods(PsiElement element) {
