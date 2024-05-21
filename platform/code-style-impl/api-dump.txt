@@ -359,7 +359,6 @@ com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider
 - sf:EP:com.intellij.lang.LanguageExtension
 - a:createMarker(com.intellij.psi.PsiFile,I):java.lang.String
 f:com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
-- <init>(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - <init>(com.intellij.psi.codeStyle.CommonCodeStyleSettings):V
 - getResultTextRange():com.intellij.openapi.util.TextRange
 - getSettings():com.intellij.psi.codeStyle.CommonCodeStyleSettings
