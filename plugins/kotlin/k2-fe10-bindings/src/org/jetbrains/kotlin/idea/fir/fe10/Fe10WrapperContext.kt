@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -116,10 +118,12 @@ class Fe10WrapperContextImpl(
 ) : Fe10WrapperContext {
     private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
         return allowAnalysisOnEdt {
-            analyze(ktElement, f)
+            allowAnalysisFromWriteAction {
+                analyze(ktElement, f)
+            }
         }
     }
 
