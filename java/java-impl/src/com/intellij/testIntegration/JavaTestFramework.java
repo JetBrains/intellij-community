@@ -135,6 +135,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public @Nullable PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return null;
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findSetUpMethod((PsiClass)clazz);
     }
@@ -145,6 +146,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public @Nullable PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return null;
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findTearDownMethod((PsiClass)clazz);
     }
