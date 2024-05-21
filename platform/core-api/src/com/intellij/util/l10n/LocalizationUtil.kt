@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.l10n
 
-import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.messages.impl.MessageBusImpl.Companion.LOG
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -131,7 +129,6 @@ object LocalizationUtil {
       .map { FileUtil.toSystemIndependentName(it.toString()) }
   }
 
-
   fun getLocaleOrNullForDefault(): Locale? {
     val locale = getLocale()
     if (Locale.ENGLISH.language == locale.language) {
@@ -146,12 +143,8 @@ object LocalizationUtil {
     return locale
   }
 
-  fun getLocaleFromPlugin(): Locale? {
-    return findLanguageBundle()?.locale?.let { Locale.forLanguageTag(it) }
-  }
-
   @JvmOverloads
-  fun findLanguageBundle(locale: Locale = getLocale()): DynamicBundle.LanguageBundleEP? {
+  fun findLanguageBundle(locale: Locale = getLocale()): LanguageBundleEP? {
     return getAllLanguageBundleExtensions().find {
       val extensionLocale = Locale.forLanguageTag(it.locale)
       extensionLocale == locale
@@ -159,17 +152,17 @@ object LocalizationUtil {
     }
   }
 
-  private fun getAllLanguageBundleExtensions(): List<DynamicBundle.LanguageBundleEP> {
+  private fun getAllLanguageBundleExtensions(): List<LanguageBundleEP> {
     try {
       if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
         return emptyList()
       }
 
       val app = ApplicationManager.getApplication()
-      if (app == null || !app.extensionArea.hasExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME)) {
+      if (app == null || !app.extensionArea.hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
         return emptyList()
       }
-      return DynamicBundle.LanguageBundleEP.EP_NAME.extensionList
+      return LanguageBundleEP.EP_NAME.extensionList
     }
     catch (e: ProcessCanceledException) {
       throw e

@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.l10n
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 enum class LocalizationOrder {
   FOLDER_REGION_LEVEL_PLUGIN,  //localization/zh/CN/
   FOLDER_REGION_LEVEL_PLATFORM,

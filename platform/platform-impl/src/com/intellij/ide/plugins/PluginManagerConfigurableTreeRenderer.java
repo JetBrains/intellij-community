@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.DynamicBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
@@ -13,6 +12,7 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.l10n.LanguageBundleEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
       myTree = (SimpleTree)tree;
     }
 
-    Icon icon = DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.General.LocalizationSettings : null;
+    Icon icon = LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.General.LocalizationSettings : null;
     if (icon == null && myCountValue == null) {
       return null;
     }

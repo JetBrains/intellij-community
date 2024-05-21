@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
-import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -49,6 +48,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import com.intellij.util.l10n.LanguageBundleEP;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +114,7 @@ public class CoreApplicationEnvironment {
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
-    registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
+    registerApplicationExtensionPoint(LanguageBundleEP.EP_NAME, LanguageBundleEP.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
