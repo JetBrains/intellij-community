@@ -2424,6 +2424,7 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - sf:FULL_VALUE_POPUP_DIMENSION_KEY:java.lang.String
 - s:addToWatches(com.intellij.xdebugger.impl.frame.XWatchesView,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 - *s:createTextViewer(java.lang.String,com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.ui.TextViewer
+- *s:createTextViewer(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType):com.intellij.xdebugger.impl.ui.TextViewer
 - *s:createTextViewerPopupBuilder(javax.swing.JComponent,com.intellij.xdebugger.impl.ui.TextViewer,com.intellij.xdebugger.frame.XFullValueEvaluator,com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.Runnable):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 - s:createValuePopup(com.intellij.openapi.project.Project,javax.swing.JComponent,java.lang.Runnable):com.intellij.openapi.ui.popup.JBPopup
 - s:enableEditorOnCheck(javax.swing.JCheckBox,javax.swing.JComponent):V
@@ -2515,8 +2516,11 @@ a:com.intellij.xdebugger.impl.ui.SideBySideLayoutOptionBase
 - createView():com.intellij.xdebugger.impl.frame.XThreadsFramesView
 f:com.intellij.xdebugger.impl.ui.TextViewer
 - com.intellij.ui.EditorTextField
+- <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,Z,com.intellij.openapi.fileTypes.FileType,Z):V
 - <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,Z,Z):V
 - <init>(java.lang.String,com.intellij.openapi.project.Project):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,Z):V
 - <init>(java.lang.String,com.intellij.openapi.project.Project,Z):V
 - setText(java.lang.String):V
 f:com.intellij.xdebugger.impl.ui.ThreadsTreeLayoutOption
