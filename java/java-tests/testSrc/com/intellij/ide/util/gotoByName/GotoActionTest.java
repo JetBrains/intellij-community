@@ -303,6 +303,31 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(errors.isEmpty());
   }
 
+  public void testUseUpdatedPresentationForMatching() {
+    String templateName = "TemplateActionName";
+    String updatedName = "UpdatedActionName";
+    AnAction testAction = new AnAction(templateName) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) { }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setText(updatedName);
+      }
+    };
+
+    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    runWithGlobalAction("myTestAction", testAction, () -> {
+      List<?> result = ChooseByNameTest.calcContributorElements(contributor, "UpdatedActionName");
+      assertEquals(1, result.size());
+    });
+  }
+
   private static boolean isNavigableOption(Object o) {
     return o instanceof OptionDescription && !(o instanceof BooleanOptionDescription);
   }
