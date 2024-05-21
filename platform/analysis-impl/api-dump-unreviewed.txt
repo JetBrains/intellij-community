@@ -2314,7 +2314,6 @@ c:com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl
 - equals(java.lang.Object):Z
 - p:filterDfTypeOnAssignment(com.intellij.codeInspection.dataFlow.value.DfaVariableValue,com.intellij.codeInspection.dataFlow.types.DfType):com.intellij.codeInspection.dataFlow.types.DfType
 - flushFields():V
-- flushFields(com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl$QualifierStatusMap):V
 - flushFieldsQualifiedBy(java.util.Set):V
 - flushVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):V
 - flushVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue,Z):V

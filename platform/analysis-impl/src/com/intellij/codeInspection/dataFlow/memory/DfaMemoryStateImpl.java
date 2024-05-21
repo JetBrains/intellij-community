@@ -19,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1346,7 +1347,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     flushFields(new QualifierStatusMap(null, false));
   }
 
-  public void flushFields(@NotNull DfaMemoryStateImpl.QualifierStatusMap qualifierStatusMap) {
+  private void flushFields(@NotNull DfaMemoryStateImpl.QualifierStatusMap qualifierStatusMap) {
     Set<DfaVariableValue> vars = new LinkedHashSet<>();
     for (DfaVariableValue value : myVariableTypes.keySet()) {
       if (qualifierStatusMap.shouldFlush(value)) {
