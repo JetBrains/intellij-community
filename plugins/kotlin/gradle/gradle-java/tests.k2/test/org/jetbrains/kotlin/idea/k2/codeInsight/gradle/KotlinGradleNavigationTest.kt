@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
 
@@ -17,6 +18,11 @@ class KotlinGradleNavigationTest : AbstractGradleCodeInsightTest() {
 
     @TestMetadata("projectDependency.test")
     fun testProjectDependency() {
+        verifyNavigationFromCaretToExpected()
+    }
+
+    @TestMetadata("librarySourceDependency.test")
+    fun testLibrarySourceDependency() {
         verifyNavigationFromCaretToExpected()
     }
 
@@ -41,10 +47,16 @@ class KotlinGradleNavigationTest : AbstractGradleCodeInsightTest() {
     }
 
     private fun verifyNavigationFromCaretToExpected() {
+        val expectedNavigationText = InTextDirectivesUtils.findStringWithPrefixes(document.text, "// \"EXPECTED-NAVIGATION-SUBSTRING\": ")
+
         fixture.performEditorAction(actionName)
 
         val text = document.text
-        assertTrue("Actual text:\n\n$text", text.startsWith("// EXPECTED"))
+        if (expectedNavigationText != null) {
+            assertTrue("Actual text:\n\n$text", text.contains(expectedNavigationText))
+        } else {
+            assertTrue("Actual text:\n\n$text", text.startsWith("// EXPECTED"))
+        }
     }
 
 }

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -15,18 +15,23 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleCodeInsightTest.TestFile
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.AbstractGradleCodeInsightTest.TestFile
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
 import java.nio.charset.StandardCharsets
 
 private const val SCRIPTING_ENABLED_FLAG = "kotlin.k2.scripting.enabled"
 
-abstract class AbstractGradleCodeInsightTest: GradleImportingTestCase() {
+abstract class AbstractGradleCodeInsightTest: GradleImportingTestCase(), ExpectedPluginModeProvider {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     protected open val filesBasedTest: Boolean = true
 
@@ -79,7 +84,7 @@ abstract class AbstractGradleCodeInsightTest: GradleImportingTestCase() {
         gradleVersion = "8.6"
         Registry.get(SCRIPTING_ENABLED_FLAG).setValue(true)
 
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         val mainFile = configureByFiles().firstOrNull() ?: error("main file not found")
         fixture.configureFromExistingVirtualFile(mainFile)
@@ -127,6 +132,9 @@ abstract class AbstractGradleCodeInsightTest: GradleImportingTestCase() {
     }
 
     fun importProjectWithMainFile(mainFile: VirtualFile) {
+        val systemSettings = GradleSystemSettings.getInstance()
+        systemSettings.isDownloadSources = true
+
         val offset = runReadAction { fixture.editor.caretModel.offset }
 
         importProject(false)
