@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
-import com.intellij.openapi.fileTypes.NativeFileType
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -41,10 +40,6 @@ class FileNavigatorImpl : FileNavigator {
     }
 
     if (type is INativeFileType) {
-      //will open with OS, check if we have specific support
-      if (type is NativeFileType && navigateInEditor(descriptor, requestFocus)) {
-        return true
-      }
       return type.openFileInAssociatedApplication(descriptor.project, descriptor.file)
     }
     else {
