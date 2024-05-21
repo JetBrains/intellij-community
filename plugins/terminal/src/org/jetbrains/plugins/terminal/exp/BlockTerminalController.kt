@@ -63,7 +63,7 @@ internal class BlockTerminalController(
           // both listen to `commandFinished` event, so they are called in an
           // unspecified order). Use `doWhenNextBlockCanBeStarted` to fix the race.
           outputController.doWhenNextBlockCanBeStarted {
-            startCommandBlock(userCommand)
+            startCommandBlock(userCommand, promptController.model.promptRenderingInfo)
           }
         }
       }
@@ -94,7 +94,7 @@ internal class BlockTerminalController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun startCommandBlock(command: String?, prompt: PromptRenderingInfo? = promptController.model.promptRenderingInfo) {
+  private fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
     outputController.startCommandBlock(command, prompt)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
