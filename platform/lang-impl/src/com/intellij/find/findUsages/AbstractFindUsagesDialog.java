@@ -157,6 +157,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     }
     else {
       options.searchScope = myScopeCombo.getSelectedScope();
+      FindSettings.getInstance().setDefaultScopeName(options.searchScope.getDisplayName());
     }
 
     options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurrences) && isSelected(myCbToSearchForTextOccurrences);
@@ -284,7 +285,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    String scope = myFindUsagesOptions.searchScope.getDisplayName();
+    String scope = FindSettings.getInstance().getDefaultScopeName();
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
