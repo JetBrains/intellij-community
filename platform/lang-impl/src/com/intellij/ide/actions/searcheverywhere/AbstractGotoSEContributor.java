@@ -39,12 +39,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +72,8 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   protected final Project myProject;
   protected ScopeDescriptor myScopeDescriptor;
 
-  private final GlobalSearchScope myEverywhereScope;
-  private final GlobalSearchScope myProjectScope;
+  private final SearchScope myEverywhereScope;
+  private final SearchScope myProjectScope;
   protected boolean isScopeDefaultAndAutoSet = true;
 
   protected final SmartPsiElementPointer<PsiElement> myPsiContext;
@@ -81,11 +83,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     PsiElement context = GotoActionBase.getPsiContext(event);
     myPsiContext = context != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context) : null;
 
-    myEverywhereScope = GlobalSearchScope.everythingScope(myProject);
-
     List<ScopeDescriptor> scopeDescriptors = createScopes();
-
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
+    myEverywhereScope = findEverywhereScope(scopeDescriptors);
+    SearchScope projectScope = findProjectScope(scopeDescriptors);
     if (myEverywhereScope.equals(projectScope)) {
       // just get the second scope, i.e. Attached Directories in DataGrip
       ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
@@ -102,6 +102,16 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         myScopeDescriptor = getInitialSelectedScope(createScopes());
       }
     });
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull SearchScope findProjectScope(@NotNull List<ScopeDescriptor> scopeDescriptors) {
+    return GlobalSearchScope.projectScope(myProject);
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull SearchScope findEverywhereScope(@NotNull List<ScopeDescriptor> scopeDescriptors) {
+    return GlobalSearchScope.everythingScope(myProject);
   }
 
   protected List<ScopeDescriptor> createScopes() {
