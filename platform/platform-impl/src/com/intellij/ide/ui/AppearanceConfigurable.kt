@@ -378,7 +378,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
-      group(message("group.ui.options")) {
+      groupRowsRange(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
           if (ExperimentalUI.isNewUI()) {
             yield {
@@ -498,7 +498,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
-      group(message("group.trees")) {
+      groupRowsRange(message("group.trees")) {
         twoColumnsRow(
           { checkBox(cdShowTreeIndents) },
           { checkBox(cdUseCompactTreeIndents) },
