@@ -392,8 +392,8 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         @Override
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
           if (statement.getElseBranch() != null) {
-            PsiKeyword keyw = (PsiKeyword)statement.getChildren()[0];
-            holder.registerProblem(keyw, "Dododo", new StupidQuickFixWhichDoesntCheckItsOwnApplicability());
+            PsiKeyword keyword = (PsiKeyword)statement.getChildren()[0];
+            holder.registerProblem(keyword, "Dododo", new StupidQuickFixWhichDoesntCheckItsOwnApplicability());
           }
         }
       };
@@ -800,9 +800,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         // invoke later because we are checking this flag in EDT below, and
         // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
         // and querying markup model in EDT
-        ApplicationManager.getApplication().invokeLater(() -> {
-          fastToolFinished.set(true);
-        });
+        ApplicationManager.getApplication().invokeLater(() -> fastToolFinished.set(true));
       }
       @NotNull
       @Override

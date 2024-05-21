@@ -442,8 +442,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     }
   }
 
-  public void _test_SerializeCodeInsightPasses_SecretSettingDoesWork() {
-
+  public void test_SerializeCodeInsightPasses_SecretSettingDoesWork() {
     TextEditorHighlightingPassRegistrarImpl registrar =
       (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
     assertFalse("Somebody (rogue plugin?) has left the dangerous setting on", registrar.isSerializeCodeInsightPasses());
@@ -593,7 +592,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     configureByText(PlainTextFileType.INSTANCE, "blah blah\n".repeat(1000) +
                                                 "<caret>" + wordToAnnotate +
                                                 "\n" +
-                                                "balh blah\n".repeat(1000));
+                                                "blah blah\n".repeat(1000));
     EditorImpl editor = (EditorImpl)getEditor();
     editor.getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
@@ -628,7 +627,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     String text = "blah blah\n".repeat(1000) +
                   "<caret>" + wordToAnnotate +
                   "\n" +
-                  "balh blah\n".repeat(1000);
+                  "blah blah\n".repeat(1000);
     configureByText(PlainTextFileType.INSTANCE, text);
     EditorImpl editor = (EditorImpl)getEditor();
     editor.getScrollPane().getViewport().setSize(1000, 1000);

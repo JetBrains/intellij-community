@@ -1661,7 +1661,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         runHeavyProcessing = true;
         Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
           HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, "my own vfs refresh", () -> {
-            while (runHeavyProcessing);
+            while (runHeavyProcessing) {
+              Thread.yield();
+            }
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
@@ -2208,7 +2210,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Class 'A2222' is never used", info.getDescription());
 
     Document document1111 = getFile().getParent().findFile("A1111.java").getFileDocument();
-    // uncomment (inside codeblock) the reference to A2222
+    // uncomment (inside code block) the reference to A2222
     WriteCommandAction.writeCommandAction(myProject).run(()->document1111.deleteString(document1111.getText().indexOf("//"), document1111.getText().indexOf("//")+2));
 
     // now A2222 is no longer unused
@@ -2226,7 +2228,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Method 'foo()' is never used", info.getDescription());
 
     Document document2222 = getFile().getParent().findFile("A2222.java").getFileDocument();
-    // uncomment (inside codeblock) the reference to A1111
+    // uncomment (inside code block) the reference to A1111
     WriteCommandAction.writeCommandAction(myProject).run(()->document2222.deleteString(document2222.getText().indexOf("//"), document2222.getText().indexOf("//")+2));
 
     // now foo() is no longer unused

@@ -4,20 +4,14 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -26,7 +20,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -52,7 +45,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * tests {@link HighlightVisitor} behaviour during highlighting
@@ -126,62 +118,6 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     super.setUpProject();
     // treat listeners added there as not leaks
     EditorMouseHoverPopupManager.getInstance();
-  }
-
-  private static void typeInAlienEditor(@NotNull Editor alienEditor, char c) {
-    EditorActionManager.getInstance();
-    TypedAction action = TypedAction.getInstance();
-    DataContext dataContext = ((EditorEx)alienEditor).getDataContext();
-
-    action.actionPerformed(alienEditor, c, dataContext);
-  }
-
-  private void checkDaemonReaction(boolean mustCancelItself, @NotNull Runnable action) {
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    highlightErrors();
-    myDaemonCodeAnalyzer.waitForTermination();
-    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-
-    AtomicBoolean run = new AtomicBoolean();
-    Disposable disposable = Disposer.newDisposable();
-    AtomicReference<RuntimeException> stopDaemonReason = new AtomicReference<>();
-    StorageUtilKt.setDEBUG_LOG("");
-    getProject().getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
-            new DaemonCodeAnalyzer.DaemonListener() {
-              @Override
-              public void daemonCancelEventOccurred(@NotNull String reason) {
-                RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
-                                                          "\nStorage write log: ----------\n" +
-                                                          StorageUtilKt.getDEBUG_LOG() + "\n--------------");
-                stopDaemonReason.compareAndSet(null, e);
-              }
-            });
-    try {
-      while (true) {
-        try {
-          int[] toIgnore = new int[0];
-          Runnable callbackWhileWaiting = () -> {
-            if (!run.getAndSet(true)) {
-              action.run();
-            }
-          };
-          myDaemonCodeAnalyzer.runPasses(getFile(), getDocument(getFile()), textEditor, toIgnore, true, callbackWhileWaiting);
-          break;
-        }
-        catch (ProcessCanceledException ignored) { }
-      }
-
-      if (mustCancelItself) {
-        assertNotNull(stopDaemonReason.get());
-      }
-      else {
-        if (stopDaemonReason.get() != null) throw stopDaemonReason.get();
-      }
-    }
-    finally {
-      StorageUtilKt.setDEBUG_LOG(null);
-      Disposer.dispose(disposable);
-    }
   }
 
   public void testHighlightInfoGeneratedByHighlightVisitorMustImmediatelyShowItselfOnScreenRightAfterCreation() {
@@ -484,7 +420,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
         fail(message);
       }
       if (visitor1.myState().THINKING.get() && visitor2.myState().THINKING.get()) {
-        // if two visitors are paused, it means they both have visited comments. Check that corresponding highlights are in the markup model
+        // if two visitors are paused, it means they both have visited comments. check that corresponding highlights are in the markup model
         List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
         visitor1.myState().THINK.set(false);
         visitor2.myState().THINK.set(false);
@@ -501,7 +437,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
 
   private record State(@NotNull AtomicBoolean COMMENT_HIGHLIGHTED, @NotNull AtomicBoolean THINK, @NotNull AtomicBoolean THINKING) {}
   private static final Map<String, State> STATE = new ConcurrentHashMap<>(); // must keep the state out of visitors because of their peculiar lifecycle
-  // highlight comment and pause for a bit (to checkk the other highlight visitors are run in parallel)
+  // highlight comment and pause for a bit (to check the other highlight visitors are run in parallel)
   private static abstract class MyThinkingHighlightVisitor implements HighlightVisitor {
     private HighlightInfoHolder myHolder;
     private final String MSG;
