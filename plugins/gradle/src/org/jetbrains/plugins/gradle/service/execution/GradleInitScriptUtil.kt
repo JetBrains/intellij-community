@@ -3,9 +3,16 @@
 
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.util.containers.ContainerUtil
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -15,6 +22,8 @@ import java.nio.file.Path
 import java.util.regex.Matcher
 import kotlin.io.path.*
 
+private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil")
+
 const val MAIN_INIT_SCRIPT_NAME = "ijInit"
 const val MAPPER_INIT_SCRIPT_NAME = "ijMapper"
 const val WRAPPER_INIT_SCRIPT_NAME = "ijWrapper"
@@ -22,7 +31,7 @@ const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
 const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME = "ijIdeaPluginConfigurator"
 
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
-  val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
+  val jarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses)
   val initScript = joinInitScripts(
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/RegistryProcessor.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JetGradlePlugin.gradle"),
@@ -64,7 +73,7 @@ fun loadTaskInitScript(
   toolingExtensionClasses: Set<Class<*>>,
   taskConfiguration: String?
 ): String {
-  val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
+  val jarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses)
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TaskInit.gradle", mapOf(
     "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
     "PROJECT_PATH" to projectPath.toGroovyStringLiteral(),
@@ -77,6 +86,12 @@ fun loadTaskInitScript(
 fun createTargetPathMapperInitScript(): Path {
   val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/MapperInit.gradle")
   return createInitScript(MAPPER_INIT_SCRIPT_NAME, initScript)
+}
+
+@ApiStatus.Internal
+fun attachTargetPathMapperInitScript(settings: GradleExecutionSettings) {
+  val file = createTargetPathMapperInitScript()
+  settings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, file.toString())
 }
 
 fun createWrapperInitScript(
@@ -210,4 +225,24 @@ fun createInitScript(prefix: String, content: String): Path {
 private fun isContentEquals(path: Path, content: ByteArray): Boolean {
   return content.size.toLong() == path.fileSize() &&
          content.contentEquals(path.readBytes())
+}
+
+private fun getToolingExtensionsJarPaths(toolingExtensionClasses: Set<Class<*>>): Set<String> {
+  return ContainerUtil.map2SetNotNull(toolingExtensionClasses) { aClass: Class<*> ->
+    val path = PathManager.getJarPathForClass(aClass) ?: return@map2SetNotNull null
+    if (FileUtilRt.getNameWithoutExtension(path) == "gradle-api-" + GradleVersion.current().baseVersion) {
+      LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {$aClass,$path}")
+      return@map2SetNotNull null
+    }
+    if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
+      val message = "Attempting to pass whole IDEA app [$path] into Gradle Daemon for class [$aClass]"
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        LOG.error(message)
+      }
+      else {
+        LOG.warn(message)
+      }
+    }
+    return@map2SetNotNull FileUtil.toCanonicalPath(path)
+  }
 }
