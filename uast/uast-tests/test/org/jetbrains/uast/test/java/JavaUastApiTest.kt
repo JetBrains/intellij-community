@@ -303,4 +303,39 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     )
     TestCase.assertEquals(1, count)
   }
+
+  @Test
+  fun testHasAndFindTypeUseAnnotation() {
+    val file = myFixture.configureByText(
+      "Test.java",
+      """
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Target;
+        @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
+        @interface MyNullable {}
+        
+        class Test {
+          @MyNullable String test() {
+            return null;
+          }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    var count = 0
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitMethod(node: UMethod): Boolean {
+          if (node.hasAnnotation("MyNullable")) {
+            val anno = node.findAnnotation("MyNullable")
+            TestCase.assertNotNull(anno)
+            count++
+          }
+          return super.visitMethod(node)
+        }
+      }
+    )
+    // IDEA-336319: TYPE_USE should not be applicable to UMethod
+    TestCase.assertEquals(0, count)
+  }
 }
