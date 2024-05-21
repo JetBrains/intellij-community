@@ -112,21 +112,15 @@ private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgumen
 }
 
 fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) -> T?): T? {
-    var result: T? = null
     if (DebuggerManagerThreadImpl.isManagerThread()) {
-        managerThread.invoke(object : DebuggerCommandImpl() {
-            override fun action() {
-                result = f(debuggerContext)
-            }
-        })
+        return f(debuggerContext)
     }
-    else {
-        managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
-            override fun threadAction(suspendContext: SuspendContextImpl) {
-                result = f(debuggerContext)
-            }
-        })
-    }
+    var result: T? = null
+    managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
+        override fun threadAction(suspendContext: SuspendContextImpl) {
+            result = f(debuggerContext)
+        }
+    })
     return result
 }
 
