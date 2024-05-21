@@ -22,7 +22,7 @@ object LocalizationUtil {
   @Volatile
   var isL10nPluginInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
-  private const val LOCALIZATION_REGISTRY = "i18n.locale"
+  private const val LOCALIZATION_KEY = "i18n.locale"
 
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
@@ -141,7 +141,7 @@ object LocalizationUtil {
   }
 
   fun getLocale(): Locale {
-    val languageTag = System.getProperty(LOCALIZATION_REGISTRY).ifEmpty { Registry.get(LOCALIZATION_REGISTRY).asString() }
+    val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY) else return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
     return locale
   }
@@ -152,7 +152,6 @@ object LocalizationUtil {
 
   @JvmOverloads
   fun findLanguageBundle(locale: Locale = getLocale()): DynamicBundle.LanguageBundleEP? {
-
     return getAllLanguageBundleExtensions().find {
       val extensionLocale = Locale.forLanguageTag(it.locale)
       extensionLocale == locale
