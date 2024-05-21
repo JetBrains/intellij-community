@@ -57,7 +57,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
   private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction(analyzerGetter, fusTabId)
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    if (!Registry.`is`("ide.redesigned.inspector", false) || PowerSaveMode.isEnabled()) return emptyArray()
+    if (!RedesignedInspectionsManager.isAvailable() || PowerSaveMode.isEnabled()) return emptyArray()
 
     val presentation = e?.presentation ?: return emptyArray()
 

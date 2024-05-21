@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
+import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -216,7 +217,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                                @NotNull String place,
                                                                @NotNull Presentation presentation,
                                                                Supplier<? extends @NotNull Dimension> minimumSize) {
-        if (Registry.is("ide.redesigned.inspector", false)) return super.createTextButton(action, place, presentation, minimumSize);
+        if (RedesignedInspectionsManager.isAvailable()) return super.createTextButton(action, place, presentation, minimumSize);
 
         ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
         JBColor color = JBColor.lazy(() -> {
@@ -303,7 +304,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     toolbar.addComponentListener(toolbarComponentListener);
     toolbar.setBorder(JBUI.Borders.empty(2));
 
-/*    if(Registry.is("ide.redesigned.inspector", false)) {
+/*    if(RedesignedInspectionsManager.isAvailable()) {
       GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
                                               "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
       tooltip.withShowCount(1);
@@ -392,7 +393,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private void doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
-      if(Registry.is("ide.redesigned.inspector", false)) {
+      if(RedesignedInspectionsManager.isAvailable()) {
         statusToolbar.updateActionsAsync();
       }
 
@@ -482,7 +483,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     AnAction result = new MarkupModelDelegateAction(delegate){
       @Override
       public void update(@NotNull AnActionEvent e) {
-        if(Registry.is("ide.redesigned.inspector", false)) {
+        if(RedesignedInspectionsManager.isAvailable()) {
           e.getPresentation().setEnabledAndVisible(false);
           return;
         }
@@ -1549,7 +1550,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
-      if(Registry.is("ide.redesigned.inspector", false)) {
+      if(RedesignedInspectionsManager.isAvailable()) {
         presentation.setEnabledAndVisible(false);
         return;
       }
