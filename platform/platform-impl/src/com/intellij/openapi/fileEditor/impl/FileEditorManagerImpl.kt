@@ -1981,7 +1981,7 @@ open class FileEditorManagerImpl(
           .debounce(100.milliseconds)
           .collectLatest {
             val allEditors = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              windows.flatMap(EditorWindow::allComposites)
+              windows.flatMap(EditorWindow::getComposites)
             }
 
             val replacements = smartReadAction(project) {
@@ -2591,7 +2591,7 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val pinned = window.isFilePinned(oldFile)
   var newOptions = FileEditorOpenOptions(selectAsCurrent = active, requestFocus = active, pin = pinned)
 
-  val isSingletonEditor = window.allComposites.any { composite ->
+  val isSingletonEditor = window.getComposites().any { composite ->
     composite.allEditors.any { it.file == oldFile && isSingletonFileEditor(it) }
   }
   val dockContainer = DockManager.getInstance(editorManager.project).getContainerFor(window.component) { it is DockableEditorTabbedContainer }
