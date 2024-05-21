@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -202,36 +201,26 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         }
         return result;
       }
-      final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<>(2);
-      if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
-        return null;
-      }
+      PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
       PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject())
-        .createType(aClass, PsiSubstitutor.createSubstitutor(hashMap), classType.getLanguageLevel());
-      PsiUtil.ensureValidType(result);
+        .createType(aClass, resultSubstitutor, classType.getLanguageLevel());
       return result.annotate(classType.getAnnotationProvider());
     }
 
-    private PsiType substituteInternal(@NotNull PsiType type) {
-      return type.accept(this);
-    }
-
-    private boolean processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor, @NotNull Map<PsiTypeParameter, PsiType> substMap) {
-      final PsiTypeParameter[] params = resolve.getTypeParameters();
-      for (final PsiTypeParameter param : params) {
-        final PsiType original = originalSubstitutor.substitute(param);
-        if (original == null) {
-          substMap.put(param, null);
+    private @NotNull PsiSubstitutor processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor) {
+      UnmodifiableHashMap<PsiTypeParameter, PsiType> substMap = EMPTY_MAP;
+      while (true) {
+        final PsiTypeParameter[] params = resolve.getTypeParameters();
+        for (final PsiTypeParameter param : params) {
+          final PsiType original = originalSubstitutor.substitute(param);
+          PsiType mapping = original == null ? null : original.accept(this);
+          substMap = substMap.with(param, mapping);
         }
-        else {
-          substMap.put(param, substituteInternal(original));
-        }
+        final PsiClass containingClass = resolve.hasModifierProperty(PsiModifier.STATIC) ? null : resolve.getContainingClass();
+        if (containingClass == null) break;
+        resolve = containingClass;
       }
-      if (resolve.hasModifierProperty(PsiModifier.STATIC)) return true;
-
-      final PsiClass containingClass = resolve.getContainingClass();
-      return containingClass == null ||
-             processClass(containingClass, originalSubstitutor, substMap);
+      return PsiSubstitutor.createSubstitutor(substMap);
     }
   }
 
