@@ -172,8 +172,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void resetIfAllFiltered(AbstractTreeNode<?> root, ActionToolbar actionToolbar) {
+    // This call must come first for correct hasVCSFilteredNodes call
+    boolean hasChildren = myViewExtension.hasChildren(root);
     if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
-      if (!myViewExtension.hasChildren(root)) {
+      if (!hasChildren) {
         myStateBean.setShowOnlyModified(false);
         resetView();
       }

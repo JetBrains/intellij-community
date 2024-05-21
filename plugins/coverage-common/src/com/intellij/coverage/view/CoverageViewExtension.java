@@ -50,7 +50,7 @@ public abstract class CoverageViewExtension {
 
   @ApiStatus.Internal
   public boolean hasChildren(AbstractTreeNode<?> node) {
-    return !getChildrenNodes(node).isEmpty();
+    return !node.getChildren().isEmpty();
   }
 
   @ApiStatus.Internal
