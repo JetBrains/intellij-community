@@ -34,31 +34,24 @@ internal object AddStarProjectionsFixFactory {
 
     private class AddStartProjectionsForInnerClass(
         element: KtTypeReference,
-        replaceString: String,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeReference, AddStartProjectionsForInnerClass.ElementContext>(
-        element,
-        ElementContext(replaceString),
-    ) {
-
-        private data class ElementContext(
-            val replaceString: String,
-        )
+        val replaceString: String,
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeReference, Unit>(element, Unit) {
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtTypeReference,
-            elementContext: ElementContext,
+            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             val psiFactory = KtPsiFactory(actionContext.project)
-            val replacement = psiFactory.createType(elementContext.replaceString)
+            val replacement = psiFactory.createType(replaceString)
             element.replace(replacement)
         }
 
         override fun getActionName(
             actionContext: ActionContext,
             element: KtTypeReference,
-            elementContext: ElementContext,
+            elementContext: Unit,
         ): String = familyName
 
         override fun getFamilyName(): String = starProjectionFixFamilyName
@@ -66,28 +59,23 @@ internal object AddStarProjectionsFixFactory {
 
     private class AddStarProjectionsFix(
         element: KtUserType,
-        argumentCount: Int,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtUserType, AddStarProjectionsFix.ElementContext>(
-        element,
-        ElementContext(argumentCount),
-    ) {
-
-        private class ElementContext(val argumentCount: Int)
+        private val argumentCount: Int,
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtUserType, Unit>(element, Unit) {
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtUserType,
-            elementContext: ElementContext,
+            elementContext: Unit,
             updater: ModPsiUpdater,
-        ) = StarProjectionUtils.addStarProjections(actionContext.project, element, elementContext.argumentCount)
+        ) = StarProjectionUtils.addStarProjections(actionContext.project, element, argumentCount)
 
         override fun getFamilyName() = starProjectionFixFamilyName
 
         override fun getActionName(
             actionContext: ActionContext,
             element: KtUserType,
-            elementContext: ElementContext,
-        ): String = StarProjectionUtils.addStarProjectionsActionName(elementContext.argumentCount)
+            elementContext: Unit,
+        ): String = StarProjectionUtils.addStarProjectionsActionName(argumentCount)
     }
 }
 
