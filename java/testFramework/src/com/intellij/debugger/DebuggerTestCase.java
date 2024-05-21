@@ -504,7 +504,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return myRunnableState;
   }
 
-  protected DebuggerSession attachVirtualMachine(RunProfileState state,
+  public DebuggerSession attachVirtualMachine(RunProfileState state,
                                                  ExecutionEnvironment environment,
                                                  RemoteConnection remoteConnection,
                                                  boolean pollConnection) throws ExecutionException {
