@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parents
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
@@ -35,8 +35,14 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         element: PsiElement,
         shorteningMode: KtSimpleNameReference.ShorteningMode
     ): PsiElement {
-        return element.kotlinFqName?.let { fqName -> bindToFqName(simpleNameReference, fqName, shorteningMode, element) }
-            ?: simpleNameReference.expression
+        val fqName = element.nameDeterminant().kotlinFqName ?: return simpleNameReference.expression
+        return bindToFqName(simpleNameReference, fqName, shorteningMode, element)
+    }
+
+    protected fun PsiElement.nameDeterminant() = when {
+        this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
+        this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
+        else -> this
     }
 
     protected fun KtSimpleReference<KtNameReferenceExpression>.getAdjustedNewName(newElementName: String): Name? {

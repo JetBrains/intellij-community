@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
 /**
@@ -41,12 +40,6 @@ sealed class K2MoveRenameUsageInfo(
     reference: PsiReference,
     referencedElement: PsiNamedElement
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
-    protected fun PsiNamedElement.correctTarget() = when {
-        this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
-        this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
-        else -> this
-    }
-
     /**
      * Returns whether this usage info is actually required for updating.
      * Sometimes it can depend on the language of the usage whether the usage info is updatable.
@@ -184,8 +177,7 @@ sealed class K2MoveRenameUsageInfo(
 
         override fun retarget(to: PsiNamedElement): PsiElement? {
             val reference = element?.reference as? KtSimpleNameReference ?: return null
-            val target = to.correctTarget()
-            return reference.bindToElement(target, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+            return reference.bindToElement(to, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
         }
     }
 

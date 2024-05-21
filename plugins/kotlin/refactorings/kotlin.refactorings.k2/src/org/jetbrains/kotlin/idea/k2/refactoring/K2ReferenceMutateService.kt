@@ -175,7 +175,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtCallableReferenceExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         if (targetElement == null) return null
-        val isUnQualifiable = targetElement.isTopLevelKtOrJavaMember()
+        val isUnQualifiable = targetElement.nameDeterminant().isTopLevelKtOrJavaMember()
         val callableReference = if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
             containingKtFile.addImport(fqName)
             KtPsiFactory(project).createCallableReferenceExpression("::${fqName.shortName()}")
