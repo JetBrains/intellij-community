@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -156,7 +155,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KtAnalysisSession)
     private fun processConstant(expr: KtExpression?): Boolean {
-        val constantValue = expr?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return false
+        val constantValue = expr?.evaluate() ?: return false
         if (constantValue is KaConstantValue.KaErrorConstantValue) return false
         val value = constantValue.value
         val ktType = when(value) {

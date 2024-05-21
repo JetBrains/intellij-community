@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -273,8 +272,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 val right = loopRange.right
                 // Reported separately by EmptyRangeInspection
                 return left != null && right != null &&
-                        left.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null &&
-                        right.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+                        left.evaluate() != null &&
+                        right.evaluate() != null
             }
         }
         return false
@@ -595,7 +594,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                     }
 
-                    if (expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null) return true
+                    if (expression.evaluate() != null) return true
                     if (expression is KtSimpleNameExpression &&
                         (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)
                     ) {
@@ -665,7 +664,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         context(KtAnalysisSession)
         private fun isZero(expression: KtExpression?): Boolean {
             expression ?: return false
-            val constantValue = expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
+            val constantValue = expression.evaluate()?.value
             return constantValue is Number && constantValue.toDouble() == 0.0
         }
 

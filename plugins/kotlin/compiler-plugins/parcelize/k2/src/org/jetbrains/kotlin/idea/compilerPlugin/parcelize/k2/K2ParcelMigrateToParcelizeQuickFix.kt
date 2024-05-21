@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -100,7 +99,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KtAnalysisSession)
         override fun KtExpression.evaluateAsConstantInt(): Int? =
-            (evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) as? KaConstantValue.KaIntConstantValue)?.value
+            (evaluate() as? KaConstantValue.KaIntConstantValue)?.value
     }
 
     companion object {

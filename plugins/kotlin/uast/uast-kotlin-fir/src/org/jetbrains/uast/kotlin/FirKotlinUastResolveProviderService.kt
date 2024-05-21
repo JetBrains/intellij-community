@@ -10,7 +10,6 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -784,7 +783,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyzeForUast(ktExpression) {
             val expressionToEvaluate = ktExpression.unwrapKotlinValPropertyReference()
-            return expressionToEvaluate?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+            return expressionToEvaluate?.evaluate()
                 ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
         }
     }

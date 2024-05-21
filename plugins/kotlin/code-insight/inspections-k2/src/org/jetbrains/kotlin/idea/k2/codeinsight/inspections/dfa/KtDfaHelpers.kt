@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -204,7 +203,7 @@ internal fun KtType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 context(KtAnalysisSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val type = expr.getKtType()
-    val constant: KaConstantValue? = if (type == null) null else expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+    val constant: KaConstantValue? = if (type == null) null else expr.evaluate()
     return when (constant) {
         is KaConstantValue.KaNullConstantValue -> DfTypes.NULL
         is KaConstantValue.KaBooleanConstantValue -> DfTypes.booleanValue(constant.value)

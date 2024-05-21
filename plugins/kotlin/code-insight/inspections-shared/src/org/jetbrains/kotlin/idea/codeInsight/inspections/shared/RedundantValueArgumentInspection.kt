@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
@@ -33,7 +32,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         val argumentIndex = arguments.indexOf(argument).takeIf { it >= 0 } ?: return
 
         analyze(argument) {
-            val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
+            val argumentConstantValue = argumentExpression.evaluate() ?: return
             val call = callElement.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
 
@@ -59,7 +58,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
                 }
 
                 val defaultValueExpression = parameter.defaultValue ?: return
-                val defaultConstantValue = defaultValueExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
+                val defaultConstantValue = defaultValueExpression.evaluate() ?: return
 
                 if (argumentConstantValue.value == defaultConstantValue.value) {
                     val description = KotlinBundle.message("inspection.redundant.value.argument.annotation", parameterSymbol.name)

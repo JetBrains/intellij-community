@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -186,7 +185,7 @@ class KotlinIntroduceConstantHandler(
             is KtConstantExpression -> false
             else -> {
                 analyzeInModalWindow(this, KotlinBundle.message("fix.change.signature.prepare")) {
-                    this@isNotConst.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+                    this@isNotConst.evaluate()
                 } == null
             }
         }

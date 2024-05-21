@@ -5,7 +5,6 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
@@ -111,7 +110,7 @@ object SimplifyBooleanWithConstantsUtils {
 
     private fun canBeReducedToBooleanConstant(expression: KtExpression, constant: Boolean? = null): Boolean {
         return analyze(expression) {
-            val value = expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
+            val value = expression.evaluate()?.value
             value == constant
         }
     }

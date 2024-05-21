@@ -8,7 +8,6 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 
@@ -67,7 +66,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
 
     context(KtAnalysisSession)
     private fun KtExpression.getConstantValue(): KaConstantValue? {
-        return evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+        return evaluate()
     }
 
     context(KtAnalysisSession)

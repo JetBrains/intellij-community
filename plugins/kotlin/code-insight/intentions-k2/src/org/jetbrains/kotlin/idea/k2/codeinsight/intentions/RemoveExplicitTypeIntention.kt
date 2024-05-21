@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -131,7 +130,7 @@ internal class RemoveExplicitTypeIntention :
         is KtSimpleNameExpression -> true
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
-        else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+        else -> initializer.evaluate() != null
     }
 
     context(KtAnalysisSession)

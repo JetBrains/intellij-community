@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -31,7 +30,7 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
         val ktExpression = expression.unwrapped as? KtExpression ?: return null
         val analyze = {
             analyze(ktExpression) {
-                ktExpression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
+                ktExpression.evaluate()
                     ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
             }
         }
