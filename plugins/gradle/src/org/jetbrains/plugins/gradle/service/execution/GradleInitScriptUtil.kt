@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleInitScriptUtil")
 
 package org.jetbrains.plugins.gradle.service.execution
@@ -118,13 +118,15 @@ fun createTestInitScript(): Path {
 
 fun loadJvmDebugInitScript(
   debuggerId: String,
-  parameters: String
+  parameters: String,
+  jvmArgs: List<String>
 ): String {
   return joinInitScripts(
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", mapOf(
       "DEBUGGER_ID" to debuggerId.toGroovyStringLiteral(),
-      "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral()
+      "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral(),
+      "PROCESS_OPTIONS" to jvmArgs.toGroovyListLiteral { toGroovyStringLiteral() }
     ))
   )
 }

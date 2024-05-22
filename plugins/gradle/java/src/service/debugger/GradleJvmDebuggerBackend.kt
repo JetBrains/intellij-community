@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.debugger
 
+import com.intellij.debugger.impl.RemoteConnectionBuilder
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.remote.RemoteConfiguration
 import com.intellij.execution.remote.RemoteConfigurationType
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension
@@ -30,7 +32,11 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   }
 
   override fun initializationCode(dispatchPort: String, parameters: String): List<String> {
-    val initScript = loadJvmDebugInitScript(id(), parameters)
+    val javaParameters = JavaParameters()
+    // TODO: need to pass project instance here to support @Async annotations
+    RemoteConnectionBuilder.addDebuggerAgent(javaParameters, null, false)
+    val jvmArgs = javaParameters.vmParametersList.list.filterNot { it.startsWith("-agentlib:jdwp=") }
+    val initScript = loadJvmDebugInitScript(id(), parameters, jvmArgs)
     return initScript.split("\n")
   }
 }
