@@ -51,12 +51,6 @@ internal object AddStarProjectionsFixFactory {
             element.replace(replacement)
         }
 
-        override fun getActionName(
-            actionContext: ActionContext,
-            element: KtTypeReference,
-            elementContext: Unit,
-        ): String = familyName
-
         override fun getFamilyName(): String = starProjectionFixFamilyName
     }
 }
