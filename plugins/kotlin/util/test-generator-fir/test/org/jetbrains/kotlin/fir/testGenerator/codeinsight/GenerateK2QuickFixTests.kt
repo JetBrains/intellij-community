@@ -193,7 +193,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/tooLongCharLiteralToString", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/typeImports", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/typeInferenceExpectedTypeMismatch", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/typeOfAnnotationMember", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/typeOfAnnotationMember", pattern = pattern)
             model("$idea/quickfix/typeParameters", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/typeProjection", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/unnecessaryLateinit", pattern = pattern, isIgnored = true)
