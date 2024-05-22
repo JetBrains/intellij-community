@@ -41,7 +41,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
     }
 
     private fun shouldSuggest(declaration: KtNamedClassOrObjectSymbol): Boolean {
-        val classId = declaration.classIdIfNonLocal
+        val classId = declaration.classId
         if (classId != null) {
             val packageName = classId.packageFqName.asString()
             for (forbiddenPackageName in FORBIDDEN_PACKAGE_NAMES) {

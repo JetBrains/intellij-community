@@ -29,7 +29,7 @@ internal object NotImportedWeigher {
 fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol, availableWithoutImport: Boolean) {
         if (availableWithoutImport) return
         val fqName = when (symbol) {
-            is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
+            is KtClassLikeSymbol -> symbol.classId?.asSingleFqName()
             is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             is KtPackageSymbol -> symbol.fqName
             else -> null

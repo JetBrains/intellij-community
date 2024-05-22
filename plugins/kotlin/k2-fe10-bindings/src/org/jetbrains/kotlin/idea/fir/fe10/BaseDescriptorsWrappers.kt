@@ -283,7 +283,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
         }.toList()
     }
 
-    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.classIdIfNonLocal ?: error("should be top-level")).packageFqName
+    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.classId ?: error("should be top-level")).packageFqName
 
     override fun getSealedSubclasses(): Collection<ClassDescriptor> = implementationPostponed()
 
@@ -901,7 +901,7 @@ class KtSymbolBasedTypeAliasDescriptor(
 
     override fun getModality(): Modality = Modality.FINAL
 
-    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.classIdIfNonLocal ?: error("should be top-level")).packageFqName
+    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.classId ?: error("should be top-level")).packageFqName
 
     override fun getOriginal(): TypeAliasDescriptor = this
 

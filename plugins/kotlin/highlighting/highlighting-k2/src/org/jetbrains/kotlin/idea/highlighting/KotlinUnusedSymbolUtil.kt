@@ -272,7 +272,7 @@ object KotlinUnusedSymbolUtil {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
           val symbol = reference.resolveToSymbol() ?: return@mapNotNull null
           val constructorSymbol = symbol as? KtConstructorSymbol ?: return@mapNotNull null
-          constructorSymbol.containingClassIdIfNonLocal?.asSingleFqName()?.asString()
+          constructorSymbol.containingClassId?.asSingleFqName()?.asString()
       }
       if (annotationsPresent.isEmpty()) return false
 

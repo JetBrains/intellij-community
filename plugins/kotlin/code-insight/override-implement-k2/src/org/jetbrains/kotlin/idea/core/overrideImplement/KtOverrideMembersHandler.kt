@@ -28,7 +28,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
         classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
             @NlsSafe
-            val fqName = containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
+            val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
             KtClassMember(
                 KtClassMemberInfo.create(
                     symbol,
@@ -68,7 +68,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KtClassOrObjectSymbol): L
                     val containingSymbol = originalOverriddenSymbol.originalContainingClassForOverride
 
                     val bodyType = when {
-                        classOrObjectSymbol.classKind == KtClassKind.INTERFACE && containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
+                        classOrObjectSymbol.classKind == KtClassKind.INTERFACE && containingSymbol?.classId == StandardClassIds.Any -> {
                             if (hasNoSuperTypesExceptAny) {
                                 // If an interface does not extends any other interfaces, FE1.0 simply skips members of `Any`. So we mimic
                                 // the same behavior. See idea/testData/codeInsight/overrideImplement/noAnyMembersInInterface.kt
@@ -78,7 +78,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KtClassOrObjectSymbol): L
                             }
                         }
                         (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true &&
-                                containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
+                                containingSymbol?.classId == StandardClassIds.Any -> {
                             if ((symbolToProcess as? KtFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue
                             } else {

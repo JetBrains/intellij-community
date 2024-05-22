@@ -112,7 +112,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
 
     context(KtAnalysisSession)
     private fun processSealedClassInheritor(klass: KtNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
-        val classId = klass.classIdIfNonLocal ?: return false
+        val classId = klass.classId ?: return false
 
         if (klass.classKind == KtClassKind.OBJECT) {
             consumer.add(CaseBranch.Object(classId))

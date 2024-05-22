@@ -110,7 +110,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             yield(receiverType)
             yieldAll(receiverType.getAllSuperTypes())
         }
-        if (receiverTypeAndSuperTypes.any { it.expandedClassSymbol?.classIdIfNonLocal in replaceableCall.supportedReceivers }) {
+        if (receiverTypeAndSuperTypes.any { it.expandedClassSymbol?.classId in replaceableCall.supportedReceivers }) {
             return replaceableCall
         } else {
             return null

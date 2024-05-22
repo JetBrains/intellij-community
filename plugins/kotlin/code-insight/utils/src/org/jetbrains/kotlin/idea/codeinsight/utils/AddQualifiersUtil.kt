@@ -103,8 +103,8 @@ object AddQualifiersUtil {
 
     fun getFqName(symbol: KtSymbol): FqName? {
         return when (symbol) {
-            is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
-            is KtConstructorSymbol -> symbol.containingClassIdIfNonLocal?.asSingleFqName()
+            is KtClassLikeSymbol -> symbol.classId?.asSingleFqName()
+            is KtConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
             is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null
         }

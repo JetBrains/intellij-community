@@ -33,7 +33,7 @@ object AddWhenRemainingBranchFixFactories {
             )
 
             val baseClassSymbol = subjectExpression.getKtType()?.expandedClassSymbol ?: return@buildList
-            val enumToStarImport = baseClassSymbol.classIdIfNonLocal
+            val enumToStarImport = baseClassSymbol.classId
             if (baseClassSymbol.classKind == KtClassKind.ENUM_CLASS && enumToStarImport != null) {
                 add(
                     AddRemainingWhenBranchesQuickFix(

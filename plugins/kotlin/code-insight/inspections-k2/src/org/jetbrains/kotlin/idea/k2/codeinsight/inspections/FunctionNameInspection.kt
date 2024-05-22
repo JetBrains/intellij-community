@@ -21,7 +21,7 @@ class FunctionNameInspection : AbstractFunctionNameInspection() {
     private fun KtType.hasShortName(shortName: String): Boolean {
         val typeShortName =
             expandedClassSymbol
-                ?.classIdIfNonLocal
+                ?.classId
                 ?.relativeClassName
                 ?.takeUnless(FqName::isRoot)
                 ?.shortName()

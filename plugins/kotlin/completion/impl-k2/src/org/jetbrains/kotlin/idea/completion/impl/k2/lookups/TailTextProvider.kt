@@ -54,7 +54,7 @@ internal object TailTextProvider {
         usePackageFqName: Boolean = false,
         addTypeParameters: Boolean = true
     ): String = buildString {
-        symbol.classIdIfNonLocal?.let { classId ->
+        symbol.classId?.let { classId ->
             if (addTypeParameters && symbol.typeParameters.isNotEmpty()) {
                 // We want to render type parameter names without modifiers and bounds, so no renderer is required.
                 append(symbol.typeParameters.joinToString(", ", "<", ">") { it.name.render() })

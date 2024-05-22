@@ -77,7 +77,7 @@ class KotlinPsiElementMemberChooserObject(
         context(KtAnalysisSession)
         private fun getChooserText(symbol: KtSymbol): @NlsSafe String {
             if (symbol is KtClassOrObjectSymbol) {
-                val classId = symbol.classIdIfNonLocal
+                val classId = symbol.classId
                 if (classId != null) {
                     return classId.asFqNameString()
                 }

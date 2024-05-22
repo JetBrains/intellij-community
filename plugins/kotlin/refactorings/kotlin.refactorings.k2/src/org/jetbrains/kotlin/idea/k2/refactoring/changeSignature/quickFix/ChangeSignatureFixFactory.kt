@@ -412,7 +412,7 @@ internal fun getDeclarationName(functionLikeSymbol: KtFunctionLikeSymbol): Strin
             val constructorSymbol = functionLikeSymbol
             if ((constructorSymbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.isInline == true) {
                 null
-            } else constructorSymbol.containingClassIdIfNonLocal?.shortClassName
+            } else constructorSymbol.containingClassId?.shortClassName
         }
 
         is KtFunctionSymbol -> {

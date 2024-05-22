@@ -109,7 +109,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
                     ?.singleConstructorCallOrNull()
                     ?.partiallyAppliedSymbol
                     ?.symbol
-                    ?.containingClassIdIfNonLocal
+                    ?.containingClassId
                     ?.asSingleFqName() == JVM_STATIC_FQN
             }
         }

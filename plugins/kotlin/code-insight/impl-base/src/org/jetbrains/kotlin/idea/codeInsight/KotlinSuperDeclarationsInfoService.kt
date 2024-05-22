@@ -54,7 +54,7 @@ object SuperDeclarationProvider {
 
                 return buildList {
                     for (superSymbol in superSymbols) {
-                        if (superSymbol is KtClassOrObjectSymbol && StandardClassIds.Any == superSymbol.classIdIfNonLocal) {
+                        if (superSymbol is KtClassOrObjectSymbol && StandardClassIds.Any == superSymbol.classId) {
                             continue
                         }
                         when (val psi = superSymbol.psi) {

@@ -299,7 +299,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveCall()?.singleConstructorCallOrNull()?.symbol ?: return null
-            return resolvedAnnotationConstructorSymbol.containingClassIdIfNonLocal
+            return resolvedAnnotationConstructorSymbol.containingClassId
                 ?.asSingleFqName()
                 ?.toString()
         }

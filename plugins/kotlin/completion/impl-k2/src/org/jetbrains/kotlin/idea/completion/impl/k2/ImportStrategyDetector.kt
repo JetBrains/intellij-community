@@ -44,7 +44,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
     fun detectImportStrategyForClassifierSymbol(symbol: KtClassifierSymbol): ImportStrategy {
         if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
 
-        val classId = symbol.classIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
+        val classId = symbol.classId?.asSingleFqName() ?: return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)
     }
 

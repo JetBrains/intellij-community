@@ -54,7 +54,7 @@ internal class ImportAllMembersIntention :
     override fun prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
         val target = actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
-        val classId = target.classIdIfNonLocal ?: return null
+        val classId = target.classId ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&
             (target.classKind == KtClassKind.OBJECT ||
                     // One cannot use on-demand import for properties or functions declared inside objects
@@ -69,7 +69,7 @@ internal class ImportAllMembersIntention :
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
             classShortenStrategy = {
-                if (it.classIdIfNonLocal?.isNestedClassIn(classId) == true) {
+                if (it.classId?.isNestedClassIn(classId) == true) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
                     ShortenStrategy.DO_NOT_SHORTEN
@@ -78,7 +78,7 @@ internal class ImportAllMembersIntention :
             callableShortenStrategy = {
                 if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
                 val containingClassId = if (it is KtConstructorSymbol) {
-                    it.containingClassIdIfNonLocal?.outerClassId
+                    it.containingClassId?.outerClassId
                 } else {
                     it.callableId?.classId
                 }

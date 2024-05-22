@@ -120,7 +120,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     classifier.name.asString(),
                     classifier,
                     CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
-                    (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
+                    (classifier as? KtNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition,
                 )
             }
@@ -135,7 +135,7 @@ internal class FirWhenWithSubjectConditionContributor(
                         classifier.name.asString(),
                         classifier,
                         CompletionSymbolOrigin.Index,
-                        (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
+                        (classifier as? KtNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
                         isSingleCondition,
                     )
                 }
@@ -171,10 +171,10 @@ internal class FirWhenWithSubjectConditionContributor(
 
         allInheritors
             .asSequence()
-            .filter { it.classIdIfNonLocal !in handledCasesClassIds }
+            .filter { it.classId !in handledCasesClassIds }
             .filter { visibilityChecker.isVisible(it as KtClassifierSymbol) }
             .forEach { inheritor ->
-                val classId = inheritor.classIdIfNonLocal ?: return@forEach
+                val classId = inheritor.classId ?: return@forEach
                 addLookupElement(
                     context,
                     classId.relativeClassName.asString(),
@@ -199,7 +199,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 else -> null
             }
             val resolvesTo = reference?.resolveToExpandedSymbol() as? KtNamedClassOrObjectSymbol
-            resolvesTo?.classIdIfNonLocal
+            resolvesTo?.classId
         }
 
     context(KtAnalysisSession)
@@ -345,8 +345,8 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
 @Suppress("AnalysisApiMissingLifetimeControlOnCallable")
 private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KtNamedClassOrObjectSymbol> {
     override fun equals(p0: KtNamedClassOrObjectSymbol?, p1: KtNamedClassOrObjectSymbol?): Boolean {
-        return p0?.classIdIfNonLocal == p1?.classIdIfNonLocal
+        return p0?.classId == p1?.classId
     }
 
-    override fun hashCode(p0: KtNamedClassOrObjectSymbol?): Int = p0?.classIdIfNonLocal?.hashCode() ?: 0
+    override fun hashCode(p0: KtNamedClassOrObjectSymbol?): Int = p0?.classId?.hashCode() ?: 0
 }

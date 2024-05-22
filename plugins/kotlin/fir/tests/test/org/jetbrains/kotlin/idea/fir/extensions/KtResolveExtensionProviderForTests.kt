@@ -108,7 +108,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
                             }
 
                             is KtClassLikeSymbol -> {
-                                symbol.classIdIfNonLocal?.relativeClassName?.pathSegments()
+                                symbol.classId?.relativeClassName?.pathSegments()
                                     ?: return@firstNotNullOfOrNull null
                             }
 

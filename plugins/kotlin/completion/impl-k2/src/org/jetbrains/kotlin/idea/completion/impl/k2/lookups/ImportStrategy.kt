@@ -42,7 +42,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
             if (anyCallableSymbolMatches) return true
 
             return scope.getClassifierSymbols(nameToImport.shortName()).any { classifier ->
-                val classId = (classifier as? KtClassLikeSymbol)?.classIdIfNonLocal
+                val classId = (classifier as? KtClassLikeSymbol)?.classId
                 classId?.asSingleFqName() == nameToImport
             }
         }

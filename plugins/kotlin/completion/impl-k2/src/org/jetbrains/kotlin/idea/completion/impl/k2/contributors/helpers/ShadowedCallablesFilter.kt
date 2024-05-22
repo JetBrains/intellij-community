@@ -200,7 +200,7 @@ internal class ShadowedCallablesFilter {
                     val expandedClassSymbol = type.expandedClassSymbol ?: return null
                     val name = expandedClassSymbol.name ?: return null
 
-                    return when (val classId = expandedClassSymbol.classIdIfNonLocal) {
+                    return when (val classId = expandedClassSymbol.classId) {
                         null -> NameForLocal(name)
                         else -> ClassIdForNonLocal(classId)
                     }

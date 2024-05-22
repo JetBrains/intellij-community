@@ -77,7 +77,7 @@ private fun isArrayGeneratorConstructorCall(symbol: KtFunctionLikeSymbol): Boole
     }
 
     if (symbol is KtConstructorSymbol) {
-        val classId = symbol.containingClassIdIfNonLocal
+        val classId = symbol.containingClassId
         val isArrayClass = classId == StandardClassIds.Array
                 || classId in StandardClassIds.elementTypeByPrimitiveArrayType
                 || classId in StandardClassIds.elementTypeByUnsignedArrayType

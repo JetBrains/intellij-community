@@ -41,7 +41,7 @@ internal object SuperKeywordHandler : CompletionKeywordHandler<KtAnalysisSession
             else -> buildList {
                 add(lookup)
                 superClasses.mapTo(this) { symbol ->
-                    createKeywordElement("super", "<${symbol.name}>", SuperKeywordLookupObject(symbol.name, symbol.classIdIfNonLocal))
+                    createKeywordElement("super", "<${symbol.name}>", SuperKeywordLookupObject(symbol.name, symbol.classId))
                         .withInsertHandler(SuperCallInsertionHandler)
                 }
             }
