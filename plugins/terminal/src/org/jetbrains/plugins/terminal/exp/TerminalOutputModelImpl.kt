@@ -12,7 +12,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
-import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
@@ -25,7 +24,7 @@ import kotlin.math.min
  * @see TerminalOutputController
  */
 internal class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputModel {
-  private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
+  override val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
   private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
@@ -134,37 +133,6 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
     }
     editor.document.setText("")
   }
-
-  override fun getActiveBlock(): CommandBlock? {
-    return blocks.lastOrNull()?.takeIf { !it.isFinalized }
-  }
-
-  override fun getLastBlock(): CommandBlock? {
-    return blocks.lastOrNull()
-  }
-
-  override fun getByOffset(offset: Int): CommandBlock? {
-    // todo: better to use binary search here, but default implementation doesn't not acquire the lock of the list
-    return blocks.find { offset in (it.startOffset..it.endOffset) }
-  }
-
-  override fun getByIndex(index: Int): CommandBlock {
-    return blocks[index]
-  }
-
-  override fun getIndexOfBlock(block: CommandBlock): Int {
-    return blocks.indexOf(block)
-  }
-
-  @RequiresEdt
-  override fun getBlockBounds(block: CommandBlock): Rectangle {
-    val topY = editor.offsetToXY(block.startOffset).y - TerminalUi.blockTopInset
-    val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset
-    val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockInset
-    return Rectangle(0, topY, width, bottomY - topY)
-  }
-
-  override fun getBlocksSize(): Int = blocks.size
 
   @RequiresEdt
   override fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {

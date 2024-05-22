@@ -9,6 +9,8 @@ import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
 import java.awt.Rectangle
 
 /**
+ * TODO: this interface is quite big.
+ *  Consider extracting [CommandBlockInfo] related things and/or highlightings?
  * Designed as a part of MVC pattern.
  * @see TerminalOutputModel
  * @see TerminalOutputView
@@ -17,6 +19,13 @@ import java.awt.Rectangle
 @ApiStatus.Internal
 interface TerminalOutputModel {
   val editor: EditorEx
+
+  /**
+   * List of command output blocks.
+   * The first block is the top one, the last is at the bottom.
+   * Note that the returned list is not a view and can be changed at any moment.
+   */
+  val blocks: List<CommandBlock>
 
   /**
    * @param terminalWidth number of columns at the moment of block creation. It is used to properly position the right prompt.
@@ -32,28 +41,6 @@ interface TerminalOutputModel {
 
   @RequiresEdt
   fun clearBlocks()
-
-  /**
-   * Active block is the last block if it is able to expand.
-   * @return null in three cases:
-   * 1. There are no blocks created yet.
-   * 2. Requested after user inserted an empty line, but before block for new command is created.
-   * 3. Requested after command is started, but before the block is created for it.
-   */
-  fun getActiveBlock(): CommandBlock?
-
-  fun getLastBlock(): CommandBlock?
-
-  fun getByOffset(offset: Int): CommandBlock?
-
-  fun getByIndex(index: Int): CommandBlock
-
-  fun getIndexOfBlock(block: CommandBlock): Int
-
-  fun getBlocksSize(): Int
-
-  @RequiresEdt
-  fun getBlockBounds(block: CommandBlock): Rectangle
 
   @RequiresEdt
   fun trimOutput()
@@ -74,4 +61,28 @@ interface TerminalOutputModel {
   fun getBlockInfo(block: CommandBlock): CommandBlockInfo?
 
   fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null)
+}
+
+/**
+ * Active block is the last block if it is able to expand.
+ * @return null in three cases:
+ * 1. There are no blocks created yet.
+ * 2. Requested after user inserted an empty line, but before block for new command is created.
+ * 3. Requested after command is started, but before the block is created for it.
+ */
+internal fun TerminalOutputModel.getActiveBlock(): CommandBlock? {
+  return blocks.lastOrNull()?.takeIf { !it.isFinalized }
+}
+
+internal fun TerminalOutputModel.getByOffset(offset: Int): CommandBlock? {
+  // todo: better to use binary search here, but default implementation doesn't not acquire the lock of the list
+  return blocks.find { offset in (it.startOffset..it.endOffset) }
+}
+
+@RequiresEdt
+internal fun TerminalOutputModel.getBlockBounds(block: CommandBlock): Rectangle {
+  val topY = editor.offsetToXY(block.startOffset).y - TerminalUi.blockTopInset
+  val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset
+  val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockInset
+  return Rectangle(0, topY, width, bottomY - topY)
 }

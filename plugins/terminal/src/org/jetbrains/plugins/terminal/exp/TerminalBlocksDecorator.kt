@@ -73,10 +73,8 @@ internal class TerminalBlocksDecorator(
         decorations.remove(block)
 
         // update the top inlay of the top block to add the gap between block and terminal top if it became the first block
-        if (outputModel.getBlocksSize() > 0) {
-          val firstBlock = outputModel.getByIndex(0)
-          decorations[firstBlock]?.topInlay?.update()
-        }
+        val firstBlock = outputModel.blocks.firstOrNull() ?: return
+        decorations[firstBlock]?.topInlay?.update()
       }
 
       // Highlight the blocks with non-zero exit code as an error
@@ -124,7 +122,7 @@ internal class TerminalBlocksDecorator(
 
     // add additional empty space on top of the block, if it is the first block
     val topRenderer = EmptyWidthInlayRenderer {
-      val additionalInset = if (outputModel.getByIndex(0) === block) TerminalUi.blocksGap else 0
+      val additionalInset = if (outputModel.blocks[0] === block) TerminalUi.blocksGap else 0
       TerminalUi.blockTopInset + additionalInset
     }
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!

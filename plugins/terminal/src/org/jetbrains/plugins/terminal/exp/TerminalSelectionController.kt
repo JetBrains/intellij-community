@@ -52,10 +52,10 @@ internal class TerminalSelectionController(
   @RequiresEdt
   fun selectRelativeBlock(isBelow: Boolean, dropCurrentSelection: Boolean) {
     val primaryBlock = selectionModel.primarySelection ?: return
-    val curIndex = outputModel.getIndexOfBlock(primaryBlock).takeIf { it >= 0 } ?: return
+    val curIndex = outputModel.blocks.indexOf(primaryBlock).takeIf { it >= 0 } ?: return
     val newIndex = if (isBelow) curIndex + 1 else curIndex - 1
-    if (newIndex in (0 until outputModel.getBlocksSize())) {
-      val newBlock = outputModel.getByIndex(newIndex)
+    if (newIndex in outputModel.blocks.indices) {
+      val newBlock = outputModel.blocks[newIndex]
       if (dropCurrentSelection) {
         selectionModel.selectedBlocks = listOf(newBlock)
       }
@@ -72,7 +72,7 @@ internal class TerminalSelectionController(
 
   @RequiresEdt
   fun selectLastBlock() {
-    val block = outputModel.getLastBlock() ?: return
+    val block = outputModel.blocks.lastOrNull() ?: return
     selectionModel.selectedBlocks = listOf(block)
     makeBlockVisible(block)
   }
@@ -140,17 +140,15 @@ internal class TerminalSelectionController(
       selectionModel.selectedBlocks = listOf(targetBlock)
       return
     }
-    val curBlockIndex = outputModel.getIndexOfBlock(primaryBlock)
+    val curBlockIndex = outputModel.blocks.indexOf(primaryBlock)
     val initialBlockIndex = rangeSelectionInitialIndex ?: curBlockIndex
-    val newBlockIndex = outputModel.getIndexOfBlock(targetBlock)
+    val newBlockIndex = outputModel.blocks.indexOf(targetBlock)
     if (curBlockIndex != -1 && newBlockIndex != -1) {
       val indexRange = if (initialBlockIndex <= newBlockIndex) {
         initialBlockIndex..newBlockIndex
       }
       else initialBlockIndex downTo newBlockIndex
-      selectionModel.selectedBlocks = indexRange.map {
-        outputModel.getByIndex(it)
-      }
+      selectionModel.selectedBlocks = indexRange.map { outputModel.blocks[it] }
       // assign it after selected blocks change, because this index is reset in the process of change
       rangeSelectionInitialIndex = initialBlockIndex
     }

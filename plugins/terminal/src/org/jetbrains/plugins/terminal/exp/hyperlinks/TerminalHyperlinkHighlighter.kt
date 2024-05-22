@@ -33,8 +33,8 @@ internal class TerminalHyperlinkHighlighter(project: Project,
   }
 
   private fun rehighlightAll() {
-    for (i in 0 until outputModel.getBlocksSize()) {
-      highlightHyperlinks(outputModel.getByIndex(i))
+    for (block in outputModel.blocks) {
+      highlightHyperlinks(block)
     }
   }
 

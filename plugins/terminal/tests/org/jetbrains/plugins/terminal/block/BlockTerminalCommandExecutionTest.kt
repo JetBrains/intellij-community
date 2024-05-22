@@ -128,15 +128,14 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 private data class CommandResult(val command: String, val output: String)
 
 private fun TerminalOutputModel.collectCommandResults(): List<CommandResult> {
-  return (0 until getBlocksSize()).mapNotNull {
-    val commandBlock = this.getByIndex(it)
-    check(commandBlock.isFinalized)
-    val command = commandBlock.command
-    if (it == 0 && command == null) {
+  return blocks.withIndex().mapNotNull { (ind, block) ->
+    check(block.isFinalized)
+    val command = block.command
+    if (ind == 0 && command == null) {
       null // skip the initial block
     }
     else {
-      CommandResult(command!!, editor.document.getCommandBlockOutput(commandBlock))
+      CommandResult(command!!, editor.document.getCommandBlockOutput(block))
     }
   }
 }
