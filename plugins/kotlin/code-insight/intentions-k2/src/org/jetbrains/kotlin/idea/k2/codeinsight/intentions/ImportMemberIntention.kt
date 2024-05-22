@@ -85,14 +85,14 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         }
 
         is KtCallableSymbol -> {
-            val callableId = symbol.callableIdIfNonLocal ?: return null
+            val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
             if (!canBeImported(symbol)) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
                 callableShortenStrategy = {
-                    if (it.callableIdIfNonLocal == callableId)
+                    if (it.callableId == callableId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
                     else
                         ShortenStrategy.DO_NOT_SHORTEN

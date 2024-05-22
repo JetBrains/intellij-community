@@ -105,7 +105,7 @@ object AddQualifiersUtil {
         return when (symbol) {
             is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
             is KtConstructorSymbol -> symbol.containingClassIdIfNonLocal?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableIdIfNonLocal?.asSingleFqName()
+            is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null
         }
     }

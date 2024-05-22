@@ -87,7 +87,7 @@ private fun isArrayGeneratorConstructorCall(symbol: KtFunctionLikeSymbol): Boole
         val receiverType = symbol.receiverType
         return receiverType is KtNonErrorClassType
                 && receiverType.classId in StandardClassIds.elementTypeByUnsignedArrayType
-                && symbol.callableIdIfNonLocal?.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+                && symbol.callableId?.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
                 && checkParameters(symbol)
     }
 

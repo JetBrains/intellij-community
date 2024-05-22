@@ -143,7 +143,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
     context(KtAnalysisSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
         val resolvedCall = expression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
-        return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal?.toString()
+        return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()
     }
 
     protected enum class ReplaceFixType {

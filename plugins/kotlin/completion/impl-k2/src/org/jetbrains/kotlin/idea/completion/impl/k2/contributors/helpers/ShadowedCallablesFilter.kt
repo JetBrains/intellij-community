@@ -277,7 +277,7 @@ private sealed class SimplifiedSignature {
 
         context(KtAnalysisSession)
         private fun KtCallableSymbol.getContainerFqName(): FqName? {
-            val callableId = callableIdIfNonLocal ?: return null
+            val callableId = callableId ?: return null
             return when (symbolKind) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
                 KaSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }

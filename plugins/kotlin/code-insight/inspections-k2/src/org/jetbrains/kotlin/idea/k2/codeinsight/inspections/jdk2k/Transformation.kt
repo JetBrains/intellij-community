@@ -42,7 +42,7 @@ object ToKotlinPrint : Transformation {
 
     context(KtAnalysisSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveCall()
-            ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal?.asSingleFqName() == FqName("java.lang.System.out")
+            ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
 }
 
 object ToExtensionFunctionWithNonNullableReceiver : Transformation {

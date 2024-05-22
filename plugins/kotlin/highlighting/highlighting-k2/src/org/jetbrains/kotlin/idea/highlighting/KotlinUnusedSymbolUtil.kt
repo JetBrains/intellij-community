@@ -604,7 +604,7 @@ object KotlinUnusedSymbolUtil {
           if (getQualifiedExpressionForSelector() != null) return false
           if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
           val symbol = mainReference?.resolveToSymbol() as? KtCallableSymbol ?: return false
-          return symbol.callableIdIfNonLocal?.asSingleFqName() in enumStaticMethods
+          return symbol.callableId?.asSingleFqName() in enumStaticMethods
       }
 
       return containingFile.anyDescendantOfType<KtExpression> {
@@ -663,7 +663,7 @@ object KotlinUnusedSymbolUtil {
           when (element) {
               is KtClassOrObject -> {
                   val overridingCallableSymbol = element.getClassOrObjectSymbol()?.getMemberScope()
-                      ?.getCallableSymbols { name -> name == callableSymbol.callableIdIfNonLocal?.callableName }?.filter {
+                      ?.getCallableSymbols { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.unwrapFakeOverrides == callableSymbol
                       }?.singleOrNull() ?: return@any false
                   overridingCallableSymbol != callableSymbol && overridingCallableSymbol.getIntersectionOverriddenSymbols()

@@ -368,7 +368,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
     override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
-    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableIdIfNonLocal ?: error("should be top-level")).packageName
+    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableId ?: error("should be top-level")).packageName
 
     override fun isSuspend(): Boolean = ktSymbol.isSuspend
     override fun isOperator(): Boolean = ktSymbol.isOperator
@@ -625,7 +625,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, PropertyDescriptor {
     abstract override val ktSymbol: KtVariableSymbol
 
-    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableIdIfNonLocal ?: error("should be top-level")).packageName
+    override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableId ?: error("should be top-level")).packageName
     override fun getOriginal(): PropertyDescriptor = context.incorrectImplementation { this }
 
 

@@ -53,7 +53,7 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
     return if (classContainingPlus != null) {
         classContainingPlus.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
     } else {
-        plusOperation?.callableIdIfNonLocal?.asSingleFqName()?.asString() in listOf("kotlin.text.plus", "kotlin.plus")
+        plusOperation?.callableId?.asSingleFqName()?.asString() in listOf("kotlin.text.plus", "kotlin.plus")
     }
 }
 

@@ -52,7 +52,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
     private fun isApplicable(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
         val functionCallOrNull = binaryExpression.resolveCall()?.singleFunctionCallOrNull()
         functionCallOrNull?.symbol?.takeIf {
-            val packageName = it.callableIdIfNonLocal?.packageName
+            val packageName = it.callableId?.packageName
             packageName == StandardNames.RANGES_PACKAGE_FQ_NAME || packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
         } ?: return false
 

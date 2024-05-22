@@ -211,7 +211,7 @@ private fun toPsiMethodForDeserialized(
     }
 
     // Deserialized member function
-    functionSymbol.callableIdIfNonLocal?.classId?.let { classId ->
+    functionSymbol.callableId?.classId?.let { classId ->
         toPsiClass(
             buildClassType(classId),
             source = null,

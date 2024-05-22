@@ -76,7 +76,7 @@ internal object TailTextProvider {
 
     context(KtAnalysisSession)
     private fun KtCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
-        val callableId = callableIdIfNonLocal ?: return null
+        val callableId = callableId ?: return null
         val className = callableId.className
 
         val isExtensionCall = isExtensionCall(isFunctionalVariableCall)

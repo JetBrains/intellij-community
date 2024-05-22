@@ -56,7 +56,7 @@ object K2StatisticsInfoProvider {
     context(KtAnalysisSession)
     fun forDeclarationSymbol(symbol: KtDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
         is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asFqNameString()?.let { StatisticsInfo(context, it) }
-        is KtCallableSymbol -> symbol.callableIdIfNonLocal?.let { callableId ->
+        is KtCallableSymbol -> symbol.callableId?.let { callableId ->
             val containerFqName = callableId.classId?.asFqNameString() ?: callableId.packageName
             val declarationText = prettyPrint { renderer.renderDeclaration(analysisSession, symbol, this) }
             StatisticsInfo(context, "$containerFqName###$declarationText")

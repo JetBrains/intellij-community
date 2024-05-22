@@ -57,7 +57,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
             analyze(calleeExpression) {
                 val resolvedCall = calleeExpression.resolveCall()?.singleFunctionCallOrNull() ?: return
-                val callableId = resolvedCall.symbol.callableIdIfNonLocal ?: return
+                val callableId = resolvedCall.symbol.callableId ?: return
                 val conversion = uselessFqNames[callableId] ?: return
                 suggestConversionIfNeeded(expression, calleeExpression, conversion)
             }

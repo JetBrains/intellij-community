@@ -90,10 +90,10 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
                         val call = element.resolveCall()?.singleCallOrNull<KtCall>()
                         if (call is KtSimpleFunctionCall) {
                             val functionSymbol = call.partiallyAppliedSymbol.symbol
-                            val callableId = functionSymbol.callableIdIfNonLocal
+                            val callableId = functionSymbol.callableId
                             if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
                                 for (overriddenSymbol in functionSymbol.getAllOverriddenSymbols()) {
-                                    val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableIdIfNonLocal]
+                                    val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableId]
                                     if (mappedCallableId != null) {
                                         return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
                                     }

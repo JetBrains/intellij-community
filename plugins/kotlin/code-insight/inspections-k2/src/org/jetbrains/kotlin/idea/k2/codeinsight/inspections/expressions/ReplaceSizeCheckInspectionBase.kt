@@ -98,10 +98,10 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         }
         val replaceableCall = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
             when (this) {
-                is KtVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableIdIfNonLocal]
+                is KtVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableId]
 
                 is KtFunctionCall -> REPLACEABLE_COUNT_CALL.takeIf {
-                    symbol.callableIdIfNonLocal == REPLACEABLE_COUNT_CALL.callableId && this.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
+                    symbol.callableId == REPLACEABLE_COUNT_CALL.callableId && this.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
                 }
             }
         } ?: return null

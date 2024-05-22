@@ -35,7 +35,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
             val anyCallableSymbolMatches = scope
                 .getCallableSymbols(nameToImport.shortName())
                 .any { callable ->
-                    val callableFqName = callable.callableIdIfNonLocal?.asSingleFqName()
+                    val callableFqName = callable.callableId?.asSingleFqName()
                     callable is KtKotlinPropertySymbol && callableFqName == nameToImport ||
                             callable is KtFunctionSymbol && callableFqName == nameToImport
                 }

@@ -255,7 +255,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     "${classSymbol.name.asString()}.${entry.name.asString()}",
                     entry,
                     CompletionSymbolOrigin.Index,
-                    entry.callableIdIfNonLocal?.asSingleFqName(),
+                    entry.callableId?.asSingleFqName(),
                     isSingleCondition,
                 )
             }

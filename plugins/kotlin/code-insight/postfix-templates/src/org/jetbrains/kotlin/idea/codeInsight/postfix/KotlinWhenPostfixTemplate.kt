@@ -99,7 +99,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
 
         return buildList {
             for (enumEntry in enumEntries) {
-                val callableId = enumEntry.callableIdIfNonLocal ?: return emptyList()
+                val callableId = enumEntry.callableId ?: return emptyList()
                 add(CaseBranch.Callable(callableId))
             }
         }

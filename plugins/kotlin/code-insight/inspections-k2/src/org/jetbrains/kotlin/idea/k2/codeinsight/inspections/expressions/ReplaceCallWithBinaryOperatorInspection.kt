@@ -203,7 +203,7 @@ private fun KtCallableSymbol.isAnyEquals(): Boolean {
         yield(this@isAnyEquals)
         yieldAll(this@isAnyEquals.getAllOverriddenSymbols())
     }
-    return overriddenSymbols.any { it.callableIdIfNonLocal == KOTLIN_ANY_EQUALS_CALLABLE_ID }
+    return overriddenSymbols.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }
 
 context(KtAnalysisSession)

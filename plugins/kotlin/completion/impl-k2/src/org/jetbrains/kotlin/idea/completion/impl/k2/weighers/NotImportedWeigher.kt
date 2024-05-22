@@ -30,7 +30,7 @@ fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol
         if (availableWithoutImport) return
         val fqName = when (symbol) {
             is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableIdIfNonLocal?.asSingleFqName()
+            is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             is KtPackageSymbol -> symbol.fqName
             else -> null
         } ?: return
