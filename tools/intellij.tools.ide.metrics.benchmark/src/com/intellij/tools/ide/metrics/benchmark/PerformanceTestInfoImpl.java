@@ -8,12 +8,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.testFramework.PerformanceTestInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProfilerForTests;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +55,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
-  private TelemetryMeterCollector meterCollector = null;
+  private TelemetryMetricsCollector meterCollector = null;
 
   private static final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(
     SupervisorKt.SupervisorJob(null).plus(Dispatchers.getIO())
@@ -122,6 +121,11 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
     }
   }
 
+  public PerformanceTestInfoImpl(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName){
+    this();
+    initialize(test, expectedInputSize, launchName);
+  }
+
   public PerformanceTestInfoImpl() {
     initOpenTelemetry();
     cleanupOutdatedMeters();
@@ -152,9 +156,27 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
     return this;
   }
 
-  @Override
+  /**
+   * Instruct to publish Telemetry meters (stored in .json files)
+   * Eg:
+   * <pre>
+   *   {@code
+   *     val counter: AtomicLong = AtomicLong()
+   *     val counterMeter = TelemetryManager.getMeter(MY_SCOPE)
+   *       .counterBuilder("custom.counter")
+   *       .buildWithCallback { it.record(counter.get()) }
+   *
+   *     val meterCollector = OpenTelemetryJsonMeterCollector(MetricsSelectionStrategy.SUM) { it.name.contains("custom") }
+   *
+   *     PlatformTestUtil.newPerformanceTest("my perf test") {
+   *       counter.incrementAndGet()
+   *     }
+   *       .withMetricsCollector(meterCollector)
+   *       .start()}
+   * </pre>
+   */
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfoImpl withTelemetryMeters(TelemetryMeterCollector meterCollector) {
+  public PerformanceTestInfoImpl withTelemetryMeters(TelemetryMetricsCollector meterCollector) {
     this.meterCollector = meterCollector;
     return this;
   }

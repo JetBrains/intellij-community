@@ -641,6 +641,9 @@ public final class PlatformTestUtil {
   /**
    * Init a performance test.<br/>
    * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
+   * If you need to customize published metrics, use
+   * {@code com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil#newPerformanceTest} and
+   * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
    * @see PerformanceTestInfo#start()
    */
   // to warn about not calling .assertTiming() in the end

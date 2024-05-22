@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.util.ThrowableRunnable;
 import kotlin.reflect.KFunction;
 import org.jetbrains.annotations.Contract;
@@ -19,29 +18,6 @@ public interface PerformanceTestInfo {
   // to warn about not calling .start() in the end
   @Contract(pure = true)
   PerformanceTestInfo attempts(int attempts);
-
-  /**
-   * Instruct to publish Telemetry meters (stored in .json files)
-   * Eg:
-   * <pre>
-   *   {@code
-   *     val counter: AtomicLong = AtomicLong()
-   *     val counterMeter = TelemetryManager.getMeter(MY_SCOPE)
-   *       .counterBuilder("custom.counter")
-   *       .buildWithCallback { it.record(counter.get()) }
-   *
-   *     val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.key.contains("custom") }
-   *
-   *     PlatformTestUtil.newPerformanceTest("my perf test") {
-   *       counter.incrementAndGet()
-   *     }
-   *       .withTelemetryMeters(meterCollector)
-   *       .start()}
-   * </pre>
-   */
-  // to warn about not calling .start() in the end
-  @Contract(pure = true)
-  PerformanceTestInfo withTelemetryMeters(TelemetryMeterCollector meterCollector);
 
   /**
    * Runs the perf test {@code iterations} times before starting the final measuring.

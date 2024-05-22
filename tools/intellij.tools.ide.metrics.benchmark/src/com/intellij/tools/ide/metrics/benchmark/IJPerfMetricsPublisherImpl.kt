@@ -5,13 +5,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.testFramework.diagnostic.MetricsAggregation
-import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
-import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
+import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
@@ -60,12 +56,12 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       else setBuildParams()
     )
 
-    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMeterCollector): PerformanceMetricsDto {
+    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector): PerformanceMetricsDto {
       val metrics: List<PerformanceMetrics.Metric> = SpanMetricsExtractor().waitTillMetricsExported(uniqueTestIdentifier)
       val additionalMetrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry meters should be exported",
                                                                          retries = 5, delay = 300.milliseconds) {
         metricsCollectors.flatMap {
-          it.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
+          it.collect(PathManager.getLogDir())
         }
       }!!
 
@@ -99,7 +95,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
     }
   }
 
-  override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMeterCollector) {
+  override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {
     delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
 
     val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
@@ -123,16 +119,4 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
                                               zipContent = false)
     }
   }
-}
-
-internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTelemetryJsonMeterCollector {
-  val metricsSelectionStrategy = when (this.metricsAggregation) {
-    MetricsAggregation.EARLIEST -> MetricsSelectionStrategy.EARLIEST
-    MetricsAggregation.LATEST -> MetricsSelectionStrategy.LATEST
-    MetricsAggregation.MINIMUM -> MetricsSelectionStrategy.MINIMUM
-    MetricsAggregation.MAXIMUM -> MetricsSelectionStrategy.MAXIMUM
-    MetricsAggregation.SUM -> MetricsSelectionStrategy.SUM
-  }
-
-  return OpenTelemetryJsonMeterCollector(metricsSelectionStrategy) { meter -> this.metersFilter(meter.name) }
 }

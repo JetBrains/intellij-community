@@ -6,10 +6,10 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
-import com.intellij.platform.testFramework.diagnostic.MetricsAggregation
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
+import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -53,7 +53,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .setDescription("Double gauge example")
       .buildWithCallback { it.record(234.567) }
 
-    val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.contains("custom") }
+    val meterCollector = OpenTelemetryJsonMeterCollector(MetricsSelectionStrategy.SUM) { it.name.contains("custom") }
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
@@ -63,7 +63,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .ofLongs()
       .build()
 
-    PlatformTestUtil.newPerformanceTest(testName) {
+    PerformanceTestUtil.newPerformanceTest(testName) {
       runWithSpan(tracer, customSpanName) {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
@@ -78,7 +78,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .start()
 
     SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
-    val meters = meterCollector.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
+    val meters = meterCollector.collect(PathManager.getLogDir())
 
     meters.assertMeterIsExported("custom.long.counter", 6)
     meters.assertMeterIsExported("custom.double.counter", 6)

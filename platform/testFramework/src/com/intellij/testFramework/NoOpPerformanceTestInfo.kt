@@ -2,7 +2,6 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.util.ThrowableRunnable
 import kotlin.reflect.KFunction
 
@@ -13,10 +12,6 @@ class NoOpPerformanceTestInfo(): PerformanceTestInfo {
   }
 
   override fun attempts(attempts: Int): PerformanceTestInfo? {
-    return this
-  }
-
-  override fun withTelemetryMeters(meterCollector: TelemetryMeterCollector?): PerformanceTestInfo? {
     return this
   }
 
