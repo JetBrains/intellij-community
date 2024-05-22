@@ -9,7 +9,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 class JCheckboxTreeFixture(data: ComponentData) : JTreeUiComponent(data) {
-  val treeFixture = driver.new(JCheckboxTreeUIRef::class, robotService.robot, component)
+  val treeFixture = driver.new(JCheckboxTreeUIRef::class, robot, component)
 
   fun switchCheckBoxByPath(path: List<String>, state: Boolean) {
     treeFixture.switchCheckBoxByPath(path, state)

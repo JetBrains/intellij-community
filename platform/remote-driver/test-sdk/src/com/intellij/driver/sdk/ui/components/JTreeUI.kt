@@ -49,7 +49,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
-  fun selectPathWithEnter(vararg path: String, fullMatch: Boolean = true) {
+  private fun selectPathWithEnter(vararg path: String, fullMatch: Boolean = true) {
     expandPath(*path, fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       clickRow(it.row)
@@ -86,14 +86,13 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     try {
       val expandedPath = mutableListOf<String>()
       path.forEach {
-        var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-        if (currentPathPaths.isEmpty()) {
-          selectPathWithEnter(*expandedPath.toTypedArray(), fullMatch = fullMatch)
-          currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-        }
-        if (currentPathPaths.isEmpty()) {
-          throw PathNotFoundException(expandedPath + listOf(it))
-        }
+        findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+          .ifEmpty {
+            selectPathWithEnter(*expandedPath.toTypedArray(), fullMatch = fullMatch)
+            findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+          }.ifEmpty {
+            throw PathNotFoundException(expandedPath + listOf(it))
+          }
         expandedPath.add(it)
       }
       true

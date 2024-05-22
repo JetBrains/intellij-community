@@ -24,7 +24,7 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
       component.cellRenderer.getTreeCellRendererComponent(component, fileTreePath.lastPathComponent as DefaultMutableTreeNode, component.isPathSelected(fileTreePath), component.isExpanded(fileTreePath), component.model.isLeaf(node), component.getRowForPath(fileTreePath), component.isPathEditable(fileTreePath))
     }
     val jpanel = renderer as? JPanel ?: error("Only JPanel is currently supported")
-    val checkbox = jpanel.components. singleOrNull { it is JCheckBox } as? JCheckBox ?: error("Only JCheckBox is currently supported")
+    val checkbox = jpanel.components.singleOrNull { it is JCheckBox } as? JCheckBox ?: error("Only JCheckBox is currently supported")
     return checkbox
   }
 
@@ -71,15 +71,13 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
       val checkboxLocation = computeOnEdt {
         component.getPathBounds(fileTreePath) ?: error("Have not found bounds")
       }
-      while (getCheckBoxForNode(fileTreePath).isSelected != state)
-      {
+      while (getCheckBoxForNode(fileTreePath).isSelected != state) {
         clickOnCheckbox(checkbox, checkboxLocation)
       }
     }
   }
 
   private fun clickOnCheckbox(checkbox: JCheckBox, checkboxLocation: Rectangle) {
-    checkbox.isVisible
     val checkBoxBounds = checkbox.bounds
 
     val clickX = checkboxLocation.x + checkBoxBounds.width / 2
@@ -87,6 +85,5 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
 
     robot.click(component, Point(clickX, clickY))
   }
-
 
 }

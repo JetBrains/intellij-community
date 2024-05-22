@@ -47,9 +47,6 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
           element.getRenderer().toString().substring(1, element.getRenderer().toString().length - 1)
         }
       }
-      finally {
-        ""
-      }
       hints.add(InlayHint(element.getOffset(), hintText!!))
     }
     return hints
@@ -99,13 +96,6 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
     if (it.size < line) "" else it[line - 1]
-  }
-
-  fun hide() {
-    this.click()
-    keyboard {
-      pressing(KeyEvent.VK_SHIFT) { key(KeyEvent.VK_ESCAPE) }
-    }
   }
 
   fun <T> interact(block: Editor.() -> T): T {
