@@ -26,6 +26,7 @@
   <content>
     <module name="intellij.vcs.git/newUiOnboarding"/>
     <module name="intellij.vcs.git/terminal"/>
+    <module name="intellij.vcs.git.coverage"/>
   </content>
 
   <actions>

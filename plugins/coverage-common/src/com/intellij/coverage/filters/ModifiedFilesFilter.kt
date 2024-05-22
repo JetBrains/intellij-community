@@ -6,9 +6,10 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class ModifiedFilesFilter(private val project: Project) {
+open class ModifiedFilesFilter(private val project: Project) {
 
   @Volatile
   var hasFilteredFiles: Boolean = false
@@ -19,13 +20,17 @@ class ModifiedFilesFilter(private val project: Project) {
   }
 
   fun isFileModified(file: VirtualFile): Boolean {
-    val isModified = isModifiedLocally(file)
+    val isModified = isModifiedLocally(file) || isInModifiedScope(file)
     return isModified.also {
       if (!isModified && !hasFilteredFiles) {
         hasFilteredFiles = true
       }
     }
   }
+
+  open fun isInModifiedScope(file: VirtualFile) = false
+
+  open fun getBranchName(): @Nls String? = null
 
   private fun isModifiedLocally(file: VirtualFile): Boolean {
     val status = FileStatusManager.getInstance(project).getStatus(file)
@@ -36,6 +41,10 @@ class ModifiedFilesFilter(private val project: Project) {
   companion object {
     @JvmStatic
     fun create(project: Project): ModifiedFilesFilter {
+      val filter = ModifiedFilesFilterFactory.EP_NAME.computeSafeIfAny {
+        it.createFilter(project)
+      }
+      if (filter != null) return filter
       return ModifiedFilesFilter(project)
     }
   }
