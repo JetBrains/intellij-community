@@ -1,149 +1,122 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.lightEdit.project;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.lightEdit.project
 
-import com.intellij.ide.lightEdit.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorComposite;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
-import com.intellij.openapi.fileEditor.impl.EditorComposite;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import kotlinx.coroutines.CoroutineScope;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.lightEdit.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorComposite
+import com.intellij.openapi.fileEditor.FileEditorComposite.Companion.EMPTY
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.fileEditor.impl.EditorComposite
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
+import org.jdom.Element
 
-import java.util.List;
-
-public final class LightEditFileEditorManagerImpl extends LightEditFileEditorManagerBase {
-  LightEditFileEditorManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    super(project, coroutineScope);
-  }
-
-  @Override
-  public void loadState(@NotNull Element state) {
+class LightEditFileEditorManagerImpl internal constructor(project: Project,
+                                                          coroutineScope: CoroutineScope) : LightEditFileEditorManagerBase(project,
+                                                                                                                           coroutineScope) {
+  override fun loadState(state: Element) {
     // do not open previously opened files
   }
 
-  @Override
-  public @Nullable Element getState() {
-    return null;
+  override fun getState(): Element? {
+    return null
   }
 
-  @Override
-  public @NotNull FileEditorComposite openFileImpl2(@NotNull EditorWindow window,
-                                                    @NotNull VirtualFile file,
-                                                    @NotNull FileEditorOpenOptions options) {
-    LightEditService.getInstance().openFile(file);
-    FileEditorWithProvider data = getSelectedEditorWithProvider(file);
-    return data == null ? FileEditorComposite.Companion.getEMPTY() : new FileEditorComposite() {
-      @Override
-      public @NotNull List<FileEditor> getAllEditors() {
-        return List.of(data.getFileEditor());
-      }
+  override fun openFileImpl2(window: EditorWindow,
+                             file: VirtualFile,
+                             options: FileEditorOpenOptions): FileEditorComposite {
+    LightEditService.getInstance().openFile(file)
+    val data = getSelectedEditorWithProvider(file)
+    return if (data == null) EMPTY
+    else object : FileEditorComposite {
+      override val allEditors: List<FileEditor>
+        get() = java.util.List.of(data.fileEditor)
 
-      @Override
-      public @NotNull List<FileEditorProvider> getAllProviders() {
-        return List.of(data.getProvider());
-      }
+      override val allProviders: List<FileEditorProvider>
+        get() = java.util.List.of(data.provider)
 
-      @Override
-      public boolean isPreview() {
-        return false;
-      }
-    };
-  }
-
-  @Override
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
-    FileEditorWithProvider data = getSelectedEditorWithProvider(file);
-    return data == null
-           ? new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
-           : new Pair<>(new FileEditor[]{data.getFileEditor()}, new FileEditorProvider[]{data.getProvider()});
-  }
-
-  @Override
-  public @Nullable FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
-    LightEditorManagerImpl editorManager = (LightEditorManagerImpl)LightEditService.getInstance().getEditorManager();
-    LightEditorInfoImpl editorInfo = (LightEditorInfoImpl)editorManager.findOpen(file);
-    if (editorInfo != null) {
-      return new FileEditorWithProvider(editorInfo.getFileEditor(), editorInfo.getProvider());
+      override val isPreview: Boolean
+        get() = false
     }
-    return null;
   }
 
-  @Override
-  public @Nullable FileEditor getSelectedEditor() {
-    return LightEditService.getInstance().getSelectedFileEditor();
+  override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    val data = getSelectedEditorWithProvider(file)
+    return if (data == null
+    ) Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+    else Pair(arrayOf(data.fileEditor), arrayOf(data.provider))
   }
 
-  @Override
-  public Editor getSelectedTextEditor() {
-    return LightEditorInfoImpl.getEditor(getSelectedEditor());
+  override fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider? {
+    val editorManager = LightEditService.getInstance().editorManager as LightEditorManagerImpl
+    val editorInfo = editorManager.findOpen(file) as LightEditorInfoImpl?
+    if (editorInfo != null) {
+      return FileEditorWithProvider(editorInfo.fileEditor, editorInfo.provider)
+    }
+    return null
   }
 
-  @Override
-  public VirtualFile @NotNull [] getOpenFiles() {
-    return VfsUtilCore.toVirtualFileArray(LightEditService.getInstance().getEditorManager().getOpenFiles());
+  override fun getSelectedEditor(): FileEditor? {
+    return LightEditService.getInstance().selectedFileEditor
   }
 
-  @Override
-  public boolean isFileOpen(@NotNull VirtualFile file) {
-    return LightEditService.getInstance().getEditorManager().isFileOpen(file);
+  override fun getSelectedTextEditor(): Editor? {
+    return LightEditorInfoImpl.getEditor(selectedEditor)
   }
 
-  @Override
-  public boolean hasOpenedFile() {
-    return !LightEditService.getInstance().getEditorManager().getOpenFiles().isEmpty();
+  override fun getOpenFiles(): Array<VirtualFile> {
+    return VfsUtilCore.toVirtualFileArray(LightEditService.getInstance().editorManager.openFiles)
   }
 
-  @Override
-  public VirtualFile @NotNull [] getSelectedFiles() {
-    VirtualFile file = LightEditService.getInstance().getSelectedFile();
-    return file != null ? new VirtualFile[] {file} : VirtualFile.EMPTY_ARRAY;
+  override fun isFileOpen(file: VirtualFile): Boolean {
+    return LightEditService.getInstance().editorManager.isFileOpen(file)
   }
 
-  @Override
-  public VirtualFile getCurrentFile() {
-    return LightEditService.getInstance().getSelectedFile();
+  override fun hasOpenedFile(): Boolean {
+    return !LightEditService.getInstance().editorManager.openFiles.isEmpty()
   }
 
-
-  @Override
-  public boolean hasOpenFiles() {
-    return !LightEditService.getInstance().getEditorManager().getOpenFiles().isEmpty();
+  override fun getSelectedFiles(): Array<VirtualFile> {
+    val file = LightEditService.getInstance().selectedFile
+    return if (file != null) arrayOf(file) else VirtualFile.EMPTY_ARRAY
   }
 
-  public @NotNull EditorComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
-    editorInfo.getFileEditor().putUserData(DUMB_AWARE, true); // Needed for composite not to postpone loading via DumbService.wrapGently()
-    FileEditorProvider editorProvider = ((LightEditorInfoImpl)editorInfo).getProvider();
-    FileEditorWithProvider editorWithProvider = new FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider);
-    return createCompositeInstance(editorInfo.getFile(), List.of(editorWithProvider));
+  override val currentFile: VirtualFile?
+    get() = LightEditService.getInstance().selectedFile
+
+
+  override fun hasOpenFiles(): Boolean {
+    return !LightEditService.getInstance().editorManager.openFiles.isEmpty()
   }
 
-  @Override
-  public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
-    LightEditorManagerImpl editorManager = (LightEditorManagerImpl)LightEditService.getInstance().getEditorManager();
-    LightEditorInfo openEditorInfo = editorManager.findOpen(file);
-    if (openEditorInfo == null) return null;
-    return LightEditUtil.findEditorComposite(openEditorInfo.getFileEditor());
+  fun createEditorComposite(editorInfo: LightEditorInfo): EditorComposite {
+    editorInfo.fileEditor.putUserData(DUMB_AWARE, true) // Needed for composite not to postpone loading via DumbService.wrapGently()
+    val editorProvider = (editorInfo as LightEditorInfoImpl).provider
+    val editorWithProvider = FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider)
+    return createCompositeInstance(editorInfo.getFile(), java.util.List.of(editorWithProvider))!!
   }
 
-  @Override
-  public @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
-    return LightEditUtil.findEditorComposite(editor);
+  override fun getComposite(file: VirtualFile): EditorComposite? {
+    val editorManager = LightEditService.getInstance().editorManager as LightEditorManagerImpl
+    val openEditorInfo = editorManager.findOpen(file)
+    if (openEditorInfo == null) return null
+    return LightEditUtil.findEditorComposite(openEditorInfo.fileEditor)
   }
 
-  @Override
-  public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
-    return ContainerUtil.map(LightEditService.getInstance().getEditorManager().getEditors(file), LightEditorInfo::getFileEditor)
-      .toArray(FileEditor.EMPTY_ARRAY);
+  override fun getComposite(editor: FileEditor): EditorComposite? {
+    return LightEditUtil.findEditorComposite(editor)
+  }
+
+  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+    return ContainerUtil.map(LightEditService.getInstance().editorManager.getEditors(file)) { obj: LightEditorInfo -> obj.fileEditor }
+      .toArray(FileEditor.EMPTY_ARRAY)
   }
 }
