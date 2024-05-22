@@ -171,7 +171,7 @@ final class IncompleteModelUtil {
    */
   static boolean mayHaveUnknownTypeDueToPendingReference(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
-    if (type != null) {
+    if (type != null && !(type instanceof PsiMethodReferenceType)) {
       return hasUnresolvedComponent(type);
     }
     expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -192,8 +192,9 @@ final class IncompleteModelUtil {
    * @return list of import statements that potentially import the given unresolved reference
    */
   static List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref.getParent() instanceof PsiImportStatementBase) return List.of();
-    boolean call = ref.getParent() instanceof PsiMethodCallExpression;
+    PsiElement parent = ref.getParent();
+    if (parent instanceof PsiImportStatementBase || ref.isQualified()) return List.of();
+    boolean maybeClass = canBeClass(ref); 
     if (!(ref.getContainingFile() instanceof PsiJavaFile file)) return List.of();
     PsiImportList list = file.getImportList();
     List<PsiImportStatementBase> imports = new ArrayList<>();
@@ -208,12 +209,20 @@ final class IncompleteModelUtil {
           if (reference.resolve() != null) continue;
         }
         // Unqualified method call cannot be imported using non-static import
-        if (statement instanceof PsiImportStaticStatement || !call) {
+        if (maybeClass || statement instanceof PsiImportStaticStatement) {
           imports.add(statement);
         }
       }
     }
     return imports;
+  }
+
+  private static boolean canBeClass(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement parent = ref.getParent();
+    if (parent instanceof PsiMethodCallExpression) return false;
+    if (!(ref instanceof PsiReferenceExpression)) return true;
+    if (parent instanceof PsiReferenceExpression parentRef && parentRef.getQualifierExpression() == ref) return true;
+    return false;
   }
 
   /**

@@ -1,8 +1,13 @@
 import java.util.Map;
 import java.io.IOException;
+import java.util.function.IntFunction;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">Anno</info>;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">MyInterface</info>;
 import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">pkg</info>.<info descr="Not resolved until the project is fully loaded">Cls</info>;
+<warning descr="Unused import statement">import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">UnusedClass</info>;</warning>
+<warning descr="Unused import statement">import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">Value</info>;</warning>
+import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">UsedInClassObject</info>;
+import <info descr="Not resolved until the project is fully loaded">my</info>.<info descr="Not resolved until the project is fully loaded">unknown</info>.<info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>;
 
 public class Simple {
   int test() {
@@ -15,6 +20,21 @@ public class Simple {
     s.trim();
     s.<error descr="Cannot resolve method 'dream' in 'String'">dream</error>();
     System.out.println(s.<error descr="Cannot resolve symbol 'field'">field</error>);
+  }
+  
+  void testImports(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">UnusedClass</info> inner) {
+    <info descr="null">var</info> x = <error descr="Cannot resolve symbol 'Value'">Value</error>;
+    System.out.println(<info descr="Not resolved until the project is fully loaded">UsedInClassObject</info>.class);
+    Runnable r = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>::<info descr="Not resolved until the project is fully loaded">foo</info>;
+  }
+  
+  void testMethodRef() {
+    Runnable r1 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>::new;
+    <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">Runnable r2 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;</error>
+    IntFunction<<info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]> r3 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;
+    Runnable r4 = String::<error descr="Cannot resolve method 'blahblah'">blahblah</error>;
+    Runnable r5 = <error descr="Non-static method cannot be referenced from a static context">String::getBytes</error>;
+    Runnable r6 = "hello"::trim;
   }
 
   void refsInUnresolvedClass(<info descr="Not resolved until the project is fully loaded">Cls</info> s) {
