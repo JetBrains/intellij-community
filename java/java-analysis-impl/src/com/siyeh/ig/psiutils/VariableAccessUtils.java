@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public final class VariableAccessUtils {
 
   private VariableAccessUtils() {}
@@ -525,7 +527,7 @@ public final class VariableAccessUtils {
         return false;
       }
 
-      if (!sameType && !InstanceOfUtils.isVariableTypeChangeSafeForReference(initializationType, refElement)) {
+      if (!sameType && !isVariableTypeChangeSafeForReference(initializationType, refElement)) {
         return false;
       }
     }
@@ -591,6 +593,59 @@ public final class VariableAccessUtils {
            getVariableReferences(var).stream()
              .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
              .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
+  }
+
+  static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
+    if (PsiUtil.isAccessedForWriting(reference)) {
+      PsiAssignmentExpression assignmentExpression = tryCast(parent, PsiAssignmentExpression.class);
+      if (assignmentExpression == null) return false;
+      PsiExpression rValue = assignmentExpression.getRExpression();
+      if (rValue == null) return false;
+      PsiType rValueType = rValue.getType();
+      return rValueType != null && targetType.isAssignableFrom(rValueType);
+    }
+    while (parent instanceof PsiConditionalExpression) {
+      parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+    }
+    if (parent instanceof PsiInstanceOfExpression instanceOf) {
+      PsiTypeElement checkTypeElement = instanceOf.getCheckType();
+      if (checkTypeElement == null) return false;
+      PsiType checkType = checkTypeElement.getType();
+      // Could be always false instanceof which will become compilation error after fix
+      return TypeConversionUtil.areTypesConvertible(targetType, checkType);
+    }
+    if (parent instanceof PsiTypeCastExpression parentCast) {
+      PsiTypeElement castTypeElement = parentCast.getCastType();
+      if (castTypeElement == null) return false;
+      PsiType castType = castTypeElement.getType();
+      // Another replacement could become invalid due to this change
+      return TypeConversionUtil.areTypesConvertible(targetType, castType);
+    }
+    // Some method call can be mis-resolved after update, check this
+    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return false;
+      Object mark = new Object();
+      PsiTreeUtil.mark(reference, mark);
+      PsiCallExpression callCopy = (PsiCallExpression)call.copy();
+      PsiTreeUtil.releaseMark(reference, mark);
+      PsiElement refCopy = PsiTreeUtil.releaseMark(callCopy, mark);
+      if (refCopy == null) return false;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+      PsiTypeCastExpression insertedCast = (PsiTypeCastExpression)refCopy.replace(
+        factory.createExpressionFromText("(a)"+reference.getReferenceName(), refCopy));
+      Objects.requireNonNull(insertedCast.getCastType()).replace(factory.createTypeElement(targetType));
+      return callCopy.resolveMethod() == method;
+    }
+    if (parent instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
+      // private member cannot be accessed on a subtype qualifier
+      if (resolve instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {
