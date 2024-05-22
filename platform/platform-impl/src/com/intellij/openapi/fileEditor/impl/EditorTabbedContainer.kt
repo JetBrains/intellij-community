@@ -555,7 +555,7 @@ private class EditorTabs(
   coroutineScope: CoroutineScope,
   parentDisposable: Disposable,
   private val window: EditorWindow,
-) : JBEditorTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder {
+) : JBEditorTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder, DataProvider {
   private val _entryPointActionGroup: DefaultActionGroup
   private var isActive = false
 
@@ -585,6 +585,14 @@ private class EditorTabs(
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
+  }
+
+  override fun getData(dataId: String): Any? {
+    return when {
+      CommonDataKeys.PROJECT.`is`(dataId) -> window.owner.manager.project
+      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> window.owner.currentCompositeFlow.value?.selectedEditor
+      else -> null
+    }
   }
 
   override fun getEditorWindow(): EditorWindow = window

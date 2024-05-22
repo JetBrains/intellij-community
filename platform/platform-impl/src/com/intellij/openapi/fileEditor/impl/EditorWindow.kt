@@ -10,7 +10,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.TransactionGuard
@@ -1087,7 +1088,7 @@ private fun hasClientPropertyInHierarchy(owner: Component, @Suppress("SameParame
 internal class EditorWindowTopComponent(
   @JvmField val window: EditorWindow,
   @JvmField val composite: EditorComposite,
-) : JPanel(BorderLayout()), EdtDataProvider, EditorWindowHolder {
+) : JPanel(BorderLayout()), EditorWindowHolder {
   init {
     add(composite.component, BorderLayout.CENTER)
     addFocusListener(object : FocusAdapter() {
@@ -1118,12 +1119,6 @@ internal class EditorWindowTopComponent(
   }
 
   override fun getEditorWindow(): EditorWindow = window
-
-  override fun uiDataSnapshot(sink: DataSink) {
-    sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
-    sink[CommonDataKeys.PROJECT] = window.owner.manager.project
-    sink[PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR] = window.owner.currentCompositeFlow.value?.selectedEditor
-  }
 }
 
 private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JComponent) {
