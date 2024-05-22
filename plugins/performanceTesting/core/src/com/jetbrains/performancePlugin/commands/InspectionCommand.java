@@ -27,8 +27,8 @@ import java.util.HashSet;
  * Command runs 'Inspect code' action.
  * Run 'Inspect code' command in context defined by parameters.
  * <p>
- * Syntax: %inspectCode [directory]
- * Example: %inspectCode src
+ * Syntax: %inspectCode [extension]
+ * Example: %inspectCode kt
  */
 public class InspectionCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "inspectCode";
