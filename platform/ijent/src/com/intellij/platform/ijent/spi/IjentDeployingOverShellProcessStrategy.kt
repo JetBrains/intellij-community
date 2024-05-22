@@ -9,6 +9,7 @@ import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -25,7 +26,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
 
   protected abstract suspend fun createShellProcess(): ShellProcessWrapper
 
-  private val myContext = run {
+  private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(start = CoroutineStart.LAZY) {
       val shellProcess = createShellProcess()
@@ -74,6 +75,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
   class ShellProcessWrapper(private var wrapped: Process?) {
     suspend fun write(data: String) {
       val wrapped = wrapped!!
+
       @Suppress("NAME_SHADOWING")
       val data = if (data.endsWith("\n")) data else "$data\n"
       LOG.debug { "Executing a script inside the shell: $data" }
@@ -127,7 +129,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
   }
 }
 
-private suspend fun <T : Any> DeployingContext.execCommand(block: suspend DeployingContext.() -> T): T {
+private suspend fun <T : Any> DeployingContextAndShell.execCommand(block: suspend DeployingContextAndShell.() -> T): T {
   return try {
     block()
   }
@@ -163,8 +165,13 @@ private suspend fun IjentDeployingOverShellProcessStrategy.ShellProcessWrapper.f
   while (line != boundary)
 }
 
-private class DeployingContext(
+private class DeployingContextAndShell(
   val process: IjentDeployingOverShellProcessStrategy.ShellProcessWrapper,
+  val context: DeployingContext,
+)
+
+@VisibleForTesting
+internal data class DeployingContext(
   val chmod: String,
   val cp: String,
   val cut: String,
@@ -181,7 +188,32 @@ private class DeployingContext(
  *
  * This tricky function checks if the necessary core utils exist and tries to substitute them with busybox otherwise.
  */
-private suspend fun createDeployingContext(shellProcess: IjentDeployingOverShellProcessStrategy.ShellProcessWrapper): DeployingContext {
+private suspend fun createDeployingContext(
+  shellProcess: IjentDeployingOverShellProcessStrategy.ShellProcessWrapper,
+): DeployingContextAndShell {
+  val deployingContext = createDeployingContext { commands ->
+    val outputOfWhich = mutableListOf<String>()
+
+    val done = "done"
+    val whichCmd = commands.joinToString(" ").let { joined ->
+      "set +e; which $joined || /bin/busybox which $joined || /usr/bin/busybox which $joined; echo $done; set -e"
+    }
+
+    shellProcess.write(whichCmd)
+
+    while (true) {
+      val line = shellProcess.readLineWithoutBuffering()
+      if (line == done) break
+      outputOfWhich += line
+    }
+
+    outputOfWhich
+  }
+  return DeployingContextAndShell(shellProcess, deployingContext)
+}
+
+@VisibleForTesting
+internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Collection<String>) -> Collection<String>): DeployingContext {
   var busybox: Lazy<String>? = null
 
   // This strange at first glance code helps reduce copy-paste errors.
@@ -206,23 +238,11 @@ private suspend fun createDeployingContext(shellProcess: IjentDeployingOverShell
            ?: throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
   }
 
-  val done = "done"
-  val whichCmd = commands.joinToString(" ").let { joined ->
-    "set +e; which $joined || /bin/busybox which $joined || /usr/bin/busybox which $joined; echo $done; set -e"
-  }
-
-  shellProcess.write(whichCmd)
-
-  while (true) {
-    val line = shellProcess.readLineWithoutBuffering()
-    if (line == done) break
-    outputOfWhich += line
-  }
+  outputOfWhich += runWhichCmd(commands)
 
   busybox = lazy { getCommandPath("busybox") }
 
   return DeployingContext(
-    process = shellProcess,
     chmod = getCommandPath("chmod"),
     cp = getCommandPath("cp"),
     cut = getCommandPath("cut"),
@@ -235,11 +255,11 @@ private suspend fun createDeployingContext(shellProcess: IjentDeployingOverShell
   )
 }
 
-private suspend fun DeployingContext.getTargetPlatform(): IjentPlatform.Posix {
+private suspend fun DeployingContextAndShell.getTargetPlatform(): IjentPlatform.Posix = run {
   // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
   // verbose, and that information may be sufficient for choosing the right binary.
   // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
-  process.write("$uname -pm")
+  process.write("${context.uname} -pm")
 
   val arch = process.readLineWithoutBuffering().split(" ").filterTo(linkedSetOf(), String::isNotEmpty)
 
@@ -252,7 +272,7 @@ private suspend fun DeployingContext.getTargetPlatform(): IjentPlatform.Posix {
   return targetPlatform
 }
 
-private suspend fun DeployingContext.uploadIjentBinary(
+private suspend fun DeployingContextAndShell.uploadIjentBinary(
   ijentBinaryOnLocalDisk: Path,
   pathMapper: suspend (Path) -> String?,
 ): String {
@@ -261,7 +281,7 @@ private suspend fun DeployingContext.uploadIjentBinary(
 
   val ijentBinaryPreparedOnTarget = pathMapper(ijentBinaryOnLocalDisk)
 
-  val script = run {
+  val script = context.run {
     val ijentPathUploadScript =
       pathMapper(ijentBinaryOnLocalDisk)
         ?.let { "$cp ${posixQuote(it)} \$BINARY" }
@@ -285,15 +305,16 @@ private suspend fun DeployingContext.uploadIjentBinary(
   return process.readLineWithoutBuffering()
 }
 
-private suspend fun DeployingContext.execIjent(remotePathToBinary: String): Process {
-  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = env).joinToString(" ")
-  val commandLineArgs =
+private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): Process {
+  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
+  val commandLineArgs = context.run {
     """
     | cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))};
     | export SHELL="${'$'}($getent passwd "${'$'}($whoami)" | $cut -d: -f7)";
     | if [ -z "${'$'}SHELL" ]; then export SHELL='/bin/sh' ; fi;
     | exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}
     """.trimMargin()
+  }
   process.write(commandLineArgs)
   return process.extractProcess()
 }
