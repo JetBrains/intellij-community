@@ -223,7 +223,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val jetBrainsClientOptions = listOf(
       "-Djb.vmOptionsFile=${vmOptionsFile.pathString}",
       "-Didea.vendor.name=JetBrains",
-      "-Didea.paths.selector=JetBrainsClient${build.withoutProductCode().asString()}",
+      "-Didea.paths.selector=${PathManager.getPathsSelector()}",
       "-Didea.platform.prefix=JetBrainsClient",
       "-Dide.no.platform.update=true",
       "-Didea.initially.ask.config=never",
