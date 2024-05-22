@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -105,14 +106,20 @@ public final class PyiUtil {
   @NotNull
   public static LanguageLevel getOriginalLanguageLevel(@NotNull PyElement element) {
     PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PyiFile) {
+    if (containingFile instanceof PyiFile pyiFile) {
       PsiElement impl = getOriginalElement(element);
       if (impl != null) {
         return LanguageLevel.forElement(impl);
       }
       else {
         // XXX: Relying on the fact .pyi files still have the language level key set by the pusher
-        return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(element.getProject(), containingFile.getVirtualFile());
+        VirtualFile vFile = containingFile.getVirtualFile();
+        if (vFile != null) {
+          return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(element.getProject(), vFile);
+        }
+        else {
+          return pyiFile.getLanguageLevel();
+        }
       }
     }
     return LanguageLevel.forElement(element);

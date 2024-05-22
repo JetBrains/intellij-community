@@ -28,7 +28,7 @@ import java.util.Optional;
 @ApiStatus.Experimental
 public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStatement,
                                        PyAstDecoratable, PyAstCallable, PyAstStatementListContainer, PyAstPossibleClassMember,
-                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner{
+                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner {
 
   PyAstFunction[] EMPTY_ARRAY = new PyAstFunction[0];
   ArrayFactory<PyAstFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyAstFunction[count];

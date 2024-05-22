@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
@@ -55,6 +57,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
                                psi.getDeprecationMessage(),
                                getStubElementType(),
+                               PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi),
                                createCustomStub(psi));
   }
 
@@ -135,6 +138,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     dataStream.writeUTFFast(docString != null ? docString : "");
     dataStream.writeName(pyClassStub.getDeprecationMessage());
 
+    PyVersionSpecificStubBaseKt.serializeVersions(pyClassStub.getVersions(), dataStream);
+
     serializeCustomStub(pyClassStub.getCustomStub(PyCustomClassStub.class), dataStream);
   }
 
@@ -161,14 +166,16 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
 
     final String docStringInStub = dataStream.readUTFFast();
-    final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
+    final String docString = StringUtil.nullize(docStringInStub);
 
     final String deprecationMessage = dataStream.readNameString();
+
+    final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(dataStream);
 
     final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
 
     return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString, deprecationMessage,
-                               getStubElementType(), customStub);
+                               getStubElementType(), versions, customStub);
   }
 
   @Override

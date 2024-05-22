@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -399,47 +398,13 @@ public final class PyPsiUtils {
       Pair<List<PsiComment>, PsiElement> blockAndAnchor = getPrecedingCommentsAndAnchor(anchor, true, false);
       anchor = blockAndAnchor.getSecond();
       List<PsiComment> block = blockAndAnchor.getFirst();
-      if (block.size() != 0 || anchor instanceof PsiComment) {
+      if (!block.isEmpty() || anchor instanceof PsiComment) {
         blocks.add(block);
       }
     }
     while (anchor instanceof PsiComment);
     Collections.reverse(blocks);
     return blocks;
-  }
-
-  @NotNull
-  static <T extends PyElement> List<T> collectStubChildren(@NotNull PyFile pyFile,
-                                                           @Nullable StubElement<?> stub,
-                                                           @NotNull Class<T> elementType) {
-    if (stub != null) {
-      final List<T> result = new ArrayList<>();
-      @SuppressWarnings("rawtypes") final List<StubElement> children = stub.getChildrenStubs();
-      for (StubElement<?> child : children) {
-        PsiElement childPsi = child.getPsi();
-        if (elementType.isInstance(childPsi)) {
-          result.add(elementType.cast(childPsi));
-        }
-      }
-      return result;
-    }
-    else {
-      return PyPsiUtilsCore.collectChildren(pyFile, elementType);
-    }
-  }
-
-  static List<PsiElement> collectAllStubChildren(PsiElement e, StubElement stub) {
-    if (stub != null) {
-      final List<PsiElement> result = new ArrayList<>();
-      final List<StubElement> children = stub.getChildrenStubs();
-      for (StubElement child : children) {
-        result.add(child.getPsi());
-      }
-      return result;
-    }
-    else {
-      return PyPsiUtilsCore.collectAllChildren(e);
-    }
   }
 
   public static int findArgumentIndex(PyCallExpression call, PsiElement argument) {
@@ -504,10 +469,7 @@ public final class PyPsiUtils {
 
   @Nullable
   public static PyExpression flattenParens(@Nullable PyExpression expr) {
-    while (expr instanceof PyParenthesizedExpression) {
-      expr = ((PyParenthesizedExpression)expr).getContainedExpression();
-    }
-    return expr;
+    return (PyExpression)PyPsiUtilsCore.flattenParens(expr);
   }
 
   @Nullable
