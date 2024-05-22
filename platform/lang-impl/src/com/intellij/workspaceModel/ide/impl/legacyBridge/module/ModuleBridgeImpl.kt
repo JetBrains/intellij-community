@@ -11,9 +11,11 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.DeprecatedModuleOptionManager
 import com.intellij.openapi.module.impl.ModuleImpl
+import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -76,6 +78,20 @@ internal class ModuleBridgeImpl(
   }
 
   override fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl) {
+    // There are some cases when `ModuleBridgeImpl` starts saving data into the IML (e.g., new Gradle import), so we
+    // need to reregister `IComponentStore` from `NonPersistentModuleStore` to `ModuleStoreImpl`
+    if (imlFilePointer == null && store is NonPersistentModuleStore) {
+      val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+      val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+                                 ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
+
+      val classLoader = javaClass.classLoader
+      val moduleStoreImpl = classLoader.loadClass("com.intellij.configurationStore.ModuleStoreImpl")
+      registerService(serviceInterface = IComponentStore::class.java,
+                      implementation = moduleStoreImpl,
+                      pluginDescriptor = corePluginDescriptor,
+                      override = true)
+    }
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     val imlPath = newModuleFileUrl.toPath()
     (store.storageManager as RenameableStateStorageManager).pathRenamed(imlPath, null)

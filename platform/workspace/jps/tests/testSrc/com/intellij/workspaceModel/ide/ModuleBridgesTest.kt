@@ -6,6 +6,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
+import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.*
@@ -34,8 +35,10 @@ import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.util.PathUtil
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -818,6 +821,38 @@ class ModuleBridgesTest {
       }
     }
     assertEquals("yyy", newModule.name)
+  }
+
+  @Test
+  fun `make module persistent`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "xxx"
+    val moduleManager = ModuleManager.getInstance(project)
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+
+    val newNonPersistentModule = moduleManager.newNonPersistentModule(moduleName, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
+    assertFalse((newNonPersistentModule as ModuleEx).canStoreSettings())
+    val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).single()
+    assertEquals(NonPersistentEntitySource, moduleEntity.entitySource)
+
+    val moduleDirPath = temporaryDirectoryRule.newDirectoryPath(moduleName).toString()
+    val moduleDirVfu = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(moduleDirPath))
+    val moduleEntitySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(
+      project = project,
+      baseModuleDir = moduleDirVfu,
+      externalSource = null,
+    )
+
+    workspaceModel.updateProjectModel { builder ->
+      val entity = builder.resolve(ModuleId(moduleName))!!
+      builder.modifyEntity(entity) {
+        this.entitySource = moduleEntitySource
+      }
+    }
+
+    val persistentModule = moduleManager.modules.single()
+    assertTrue((persistentModule as ModuleEx).canStoreSettings())
+    assertSame(newNonPersistentModule, persistentModule)
   }
 
   class OutCatcher(printStream: PrintStream) : PrintStream(printStream) {
