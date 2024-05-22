@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import java.io.IOException
 import java.io.InputStream
 
@@ -16,10 +17,24 @@ class RawIncludedFromData internal constructor(
   val withoutModules: Set<RuntimeModuleId>,
 )
 
-interface IncludedProductModulesResolver {
+interface ResourceFileResolver {
   /**
-   * Reads content of META-INF/product-modules.xml from [moduleId] if it's present or `null` if it cannot be resolved.
+   * Reads content of file with [relativePath] from [moduleId] if it's present or `null` if it cannot be resolved.
    */
   @Throws(IOException::class)
-  fun readProductModules(moduleId: RuntimeModuleId): InputStream?
+  fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream?
+  
+  companion object {
+    /**
+     * Returns the default variant of [ResourceFileResolver] which load files from module classes roots specified in [moduleRepository]. 
+     */
+    @JvmStatic
+    fun default(moduleRepository: RuntimeModuleRepository): ResourceFileResolver {
+      return object : ResourceFileResolver {
+        override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
+          return moduleRepository.getModule(moduleId).readFile(relativePath)
+        }  
+      }
+    } 
+  }
 }
