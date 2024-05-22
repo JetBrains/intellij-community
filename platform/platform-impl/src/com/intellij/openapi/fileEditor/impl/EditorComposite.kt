@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -37,12 +38,15 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
+import java.awt.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -481,12 +485,38 @@ open class EditorComposite internal constructor(
   }
 }
 
-private class EditorCompositePanel(private val composite: EditorComposite) : JPanel(BorderLayout()), EdtDataProvider {
+internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), EdtDataProvider {
   var focusComponent: () -> JComponent? = { null }
     private set
 
   init {
-    isFocusable = false
+    addFocusListener(object : FocusAdapter() {
+      override fun focusGained(e: FocusEvent) {
+        // no window - not visible
+        val editorWindow = UIUtil.getParentOfType(EditorWindowHolder::class.java, this@EditorCompositePanel)?.editorWindow ?: return
+        editorWindow.coroutineScope.launch(Dispatchers.EDT) {
+          if (!hasFocus()) {
+            return@launch
+          }
+          val focus = composite.selectedWithProvider?.fileEditor?.preferredFocusedComponent
+          if (focus != null && !focus.hasFocus()) {
+            IdeFocusManager.getGlobalInstance().requestFocus(focus, true)
+          }
+        }
+      }
+    })
+    focusTraversalPolicy = object : FocusTraversalPolicy() {
+      override fun getComponentAfter(aContainer: Container, aComponent: Component) = composite.focusComponent
+
+      override fun getComponentBefore(aContainer: Container, aComponent: Component) = composite.focusComponent
+
+      override fun getFirstComponent(aContainer: Container) = composite.focusComponent
+
+      override fun getLastComponent(aContainer: Container) = composite.focusComponent
+
+      override fun getDefaultComponent(aContainer: Container) = composite.focusComponent
+    }
+    isFocusCycleRoot = true
   }
 
   fun setComponent(newComponent: JComponent, focusComponent: () -> JComponent?) {

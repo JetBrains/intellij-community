@@ -13,7 +13,6 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.diagnostic.logger
@@ -43,7 +42,9 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -166,7 +167,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
    */
   @Suppress("MemberVisibilityCanBePrivate", "unused")
   fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
-    return (tabbedPane.getSelectedComponent(ignorePopup) as? EditorWindowTopComponent)?.composite
+    return (tabbedPane.getSelectedComponent(ignorePopup) as? EditorCompositePanel)?.composite
   }
 
   /**
@@ -318,7 +319,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       tabbedPane.insertTab(
         file = file,
         icon = EmptyIcon.create(template.iconWidth, template.iconHeight),
-        component = EditorWindowTopComponent(window = this, composite = composite),
+        component = composite.component,
         tooltip = null,
         indexToInsert = indexToInsert,
         selectedEditor = composite.selectedEditor,
@@ -890,7 +891,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     return IntRange(0, tabCount - 1).firstOrNull { getCompositeAt(it).file == fileToFind } ?: -1
   }
 
-  private fun getCompositeAt(i: Int): EditorComposite = (tabbedPane.tabs.getTabAt(i).component as EditorWindowTopComponent).composite
+  private fun getCompositeAt(i: Int): EditorComposite = (tabbedPane.tabs.getTabAt(i).component as EditorCompositePanel).composite
 
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
@@ -1083,41 +1084,6 @@ private fun hasClientPropertyInHierarchy(owner: Component, @Suppress("SameParame
     component = component.parent ?: break
   }
   return false
-}
-
-internal class EditorWindowTopComponent(
-  @JvmField val window: EditorWindow,
-  @JvmField val composite: EditorComposite,
-) : JPanel(BorderLayout()), EditorWindowHolder {
-  init {
-    add(composite.component, BorderLayout.CENTER)
-    addFocusListener(object : FocusAdapter() {
-      override fun focusGained(e: FocusEvent) {
-        window.coroutineScope.launch(Dispatchers.EDT) {
-          if (!hasFocus()) {
-            return@launch
-          }
-          val focus = composite.selectedWithProvider?.fileEditor?.preferredFocusedComponent
-          if (focus != null && !focus.hasFocus()) {
-            IdeFocusManager.getGlobalInstance().requestFocus(focus, true)
-          }
-        }
-      }
-    })
-    focusTraversalPolicy = object : FocusTraversalPolicy() {
-      override fun getComponentAfter(aContainer: Container, aComponent: Component) = composite.focusComponent
-
-      override fun getComponentBefore(aContainer: Container, aComponent: Component) = composite.focusComponent
-
-      override fun getFirstComponent(aContainer: Container) = composite.focusComponent
-
-      override fun getLastComponent(aContainer: Container) = composite.focusComponent
-
-      override fun getDefaultComponent(aContainer: Container) = composite.focusComponent
-    }
-    isFocusCycleRoot = true
-  }
-  override fun getEditorWindow(): EditorWindow = window
 }
 
 private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JComponent) {

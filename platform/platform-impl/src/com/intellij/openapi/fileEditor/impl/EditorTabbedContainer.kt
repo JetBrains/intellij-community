@@ -267,7 +267,7 @@ class EditorTabbedContainer internal constructor(
 
   fun getSelectedComposite(): EditorComposite? {
     val selectedTab = editorTabs.selectedInfo
-    return selectedTab?.component?.let { (it as EditorWindowTopComponent).composite }
+    return selectedTab?.component?.let { (it as EditorCompositePanel).composite }
   }
 
   internal fun insertTab(
@@ -393,7 +393,7 @@ class EditorTabbedContainer internal constructor(
   private fun doProcessDoubleClick(e: MouseEvent) {
     val info = editorTabs.findInfo(e)
     if (info != null) {
-      val composite = (info.component as EditorWindowTopComponent).composite
+      val composite = (info.component as EditorCompositePanel).composite
       if (composite.isPreview) {
         composite.isPreview = false
         window.owner.updateFileColorAsync(composite.file)
@@ -620,8 +620,8 @@ private class EditorTabs(
   }
 
   override fun shouldPaintBottomBorder(): Boolean {
-    val info = selectedInfo ?: return true
-    return !(info.component as EditorWindowTopComponent).composite.selfBorder
+    val tab = selectedInfo ?: return true
+    return !(tab.component as EditorCompositePanel).composite.selfBorder
   }
 
   // return same instance to avoid unnecessary action toolbar updates
