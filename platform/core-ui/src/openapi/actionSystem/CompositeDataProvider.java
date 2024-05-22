@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +41,7 @@ public final class CompositeDataProvider implements DataProvider {
     }
     return list == null ? null :
            list.size() == 1 ? list.get(0) :
-           new CompositeDataProvider(new ArrayList<>(list));
+           new CompositeDataProvider(List.copyOf(list));
   }
 
   @Override
@@ -56,7 +56,7 @@ public final class CompositeDataProvider implements DataProvider {
   }
 
   @ApiStatus.Internal
-  public @NotNull Iterable<? extends DataProvider> getDataProviders() {
+  public @NotNull List<? extends DataProvider> getDataProviders() {
     return myProviders;
   }
 }

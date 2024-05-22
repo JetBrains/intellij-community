@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AsyncResult;
@@ -94,6 +91,13 @@ public abstract class DataManager {
    */
   public abstract @Nullable <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
 
+  /**
+   * Implement {@link com.intellij.openapi.actionSystem.EdtDataProvider} on a component directly
+   * and use separate {@link com.intellij.openapi.actionSystem.EdtDataRule} to add specific UI data.
+   * <p>
+   * Use {@link EdtNoGetDataProvider} as a temporary type-safe and performant solution.
+   */
+  @ApiStatus.Obsolete
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
     if (component instanceof DataProvider) {
       LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing DataProvider. " +

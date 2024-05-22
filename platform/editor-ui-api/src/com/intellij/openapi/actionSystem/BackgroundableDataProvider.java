@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** @deprecated Use {@link PlatformCoreDataKeys#BGT_DATA_PROVIDER} instead */
+@Deprecated(forRemoval = true)
 public interface BackgroundableDataProvider extends DataProvider {
 
   /**

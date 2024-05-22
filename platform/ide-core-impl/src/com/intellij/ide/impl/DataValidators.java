@@ -18,6 +18,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +39,14 @@ public abstract class DataValidators {
     boolean checkValid(@NotNull T data, @NotNull String dataId, @NotNull Object source);
   }
 
+  @ApiStatus.NonExtendable
   public interface Registry {
     <T> void register(@NotNull DataKey<T> key, @NotNull Validator<? super T> validator);
+  }
+
+  @ApiStatus.Internal
+  public interface SourceWrapper {
+    @NotNull Object unwrapSource();
   }
 
   public static <T> @NotNull Validator<T[]> arrayValidator(@NotNull Validator<? super T> validator) {
@@ -47,9 +54,11 @@ public abstract class DataValidators {
       for (T element : data) {
         if (element == null) {
           T notNull = ContainerUtil.find(data, Conditions.notNull());
-          LOG.error("Array with null provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")" +
-                    ": " + data.getClass().getComponentType().getName() + "[" + data.length + "] " +
-                    "{" + (notNull == null ? null : notNull.getClass().getName()) + (data.length > 1 ? ", ..." : "") + "}");
+          Class<?> aClass = unwrap(source).getClass();
+          LOG.error(PluginException.createByClass(
+            "Array with null provided by " + aClass.getName() + ".getData(\"" + dataId + "\")" +
+            ": " + data.getClass().getComponentType().getName() + "[" + data.length + "] " +
+            "{" + (notNull == null ? null : notNull.getClass().getName()) + (data.length > 1 ? ", ..." : "") + "}", null, aClass));
           return false;
         }
         if (!validator.checkValid(element, dataId, source)) {
@@ -93,15 +102,21 @@ public abstract class DataValidators {
   }
 
   private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
+    Class<?> aClass = unwrap(source).getClass();
     LOG.error(PluginException.createByClass(
-      "PSI element is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
-      "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER", null, source.getClass()));
+      "PSI element is provided on EDT by " + aClass.getName() + ".getData(\"" + dataId + "\"). " +
+      "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER", null, aClass));
   }
 
   private static void reportObjectOfIncorrectType(@NotNull String dataId, @NotNull Object source, @NotNull ClassCastException ex) {
+    Class<?> aClass = unwrap(source).getClass();
     LOG.error(PluginException.createByClass(
-      "Object of incorrect type provided by " + source.getClass().getName() +
-      ".getData(\"" + dataId + "\")", ex, source.getClass()));
+      "Object of incorrect type provided by " + aClass.getName() +
+      ".getData(\"" + dataId + "\")", ex, aClass));
+  }
+
+  private static @NotNull Object unwrap(@NotNull Object source) {
+    return source instanceof SourceWrapper o ? o.unwrapSource() : source;
   }
 
   private static final Map<String, Validator<?>[]> ourValidators = new ConcurrentHashMap<>();

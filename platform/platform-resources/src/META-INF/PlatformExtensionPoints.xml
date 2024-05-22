@@ -78,6 +78,8 @@
       <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
     </extensionPoint>
 
+    <extensionPoint name="edtDataRule" interface="com.intellij.openapi.actionSystem.EdtDataRule" dynamic="true"/>
+
     <extensionPoint name="dataValidators" interface="com.intellij.ide.impl.DataValidators" dynamic="true"/>
 
     <extensionPoint name="cutElementMarker"

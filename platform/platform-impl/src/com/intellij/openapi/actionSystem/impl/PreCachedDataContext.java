@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -28,6 +29,7 @@ import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,11 +97,21 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         myDataKeysCount = ourDataKeysIndices.size();
       }
       else {
-        DataKey<?>[] keys = DataKey.allKeys();
-        myDataKeysCount = updateDataKeyIndices(keys);
+        int keyCount;
+        FList<ProviderData> cachedData;
+        MySink sink = new MySink();
         try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
-          myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
+          while (true) {
+            sink.keys = null;
+            cachedData = cacheComponentsData(sink, components, initial, myDataManager);
+            cachedData = runSnapshotRules(sink, component, cachedData);
+            keyCount = sink.keys == null ? DataKey.allKeysCount() : sink.keys.length;
+            // retry if providers add new keys
+            if (keyCount == DataKey.allKeysCount()) break;
+          }
         }
+        myDataKeysCount = keyCount;
+        myCachedData = cachedData;
         ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -130,15 +142,26 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   }
 
   @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
-    DataKey<?>[] keys = DataKey.allKeys();
-    Component component = SoftReference.dereference(myComponentRef.ref);
-    int dataKeysCount = updateDataKeyIndices(keys);
-    ProviderData cachedData = cacheProviderData(dataProvider, component, myDataManager, keys);
-    FList<ProviderData> newCachedData = cachedData == null ? myCachedData : myCachedData.prepend(cachedData);
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    int keyCount;
+    FList<ProviderData> cachedData;
+    MySink sink = new MySink();
+    while (true) {
+      Component component = SoftReference.dereference(myComponentRef.ref);
+      sink.keys = null;
+      sink.hideEditor = hideEditor(component);
+      cacheProviderData(sink, dataProvider, myDataManager);
+      cachedData = sink.map == null ? myCachedData : myCachedData.prepend(sink.map);
+      // do not provide CONTEXT_COMPONENT in BGT
+      cachedData = runSnapshotRules(sink, isEDT ? component : null, cachedData);
+      keyCount = sink.keys == null ? DataKey.allKeysCount() : sink.keys.length;
+      // retry if the provider adds new keys
+      if (keyCount == DataKey.allKeysCount()) break;
+    }
     AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
     return this instanceof InjectedDataContext
-           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myDataManager, dataKeysCount)
-           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myDataManager, dataKeysCount);
+           ? new InjectedDataContext(myComponentRef, cachedData, userData, myDataManager, keyCount)
+           : new PreCachedDataContext(myComponentRef, cachedData, userData, myDataManager, keyCount);
   }
 
   @Override
@@ -163,9 +186,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         return getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
       });
       if (answer != null) {
-        map.put(dataId, answer);
+        map.computedData.put(dataId, answer);
         map.nullsByRules.clear(keyIndex);
-        map.valueByRules.set(keyIndex);
         reportValueProvidedByRules(dataId);
       }
       else {
@@ -194,31 +216,37 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     Object answer = null;
     for (ProviderData map : myCachedData) {
       ProgressManager.checkCanceled();
-      answer = map.get(dataId);
+      boolean isComputed = false;
+      answer = map.uiSnapshot.get(dataId);
+      if (answer == null) {
+        answer = map.computedData.get(dataId);
+        isComputed = true;
+      }
       if (answer == EXPLICIT_NULL) break;
       if (answer != null) {
-        if (map.valueByRules.get(keyIndex)) {
+        if (isComputed) {
           reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed);
           if (!ruleValuesAllowed) return null;
         }
         answer = DataValidators.validOrNull(answer, dataId, this);
         if (answer != null) break;
+        if (!isComputed) return null;
         // allow slow data providers and rules to re-calc the value
-        map.remove(dataId);
-        map.valueByRules.clear(keyIndex);
+        map.computedData.remove(dataId);
       }
       if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
 
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, id -> {
-        return Objects.equals(id, dataId) ? null : map.get(id);
+        if (Objects.equals(id, dataId)) return null;
+        Object o = map.uiSnapshot.get(id);
+        return o != null ? o : map.computedData.get(id);
       });
 
       if (answer == null) {
         map.nullsByRules.set(keyIndex);
       }
       else {
-        map.put(dataId, answer);
-        map.valueByRules.set(keyIndex);
+        map.computedData.put(dataId, answer);
         reportValueProvidedByRules(dataId);
         break;
       }
@@ -252,10 +280,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId, boolean uiOnly) {
-    int index = uiOnly ? ourDataKeysIndices.getOrDefault(dataId, -1) : -1;
     for (ProviderData map : myCachedData) {
-      if (index > -1 && map.valueByRules.get(index)) continue;
-      Object answer = map.get(dataId);
+      Object answer = map.uiSnapshot.get(dataId);
+      if (answer == null && !uiOnly) answer = map.computedData.get(dataId);
       if (answer != null) {
         return answer == EXPLICIT_NULL ? null : answer;
       }
@@ -265,65 +292,232 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   static void clearAllCaches() {
     for (FList<ProviderData> list : ourPrevMaps.values()) {
-      for (ProviderData map : list) map.clear();
+      for (ProviderData map : list) {
+        map.uiSnapshot.clear();
+        map.computedData.clear();
+      }
     }
     ourPrevMaps.clear();
     for (PreCachedDataContext context : ourInstances) {
-      for (ProviderData map : context.myCachedData) map.clear();
+      for (ProviderData map : context.myCachedData) {
+        map.uiSnapshot.clear();
+        map.computedData.clear();
+      }
     }
     ourInstances.clear();
   }
 
-  private static int updateDataKeyIndices(DataKey<?> @NotNull [] keys) {
+  static @NotNull AsyncDataContext customize(@NotNull AsyncDataContext context, @NotNull DataProvider provider) {
+    MySink sink = new MySink();
+    cacheProviderData(sink, provider, (DataManagerImpl)DataManager.getInstance());
+    Map<String, Object> snapshot = sink.map == null ? null : sink.map.uiSnapshot;
+    if (snapshot == null) return context;
+    return dataId -> DataManager.getInstance().getCustomizedData(dataId, context, snapshot::get);
+  }
+
+  private static void updateDataKeyIndices(DataKey<?> @NotNull [] keys) {
     if (ourDataKeysIndices.size() >= keys.length) {
-      return ourDataKeysIndices.size();
+      return;
     }
     for (DataKey<?> key : keys) {
       ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
     }
-    return ourDataKeysIndices.size();
   }
 
-  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<? extends Component> components,
+  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull MySink sink,
+                                                                  @NotNull List<? extends Component> components,
                                                                   @NotNull FList<ProviderData> initial,
-                                                                  @NotNull DataManagerImpl dataManager,
-                                                                  DataKey<?> @NotNull [] keys) {
-    FList<ProviderData> result = initial;
+                                                                  @NotNull DataManagerImpl dataManager) {
+    FList<ProviderData> cachedData = initial;
     long start = System.currentTimeMillis();
     for (Component comp : components) {
-      DataProvider dataProvider = getDataProviderEx(comp);
-      if (dataProvider == null && hideEditor(comp)) dataProvider = dataId -> null;
-      if (dataProvider == null) continue;
-      ProviderData cachedData = cacheProviderData(dataProvider, comp, dataManager, keys);
-      result = cachedData == null ? result : result.prepend(cachedData);
-      ourPrevMaps.put(comp, result);
+      sink.map = null;
+      sink.hideEditor = hideEditor(comp);
+      Object dataProvider = comp instanceof EdtDataProvider ? comp : getDataProviderEx(comp);
+      cacheProviderData(sink, dataProvider, dataManager);
+      cachedData = sink.map == null ? cachedData : cachedData.prepend(sink.map);
+      ourPrevMaps.put(comp, cachedData);
     }
     long time = System.currentTimeMillis() - start;
     if (time > 200) {
       // nothing
     }
-    return result;
+    return cachedData;
   }
 
-  private static @Nullable ProviderData cacheProviderData(@NotNull DataProvider dataProvider,
-                                                          @Nullable Component c,
-                                                          @NotNull DataManagerImpl dataManager,
-                                                          DataKey<?> @NotNull [] keys) {
-    ProviderData cachedData = null;
-    boolean hideEditor = hideEditor(c);
-    for (DataKey<?> key : keys) {
-      if (key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
-          key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
-          key == PlatformDataKeys.MODALITY_STATE) {
-        continue;
+  private static void cacheProviderData(@NotNull MySink sink,
+                                        @Nullable Object dataProvider,
+                                        @NotNull DataManagerImpl dataManager) {
+    if (dataProvider != null) {
+      DataSink.uiDataSnapshot(sink, dataProvider);
+      if (sink.map != null) { // no data - no rules
+        for (DataKey<?> key : dataManager.keysForRuleType(GetDataRuleType.FAST)) {
+          Object data = dataManager.getDataFromRules(key.getName(), GetDataRuleType.FAST, sink.map.uiSnapshot::get);
+          if (data == null) continue;
+          sink.map.uiSnapshot.putIfAbsent(key.getName(), data);
+        }
       }
-      Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR || key == InjectedDataKeys.EDITOR) ?
-                    EXPLICIT_NULL : dataManager.getDataFromProviderAndRules(key.getName(), GetDataRuleType.FAST, dataProvider);
-      if (data == null) continue;
-      if (cachedData == null) cachedData = new ProviderData();
-      cachedData.put(key.getName(), data);
     }
-    return cachedData;
+    if (sink.hideEditor) {
+      if (sink.map == null) sink.map = new ProviderData();
+      sink.map.uiSnapshot.put(CommonDataKeys.EDITOR.getName(), EXPLICIT_NULL);
+      sink.map.uiSnapshot.put(CommonDataKeys.HOST_EDITOR.getName(), EXPLICIT_NULL);
+      sink.map.uiSnapshot.put(InjectedDataKeys.EDITOR.getName(), EXPLICIT_NULL);
+    }
+  }
+
+  private static FList<ProviderData> runSnapshotRules(@NotNull MySink sink,
+                                                      @Nullable Component component,
+                                                      @NotNull FList<ProviderData> cachedData) {
+    boolean noMap = sink.map == null;
+    DataSnapshot snapshot = new DataSnapshot() {
+      /** @noinspection unchecked*/
+      @Override
+      public <T> @Nullable T get(@NotNull DataKey<@NotNull T> key) {
+        if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT) return (T)component;
+        for (ProviderData map : cachedData) {
+          Object answer = map.uiSnapshot.get(key.getName());
+          if (answer != null) {
+            return answer == EXPLICIT_NULL ? null : (T)answer;
+          }
+        }
+        return null;
+      }
+    };
+    EdtDataRule.forEachRule(o -> {
+      Object prev = sink.source;
+      sink.source = o;
+      sink.cachedDataForRules = cachedData;
+      try {
+        o.uiDataSnapshot(sink, snapshot);
+      }
+      finally {
+        sink.cachedDataForRules = null;
+        sink.source = prev;
+      }
+    });
+    return noMap && sink.map != null ? cachedData.prepend(sink.map) : cachedData;
+  }
+
+  private static class MySink implements DataSink {
+    ProviderData map;
+    Object source;
+    DataKey<?>[] keys;
+    @Deprecated
+    boolean hideEditor;
+    FList<ProviderData> cachedDataForRules;
+
+    @Override
+    public <T> void set(@NotNull DataKey<@NotNull T> key, @Nullable T data) {
+      if (data == null) return;
+      if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
+          key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+          key == PlatformDataKeys.MODALITY_STATE) {
+        return;
+      }
+      //noinspection unchecked
+      T validated =
+        data == EXPLICIT_NULL ? data :
+        key == PlatformCoreDataKeys.BGT_DATA_PROVIDER ? (T)CompositeDataProvider.compose(
+          (DataProvider)data, map == null ? null : ObjectUtils.tryCast(
+            map.uiSnapshot.get(key.getName()), DataProvider.class)) :
+        (T)DataValidators.validOrNull(data, key.getName(), source);
+      if (validated == null) return;
+      if (map == null) map = new ProviderData();
+      if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
+        for (ProviderData map : cachedDataForRules) {
+          if (map.uiSnapshot.get(key.getName()) != null) {
+            return;
+          }
+        }
+      }
+      map.uiSnapshot.put(key.getName(), validated);
+      if (key == CommonDataKeys.EDITOR && validated != EXPLICIT_NULL) {
+        map.uiSnapshot.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), validated);
+      }
+    }
+
+    @Override
+    public <T> void setNull(@NotNull DataKey<@NotNull T> key) {
+      if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
+          key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+          key == PlatformDataKeys.MODALITY_STATE) {
+        return;
+      }
+      if (map == null) map = new ProviderData();
+      map.uiSnapshot.put(key.getName(), EXPLICIT_NULL);
+    }
+
+    @Override
+    public <T> void lazy(@NotNull DataKey<@NotNull T> key, @NotNull Function0<? extends @Nullable T> data) {
+      set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, new MyLazy<>(key, data));
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull EdtDataProvider provider) {
+      Object prev = source;
+      source = provider;
+      try {
+        provider.uiDataSnapshot(this);
+      }
+      finally {
+        source = prev;
+      }
+    }
+
+    @Override
+    public void dataSnapshot(@NotNull DataSnapshotProvider provider) {
+      Object prev = source;
+      source = provider;
+      try {
+        provider.dataSnapshot(this);
+      }
+      finally {
+        source = prev;
+      }
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataProvider provider) {
+      Object prev = source;
+      source = provider;
+      try {
+        if (keys == null) {
+          keys = DataKey.allKeys();
+          updateDataKeyIndices(keys);
+        }
+        for (DataKey<?> key : keys) {
+          Object data = key.getData(provider);
+          if (data != null) {
+            //noinspection unchecked
+            set((DataKey<Object>)key, data);
+          }
+        }
+      }
+      finally {
+        source = prev;
+      }
+    }
+  }
+
+  private static class MyLazy<T> implements DataProvider, DataValidators.SourceWrapper {
+    final DataKey<@NotNull T> key;
+    final Function0<? extends @Nullable T> supplier;
+
+    MyLazy(@NotNull DataKey<@NotNull T> key, @NotNull Function0<? extends @Nullable T> supplier) {
+      this.key = key;
+      this.supplier = supplier;
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      return key.is(dataId) ? supplier.invoke() : null;
+    }
+
+    @Override
+    public @NotNull Object unwrapSource() {
+      return supplier;
+    }
   }
 
   private static boolean hideEditor(@Nullable Component component) {
@@ -368,10 +562,12 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  private static final class ProviderData extends ConcurrentHashMap<String, Object> {
+  private static final class ProviderData {
+    final Map<String, Object> uiSnapshot = new ConcurrentHashMap<>();
+    final Map<String, Object> computedData = new ConcurrentHashMap<>();
+    // to avoid lots of nulls in maps
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
     final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
-    final ConcurrentBitSet valueByRules = ConcurrentBitSet.create();
   }
 
   private static final class ComponentRef {

@@ -55,6 +55,19 @@ public class DataManagerImpl extends DataManager {
   }
 
   @ApiStatus.Internal
+  public @NotNull List<DataKey<?>> keysForRuleType(@Nullable GetDataRuleType ruleType) {
+    boolean includeFast = ruleType == GetDataRuleType.PROVIDER;
+    List<DataKey<?>> result = null;
+    for (KeyedLazyInstance<GetDataRule> bean : GetDataRule.EP_NAME.getExtensionsIfPointIsRegistered()) {
+      GetDataRuleType type = ((GetDataRuleBean)bean).type;
+      if (type != ruleType && !(includeFast && type == GetDataRuleType.FAST)) continue;
+      if (result == null) result = new ArrayList<>();
+      result.add(DataKey.create(((GetDataRuleBean)bean).key));
+    }
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProviderAndRules(@NotNull String dataId,
                                                       @Nullable GetDataRuleType ruleType,
                                                       @NotNull DataProvider provider) {
