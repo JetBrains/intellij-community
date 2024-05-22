@@ -1,14 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
 import com.intellij.diff.*
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.MutableDiffRequestChain
-import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
-import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.util.DiffDataKeys
@@ -18,8 +16,8 @@ import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.*
+import com.intellij.diff.util.BlankDiffWindowUtil
 import com.intellij.icons.AllIcons
-import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.idea.ActionsBundle
@@ -37,17 +35,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.UIBundle
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.LinkedListWithSum
 import com.intellij.util.containers.map2Array
 import com.intellij.util.text.DateFormatUtil
 import java.awt.datatransfer.DataFlavor
@@ -55,7 +48,6 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.JComponent
-import kotlin.math.max
 
 internal class ShowBlankDiffWindowAction : DumbAwareAction() {
 
@@ -411,74 +403,22 @@ private class RecentContentHandler(val viewer: DiffViewerBase) {
 
 internal data class RecentBlankContent(val text: @NlsSafe String, val timestamp: Long)
 
+@Deprecated("this internal object is deprecated", ReplaceWith("BlankDiffWindowUtil", "com.intellij.diff.util"))
 object BlankDiffWindowUtil {
-  val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
-
+  @Deprecated("deprecated", ReplaceWith("BlankDiffWindowUtil.REMEMBER_CONTENT_KEY", "com.intellij.diff.util"))
   @JvmField
-  val REMEMBER_CONTENT_KEY = Key.create<Boolean>("Diff.BlankWindow.BlankContent")
+  val REMEMBER_CONTENT_KEY = BlankDiffWindowUtil.REMEMBER_CONTENT_KEY
 
-  @JvmStatic
-  fun createBlankDiffRequestChain(project: Project?): MutableDiffRequestChain =
-    createBlankDiffRequestChain(createEditableContent(project), createEditableContent(project))
-
+  @Deprecated("deprecated", ReplaceWith("BlankDiffWindowUtil.createBlankDiffRequestChain", "com.intellij.diff.util"))
   @JvmStatic
   fun createBlankDiffRequestChain(content1: DocumentContent,
                                   content2: DocumentContent,
                                   baseContent: DocumentContent? = null): MutableDiffRequestChain {
-    val chain = MutableDiffRequestChain(content1, baseContent, content2)
-    chain.putUserData(BLANK_KEY, true)
-    return chain
-  }
-
-  @JvmStatic
-  fun setupBlankContext(chain: DiffRequestChain) {
-    chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.BLANK)
-    chain.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, Side.LEFT)
-    chain.putUserData(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, true)
-  }
-
-  private val ourRecentFiles = LinkedListWithSum<RecentBlankContent> { it.text.length }
-
-  internal fun getRecentFiles(): List<RecentBlankContent> = ourRecentFiles.toList()
-
-  @RequiresEdt
-  fun saveRecentContents(request: DiffRequest) {
-    if (request is ContentDiffRequest) {
-      for (content in request.contents) {
-        saveRecentContent(content)
-      }
-    }
-  }
-
-  @RequiresEdt
-  fun saveRecentContent(content: DiffContent) {
-    if (content !is DocumentContent) return
-    if (!DiffUtil.isUserDataFlagSet(REMEMBER_CONTENT_KEY, content)) return
-
-    val text = content.document.text
-    if (text.isBlank()) return
-
-    val oldValue = ourRecentFiles.find { it.text == text }
-    if (oldValue != null) {
-      ourRecentFiles.remove(oldValue)
-      ourRecentFiles.add(0, oldValue)
-    }
-    else {
-      ourRecentFiles.add(0, RecentBlankContent(text, System.currentTimeMillis()))
-      deleteAfterAllowedMaximum()
-    }
-  }
-
-  private fun deleteAfterAllowedMaximum() {
-    val maxCount = max(1, Registry.intValue("blank.diff.history.max.items"))
-    val maxMemory = max(0, Registry.intValue("blank.diff.history.max.memory"))
-    CopyPasteManagerEx.deleteAfterAllowedMaximum(ourRecentFiles, maxCount, maxMemory) { item ->
-      RecentBlankContent(UIBundle.message("clipboard.history.purged.item"), item.timestamp)
-    }
+    return BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent)
   }
 }
 
-private fun createEditableContent(project: Project?, text: String = ""): DocumentContent {
+internal fun createEditableContent(project: Project?, text: String = ""): DocumentContent {
   val content = DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
   content.putUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY, true)
   DiffUtil.addNotification(DiffNotificationProvider { viewer -> createBlankNotificationProvider(viewer, content) }, content)

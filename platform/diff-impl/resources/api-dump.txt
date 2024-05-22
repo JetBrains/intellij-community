@@ -1536,6 +1536,7 @@ com.intellij.diff.tools.util.DiffDataKeys
 - sf:CURRENT_EDITOR:com.intellij.openapi.actionSystem.DataKey
 - sf:DIFF_CONTEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:DIFF_REQUEST:com.intellij.openapi.actionSystem.DataKey
+- sf:DIFF_REQUEST_TO_COMPARE:com.intellij.openapi.actionSystem.DataKey
 - sf:DIFF_VIEWER:com.intellij.openapi.actionSystem.DataKey
 - sf:EDITOR_CHANGED_RANGE_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:MERGE_VIEWER:com.intellij.openapi.actionSystem.DataKey
@@ -2482,6 +2483,16 @@ com.intellij.diff.tools.util.text.TwosideTextDiffProvider$NoIgnore
 - com.intellij.diff.tools.util.text.TwosideTextDiffProvider
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,java.util.List,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+f:com.intellij.diff.util.BlankDiffWindowUtil
+- sf:INSTANCE:com.intellij.diff.util.BlankDiffWindowUtil
+- sf:REMEMBER_CONTENT_KEY:com.intellij.openapi.util.Key
+- sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- sf:createBlankDiffRequestChain(com.intellij.openapi.project.Project):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- bs:createBlankDiffRequestChain$default(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,I,java.lang.Object):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- f:getBLANK_KEY():com.intellij.openapi.util.Key
+- f:saveRecentContent(com.intellij.diff.contents.DiffContent):V
+- f:saveRecentContents(com.intellij.diff.requests.DiffRequest):V
+- sf:setupBlankContext(com.intellij.diff.chains.DiffRequestChain):V
 *:com.intellij.diff.util.CombinedDiffToggle
 - *sf:Companion:com.intellij.diff.util.CombinedDiffToggle$Companion
 - s:getDEFAULT():com.intellij.diff.util.CombinedDiffToggle
