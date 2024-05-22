@@ -10,6 +10,8 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -28,14 +30,12 @@ import java.util.Objects;
  * A bridge from {@link ModCommandAction} to {@link IntentionAction} interface.
  */
 /*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
-                                                           CustomizableIntentionAction, ReportingClassSubstitutor {
-  private final @NotNull ModCommandAction myAction;
+                                                           CustomizableIntentionAction, ReportingClassSubstitutor, PossiblyDumbAware {
+  private final @NotNull ModCommandAction myModAction;
   private @Nullable Presentation myPresentation;
 
-  ModCommandActionWrapper(@NotNull ModCommandAction action) { this.myAction = action; }
-
-  ModCommandActionWrapper(@NotNull ModCommandAction action, @Nullable Presentation presentation) {
-    this.myAction = action;
+  ModCommandActionWrapper(@NotNull ModCommandAction modAction, @Nullable Presentation presentation) {
+    this.myModAction = modAction;
     this.myPresentation = presentation;
   }
 
@@ -53,19 +53,20 @@ import java.util.Objects;
   public @NotNull String getText() {
     if (myPresentation == null) {
       // Should not arrive here; for debug purposes only
-      return "(not initialized) " + myAction.getClass(); //NON-NLS
+      return "(not initialized) " + myModAction.getClass(); //NON-NLS
     }
     return myPresentation.name();
   }
 
   @Override
   public @NotNull String getFamilyName() {
-    return myAction.getFamilyName();
+    return myModAction.getFamilyName();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    Presentation presentation = myAction.getPresentation(ActionContext.from(editor, file));
+    if (!DumbService.getInstance(project).isUsableInCurrentContext(myModAction)) return false;
+    Presentation presentation = myModAction.getPresentation(ActionContext.from(editor, file));
     if (presentation == null) return false;
     myPresentation = presentation;
     return true;
@@ -74,7 +75,7 @@ import java.util.Objects;
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ActionContext context = ActionContext.from(editor, file);
-    ModCommand command = myAction.perform(context);
+    ModCommand command = myModAction.perform(context);
     ModCommandExecutor instance = ModCommandExecutor.getInstance();
     if (file.isPhysical()) {
       instance.executeInteractively(context, command, editor);
@@ -90,7 +91,7 @@ import java.util.Objects;
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myAction.generatePreview(ActionContext.from(editor, file));
+    return myModAction.generatePreview(ActionContext.from(editor, file));
   }
 
   @Override
@@ -133,27 +134,32 @@ import java.util.Objects;
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
     var that = (ModCommandActionWrapper)obj;
-    return Objects.equals(this.myAction, that.myAction);
+    return Objects.equals(this.myModAction, that.myModAction);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myAction);
+    return Objects.hash(myModAction);
   }
 
   @Override
   public String toString() {
     return "ModCommandActionWrapper[" +
-           "action=" + myAction + ']';
+           "action=" + myModAction + ']';
   }
 
   @Override
   public @NotNull ModCommandAction asModCommandAction() {
-    return myAction;
+    return myModAction;
   }
 
   @Override
   public @NotNull Class<?> getSubstitutedClass() {
-    return ReportingClassSubstitutor.getClassToReport(myAction);
+    return ReportingClassSubstitutor.getClassToReport(myModAction);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return DumbService.isDumbAware(myModAction);
   }
 }

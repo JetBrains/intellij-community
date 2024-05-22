@@ -602,9 +602,11 @@ f:com.intellij.codeInsight.intention.IntentionActionBean
 - getDescriptionDirectoryName():java.lang.String
 com.intellij.codeInsight.intention.IntentionActionDelegate
 - com.intellij.openapi.diagnostic.ReportingClassSubstitutor
+- com.intellij.openapi.project.PossiblyDumbAware
 - a:getDelegate():com.intellij.codeInsight.intention.IntentionAction
 - getImplementationClassName():java.lang.String
 - getSubstitutedClass():java.lang.Class
+- isDumbAware():Z
 - s:unwrap(com.intellij.codeInsight.intention.IntentionAction):com.intellij.codeInsight.intention.IntentionAction
 com.intellij.codeInsight.intention.IntentionActionProvider
 - a:getIntentionAction():com.intellij.codeInsight.intention.IntentionActionWithOptions

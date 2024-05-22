@@ -7491,7 +7491,6 @@ f:com.intellij.codeInsight.intention.impl.IntentionActionAsAction
 f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 - com.intellij.codeInsight.intention.IntentionActionDelegate
 - com.intellij.openapi.actionSystem.ShortcutProvider
-- com.intellij.openapi.project.PossiblyDumbAware
 - java.lang.Comparable
 - <init>(com.intellij.codeInsight.intention.IntentionAction):V
 - compareTo(com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching):I
@@ -7507,7 +7506,6 @@ f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 - getText():java.lang.String
 - getToolId():java.lang.String
 - hashCode():I
-- isDumbAware():Z
 - isSelectable():Z
 - isShowIcon():Z
 - toString():java.lang.String

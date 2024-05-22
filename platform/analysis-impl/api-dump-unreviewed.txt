@@ -1104,7 +1104,6 @@ f:com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.IntentionActionDelegate
 - com.intellij.openapi.actionSystem.ShortcutProvider
-- com.intellij.openapi.project.PossiblyDumbAware
 - java.lang.Comparable
 - <init>(com.intellij.codeInsight.intention.IntentionActionBean):V
 - compareTo(com.intellij.codeInsight.intention.IntentionAction):I
@@ -1121,7 +1120,6 @@ f:com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - isApplicable(java.util.Collection):Z
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- isDumbAware():Z
 - startInWriteAction():Z
 - toString():java.lang.String
 c:com.intellij.codeInsight.intention.impl.config.LazyEditor

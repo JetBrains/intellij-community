@@ -11,8 +11,6 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
-                                                     Comparable<IntentionAction> {
+public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, Comparable<IntentionAction> {
   private final IntentionActionBean extension;
   private IntentionAction instance;
   private String fullFamilyName;
@@ -102,11 +99,6 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
       fullFamilyName = result = categories != null ? String.join("/", categories) + "/" + getFamilyName() : getFamilyName();
     }
     return result;
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return DumbService.isDumbAware(getDelegate());
   }
 
   @Override
