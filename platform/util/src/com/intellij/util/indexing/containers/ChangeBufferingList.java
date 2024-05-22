@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
@@ -48,17 +47,6 @@ public final class ChangeBufferingList implements Cloneable {
     else {
       changes = new int[length];
     }
-  }
-
-  /** @return both min and max values from an array segment array[0..length), as 2-elements array [min, max] */
-  static int @NotNull [] calcMinMax(int[] array, int length) {
-    int max = Integer.MIN_VALUE;
-    int min = Integer.MAX_VALUE;
-    for (int i = 0; i < length; ++i) {
-      max = Math.max(max, array[i]);
-      min = Math.min(min, array[i]);
-    }
-    return new int[]{min, max};
   }
 
   public synchronized void add(int value) {
@@ -150,7 +138,7 @@ public final class ChangeBufferingList implements Cloneable {
         copyChanges = false;
       }
       else {
-        idSet = new IdBitSet(calcMinMax(changes, length), 0);
+        idSet = new IdBitSet(IdBitSet.calcMinMax(changes, length), 0);
       }
     }
     else {
