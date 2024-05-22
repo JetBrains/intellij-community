@@ -124,8 +124,16 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     // Based on the assumption that no one changes the application library file manually, we can reuse existing bridges
     val storageOnBuilder = VersionedEntityStorageOnBuilder(mutableEntityStorage)
     mutableEntityStorage.entities(LibraryEntity::class.java).forEach { libraryEntity ->
-      val originalLibrary = globalWorkspaceModel.currentSnapshot.resolve(libraryEntity.symbolicId) ?: return@forEach
-      val libraryBridge = originalLibrary.findLibraryBridge(globalWorkspaceModel.currentSnapshot) ?: LibraryBridgeImpl(
+      val globalSnapshot = globalWorkspaceModel.currentSnapshot
+      val originalLibrary = globalSnapshot.resolve(libraryEntity.symbolicId)
+      val (actualLibraryEntity, entityStorage) = if (originalLibrary != null) {
+        originalLibrary to globalSnapshot
+      }
+      else {
+        libraryEntity to mutableEntityStorage
+      }
+
+      val libraryBridge = actualLibraryEntity.findLibraryBridge(entityStorage) ?: LibraryBridgeImpl(
         libraryTable = this,
         project = null,
         initialId = libraryEntity.symbolicId,
