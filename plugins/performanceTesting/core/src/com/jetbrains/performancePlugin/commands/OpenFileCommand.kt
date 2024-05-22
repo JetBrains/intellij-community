@@ -45,7 +45,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     fun getOptions(arguments: String): OpenFileCommandOptions? {
       val myOptions = runCatching {
-        OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
+        OpenFileCommandOptions().apply { Args.parse(this, arguments.split("|==|").toTypedArray()) }
       }.getOrNull()
       return myOptions
     }

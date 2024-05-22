@@ -73,9 +73,11 @@ fun <T : CommandChain> T.openFile(relativePath: String,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
                                   disableCodeAnalysis: Boolean = false): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
+  // For cases when there are spaces in the file path
+  val separator = "|==|"
+  val command = mutableListOf("${CMD_PREFIX}openFile", "-file$separator$relativePath")
   if (timeoutInSeconds != 0L) {
-    command.add("-timeout $timeoutInSeconds")
+    command.add("-timeout$separator$timeoutInSeconds")
   }
   if (suppressErrors) {
     command.add("-suppressErrors")
@@ -87,7 +89,7 @@ fun <T : CommandChain> T.openFile(relativePath: String,
     command.add(WARMUP)
   }
 
-  addCommand(*command.toTypedArray())
+  addCommandWithSeparator(separator, *command.toTypedArray())
 }
 
 fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
