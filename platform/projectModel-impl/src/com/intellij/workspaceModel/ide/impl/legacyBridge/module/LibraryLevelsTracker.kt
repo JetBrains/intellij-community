@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -43,6 +44,7 @@ class LibraryLevelsTracker {
 
   companion object {
     fun getInstance(project: Project) = project.service<LibraryLevelsTracker>()
+    fun getInstanceIfInitialized(project: Project): LibraryLevelsTracker? = project.serviceIfCreated<LibraryLevelsTracker>()
     private val LOG = logger<LibraryLevelsTracker>()
   }
 }

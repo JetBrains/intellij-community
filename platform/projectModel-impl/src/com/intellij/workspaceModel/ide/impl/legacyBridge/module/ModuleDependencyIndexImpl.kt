@@ -323,7 +323,11 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     fun unsubscribe(fireEvents: Boolean) {
       val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-      LibraryLevelsTracker.getInstance(project).getLibraryLevels().forEach { libraryLevel ->
+
+      // getInstanceIfInitialized is used here as there is nothing to unsubscribe from if the tracker was not used.
+      // Also, this `unsubscribe` function is called from dispose and this is not allowed to initialize services during dispose
+      val libraryTracker = LibraryLevelsTracker.getInstanceIfInitialized(project)
+      libraryTracker?.getLibraryLevels()?.forEach { libraryLevel ->
         val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
         libraryTable?.libraryIterator?.forEach {
           if (fireEvents && hasDependencyOn(it)) {
@@ -340,7 +344,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           }
         }
       }
-      LibraryLevelsTracker.getInstance(project).clear()
+      libraryTracker?.clear()
     }
 
     fun unsubscribeFromCustomTableOnDispose(libraryTable: LibraryTable) {
