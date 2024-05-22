@@ -233,9 +233,17 @@ internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Coll
 
   fun getCommandPath(name: String): String {
     assert(name in commands)
-    return outputOfWhich.firstOrNull { it.endsWith("/$name") }
-           ?: busybox?.value?.let { "$it $name" }
-           ?: throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
+    val directCandidate = outputOfWhich.firstOrNull { it.endsWith("/$name") }
+    if (directCandidate != null) {
+      return directCandidate
+    }
+
+    if (name != "busybox") {
+      val busybox = busybox!!.value // Throws an error.
+      return "$busybox $name"
+    }
+
+    throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
   }
 
   outputOfWhich += runWhichCmd(commands)
