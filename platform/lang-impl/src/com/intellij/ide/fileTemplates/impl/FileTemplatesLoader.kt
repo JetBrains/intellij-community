@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -25,7 +26,6 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.URLUtil
-import com.intellij.util.l10n.LocalizationUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.apache.velocity.runtime.ParserPool
 import org.apache.velocity.runtime.RuntimeSingleton

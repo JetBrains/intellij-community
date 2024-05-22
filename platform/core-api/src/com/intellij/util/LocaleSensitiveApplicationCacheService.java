@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -8,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.l10n.LanguageBundleEP;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

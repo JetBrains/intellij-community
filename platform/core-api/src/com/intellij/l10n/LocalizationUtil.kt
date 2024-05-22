@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.l10n
+package com.intellij.l10n
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
@@ -28,7 +28,7 @@ object LocalizationUtil {
     if (langBundle == null) {
       return null
     }
-    val pluginDescriptor = langBundle.pluginDescriptor
+    val pluginDescriptor = langBundle.getPluginDescriptor()
     return pluginDescriptor?.classLoader ?: defaultLoader
   }
 

@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl
 
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
-import com.intellij.util.l10n.LocalizationUtil
 import java.io.IOException
 import java.lang.ref.Reference
 import java.nio.file.Path

@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -14,7 +15,6 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.intellij.util.l10n.LanguageBundleEP;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ResourceUtil;
-import com.intellij.util.l10n.LocalizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

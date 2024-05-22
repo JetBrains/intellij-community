@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.util.TipUiSettings.imageBorderColor
 import com.intellij.ide.util.TipUiSettings.imageMaxWidth
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -23,7 +24,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
 import com.intellij.util.ImageLoader.loadFromUrl
 import com.intellij.util.ResourceUtil
-import com.intellij.util.l10n.LocalizationUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly

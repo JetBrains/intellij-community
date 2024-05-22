@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.l10n
+package com.intellij.l10n
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
@@ -17,9 +17,11 @@ class LanguageBundleEP : PluginAware {
 
   @Attribute("locale")
   var locale: String = Locale.ENGLISH.language
-  var pluginDescriptor: PluginDescriptor? = null
+  private var myPluginDescriptor: PluginDescriptor? = null
+
+  fun getPluginDescriptor() = myPluginDescriptor
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    this.pluginDescriptor = pluginDescriptor
+    myPluginDescriptor = pluginDescriptor
   }
 }

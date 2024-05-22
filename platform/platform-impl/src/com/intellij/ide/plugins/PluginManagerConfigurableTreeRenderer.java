@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.NlsSafe;
@@ -12,7 +13,6 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.l10n.LanguageBundleEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

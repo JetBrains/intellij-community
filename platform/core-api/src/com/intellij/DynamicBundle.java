@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
+import com.intellij.l10n.LocalizationOrder;
+import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,8 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.l10n.LocalizationOrder;
-import com.intellij.util.l10n.LocalizationUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
