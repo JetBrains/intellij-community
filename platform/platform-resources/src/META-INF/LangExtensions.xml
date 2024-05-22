@@ -441,9 +441,6 @@
                    serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"
                    testServiceImplementation="com.intellij.configurationStore.TestModuleStore"/>
 
-    <registryKey defaultValue="true" key="workspace.model.test.properties.bridge" restartRequired="true"
-                 description="Provides bridges for TestModuleProperties via WorkspaceModel"/>
-
     <moduleService serviceImplementation="com.intellij.openapi.module.impl.DeprecatedModuleOptionManager"/>
     <moduleService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                    serviceImplementation="com.intellij.openapi.components.impl.ModulePathMacroManager"/>

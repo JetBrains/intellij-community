@@ -28,10 +28,6 @@ object JpsProjectEntitiesLoader {
     return data
   }
   
-  @JvmStatic
-  val isModulePropertiesBridgeEnabled: Boolean
-    get() = Registry.`is`("workspace.model.test.properties.bridge")
-  
   fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                  errorReporter: ErrorReporter, context: SerializationContext) {
     val source = JpsProjectFileEntitySource.FileInDirectory(moduleFile.parent.toVirtualFileUrl(context.virtualFileUrlManager), configLocation)

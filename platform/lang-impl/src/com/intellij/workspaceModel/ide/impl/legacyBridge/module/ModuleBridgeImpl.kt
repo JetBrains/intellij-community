@@ -20,7 +20,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
@@ -45,14 +44,7 @@ internal class ModuleBridgeImpl(
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
                                ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
-    if (isModulePropertiesBridgeEnabled) {
-      registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
-    }
-    else {
-      val classLoader = javaClass.classLoader
-      val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
-      registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
-    }
+    registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
   }
 
   //override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
