@@ -36,7 +36,7 @@ internal object AddStarProjectionsFixFactory : KotlinSingleIntentionActionFactor
     }
 }
 
-class AddStartProjectionsForInnerClass(element: KtTypeReference) : KotlinQuickFixAction<KtTypeReference>(element) {
+private class AddStartProjectionsForInnerClass(element: KtTypeReference) : KotlinQuickFixAction<KtTypeReference>(element) {
 
     override fun getFamilyName() = text
 
