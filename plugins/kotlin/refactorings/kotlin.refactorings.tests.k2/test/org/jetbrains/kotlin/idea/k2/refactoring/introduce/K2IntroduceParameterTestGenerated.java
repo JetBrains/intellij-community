@@ -190,6 +190,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/avoidFunDuplicatingParameters.kt");
         }
 
+        @TestMetadata("callableReferenceInParenthesis.kt")
+        public void testCallableReferenceInParenthesis() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/callableReferenceInParenthesis.kt");
+        }
+
         @TestMetadata("callableReferenceToShorten.kt")
         public void testCallableReferenceToShorten() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/callableReferenceToShorten.kt");

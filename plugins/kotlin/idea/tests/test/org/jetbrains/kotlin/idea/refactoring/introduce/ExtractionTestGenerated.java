@@ -3451,6 +3451,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/avoidFunDuplicatingParameters.kt");
             }
 
+            @TestMetadata("callableReferenceInParenthesis.kt")
+            public void testCallableReferenceInParenthesis() throws Exception {
+                runTest("testData/refactoring/introduceParameter/callableReferenceInParenthesis.kt");
+            }
+
             @TestMetadata("callableReferenceToShorten.kt")
             public void testCallableReferenceToShorten() throws Exception {
                 runTest("testData/refactoring/introduceParameter/callableReferenceToShorten.kt");

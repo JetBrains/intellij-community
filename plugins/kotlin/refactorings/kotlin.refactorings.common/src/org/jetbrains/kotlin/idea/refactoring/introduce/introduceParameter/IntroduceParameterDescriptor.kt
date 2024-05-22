@@ -44,7 +44,7 @@ data class IntroduceParameterDescriptor<Descriptor>(
             when {
                 it.parent != callable.body -> false
                 it is KtAnonymousInitializer -> true
-              it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) ?: false -> true
+                it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) == true -> true
                 else -> false
             }
         }

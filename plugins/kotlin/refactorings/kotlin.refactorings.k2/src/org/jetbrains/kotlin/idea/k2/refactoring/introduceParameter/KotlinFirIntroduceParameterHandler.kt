@@ -198,7 +198,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
 
             val psiFactory = KtPsiFactory(project)
             introduceParameterDescriptor(
-                KtPsiUtil.safeDeparenthesize(expression),
+                expression,
                 targetParent,
                 suggestedNames,
                 physicalExpression,
@@ -391,7 +391,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: 
     val methodDescriptor = KotlinMethodDescriptor((targetCallable as? KtClass)?.primaryConstructor ?: targetCallable)
     val changeInfo = KotlinChangeInfo(methodDescriptor)
 
-    val defaultValue = if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue
+    val defaultValue = (if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue)?.let { KtPsiUtil.safeDeparenthesize(it) }
 
     if (!withDefaultValue) {
         val parameters = targetCallable.getValueParameters()

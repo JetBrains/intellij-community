@@ -1,0 +1,11 @@
+// WITH_DEFAULT_VALUE: false
+
+interface Repo {
+    fun getById(int: Int) : String
+}
+
+class Foo(val repo: Repo){
+    fun foo(function: (Int) -> String) {
+        val value = function(1)
+    }
+}
