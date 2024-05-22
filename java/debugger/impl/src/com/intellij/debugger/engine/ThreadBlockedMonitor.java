@@ -57,7 +57,7 @@ public class ThreadBlockedMonitor {
     if (thread != null && getSingleThreadedEvaluationThreshold() > 0 &&
         context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
         BitUtil.isSet(invokePolicy, ObjectReference.INVOKE_SINGLE_THREADED)) {
-      return new InvocationWatcher(this, thread);
+      return new InvocationWatcherOldImpl(this, thread);
     }
     return null;
   }
@@ -167,7 +167,11 @@ public class ThreadBlockedMonitor {
     return myIsInResumeAllMode;
   }
 
-  protected static final class InvocationWatcher {
+  protected interface InvocationWatcher {
+    void invocationFinished();
+  }
+
+  protected static final class InvocationWatcherOldImpl implements InvocationWatcher {
     private final AtomicBoolean myObsolete = new AtomicBoolean();
     private final AtomicBoolean myAllResumed = new AtomicBoolean();
     private final Future myTask;
@@ -175,14 +179,15 @@ public class ThreadBlockedMonitor {
     private final @NotNull DebugProcessImpl myProcess;
     private final @NotNull ThreadBlockedMonitor myThreadBlockedMonitor;
 
-    private InvocationWatcher(@NotNull ThreadBlockedMonitor threadBlockedMonitor, @NotNull ThreadReferenceProxyImpl thread) {
+    private InvocationWatcherOldImpl(@NotNull ThreadBlockedMonitor threadBlockedMonitor, @NotNull ThreadReferenceProxyImpl thread) {
       myThreadBlockedMonitor = threadBlockedMonitor;
       myProcess = threadBlockedMonitor.myProcess;
       myThread = thread;
       myTask = JobScheduler.getScheduler().schedule(this::checkInvocation, getSingleThreadedEvaluationThreshold(), TimeUnit.MILLISECONDS);
     }
 
-    void invocationFinished() {
+    @Override
+    public void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
         myProcess.getManagerThread().pushBack(new DebuggerCommandImpl() {
