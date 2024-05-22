@@ -71,6 +71,11 @@ internal class TerminalPromptController(
 
   @RequiresEdt
   fun handleEnterPressed() {
+    val customHandlers = TerminalPromptCustomEnterHandler.EP_NAME.extensionList
+    for (handler in customHandlers) {
+      val consumed = handler.handleEnter(model)
+      if (consumed) return
+    }
     commandExecutor.startCommandExecution(model.commandText)
   }
 
