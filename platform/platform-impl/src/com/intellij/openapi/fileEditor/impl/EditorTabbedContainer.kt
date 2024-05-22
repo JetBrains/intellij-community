@@ -17,8 +17,12 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.containsFileDropTargets
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -27,7 +31,6 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_IN
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
-import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
@@ -100,7 +103,7 @@ class EditorTabbedContainer internal constructor(
       }
     })
     editorTabs.component.isFocusable = false
-    editorTabs.component.transferHandler = MyTransferHandler()
+    editorTabs.component.transferHandler = EditorTabbedContainerTransferHandler(window)
     editorTabs.setDataProvider(object : EdtCompatibleDataProvider {
       override fun uiDataSnapshot(sink: DataSink) {
         sink[CommonDataKeys.PROJECT] = window.manager.project
@@ -160,12 +163,21 @@ class EditorTabbedContainer internal constructor(
   companion object {
     const val HELP_ID: @NonNls String = "ideaInterface.editor"
 
-    internal fun createDockableEditor(image: Image?,
-                                      file: VirtualFile?,
-                                      presentation: Presentation,
-                                      window: EditorWindow,
-                                      isNorthPanelAvailable: Boolean): DockableEditor {
-      return DockableEditor(image, file!!, presentation, window.size, window.isFilePinned(file), isNorthPanelAvailable)
+    internal fun createDockableEditor(
+      image: Image?,
+      file: VirtualFile?,
+      presentation: Presentation,
+      window: EditorWindow,
+      isNorthPanelAvailable: Boolean,
+    ): DockableEditor {
+      return DockableEditor(
+        img = image,
+        file = file!!,
+        presentation = presentation,
+        preferredSize = window.size,
+        isPinned = window.isFilePinned(file),
+        isNorthPanelAvailable = isNorthPanelAvailable,
+      )
     }
 
     private fun createKeepMousePositionRunnable(event: MouseEvent): Runnable {
@@ -525,19 +537,18 @@ class EditorTabbedContainer internal constructor(
 
     override fun close() {}
   }
+}
 
-  private inner class MyTransferHandler : TransferHandler() {
-    private val fileDropHandler = FileEditorDropHandler(null)
-    override fun importData(comp: JComponent, t: Transferable): Boolean {
-      if (fileDropHandler.canHandleDrop(t.transferDataFlavors)) {
-        fileDropHandler.handleDrop(t, window.manager.project, window)
-        return true
-      }
-      return false
+private class EditorTabbedContainerTransferHandler(private val window: EditorWindow) : TransferHandler() {
+  override fun importData(comp: JComponent, t: Transferable): Boolean {
+    if (containsFileDropTargets(t.transferDataFlavors)) {
+      window.manager.project.service<FileDropManager>().scheduleDrop(transferable = t, editor = null, editorWindowCandidate = window)
+      return true
     }
-
-    override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>): Boolean = fileDropHandler.canHandleDrop(transferFlavors)
+    return false
   }
+
+  override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>): Boolean = containsFileDropTargets(transferFlavors)
 }
 
 private class EditorTabs(

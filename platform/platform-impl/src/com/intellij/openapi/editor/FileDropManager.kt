@@ -34,32 +34,30 @@ fun containsFileDropTargets(transferFlavors: Array<DataFlavor>): Boolean {
 
 private val LOG = Logger.getInstance(FileDropManager::class.java)
 
-private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName.create("com.intellij.fileDropHandler")
+private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName("com.intellij.fileDropHandler")
 
 @Service(Service.Level.PROJECT)
-class FileDropManager(private val project: Project,
-                      private val coroutineScope: CoroutineScope) {
-  fun scheduleDrop(t: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
-    val fileList = FileCopyPasteUtil.getFileList(t) ?: return
-
+class FileDropManager(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) {
+  fun scheduleDrop(transferable: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
+    val fileList = FileCopyPasteUtil.getFileList(transferable) ?: return
     coroutineScope.launch {
-      handleDrop(t, editor, editorWindowCandidate, fileList)
+      handleDrop(transferable, editor, editorWindowCandidate, fileList)
     }
   }
 
-  suspend fun handleDrop(t: Transferable,
-                         editor: Editor?,
-                         editorWindowCandidate: EditorWindow?) {
-    val fileList = FileCopyPasteUtil.getFileList(t) ?: return
-
-    handleDrop(t, editor, editorWindowCandidate, fileList)
+  suspend fun handleDrop(transferable: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
+    val fileList = FileCopyPasteUtil.getFileList(transferable) ?: return
+    handleDrop(transferable = transferable, editor = editor, editorWindowCandidate = editorWindowCandidate, fileList = fileList)
   }
 
-  private suspend fun handleDrop(t: Transferable,
+  private suspend fun handleDrop(transferable: Transferable,
                                  editor: Editor?,
                                  editorWindowCandidate: EditorWindow?,
                                  fileList: Collection<File>) {
-    val event = FileDropEvent(project, t, fileList, editor)
+    val event = FileDropEvent(project, transferable, fileList, editor)
     val dropHandled = (listOf(CustomFileDropHandlerBridge()) + EP_NAME.extensionList).any {
       try {
         it.handleDrop(event)
