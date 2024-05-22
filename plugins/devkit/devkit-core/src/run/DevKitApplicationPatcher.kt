@@ -2,11 +2,13 @@
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.compiler.options.MakeProjectStepBeforeRun
+import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
@@ -33,9 +35,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     passDataAboutBuiltInServer(javaParameters, project)
 
     val vmParameters = javaParameters.vmParametersList
-    val isDev = configuration.mainClassName == "org.jetbrains.intellij.build.devServer.DevMainKt"
+    val isDevBuild = configuration.mainClassName == "org.jetbrains.intellij.build.devServer.DevMainKt"
     val vmParametersAsList = vmParameters.list
-    if (vmParametersAsList.contains("--add-modules") || (!isDev && configuration.mainClassName != "com.intellij.idea.Main")) {
+    if (vmParametersAsList.contains("--add-modules") || (!isDevBuild && configuration.mainClassName != "com.intellij.idea.Main")) {
       return
     }
 
@@ -81,11 +83,14 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
 
-    if (!isDev) {
-      return
+    if (isDevBuild) {
+      updateParametersForDevBuild(javaParameters, configuration, project)
     }
+  }
 
-    if (appConfiguration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
+  private fun updateParametersForDevBuild(javaParameters: JavaParameters, configuration: JavaRunConfigurationBase, project: Project) {
+    val vmParameters = javaParameters.vmParametersList
+    if (configuration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
       vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
       vmParameters.addProperty("compile.server.project", project.locationHash)
       vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
