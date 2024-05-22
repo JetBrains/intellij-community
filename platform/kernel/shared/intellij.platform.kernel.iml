@@ -92,6 +92,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.fleet.kernel" type="repository">
         <properties maven-id="org.jetbrains.fleet:kernel:1.33.0-temporaryHack.6">
