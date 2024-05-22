@@ -6681,7 +6681,7 @@ f:com.intellij.ui.GuiUtils
 - s:getTextWithoutMnemonicEscaping(java.lang.String):java.lang.String
 - s:installVisibilityReferent(javax.swing.JComponent,javax.swing.JComponent):V
 - s:invokeLaterIfNeeded(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
-- s:iterateChildren(java.awt.Component,com.intellij.util.Consumer,javax.swing.JComponent[]):V
+- s:iterateChildren(java.awt.Component,java.util.function.Consumer,javax.swing.JComponent[]):V
 - s:removePotentiallyLeakingReferences(java.awt.Container):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent,Z):V
@@ -11014,7 +11014,7 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - p:getFocusOwnerToStore():javax.swing.JComponent
 - f:getHeaderFitSize():java.awt.Dimension
 - f:getHorizontalSide():Z
-- getIndexOf(com.intellij.ui.tabs.TabInfo):I
+- f:getIndexOf(com.intellij.ui.tabs.TabInfo):I
 - f:getInfoToForeToolbar():java.util.Map
 - f:getInfoToToolbar():java.util.Map
 - getJBTabs():com.intellij.ui.tabs.JBTabs
@@ -11056,8 +11056,8 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - f:isDropTarget(com.intellij.ui.tabs.TabInfo):Z
 - isEditorTabs():Z
 - isEmptyVisible():Z
-- isHideTabs():Z
-- isHideTopPanel():Z
+- f:isHideTabs():Z
+- f:isHideTopPanel():Z
 - f:isHorizontalTabs():Z
 - f:isHoveredTab(com.intellij.ui.tabs.impl.TabLabel):Z
 - f:isMouseInsideTabsArea():Z
@@ -11105,7 +11105,7 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - run():V
 - select(com.intellij.ui.tabs.TabInfo,Z):com.intellij.openapi.util.ActionCallback
 - f:setActivePopup(javax.swing.JPopupMenu):V
-- setActiveTabFillIn(java.awt.Color):com.intellij.ui.tabs.JBTabsPresentation
+- f:setActiveTabFillIn(java.awt.Color):com.intellij.ui.tabs.JBTabsPresentation
 - f:setAddNavigationGroup(Z):V
 - setAlphabeticalMode(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):com.intellij.ui.tabs.impl.JBTabsImpl
@@ -11119,8 +11119,8 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - setFocusCycle(Z):com.intellij.ui.tabs.JBTabsPresentation
 - f:setFocused(Z):V
 - f:setHeaderFitSize(java.awt.Dimension):V
-- setHideTabs(Z):V
-- setHideTopPanel(Z):V
+- f:setHideTabs(Z):V
+- f:setHideTopPanel(Z):V
 - f:setHorizontalSide(Z):V
 - f:setHovered(com.intellij.ui.tabs.impl.TabLabel):V
 - setInnerInsets(java.awt.Insets):com.intellij.ui.tabs.JBTabsPresentation

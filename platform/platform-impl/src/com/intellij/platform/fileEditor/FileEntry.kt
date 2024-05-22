@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.fileEditor
 
 import com.intellij.openapi.fileEditor.impl.*
@@ -46,7 +46,7 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
 }
 
 internal fun writeWindow(result: Element, window: EditorWindow) {
-  for (composite in window.getComposites()) {
+  for (composite in window.composites()) {
     val fileElement = Element("file")
     fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project = window.manager.project))
     if (window.isFilePinned(composite.file)) {

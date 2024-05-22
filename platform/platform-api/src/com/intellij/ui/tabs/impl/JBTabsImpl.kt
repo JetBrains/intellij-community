@@ -1667,12 +1667,12 @@ open class JBTabsImpl(
     }
   }
 
-  override fun getToSelectOnRemoveOf(info: TabInfo): TabInfo? {
-    if (!visibleInfos.contains(info) || selectedInfo != info || visibleInfos.size == 1) {
+  override fun getToSelectOnRemoveOf(tab: TabInfo): TabInfo? {
+    if (!visibleInfos.contains(tab) || selectedInfo != tab || visibleInfos.size == 1) {
       return null
     }
 
-    val index = getVisibleInfos().indexOf(info)
+    val index = getVisibleInfos().indexOf(tab)
     var result: TabInfo? = null
     if (index > 0) {
       result = findEnabledBackward(index, false)
@@ -2570,11 +2570,11 @@ open class JBTabsImpl(
     }
   }
 
-  override fun getIndexOf(tabInfo: TabInfo?): Int = getVisibleInfos().indexOf(tabInfo)
+  final override fun getIndexOf(tabInfo: TabInfo): Int = getVisibleInfos().indexOf(tabInfo)
 
-  override fun isHideTabs(): Boolean = hideTabs || isHideTopPanel
+  final override fun isHideTabs(): Boolean = hideTabs || isHideTopPanel
 
-  override fun setHideTabs(hideTabs: Boolean) {
+  final override fun setHideTabs(hideTabs: Boolean) {
     if (isHideTabs == hideTabs) {
       return
     }
@@ -2583,7 +2583,7 @@ open class JBTabsImpl(
     relayout(forced = true, layoutNow = false)
   }
 
-  override var isHideTopPanel: Boolean = false
+  final override var isHideTopPanel: Boolean = false
     set(value) {
       if (field == value) {
         return
@@ -2597,7 +2597,7 @@ open class JBTabsImpl(
       relayout(forced = true, layoutNow = true)
     }
 
-  override fun setActiveTabFillIn(color: Color?): JBTabsPresentation {
+  final override fun setActiveTabFillIn(color: Color?): JBTabsPresentation {
     if (!isChanged(activeTabFillIn, color)) return this
     activeTabFillIn = color
     revalidateAndRepaint(false)
@@ -3128,10 +3128,10 @@ open class JBTabsImpl(
       return infoToPage.get(selectedInfo ?: return null)
     }
 
-    override fun isAccessibleChildSelected(i: Int): Boolean = i == getIndexOf(selectedInfo)
+    override fun isAccessibleChildSelected(i: Int): Boolean = selectedInfo?.let { i == getIndexOf(it) } ?: false
 
     override fun addAccessibleSelection(i: Int) {
-      select(getTabAt(tabIndex = i), false)
+      select(info = getTabAt(tabIndex = i), requestFocus = false)
     }
 
     override fun removeAccessibleSelection(i: Int) {

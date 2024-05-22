@@ -80,7 +80,7 @@ public interface JBTabs extends DropAreaAware {
   @Nullable
   TabInfo findInfo(Component component);
 
-  int getIndexOf(final @Nullable TabInfo tabInfo);
+  int getIndexOf(@NotNull TabInfo tabInfo);
 
   void requestFocus();
 

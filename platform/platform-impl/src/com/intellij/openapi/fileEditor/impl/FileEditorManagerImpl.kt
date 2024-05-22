@@ -966,13 +966,13 @@ open class FileEditorManagerImpl(
   private fun openInRightSplit(file: VirtualFile): FileEditorComposite? {
     val active = splitters
     val window = active.currentWindow
-    if (window == null || window.inSplitter() && file == window.selectedFile && file == window.getFileSequence().lastOrNull()) {
+    if (window == null || window.inSplitter() && file == window.selectedFile && file == window.files().lastOrNull()) {
       // already in right splitter
       return null
     }
 
     val split = active.openInRightSplit(file) ?: return null
-    val editorsWithProviders = split.getComposites().flatMap(EditorComposite::allEditorsWithProviders).toList()
+    val editorsWithProviders = split.composites().flatMap(EditorComposite::allEditorsWithProviders).toList()
     return FileEditorComposite.createFileEditorComposite(allEditors = editorsWithProviders.map { it.fileEditor },
                                                          allProviders = editorsWithProviders.map { it.provider })
   }
@@ -1976,7 +1976,7 @@ open class FileEditorManagerImpl(
           .debounce(100.milliseconds)
           .collectLatest {
             val allEditors = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              windows.flatMap(EditorWindow::getComposites)
+              windows.flatMap(EditorWindow::composites)
             }
 
             val replacements = smartReadAction(project) {
@@ -2017,20 +2017,20 @@ open class FileEditorManagerImpl(
         return
       }
 
-      for (eachWindow in windows) {
-        val selected = eachWindow.selectedComposite
-        val composites = eachWindow.allComposites
+      for (window in windows) {
+        val selected = window.selectedComposite
+        val composites = window.allComposites
         for (i in composites.indices) {
           val composite = composites[i]
           val file = composite.file.takeIf { it.isValid } ?: continue
           val newFilePair = replacements.get(composite) ?: continue
           val newFile = newFilePair.first
           // already open
-          if (eachWindow.findFileIndex(newFile) != -1) {
+          if (window.findTabByFile(newFile) != null) {
             continue
           }
 
-          val openResult = openFileImpl2(window = eachWindow,
+          val openResult = openFileImpl2(window = window,
                                          file = newFile,
                                          options = FileEditorOpenOptions(index = i, requestFocus = composite === selected))
           val position = newFilePair.second
@@ -2041,7 +2041,7 @@ open class FileEditorManagerImpl(
               openedEditor.scrollingModel.scrollToCaret(ScrollType.CENTER)
             }
           }
-          closeFile(file, eachWindow)
+          closeFile(file, window)
         }
       }
     }
@@ -2108,7 +2108,7 @@ open class FileEditorManagerImpl(
 
   override fun closeOpenedEditors() {
     for (window in getAllSplitters().flatMap(EditorsSplitters::getWindowSequence)) {
-      for (file in window.getFileSequence().toList()) {
+      for (file in window.files().toList()) {
         window.closeFile(file)
       }
     }
@@ -2285,7 +2285,7 @@ open class FileEditorManagerImpl(
       try {
         val composite = createCompositeByEditorWithProviderList(file = file, editorsWithProviders = emptyList()) ?: return@withContext null
         openedComposites.add(composite)
-        window.addComposite(composite = composite, options = options, isNewEditor = true, isOpenedInBulk = true)
+        window.addComposite(composite = composite, options = options, isNewEditor = true, isOpenedInBulk = true, file = composite.file)
         openFileSetModificationCount.increment()
         // update frame and tab title
         updateFileName(file = file)
@@ -2317,7 +2317,7 @@ open class FileEditorManagerImpl(
       composite.setSelectedEditor(selectedProvider.editorTypeId)
     }
 
-    window.addComposite(composite = composite, options = options, isNewEditor = isNewEditor, isOpenedInBulk = isOpenedInBulk)
+    window.addComposite(composite = composite, options = options, isNewEditor = isNewEditor, isOpenedInBulk = isOpenedInBulk, file = composite.file)
 
     // notify editors about selection changes
     val splitters = window.owner
@@ -2438,9 +2438,9 @@ private class SelectionHistory {
   fun getHistory(): Collection<kotlin.Pair<VirtualFile, EditorWindow>> {
     val copy = LinkedHashSet<kotlin.Pair<VirtualFile, EditorWindow>>()
     for (pair in history) {
-      if (pair.second.getFileSequence().none()) {
+      if (pair.second.files().none()) {
         val windows = pair.second.owner.getWindows()
-        if (windows.isNotEmpty() && windows[0].getFileSequence().any()) {
+        if (windows.isNotEmpty() && windows[0].files().any()) {
           copy.add(pair.first to windows[0])
         }
       }
@@ -2576,7 +2576,7 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val pinned = window.isFilePinned(oldFile)
   var newOptions = FileEditorOpenOptions(selectAsCurrent = active, requestFocus = active, pin = pinned)
 
-  val isSingletonEditor = window.getComposites().any { composite ->
+  val isSingletonEditor = window.composites().any { composite ->
     composite.allEditors.any { it.file == oldFile && isSingletonFileEditor(it) }
   }
   val dockContainer = DockManager.getInstance(editorManager.project).getContainerFor(window.component) { it is DockableEditorTabbedContainer }

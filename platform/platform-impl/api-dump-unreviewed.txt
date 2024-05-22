@@ -15967,7 +15967,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - close():V
 - f:getComponent():javax.swing.JComponent
 - f:getSelectedComponent(Z):java.lang.Object
-- f:getSelectedComposite():com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:getSelectedIndex():I
 - f:getTabCount():I
 - f:getTabs():com.intellij.ui.tabs.JBTabs
@@ -15976,7 +15975,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - f:requestFocus(Z):V
 - f:setForegroundAt(I,java.awt.Color):V
 - f:setSelectedIndex(I):com.intellij.openapi.util.ActionCallback
-- f:setSelectedIndex(I,Z):com.intellij.openapi.util.ActionCallback
 - f:setTabLayoutPolicy(I):V
 - f:setTabPlacement(I):V
 - f:setTextAttributes(I,com.intellij.openapi.editor.markup.TextAttributes):V
@@ -16006,12 +16004,12 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:closeFile(com.intellij.openapi.vfs.VirtualFile,Z,Z):V
 - bs:closeFile$default(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):V
 - bs:closeFile$default(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.vfs.VirtualFile,Z,Z,I,java.lang.Object):V
+- f:composites():kotlin.sequences.Sequence
 - f:dispose():V
 - f:findFileComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
 - f:findSiblings():com.intellij.openapi.fileEditor.impl.EditorWindow[]
 - f:getAllComposites():java.util.List
 - f:getComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorComposite
-- f:getComposites():kotlin.sequences.Sequence
 - f:getContextComposite():com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:getEditors():com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite[]
 - f:getFileList():java.util.List
@@ -16043,7 +16041,7 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:setEditor(com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite,Z):V
 - f:setFilePinned(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setForegroundAt(I,java.awt.Color):V
-- f:setSelectedComposite(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
+- f:setSelectedComposite(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
 - f:setTabLayoutPolicy(I):V
 - f:setTabsPlacement(I):V

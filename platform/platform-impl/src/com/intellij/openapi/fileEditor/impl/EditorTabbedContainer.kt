@@ -202,15 +202,11 @@ class EditorTabbedContainer internal constructor(
     get() = editorTabs.tabCount
 
   fun setSelectedIndex(indexToSelect: Int): ActionCallback {
-    return setSelectedIndex(indexToSelect = indexToSelect, focusEditor = true)
-  }
-
-  fun setSelectedIndex(indexToSelect: Int, focusEditor: Boolean): ActionCallback {
-    return if (indexToSelect >= editorTabs.tabCount) {
-      ActionCallback.REJECTED
+    if (indexToSelect >= editorTabs.tabCount) {
+      return ActionCallback.REJECTED
     }
     else {
-      editorTabs.select(editorTabs.getTabAt(indexToSelect), focusEditor)
+      return editorTabs.select(info = editorTabs.getTabAt(indexToSelect), requestFocus = true)
     }
   }
 
@@ -228,15 +224,14 @@ class EditorTabbedContainer internal constructor(
   }
 
   val selectedIndex: Int
-    get() = editorTabs.getIndexOf(editorTabs.selectedInfo)
+    get() = editorTabs.selectedInfo?.let { editorTabs.getIndexOf(it) } ?: -1
 
   fun setForegroundAt(index: Int, color: Color) {
     editorTabs.getTabAt(index).setDefaultForeground(color)
   }
 
   fun setTextAttributes(index: Int, attributes: TextAttributes?) {
-    val tab = editorTabs.getTabAt(index)
-    tab.setDefaultAttributes(attributes)
+    editorTabs.getTabAt(index).setDefaultAttributes(attributes)
   }
 
   fun setTabLayoutPolicy(policy: Int) {
@@ -263,11 +258,6 @@ class EditorTabbedContainer internal constructor(
    */
   fun getSelectedComponent(ignorePopup: Boolean): Any? {
     return (if (ignorePopup) editorTabs.selectedInfo else editorTabs.targetInfo)?.component
-  }
-
-  fun getSelectedComposite(): EditorComposite? {
-    val selectedTab = editorTabs.selectedInfo
-    return selectedTab?.component?.let { (it as EditorCompositePanel).composite }
   }
 
   internal fun insertTab(
@@ -669,20 +659,20 @@ private class EditorTabs(
 
   override fun isActiveTabs(info: TabInfo?): Boolean = isActive
 
-  override fun getToSelectOnRemoveOf(info: TabInfo): TabInfo? {
+  override fun getToSelectOnRemoveOf(tab: TabInfo): TabInfo? {
     if (window.isDisposed) {
       return null
     }
 
-    val index = getIndexOf(info)
+    val index = getIndexOf(tab)
     if (index != -1) {
-      val file = window.getFileAt(index)
+      val file = tab.composite.file
       val indexToSelect = window.computeIndexToSelect(file, index)
       if (indexToSelect >= 0 && indexToSelect < tabs.size) {
         return getTabAt(indexToSelect)
       }
     }
-    return super.getToSelectOnRemoveOf(info)
+    return super.getToSelectOnRemoveOf(tab)
   }
 
   override fun revalidateAndRepaint(layoutNow: Boolean) {

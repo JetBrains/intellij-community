@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -116,11 +117,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     get() = tabbedPane.tabCount
 
   fun setForegroundAt(index: Int, color: Color) {
-    tabbedPane.setForegroundAt(index, color)
+    tabbedPane.tabs.getTabAt(index).setDefaultForeground(color)
   }
 
   fun setTextAttributes(index: Int, attributes: TextAttributes?) {
-    tabbedPane.setTextAttributes(index, attributes)
+    tabbedPane.tabs.getTabAt(index).setDefaultAttributes(attributes)
   }
 
   fun setTabLayoutPolicy(policy: Int) {
@@ -179,23 +180,23 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   val allComposites: List<EditorComposite>
-    get() = getComposites().toList()
+    get() = composites().toList()
 
-  fun getComposites(): Sequence<EditorComposite> = IntRange(0, tabCount - 1).asSequence().map(::getCompositeAt)
+  fun composites(): Sequence<EditorComposite> = tabbedPane.tabs.tabs.asSequence().map { it.composite }
 
   @Suppress("DEPRECATION")
   @get:Deprecated("{@link #getAllComposites()}", ReplaceWith("allComposites)"))
   val editors: Array<EditorWithProviderComposite>
-    get() = getComposites().filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
+    get() = composites().filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
 
   val files: Array<VirtualFile>
-    get() = getFileSequence().toList().toTypedArray()
+    get() = files().toList().toTypedArray()
 
   val fileList: List<VirtualFile>
-    get() = getFileSequence().toList()
+    get() = files().toList()
 
   @RequiresEdt
-  internal fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
+  internal fun files(): Sequence<VirtualFile> = composites().map { it.file }
 
   init {
     // tab layout policy
@@ -270,14 +271,16 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   @Deprecated("{@link #setSelectedComposite(EditorComposite, boolean)}", ReplaceWith("setSelectedComposite(composite, focusEditor)"))
   fun setSelectedEditor(composite: EditorComposite, focusEditor: Boolean) {
-    setSelectedComposite(composite, focusEditor)
+    setSelectedComposite(file = composite.file, focusEditor = focusEditor)
   }
 
-  fun setSelectedComposite(composite: EditorComposite, focusEditor: Boolean) {
+  fun setSelectedComposite(file: VirtualFile, focusEditor: Boolean) {
     // select a composite in a tabbed pane and then focus on a composite if needed
-    val index = findFileIndex(composite.file)
-    if (index != -1 && !isDisposed) {
-      tabbedPane.setSelectedIndex(index, focusEditor)
+    for (tab in tabbedPane.tabs.tabs) {
+      if (tab.composite.file == file) {
+        tabbedPane.tabs.select(tab, focusEditor)
+        break
+      }
     }
   }
 
@@ -291,7 +294,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   @RequiresEdt
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
-    addComposite(composite = composite, options = options, isNewEditor = findCompositeIndex(composite) == -1, isOpenedInBulk = false)
+    addComposite(
+      composite = composite,
+      options = options,
+      isNewEditor = findTabByComposite(composite) == null,
+      isOpenedInBulk = false,
+      file = composite.file,
+    )
   }
 
   @RequiresEdt
@@ -300,6 +309,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     options: FileEditorOpenOptions,
     isNewEditor: Boolean,
     isOpenedInBulk: Boolean,
+    file: VirtualFile,
   ) {
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
@@ -307,14 +317,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       var indexToInsert = options.index
       if (indexToInsert == -1) {
         if (isPreviewMode) {
-          indexToInsert = findPreviewIndex()
+          indexToInsert = composites().indexOfLast { it.isPreview }
         }
         if (indexToInsert == -1) {
           indexToInsert = if (UISettings.getInstance().openTabsAtTheEnd) tabbedPane.tabCount else tabbedPane.selectedIndex + 1
         }
       }
 
-      val file = composite.file
       val template = AllIcons.FileTypes.Text
       tabbedPane.insertTab(
         file = file,
@@ -351,11 +360,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       owner.updateFileIcon(file)
     }
 
-    owner.updateFileColorAsync(composite.file)
+    owner.updateFileColorAsync(file)
 
     if (!isOpenedInBulk) {
       if (options.selectAsCurrent) {
-        setSelectedComposite(composite, options.requestFocus)
+        setSelectedComposite(file, options.requestFocus)
       }
       updateTabsVisibility()
       owner.validate()
@@ -364,7 +373,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   internal fun selectOpenedCompositeOnStartup(composite: EditorComposite, requestFocus: Boolean) {
     composite.selectedEditor?.selectNotify()
-    setSelectedComposite(composite = composite, focusEditor = requestFocus)
+    setSelectedComposite(file = composite.file, focusEditor = requestFocus)
     updateTabsVisibility()
     owner.validate()
   }
@@ -434,7 +443,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
                                                   options = openOptions).allEditors
     syncCaretIfPossible(editors)
     if (!focusNew) {
-      result.setSelectedComposite(composite = selectedComposite!!, focusEditor = true)
+      result.setSelectedComposite(file = selectedComposite!!.file, focusEditor = true)
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
         selectedComposite.focusComponent?.let {
           IdeFocusManager.getGlobalInstance().requestFocus(it, true)
@@ -538,7 +547,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   fun closeAllExcept(selectedFile: VirtualFile?) {
     runBulkTabChange(owner) {
-      for (file in getFileSequence().toList()) {
+      for (file in files().toList()) {
         if (file != selectedFile && !isFilePinned(file)) {
           closeFile(file)
         }
@@ -579,7 +588,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       try {
         fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
           .beforeFileClosed(fileEditorManager, file)
-        val componentIndex = findComponentIndex(composite.component)
+        val componentIndex = findComponentIndex(composite)
         // composite could close itself on decomposition
         if (componentIndex >= 0) {
           val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
@@ -675,8 +684,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
           continue
         }
 
-        val composite = getComposite(histFile) ?: continue
-        val histFileIndex = findComponentIndex(composite.component)
+        val histFileIndex = findComponentIndex(getComposite(histFile) ?: continue)
         if (histFileIndex >= 0) {
           // if the file being closed is located before the hist file, then after closing, the index of the histFile will be shifted by -1
           return histFileIndex
@@ -724,8 +732,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     //                    |-- PsiAwareTextEditorComponent
     //
     //assuming that it's safe to `!!`, if `showSplitChooser` is called, we expect that selected editor exists and it's not null
-    val editorComposite = tabbedPane.getSelectedComposite()!!
-    val componentToFocus = editorComposite.component.getComponent(0) as JComponent
+    val componentToFocus = tabbedPane.tabs.selectedInfo!!.component.getComponent(0) as JComponent
 
     componentToFocus.repaint()
     componentToFocus.isFocusable = true
@@ -791,7 +798,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     // we'll select and focus on a single editor in the end
     val openOptions = FileEditorOpenOptions(selectAsCurrent = false, requestFocus = false)
     for (sibling in siblings) {
-      for (siblingEditor in sibling.getComposites().toList()) {
+      for (siblingEditor in sibling.composites().toList()) {
         if (compositeToSelect == null) {
           compositeToSelect = siblingEditor
         }
@@ -804,7 +811,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     parent.revalidate()
 
     if (compositeToSelect != null) {
-      setSelectedComposite(compositeToSelect, true)
+      setSelectedComposite(file = compositeToSelect.file, focusEditor = true)
     }
     if (setCurrent) {
       owner.setCurrentWindow(window = this, requestFocus = false)
@@ -841,57 +848,26 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getComposite(VirtualFile)}", ReplaceWith("getComposite(file)"))
-  fun findFileComposite(file: VirtualFile): EditorWithProviderComposite? {
-    return getComposite(file) as EditorWithProviderComposite?
-  }
+  fun findFileComposite(file: VirtualFile): EditorWithProviderComposite? = getComposite(file) as EditorWithProviderComposite?
 
-  fun getComposite(inputFile: VirtualFile): EditorComposite? = findCompositeAndIndex(inputFile)?.first
+  fun getComposite(inputFile: VirtualFile): EditorComposite? = findTabByFile(inputFile)?.composite
 
-  internal fun findCompositeAndIndex(inputFile: VirtualFile): kotlin.Pair<EditorComposite, Int>? {
+  internal fun findCompositeAndTab(inputFile: VirtualFile): kotlin.Pair<EditorComposite, TabInfo>? {
     val file = (inputFile as? BackedVirtualFile)?.originFile ?: inputFile
-    for (i in 0 until tabCount) {
-      val composite = getCompositeAt(i)
+    for (tab in tabbedPane.tabs.tabs) {
+      val composite = tab.composite
       if (composite.file == file) {
-        return composite to i
+        return composite to tab
       }
     }
     return null
   }
 
-  private fun findComponentIndex(component: Component): Int {
-    for (i in 0 until tabCount) {
-      val composite = getCompositeAt(i)
-      if (composite.component == component) {
-        return i
-      }
-    }
-    return -1
-  }
+  private fun findComponentIndex(composite: EditorComposite): Int = tabbedPane.tabs.tabs.indexOfFirst { it.component === composite.component }
 
-  private fun findPreviewIndex(): Int {
-    for (i in tabCount - 1 downTo 0) {
-      val composite = getCompositeAt(i)
-      if (composite.isPreview) {
-        return i
-      }
-    }
-    return -1
-  }
+  internal fun findTabByComposite(composite: EditorComposite): TabInfo? = tabbedPane.tabs.tabs.firstOrNull { it.composite === composite }
 
-  internal fun findCompositeIndex(composite: EditorComposite): Int {
-    for (i in 0 until tabCount) {
-      if (getCompositeAt(i) === composite) {
-        return i
-      }
-    }
-    return -1
-  }
-
-  internal fun findFileIndex(fileToFind: VirtualFile): Int {
-    return IntRange(0, tabCount - 1).firstOrNull { getCompositeAt(it).file == fileToFind } ?: -1
-  }
-
-  private fun getCompositeAt(i: Int): EditorComposite = (tabbedPane.tabs.getTabAt(i).component as EditorCompositePanel).composite
+  internal fun findTabByFile(file: VirtualFile): TabInfo? = tabbedPane.tabs.tabs.firstOrNull { it.composite.file == file }
 
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
@@ -935,7 +911,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
 
     // close all preview tabs
-    for (file in getComposites().filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
+    for (file in composites().filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
       defaultCloseFile(file = file, transferFocus = transferFocus)
     }
 
@@ -959,7 +935,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   private fun getTabClosingOrder(closeNonModifiedFilesFirst: Boolean): MutableSet<VirtualFile> {
-    val allFiles = getFileSequence().toList()
+    val allFiles = files().toList()
     val histFiles = EditorHistoryManager.getInstance(manager.project).fileList
     val closingOrder = LinkedHashSet<VirtualFile>()
 
@@ -980,11 +956,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       }
 
       // Search in tabbed pane
-      for (i in 0 until tabbedPane.tabCount) {
-        val file = getFileAt(i)
-        if (!owner.manager.isChanged(getCompositeAt(i))) {
+      for (composite in composites()) {
+        if (!owner.manager.isChanged(composite)) {
           // we found a non-modified file
-          closingOrder.add(file)
+          closingOrder.add(composite.file)
         }
       }
     }
@@ -994,8 +969,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     closingOrder.addAll(histFiles)
 
     // finally, close tabs by their order
-    for (i in 0 until tabbedPane.tabCount) {
-      closingOrder.add(getFileAt(i))
+    for (composite in composites()) {
+      closingOrder.add(composite.file)
     }
     val selectedFile = selectedFile
     // selected should be closed last
@@ -1028,7 +1003,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   private fun isAnyTabClosable(fileToIgnore: VirtualFile?): Boolean {
-    return (tabbedPane.tabCount - 1 downTo 0).any { fileCanBeClosed(getFileAt(it), fileToIgnore) }
+    return (tabbedPane.tabs.tabs.asReversed()).any { fileCanBeClosed(it.composite.file, fileToIgnore) }
   }
 
   private fun defaultCloseFile(file: VirtualFile, transferFocus: Boolean) {
@@ -1044,16 +1019,17 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   private fun isClosingAllowed(file: VirtualFile): Boolean {
     val extensions = EditorAutoClosingHandler.EP_NAME.extensionList
-    if (extensions.isEmpty()) return true
+    if (extensions.isEmpty()) {
+      return true
+    }
+
     val composite = getComposite(file) ?: return true
     return extensions.all { handler -> handler.isClosingAllowed(composite) }
   }
 
-  internal fun getFileAt(i: Int): VirtualFile = getCompositeAt(i).file
-
   override fun toString(): String {
     if (EDT.isCurrentThreadEdt()) {
-      return "EditorWindow(files=${getComposites().joinToString { it.file.path }})"
+      return "EditorWindow(files=${composites().joinToString { it.file.path }})"
     }
     else {
       return super.toString()
@@ -1209,3 +1185,6 @@ private class MySplitPainter(
     rectangle = Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
   }
 }
+
+internal val TabInfo.composite: EditorComposite
+  get() = (component as EditorCompositePanel).composite

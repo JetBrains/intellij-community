@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -19,20 +19,20 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 // used externally - cannot be final
 public class JBTabsPaneImpl implements TabbedPane {
-  private final JBEditorTabsBase myTabs;
+  private final JBEditorTabsBase tabs;
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
-    myTabs = JBTabsFactory.createEditorTabs(project, parent);
-    myTabs.getPresentation()
+    tabs = JBTabsFactory.createEditorTabs(project, parent);
+    tabs.getPresentation()
       .setAlphabeticalMode(false)
       .setPaintFocus(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
       .setFirstTabOffset(10);
 
-    myTabs.addListener(new TabsListener() {
+    tabs.addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        fireChanged(new ChangeEvent(myTabs));
+        fireChanged(new ChangeEvent(tabs));
       }
     });
 
@@ -47,17 +47,17 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public JComponent getComponent() {
-    return myTabs.getComponent();
+    return tabs.getComponent();
   }
 
   @Override
   public void putClientProperty(@NotNull Object key, Object value) {
-    myTabs.getComponent().putClientProperty(key, value);
+    tabs.getComponent().putClientProperty(key, value);
   }
 
   @Override
   public void setKeyboardNavigation(@NotNull PrevNextActionsDescriptor installKeyboardNavigation) {
-    myTabs.setNavigationActionBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
+    tabs.setNavigationActionBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
   }
 
   @Override
@@ -67,13 +67,13 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public int getTabCount() {
-    return myTabs.getTabCount();
+    return tabs.getTabCount();
   }
 
   @Override
   public void insertTab(@NotNull String title, Icon icon, @NotNull Component c, String tip, int index) {
     assert c instanceof JComponent;
-    myTabs.addTab(new TabInfo((JComponent)c).setText(title).setTooltipText(tip).setIcon(icon), index);
+    tabs.addTab(new TabInfo((JComponent)c).setText(title).setTooltipText(tip).setIcon(icon), index);
   }
 
   @Override
@@ -85,44 +85,45 @@ public class JBTabsPaneImpl implements TabbedPane {
       case SwingConstants.RIGHT -> JBTabsPosition.right;
       default -> throw new IllegalArgumentException("Invalid tab placement code=" + tabPlacement);
     };
-    myTabs.getPresentation().setTabsPosition(position);
+    tabs.getPresentation().setTabsPosition(position);
   }
 
   @Override
   public void addMouseListener(@NotNull MouseListener listener) {
-    myTabs.getComponent().addMouseListener(listener);
+    tabs.getComponent().addMouseListener(listener);
   }
 
   @Override
   public int getSelectedIndex() {
-    return myTabs.getIndexOf(myTabs.getSelectedInfo());
+    TabInfo tab = tabs.getSelectedInfo();
+    return tab == null ? -1 : tabs.getIndexOf(tab);
   }
 
   @Override
   public Component getSelectedComponent() {
-    final TabInfo selected = myTabs.getSelectedInfo();
-    return selected != null ? selected.getComponent() : null;
+    TabInfo selected = tabs.getSelectedInfo();
+    return selected == null ? null : selected.getComponent();
   }
 
   @Override
   public void setSelectedIndex(int index) {
-    myTabs.select(getTabAt(index), false);
+    tabs.select(getTabAt(index), false);
   }
 
   @Override
   public Component getTabComponentAt(int index) {
-    final TabInfo tabInfo = myTabs.getTabAt(index);
-    return myTabs.getTabLabel(tabInfo);
+    final TabInfo tabInfo = tabs.getTabAt(index);
+    return tabs.getTabLabel(tabInfo);
   }
 
   @Override
   public void removeTabAt(int index) {
-    myTabs.removeTab(getTabAt(index));
+    tabs.removeTab(getTabAt(index));
   }
 
   private TabInfo getTabAt(int index) {
     checkIndex(index);
-    return myTabs.getTabAt(index);
+    return tabs.getTabAt(index);
   }
 
   private void checkIndex(int index) {
@@ -133,7 +134,7 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void revalidate() {
-    myTabs.getComponent().revalidate();
+    tabs.getComponent().revalidate();
   }
 
   @Override
@@ -178,7 +179,7 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public int getTabLayoutPolicy() {
-    return myTabs.getPresentation().isSingleRow() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT;
+    return tabs.getPresentation().isSingleRow() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT;
   }
 
   @Override
@@ -188,7 +189,7 @@ public class JBTabsPaneImpl implements TabbedPane {
       case JTabbedPane.WRAP_TAB_LAYOUT -> false;
       default -> throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
     };
-    myTabs.getPresentation().setSingleRow(singleRow);
+    tabs.getPresentation().setSingleRow(singleRow);
   }
 
   @Override
@@ -202,12 +203,12 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void removeAll() {
-    myTabs.removeAllTabs();
+    tabs.removeAllTabs();
   }
 
   @Override
   public void updateUI() {
-    myTabs.getComponent().updateUI();
+    tabs.getComponent().updateUI();
   }
 
   @Override
@@ -216,6 +217,6 @@ public class JBTabsPaneImpl implements TabbedPane {
   }
 
   public @NotNull JBTabs getTabs() {
-    return myTabs;
+    return tabs;
   }
 }
