@@ -106,73 +106,16 @@ open class CodeVisionHost(val project: Project) {
   open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadAction {
-        if (project.isDisposed) return@runReadAction
-        val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
-        liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
-          if (isEditorApplicable(editor)) {
-            onEditorCreated(editorLifetime, editor)
-          }
+        if (project.isDisposed) {
+          return@runReadAction
         }
-
-        val viewService = project.service<CodeVisionView>()
-        viewService.setPerAnchorLimits(
-          CodeVisionAnchorKind.entries.associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
-
-
-        invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
-          if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
-            viewService.setPerAnchorLimits(
-              CodeVisionAnchorKind.entries.associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
-        }
-
-
-        lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
-          invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
-        }
-
-        lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
-          invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
-        }
-
-
-        rearrangeProviders()
-
-        project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
-          .subscribe(DynamicPluginListener.TOPIC,
-                     object : DynamicPluginListener {
-                       private fun recollectAndRearrangeProviders() {
-                         providers = CodeVisionProviderFactory.createAllProviders(
-                           project)
-                         rearrangeProviders()
-                       }
-
-                       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                         recollectAndRearrangeProviders()
-                       }
-
-                       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
-                                                   isUpdate: Boolean) {
-                         recollectAndRearrangeProviders()
-                       }
-                     })
-        project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
-          .subscribe(CodeVisionSettings.CODE_LENS_SETTINGS_CHANGED, object : CodeVisionSettings.CodeVisionSettingsListener {
-            override fun groupPositionChanged(id: String, position: CodeVisionAnchorKind) {
-
-            }
-
-            override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
-              PsiManager.getInstance(project).dropPsiCaches()
-              for (editor in EditorFactory.getInstance().allEditors) {
-                ModificationStampUtil.clearModificationStamp(editor)
-              }
-              DaemonCodeAnalyzer.getInstance(project).restart()
-              invalidateProviderSignal.fire(LensInvalidateSignal(null))
-            }
-          })
+        subscribeEditorCreated(enableCodeVisionLifetime)
+        subscribeAnchorLimitChanged(enableCodeVisionLifetime)
+        subscribeMetricsPositionChanged()
+        subscribeDynamicPluginLoaded(enableCodeVisionLifetime)
+        subscribeCVSettingsChanged(enableCodeVisionLifetime)
       }
     }
-
   }
 
   open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
@@ -272,6 +215,77 @@ open class CodeVisionHost(val project: Project) {
     val allProviders = collectAllProviders()
     defaultSortedProvidersList.clear()
     defaultSortedProvidersList.addAll(allProviders.getTopSortedIdList())
+  }
+
+  private fun subscribeEditorCreated(enableCodeVisionLifetime: Lifetime) {
+    val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
+    liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
+      if (isEditorApplicable(editor)) {
+        onEditorCreated(editorLifetime, editor)
+      }
+    }
+  }
+
+  private fun subscribeAnchorLimitChanged(enableCodeVisionLifetime: Lifetime) {
+    val viewService = project.service<CodeVisionView>()
+    viewService.setPerAnchorLimits(
+      CodeVisionAnchorKind.entries.associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+
+    invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
+      if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
+        viewService.setPerAnchorLimits(
+          CodeVisionAnchorKind.entries.associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+    }
+  }
+
+  private fun subscribeMetricsPositionChanged() {
+    lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
+      invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+    }
+
+    lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
+      invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+    }
+  }
+
+  private fun subscribeDynamicPluginLoaded(enableCodeVisionLifetime: Lifetime) {
+    rearrangeProviders()
+    project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+      .subscribe(DynamicPluginListener.TOPIC,
+                 object : DynamicPluginListener {
+                   private fun recollectAndRearrangeProviders() {
+                     providers = CodeVisionProviderFactory.createAllProviders(
+                       project)
+                     rearrangeProviders()
+                   }
+
+                   override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                     recollectAndRearrangeProviders()
+                   }
+
+                   override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
+                                               isUpdate: Boolean) {
+                     recollectAndRearrangeProviders()
+                   }
+                 })
+  }
+
+  private fun subscribeCVSettingsChanged(enableCodeVisionLifetime: Lifetime) {
+    project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+      .subscribe(CodeVisionSettings.CODE_LENS_SETTINGS_CHANGED, object : CodeVisionSettings.CodeVisionSettingsListener {
+        override fun groupPositionChanged(id: String, position: CodeVisionAnchorKind) {
+
+        }
+
+        override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
+          PsiManager.getInstance(project).dropPsiCaches()
+          for (editor in EditorFactory.getInstance().allEditors) {
+            ModificationStampUtil.clearModificationStamp(editor)
+          }
+          DaemonCodeAnalyzer.getInstance(project).restart()
+          invalidateProviderSignal.fire(LensInvalidateSignal(null))
+        }
+      })
   }
 
   private fun collectPlaceholdersInner(editor: Editor, psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
