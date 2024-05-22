@@ -31,6 +31,11 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         // TODO: add default Xmx to productInfo as right now we patch the user one
         vm_options.push("-Xmx2048m".to_string());
 
+        #[cfg(target_os = "linux")]
+        if is_wsl2() && !parse_bool_env_var("REMOTE_DEV_SERVER_ALLOW_IPV6_ON_WSL2", false)? {
+            vm_options.push("-Djava.net.preferIPv4Stack=true".to_string())
+        }
+
         Ok(vm_options)
     }
 
@@ -610,4 +615,11 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     debug!("All self-contained libraries ({}) were loaded", ordered_libs_to_load.len());
 
     Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn is_wsl2() -> bool {
+    fs::read_to_string("/proc/sys/kernel/osrelease")
+        .map(|x| x.contains("WSL2"))
+        .unwrap_or(false)
 }
