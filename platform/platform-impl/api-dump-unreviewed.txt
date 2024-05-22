@@ -6621,7 +6621,7 @@ f:com.intellij.ide.gdpr.EndUserAgreement
 - s:loadContent(java.lang.String,java.nio.file.Path):com.intellij.ide.gdpr.EndUserAgreement$Document
 - s:setAccepted(com.intellij.ide.gdpr.EndUserAgreement$Document):V
 - s:updateActiveDocumentName(java.lang.String):V
-- s:updateCachedContentToLatestBundledVersion():Z
+- s:updateCachedContentToLatestBundledVersion():V
 - s:updateContent(java.lang.String,java.lang.String):V
 f:com.intellij.ide.gdpr.EndUserAgreement$Document
 - <init>(java.lang.String,java.lang.String):V

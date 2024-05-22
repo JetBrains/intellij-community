@@ -2,10 +2,12 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.ide.SystemLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.LocalizationUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -19,6 +21,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+
 
 /**
  * @author Eugene Zhuravlev
@@ -102,6 +106,18 @@ public final class EndUserAgreement {
     }
 
     String docName = getDocumentName();
+    Document document;
+    Document defaultDocument = loadDocument(docName);
+    Locale locale = SystemLanguage.getInstance().getLocale();
+    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+    for (String localizedDocName : localizedDocsNames) {
+      document = loadDocument(localizedDocName);
+      if (!document.getText().isEmpty() && !defaultDocument.getVersion().isNewer(document.getVersion())) return document;
+    }
+    return defaultDocument;
+  }
+
+  private static @NotNull Document loadDocument(String docName) {
     Document fromFile = loadContent(docName, getDocumentContentFile(docName));
     if (fromFile != null && !fromFile.getVersion().isUnknown()) {
       return fromFile;
@@ -109,12 +125,21 @@ public final class EndUserAgreement {
     return loadContent(docName, getBundledResourcePath(docName));
   }
 
-  public static boolean updateCachedContentToLatestBundledVersion() {
+  public static void updateCachedContentToLatestBundledVersion() {
+    String docName = getDocumentName();
+    Locale locale = SystemLanguage.getInstance().getLocale();
+    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+    for (String localizedDocName : localizedDocsNames) {
+      updateCachedContentToLatestBundledVersion(localizedDocName);
+    }
+    updateCachedContentToLatestBundledVersion(docName);
+  }
+
+  private static void updateCachedContentToLatestBundledVersion(String docName) {
     try {
-      String docName = getDocumentName();
       Document cached = loadContent(docName, getDocumentContentFile(docName));
       if (cached == null || cached.getVersion().isUnknown()) {
-        return false;
+        return;
       }
 
       Document bundled = loadContent(docName, getBundledResourcePath(docName));
@@ -122,12 +147,9 @@ public final class EndUserAgreement {
         // update content only and not the active document name
         // active document name can be changed by JBA only
         writeToFile(getDocumentContentFile(docName), bundled.getText());
-        return true;
       }
     }
-    catch (Throwable ignored) {
-    }
-    return false;
+    catch (Throwable ignored) { }
   }
 
   private static void writeToFile(@NotNull Path file, @NotNull String text) {

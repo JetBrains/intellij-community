@@ -107,4 +107,17 @@ object LocalizationUtil {
   fun getLocaleFromPlugin(): Locale? {
     return DynamicBundle.findLanguageBundle()?.locale?.let { Locale.forLanguageTag(it) }
   }
+
+
+  @JvmOverloads
+  fun getSuffixLocalizedPaths(path: Path, specialLocale: Locale? = null): List<String> {
+    val locale = specialLocale ?: getLocale()
+    return setOf(
+      //inspectionDescriptions/name_zh_CN.html
+      path.convertPathToLocaleSuffixUsage(locale, true),
+
+      //inspectionDescriptions/name_zh.html
+      path.convertPathToLocaleSuffixUsage(locale, false))
+      .map { FileUtil.toSystemIndependentName(it.toString()) }
+  }
 }
