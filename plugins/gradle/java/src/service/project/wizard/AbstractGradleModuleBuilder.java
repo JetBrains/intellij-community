@@ -77,8 +77,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC;
-
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
 
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
@@ -225,10 +223,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     // execute when current dialog is closed
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (isCreatingNewProject) {
-        // update external projects data to be able to add child modules before the initial import finish
-        loadPreviewProject(project);
-      }
       if (isCreatingBuildScriptFile) {
         preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
         openBuildScriptFile(project, buildScriptFile);
@@ -238,14 +232,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       }
       reloadProject(project);
     }, ModalityState.nonModal(), project.getDisposed());
-  }
-
-  private void loadPreviewProject(@NotNull Project project) {
-    ImportSpecBuilder previewSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
-    previewSpec.usePreviewMode();
-    previewSpec.use(MODAL_SYNC);
-    previewSpec.callback(new ConfigureGradleModuleCallback(previewSpec));
-    ExternalSystemUtil.refreshProject(PathKt.getSystemIndependentPath(rootProjectPath), previewSpec);
   }
 
   private void reloadProject(@NotNull Project project) {
