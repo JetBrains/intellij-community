@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractFunction
+package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
@@ -17,18 +18,14 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui.KotlinFirExtractFunctionDialog
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractFunction.KotlinFirExtractFunctionHandler.InteractiveExtractionHelper
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.KotlinFirExtractFunctionHandler.InteractiveExtractionHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractInplaceExtractionHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
@@ -58,7 +55,7 @@ class KotlinFirExtractFunctionHandler(
             }
             allowAnalysisOnEdt {
                 KotlinFirExtractFunctionDialog(descriptorWithConflicts.descriptor.extractionData.project, descriptorWithConflicts) {
-                    doRefactor(ExtractionGeneratorConfiguration(it, ExtractionGeneratorOptions.DEFAULT), ::afterFinish)
+                    doRefactor(ExtractionGeneratorConfiguration(it, withCollapseOption(project)), ::afterFinish)
                 }.show()
             }
         }
@@ -69,11 +66,14 @@ class KotlinFirExtractFunctionHandler(
         override fun createRestartHandler(): AbstractExtractKotlinFunctionHandler =
             KotlinFirExtractFunctionHandler(acceptAllScopes, InteractiveExtractionHelper)
 
+        override fun createInplaceRestartHandler(): AbstractExtractKotlinFunctionHandler =
+            KotlinFirExtractFunctionHandler(acceptAllScopes, this)
+
         override fun doRefactor(
             descriptor: IExtractableCodeDescriptor<KtType>, onFinish: (ExtractionResult) -> Unit
         ) {
             val configuration =
-                ExtractionGeneratorConfiguration(descriptor as ExtractableCodeDescriptor, ExtractionGeneratorOptions.DEFAULT)
+                ExtractionGeneratorConfiguration(descriptor as ExtractableCodeDescriptor, withCollapseOption(descriptor.context.project))
             doRefactor(configuration, onFinish)
         }
 
@@ -124,3 +124,9 @@ class KotlinFirExtractFunctionHandler(
         engine.run(editor, data)
     }
 }
+
+private fun withCollapseOption(project: Project): ExtractionGeneratorOptions =
+    ExtractionGeneratorOptions.DEFAULT.copy(
+        allowExpressionBody = PropertiesComponent.getInstance(project)
+            .getBoolean(EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY, true)
+    )

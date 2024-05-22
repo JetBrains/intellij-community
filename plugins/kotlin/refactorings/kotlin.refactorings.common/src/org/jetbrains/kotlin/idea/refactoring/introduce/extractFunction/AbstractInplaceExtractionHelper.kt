@@ -2,13 +2,18 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -21,7 +26,12 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
+import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptorWithConflicts
@@ -31,9 +41,13 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
+import javax.swing.JCheckBox
+import javax.swing.JPanel
+import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.max
 import kotlin.math.min
+
+const val EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY = "EXTRACT_FUNCTION_COLLAPSE_BODY"
 
 interface AbstractInplaceExtractionHelper<KotlinType,
         Result : IExtractionResult<KotlinType>,
@@ -43,9 +57,12 @@ interface AbstractInplaceExtractionHelper<KotlinType,
 
     fun createRestartHandler(): AbstractExtractKotlinFunctionHandler
 
+    fun createInplaceRestartHandler(): AbstractExtractKotlinFunctionHandler
+
     @Nls
     fun getIdentifierError(file: KtFile, variableRange: TextRange): String?
 
+    fun supportConfigurableOptions(): Boolean = true
 
     fun configureAndRun(
         project: Project,
@@ -53,15 +70,15 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         descriptorWithConflicts: DescriptorWithConflicts,
         onFinish: (Result) -> Unit
     ) {
-        val activeTemplateState = TemplateManagerImpl.getTemplateState(editor)
-        if (activeTemplateState != null) {
-            activeTemplateState.gotoEnd(true)
-            createRestartHandler()
-                .invoke(project, editor, descriptorWithConflicts.descriptor.extractionData.originalFile, null)
-        }
         val descriptor = descriptorWithConflicts.descriptor
         val elements = descriptor.extractionData.physicalElements
         val file = descriptor.extractionData.originalFile
+
+        val activeTemplateState = TemplateManagerImpl.getTemplateState(editor)
+        if (activeTemplateState != null) {
+            restart(activeTemplateState, file, false)
+        }
+
         val first = elements.first()
         val callTextRange =
             editor.document.createRangeMarker(
@@ -108,7 +125,7 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                     }
                     error == null
                 }
-            ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
+            val templateState = ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
                 .enableRestartForHandler(createRestartHandler()::class.java)
                 .onBroken {
                     editorState.revert()
@@ -118,6 +135,9 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                 }
                 .disposeWithTemplate(disposable)
                 .createTemplate(file, listOf(templateField))
+            if (supportConfigurableOptions()) {
+                afterTemplateStart(templateState, disposable, file)
+            }
             onFinish(extraction)
         }
         try {
@@ -126,6 +146,34 @@ interface AbstractInplaceExtractionHelper<KotlinType,
             Disposer.dispose(disposable)
             throw e
         }
+    }
+
+    private fun afterTemplateStart(templateState: TemplateState, disposable: Disposable, file: KtFile) {
+        val popupProvider = ExtractFunctionPopupProvider(PropertiesComponent.getInstance(templateState.project).getBoolean(EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY, true))
+        popupProvider.setChangeListener {
+            val shouldCollapse = popupProvider.expressionBody
+            PropertiesComponent.getInstance(templateState.project).setValue(EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY, shouldCollapse, true)
+            restart(templateState, file, true)
+        }
+
+        val editor = templateState.editor as? EditorImpl ?: return
+        val offset = templateState.currentVariableRange?.endOffset ?: return
+
+        val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
+        val templateElement = TemplateInlayUtil.SelectableTemplateElement(presentation)
+        TemplateInlayUtil.createNavigatableButtonWithPopup(
+            templateState.editor, offset, presentation, popupProvider.panel,
+            templateElement, isPopupAbove = false
+        )?.let {
+            Disposer.register(disposable, it)
+        }
+    }
+
+    fun restart(templateState: TemplateState, file: KtFile, restartInplace: Boolean) {
+        val editor = templateState.editor
+        templateState.gotoEnd(true)
+        val handler = if (restartInplace) createInplaceRestartHandler() else createRestartHandler()
+        handler.invoke(file.project, editor, file, null)
     }
 
     fun rangeOf(element: PsiElement): TextRange {
@@ -161,5 +209,36 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         if (name == null) return callExpressionsInRange.firstOrNull()
         return callExpressionsInRange.find { (it.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() == name }
             ?: callExpressionsInRange.firstOrNull()
+    }
+}
+
+private class ExtractFunctionPopupProvider(expressionBodyDefault: Boolean) {
+    var expressionBody = expressionBodyDefault
+        private set
+
+    private var changeListener: () -> Unit = {}
+
+    fun setChangeListener(listener: () -> Unit) {
+        changeListener = listener
+    }
+
+    val panel: JPanel by lazy { createPanel() }
+
+    private fun createPanel(): DialogPanel {
+        val panel = panel {
+            row {
+                checkBox(KotlinBundle.message("checkbox.collapse.to.expression.body"))
+                    .selected(expressionBody)
+                    .onChanged { component ->
+                        expressionBody = component.isSelected
+                        changeListener.invoke()
+                    }
+            }
+        }
+        panel.isFocusCycleRoot = true
+        panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
+        panel.preferredFocusedComponent = UIUtil.findComponentOfType(panel, JCheckBox::class.java)
+
+        return panel
     }
 }

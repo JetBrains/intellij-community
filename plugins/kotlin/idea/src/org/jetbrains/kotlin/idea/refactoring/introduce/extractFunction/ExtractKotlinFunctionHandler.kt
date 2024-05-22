@@ -73,6 +73,9 @@ class ExtractKotlinFunctionHandler(
             allContainersEnabled, InteractiveExtractionHelper
         )
 
+        override fun createInplaceRestartHandler(): AbstractExtractKotlinFunctionHandler =
+            ExtractKotlinFunctionHandler(allContainersEnabled, this)
+
         override fun doRefactor(descriptor: IExtractableCodeDescriptor<KotlinType>, onFinish: (ExtractionResult) -> Unit) {
             val configuration = ExtractionGeneratorConfiguration(descriptor as ExtractableCodeDescriptor, ExtractionGeneratorOptions.DEFAULT)
             doRefactor(configuration, onFinish)
@@ -92,6 +95,8 @@ class ExtractKotlinFunctionHandler(
                 null
             }
         }
+
+        override fun supportConfigurableOptions(): Boolean = false
     }
 
     override fun doInvoke(
