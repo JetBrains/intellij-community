@@ -155,9 +155,15 @@ object Utils {
   }
 
   @JvmStatic
+  fun createAsyncDataContext(component: Component?): DataContext {
+    if (component == null) return DataContext.EMPTY_CONTEXT
+    return PreCachedDataContext(component)
+  }
+
+  @JvmStatic
   private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
-    dataContext is EdtDataContext -> PreCachedDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
+    dataContext is EdtDataContext -> createAsyncDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     dataContext is CustomizedDataContext ->
       when (val delegate = createAsyncDataContextImpl(dataContext.getParent())) {
         DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
