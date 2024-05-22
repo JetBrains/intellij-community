@@ -124,8 +124,13 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     PsiClass aClass = resolveResult.getElement();
     if (aClass == null) return false;
     boolean hasParams = false;
+    PsiSubstitutor substitutor = null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
-      if (resolveResult.getSubstitutor().substitute(parameter) == null) return false;
+      if (substitutor == null) {
+        substitutor = resolveResult.getSubstitutor();
+        if (!substitutor.hasRawSubstitution()) return true;
+      }
+      if (substitutor.substitute(parameter) == null) return false;
       hasParams = true;
     }
     return hasParams;
