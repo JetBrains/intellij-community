@@ -15,14 +15,14 @@ import com.sun.jdi.request.EventRequest;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance(SuspendManager.class);
+
+  private final AtomicLong mySuspendContextNextId = new AtomicLong();
 
   private final Deque<SuspendContextImpl> myEventContexts = new ConcurrentLinkedDeque<>();
   /**
@@ -55,7 +55,7 @@ public class SuspendManagerImpl implements SuspendManager {
   @NotNull
   @Override
   public SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
-    SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
+    SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null, mySuspendContextNextId.incrementAndGet()) {
       @Override
       protected void resumeImpl() {
         LOG.debug("Start resuming...");
@@ -87,13 +87,17 @@ public class SuspendManagerImpl implements SuspendManager {
   @NotNull
   @Override
   public SuspendContextImpl pushSuspendContext(final @NotNull EventSet set) {
-    SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set) {
+    SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set, mySuspendContextNextId.incrementAndGet()) {
       @Override
       protected void resumeImpl() {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Start resuming eventSet " + set + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
+        switch (getSuspendPolicy()) {
+          case EventRequest.SUSPEND_ALL -> myDebugProcess.getVirtualMachineProxy().resumedSuspendAllContext();
+          case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(getEventThread()).resumedSuspendThreadContext();
+        }
         DebuggerUtilsAsync.resume(set);
         LOG.debug("Set resumed ");
         myDebugProcess.logThreads();
@@ -114,9 +118,13 @@ public class SuspendManagerImpl implements SuspendManager {
     if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
       List<SuspendContextImpl> suspendAllContexts = ContainerUtil.filter(myEventContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
       if (suspendAllContexts.size() > 1) {
-        LOG.error("More than one suspend all context: " + suspendAllContexts);
+        logError("More than one suspend all context: " + suspendAllContexts);
       }
     }
+  }
+
+  private void logError(String message) {
+    DebuggerDiagnosticsUtil.logError(myDebugProcess, message);
   }
 
   @Override
@@ -143,7 +151,7 @@ public class SuspendManagerImpl implements SuspendManager {
     ThreadReferenceProxyImpl eventThread = context.getEventThread();
     if (eventThread != null && isFrozen(eventThread)) {
       if (context.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
-        LOG.error("Suspend policy for frozen context " + context + " is " + context.getSuspendPolicy());
+        logError("Suspend policy for frozen context " + context + " is " + context.getSuspendPolicy());
       }
       myFrozenThreads.remove(eventThread);
     }
@@ -193,8 +201,8 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   private void pushPausedContext(SuspendContextImpl suspendContext) {
-    if (LOG.isDebugEnabled()) {
-      LOG.assertTrue(myEventContexts.contains(suspendContext));
+    if (!myEventContexts.contains(suspendContext)) {
+      logError("Suspend context " + suspendContext + " was not in myEventContexts");
     }
 
     myPausedContexts.addFirst(suspendContext);
@@ -233,7 +241,9 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void suspendThread(@NotNull SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
-    LOG.assertTrue(thread != context.getEventThread(), "Thread is already suspended at the breakpoint");
+    if (thread == context.getEventThread()) {
+      logError("Thread " + thread + " is already suspended at the breakpoint for " + context);
+    }
 
     if (context.isExplicitlyResumed(thread)) {
       context.myResumedThreads.remove(thread);
@@ -244,8 +254,9 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void resumeThread(@NotNull SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
-    //LOG.assertTrue(thread != context.getThread(), "Use resume() instead of resuming breakpoint thread");
-    LOG.assertTrue(!context.isExplicitlyResumed(thread));
+    if (context.isExplicitlyResumed(thread)) {
+      logError("Thread " + thread + " was in explicitly resumed threads for " + context);
+    }
 
     if (context.myResumedThreads == null) {
       context.myResumedThreads = ConcurrentCollectionFactory.createConcurrentSet();
@@ -281,7 +292,9 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   private void processVote(@NotNull SuspendContextImpl suspendContext) {
-    LOG.assertTrue(suspendContext.myVotesToVote > 0);
+    if (suspendContext.myVotesToVote <= 0) {
+      logError("Vote counter should be positive for " + suspendContext);
+    }
     suspendContext.myVotesToVote--;
 
     if (LOG.isDebugEnabled()) {
@@ -290,6 +303,7 @@ public class SuspendManagerImpl implements SuspendManager {
     if (suspendContext.myVotesToVote == 0) {
       if (suspendContext.myIsVotedForResume) {
         // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
+        suspendContext.myIsGoingToResume = true;
         myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
       }
       else {
@@ -332,5 +346,17 @@ public class SuspendManagerImpl implements SuspendManager {
   public boolean hasPausedContext(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return myPausedContexts.contains(suspendContext);
+  }
+
+  String getStateForDiagnostics() {
+    return "myEventContexts=" + myEventContexts + "\n" +
+           "myPausedContexts=" + myPausedContexts + "\n" +
+           "myFrozenThreads=" + myFrozenThreads + "\n" +
+           "myExplicitlyResumedThreads=" + myExplicitlyResumedThreads + "\n" +
+           "suspends=" + suspends + "\n";
+  }
+
+  DebugProcessImpl getDebugProcess() {
+    return myDebugProcess;
   }
 }

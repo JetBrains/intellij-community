@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.DebuggerInvocationUtil
+import com.intellij.debugger.engine.DebuggerDiagnosticsUtil
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerSession
@@ -19,6 +20,13 @@ class RepairDebuggerViewAction : SessionActionBase(), DumbAware {
         val suspendManager = process.suspendManager
         val eventContexts = suspendManager.eventContexts
         val suspendAllContexts = eventContexts.filter { it.suspendPolicy == EventRequest.SUSPEND_ALL }
+
+        DebuggerDiagnosticsUtil.checkThreadsConsistency(process, true)
+
+        val evaluating = eventContexts.filter { it.isEvaluating }
+        if (evaluating.isNotEmpty()) {
+          DebuggerDiagnosticsUtil.logError(process, "May be a problem with hanged evaluation: $evaluating")
+        }
 
         thisLogger().warn("All paused contexts: $eventContexts")
 

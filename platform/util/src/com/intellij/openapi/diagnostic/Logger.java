@@ -384,10 +384,6 @@ public abstract class Logger {
 
   static final Function<Attachment, String> ATTACHMENT_TO_STRING = attachment -> attachment.getPath() + "\n" + attachment.getDisplayText();
 
-  public void error(String message, Attachment @NotNull ... attachments) {
-    error(message, null, attachments);
-  }
-
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING::apply));
   }
@@ -508,5 +504,9 @@ public abstract class Logger {
     else {
       warn(t);
     }
+  }
+
+  public void error(String message, Attachment @NotNull ... attachments) {
+    error(message, null, attachments);
   }
 }

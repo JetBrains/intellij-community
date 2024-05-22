@@ -227,7 +227,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       if (eventSet.size() > 1) {
                         // check for more than one different thread
                         if (StreamEx.of(eventSet).select(ClassPrepareEvent.class).map(ClassPrepareEvent::thread).toSet().size() > 1) {
-                          LOG.error("Two different threads in ClassPrepareEvents: " + eventSet);
+                          logError("Two different threads in ClassPrepareEvents: " + eventSet);
                         }
                       }
                       if (notifiedClassPrepareEventRequestors == null) {
@@ -235,7 +235,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       }
                       ReferenceType type = ((ClassPrepareEvent)event).referenceType();
                       if (lastPreparedClass != null && !lastPreparedClass.equals(type)) {
-                        LOG.error("EventSet contains ClassPrepareEvents for: " + lastPreparedClass + " and " + type);
+                        logError("EventSet contains ClassPrepareEvents for: " + lastPreparedClass + " and " + type);
                       }
                       lastPreparedClass = type;
 
@@ -246,7 +246,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       if (eventSet.size() > 1) {
                         // check for more than one different thread
                         if (StreamEx.of(eventSet).select(LocatableEvent.class).map(LocatableEvent::thread).toSet().size() > 1) {
-                          LOG.error("Two different threads in LocatableEvents: " + eventSet);
+                          logError("Two different threads in LocatableEvents: " + eventSet);
                         }
                       }
                       //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
@@ -269,7 +269,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                     LOG.info(e);
                   }
                   catch (Throwable e) {
-                    LOG.error(e);
+                    logError("Top-level error during event processing", e);
                   }
                 }
               }
@@ -336,6 +336,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
     suspendContext.setThread(thread);
 
     if (oldThread == null) {
+      switch (suspendContext.getSuspendPolicy()) {
+        case EventRequest.SUSPEND_ALL -> suspendContext.getDebugProcess().getVirtualMachineProxy().addedSuspendAllContext();
+        case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(suspendContext.getEventThread()).suspendedThreadContext();
+      }
       //this is the first event in the eventSet that we process
       suspendContext.getDebugProcess().beforeSuspend(suspendContext);
     }
@@ -696,7 +700,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           throw e;
         }
         catch (Exception e) { // catch everything else here to be able to vote
-          LOG.error(e);
+          logError("Error in requestor.processLocatableEvent", e);
         }
         finally {
           if (endTimeNs == 0) {
@@ -794,13 +798,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
                                                                  @NotNull LocatableEventRequestor requestor,
                                                                  @NotNull SuspendManagerImpl suspendManager,
                                                                  @NotNull ThreadReference thread) {
+    DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
       if (!(requestor instanceof SuspendOtherThreadsRequestor)) {
         LOG.warn("Requestor " + requestor + " performed unsafe suspend-all suspend");
       }
       return false;
     }
-    LOG.assertTrue(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD);
+    if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
+      debugProcess.logError("Suspend context " + suspendContext + " has non-thread suspend policy");
+    }
 
     if (!DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       // just usual suspend-thread stepping
@@ -819,12 +826,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
       ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
     if (!suspendAllContexts.isEmpty()) {
       if (suspendAllContexts.size() > 1) {
-        LOG.error("Many suspend all switch contexts: " + suspendAllContexts);
+        debugProcess.logError("Many suspend all switch contexts: " + suspendAllContexts);
       }
 
       // Already stopped, so this is "remaining" event. Need to resume the event.
       noStandardSuspendNeeded = true;
-      DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
       ThreadReferenceProxyImpl threadProxy = debugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
       if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
         for (SuspendContextImpl context : suspendManager.getEventContexts()) {
@@ -846,9 +852,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
         });
       }
       else {
+        List<SuspendContextImpl> suspendAllSwitchContexts =
+          ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext);
+        if (suspendAllSwitchContexts.size() != 1) {
+          debugProcess.logError("Requires just one suspend all switch context, but have: " + suspendAllSwitchContexts);
+        }
         if (thread.suspendCount() == 1) {
           // There are some errors in evaluation-resume-suspend logic
-          LOG.error("This means resuming this thead to the running state");
+          debugProcess.logError("This means resuming thead " + thread + " to the running state for " + suspendContext);
         }
         suspendManager.voteResume(suspendContext);
         debugProcess.notifyStoppedOtherThreads();

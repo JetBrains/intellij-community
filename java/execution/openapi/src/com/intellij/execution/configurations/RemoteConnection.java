@@ -149,4 +149,16 @@ public class RemoteConnection {
     }
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "RemoteConnection{" +
+           "myUseSockets=" + myUseSockets +
+           ", myServerMode=" + myServerMode +
+           ", myApplicationHostName='" + myApplicationHostName + '\'' +
+           ", myApplicationAddress='" + myApplicationAddress + '\'' +
+           ", myDebuggerHostName='" + myDebuggerHostName + '\'' +
+           ", myDebuggerAddress='" + myDebuggerAddress + '\'' +
+           '}';
+  }
 }
