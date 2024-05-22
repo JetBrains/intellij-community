@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.NonNls;
@@ -9,10 +9,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Queryable {
-
   void putInfo(@NotNull Map<? super String, ? super String> info);
 
-  class PrintInfo {
+  final class PrintInfo {
     private final String[] myIdKeys;
     private final String[] myInfoKeys;
 
