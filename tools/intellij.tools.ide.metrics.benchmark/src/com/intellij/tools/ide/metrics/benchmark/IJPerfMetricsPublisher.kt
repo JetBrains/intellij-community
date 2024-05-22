@@ -14,13 +14,16 @@ import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import com.intellij.tools.ide.util.common.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.io.path.Path
+import kotlin.io.path.writer
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -28,8 +31,13 @@ import kotlin.time.Duration.Companion.seconds
  * Metrics will be stored as TeamCity artifacts and later will be collected by IJ Perf collector (~ once/twice per hour).
  * Charts can be found at [IJ Perf Dashboard](https://ij-perf.labs.jb.gg/intellij/testsDev) - link is prone to change, though.
  */
-class IJPerfMetricsPublisherImpl : MetricsPublisher {
+class IJPerfMetricsPublisher {
+
   companion object {
+
+    fun getIdeTestLogFile(): Path = PathManager.getSystemDir().resolve("testlog").resolve("idea.log")
+    fun truncateTestLog(): Unit = run { getIdeTestLogFile().writer(options = arrayOf(StandardOpenOption.TRUNCATE_EXISTING)).write("") }
+
     // for local testing
     private fun setBuildParams(vararg buildProperties: Pair<String, String>): Path {
       val tempPropertiesFile = FileUtil.createTempFile("teamcity_", "_properties_file.properties")
@@ -68,7 +76,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       val mergedMetrics = metrics.plus(additionalMetrics)
 
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = uniqueTestIdentifier)
-      teamCityClient.publishTeamCityArtifacts(source = MetricsPublisher.getIdeTestLogFile(), artifactPath = uniqueTestIdentifier)
+      teamCityClient.publishTeamCityArtifacts(source = getIdeTestLogFile(), artifactPath = uniqueTestIdentifier)
 
       val buildInfo = CIServerBuildInfo(
         buildId = teamCityClient.buildId,
@@ -93,30 +101,36 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
         buildInfo = buildInfo
       )
     }
-  }
 
-  override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {
-    delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
-
-    val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
-
-    withContext(Dispatchers.IO) {
-      val artifactName = "metrics.performance.json"
-      val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
-      jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
-
-      // Print metrics in stdout when running locally
-      // https://youtrack.jetbrains.com/issue/AT-644/Performance-tests-do-not-check-anything#focus=Comments-27-8578186.0-0
-      // https://youtrack.jetbrains.com/issue/AT-726
-      if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-        println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(uniqueTestIdentifier).toUri()})")
-        println(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-60s %6s", it.n, it.v) })
+    fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {
+      runBlocking {
+        publish(fullQualifiedTestMethodName, *metricsCollectors)
       }
+    }
 
-      teamCityClient.publishTeamCityArtifacts(source = reportFile,
-                                              artifactPath = uniqueTestIdentifier,
-                                              artifactName = "metrics.performance.json",
-                                              zipContent = false)
+    suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {
+      delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
+
+      val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
+
+      withContext(Dispatchers.IO) {
+        val artifactName = "metrics.performance.json"
+        val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
+        jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
+
+        // Print metrics in stdout when running locally
+        // https://youtrack.jetbrains.com/issue/AT-644/Performance-tests-do-not-check-anything#focus=Comments-27-8578186.0-0
+        // https://youtrack.jetbrains.com/issue/AT-726
+        if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+          println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(uniqueTestIdentifier).toUri()})")
+          println(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-60s %6s", it.n, it.v) })
+        }
+
+        teamCityClient.publishTeamCityArtifacts(source = reportFile,
+                                                artifactPath = uniqueTestIdentifier,
+                                                artifactName = "metrics.performance.json",
+                                                zipContent = false)
+      }
     }
   }
 }

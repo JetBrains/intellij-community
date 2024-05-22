@@ -106,7 +106,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
       TelemetryManager.getInstance().forceFlushMetricsBlocking();
 
       // remove content of the previous tests from the idea.log
-      MetricsPublisher.Companion.truncateTestLog();
+      IJPerfMetricsPublisher.Companion.truncateTestLog();
 
       var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) ->
                                                                           it.toString().contains("-metrics") ||
@@ -349,9 +349,8 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
       try {
         // publish warmup and final measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          var publisherInstance = MetricsPublisher.Companion.getInstance();
-          publisherInstance.publishSync(uniqueTestName,
-                                        metricsCollectors.toArray(new TelemetryMetricsCollector[0]));
+          IJPerfMetricsPublisher.Companion.publishSync(uniqueTestName,
+                                                       metricsCollectors.toArray(new TelemetryMetricsCollector[0]));
         }
       }
       catch (Throwable t) {
