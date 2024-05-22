@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="rhizomedb-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:rhizomedb-compiler-plugin:1.9.20-0.17">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/1.9.20-0.17/rhizomedb-compiler-plugin-1.9.20-0.17.jar">
+          <sha256sum>6941e354c317334bd0f62054232a092c7bb9216590965a55af17af13adcd3b55</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/1.9.20-0.17/rhizomedb-compiler-plugin-1.9.20-0.17.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/1.9.20-0.17/rhizomedb-compiler-plugin-1.9.20-0.17-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
