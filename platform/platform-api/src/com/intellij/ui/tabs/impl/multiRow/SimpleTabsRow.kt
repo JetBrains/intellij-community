@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
@@ -14,7 +14,7 @@ class SimpleTabsRow(infos: List<TabInfo>,
     var curX = x
     for (info in infos) {
       val len = data.lengths.get(info)!!
-      val label = tabs.infoToLabel.get(info)!!
+      val label = tabs.getTabLabel(info)!!
       tabs.layout(label, curX, y, len, data.rowHeight)
       curX += len + tabs.tabHGap
     }

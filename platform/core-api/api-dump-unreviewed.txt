@@ -2798,7 +2798,7 @@ com.intellij.openapi.ui.Queryable
 - a:putInfo(java.util.Map):V
 com.intellij.openapi.ui.Queryable$Contributor
 - a:apply(java.util.Map):V
-c:com.intellij.openapi.ui.Queryable$PrintInfo
+f:com.intellij.openapi.ui.Queryable$PrintInfo
 - <init>():V
 - <init>(java.lang.String[]):V
 - <init>(java.lang.String[],java.lang.String[]):V

@@ -27,9 +27,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 /** A multi-output inlay that puts outputs from different sources to separate tabbed pane tabs. */
-class TabbedMultiOutput(val editor: Editor, parent: Disposable) : NotebookInlayMultiOutput() {
-
-  /** Page control for results viewing. */
+internal class TabbedMultiOutput(private val editor: Editor, parent: Disposable) : NotebookInlayMultiOutput() {
+  /** Page control for result viewing. */
   private val tabs: JBTabsImpl
 
   var onChange: (() -> Unit)? = null
@@ -79,7 +78,7 @@ class TabbedMultiOutput(val editor: Editor, parent: Disposable) : NotebookInlayM
   override fun onOutputs(inlayOutputs: List<InlayOutput>) {
     tabs.removeAllTabs()
     tabsOutput.clear()
-    inlayOutputs.forEach { inlayOutput ->
+    for (inlayOutput in inlayOutputs) {
       NotebookInlayOutput(editor, disposable).apply {
         setupOnHeightCalculated()
         addData(inlayOutput.type, inlayOutput.data, inlayOutput.progressStatus)
@@ -114,7 +113,7 @@ class TabbedMultiOutput(val editor: Editor, parent: Disposable) : NotebookInlayM
   private fun NotebookInlayState.setupOnHeightCalculated() {
     onHeightCalculated = {
       tabs.findInfo(this)?.let { tab ->
-        updateMaxHeight(it + tabs.getTabLabel(tab).preferredSize.height)
+        updateMaxHeight(it + tabs.getTabLabel(tab)!!.preferredSize.height)
       }
     }
   }
@@ -129,7 +128,7 @@ class TabbedMultiOutput(val editor: Editor, parent: Disposable) : NotebookInlayM
         text = inlayOutput.title
       }
     }).apply {
-      tabs.infoToLabel[this]?.apply {
+      tabs.getTabLabel(this)?.apply {
         if (inlayOutput.preferredWidth != 0) {
           preferredSize = Dimension(inlayOutput.preferredWidth, 0)
         }

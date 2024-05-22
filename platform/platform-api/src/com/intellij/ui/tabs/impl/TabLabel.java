@@ -378,10 +378,10 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
   public boolean isLastInRow() {
     List<TabInfo> infos = tabs.getVisibleInfos();
     for (int ind = 0; ind < infos.size() - 1; ind++) {
-      TabLabel cur = tabs.getInfoToLabel().get(infos.get(ind));
+      TabLabel cur = tabs.getTabLabel(infos.get(ind));
       if (cur == this) {
-        TabLabel next = tabs.getInfoToLabel().get(infos.get(ind + 1));
-        return cur.getY() != next.getY();
+        TabLabel next = tabs.getTabLabel(infos.get(ind + 1));
+        return cur.getY() != Objects.requireNonNull(next).getY();
       }
     }
     // can be empty in case of dragging tab label

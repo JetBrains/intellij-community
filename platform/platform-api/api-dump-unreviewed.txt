@@ -11015,7 +11015,6 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - f:getHorizontalSide():Z
 - getIndexOf(com.intellij.ui.tabs.TabInfo):I
 - f:getInfoToForeToolbar():java.util.Map
-- f:getInfoToLabel():java.util.Map
 - f:getInfoToToolbar():java.util.Map
 - getJBTabs():com.intellij.ui.tabs.JBTabs
 - f:getLastLayoutPass():com.intellij.ui.tabs.impl.LayoutPassInfo

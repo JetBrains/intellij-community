@@ -163,7 +163,11 @@ open class JBTabsImpl(
   private val hiddenInfos = HashMap<TabInfo, Int>()
   private var selectedInfo: TabInfo? = null
 
-  val infoToLabel: MutableMap<TabInfo, TabLabel> = HashMap()
+  private val infoToLabel: MutableMap<TabInfo, TabLabel> = HashMap()
+
+  @Internal
+  fun getInfoToLabel(): Map<TabInfo, TabLabel> = infoToLabel
+
   val infoToForeToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
   val infoToToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
 
@@ -1249,7 +1253,7 @@ open class JBTabsImpl(
 
   override fun addTab(info: TabInfo): TabInfo = addTab(info, -1)
 
-  override fun getTabLabel(info: TabInfo): TabLabel = infoToLabel.get(info)!!
+  override fun getTabLabel(info: TabInfo): TabLabel? = infoToLabel.get(info)
 
   val popupGroup: ActionGroup?
     get() = popupGroupSupplier?.invoke()
@@ -2528,8 +2532,8 @@ open class JBTabsImpl(
   }
 
   private fun removeListeners() {
-    for (eachInfo in visibleInfos) {
-      val label = infoToLabel[eachInfo]
+    for (info in visibleInfos) {
+      val label = infoToLabel.get(info)
       for (eachListener in tabMouseListeners) {
         when (eachListener) {
           is MouseListener -> label!!.removeMouseListener(eachListener)
@@ -3195,8 +3199,10 @@ private fun sortTabsAlphabetically(tabs: MutableList<TabInfo>) {
  * component to expose, as components are created/deleted on demand.
  * A tab page exposes one action: select and activate the panel.
  */
-private class AccessibleTabPage(private val parent: JBTabsImpl,
-                                private val tabInfo: TabInfo) : AccessibleContext(), Accessible, AccessibleComponent, AccessibleAction {
+private class AccessibleTabPage(
+  private val parent: JBTabsImpl,
+  private val tabInfo: TabInfo,
+) : AccessibleContext(), Accessible, AccessibleComponent, AccessibleAction {
   private val component = tabInfo.component
 
   init {
@@ -3208,7 +3214,7 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
     get() = parent.getIndexOf(tabInfo)
 
   private val tabLabel: TabLabel?
-    get() = parent.infoToLabel.get(tabInfo)
+    get() = parent.getTabLabel(tabInfo)
 
   /*
    * initializes the AccessibleContext for the page

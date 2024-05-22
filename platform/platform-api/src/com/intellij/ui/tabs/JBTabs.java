@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.Disposable;
@@ -18,6 +18,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public interface JBTabs extends DropAreaAware {
@@ -95,7 +96,7 @@ public interface JBTabs extends DropAreaAware {
   Image startDropOver(TabInfo tabInfo, RelativePoint point);
   void processDropOver(TabInfo over, RelativePoint point);
 
-  Component getTabLabel(TabInfo tabInfo);
+  @Nullable Component getTabLabel(TabInfo tabInfo);
 
   @Override
   default @NotNull Rectangle getDropArea() {
@@ -103,7 +104,7 @@ public interface JBTabs extends DropAreaAware {
     if (getTabCount() > 0) {
       @SuppressWarnings("UseDPIAwareInsets")
       Insets insets = JBUI.insets(0);
-      Rectangle bounds = getTabLabel(getTabAt(0)).getBounds();
+      Rectangle bounds = Objects.requireNonNull(getTabLabel(getTabAt(0))).getBounds();
       switch (getPresentation().getTabsPosition()) {
         case top -> insets.top = bounds.height;
         case left -> insets.left = bounds.width;

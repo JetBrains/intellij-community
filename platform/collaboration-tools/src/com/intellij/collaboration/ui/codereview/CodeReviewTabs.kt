@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
@@ -34,16 +34,17 @@ object CodeReviewTabs {
     text: Supplier<@Nls String>,
     totalFlow: Flow<Int?>,
     unreadFlow: Flow<Int?>
-  ): Job =
-    combine(totalFlow, unreadFlow, ::Pair)
+  ): Job {
+    return combine(totalFlow, unreadFlow, ::Pair)
       .onEach { (total, unread) ->
         tab.setText(text)
-        tab.appendUnreadIcon(tabs.getTabLabel(tab), unread)
+        tab.appendUnreadIcon(tabs.getTabLabel(tab)!!, unread)
         tab.appendCount(total, unread == null || unread <= 0)
 
         tab.setUnreadTooltip(unread)
       }
       .launchIn(this)
+  }
 }
 
 private fun TabInfo.setText(text: Supplier<@Nls String>) {

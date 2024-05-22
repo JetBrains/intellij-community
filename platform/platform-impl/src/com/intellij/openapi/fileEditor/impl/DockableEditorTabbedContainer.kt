@@ -156,7 +156,7 @@ class DockableEditorTabbedContainer internal constructor(
           tabInfo?.isPinned
         }
         if (index > 0 && previousIsPinned) {
-          val previousLabel = currentOver!!.getTabLabel(previousInfo)
+          val previousLabel = currentOver!!.getTabLabel(previousInfo)!!
           val bounds = previousLabel.bounds
           val dropPoint = dropTarget!!.getPoint(previousLabel)
           dropInPinnedRow = (currentOver is JBTabsImpl &&
@@ -179,9 +179,7 @@ class DockableEditorTabbedContainer internal constructor(
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
     coroutineScope.launch {
-      val openOptions = FileEditorOpenOptions(index = index,
-                                              requestFocus = true,
-                                              pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
+      val openOptions = FileEditorOpenOptions(index = index, requestFocus = true, pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
       splitters.manager.checkForbidSplitAndOpenFile(window, file, openOptions)
     }
   }
