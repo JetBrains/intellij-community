@@ -144,7 +144,7 @@ internal class RightPromptAndCommandLayoutTest {
   private fun createCommandAndRightPrompt(command: String, prompt: String, rightPrompt: String, width: Int): TextWithHighlightings {
     val promptInfo = TerminalPromptRenderingInfo(prompt, listOf(HighlightingInfo(0, prompt.length, promptAttributes)),
                                                  rightPrompt, listOf(HighlightingInfo(0, rightPrompt.length, rightPromptAttributes)))
-    return TerminalOutputModel.createCommandAndRightPromptText(command, promptInfo, commandAttributes, width)
+    return TerminalOutputModelImpl.createCommandAndRightPromptText(command, promptInfo, commandAttributes, width)
   }
 
   private class TestTextAttributesProvider(val name: String) : TextAttributesProvider {

@@ -15,7 +15,7 @@ import org.junit.Assert
 
 internal class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
   private val editor: EditorEx = createEditor(project, parentDisposable)
-  private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  private val outputModel: TerminalOutputModel = TerminalOutputModelImpl(editor)
 
   init {
     editor.highlighter = TerminalTextHighlighter(outputModel)

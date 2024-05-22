@@ -3,8 +3,10 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import org.jetbrains.annotations.ApiStatus
 
-internal class TerminalOutputHighlightingsSnapshot(private val document: Document, highlightings: List<HighlightingInfo>) {
+@ApiStatus.Internal
+class TerminalOutputHighlightingsSnapshot(private val document: Document, highlightings: List<HighlightingInfo>) {
   private val allSortedHighlightings: List<HighlightingInfo> = buildAndSortHighlightings(document, highlightings)
 
   val size: Int

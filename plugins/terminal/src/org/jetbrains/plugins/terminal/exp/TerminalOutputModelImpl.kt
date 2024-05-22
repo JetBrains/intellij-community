@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
 import java.awt.Rectangle
@@ -23,7 +24,7 @@ import kotlin.math.min
  * @see TerminalOutputView
  * @see TerminalOutputController
  */
-internal class TerminalOutputModel(val editor: EditorEx) {
+internal class TerminalOutputModelImpl(override val editor: EditorEx) : TerminalOutputModel {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
@@ -32,7 +33,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   private val document: Document = editor.document
   private val listeners: MutableList<TerminalOutputModelListener> = CopyOnWriteArrayList()
 
-  fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null) {
+  override fun addListener(listener: TerminalOutputModelListener, disposable: Disposable?) {
     listeners.add(listener)
     if (disposable != null) {
       Disposer.register(disposable) { listeners.remove(listener) }
@@ -43,7 +44,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
    * @param terminalWidth number of columns at the moment of block creation. It is used to properly position the right prompt.
    */
   @RequiresEdt
-  fun createBlock(command: String?, prompt: TerminalPromptRenderingInfo?, terminalWidth: Int): CommandBlock {
+  override fun createBlock(command: String?, prompt: TerminalPromptRenderingInfo?, terminalWidth: Int): CommandBlock {
     // Execute document insertions in bulk to make sure that EditorHighlighter
     // is not requesting the highlightings before we set them.
     val block = document.executeInBulk {
@@ -81,14 +82,14 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  internal fun finalizeBlock(activeBlock: CommandBlock) {
+  override fun finalizeBlock(activeBlock: CommandBlock) {
     // restrict block expansion
     (activeBlock as CommandBlockImpl).range.isGreedyToRight = false
     listeners.forEach { it.blockFinalized(activeBlock) }
   }
 
   @RequiresEdt
-  fun removeBlock(block: CommandBlock) {
+  override fun removeBlock(block: CommandBlock) {
     val startBlockInd = blocks.indexOf(block)
     check(startBlockInd >= 0)
     val rangeToDelete = findBlockRangeToDelete(block)
@@ -126,7 +127,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun clearBlocks() {
+  override fun clearBlocks() {
     val blocksCopy = blocks.reversed()
     for (block in blocksCopy) {
       removeBlock(block)
@@ -134,46 +135,39 @@ internal class TerminalOutputModel(val editor: EditorEx) {
     editor.document.setText("")
   }
 
-  /**
-   * Active block is the last block if it is able to expand.
-   * @return null in three cases:
-   * 1. There are no blocks created yet.
-   * 2. Requested after user inserted an empty line, but before block for new command is created.
-   * 3. Requested after command is started, but before the block is created for it.
-   */
-  fun getActiveBlock(): CommandBlock? {
+  override fun getActiveBlock(): CommandBlock? {
     return blocks.lastOrNull()?.takeIf { !it.isFinalized }
   }
 
-  fun getLastBlock(): CommandBlock? {
+  override fun getLastBlock(): CommandBlock? {
     return blocks.lastOrNull()
   }
 
-  fun getByOffset(offset: Int): CommandBlock? {
+  override fun getByOffset(offset: Int): CommandBlock? {
     // todo: better to use binary search here, but default implementation doesn't not acquire the lock of the list
     return blocks.find { offset in (it.startOffset..it.endOffset) }
   }
 
-  fun getByIndex(index: Int): CommandBlock {
+  override fun getByIndex(index: Int): CommandBlock {
     return blocks[index]
   }
 
-  fun getIndexOfBlock(block: CommandBlock): Int {
+  override fun getIndexOfBlock(block: CommandBlock): Int {
     return blocks.indexOf(block)
   }
 
   @RequiresEdt
-  fun getBlockBounds(block: CommandBlock): Rectangle {
+  override fun getBlockBounds(block: CommandBlock): Rectangle {
     val topY = editor.offsetToXY(block.startOffset).y - TerminalUi.blockTopInset
     val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset
     val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockInset
     return Rectangle(0, topY, width, bottomY - topY)
   }
 
-  fun getBlocksSize(): Int = blocks.size
+  override fun getBlocksSize(): Int = blocks.size
 
   @RequiresEdt
-  internal fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
+  override fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
     var snapshot = highlightingsSnapshot
     if (snapshot == null) {
       snapshot = TerminalOutputHighlightingsSnapshot(editor.document, highlightings.flatMap { it.value })
@@ -183,29 +177,29 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun getHighlightings(block: CommandBlock): List<HighlightingInfo> {
+  override fun getHighlightings(block: CommandBlock): List<HighlightingInfo> {
     return highlightings[block] ?: emptyList()
   }
 
   @RequiresEdt
-  fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
+  override fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
     highlightingsSnapshot = null
   }
 
   @RequiresEdt
-  fun setBlockInfo(block: CommandBlock, info: CommandBlockInfo) {
+  override fun setBlockInfo(block: CommandBlock, info: CommandBlockInfo) {
     blockInfos[block] = info
     listeners.forEach { it.blockInfoUpdated(block, info) }
   }
 
   @RequiresEdt
-  fun getBlockInfo(block: CommandBlock): CommandBlockInfo? {
+  override fun getBlockInfo(block: CommandBlock): CommandBlockInfo? {
     return blockInfos[block]
   }
 
   @RequiresEdt
-  fun trimOutput() {
+  override fun trimOutput() {
     val maxCapacity = getMaxCapacity()
     val textLength = document.textLength
     if (textLength <= maxCapacity) {
@@ -239,7 +233,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun deleteDocumentRange(block: CommandBlock, deleteRange: TextRange) {
+  private fun deleteDocumentRange(block: CommandBlock, deleteRange: TextRange) {
     val startBlockInd = blocks.indexOf(block)
     check(startBlockInd >= 0)
     if (!deleteRange.isEmpty) {
@@ -329,6 +323,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   }
 }
 
-internal data class CommandBlockInfo(val exitCode: Int)
+@ApiStatus.Internal
+data class CommandBlockInfo(val exitCode: Int)
 
 internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

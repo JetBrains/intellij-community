@@ -25,7 +25,7 @@ internal class SimpleTerminalController(
   private val terminalModel: TerminalModel
     get() = session.model
 
-  private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  private val outputModel: TerminalOutputModel = TerminalOutputModelImpl(editor)
   private val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor, parentDisposable = this)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)

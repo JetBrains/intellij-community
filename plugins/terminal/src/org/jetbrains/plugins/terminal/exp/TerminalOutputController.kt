@@ -31,7 +31,7 @@ internal class TerminalOutputController(
   private val settings: JBTerminalSystemSettingsProviderBase,
   focusModel: TerminalFocusModel
 ) : TerminalModel.TerminalListener {
-  val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  val outputModel: TerminalOutputModel = TerminalOutputModelImpl(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val scraper: ShellCommandOutputScraper = ShellCommandOutputScraper(session)
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(session.colorPalette, outputModel, focusModel, selectionModel, editor)
