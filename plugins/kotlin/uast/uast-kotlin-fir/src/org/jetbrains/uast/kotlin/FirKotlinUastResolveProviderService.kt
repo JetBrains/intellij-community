@@ -250,6 +250,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 ?.symbol
                 ?.let { return toPsiMethod(it, ktElement) }
             return when (ktElement) {
+                is KtBinaryExpression,
                 is KtPrefixExpression,
                 is KtPostfixExpression -> {
                     ktCallInfo.singleCallOrNull<KtCompoundVariableAccessCall>()
