@@ -119,7 +119,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1516,6 +1517,12 @@ public final class BuildManager implements Disposable {
       // Both formats "<host>:<port>" and "<port>" are accepted.
       // https://docs.oracle.com/en/java/javase/11/docs/specs/jpda/conninv.html#socket-transport
       cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+    }
+
+    // DepGraph-based IC implementation
+    if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
+      cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
+      cmdLine.addParameter("-Dkotlin.jps.dumb.mode=true");
     }
 
     // portable caches
