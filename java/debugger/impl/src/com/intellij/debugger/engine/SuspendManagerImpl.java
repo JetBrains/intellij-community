@@ -108,6 +108,13 @@ public class SuspendManagerImpl implements SuspendManager {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Push context : Suspends = " + suspends);
     }
+
+    if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
+      List<SuspendContextImpl> suspendAllContexts = ContainerUtil.filter(myEventContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+      if (suspendAllContexts.size() > 1) {
+        LOG.error("More than one suspend all context: " + suspendAllContexts);
+      }
+    }
   }
 
   @Override
