@@ -1328,6 +1328,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/filterPropertyAccessCallsFromInlineClass.kt");
         }
 
+        @TestMetadata("filterSingleFunctionCall.kt")
+        public void testFilterSingleFunctionCall() throws Exception {
+            runTest("testData/stepping/custom/filterSingleFunctionCall.kt");
+        }
+
         @TestMetadata("finallyBlock.kt")
         public void testFinallyBlock() throws Exception {
             runTest("testData/stepping/custom/finallyBlock.kt");

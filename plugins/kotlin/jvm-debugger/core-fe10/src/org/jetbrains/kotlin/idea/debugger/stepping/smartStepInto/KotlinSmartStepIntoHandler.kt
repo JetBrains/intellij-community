@@ -106,7 +106,8 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
     lines: ClosedRange<Int>
 ): List<KotlinMethodSmartStepTarget> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    if (DexDebugFacility.isDex(debugProcess) || size <= 1) return this
+    if (isEmpty()) return this
+    if (DexDebugFacility.isDex(debugProcess)) return this
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
     val location = frameProxy?.safeLocation() ?: return this
     return filterSmartStepTargets(location, lines, this, debugProcess)
