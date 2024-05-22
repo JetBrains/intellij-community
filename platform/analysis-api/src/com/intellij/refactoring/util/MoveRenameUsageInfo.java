@@ -38,7 +38,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
     if (referencedElement != null) {
-      myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
+      myReferencedElementPointer = SmartPointerManager.getInstance(referencedElement.getProject()).createSmartPsiElementPointer(referencedElement);
     }
     if (reference == null) reference = element.getReference();
     PsiFile containingFile = element.getContainingFile();
