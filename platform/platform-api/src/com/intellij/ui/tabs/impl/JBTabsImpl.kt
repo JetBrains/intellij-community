@@ -163,10 +163,8 @@ open class JBTabsImpl(
   private val hiddenInfos = HashMap<TabInfo, Int>()
   private var selectedInfo: TabInfo? = null
 
-  private val infoToLabel: MutableMap<TabInfo, TabLabel> = HashMap()
-
   @Internal
-  fun getInfoToLabel(): Map<TabInfo, TabLabel> = infoToLabel
+  fun getInfoToLabel(): Map<TabInfo, TabLabel> = tabs.asSequence().filter { it.tabLabel != null }.associateWith { it.tabLabel!! }
 
   val infoToForeToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
   val infoToToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
@@ -496,9 +494,9 @@ open class JBTabsImpl(
   protected open fun createDragHelper(tabs: JBTabsImpl, parentDisposable: Disposable): DragHelper = DragHelper(tabs, parentDisposable)
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    for ((info, label) in infoToLabel) {
-      info.revalidate()
-      label.setTabActions(info.tabLabelActions)
+    for (tab in visibleInfos) {
+      tab.revalidate()
+      tab.tabLabel?.setTabActions(tab.tabLabelActions)
     }
     updateRowLayout()
   }
@@ -514,7 +512,8 @@ open class JBTabsImpl(
     setLayout(layout)
 
     applyDecoration()
-    for (label in infoToLabel.values) {
+    for (tab in visibleInfos) {
+      val label = tab.tabLabel ?: continue
       label.enableCompressionMode(false)
       label.isForcePaintBorders = false
     }
@@ -597,8 +596,8 @@ open class JBTabsImpl(
   private fun repaintAttractions() {
     var needsUpdate = false
     for (each in visibleInfos) {
-      val eachLabel = infoToLabel.get(each)
-      needsUpdate = needsUpdate or eachLabel!!.repaintAttraction()
+      val label = each.tabLabel ?: continue
+      needsUpdate = needsUpdate or label.repaintAttraction()
     }
     if (needsUpdate) {
       relayout(forced = true, layoutNow = false)
@@ -766,7 +765,7 @@ open class JBTabsImpl(
       }
 
       if (lastOverPoint.x in 0 until width && lastOverPoint.y > 0 && lastOverPoint.y < height) {
-        val label = infoToLabel.get(doFindInfo(point = lastOverPoint, labelsOnly = true))
+        val label = doFindInfo(point = lastOverPoint, labelsOnly = true)?.tabLabel
         if (label != null) {
           if (currentOverLabel != null) {
             currentOverLabel!!.toggleShowActions(false)
@@ -792,8 +791,8 @@ open class JBTabsImpl(
   override fun updateTabActions(validateNow: Boolean) {
     if (isHideTabs) return
     var changed = false
-    for (tabLabel in infoToLabel.values) {
-      val changes = tabLabel.updateTabActions()
+    for (tab in visibleInfos) {
+      val changes = tab.tabLabel?.updateTabActions() ?: continue
       changed = changed || changes
     }
     if (changed) {
@@ -842,12 +841,12 @@ open class JBTabsImpl(
 
   private fun showListPopup(rect: Rectangle, hiddenInfos: List<TabInfo>): JBPopup {
     val separatorIndex = hiddenInfos.indexOfFirst { info ->
-      val label = infoToLabel.get(info)
+      val label = info.tabLabel!!
       if (position.isSide) {
-        label!!.y >= 0
+        label.y >= 0
       }
       else {
-        label!!.x >= 0
+        label.x >= 0
       }
     }
 
@@ -1008,10 +1007,11 @@ open class JBTabsImpl(
               if (renderer !is JLabel) {
                 return
               }
+
               val tabInfo = ClientProperty.get(renderer, TAB_INFO_KEY) ?: return
 
               // The last one is expected to be 'CloseTab'
-              val tabAction = if (tabInfo.tabLabelActions != null) tabInfo.tabLabelActions!!.getChildren(null).lastOrNull() else null
+              val tabAction = tabInfo.tabLabelActions?.getChildren(null)?.lastOrNull()
               if (tabAction == null && !tabInfo.isPinned) {
                 return
               }
@@ -1019,7 +1019,7 @@ open class JBTabsImpl(
               var clickToUnpin = false
               if (tabInfo.isPinned) {
                 if (tabAction != null) {
-                  val component = infoToLabel[tabInfo]!!
+                  val component = tabInfo.tabLabel!!
                   ActionManager.getInstance().tryToExecute(tabAction, e, component, tabInfo.tabActionPlace, true)
                   clickToUnpin = true
                 }
@@ -1225,7 +1225,7 @@ open class JBTabsImpl(
 
     info.changeSupport.addPropertyChangeListener(this)
     val label = createTabLabel(info)
-    infoToLabel.put(info, label)
+    info.tabLabel = label
     infoToPage.put(info, AccessibleTabPage(parent = this, tabInfo = info))
     if (!isDropTarget) {
       if (index < 0 || index > visibleInfos.size - 1) {
@@ -1253,7 +1253,7 @@ open class JBTabsImpl(
 
   override fun addTab(info: TabInfo): TabInfo = addTab(info, -1)
 
-  override fun getTabLabel(info: TabInfo): TabLabel? = infoToLabel.get(info)
+  override fun getTabLabel(info: TabInfo): TabLabel? = info.tabLabel
 
   val popupGroup: ActionGroup?
     get() = popupGroupSupplier?.invoke()
@@ -1321,7 +1321,7 @@ open class JBTabsImpl(
 
       val owner = focusManager.focusOwner
       val c = info.component
-      if (c != null && owner != null && (c === owner || SwingUtilities.isDescendingFrom(owner, c))) {
+      if (owner != null && (c === owner || SwingUtilities.isDescendingFrom(owner, c))) {
         // This might look like a no-op, but in some cases it's not. In particular, it's required when a focus transfer has just been
         // requested to another component. E.g., this happens on 'unsplit' operation when we remove an editor component from UI hierarchy and
         // re-add it at once in a different layout, and want that editor component to preserve focus afterward.
@@ -1337,9 +1337,8 @@ open class JBTabsImpl(
     val oldInfo = selectedInfo
     setSelectedInfo(info)
     val newInfo = selectedInfo
-    val label = infoToLabel.get(info)
-    if (label != null) {
-      setComponentZOrder(label, 0)
+    info.tabLabel?.let {
+      setComponentZOrder(it, 0)
     }
     setComponentZOrder(scrollBar, 0)
     fireBeforeSelectionChanged(oldInfo, newInfo)
@@ -1525,13 +1524,12 @@ open class JBTabsImpl(
   private fun updateEnabling() {
     val all = tabs
     for (tabInfo in all) {
-      infoToLabel.get(tabInfo)!!.setTabEnabled(tabInfo.isEnabled)
+      tabInfo.tabLabel?.setTabEnabled(tabInfo.isEnabled)
     }
     val selected = selectedInfo
     if (selected != null && !selected.isEnabled) {
-      val toSelect = getToSelectOnRemoveOf(selected)
-      if (toSelect != null) {
-        select(info = toSelect, requestFocus = focusManager.getFocusedDescendantFor(this) != null)
+      getToSelectOnRemoveOf(selected)?.let {
+        select(info = it, requestFocus = focusManager.getFocusedDescendantFor(this) != null)
       }
     }
   }
@@ -1579,7 +1577,7 @@ open class JBTabsImpl(
   }
 
   private fun updateIcon(tabInfo: TabInfo) {
-    infoToLabel.get(tabInfo)!!.setIcon(tabInfo.icon)
+    tabInfo.tabLabel?.setIcon(tabInfo.icon)
   }
 
   fun revalidateAndRepaint() {
@@ -1623,8 +1621,8 @@ open class JBTabsImpl(
   }
 
   private fun updateText(tabInfo: TabInfo) {
-    val label = infoToLabel.get(tabInfo)
-    label!!.setText(tabInfo.coloredText)
+    val label = tabInfo.tabLabel!!
+    label.setText(tabInfo.coloredText)
     label.toolTipText = tabInfo.tooltipText
   }
 
@@ -1644,7 +1642,7 @@ open class JBTabsImpl(
   }
 
   private fun updateTabActions(info: TabInfo) {
-    infoToLabel.get(info)!!.setTabActions(info.tabLabelActions)
+    info.tabLabel!!.setTabActions(info.tabLabelActions)
   }
 
   override fun getSelectedInfo(): TabInfo? {
@@ -1815,7 +1813,7 @@ open class JBTabsImpl(
         return base
       }
 
-      val label = tabs.infoToLabel.get(info)
+      val label = info.tabLabel
       if (tabs.isSideComponentOnTabs && label != null && base.height > 0) {
         return Dimension(base.width, label.preferredSize.height)
       }
@@ -1858,8 +1856,8 @@ open class JBTabsImpl(
 
   override fun doLayout() {
     try {
-      for (each in infoToLabel.values) {
-        each.setTabActionsAutoHide(tabLabelActionsAutoHide)
+      for (tab in tabs) {
+        tab.tabLabel?.setTabActionsAutoHide(tabLabelActionsAutoHide)
       }
       val moreBoundsBeforeLayout = moreToolbar!!.component.bounds
       val entryPointBoundsBeforeLayout = if (entryPointToolbar == null) Rectangle(0, 0, 0, 0) else entryPointToolbar!!.component.bounds
@@ -1976,7 +1974,7 @@ open class JBTabsImpl(
   fun moveDraggedTabLabel() {
     val dragHelper = dragHelper
     if (dragHelper?.dragRec != null) {
-      val selectedLabel = infoToLabel.get(draggedTabSelectionInfo)
+      val selectedLabel = draggedTabSelectionInfo?.tabLabel
       if (selectedLabel != null) {
         val bounds = selectedLabel.bounds
         if (isHorizontalTabs) {
@@ -2050,13 +2048,13 @@ open class JBTabsImpl(
 
   private fun reset(tabInfo: TabInfo, resetLabels: Boolean) {
     val c = tabInfo.component
-    if (c != null) {
-      resetLayout(c)
-    }
+    resetLayout(c)
     resetLayout(infoToForeToolbar.get(tabInfo))
     resetLayout(infoToToolbar.get(tabInfo))
     if (resetLabels) {
-      resetLayout(infoToLabel.get(tabInfo))
+      tabInfo.tabLabel?.let {
+        resetLayout(it)
+      }
     }
   }
 
@@ -2094,7 +2092,7 @@ open class JBTabsImpl(
   }
 
   val selectedLabel: TabLabel?
-    get() = infoToLabel.get(selectedInfo)
+    get() = selectedInfo?.tabLabel
 
   open fun getVisibleInfos(): List<TabInfo> {
     if (AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
@@ -2147,19 +2145,19 @@ open class JBTabsImpl(
   private fun computeMaxSize(): Max {
     val max = Max()
     val isSideComponentOnTabs = effectiveLayout!!.isSideComponentOnTabs
-    for (eachInfo in visibleInfos) {
-      val label = infoToLabel.get(eachInfo)
-      max.label.height = max.label.height.coerceAtLeast(label!!.preferredSize.height)
+    for (tab in visibleInfos) {
+      val label = tab.tabLabel ?: continue
+      max.label.height = max.label.height.coerceAtLeast(label.preferredSize.height)
       max.label.width = max.label.width.coerceAtLeast(label.preferredSize.width)
       if (isSideComponentOnTabs) {
         var toolbarWidth = 0
-        val foreToolbar = infoToForeToolbar.get(eachInfo)
+        val foreToolbar = infoToForeToolbar.get(tab)
         if (foreToolbar != null && !foreToolbar.isEmpty) {
           max.toolbar.height = max.toolbar.height.coerceAtLeast(foreToolbar.preferredSize.height)
           toolbarWidth += foreToolbar.preferredSize.width
 
         }
-        val toolbar = infoToToolbar.get(eachInfo)
+        val toolbar = infoToToolbar.get(tab)
         if (toolbar != null && !toolbar.isEmpty) {
           max.toolbar.height = max.toolbar.height.coerceAtLeast(toolbar.preferredSize.height)
           toolbarWidth += toolbar.preferredSize.width
@@ -2188,11 +2186,9 @@ open class JBTabsImpl(
     val size = Dimension()
     for (each in visibleInfos) {
       val c = each.component
-      if (c != null) {
-        val eachSize = transform.`fun`(c)
-        size.width = max(eachSize.width, size.width)
-        size.height = max(eachSize.height, size.height)
-      }
+      val eachSize = transform.`fun`(c)
+      size.width = max(eachSize.width, size.width)
+      size.height = max(eachSize.height, size.height)
     }
     addHeaderSize(size, tabCount)
     return size
@@ -2215,15 +2211,13 @@ open class JBTabsImpl(
   }
 
   private fun computeHeaderPreferredSize(tabsCount: Int): Dimension {
-    val infos: Iterator<TabInfo?> = infoToLabel.keys.iterator()
     val size = Dimension()
     var currentTab = 0
     val horizontal = tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom
-    while (infos.hasNext()) {
+    for (tab in visibleInfos) {
       val canGrow = currentTab < tabsCount
-      val eachInfo = infos.next()
-      val eachLabel = infoToLabel[eachInfo]
-      val eachPrefSize = eachLabel!!.preferredSize
+      val eachLabel = tab.tabLabel ?: continue
+      val eachPrefSize = eachLabel.preferredSize
       if (horizontal) {
         if (canGrow) {
           size.width += eachPrefSize.width
@@ -2289,20 +2283,20 @@ open class JBTabsImpl(
       doSetSelected(toSelect, transferFocus, true).doWhenProcessed { removeDeferred().notifyWhenDone(result) }
     }
     else {
-      processRemove(info, true)
+      processRemove(info!!, true)
       removeDeferred().notifyWhenDone(result)
     }
     if (visibleInfos.isEmpty()) {
       removeDeferredNow()
     }
     revalidateAndRepaint(true)
-    fireTabRemoved(info!!)
+    fireTabRemoved(info)
     return result
   }
 
   // Tells whether focus is currently within one of the tab's components, or it was there last time the containing window had focus
   private fun isFocused(info: TabInfo): Boolean {
-    val label = infoToLabel.get(info)
+    val label = info.tabLabel
     val foreToolbar = infoToForeToolbar.get(info)
     val toolbar = infoToToolbar.get(info)
     val component = info.component
@@ -2324,25 +2318,25 @@ open class JBTabsImpl(
     return ourWindow != null && !ourWindow.isFocused && ancestorChecker.test(ourWindow.mostRecentFocusOwner)
   }
 
-  private fun processRemove(info: TabInfo?, forcedNow: Boolean) {
-    val tabLabel = infoToLabel.get(info)
+  private fun processRemove(tab: TabInfo, forcedNow: Boolean) {
+    val tabLabel = tab.tabLabel
     tabLabel?.let { remove(it) }
-    infoToForeToolbar.get(info)?.let { remove(it) }
-    val toolbar = infoToToolbar.get(info)
+    infoToForeToolbar.get(tab)?.let { remove(it) }
+    val toolbar = infoToToolbar.get(tab)
     toolbar?.let { remove(it) }
-    val tabComponent = info!!.component
+    val tabComponent = tab.component
     if (forcedNow || !isToDeferRemoveForLater(tabComponent)) {
       remove(tabComponent)
     }
     else {
       addToDeferredRemove(tabComponent)
     }
-    visibleInfos.remove(info)
-    hiddenInfos.remove(info)
-    infoToLabel.remove(info)
-    infoToPage.remove(info)
-    infoToForeToolbar.remove(info)
-    infoToToolbar.remove(info)
+    visibleInfos.remove(tab)
+    hiddenInfos.remove(tab)
+    tab.tabLabel = null
+    infoToPage.remove(tab)
+    infoToForeToolbar.remove(tab)
+    infoToToolbar.remove(tab)
     if (tabLabelAtMouse === tabLabel) {
       tabLabelAtMouse = null
     }
@@ -2519,12 +2513,12 @@ open class JBTabsImpl(
   override fun getComponent(): JComponent = this
 
   private fun addListeners() {
-    for (eachInfo in visibleInfos) {
-      val label = infoToLabel[eachInfo]
+    for (tab in visibleInfos) {
+      val label = tab.tabLabel ?: continue
       for (eachListener in tabMouseListeners) {
         when (eachListener) {
-          is MouseListener -> label!!.addMouseListener(eachListener)
-          is MouseMotionListener -> label!!.addMouseMotionListener(eachListener)
+          is MouseListener -> label.addMouseListener(eachListener)
+          is MouseMotionListener -> label.addMouseMotionListener(eachListener)
           else -> assert(false)
         }
       }
@@ -2532,12 +2526,12 @@ open class JBTabsImpl(
   }
 
   private fun removeListeners() {
-    for (info in visibleInfos) {
-      val label = infoToLabel.get(info)
+    for (tab in visibleInfos) {
+      val label = tab.tabLabel ?: continue
       for (eachListener in tabMouseListeners) {
         when (eachListener) {
-          is MouseListener -> label!!.removeMouseListener(eachListener)
-          is MouseMotionListener -> label!!.removeMouseMotionListener(eachListener)
+          is MouseListener -> label.removeMouseListener(eachListener)
+          is MouseMotionListener -> label.removeMouseMotionListener(eachListener)
           else -> assert(false)
         }
       }
@@ -2870,8 +2864,8 @@ open class JBTabsImpl(
 
   private fun applyDecoration() {
     uiDecorator?.getDecoration()?.let { uiDecoration ->
-      for (tabLabel in infoToLabel.values) {
-        tabLabel.apply(uiDecoration)
+      for (tab in visibleInfos) {
+        tab.tabLabel?.apply(uiDecoration)
       }
     }
     for (tabInfo in tabs) {
@@ -2964,7 +2958,7 @@ open class JBTabsImpl(
   override fun setTabLabelActionsMouseDeadzone(length: TimedDeadzone.Length): JBTabsPresentation {
     tabActionsMouseDeadZone = length
     for (tabInfo in tabs) {
-      infoToLabel.get(tabInfo)!!.updateTabActions()
+      tabInfo.tabLabel?.updateTabActions()
     }
     return this
   }
@@ -3038,8 +3032,8 @@ open class JBTabsImpl(
     val index = effectiveLayout!!.getDropIndexFor(pointInMySpace)
     dropInfoIndex = index
     addTab(info = dropInfo!!, index = index, isDropTarget = true, fireEvents = true)
-    val label = infoToLabel.get(dropInfo)
-    val size = label!!.preferredSize
+    val label = dropInfo!!.tabLabel!!
+    val size = label.preferredSize
     label.setBounds(0, 0, size.width, size.height)
     val img = ImageUtil.createImage(/* gc = */ graphicsConfiguration, /* width = */ size.width, /* height = */ size.height, /* type = */
                                     BufferedImage.TYPE_INT_ARGB)

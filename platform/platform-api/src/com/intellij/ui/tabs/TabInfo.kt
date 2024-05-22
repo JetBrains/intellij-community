@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
@@ -41,6 +42,9 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
 
     private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
   }
+
+  @JvmField
+  internal var tabLabel: TabLabel? = null
 
   private var preferredFocusableComponent: JComponent? = component
 
