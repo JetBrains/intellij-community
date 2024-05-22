@@ -266,8 +266,8 @@ class EditorTabbedContainer internal constructor(
   }
 
   fun getSelectedComposite(): EditorComposite? {
-    val selectedInfo = editorTabs.selectedInfo
-    return selectedInfo?.component?.let { (it as EditorWindowTopComponent).composite }
+    val selectedTab = editorTabs.selectedInfo
+    return selectedTab?.component?.let { (it as EditorWindowTopComponent).composite }
   }
 
   internal fun insertTab(

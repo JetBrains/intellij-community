@@ -1117,7 +1117,6 @@ internal class EditorWindowTopComponent(
     }
     isFocusCycleRoot = true
   }
-
   override fun getEditorWindow(): EditorWindow = window
 }
 

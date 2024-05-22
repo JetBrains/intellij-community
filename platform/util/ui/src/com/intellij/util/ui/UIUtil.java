@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -1933,7 +1933,7 @@ public final class UIUtil {
    * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
    */
   @Deprecated
-  public static void removeScrollBorder(final Component c) {
+  public static void removeScrollBorder(@NotNull Component c) {
     JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
       .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
       .filter(JScrollPane.class);

@@ -1225,6 +1225,11 @@ open class JBTabsImpl(
 
     info.changeSupport.addPropertyChangeListener(this)
     val label = createTabLabel(info)
+    label.setText(info.coloredText)
+    label.toolTipText = info.tooltipText
+    label.setIcon(info.icon)
+    label.setTabActions(info.tabLabelActions)
+
     info.tabLabel = label
     infoToPage.put(info, AccessibleTabPage(parent = this, tabInfo = info))
     if (!isDropTarget) {
@@ -1237,11 +1242,6 @@ open class JBTabsImpl(
     }
 
     resetTabsCache()
-
-    label.setText(info.coloredText)
-    label.toolTipText = info.tooltipText
-    label.setIcon(info.icon)
-    label.setTabActions(info.tabLabelActions)
 
     updateSideComponent(info)
     add(label)
