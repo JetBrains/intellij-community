@@ -666,7 +666,7 @@ public final class PlatformTestUtil {
   public static @NotNull PerformanceTestInfo newPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
                                                                                      int expectedInputSize,
                                                                                      @NotNull ThrowableComputable<Integer, ?> test) {
-    return new PerformanceTestInfo(test, expectedInputSize, launchName);
+    return PerformanceTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -703,7 +703,7 @@ public final class PlatformTestUtil {
     OpenProjectTaskBuilderKt.saveProject(project, isForceSavingAllSettings);
   }
 
-  static void waitForAllBackgroundActivityToCalmDown() {
+  public static void waitForAllBackgroundActivityToCalmDown() {
     for (int i = 0; i < 50; i++) {
       CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
       if (!data.hasAnyActivityBesides(Thread.currentThread())) {
