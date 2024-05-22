@@ -17,8 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncActionResultHandler.Companion.project
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
 
 @ApiStatus.Internal
 @Order(GradleSyncContributor.Order.CONTENT_ROOT_CONTRIBUTOR)

@@ -68,7 +68,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncActionResultHandler;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionResultHandler;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -311,7 +311,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var models = new GradleIdeaModelHolder(useCustomSerialization, pathMapper, buildEnvironment);
     resolverContext.setModels(models);
 
-    var syncResultHandler = new GradleSyncActionResultHandler(resolverContext);
 
     ProgressManager.checkCanceled();
 
@@ -331,7 +330,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      GradleModelFetchActionRunner.runBuildAction(resolverContext, executionSettings, buildAction, syncResultHandler);
+      var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
+      GradleModelFetchActionRunner.runBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
 
       var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
