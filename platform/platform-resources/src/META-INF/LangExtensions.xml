@@ -250,6 +250,8 @@
 
     <applicationService serviceInterface="com.intellij.platform.backend.navigation.NavigationRequests"
                         serviceImplementation="com.intellij.platform.backend.navigation.impl.NavigationRequestsImpl"/>
+    <applicationService serviceInterface="com.intellij.l10n.LocalizationStateService"
+                        serviceImplementation="com.intellij.lang.LocalizationStateServiceImpl"/>
     <projectService serviceInterface="com.intellij.platform.ide.navigation.NavigationService"
                     serviceImplementation="com.intellij.platform.ide.navigation.impl.IdeNavigationService"/>
     <projectService serviceImplementation="com.intellij.platform.ide.navigation.impl.IdeNavigationServiceExecutor"/>

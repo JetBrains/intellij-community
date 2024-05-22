@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 
 private class LanguageBundleListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
-    LocalizationUtil.isL10nPluginInitialized = true
+    LocalizationUtil.isL10nInitialized = true
     val langBundle = LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP::class.java) ?: return
     val pluginClassLoader = (langBundle.getPluginDescriptor() ?: return).pluginClassLoader
     UtilBundle.loadBundleFromPlugin(pluginClassLoader)

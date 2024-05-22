@@ -18,7 +18,7 @@ import kotlin.io.path.pathString
 @ApiStatus.Internal
 object LocalizationUtil {
   @Volatile
-  var isL10nPluginInitialized: Boolean = false
+  var isL10nInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
   private const val LOCALIZATION_KEY = "i18n.locale"
 
@@ -138,7 +138,8 @@ object LocalizationUtil {
   }
 
   fun getLocale(): Locale {
-    val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY) else return Locale.ENGLISH
+    val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY)
+    else LocalizationStateService.getInstance()?.getLocalizationState()?.selectedLocale ?: return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
     return locale
   }
