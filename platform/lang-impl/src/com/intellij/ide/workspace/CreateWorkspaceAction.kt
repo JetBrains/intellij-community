@@ -75,7 +75,7 @@ private fun importSettingsFromProject(project: Project, newWorkspace: Boolean): 
 
 internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
   val projectManagerImpl = blockingContext { ProjectManager.getInstance() as ProjectManagerImpl }
-  val referentProject = projectManagerImpl.loadProject(Path.of(projectPath), false, false)
+  val referentProject = blockingContext { projectManagerImpl.loadProject(Path.of(projectPath), false, false) }
   try {
     val settings = importSettingsFromProject(referentProject, false)
     for (importedSettings in settings) {
