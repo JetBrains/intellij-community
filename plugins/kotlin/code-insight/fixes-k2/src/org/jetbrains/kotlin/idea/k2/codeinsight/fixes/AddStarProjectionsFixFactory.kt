@@ -29,7 +29,10 @@ internal object AddStarProjectionsFixFactory {
 
         val typeElement = typeReference.typeElement ?: return@ModCommandBased emptyList()
         val unwrappedType = StarProjectionUtils.getUnwrappedType(typeElement) ?: return@ModCommandBased emptyList()
-        return@ModCommandBased listOf(AddStarProjectionsFix(unwrappedType, diagnostic.expectedCount))
+
+        listOf(
+            AddStarProjectionsFix(unwrappedType, diagnostic.expectedCount)
+        )
     }
 
     private class AddStartProjectionsForInnerClass(
