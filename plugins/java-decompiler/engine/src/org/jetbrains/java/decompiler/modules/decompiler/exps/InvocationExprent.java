@@ -218,7 +218,7 @@ public class InvocationExprent extends Exprent {
     }
     else {
 
-      if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
+      if (instance != null && instance.type == EXPRENT_VAR) {
         VarExprent instVar = (VarExprent)instance;
         VarVersionPair varPair = new VarVersionPair(instVar);
 
@@ -264,7 +264,13 @@ public class InvocationExprent extends Exprent {
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, className);
 
-          if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
+          if (!leftType.equals(rightType) &&
+              (rightType.equals(VarType.VARTYPE_OBJECT) ||
+               //try to preserve for navigation in certain cases: virtual call on variable
+               (rightType.getType() != CodeConstants.TYPE_UNKNOWN &&
+                instance.type == EXPRENT_VAR &&
+                invocationType == INVOKE_VIRTUAL &&
+                !leftType.equals(VarType.VARTYPE_OBJECT)))) {
             buf.append("((").append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(")");
 
             if (instance.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
@@ -385,7 +391,7 @@ public class InvocationExprent extends Exprent {
       int paramType = parameters.get(0).getExprType().getType();
 
       // special handling for ambiguous types
-      if (parameters.get(0).type == Exprent.EXPRENT_CONST) {
+      if (parameters.get(0).type == EXPRENT_CONST) {
         // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
         // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
         // so we check the type family instead
@@ -448,7 +454,7 @@ public class InvocationExprent extends Exprent {
   );
 
   private boolean isUnboxingCall() {
-    return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
+    return !isStatic && parameters.isEmpty() && className.equals(UNBOXING_METHODS.get(name));
   }
 
   private BitSet getAmbiguousParameters() {
