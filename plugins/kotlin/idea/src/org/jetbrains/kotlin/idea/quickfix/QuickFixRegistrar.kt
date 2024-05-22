@@ -337,8 +337,8 @@ class QuickFixRegistrar : QuickFixContributor {
         LOCAL_VARIABLE_WITH_TYPE_PARAMETERS.registerFactory(RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
         LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING.registerFactory(RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
 
-        UNCHECKED_CAST.registerFactory(ChangeToStarProjectionFix)
-        CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFix)
+        UNCHECKED_CAST.registerFactory(ChangeToStarProjectionFixFactory)
+        CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFixFactory)
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFix)
 

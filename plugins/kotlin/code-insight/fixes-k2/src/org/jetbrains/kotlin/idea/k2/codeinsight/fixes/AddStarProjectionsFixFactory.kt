@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.AddStarProjectionsFix
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils.starProjectionFixFamilyName
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtUserType
 
 internal object AddStarProjectionsFixFactory {
     val addStarProjectionsFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NoTypeArgumentsOnRhs ->
@@ -55,27 +55,6 @@ internal object AddStarProjectionsFixFactory {
         ): String = familyName
 
         override fun getFamilyName(): String = starProjectionFixFamilyName
-    }
-
-    private class AddStarProjectionsFix(
-        element: KtUserType,
-        private val argumentCount: Int,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtUserType, Unit>(element, Unit) {
-
-        override fun invoke(
-            actionContext: ActionContext,
-            element: KtUserType,
-            elementContext: Unit,
-            updater: ModPsiUpdater,
-        ) = StarProjectionUtils.addStarProjections(actionContext.project, element, argumentCount)
-
-        override fun getFamilyName() = starProjectionFixFamilyName
-
-        override fun getActionName(
-            actionContext: ActionContext,
-            element: KtUserType,
-            elementContext: Unit,
-        ): String = StarProjectionUtils.addStarProjectionsActionName(argumentCount)
     }
 }
 
