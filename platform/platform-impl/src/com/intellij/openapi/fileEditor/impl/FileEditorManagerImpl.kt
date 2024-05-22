@@ -85,6 +85,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.toArray
@@ -184,19 +185,6 @@ open class FileEditorManagerImpl(
    * Removes invalid editor and updates "modified" status.
    */
   private val editorPropertyChangeListener = MyEditorPropertyChangeListener()
-
-  /**
-   * Updates file tooltip
-   */
-
-  /**
-   * Listen for preview status change to update file tooltip
-   */
-  private val editorCompositeListener = object : EditorCompositeListener {
-    override fun isPreviewChanged(composite: EditorComposite, value: Boolean) {
-      updateFileName(composite.file)
-    }
-  }
 
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
@@ -1288,7 +1276,13 @@ open class FileEditorManagerImpl(
     }
 
     val composite = createCompositeInstance(file, editorsWithProviders) ?: return null
-    composite.addListener(editorCompositeListener, disposable = this)
+    val job = coroutineScope.launch {
+      // listen for preview status change to update file tooltip
+      composite.isPreviewFlow.collect {
+        updateFileName(file)
+      }
+    }
+    job.cancelOnDispose(composite)
     return composite
   }
 

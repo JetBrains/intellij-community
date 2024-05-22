@@ -37,9 +37,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
@@ -69,11 +67,12 @@ open class EditorComposite internal constructor(
   private var compositePanel: EditorCompositePanel
   private val focusWatcher: FocusWatcher
 
+  private val _selectedEditorWithProvider = MutableStateFlow<FileEditorWithProvider?>(null)
+  @JvmField
   /**
    * Currently selected editor
    */
-  private val selectedEditorWithProviderMutable: MutableStateFlow<FileEditorWithProvider?> = MutableStateFlow(null)
-  internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = selectedEditorWithProviderMutable.asStateFlow()
+  internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
 
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
@@ -108,7 +107,7 @@ open class EditorComposite internal constructor(
         setEditorComponent()
       }
 
-      selectedEditorWithProviderMutable.value = fileEditorWithProviderList.get(0)
+      _selectedEditorWithProvider.value = fileEditorWithProviderList.get(0)
     }
 
     focusWatcher = FocusWatcher()
@@ -154,7 +153,7 @@ open class EditorComposite internal constructor(
     wrapper.addChangeListener {
       val selectedIndex = tabbedPaneWrapper!!.selectedIndex
       require(selectedIndex != -1)
-      selectedEditorWithProviderMutable.value = fileEditorWithProviderList.get(selectedIndex)
+      _selectedEditorWithProvider.value = fileEditorWithProviderList.get(selectedIndex)
     }
     return wrapper
   }
@@ -176,20 +175,16 @@ open class EditorComposite internal constructor(
   }
 
   /**
-   * @return whether myEditor composite is pinned
+   * @return whether editor composite is pinned
    */
   var isPinned: Boolean = false
     /**
      * Sets new "pinned" state
      */
     set(pinned) {
-      val oldPinned = field
       field = pinned
        (compositePanel.parent as? JComponent)?.let {
         ClientProperty.put(it, JBTabsImpl.PINNED, if (field) true else null)
-      }
-      if (pinned != oldPinned) {
-        dispatcher.multicaster.isPinnedChanged(this, pinned)
       }
     }
 
@@ -197,12 +192,16 @@ open class EditorComposite internal constructor(
    * Whether the composite is opened as a preview tab or not
    */
   override var isPreview: Boolean = false
-    set(preview) {
-      if (preview != field) {
-        field = preview
-        dispatcher.multicaster.isPreviewChanged(this, preview)
+    set(value) {
+      if (field != value) {
+        field = value
+        _isPreviewFlow.value = value
       }
     }
+
+  private val _isPreviewFlow = MutableStateFlow(isPreview)
+
+  internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
 
   fun addListener(listener: EditorCompositeListener, disposable: Disposable?) {
     dispatcher.addListener(listener, disposable!!)
@@ -266,8 +265,8 @@ open class EditorComposite internal constructor(
     manageTopOrBottomComponent(editor = editor, component = component, top = false, remove = true)
   }
 
+  @RequiresEdt
   private fun manageTopOrBottomComponent(editor: FileEditor, component: JComponent, top: Boolean, remove: Boolean) {
-    ThreadingAssertions.assertEventDispatchThread()
     val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     selfBorder = false
     if (remove) {
@@ -314,7 +313,7 @@ open class EditorComposite internal constructor(
 
   internal fun deselectNotify() {
     val selected = selectedEditorWithProvider.value ?: return
-    selectedEditorWithProviderMutable.value = null
+    _selectedEditorWithProvider.value = null
     selected.fileEditor.deselectNotify()
   }
 
@@ -367,7 +366,7 @@ open class EditorComposite internal constructor(
     get() = allEditors.any { it.isModified }
 
   override fun dispose() {
-    selectedEditorWithProviderMutable.value = null
+    _selectedEditorWithProvider.value = null
     for (editor in fileEditorWithProviderList) {
       @Suppress("DEPRECATION")
       if (!Disposer.isDisposed(editor.fileEditor)) {
@@ -389,7 +388,7 @@ open class EditorComposite internal constructor(
     when {
       fileEditorWithProviderList.size == 1 -> {
         setEditorComponent()
-        selectedEditorWithProviderMutable.value = fileEditorWithProviderList.get(0)
+        _selectedEditorWithProvider.value = fileEditorWithProviderList.get(0)
       }
       tabbedPaneWrapper == null -> {
         setTabbedPaneComponent(createTabbedPaneWrapper(compositePanel))
@@ -430,7 +429,7 @@ open class EditorComposite internal constructor(
     }
 
     if (selectedEditorWithProvider.value?.provider?.editorTypeId == editorTypeId) {
-      selectedEditorWithProviderMutable.value = fileEditorWithProviderList.firstOrNull()
+      _selectedEditorWithProvider.value = fileEditorWithProviderList.firstOrNull()
     }
     focusWatcher.deinstall(focusWatcher.topComponent)
     focusWatcher.install(compositePanel)
