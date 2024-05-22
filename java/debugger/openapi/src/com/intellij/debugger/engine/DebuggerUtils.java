@@ -52,6 +52,10 @@ public abstract class DebuggerUtils {
     return Registry.is("debugger.always.suspend.thread.before.switch");
   }
 
+  public static boolean isNewThreadSuspendStateTracking() {
+    return Registry.is("debugger.new.suspend.state.tracking");
+  }
+
   public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
     debugProcess.putUserData(TO_STRING_METHOD_KEY, null);
   }

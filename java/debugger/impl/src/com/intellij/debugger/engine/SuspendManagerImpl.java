@@ -112,10 +112,41 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void resume(@NotNull SuspendContextImpl context) {
+    if (DebuggerUtils.isNewThreadSuspendStateTracking()) {
+      resumeNew(context);
+    }
+    else {
+      resumeOld(context);
+    }
+  }
+
+  private void resumeOld(@NotNull SuspendContextImpl context) {
     SuspendManagerUtil.prepareForResume(context);
 
     myDebugProcess.logThreads();
     popContext(context);
+    context.resume(true);
+    myDebugProcess.clearCashes(context.getSuspendPolicy());
+  }
+
+
+  private void resumeNew(@NotNull SuspendContextImpl context) {
+    ThreadReferenceProxyImpl eventThread = context.getEventThread();
+    if (eventThread != null && isFrozen(eventThread)) {
+      if (context.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
+        LOG.error("Suspend policy for frozen context " + context + " is " + context.getSuspendPolicy());
+      }
+      myFrozenThreads.remove(eventThread);
+    }
+
+    myDebugProcess.logThreads();
+    popContext(context);
+    Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads;
+    if (resumedThreads != null) {
+      for (ThreadReferenceProxyImpl thread : resumedThreads) {
+        thread.suspend();
+      }
+    }
     context.resume(true);
     myDebugProcess.clearCashes(context.getSuspendPolicy());
   }

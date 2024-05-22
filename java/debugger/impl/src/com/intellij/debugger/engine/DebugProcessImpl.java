@@ -178,11 +178,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void paused(@NotNull SuspendContext suspendContext) {
-        myThreadBlockedMonitor.stopWatching(
-          suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL ? suspendContext.getThread() : null);
+        boolean isSuspendAll = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
+        if (isSuspendAll && DebuggerUtils.isNewThreadSuspendStateTracking()) {
+          resumeThreadsUnderEvaluationAfterPause((SuspendContextImpl)suspendContext);
+        }
+
+        myThreadBlockedMonitor.stopWatching(!isSuspendAll ? suspendContext.getThread() : null);
       }
-    });
-    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
+
       @Override
       public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         DebuggerStatistics.logProcessStatistics(process);
@@ -1095,6 +1098,27 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myWaitFor.waitFor(timeout);
   }
 
+
+  private void resumeThreadsUnderEvaluationAfterPause(@NotNull SuspendContextImpl suspendAllContext) {
+    for (SuspendContextImpl suspendContext : mySuspendManager.getEventContexts()) {
+      EvaluationContextImpl evaluationContext = suspendContext.getEvaluationContext();
+      if (evaluationContext != null) {
+        ThreadReferenceProxyImpl threadForEvaluation = evaluationContext.getThreadForEvaluation();
+        if (threadForEvaluation == null) {
+          LOG.error("Thread for evaluation in evaluating " + suspendContext + " is null");
+          continue;
+        }
+        if (threadForEvaluation == suspendAllContext.getEventThread()) {
+          LOG.error("Paused suspend-all context " + suspendAllContext + " for evaluating context " + suspendContext);
+          continue;
+        }
+        if (suspendAllContext.suspends(threadForEvaluation)) {
+          mySuspendManager.resumeThread(suspendAllContext, threadForEvaluation);
+        }
+      }
+    }
+  }
+
   private abstract class InvokeCommand<E extends Value> {
     private final Method myMethod;
     private final List<Value> myArgs;
@@ -1181,13 +1205,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (suspendingContext == suspendContext) {
             continue;
           }
+          if (suspendingContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) {
+            // Event thread contexts may come from breakpoint, class prepare and so on.
+            // But it may happen before (and already processed) or during evaluation (and will be processed).
+            // It should not be ok to have several standing event thread contexts for the same thread.
+            LOG.error("Evaluating on " + suspendContext + ", but found existed event thread context " + suspendingContext);
+          }
           if (LOG.isDebugEnabled()) {
             LOG.debug("Resuming " + invokeThread + " that is paused by " + suspendingContext);
           }
           getSuspendManager().resumeThread(suspendingContext, invokeThread);
         }
 
-        resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
+        if (!DebuggerUtils.isNewThreadSuspendStateTracking()) {
+          resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
+        }
         myEvaluationContext.setThreadForEvaluation(invokeThread);
 
         invokeThread.getVirtualMachineProxy().clearCaches();
@@ -1209,15 +1241,39 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       finally {
         myEvaluationContext.setThreadForEvaluation(null);
-        if (resumeData != null) {
-          SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
+        if (DebuggerUtils.isNewThreadSuspendStateTracking()) {
+          for (SuspendContextImpl anotherContext : mySuspendManager.getEventContexts()) {
+            if (anotherContext != suspendContext && !anotherContext.suspends(invokeThread)) {
+              boolean shouldSuspendThread = false;
+              if (anotherContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && anotherContext.getEventThread() == invokeThread) {
+                // Event thread contexts may come from breakpoint, class prepare and so on.
+                // But it may happen during evaluation and should be already processed.
+                LOG.error("Another event thread context after evaluation on " + invokeThread + " (" + suspendContext + ") : " + anotherContext);
+                shouldSuspendThread = true;
+              }
+              if (anotherContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+                if (anotherContext.myResumedThreads == null || !anotherContext.myResumedThreads.contains(invokeThread)) {
+                  LOG.error("Suspend all context claims not suspending " + invokeThread + " but its resumed threads have no it: " + anotherContext.myResumedThreads);
+                }
+                shouldSuspendThread = true;
+              }
+              if (shouldSuspendThread) {
+                mySuspendManager.suspendThread(anotherContext, invokeThread);
+              }
+            }
+          }
         }
-        for (SuspendContextImpl suspendingContext : mySuspendManager.getEventContexts()) {
-          if (suspendingContexts.contains(suspendingContext) &&
-              suspendingContext != suspendContext &&
-              !suspendingContext.isEvaluating() &&
-              !suspendingContext.suspends(invokeThread)) {
-            mySuspendManager.suspendThread(suspendingContext, invokeThread);
+        else {
+          if (resumeData != null) {
+            SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
+          }
+          for (SuspendContextImpl suspendingContext : mySuspendManager.getEventContexts()) {
+            if (suspendingContexts.contains(suspendingContext) &&
+                suspendingContext != suspendContext &&
+                !suspendingContext.isEvaluating() &&
+                !suspendingContext.suspends(invokeThread)) {
+              mySuspendManager.suspendThread(suspendingContext, invokeThread);
+            }
           }
         }
 
