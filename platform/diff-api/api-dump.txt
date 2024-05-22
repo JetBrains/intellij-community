@@ -624,6 +624,12 @@ a:com.intellij.openapi.diff.LineTokenizerBase
 - getLineSeparator():java.lang.String
 - pa:length():I
 - pa:substring(I,I):java.lang.String
+c:com.intellij.openapi.diff.impl.GenericDataProvider
+- com.intellij.openapi.actionSystem.DataProvider
+- <init>():V
+- <init>(com.intellij.openapi.actionSystem.DataProvider):V
+- getData(java.lang.String):java.lang.Object
+- putData(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 a:com.intellij.openapi.diff.impl.settings.DiffPreviewProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

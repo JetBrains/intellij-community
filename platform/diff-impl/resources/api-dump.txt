@@ -2949,11 +2949,6 @@ c:com.intellij.openapi.diff.LineStatusMarkerDrawUtil$DiffStripeTextAttributes
 - <init>(B):V
 - getErrorStripeColor():java.awt.Color
 - getType():B
-c:com.intellij.openapi.diff.impl.GenericDataProvider
-- com.intellij.openapi.actionSystem.DataProvider
-- <init>():V
-- <init>(com.intellij.openapi.actionSystem.DataProvider):V
-- getData(java.lang.String):java.lang.Object
 a:com.intellij.openapi.vcs.ex.ActiveLineStatusGutterMarkerRenderer
 - com.intellij.openapi.vcs.ex.LineStatusGutterMarkerRenderer
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer
