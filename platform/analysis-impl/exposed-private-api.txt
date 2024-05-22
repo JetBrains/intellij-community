@@ -1,7 +1,6 @@
 com/intellij/codeInsight/completion/CompletionProcessEx
 com/intellij/codeInsight/template/impl/TemplateSegments
 com/intellij/codeInspection/dataFlow/memory/DfaMemoryStateImpl$QualifierStatusMap
-com/intellij/codeInspection/dataFlow/memory/SortedIntSet
 com/intellij/openapi/module/impl/scopes/ModuleWithDependentsTestScope
 com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/psi/FilePropertyKey

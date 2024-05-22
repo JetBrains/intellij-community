@@ -2378,30 +2378,16 @@ f:com.intellij.codeInspection.dataFlow.memory.DistinctPairSet$DistinctPair
 - hashCode():I
 - isOrdered():Z
 - toString():java.lang.String
-f:com.intellij.codeInspection.dataFlow.memory.EqClass
-- java.lang.Comparable
+com.intellij.codeInspection.dataFlow.memory.EqClass
 - java.lang.Iterable
-- sf:CANONICAL_VARIABLE_COMPARATOR:java.util.Comparator
-- <init>(com.intellij.codeInspection.dataFlow.memory.EqClass):V
-- <init>(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):V
-- add(I):V
-- add(I[]):V
-- asList():java.util.List
-- compareTo(com.intellij.codeInspection.dataFlow.memory.SortedIntSet):I
-- contains(I):Z
-- containsAll(com.intellij.codeInspection.dataFlow.memory.SortedIntSet):Z
-- equals(java.lang.Object):Z
-- forValues(java.util.function.IntConsumer):V
-- get(I):I
-- getCanonicalVariable():com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-- getVariable(I):com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-- hashCode():I
+- a:asList():java.util.List
+- a:contains(com.intellij.codeInspection.dataFlow.value.DfaValue):Z
+- a:containsAll(com.intellij.codeInspection.dataFlow.memory.EqClass):Z
+- a:getCanonicalVariable():com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+- a:getVariable(I):com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 - isEmpty():Z
-- iterator():java.util.Iterator
-- remove(I):V
-- removeValue(I):V
-- size():I
-- toString():java.lang.String
+- a:iterator():java.util.Iterator
+- a:size():I
 e:com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
 - java.lang.Enum
 - sf:AND:com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
