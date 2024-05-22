@@ -212,7 +212,8 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     }
 
     private fun createLibraryFromCoordinates(project: Project, dependency: KmpAwareLibraryDependency): Library {
-        val dependencyRoot = KmpLightFixtureDependencyDownloader.resolveDependency(dependency)?.toFile()
+        val transformedLibrariesRoot = KotlinTestDirectoriesHolder.transformedKmpLibrariesRoot
+        val dependencyRoot = KmpLightFixtureDependencyDownloader.resolveDependency(dependency, transformedLibrariesRoot)?.toFile()
             ?: error("Unable to download library ${dependency.coordinates}")
         return ConfigLibraryUtil.addProjectLibrary(project = project, name = dependency.coordinates.toString()) {
             addRoot(dependencyRoot, OrderRootType.CLASSES)

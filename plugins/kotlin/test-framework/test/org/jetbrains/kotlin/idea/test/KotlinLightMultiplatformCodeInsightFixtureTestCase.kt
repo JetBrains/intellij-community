@@ -70,6 +70,9 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
             isKotlinK2KmpEnabledBeforeTest = registryValue.asBoolean()
             registryValue.setValue(true)
         }
+
+        // sync is necessary for to detect unexpected disappearances of library files
+        VfsTestUtil.syncRefresh()
     }
 
     override fun tearDown() {
