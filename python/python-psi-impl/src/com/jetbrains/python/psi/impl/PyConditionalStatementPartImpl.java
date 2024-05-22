@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementVisitor;
 
-public abstract class PyConditionalStatementPartImpl extends PyStatementPartImpl implements PyConditionalStatementPart {
+public abstract class PyConditionalStatementPartImpl extends PyElementImpl implements PyConditionalStatementPart {
   public PyConditionalStatementPartImpl(ASTNode astNode) {
     super(astNode);
   }
