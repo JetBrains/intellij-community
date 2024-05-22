@@ -122,10 +122,10 @@ internal class TabbedMultiOutput(private val editor: Editor, parent: Disposable)
     addTab(TabInfo(this).apply {
       inlayOutput.preview?.let {
         setIcon(it)
-        text = ""
+        setText("")
       }
       inlayOutput.title?.let {
-        text = inlayOutput.title
+        setText(it)
       }
     }).apply {
       tabs.getTabLabel(this)?.apply {
@@ -142,7 +142,7 @@ internal class TabbedMultiOutput(private val editor: Editor, parent: Disposable)
   private fun addTab(tabInfo: TabInfo, select: Boolean = false): TabInfo {
     // We need to set empty DefaultActionGroup to move sideComponent to the right.
     tabInfo.setActions(DefaultActionGroup(), ActionPlaces.UNKNOWN)
-    tabInfo.sideComponent = createTabToolbar(tabInfo)
+    tabInfo.setSideComponent(createTabToolbar(tabInfo))
     tabs.addTab(tabInfo)
     if (select) {
       tabs.select(tabInfo, false)

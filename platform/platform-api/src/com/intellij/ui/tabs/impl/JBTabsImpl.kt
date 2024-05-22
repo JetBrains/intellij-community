@@ -121,13 +121,13 @@ open class JBTabsImpl(
       if (component.isShowing) {
         val width = component.width
         val height = component.height
-        image = ImageUtil.createImage(info.component?.graphicsConfiguration, if (width > 0) width else 500, if (height > 0) height else 500,
+        image = ImageUtil.createImage(info.component.graphicsConfiguration, if (width > 0) width else 500, if (height > 0) height else 500,
                                       BufferedImage.TYPE_INT_ARGB)
         val g = image.createGraphics()
         component.paint(g)
       }
       else {
-        image = ImageUtil.createImage(info.component?.graphicsConfiguration, 500, 500, BufferedImage.TYPE_INT_ARGB)
+        image = ImageUtil.createImage(info.component.graphicsConfiguration, 500, 500, BufferedImage.TYPE_INT_ARGB)
       }
       return image
     }
@@ -1011,7 +1011,7 @@ open class JBTabsImpl(
               val tabInfo = ClientProperty.get(renderer, TAB_INFO_KEY) ?: return
 
               // The last one is expected to be 'CloseTab'
-              val tabAction = if (tabInfo.tabLabelActions != null) tabInfo.tabLabelActions.getChildren(null).lastOrNull() else null
+              val tabAction = if (tabInfo.tabLabelActions != null) tabInfo.tabLabelActions!!.getChildren(null).lastOrNull() else null
               if (tabAction == null && !tabInfo.isPinned) {
                 return
               }
@@ -1067,7 +1067,7 @@ open class JBTabsImpl(
 
   // returns the icon that will be used in the hidden tabs list
   protected open fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
-    val hasActions = info.tabLabelActions != null && info.tabLabelActions.getChildren(null).isNotEmpty()
+    val hasActions = info.tabLabelActions != null && info.tabLabelActions!!.getChildren(null).isNotEmpty()
     val icon: Icon? = if (hasActions) {
       if (isHovered) AllIcons.Actions.CloseHovered else AllIcons.Actions.Close
     }
@@ -1161,9 +1161,9 @@ open class JBTabsImpl(
       }
     }
 
-    val toFocus: JComponent? = info.preferredFocusableComponent
+    val toFocus = info.getPreferredFocusableComponent()
     LOG.debug { "preferred focusable component: $toFocus" }
-    if (toFocus == null || !toFocus.isShowing) {
+    if (!toFocus.isShowing) {
       return null
     }
 
@@ -2594,10 +2594,11 @@ open class JBTabsImpl(
       if (field == value) {
         return
       }
+
       field = value
       for (tab in tabs) {
-        tab.sideComponent.isVisible = !field
-        tab.foreSideComponent.isVisible = !field
+        tab.sideComponent!!.isVisible = !field
+        tab.foreSideComponent!!.isVisible = !field
       }
       relayout(forced = true, layoutNow = true)
     }
@@ -3424,8 +3425,12 @@ private class AccessibleTabPage(
   }
 }
 
-private class TitleAction(private val tabs: JBTabsImpl,
-                          private val titleProvider: () -> Pair<Icon, @Nls String>) : AnAction(), CustomComponentAction {
+private val DUMMY_COMPONENT by lazy(LazyThreadSafetyMode.PUBLICATION) { JPanel() }
+
+private class TitleAction(
+  private val tabs: JBTabsImpl,
+  private val titleProvider: () -> Pair<Icon, @Nls String>,
+) : AnAction(), CustomComponentAction {
   private val label = object : JLabel() {
     override fun getPreferredSize(): Dimension {
       val size = super.getPreferredSize()
@@ -3435,7 +3440,7 @@ private class TitleAction(private val tabs: JBTabsImpl,
 
     override fun updateUI() {
       super.updateUI()
-      font = TabLabel(tabs, TabInfo(null)).labelComponent.font
+      font = TabLabel(tabs, TabInfo(DUMMY_COMPONENT)).labelComponent.font
       border = JBUI.Borders.empty(0, 5, 0, 6)
     }
   }

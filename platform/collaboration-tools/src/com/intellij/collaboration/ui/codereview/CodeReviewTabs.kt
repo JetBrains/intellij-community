@@ -60,16 +60,16 @@ private fun TabInfo.appendUnreadIcon(tabLabel: TabLabel, unread: Int?) {
     stopAlerting()
   }
   else {
-    alertIcon = AlertIcon(
+    setAlertIcon(AlertIcon(
       CollaborationToolsIcons.Review.FileUnread,
       0,
       tabLabel.labelComponent.preferredSize.width + scale(3)
-    )
+    ))
     fireAlert()
     resetAlertRequest()
   }
 }
 
 private fun TabInfo.setUnreadTooltip(unread: Int?) {
-  tooltipText = if (unread != null && unread > 0) message("tooltip.code.review.files.not.viewed", unread) else null
+  setTooltipText(if (unread != null && unread > 0) message("tooltip.code.review.files.not.viewed", unread) else null)
 }

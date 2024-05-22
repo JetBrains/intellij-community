@@ -122,9 +122,9 @@ class EditorTabbedContainer internal constructor(
       .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false).jbTabs
       .addListener(object : TabsListener {
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          val oldEditor = if (oldSelection == null) null else window.manager.getSelectedEditor((oldSelection.getObject() as VirtualFile))
+          val oldEditor = if (oldSelection == null) null else window.manager.getSelectedEditor((oldSelection.`object` as VirtualFile))
           oldEditor?.deselectNotify()
-          val newFile = (newSelection ?: return).getObject() as VirtualFile
+          val newFile = (newSelection ?: return).`object` as VirtualFile
           val newEditor = newFile.let { window.manager.getSelectedEditor(newFile) }
           newEditor?.selectNotify()
           if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
@@ -284,13 +284,13 @@ class EditorTabbedContainer internal constructor(
     coroutineScope.launch {
       val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
       withContext(Dispatchers.EDT) {
-        tab.text = title
+        tab.setText(title)
       }
     }
     coroutineScope.launch {
       val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
       withContext(Dispatchers.EDT) {
-        tab.tabColor = color
+        tab.setTabColor(color)
       }
     }
 
@@ -322,7 +322,7 @@ class EditorTabbedContainer internal constructor(
 
   override fun close() {
     val selected = editorTabs.targetInfo ?: return
-    window.manager.closeFile((selected.getObject() as VirtualFile), window)
+    window.manager.closeFile((selected.`object` as VirtualFile), window)
   }
 
   private val isFloating: Boolean
@@ -344,11 +344,11 @@ class EditorTabbedContainer internal constructor(
           if (tabInfo == info) {
             continue
           }
-          window.manager.closeFile((tabInfo.getObject() as VirtualFile), window)
+          window.manager.closeFile((tabInfo.`object` as VirtualFile), window)
         }
       }
       else {
-        window.manager.closeFile((info.getObject() as VirtualFile), window)
+        window.manager.closeFile((info.`object` as VirtualFile), window)
       }
     }
 
@@ -370,7 +370,7 @@ class EditorTabbedContainer internal constructor(
 
     override fun mouseClicked(e: MouseEvent) {
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown)) {
-        val o = editorTabs.findInfo(e)?.getObject()
+        val o = editorTabs.findInfo(e)?.`object`
         if (o is VirtualFile) {
           ShowFilePathAction.show((o as VirtualFile?)!!, e)
         }
@@ -443,7 +443,7 @@ class EditorTabbedContainer internal constructor(
         editorTabs.select(previousSelection, true)
       }
 
-      val file = info.getObject() as VirtualFile
+      val file = info.`object` as VirtualFile
       this.file = file
       file.putUserData(DRAG_START_INDEX_KEY, dragStartIndex)
       file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))
@@ -456,11 +456,8 @@ class EditorTabbedContainer internal constructor(
       val editors = window.getComposite(file)?.allEditors ?: emptyList()
       val isNorthPanelAvailable = isNorthPanelAvailable(editors)
       presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
-      session = dockManager.createDragSession(mouseEvent, createDockableEditor(img, file, presentation, window, isNorthPanelAvailable))
+      session = DockManager.getInstance(window.manager.project).createDragSession(mouseEvent, createDockableEditor(img, file, presentation, window, isNorthPanelAvailable))
     }
-
-    private val dockManager: DockManager
-      get() = DockManager.getInstance(window.manager.project)
 
     override fun processDragOut(event: MouseEvent, source: TabInfo) {
       session!!.process(event)

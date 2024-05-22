@@ -5,9 +5,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.Queryable
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.LoadingNode.getText
 import com.intellij.ui.PlaceProvider
 import com.intellij.ui.SimpleColoredText
 import com.intellij.ui.SimpleTextAttributes
@@ -25,7 +25,7 @@ import java.lang.ref.WeakReference
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
+class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   companion object {
     const val ACTION_GROUP: String = "actionGroup"
     const val ICON: String = "icon"
@@ -42,7 +42,7 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
     private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
   }
 
-  private var preferredFocusableComponent: JComponent?
+  private var preferredFocusableComponent: JComponent? = component
 
   var group: ActionGroup? = null
     private set
@@ -51,81 +51,99 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
 
   var icon: Icon? = null
     private set
+
   private var place: @NonNls String? = null
+
   var `object`: Any? = null
     private set
+
   var sideComponent: JComponent? = null
     private set
+
   var foreSideComponent: JComponent? = null
     private set
 
-  private var lastFocusOwner: Reference<JComponent>? = null
+  private var lastFocusOwnerRef: Reference<JComponent>? = null
 
-  fun getLastFocusOwner() = lastFocusOwner?.get()
-
-  fun setLastFocusOwner(component: JComponent?) {
-    lastFocusOwner = component?.let { WeakReference(it) }
-  }
+  var lastFocusOwner: JComponent?
+    get() = lastFocusOwnerRef?.get()
+    set(value) {
+      lastFocusOwnerRef = value?.let { WeakReference(it) }
+    }
 
   var tabLabelActions: ActionGroup? = null
     private set
+
   var tabPaneActions: ActionGroup? = null
     private set
+
   var tabActionPlace: String? = null
     private set
 
   private var alertIcon: AlertIcon? = null
 
   var blinkCount: Int = 0
+
   var isAlertRequested: Boolean = false
     private set
+
   var isHidden: Boolean = false
     set(hidden) {
       val old = field
       field = hidden
       changeSupport.firePropertyChange(HIDDEN, old, field)
     }
+
   var actionsContextComponent: JComponent? = null
     private set
 
   val coloredText: SimpleColoredText = SimpleColoredText()
+
   var tooltipText: @NlsContexts.Tooltip String? = null
     private set
 
   private var defaultStyle = -1
+
   var defaultForeground: Color? = null
     private set
+
   private var editorAttributes: TextAttributes? = null
   private var defaultAttributes: SimpleTextAttributes? = null
+
   var isEnabled: Boolean = true
     set(enabled) {
       val old = field
       field = enabled
       changeSupport.firePropertyChange(ENABLED, old, field)
     }
+
   var tabColor: Color? = null
     private set
 
   private var queryable: Queryable? = null
+
   var dragOutDelegate: DragOutDelegate? = null
     private set
+
   var dragDelegate: DragDelegate? = null
 
   /**
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
    * out of its container. (IDEA-61536)
    */
-  private var previousSelection = WeakReference<TabInfo?>(null)
+  private var previousSelectionRef: WeakReference<TabInfo>? = null
 
-  init {
-    preferredFocusableComponent = component
-  }
+  var previousSelection: TabInfo?
+    get() = previousSelectionRef?.get()
+    set(value) {
+      previousSelectionRef = value?.let { WeakReference(it) }
+    }
 
   fun setText(text: @NlsContexts.TabTitle String): TabInfo {
     val attributes = coloredText.attributes
     val textAttributes = attributes.singleOrNull()?.toTextAttributes()
     val defaultAttributes = getDefaultAttributes()
-    if (coloredText.toString() != text || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
+    if (coloredText.toString() != text || textAttributes != defaultAttributes.toTextAttributes()) {
       clearText(false)
       @Suppress("DialogTitleCapitalization")
       append(text, defaultAttributes)
@@ -135,7 +153,7 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
 
   private fun getDefaultAttributes(): SimpleTextAttributes {
     if (defaultAttributes == null) {
-      val style = ((if (defaultStyle != -1) defaultStyle else SimpleTextAttributes.STYLE_PLAIN)
+      val style = ((if (defaultStyle == -1) SimpleTextAttributes.STYLE_PLAIN else defaultStyle)
         or SimpleTextAttributes.STYLE_USE_EFFECT_COLOR)
       if (editorAttributes != null) {
         var attr = SimpleTextAttributes.fromTextAttributes(editorAttributes)
@@ -165,7 +183,7 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
     return this
   }
 
-  fun setIcon(icon: Icon): TabInfo {
+  fun setIcon(icon: Icon?): TabInfo {
     val old = this.icon
     if (old != icon) {
       this.icon = icon
@@ -186,13 +204,10 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
   val isPinned: Boolean
     get() = ClientProperty.isTrue(component, JBTabsImpl.PINNED)
 
-  fun getText(): @NlsContexts.TabTitle String {
-    return coloredText.toString()
-  }
+  val text: @NlsContexts.TabTitle String
+    get() = coloredText.toString()
 
-  override fun getPlace(): String {
-    return place!!
-  }
+  override fun getPlace(): String? = place
 
   fun setSideComponent(comp: JComponent?): TabInfo {
     sideComponent = comp
@@ -222,9 +237,7 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
     return this
   }
 
-  fun getPreferredFocusableComponent(): JComponent {
-    return if (preferredFocusableComponent != null) preferredFocusableComponent!! else component!!
-  }
+  fun getPreferredFocusableComponent(): JComponent = preferredFocusableComponent ?: component
 
   fun setPreferredFocusableComponent(component: JComponent?): TabInfo {
     preferredFocusableComponent = component
@@ -264,13 +277,9 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
     changeSupport.firePropertyChange(ALERT_STATUS, null, false)
   }
 
-  override fun toString(): String {
-    return getText()
-  }
+  override fun toString(): String = getText()
 
-  fun getAlertIcon(): AlertIcon {
-    return if (alertIcon == null) DEFAULT_ALERT_ICON else alertIcon!!
-  }
+  fun getAlertIcon(): AlertIcon = alertIcon ?: DEFAULT_ALERT_ICON
 
   fun resetAlertRequest() {
     isAlertRequested = false
@@ -297,9 +306,8 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
     return this
   }
 
-
   private fun update() {
-    setText(getText())
+    setText(text)
   }
 
   fun revalidate() {
@@ -318,7 +326,7 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
 
   fun setTabColor(color: Color?): TabInfo {
     val old = tabColor
-    if (!Comparing.equal(color, old)) {
+    if (color != old) {
       tabColor = color
       changeSupport.firePropertyChange(TAB_COLOR, old, color)
     }
@@ -331,9 +339,7 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
   }
 
   override fun putInfo(info: MutableMap<in String, in String>) {
-    if (queryable != null) {
-      queryable!!.putInfo(info)
-    }
+    queryable?.putInfo(info)
   }
 
   fun setDragOutDelegate(delegate: DragOutDelegate?): TabInfo {
@@ -341,17 +347,8 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
     return this
   }
 
-  fun canBeDraggedOut(): Boolean {
-    return dragOutDelegate != null
-  }
+  fun canBeDraggedOut(): Boolean = dragOutDelegate != null
 
-  fun setPreviousSelection(previousSelection: TabInfo?) {
-    this.previousSelection = WeakReference(previousSelection)
-  }
-
-  fun getPreviousSelection(): TabInfo? {
-    return previousSelection.get()
-  }
 
   interface DragDelegate {
     fun dragStarted(mouseEvent: MouseEvent)
@@ -360,8 +357,11 @@ class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
 
   interface DragOutDelegate {
     fun dragOutStarted(mouseEvent: MouseEvent, info: TabInfo)
+
     fun processDragOut(event: MouseEvent, source: TabInfo)
-    fun dragOutFinished(event: MouseEvent, source: TabInfo?)
-    fun dragOutCancelled(source: TabInfo?)
+
+    fun dragOutFinished(event: MouseEvent, source: TabInfo)
+
+    fun dragOutCancelled(source: TabInfo)
   }
 }

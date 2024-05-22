@@ -57,13 +57,13 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
   private final Wrapper labelPlaceholder = new Wrapper(false);
   protected final JBTabsImpl tabs;
 
-  public TabLabel(JBTabsImpl tabs, final TabInfo info) {
+  public TabLabel(JBTabsImpl tabs, TabInfo info) {
     super(false);
 
     this.tabs = tabs;
     this.info = info;
 
-    label = createLabel();
+    label = createLabel(tabs, info);
 
     // Allow focus so that user can TAB into the selected TabLabel and then
     // navigate through the other tabs using the LEFT/RIGHT keys.
@@ -198,14 +198,17 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
     return tabs.getSelectedLabel() == this && super.isFocusable();
   }
 
-  private SimpleColoredComponent createLabel() {
+  private @NotNull SimpleColoredComponent createLabel(@NotNull JBTabsImpl tabs, @Nullable TabInfo info) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
       public Font getFont() {
         Font font = super.getFont();
-
-        return (isFontSet() || !tabs.useSmallLabels()) ? font :
-               RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont());
+        if (isFontSet() || !tabs.useSmallLabels()) {
+          return font;
+        }
+        else {
+          return RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont());
+        }
       }
 
       @Override
@@ -241,7 +244,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
     return baseForeground;
   }
 
-  // Allows to edit the icon right before painting
+  // Allows editing the icon right before painting
   public @NotNull Icon editIcon(@NotNull Icon baseIcon) {
     return baseIcon;
   }
