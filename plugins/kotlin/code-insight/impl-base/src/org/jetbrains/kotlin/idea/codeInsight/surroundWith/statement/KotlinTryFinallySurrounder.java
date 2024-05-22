@@ -35,7 +35,7 @@ public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase<KtFinall
         TextRange finallyBlockRange = expression.getTextRange();
         int newLineOffset = finallyBlockRange.getStartOffset() + 2;
         int offset = CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
-        navigator.moveCaretTo(offset);
+        navigator.select(TextRange.from(offset, 0));
         psiDocumentManager.commitDocument(document);
     }
 

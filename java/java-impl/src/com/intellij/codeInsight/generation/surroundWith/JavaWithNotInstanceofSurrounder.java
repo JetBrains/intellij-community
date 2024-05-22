@@ -54,7 +54,7 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionModCommandSurrounder
     instanceofExpr = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(instanceofExpr);
     TextRange range = instanceofExpr.getCheckType().getTextRange();
     instanceofExpr.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    updater.moveCaretTo(range.getStartOffset());
+    updater.select(TextRange.from(range.getStartOffset(), 0));
   }
 
   @Override

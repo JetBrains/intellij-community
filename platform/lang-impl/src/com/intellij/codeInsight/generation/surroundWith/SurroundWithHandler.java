@@ -242,7 +242,6 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
       );
     } else {
       CommandProcessor.getInstance().executeCommand(project, () -> {
-        editor.getSelectionModel().removeSelection();
         TextRange range = ReadAction.compute(() -> surrounder.surroundElements(project, editor, elements));
         if (!(surrounder instanceof ModCommandSurrounder)) {
           updateRange(project, editor, range, line, col);

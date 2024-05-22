@@ -68,6 +68,6 @@ public class JavaWithForSurrounder extends JavaStatementsModCommandSurrounder {
     if (update == null) return;
     TextRange range3 = update.getTextRange();
     update.getContainingFile().getFileDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());
-    updater.moveCaretTo(range1.getStartOffset());
+    updater.select(TextRange.from(range1.getStartOffset(), 0));
   }
 }

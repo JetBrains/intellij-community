@@ -52,7 +52,7 @@ public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurr
 
     TextRange range = afterStatement.getTextRange();
     afterStatement.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    updater.moveCaretTo(range.getStartOffset());
+    updater.select(TextRange.from(range.getStartOffset(), 0));
   }
 
   @Override

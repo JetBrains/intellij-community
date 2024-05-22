@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
@@ -52,7 +53,7 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
         KtExpression condition = ifExpression.getCondition();
         assert condition != null : "Condition should exists for created if expression: " + ifExpression.getText();
         // Delete condition from created if
-        updater.moveCaretTo(condition.getTextOffset());
+        updater.select(TextRange.from(condition.getTextOffset(), 0));
         condition.delete();
     }
 

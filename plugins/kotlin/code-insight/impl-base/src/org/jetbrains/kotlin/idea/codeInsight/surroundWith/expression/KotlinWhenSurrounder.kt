@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -66,7 +67,7 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
             document.deleteString(textRange.startOffset, textRange.endOffset)
             offset
         }
-        updater.moveCaretTo(offset)
+        updater.select(TextRange.from(offset, 0))
         psiDocumentManager.commitDocument(document)
     }
 }
