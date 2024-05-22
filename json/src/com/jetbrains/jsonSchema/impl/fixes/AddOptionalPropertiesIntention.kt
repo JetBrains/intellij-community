@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter
+import com.jetbrains.jsonSchema.extension.JsonSchemaQuickFixSuppressor
 import com.jetbrains.jsonSchema.impl.JsonCachedValues
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,9 @@ open class AddOptionalPropertiesIntention : IntentionAction {
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val containingObject = findContainingObjectNode(editor, file) ?: return false
+    if (JsonSchemaQuickFixSuppressor.EXTENSION_POINT_NAME.extensionList.any {
+      it.shouldSuppressFix(file, AddOptionalPropertiesIntention::class.java)
+    }) return false
     return JsonCachedValues.hasComputedSchemaObjectForFile(containingObject.containingFile)
   }
 
