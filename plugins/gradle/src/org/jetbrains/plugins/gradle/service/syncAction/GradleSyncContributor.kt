@@ -100,6 +100,13 @@ interface GradleSyncContributor {
   object Order {
 
     /**
+     * The [PROJECT_ROOT_CONTRIBUTOR] configures the IDE project root and their basic module info.
+     *
+     * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor
+     */
+    const val PROJECT_ROOT_CONTRIBUTOR = 0
+
+    /**
      * The [CONTENT_ROOT_CONTRIBUTOR] configures the IDE project content root structure and their basic module info.
      *
      * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor
