@@ -4,9 +4,11 @@ package com.intellij.platform.lvcs.impl.actions
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.DirectoryDiffMode
 import com.intellij.platform.lvcs.impl.USE_OLD_CONTENT
 import com.intellij.platform.lvcs.impl.operations.createReverter
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
@@ -21,10 +23,12 @@ internal class RevertAction : ChangeSetSelectionAction() {
                                facade: LocalHistoryFacade,
                                gateway: IdeaGateway,
                                activityScope: ActivityScope,
-                               selection: ChangeSetSelection) {
+                               selection: ChangeSetSelection,
+                               e: AnActionEvent) {
     LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.RevertRevisions, activityScope)
 
-    val reverter = facade.createReverter(project, gateway, activityScope, selection, USE_OLD_CONTENT)
+    val diffMode = DirectoryDiffMode.WithLocal // revert everything after the selected changeset
+    val reverter = facade.createReverter(project, gateway, activityScope, selection, diffMode, USE_OLD_CONTENT)
     if (reverter == null || reverter.checkCanRevert().isNotEmpty()) return
     reverter.revert()
   }

@@ -15,8 +15,9 @@ private class ActivityDiffDataImpl(override val presentableChanges: Iterable<Pre
 internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
                                                selection: ChangeSetSelection,
+                                               diffMode: DirectoryDiffMode,
                                                isOldContentUsed: Boolean): ActivityDiffData {
-  val differences = getDiff(gateway, scope, selection, isOldContentUsed)
+  val differences = getDiff(gateway, scope, selection, diffMode, isOldContentUsed)
   val presentableChanges = JBIterable.from(differences)
     .mapNotNull { it.toPresentableChange(gateway, scope, selection, isOldContentUsed) }
   return ActivityDiffDataImpl(presentableChanges)

@@ -12,7 +12,7 @@ interface ActivityProvider {
   fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData
   fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>?
 
-  fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData?
+  fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData?
   fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer?
 
   fun getSupportedFilterKindFor(scope: ActivityScope): FilterKind
@@ -23,4 +23,9 @@ interface ActivityProvider {
 @ApiStatus.Experimental
 enum class FilterKind {
   FILE, CONTENT
+}
+
+@ApiStatus.Experimental
+enum class DirectoryDiffMode {
+  WithLocal, WithNext
 }

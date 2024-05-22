@@ -45,9 +45,9 @@ abstract class ChangeSetSelectionAction : DumbAwareAction() {
 
     val selection = activitySelection.toChangeSetSelection() ?: return
 
-    actionPerformed(project, facade, gateway, activityScope, selection)
+    actionPerformed(project, facade, gateway, activityScope, selection, e)
   }
 
   abstract fun actionPerformed(project: Project, facade: LocalHistoryFacade, gateway: IdeaGateway,
-                               activityScope: ActivityScope, selection: ChangeSetSelection)
+                               activityScope: ActivityScope, selection: ChangeSetSelection, e: AnActionEvent)
 }

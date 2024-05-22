@@ -234,12 +234,40 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     TestCase.assertEquals(listOf("ADDED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, 3, 4))
     TestCase.assertEquals(listOf("ADDED:${file.name}", "ADDED:${directory.name}", "ADDED:${innerDirectory.name}").sorted(),
                           getDiffDataForSelection(provider, scope, activityList, 0, 4))
+
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithNext, 0))
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithLocal, 0))
+
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithNext, 1))
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithLocal, 1))
+
+    TestCase.assertEquals(listOf("ADDED:${innerDirectory.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithNext, 2))
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}", "ADDED:${innerDirectory.name}").sorted(),
+                          getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithLocal, 2))
+
+    TestCase.assertEquals(listOf("ADDED:${directory.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithNext, 3))
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}", "ADDED:${directory.name}", "ADDED:${innerDirectory.name}").sorted(),
+                          getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithLocal, 3))
+
+    TestCase.assertEquals(listOf("ADDED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithNext, 4))
+    TestCase.assertEquals(listOf("ADDED:${file.name}", "ADDED:${directory.name}", "ADDED:${innerDirectory.name}").sorted(),
+                          getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithLocal, 4))
+  }
+
+  private fun getDiffDataForSelection(provider: LocalHistoryActivityProvider, scope: ActivityScope, activityList: ActivityData,
+                                      diffMode: DirectoryDiffMode, index: Int): List<String> {
+    return getDiffDataForSelection(provider, scope, activityList, diffMode, index, index)
   }
 
   private fun getDiffDataForSelection(provider: LocalHistoryActivityProvider, scope: ActivityScope, activityList: ActivityData,
                                       from: Int, to: Int): List<String> {
-    val selection = ActivitySelection(listOf(activityList.items[from], activityList.items[to]), activityList)
-    return provider.loadDiffData(scope, selection)!!.presentableChanges.map { "${it.fileStatus}:${it.filePath.name}" }.sorted()
+    return getDiffDataForSelection(provider, scope, activityList, DirectoryDiffMode.WithLocal, from, to)
+  }
+
+  private fun getDiffDataForSelection(provider: LocalHistoryActivityProvider, scope: ActivityScope, activityList: ActivityData,
+                                      diffMode: DirectoryDiffMode, from: Int, to: Int): List<String> {
+    val selection = ActivitySelection(listOf(from, to).distinct().map { activityList.items[it] }, activityList)
+    return provider.loadDiffData(scope, selection, diffMode)!!.presentableChanges.map { "${it.fileStatus}:${it.filePath.name}" }.sorted()
   }
 
   private fun ActivityData.getLabelNameSet(): Set<String> {

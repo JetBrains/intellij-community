@@ -827,7 +827,7 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - a:getPresentation(com.intellij.platform.lvcs.impl.ActivityItem):com.intellij.platform.lvcs.impl.ActivityPresentation
 - a:getSupportedFilterKindFor(com.intellij.platform.lvcs.impl.ActivityScope):com.intellij.platform.lvcs.impl.FilterKind
 - a:loadActivityList(com.intellij.platform.lvcs.impl.ActivityScope,java.lang.String):com.intellij.platform.lvcs.impl.ActivityData
-- a:loadDiffData(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ActivityDiffData
+- a:loadDiffData(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection,com.intellij.platform.lvcs.impl.DirectoryDiffMode):com.intellij.platform.lvcs.impl.ActivityDiffData
 - a:loadSingleDiff(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.diff.chains.DiffRequestProducer
 *:com.intellij.platform.lvcs.impl.ActivityScope
 - *sf:Companion:com.intellij.platform.lvcs.impl.ActivityScope$Companion
@@ -953,6 +953,13 @@ f:com.intellij.platform.lvcs.impl.ChangeSetSelectionKt
 - sf:getLeftRevision(com.intellij.platform.lvcs.impl.ChangeSetSelection):com.intellij.platform.lvcs.impl.RevisionId
 - sf:getRightRevision(com.intellij.platform.lvcs.impl.ChangeSetSelection):com.intellij.platform.lvcs.impl.RevisionId
 - sf:toChangeSetSelection(com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ChangeSetSelection
+*e:com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- java.lang.Enum
+- sf:WithLocal:com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- sf:WithNext:com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- s:values():com.intellij.platform.lvcs.impl.DirectoryDiffMode[]
 *e:com.intellij.platform.lvcs.impl.FilterKind
 - java.lang.Enum
 - sf:CONTENT:com.intellij.platform.lvcs.impl.FilterKind
@@ -1066,6 +1073,7 @@ f:com.intellij.platform.lvcs.impl.ui.ActivityView$Companion
 - f:showInToolWindow(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.platform.lvcs.impl.ActivityScope):V
 *f:com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
+- f:getDIRECTORY_DIFF_MODE():com.intellij.openapi.actionSystem.DataKey
 - f:getSCOPE():com.intellij.openapi.actionSystem.DataKey
 - f:getSELECTED_DIFFERENCES():com.intellij.openapi.actionSystem.DataKey
 - f:getSELECTION():com.intellij.openapi.actionSystem.DataKey

@@ -151,6 +151,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     if (ActivityViewDataKeys.SELECTION.`is`(dataId)) return activityList.selection
     if (ActivityViewDataKeys.SCOPE.`is`(dataId)) return activityScope
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorDiffPreview
+    if (ActivityViewDataKeys.DIRECTORY_DIFF_MODE.`is`(dataId)) return model.diffMode
     return null
   }
 

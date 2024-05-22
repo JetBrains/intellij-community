@@ -131,9 +131,9 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
-  override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
+  override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData? {
     val changeSetSelection = selection.toChangeSetSelection() ?: return null
-    return facade.createDiffData(gateway, scope, changeSetSelection, USE_OLD_CONTENT)
+    return facade.createDiffData(gateway, scope, changeSetSelection, diffMode, USE_OLD_CONTENT)
   }
 
   override fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {

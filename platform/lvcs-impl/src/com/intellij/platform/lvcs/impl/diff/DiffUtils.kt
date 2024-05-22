@@ -31,21 +31,43 @@ internal fun LocalHistoryFacade.getSingleFileDiff(rootEntry: RootEntry,
 internal fun LocalHistoryFacade.getDiff(rootEntry: RootEntry,
                                         selection: ChangeSetSelection,
                                         entryPaths: Collection<String>,
+                                        diffMode: DirectoryDiffMode,
                                         isOldContentUsed: Boolean): List<Difference> {
-  return entryPaths.flatMap {
-    val leftEntry = findEntry(rootEntry, selection.leftRevision, it, isOldContentUsed)
-    val rightEntry = findEntry(rootEntry, selection.rightRevision, it, isOldContentUsed)
-    Entry.getDifferencesBetween(leftEntry, rightEntry, selection.rightRevision is RevisionId.Current)
+  val leftRevision = selection.leftRevision
+  val rightRevision = when (diffMode) {
+    DirectoryDiffMode.WithLocal -> selection.rightRevision
+    DirectoryDiffMode.WithNext -> {
+      val rightItem = selection.rightItem
+      if (rightItem != null) RevisionId.ChangeSet(rightItem.id) else nextRevision(leftRevision)
+    }
   }
+  return entryPaths.flatMap {
+    val leftEntry = findEntry(rootEntry, leftRevision, it, isOldContentUsed)
+    val rightEntry = findEntry(rootEntry, rightRevision, it, isOldContentUsed)
+    Entry.getDifferencesBetween(leftEntry, rightEntry, rightRevision is RevisionId.Current)
+  }
+}
+
+private fun LocalHistoryFacade.nextRevision(revisionId: RevisionId): RevisionId {
+  if (revisionId is RevisionId.Current) return RevisionId.Current
+  revisionId as RevisionId.ChangeSet
+
+  var nextChange: Long? = null
+  for (change in changes) {
+    if (change.id == revisionId.id) break
+    nextChange = change.id
+  }
+  return nextChange?.let { RevisionId.ChangeSet(it) } ?: RevisionId.Current
 }
 
 internal fun LocalHistoryFacade.getDiff(gateway: IdeaGateway,
                                         scope: ActivityScope,
                                         selection: ChangeSetSelection,
+                                        diffMode: DirectoryDiffMode,
                                         isOldContentUsed: Boolean): List<Difference> {
   val rootEntry = selection.data.getRootEntry(gateway)
   val entryPaths = getEntryPaths(gateway, scope)
-  return getDiff(rootEntry, selection, entryPaths, isOldContentUsed).toList()
+  return getDiff(rootEntry, selection, entryPaths, diffMode, isOldContentUsed).toList()
 }
 
 internal fun getEntryPaths(gateway: IdeaGateway, scope: ActivityScope): Collection<String> {

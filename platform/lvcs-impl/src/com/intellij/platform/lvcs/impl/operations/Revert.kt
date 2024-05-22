@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
 internal fun LocalHistoryFacade.createReverter(project: Project, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
-                                               isOldContentUsed: Boolean): Reverter? {
+                                               diffMode: DirectoryDiffMode, isOldContentUsed: Boolean): Reverter? {
   val targetRevisionId = selection.leftRevision
   if (targetRevisionId == RevisionId.Current) return null
 
@@ -32,7 +32,7 @@ internal fun LocalHistoryFacade.createReverter(project: Project, gateway: IdeaGa
                              commandNameSupplier)
   }
 
-  val diff = getDiff(gateway, scope, selection, isOldContentUsed)
+  val diff = getDiff(gateway, scope, selection, diffMode, isOldContentUsed)
   return DifferenceReverter(project, this, gateway, diff, commandNameSupplier)
 }
 

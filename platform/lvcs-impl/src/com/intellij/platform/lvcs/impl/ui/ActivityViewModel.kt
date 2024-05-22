@@ -22,6 +22,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
 
   private val activityItemsFlow = MutableStateFlow(ActivityData.EMPTY)
   private val selectionFlow = MutableStateFlow<ActivitySelection?>(null)
+  private val diffModeFlow = MutableStateFlow(DirectoryDiffMode.WithLocal)
 
   private val filterFlow = MutableStateFlow<String?>(null)
 
@@ -50,15 +51,15 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
     }
     if (!isSingleDiffSupported) {
       coroutineScope.launch {
-        selectionFlow.collectLatest { selection ->
-          thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
+        combine(selectionFlow, diffModeFlow) { s, d -> s to d }.collectLatest { (selection, diffMode) ->
+          thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope diff mode $diffMode")
           withContext(Dispatchers.EDT) {
             eventDispatcher.multicaster.onDiffDataLoadingStarted()
           }
           val diffData = selection?.let {
             withContext(Dispatchers.Default) {
               LocalHistoryCounter.logLoadDiff(project, activityScope) {
-                activityProvider.loadDiffData(activityScope, selection)
+                activityProvider.loadDiffData(activityScope, selection, diffMode)
               }
             }
           }
@@ -89,6 +90,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   }
 
   internal val selection get() = selectionFlow.value
+  internal val diffMode get() = diffModeFlow.value
 
   internal val isSingleDiffSupported get() = !activityScope.hasMultipleFiles
 
