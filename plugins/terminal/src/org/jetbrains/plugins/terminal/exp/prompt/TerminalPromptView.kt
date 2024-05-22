@@ -27,11 +27,7 @@ import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptLanguage
-import java.awt.Color
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -61,7 +57,7 @@ internal class TerminalPromptView(
     controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
 
-    commandHistoryPresenter = CommandHistoryPresenter(project, editor, controller.model, commandExecutor)
+    commandHistoryPresenter = CommandHistoryPresenter(project, editor, controller)
     commandSearchPresenter = CommandSearchPresenter(project, editor, controller.model)
 
     val toolbarComponent = createToolbarComponent(targetComponent = editor.contentComponent)
