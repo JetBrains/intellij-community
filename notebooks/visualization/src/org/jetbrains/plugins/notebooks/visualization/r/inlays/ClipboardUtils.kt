@@ -8,6 +8,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import java.awt.Image
@@ -16,8 +17,7 @@ import java.awt.datatransfer.StringSelection
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.JTable
 
@@ -122,7 +122,21 @@ object ClipboardUtils {
   // https://bugs.openjdk.org/browse/JDK-8313706
   // https://youtrack.jetbrains.com/issue/PY-69919/Result-of-Copy-plot-command-results-in-Unsupported-image-type-in-Google-Slides
   fun copyPngImageToClipboard(image: BufferedImage) {
-    CopyPasteManager.getInstance().setContents(PngTransferable(image))
+    val tempImage = FileUtil.createTempFile("clipboard", ".png")
+    ImageIO.write(image, "png", tempImage)
+
+    CopyPasteManager.getInstance().setContents(FileTransferable(listOf(tempImage)))
+  }
+
+  private class FileTransferable(private val files: List<File>) : Transferable {
+    override fun getTransferDataFlavors(): Array<DataFlavor> = arrayOf(DataFlavor.javaFileListFlavor)
+    override fun isDataFlavorSupported(flavor: DataFlavor): Boolean = DataFlavor.javaFileListFlavor.equals(flavor)
+    override fun getTransferData(flavor: DataFlavor): List<File> {
+      if (!isDataFlavorSupported(flavor))
+        throw UnsupportedFlavorException(flavor)
+
+      return files
+    }
   }
 
   private class ImageTransferable(private val image: Image) : Transferable {
@@ -139,28 +153,6 @@ object ClipboardUtils {
         throw UnsupportedFlavorException(flavor)
       }
       return image
-    }
-  }
-
-  /**
-   * When using [ImageTransferable], the image data is transferred in format by OS decision,
-   * for example, macOS can use TIFF format. This class transfers the image data as png.
-   */
-  private class PngTransferable(private val image: BufferedImage) : Transferable {
-
-    private val pngFlavor = DataFlavor("image/png;class=java.io.InputStream", "PNG Image")
-
-    override fun getTransferDataFlavors() = arrayOf(pngFlavor)
-
-    override fun isDataFlavorSupported(dataFlavor: DataFlavor) = pngFlavor == dataFlavor
-
-    override fun getTransferData(dataFlavor: DataFlavor): Any {
-      if (!isDataFlavorSupported(dataFlavor))
-        throw UnsupportedFlavorException(dataFlavor)
-
-      val outputStream = ByteArrayOutputStream()
-      ImageIO.write(image, "png", outputStream)
-      return ByteArrayInputStream(outputStream.toByteArray())
     }
   }
 }
