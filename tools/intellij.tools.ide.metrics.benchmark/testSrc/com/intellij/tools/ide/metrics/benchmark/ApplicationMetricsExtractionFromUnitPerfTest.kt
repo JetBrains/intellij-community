@@ -74,7 +74,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
     }
       .attempts(5)
-      .withTelemetryMeters(meterCollector)
+      .withMetricsCollector(meterCollector)
       .start()
 
     SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)

@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.ServiceLoader;
@@ -55,7 +56,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
-  private TelemetryMetricsCollector meterCollector = null;
+  private ArrayList<TelemetryMetricsCollector> metricsCollectors = new ArrayList<>();
 
   private static final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(
     SupervisorKt.SupervisorJob(null).plus(Dispatchers.getIO())
@@ -176,8 +177,8 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
    * </pre>
    */
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfoImpl withTelemetryMeters(TelemetryMetricsCollector meterCollector) {
-    this.meterCollector = meterCollector;
+  public PerformanceTestInfoImpl withMetricsCollector(TelemetryMetricsCollector meterCollector) {
+    this.metricsCollectors.add(meterCollector);
     return this;
   }
 
@@ -349,12 +350,8 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
         // publish warmup and final measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
           var publisherInstance = MetricsPublisher.Companion.getInstance();
-          if (meterCollector != null) {
-            publisherInstance.publishSync(uniqueTestName, meterCollector);
-          }
-          else {
-            publisherInstance.publishSync(uniqueTestName);
-          }
+          publisherInstance.publishSync(uniqueTestName,
+                                        metricsCollectors.toArray(new TelemetryMetricsCollector[0]));
         }
       }
       catch (Throwable t) {
