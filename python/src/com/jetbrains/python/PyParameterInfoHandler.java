@@ -5,8 +5,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.parameterInfo.ParameterFlag;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtilRt;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -87,44 +87,51 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     ParameterHints parameterHints = PyParameterInfoUtils.buildParameterHints(callAndCallee, currentParamOffset);
     if (parameterHints == null) return;
 
-    String[] hints = ArrayUtilRt.toStringArray(parameterHints.getHints());
-    String[] annotations = ArrayUtilRt.toStringArray(parameterHints.getAnnotations());
+    boolean showAllHints = Registry.is("python.parameter.info.show.all.hints");
+    List<PyParameterInfoUtils.ParameterDescription> parameterDescriptions = parameterHints.getParameterDescriptors();
+    String[] hintsToShow = new String[parameterDescriptions.size()];
     if (context instanceof ParameterInfoUIContextEx) {
       //noinspection unchecked
       EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[parameterHints.getFlags().size()];
       for (int i = 0; i < flags.length; i++) {
         EnumSet<ParameterFlag> curFlags = parameterHints.getFlags().get(i);
-        if (!curFlags.contains(ParameterFlag.HIGHLIGHT) && i < hints.length && hints[i].length() > MY_PARAM_LENGTH_LIMIT &&
-            i < annotations.length) {
-          String annotation = annotations[i];
-          if (!annotation.isEmpty() && annotation.length() < hints[i].length()) {
-            hints[i] = annotation;
-          }
-        }
+        PyParameterInfoUtils.ParameterDescription description = parameterDescriptions.get(i);
+        hintsToShow[i] = getRepresentationToShow(description, curFlags.contains(ParameterFlag.HIGHLIGHT), showAllHints);
         flags[i] = StreamEx.of(parameterHints.getFlags().get(i))
           .map(PARAM_FLAG_TO_UI_FLAG::get)
           .collect(MoreCollectors.toEnumSet(ParameterInfoUIContextEx.Flag.class));
       }
-      if (hints.length == 0) {
-        hints = new String[]{getNoParamsMsg()};
+      if (parameterDescriptions.isEmpty()) {
+        hintsToShow = new String[]{getNoParamsMsg()};
         //noinspection unchecked
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 
-      ((ParameterInfoUIContextEx)context).setupUIComponentPresentation(hints, flags, context.getDefaultParameterColor());
+      ((ParameterInfoUIContextEx)context).setupUIComponentPresentation(hintsToShow, flags, context.getDefaultParameterColor());
     }
     else { // fallback, no highlight
       final StringBuilder signatureBuilder = new StringBuilder();
-      if (hints.length == 0) {
+      if (hintsToShow.length == 0) {
         signatureBuilder.append(getNoParamsMsg());
       }
       else {
-        for (String s : hints) signatureBuilder.append(s);
+        for (String s : hintsToShow) signatureBuilder.append(s);
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()
       );
     }
+  }
+
+  private static String getRepresentationToShow(PyParameterInfoUtils.ParameterDescription description, boolean isHighlighted, boolean showHints) {
+    String fullRepresentation = description.getFullRepresentation(isHighlighted || showHints);
+    if (fullRepresentation.length() > MY_PARAM_LENGTH_LIMIT && !isHighlighted) {
+      String annotation = description.getAnnotation();
+      if (!annotation.isEmpty() && annotation.length() < fullRepresentation.length()) {
+        return annotation;
+      }
+    }
+    return fullRepresentation;
   }
 
   private static String getNoParamsMsg() {
