@@ -208,6 +208,7 @@
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.devLauncher.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.lombok" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.xmlbeans" scope="TEST" />
