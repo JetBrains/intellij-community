@@ -1,457 +1,367 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.tabs;
+package com.intellij.ui.tabs
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.reference.SoftReference;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.PlaceProvider;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.content.AlertIcon;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.ui.Queryable
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.PlaceProvider
+import com.intellij.ui.SimpleColoredText
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
+import com.intellij.ui.content.AlertIcon
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.NonNls
+import java.awt.Color
+import java.awt.Component
+import java.awt.event.MouseEvent
+import java.beans.PropertyChangeSupport
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
+import javax.swing.Icon
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeSupport;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+class TabInfo(var component: JComponent?) : Queryable, PlaceProvider {
+  companion object {
+    const val ACTION_GROUP: String = "actionGroup"
+    const val ICON: String = "icon"
+    const val TAB_COLOR: String = "color"
+    const val COMPONENT: String = "component"
+    const val TEXT: String = "text"
+    const val TAB_ACTION_GROUP: String = "tabActionGroup"
+    const val ALERT_ICON: String = "alertIcon"
 
-public final class TabInfo implements Queryable, PlaceProvider {
-  public static final String ACTION_GROUP = "actionGroup";
-  public static final String ICON = "icon";
-  public static final String TAB_COLOR = "color";
-  public static final String COMPONENT = "component";
-  public static final String TEXT = "text";
-  public static final String TAB_ACTION_GROUP = "tabActionGroup";
-  public static final String ALERT_ICON = "alertIcon";
+    const val ALERT_STATUS: String = "alertStatus"
+    const val HIDDEN: String = "hidden"
+    const val ENABLED: String = "enabled"
 
-  public static final String ALERT_STATUS = "alertStatus";
-  public static final String HIDDEN = "hidden";
-  public static final String ENABLED = "enabled";
+    private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
+  }
 
-  private JComponent component;
-  private JComponent preferredFocusableComponent;
+  private var preferredFocusableComponent: JComponent?
 
-  private ActionGroup group;
+  var group: ActionGroup? = null
+    private set
 
-  private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
+  val changeSupport: PropertyChangeSupport = PropertyChangeSupport(this)
 
-  private Icon icon;
-  private @NonNls String place;
-  private Object object;
-  private JComponent sideComponent;
-  private JComponent foreSideComponent;
-  private Reference<JComponent> lastFocusOwner;
+  var icon: Icon? = null
+    private set
+  private var place: @NonNls String? = null
+  var `object`: Any? = null
+    private set
+  var sideComponent: JComponent? = null
+    private set
+  var foreSideComponent: JComponent? = null
+    private set
 
-  private ActionGroup tabLabelActions;
-  private @Nullable ActionGroup tabPaneActions;
-  private String tabActionPlace;
+  private var lastFocusOwner: Reference<JComponent>? = null
 
-  private AlertIcon alertIcon;
+  fun getLastFocusOwner() = lastFocusOwner?.get()
 
-  private int blinkCount;
-  private boolean isAlertRequested;
-  private boolean isHidden;
-  private JComponent actionContextComponent;
+  fun setLastFocusOwner(component: JComponent?) {
+    lastFocusOwner = component?.let { WeakReference(it) }
+  }
 
-  private final SimpleColoredText text = new SimpleColoredText();
-  private @NlsContexts.Tooltip String tooltipText;
+  var tabLabelActions: ActionGroup? = null
+    private set
+  var tabPaneActions: ActionGroup? = null
+    private set
+  var tabActionPlace: String? = null
+    private set
 
-  private int defaultStyle = -1;
-  private Color defaultForeground;
-  private TextAttributes editorAttributes;
-  private SimpleTextAttributes defaultAttributes;
-  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6));
+  private var alertIcon: AlertIcon? = null
 
-  private boolean isEnabled = true;
-  private Color tabColor;
+  var blinkCount: Int = 0
+  var isAlertRequested: Boolean = false
+    private set
+  var isHidden: Boolean = false
+    set(hidden) {
+      val old = field
+      field = hidden
+      changeSupport.firePropertyChange(HIDDEN, old, field)
+    }
+  var actionsContextComponent: JComponent? = null
+    private set
 
-  private Queryable queryable;
-  private DragOutDelegate dragOutDelegate;
-  private DragDelegate dragDelegate;
+  val coloredText: SimpleColoredText = SimpleColoredText()
+  var tooltipText: @NlsContexts.Tooltip String? = null
+    private set
+
+  private var defaultStyle = -1
+  var defaultForeground: Color? = null
+    private set
+  private var editorAttributes: TextAttributes? = null
+  private var defaultAttributes: SimpleTextAttributes? = null
+  var isEnabled: Boolean = true
+    set(enabled) {
+      val old = field
+      field = enabled
+      changeSupport.firePropertyChange(ENABLED, old, field)
+    }
+  var tabColor: Color? = null
+    private set
+
+  private var queryable: Queryable? = null
+  var dragOutDelegate: DragOutDelegate? = null
+    private set
+  var dragDelegate: DragDelegate? = null
 
   /**
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
    * out of its container. (IDEA-61536)
    */
-  private WeakReference<TabInfo> previousSelection = new WeakReference<>(null);
+  private var previousSelection = WeakReference<TabInfo?>(null)
 
-  public TabInfo(@Nullable JComponent component) {
-    this.component = component;
-    preferredFocusableComponent = component;
+  init {
+    preferredFocusableComponent = component
   }
 
-  public @NotNull PropertyChangeSupport getChangeSupport() {
-    return changeSupport;
-  }
-
-  public @NotNull TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
-    List<SimpleTextAttributes> attributes = this.text.getAttributes();
-    TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
-    SimpleTextAttributes defaultAttributes = getDefaultAttributes();
-    if (!this.text.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
-      clearText(false);
-      //noinspection DialogTitleCapitalization
-      append(text, defaultAttributes);
+  fun setText(text: @NlsContexts.TabTitle String): TabInfo {
+    val attributes = coloredText.attributes
+    val textAttributes = attributes.singleOrNull()?.toTextAttributes()
+    val defaultAttributes = getDefaultAttributes()
+    if (coloredText.toString() != text || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
+      clearText(false)
+      @Suppress("DialogTitleCapitalization")
+      append(text, defaultAttributes)
     }
-    return this;
+    return this
   }
 
-  private @NotNull SimpleTextAttributes getDefaultAttributes() {
+  private fun getDefaultAttributes(): SimpleTextAttributes {
     if (defaultAttributes == null) {
-      int style = (defaultStyle != -1 ? defaultStyle : SimpleTextAttributes.STYLE_PLAIN)
-                  | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR;
+      val style = ((if (defaultStyle != -1) defaultStyle else SimpleTextAttributes.STYLE_PLAIN)
+        or SimpleTextAttributes.STYLE_USE_EFFECT_COLOR)
       if (editorAttributes != null) {
-        SimpleTextAttributes attr = SimpleTextAttributes.fromTextAttributes(editorAttributes);
-        attr = SimpleTextAttributes.merge(new SimpleTextAttributes(style, defaultForeground), attr);
-        defaultAttributes = attr;
+        var attr = SimpleTextAttributes.fromTextAttributes(editorAttributes)
+        attr = SimpleTextAttributes.merge(SimpleTextAttributes(style, defaultForeground), attr)
+        defaultAttributes = attr
       }
       else {
-        defaultAttributes = new SimpleTextAttributes(style, defaultForeground);
+        defaultAttributes = SimpleTextAttributes(style, defaultForeground)
       }
     }
-    return defaultAttributes;
+    return defaultAttributes!!
   }
 
-  public @NotNull TabInfo clearText(final boolean invalidate) {
-    final String old = text.toString();
-    text.clear();
+  fun clearText(invalidate: Boolean): TabInfo {
+    val old = coloredText.toString()
+    coloredText.clear()
     if (invalidate) {
-      changeSupport.firePropertyChange(TEXT, old, text.toString());
+      changeSupport.firePropertyChange(TEXT, old, coloredText.toString())
     }
-    return this;
+    return this
   }
 
-  public @NotNull TabInfo append(@NotNull @NlsContexts.Label String fragment, @NotNull SimpleTextAttributes attributes) {
-    final String old = text.toString();
-    text.append(fragment, attributes);
-    changeSupport.firePropertyChange(TEXT, old, text.toString());
-    return this;
+  fun append(fragment: @NlsContexts.Label String, attributes: SimpleTextAttributes): TabInfo {
+    val old = coloredText.toString()
+    coloredText.append(fragment, attributes)
+    changeSupport.firePropertyChange(TEXT, old, coloredText.toString())
+    return this
   }
 
-  public @NotNull TabInfo setIcon(Icon icon) {
-    Icon old = this.icon;
-    if (!Objects.equals(old, icon)) {
-      this.icon = icon;
-      changeSupport.firePropertyChange(ICON, old, icon);
+  fun setIcon(icon: Icon): TabInfo {
+    val old = this.icon
+    if (old != icon) {
+      this.icon = icon
+      changeSupport.firePropertyChange(ICON, old, icon)
     }
-    return this;
+    return this
   }
 
-  public @NotNull TabInfo setComponent(Component c) {
-    if (component != c) {
-      JComponent old = component;
-      component = (JComponent)c;
-      changeSupport.firePropertyChange(COMPONENT, old, component);
+  fun setComponent(c: Component): TabInfo {
+    if (component !== c) {
+      val old = component
+      component = c as JComponent
+      changeSupport.firePropertyChange(COMPONENT, old, component)
     }
-    return this;
+    return this
   }
 
-  public ActionGroup getGroup() {
-    return group;
+  val isPinned: Boolean
+    get() = ClientProperty.isTrue(component, JBTabsImpl.PINNED)
+
+  fun getText(): @NlsContexts.TabTitle String {
+    return coloredText.toString()
   }
 
-  public JComponent getComponent() {
-    return component;
+  override fun getPlace(): String {
+    return place!!
   }
 
-  public boolean isPinned() {
-    return ClientProperty.isTrue(getComponent(), JBTabsImpl.PINNED);
+  fun setSideComponent(comp: JComponent?): TabInfo {
+    sideComponent = comp
+    return this
   }
 
-  public @NotNull @NlsContexts.TabTitle String getText() {
-    return text.toString();
+  fun setForeSideComponent(comp: JComponent?): TabInfo {
+    foreSideComponent = comp
+    return this
   }
 
-  public @NotNull SimpleColoredText getColoredText() {
-    return text;
+  fun setActions(group: ActionGroup?, place: @NonNls String?): TabInfo {
+    val old = this.group
+    this.group = group
+    this.place = place
+    changeSupport.firePropertyChange(ACTION_GROUP, old, this.group)
+    return this
   }
 
-  @Nullable
-  public Icon getIcon() {
-    return icon;
+  fun setActionsContextComponent(c: JComponent?): TabInfo {
+    actionsContextComponent = c
+    return this
   }
 
-  @Override
-  public String getPlace() {
-    return place;
+  fun setObject(`object`: Any?): TabInfo {
+    this.`object` = `object`
+    return this
   }
 
-  public @NotNull TabInfo setSideComponent(JComponent comp) {
-    sideComponent = comp;
-    return this;
+  fun getPreferredFocusableComponent(): JComponent {
+    return if (preferredFocusableComponent != null) preferredFocusableComponent!! else component!!
   }
 
-  public JComponent getSideComponent() {
-    return sideComponent;
+  fun setPreferredFocusableComponent(component: JComponent?): TabInfo {
+    preferredFocusableComponent = component
+    return this
   }
 
-  public @NotNull TabInfo setForeSideComponent(JComponent comp) {
-    foreSideComponent = comp;
-    return this;
-  }
-
-  public JComponent getForeSideComponent() {
-    return foreSideComponent;
-  }
-
-  public @NotNull TabInfo setActions(ActionGroup group, @NonNls String place) {
-    ActionGroup old = this.group;
-    this.group = group;
-    this.place = place;
-    changeSupport.firePropertyChange(ACTION_GROUP, old, this.group);
-    return this;
-  }
-
-  public @NotNull TabInfo setActionsContextComponent(JComponent c) {
-    actionContextComponent = c;
-    return this;
-  }
-
-  public JComponent getActionsContextComponent() {
-    return actionContextComponent;
-  }
-
-  public @NotNull TabInfo setObject(final Object object) {
-    this.object = object;
-    return this;
-  }
-
-  public Object getObject() {
-    return object;
-  }
-
-  public JComponent getPreferredFocusableComponent() {
-    return preferredFocusableComponent != null ? preferredFocusableComponent : component;
-  }
-
-  public @NotNull TabInfo setPreferredFocusableComponent(final JComponent component) {
-    preferredFocusableComponent = component;
-    return this;
-  }
-
-  public void setLastFocusOwner(final JComponent owner) {
-    lastFocusOwner = owner == null ? null : new WeakReference<>(owner);
-  }
-
-  public ActionGroup getTabLabelActions() {
-    return tabLabelActions;
-  }
-
-  public String getTabActionPlace() {
-    return tabActionPlace;
-  }
-
-  public @NotNull TabInfo setTabLabelActions(final ActionGroup tabActions, @NotNull String place) {
-    ActionGroup old = tabLabelActions;
-    tabLabelActions = tabActions;
-    tabActionPlace = place;
-    changeSupport.firePropertyChange(TAB_ACTION_GROUP, old, tabLabelActions);
-    return this;
-  }
-
-  public @Nullable ActionGroup getTabPaneActions() {
-    return tabPaneActions;
+  fun setTabLabelActions(tabActions: ActionGroup?, place: String): TabInfo {
+    val old = tabLabelActions
+    tabLabelActions = tabActions
+    tabActionPlace = place
+    changeSupport.firePropertyChange(TAB_ACTION_GROUP, old, tabLabelActions)
+    return this
   }
 
   /**
    * Sets the actions that will be displayed on the right side of the tabs
    */
-  public @NotNull TabInfo setTabPaneActions(final @Nullable ActionGroup tabPaneActions) {
-    this.tabPaneActions = tabPaneActions;
-    return this;
+  fun setTabPaneActions(tabPaneActions: ActionGroup?): TabInfo {
+    this.tabPaneActions = tabPaneActions
+    return this
   }
 
-  public @Nullable JComponent getLastFocusOwner() {
-    return SoftReference.dereference(lastFocusOwner);
+  fun setAlertIcon(alertIcon: AlertIcon?): TabInfo {
+    val old = this.alertIcon
+    this.alertIcon = alertIcon
+    changeSupport.firePropertyChange(ALERT_ICON, old, this.alertIcon)
+    return this
   }
 
-  public @NotNull TabInfo setAlertIcon(AlertIcon alertIcon) {
-    AlertIcon old = this.alertIcon;
-    this.alertIcon = alertIcon;
-    changeSupport.firePropertyChange(ALERT_ICON, old, this.alertIcon);
-    return this;
+  fun fireAlert() {
+    isAlertRequested = true
+    changeSupport.firePropertyChange(ALERT_STATUS, null, true)
   }
 
-  public void fireAlert() {
-    isAlertRequested = true;
-    changeSupport.firePropertyChange(ALERT_STATUS, null, true);
+  fun stopAlerting() {
+    isAlertRequested = false
+    changeSupport.firePropertyChange(ALERT_STATUS, null, false)
   }
 
-  public void stopAlerting() {
-    isAlertRequested = false;
-    changeSupport.firePropertyChange(ALERT_STATUS, null, false);
+  override fun toString(): String {
+    return getText()
   }
 
-  public int getBlinkCount() {
-    return blinkCount;
+  fun getAlertIcon(): AlertIcon {
+    return if (alertIcon == null) DEFAULT_ALERT_ICON else alertIcon!!
   }
 
-  public void setBlinkCount(final int blinkCount) {
-    this.blinkCount = blinkCount;
+  fun resetAlertRequest() {
+    isAlertRequested = false
   }
 
-  @Override
-  public String toString() {
-    return getText();
+  fun setDefaultStyle(@StyleAttributeConstant style: Int): TabInfo {
+    defaultStyle = style
+    defaultAttributes = null
+    update()
+    return this
   }
 
-  public @NotNull AlertIcon getAlertIcon() {
-    return alertIcon == null ? DEFAULT_ALERT_ICON : alertIcon;
+  fun setDefaultForeground(fg: Color?): TabInfo {
+    defaultForeground = fg
+    defaultAttributes = null
+    update()
+    return this
   }
 
-  public void resetAlertRequest() {
-    isAlertRequested = false;
-  }
-
-  public boolean isAlertRequested() {
-    return isAlertRequested;
-  }
-
-  public void setHidden(boolean hidden) {
-    boolean old = isHidden;
-    isHidden = hidden;
-    changeSupport.firePropertyChange(HIDDEN, old, isHidden);
-  }
-
-  public boolean isHidden() {
-    return isHidden;
-  }
-
-  public void setEnabled(boolean enabled) {
-    boolean old = isEnabled;
-    isEnabled = enabled;
-    changeSupport.firePropertyChange(ENABLED, old, isEnabled);
-  }
-
-  public boolean isEnabled() {
-    return isEnabled;
-  }
-
-  public @NotNull TabInfo setDefaultStyle(@SimpleTextAttributes.StyleAttributeConstant int style) {
-    defaultStyle = style;
-    defaultAttributes = null;
-    update();
-    return this;
-  }
-
-  public @NotNull TabInfo setDefaultForeground(final Color fg) {
-    defaultForeground = fg;
-    defaultAttributes = null;
-    update();
-    return this;
-  }
-
-  public Color getDefaultForeground() {
-    return defaultForeground;
-  }
-
-  public @NotNull TabInfo setDefaultAttributes(@Nullable TextAttributes attributes) {
-    editorAttributes = attributes;
-    defaultAttributes = null;
-    update();
-    return this;
+  fun setDefaultAttributes(attributes: TextAttributes?): TabInfo {
+    editorAttributes = attributes
+    defaultAttributes = null
+    update()
+    return this
   }
 
 
-  private void update() {
-    setText(getText());
+  private fun update() {
+    setText(getText())
   }
 
-  public void revalidate() {
-    defaultAttributes = null;
-    update();
+  fun revalidate() {
+    defaultAttributes = null
+    update()
   }
 
-  public @NotNull TabInfo setTooltipText(@NlsContexts.Tooltip String text) {
-    String old = tooltipText;
-    if (!Objects.equals(old, text)) {
-      tooltipText = text;
-      changeSupport.firePropertyChange(TEXT, old, tooltipText);
+  fun setTooltipText(text: @NlsContexts.Tooltip String?): TabInfo {
+    val old = tooltipText
+    if (old != text) {
+      tooltipText = text
+      changeSupport.firePropertyChange(TEXT, old, tooltipText)
     }
-    return this;
+    return this
   }
 
-  public @NlsContexts.Tooltip String getTooltipText() {
-    return tooltipText;
-  }
-
-  public @NotNull TabInfo setTabColor(Color color) {
-    Color old = tabColor;
+  fun setTabColor(color: Color?): TabInfo {
+    val old = tabColor
     if (!Comparing.equal(color, old)) {
-      tabColor = color;
-      changeSupport.firePropertyChange(TAB_COLOR, old, color);
+      tabColor = color
+      changeSupport.firePropertyChange(TAB_COLOR, old, color)
     }
-    return this;
+    return this
   }
 
-  public Color getTabColor() {
-    return tabColor;
+  fun setTestableUi(queryable: Queryable?): TabInfo {
+    this.queryable = queryable
+    return this
   }
 
-  public @NotNull TabInfo setTestableUi(Queryable queryable) {
-    this.queryable = queryable;
-    return this;
-  }
-
-  @Override
-  public void putInfo(@NotNull Map<? super String, ? super String> info) {
+  override fun putInfo(info: MutableMap<in String, in String>) {
     if (queryable != null) {
-      queryable.putInfo(info);
+      queryable!!.putInfo(info)
     }
   }
 
-  public @NotNull TabInfo setDragOutDelegate(DragOutDelegate delegate) {
-    dragOutDelegate = delegate;
-    return this;
+  fun setDragOutDelegate(delegate: DragOutDelegate?): TabInfo {
+    dragOutDelegate = delegate
+    return this
   }
 
-  public boolean canBeDraggedOut() {
-    return dragOutDelegate != null;
+  fun canBeDraggedOut(): Boolean {
+    return dragOutDelegate != null
   }
 
-  public DragOutDelegate getDragOutDelegate() {
-    return dragOutDelegate;
+  fun setPreviousSelection(previousSelection: TabInfo?) {
+    this.previousSelection = WeakReference(previousSelection)
   }
 
-  public void setPreviousSelection(@Nullable TabInfo previousSelection) {
-    this.previousSelection = new WeakReference<>(previousSelection);
+  fun getPreviousSelection(): TabInfo? {
+    return previousSelection.get()
   }
 
-  public DragDelegate getDragDelegate() {
-    return dragDelegate;
+  interface DragDelegate {
+    fun dragStarted(mouseEvent: MouseEvent)
+    fun dragFinishedOrCanceled()
   }
 
-  public void setDragDelegate(DragDelegate dragDelegate) {
-    this.dragDelegate = dragDelegate;
-  }
-
-  public @Nullable TabInfo getPreviousSelection() {
-    return previousSelection.get();
-  }
-
-  public interface DragDelegate {
-    void dragStarted(@NotNull MouseEvent mouseEvent);
-    void dragFinishedOrCanceled();
-  }
-
-  public interface DragOutDelegate {
-    void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info);
-    void processDragOut(@NotNull MouseEvent event, @NotNull TabInfo source);
-    void dragOutFinished(@NotNull MouseEvent event, TabInfo source);
-    void dragOutCancelled(TabInfo source);
+  interface DragOutDelegate {
+    fun dragOutStarted(mouseEvent: MouseEvent, info: TabInfo)
+    fun processDragOut(event: MouseEvent, source: TabInfo)
+    fun dragOutFinished(event: MouseEvent, source: TabInfo?)
+    fun dragOutCancelled(source: TabInfo?)
   }
 }
