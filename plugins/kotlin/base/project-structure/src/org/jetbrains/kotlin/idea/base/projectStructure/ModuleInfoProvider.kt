@@ -185,9 +185,7 @@ class ModuleInfoProvider(private val project: Project) {
                     config = config,
                     extensionBlock = { collectByElement(element, containingFile, virtualFile) },
                 ) {
-                    val isLibrarySource =
-                        config.contextualModuleInfo is LibrarySourceInfo ||
-                                containingKtFile != null && isLibrarySource(containingKtFile, config)
+                    val isLibrarySource = containingKtFile != null && isLibrarySource(containingKtFile, config)
                     collectByFile(virtualFile, isLibrarySource, config)
                 }
             } else {
@@ -377,8 +375,8 @@ class ModuleInfoProvider(private val project: Project) {
         config: Configuration,
     ): IdeaModuleInfo? {
         val sourceContext = config.contextualModuleInfo as? ModuleSourceInfo
-
-        if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
+        val useLibrarySource = isLibrarySource || (config.contextualModuleInfo as? LibrarySourceInfo)?.library == library
+        if (!useLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
             for (libraryInfo in libraryInfoCache[library]) {
                 if (visited.add(libraryInfo)) {
                     if (libraryInfo.isApplicable(sourceContext)) {
@@ -386,7 +384,7 @@ class ModuleInfoProvider(private val project: Project) {
                     }
                 }
             }
-        } else if (isLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
+        } else if (useLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
             for (libraryInfo in libraryInfoCache[library]) {
                 val moduleInfo = libraryInfo.sourcesModuleInfo
                 if (visited.add(moduleInfo)) {
