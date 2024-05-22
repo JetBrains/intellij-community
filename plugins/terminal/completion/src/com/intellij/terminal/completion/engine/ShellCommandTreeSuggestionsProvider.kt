@@ -11,17 +11,18 @@ internal class ShellCommandTreeSuggestionsProvider(
   private val generatorsExecutor: ShellDataGeneratorsExecutor
 ) {
   suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<ShellCompletionSuggestion> {
-    return when (node) {
+    val suggestions = when (node) {
       is ShellCommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
       is ShellOptionNode -> getSuggestionsForOption(node, nextNodeText)
       is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it, nextNodeText) } ?: emptyList()
       else -> emptyList()
     }
+    return suggestions.distinctBy { it.name }
   }
 
   suspend fun getDirectSuggestionsOfNext(option: ShellOptionNode): List<ShellCompletionSuggestion> {
     val availableArgs = getAvailableArguments(option)
-    return availableArgs.flatMap { getArgumentSuggestions(it) }
+    return availableArgs.flatMap { getArgumentSuggestions(it) }.distinctBy { it.name }
   }
 
   fun getAvailableArguments(node: ShellOptionNode): List<ShellArgumentSpec> {

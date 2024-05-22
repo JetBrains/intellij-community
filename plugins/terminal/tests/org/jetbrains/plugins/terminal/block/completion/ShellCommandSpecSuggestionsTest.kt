@@ -178,13 +178,31 @@ internal class ShellCommandSpecSuggestionsTest {
           suggestions(fileSuggestionsGenerator(onlyDirectories = true))
         }
       }
+
+      subcommand("withTwoOptArgs") {
+        option("--opt") {
+          argument {
+            suggestions("3", "4", "5")
+            isOptional = true
+          }
+        }
+
+        argument {
+          suggestions("1", "2", "3")
+          isOptional = true
+        }
+        argument {
+          suggestions("2", "3", "4")
+          isOptional = true
+        }
+      }
     }
   }
 
   @Test
   fun `main command`() {
     doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cdWithSuggestions", "cd",
-                             "-a", "--asd", "--bcde", "--argum", "abc"))
+                             "withTwoOptArgs", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -299,6 +317,16 @@ internal class ShellCommandSpecSuggestionsTest {
     val separator = File.separatorChar
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
     doTest("cd", typedPrefix = "\"someDir$separator", expected = listOf("dir$separator", "folder$separator"))
+  }
+
+  @Test
+  fun `do not duplicate suggestions for command arguments`() {
+    doTest("withTwoOptArgs", expected = listOf("1", "2", "3", "4", "--opt", "--bcde"))
+  }
+
+  @Test
+  fun `do not duplicate suggestions for option arguments and command arguments`() {
+    doTest("withTwoOptArgs", "--opt", expected = listOf("1", "2", "3", "4", "5", "--bcde"))
   }
 
   private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
