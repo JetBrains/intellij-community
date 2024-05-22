@@ -16,6 +16,7 @@ import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -388,7 +389,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-    
+
     doHighlighting();
     assertSameElements(collected, dumbFac);
     assertSameElements(applied, dumbFac);
@@ -418,4 +419,50 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testLightBulbMustShowInDumbModeForDumbAwarePlainIntentionWhichIsNotQuickFix() {
+    // try to apply com.intellij.openapi.editor.actions.FlipCommaIntention (which is DumbAware) in dumb mode
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo(int a, int b) {
+          foo(b<caret>, a);
+        }
+      }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
+    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
+    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+    {
+      IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
+      List<IntentionActionWithTextCaching> actions = hintComponent.getCachedIntentions().getAllActions();
+      assertTrue(actions.toString(), ContainerUtil.exists(actions, a -> a.getText().equals("Flip ',' (may change semantics)")));
+    }
+    UIUtil.dispatchAllInvocationEvents();
+    myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
+      UIUtil.dispatchAllInvocationEvents();
+      type(' ');
+      backspace();
+      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+
+      IntentionActionWithTextCaching action;
+      {
+        IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
+        List<IntentionActionWithTextCaching> actions = hintComponent.getCachedIntentions().getAllActions();
+        action = ContainerUtil.find(actions, a -> a.getText().equals("Flip ',' (may change semantics)"));
+        assertNotNull(actions.toString(), action);
+      }
+      WriteCommandAction.writeCommandAction(getProject()).withName(getTestName(false)).run(() -> action.getAction().invoke(getProject(), getEditor(), getFile()));
+      assertEquals("""
+                     class X {
+                       void foo(int a, int b) {
+                         foo(a, b);
+                       }
+                     }
+                     """, getEditor().getDocument().getText());
+    });
+  }
 }

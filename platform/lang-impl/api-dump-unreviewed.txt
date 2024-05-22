@@ -20544,6 +20544,7 @@ pf:com.intellij.openapi.editor.actions.FindWordAtCaretAction$Handler
 - isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
 f:com.intellij.openapi.editor.actions.FlipCommaIntention
 - com.intellij.modcommand.PsiUpdateModCommandAction
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - getFamilyName():java.lang.String
 com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper

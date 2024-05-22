@@ -45,7 +45,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
   private final Editor myEditor;
 
   private final PsiFile myFile;
-  private final int myPassIdToShowIntentionsFor;
   private final boolean myQueryIntentionActions;
   private final @NotNull ProperTextRange myVisibleRange;
   private volatile CachedIntentions myCachedIntentions;
@@ -59,8 +58,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
   ShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull Editor editor, boolean queryIntentionActions) {
     super(psiFile.getProject(), editor.getDocument(), false);
     myQueryIntentionActions = queryIntentionActions;
-    myPassIdToShowIntentionsFor = -1;
-
     myEditor = editor;
     myFile = psiFile;
     myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
@@ -249,7 +246,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
-    getActionsToShow(myEditor, myFile, intentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
+    getActionsToShow(myEditor, myFile, intentionsInfo, -1, myQueryIntentionActions);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
     UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
@@ -382,7 +379,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
       }
       for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
         try {
-          extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
+          if (DumbService.getInstance(hostFile.getProject()).isUsableInCurrentContext(extension)) {
+            extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
+          }
         }
         catch (IntentionPreviewUnsupportedOperationException e) {
           //can collect action on a mock memory editor and produce exceptions - ignore
