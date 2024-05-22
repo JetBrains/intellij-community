@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 public class ResumeThreadAction extends DebuggerAction {
@@ -38,7 +39,7 @@ public class ResumeThreadAction extends DebuggerAction {
             if (suspendingContext != null) {
               debugProcess.createResumeThreadCommand(suspendingContext, thread).run();
             }
-            debuggerTreeNode.calcValue();
+            ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
           }
         });
       }
