@@ -65,7 +65,7 @@ public abstract class ApplicationCommandLineState<T extends
       }
       return null;
     })
-      .expireWith(getEnvironment())
+      .expireWith(configuration.getProject())
       .executeSynchronously();
 
     setupModulePath(params, module);
