@@ -65,9 +65,9 @@ object LocalizationUtil {
     fun getResourceAsStream(defaultLoader: ClassLoader?, path: Path,  specialLocale: Locale? = null): InputStream? {
       val locale = specialLocale ?: getLocale()
       val localizedPaths = getLocalizedPaths(path, locale)
+      getPluginClassLoader()?.getResourceAsStream(FileUtil.toSystemIndependentName(path.pathString))?.let { return it }
       for (localizedPath in localizedPaths) {
         val pathString = FileUtil.toSystemIndependentName(localizedPath.pathString)
-        getPluginClassLoader()?.getResourceAsStream(pathString)?.let { return it }
         defaultLoader?.getResourceAsStream(pathString)?.let { return it }
       }
       return null

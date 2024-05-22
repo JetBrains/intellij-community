@@ -6,22 +6,17 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 enum class LocalizationOrder {
-  FOLDER_REGION_LEVEL_PLUGIN,  //localization/zh/CN/
-  FOLDER_REGION_LEVEL_PLATFORM,
-  SUFFIX_REGION_LEVEL_PLUGIN,  //name_zh_CN.properties
-  SUFFIX_REGION_LEVEL_PLATFORM,
-  FOLDER_LANGUAGE_LEVEL_PLUGIN,  //localization/zh/
-  FOLDER_LANGUAGE_LEVEL_PLATFORM,
-  SUFFIX_LANGUAGE_LEVEL_PLUGIN,  //name_zh.properties
-  SUFFIX_LANGUAGE_LEVEL_PLATFORM,
-  DEFAULT_PLUGIN,  //name.properties
-  DEFAULT_PLATFORM;
+  DEFAULT_PLUGIN,
+  FOLDER_REGION_LEVEL_PLATFORM, //localization/zh/CN/
+  SUFFIX_REGION_LEVEL_PLATFORM, //name_zh_CN.properties
+  FOLDER_LANGUAGE_LEVEL_PLATFORM, //localization/zh/
+  SUFFIX_LANGUAGE_LEVEL_PLATFORM,  //name_zh.properties
+  DEFAULT_PLATFORM; //name.properties
 
   companion object {
-    fun getLocalizationOrder(orderedPaths: List<Path?>, bundlePath: Path, isPluginClassLoader: Boolean): LocalizationOrder? {
-      var order = orderedPaths.indexOf(bundlePath)
-      order = if (isPluginClassLoader) order * 2 else order * 2 + 1
-      return if (0 <= order && order < entries.size) entries[order] else null
+    fun getLocalizationOrder(orderedPaths: List<Path?>, bundlePath: Path): LocalizationOrder? {
+      val order = orderedPaths.indexOf(bundlePath) + 1
+      return if (order >= 0 && order < entries.size) entries[order] else null
     }
   }
 }

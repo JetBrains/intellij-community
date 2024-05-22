@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.Strings
@@ -32,17 +31,7 @@ class DefaultTemplate constructor(
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
     if (text != null) return text
-    val locale = LocalizationUtil.getLocaleOrNullForDefault()
-    if (locale != null) {
-      val localizedPaths = LocalizationUtil.getLocalizedPaths(templatePath).map { it.invariantSeparatorsPathString }
-      for (path in localizedPaths) {
-        text = textLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
-        if (!text.isNullOrEmpty()) break
-      }
-    }
-    if (text == null) {
-      text = textLoader.apply(templatePath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
-    }
+    text = textLoader.apply(templatePath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
     this.text = java.lang.ref.SoftReference(text)
     if (text == null) {
       logger<DefaultTemplate>().error("Cannot find file template by path: $templatePath")
@@ -62,15 +51,8 @@ class DefaultTemplate constructor(
 
     val fullPath = descriptionPath?.let { Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(it) }
     try {
-      if (LocalizationUtil.getLocaleOrNullForDefault() != null && fullPath != null) {
-        val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath)
-          val localizedPathStrings = localizedPaths.map { it.invariantSeparatorsPathString }
-          for (path in localizedPathStrings) {
-            text = descriptionLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
-            if (text != null) {
-              break
-            }
-          }
+      if (fullPath != null) {
+        text = descriptionLoader.apply(fullPath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
       }
 
       if (text == null) {

@@ -231,10 +231,10 @@ private fun loadDefaultsFromJar(module: PluginDescriptor, url: URL, prefixes: Li
   val descriptionPaths = HashSet<String>()
   for (path in children) {
     if (path.endsWith("includes/default.html")) {
-      result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { loadTemplate(classLoader, url, it) } }
+      result.defaultIncludeDescription = Supplier { getContentOrLogError(path) { loadLocalizedContent(classLoader, url, it) } }
     }
     else if (path.endsWith("default.html")) {
-      result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { loadTemplate(classLoader, url, it) } }
+      result.defaultTemplateDescription = Supplier { getContentOrLogError(path) { loadLocalizedContent(classLoader, url, it) } }
     }
     else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
       val filePath = Path.of(path).invariantSeparatorsPathString
@@ -248,8 +248,8 @@ private fun loadDefaultsFromJar(module: PluginDescriptor, url: URL, prefixes: Li
     prefixes = prefixes,
     descriptionPaths = descriptionPaths,
     result = result,
-    descriptionLoader = { loadTemplate(classLoader, url, it) },
-    dataLoader = { loadTemplate(classLoader, url, it) },
+    descriptionLoader = { loadLocalizedContent(classLoader, url, it) },
+    dataLoader = { loadLocalizedContent(classLoader, url, it) },
   )
 }
 
@@ -308,10 +308,10 @@ private fun loadDefaultsFromDirectory(module: PluginDescriptor, root: URL, resul
       val path = pathToFileTemplate.relativize(file).invariantSeparatorsPathString
       when {
         path.endsWith("includes/default.html") -> {
-          result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(classLoader, rootFolder, filePath) } }
+          result.defaultIncludeDescription = Supplier { getContentOrLogError(path) { filePath -> loadLocalizedContent(classLoader, rootFolder, filePath) } }
         }
         path.endsWith("default.html") -> {
-          result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(classLoader, rootFolder, filePath) } }
+          result.defaultTemplateDescription = Supplier { getContentOrLogError(path) { filePath -> loadLocalizedContent(classLoader, rootFolder, filePath) } }
         }
         path.endsWith(DESCRIPTION_EXTENSION_SUFFIX) -> {
           descriptionPaths.add(path)
@@ -329,40 +329,19 @@ private fun loadDefaultsFromDirectory(module: PluginDescriptor, root: URL, resul
     prefixes = prefixes,
     descriptionPaths = descriptionPaths,
     result = result,
-    descriptionLoader = { loadFileContent(classLoader, rootFolder, it) },
-    dataLoader = { loadFileContent(classLoader, rootFolder, it) },
+    descriptionLoader = { loadLocalizedContent(classLoader, rootFolder, it) },
+    dataLoader = { loadLocalizedContent(classLoader, rootFolder, it) },
   )
 }
 
-private fun getLocalizedContent(path: String, pathResolver: Function<String, String?>): String {
-  val fullPath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path)
-  if (LocalizationUtil.getLocaleOrNullForDefault() != null) {
-    val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath).map { it.invariantSeparatorsPathString }
-    for (localizedPath in localizedPaths) {
-      pathResolver.apply(localizedPath)?.let { return it }
-    }
-  }
-  val result = pathResolver.apply(fullPath.invariantSeparatorsPathString)
+private fun getContentOrLogError(path: String, pathResolver: Function<String, String?>): String {
+  val fullPath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path).invariantSeparatorsPathString
+  val result = pathResolver.apply(fullPath)
   if (result == null) {
     logger<FileTemplatesLoader>().error("Cannot find file by path: $path")
     return "Unexpected error occurred"
   }
   return result
-}
-
-private fun loadFileContent(classLoader: ClassLoader, root: Path, filePath: String): String? {
-  try {
-    val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
-    val fileContent = (pluginClassLoader?.let {
-      ResourceUtil.getResourceAsBytesSafely(filePath, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
-    } ?: ResourceUtil.getResourceAsBytesSafely(filePath, classLoader)?.toString(StandardCharsets.UTF_8)
-                       ?: Files.readString(root.resolve(filePath)))
-    return fileContent
-  }
-  catch (e: IOException) {
-    logger<FileTemplatesLoader>().info(e.message)
-  }
-  return null
 }
 
 private fun urlToPath(root: URL): Path {
@@ -391,20 +370,44 @@ private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>
   fun getManager(kind: String) = managers.get(kind)!!
 }
 
-private fun loadTemplate(classLoader: ClassLoader, root: URL, path: String): String? {
-  try {
-    val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
-    val result = pluginClassLoader?.let {
-      ResourceUtil.getResourceAsBytesSafely(path, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
-    } ?: ResourceUtil.getResourceAsBytesSafely(path, classLoader)?.toString(StandardCharsets.UTF_8)
-    if (result == null) {
-      val url = URL(root.protocol, root.host, root.port, root.path.replace(DEFAULT_TEMPLATES_ROOT, path))
-      return ResourceUtil.loadText(url.openStream())
+private fun loadLocalizedContent(classLoader: ClassLoader, root: Any, path: String): String? {
+  var result: String? = null
+  val locale = LocalizationUtil.getLocaleOrNullForDefault()
+  if (locale != null) {
+    //loading from localization plugin
+    val localizedPaths = LocalizationUtil.getLocalizedPaths(Path.of(path)).map { it.invariantSeparatorsPathString }
+    result = LocalizationUtil.getPluginClassLoader()?.let {
+      ResourceUtil.getResourceAsBytesSafely(path, it)?.toString(StandardCharsets.UTF_8)
     }
-    return result
+    //loading localized content from source files
+    if (!result.isNullOrEmpty()) return result
+    for (localizedPath in localizedPaths) {
+      result = loadFileContent(classLoader, root, localizedPath)
+      if (!result.isNullOrEmpty()) return result
+    }
+  }
+  //default loading content in case of default locale
+  result = loadFileContent(classLoader, root, path)
+  return result
+}
+
+private fun loadFileContent(classLoader: ClassLoader, root: Any, path: String): String? {
+  var result: String? = null
+  try {
+    result = ResourceUtil.getResourceAsBytesSafely(path, classLoader)?.toString(StandardCharsets.UTF_8)
+    if (!result.isNullOrEmpty()) return result
+    when (root) {
+      is URL -> {
+        val url = URL(root.protocol, root.host, root.port, root.path.replace(DEFAULT_TEMPLATES_ROOT, path))
+        result = ResourceUtil.loadText(url.openStream())
+      }
+      is Path -> {
+        result = Files.readString(root.resolve(path))
+      }
+    }
   }
   catch (e: IOException) {
     logger<FileTemplatesLoader>().info(e.message)
   }
-  return null
+  return result
 }

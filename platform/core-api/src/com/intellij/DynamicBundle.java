@@ -74,7 +74,7 @@ public class DynamicBundle extends AbstractBundle {
     List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPaths(bundlePath, locale);
     Map<LocalizationOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
-      resolveBundleOrder(pluginClassLoader, true, bundlePath, paths, bundleOrderMap, bundleResolver, locale);
+        bundleOrderMap.put(LocalizationOrder.DEFAULT_PLUGIN, bundleResolver.apply(pluginClassLoader, Locale.ROOT));
     }
     resolveBundleOrder(baseLoader, false, bundlePath, paths, bundleOrderMap, bundleResolver, locale);
     reorderParents(bundleOrderMap);
@@ -95,8 +95,7 @@ public class DynamicBundle extends AbstractBundle {
         ResourceBundle resourceBundle = resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
         resourceBundles.add(resourceBundle);
       }
-      catch (MissingResourceException ignored) {
-      }
+      catch (MissingResourceException ignored) { }
     }
 
     if (resourceBundles.isEmpty()) {
@@ -137,18 +136,22 @@ public class DynamicBundle extends AbstractBundle {
                                      @NotNull List<? extends Path> orderedPaths,
                                      boolean isPluginClassLoader) {
     String bundlePath = FileUtil.toCanonicalPath(bundle.getBaseBundleName(), '.');
-    if (!bundle.getLocale().toString().isEmpty()) {
-      bundlePath += "_" + bundle.getLocale().toString();
+    if (isPluginClassLoader) {
+      bundleOrderMap.put(LocalizationOrder.DEFAULT_PLUGIN, bundle);
+    } else {
+      if (!bundle.getLocale().toString().isEmpty()) {
+        bundlePath += "_" + bundle.getLocale().toString();
+      }
+      Path path = FileSystems.getDefault().getPath(bundlePath);
+      LocalizationOrder localizationOrder = LocalizationOrder.Companion.getLocalizationOrder(orderedPaths, path);
+      if (localizationOrder == null) {
+        LOG.debug("Order cannot be defined for the bundle: " + path +
+                  "; Current locale: " + getLocale() +
+                  "; Paths for locale: " + orderedPaths);
+        return;
+      }
+      bundleOrderMap.put(localizationOrder, bundle);
     }
-    Path path = FileSystems.getDefault().getPath(bundlePath);
-    LocalizationOrder localizationOrder = LocalizationOrder.Companion.getLocalizationOrder(orderedPaths, path, isPluginClassLoader);
-    if (localizationOrder == null) {
-      LOG.debug("Order cannot be defined for the bundle: " + path +
-                "; Current locale: " + getLocale() +
-                "; Paths for locale: " + orderedPaths);
-      return;
-    }
-    bundleOrderMap.put(localizationOrder, bundle);
   }
 
   private static void reorderParents(@NotNull Map<LocalizationOrder, ResourceBundle> bundleOrderMap) {
