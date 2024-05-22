@@ -650,11 +650,11 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(AddModifierFixFE10.AddLateinitFactory)
 
-        RETURN_NOT_ALLOWED.registerFactory(ChangeToLabeledReturnFix)
-        TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
-        TYPE_MISMATCH_WARNING.registerFactory(ChangeToLabeledReturnFix)
-        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
-        NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFix)
+        RETURN_NOT_ALLOWED.registerFactory(ChangeToLabeledReturnFixFactory)
+        TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFixFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(ChangeToLabeledReturnFixFactory)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFixFactory)
+        NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFixFactory)
 
         WRONG_ANNOTATION_TARGET.registerFactory(AddAnnotationTargetFix, AddAnnotationUseSiteTargetFix)
         WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET.registerFactory(MoveReceiverAnnotationFix, AddAnnotationTargetFix)
