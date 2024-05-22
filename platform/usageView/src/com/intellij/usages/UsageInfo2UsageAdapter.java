@@ -42,8 +42,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import static com.intellij.util.containers.ContainerUtil.*;
-
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage,
@@ -55,25 +53,75 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private final @NotNull UsageInfo myUsageInfo;
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
-  private @Nullable Segment myMergedNavigationRange;
+  private @Nullable PossiblySmartSegment myMergedNavigationRange;
   private final int myLineNumber;
   private final int myOffset;
   private volatile UsageNodePresentation myCachedPresentation;
   @Nullable private final VirtualFile myVirtualFile;
-  private final @Nullable Segment myNavigationRange;
+  private final @Nullable PossiblySmartSegment myNavigationRange;
   private volatile UsageType myUsageType;
 
   private static class ComputedData {
     public final int offset;
     public final int lineNumber;
     public final VirtualFile virtualFile;
-    public final @Nullable Segment navigationRange;
+    public final @Nullable PossiblySmartSegment navigationRange;
 
-    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable Segment navigationRange) {
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable PossiblySmartSegment navigationRange) {
       this.offset = offset;
       this.lineNumber = lineNumber;
       this.virtualFile = virtualFile;
       this.navigationRange = navigationRange;
+    }
+  }
+
+  private abstract static class PossiblySmartSegment {
+    abstract @Nullable Segment getSegment();
+
+    int getStartOffset() {
+      var segment = getSegment();
+      return segment == null ? -1 : segment.getStartOffset();
+    }
+
+    int getEndOffset() {
+      var segment = getSegment();
+      return segment == null ? -1 : segment.getEndOffset();
+    }
+  }
+
+  private class SmartSegment extends PossiblySmartSegment {
+    private final @NotNull SmartPsiFileRange myRange;
+
+    SmartSegment(@NotNull PsiFile psiFile, @NotNull TextRange range) {
+      myRange = SmartPointerManager.getInstance(getProject()).createSmartPsiFileRangePointer(psiFile, range);
+    }
+
+    @Override
+    @Nullable Segment getSegment() {
+      return myRange.getRange();
+    }
+  }
+
+  private static class DumbSegment extends PossiblySmartSegment {
+    private final Segment mySegment;
+
+    DumbSegment(@NotNull Segment segment) {
+      mySegment = segment;
+    }
+
+    @Override
+    @Nullable Segment getSegment() {
+      return mySegment;
+    }
+  }
+
+  private @Nullable PossiblySmartSegment possiblySmart(@Nullable PsiFile psiFile, @Nullable Segment segment) {
+    if (segment == null) return null;
+    if (psiFile != null && segment instanceof TextRange range) {
+      return new SmartSegment(psiFile, range);
+    }
+    else {
+      return new DumbSegment(segment);
     }
   }
 
@@ -112,7 +160,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
           lineNumber = getLineNumber(document, range.getStartOffset());
         }
       }
-      return new ComputedData(offset, lineNumber, virtualFile, navigationRange);
+      return new ComputedData(offset, lineNumber, virtualFile, possiblySmart(psiFile, navigationRange));
     });
     myOffset = data.offset;
     myLineNumber = data.lineNumber;
@@ -318,7 +366,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public Segment getNavigationRange() {
     Document document = getDocument();
     if (document == null) return null;
-    Segment range = myMergedNavigationRange;
+    Segment range = myMergedNavigationRange != null ? myMergedNavigationRange.getSegment() : null;
     if (range == null) range = getUsageInfo().getNavigationRange();
     if (range == null) {
       ProperTextRange rangeInElement = getUsageInfo().getRangeInElement();
@@ -431,14 +479,31 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
-    myMergedNavigationRange =
-      getFirstItem(sorted(packNullables(myMergedNavigationRange, u2.myMergedNavigationRange), Segment.BY_START_OFFSET_THEN_END_OFFSET));
+    myMergedNavigationRange = merge(myMergedNavigationRange, u2.myMergedNavigationRange);
 
     // Invalidate cached presentation, so it'll be updated later
     // Do not reset it to still have something to present
     myModificationStamp = Long.MIN_VALUE;
 
     return true;
+  }
+
+  private @Nullable PossiblySmartSegment merge(
+    @Nullable UsageInfo2UsageAdapter.PossiblySmartSegment r1,
+    @Nullable PossiblySmartSegment r2
+  ) {
+    if (r1 == null) return r2;
+    if (r2 == null) return r1;
+    var r1start = r1.getStartOffset();
+    var r2start = r2.getStartOffset();
+    if (r1start != r2start) {
+      return r1start <= r2start ? r1 : r2;
+    }
+    else {
+      var r1end = r1.getEndOffset();
+      var r2end = r2.getEndOffset();
+      return r1end <= r2end ? r1 : r2;
+    }
   }
 
   @Override
