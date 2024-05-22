@@ -124,7 +124,7 @@ class PluginXmlPatcherTest {
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
 
-        <product-descriptor code="PDB" release-version="__VERSION__" eap="true"/>
+        <product-descriptor release-version="__VERSION__" eap="true"/>
       </idea-plugin>
     """.trimIndent(),
     """
@@ -134,7 +134,7 @@ class PluginXmlPatcherTest {
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
 
-        <product-descriptor code="PDB" release-version="X-RELEASE-VERSION-X" release-date="X-RELEASE-DATE-X"/>
+        <product-descriptor release-version="X-RELEASE-VERSION-X" release-date="X-RELEASE-DATE-X"/>
       </idea-plugin>
     """.trimIndent(),
     toPublish = true,
@@ -150,7 +150,7 @@ class PluginXmlPatcherTest {
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
 
-        <product-descriptor code="PDB" />
+        <product-descriptor />
       </idea-plugin>
     """.trimIndent(),
     """
@@ -160,7 +160,7 @@ class PluginXmlPatcherTest {
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
 
-        <product-descriptor code="PDB" eap="true" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
+        <product-descriptor eap="true" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
       </idea-plugin>
     """.trimIndent(),
     toPublish = true,
@@ -200,7 +200,7 @@ class PluginXmlPatcherTest {
   )
 
   @Test
-  fun doNotPatchDatabasePluginInGenericProduct() = assertTransform(
+  fun doNotPatchDatabasePluginIfBundled() = assertTransform(
     """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
         <name>Database Tools and SQL</name>
@@ -219,7 +219,6 @@ class PluginXmlPatcherTest {
         <id>com.intellij.database</id>
         <version>x-plugin-version</version>
         <idea-version since-build="new-since" until-build="new-until"/>
-        <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X"/>
         <description>
             <![CDATA[
               xxx for IntelliJ-based IDEs provides
@@ -227,7 +226,7 @@ class PluginXmlPatcherTest {
         </description>
       </idea-plugin>
     """.trimIndent(),
-    toPublish = true,
+    toPublish = false,
   )
 
   @Test
