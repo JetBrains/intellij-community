@@ -31,4 +31,6 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
   public void testDefaultLoaderFactory() { doTest(); }
   
   public void testServer() { doTest(); }
+  
+  public void testStarImports() { doTest(); }
 }

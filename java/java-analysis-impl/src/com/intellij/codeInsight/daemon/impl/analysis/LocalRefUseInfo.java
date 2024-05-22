@@ -21,7 +21,6 @@ import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
 
@@ -33,8 +32,8 @@ public final class LocalRefUseInfo {
   private final @NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap;
 
   private final @NotNull Set<PsiAnchor> myDclsUsedMap;
-  // reference -> import statement the reference has come from
-  private final @NotNull Map<PsiReference, PsiImportStatementBase> myImportStatements;
+  // used import statements
+  private final @NotNull Set<PsiImportStatementBase> myUsedImports;
 
   /**
    * @param file Java/JSP file to get local reference use info for.
@@ -53,10 +52,10 @@ public final class LocalRefUseInfo {
 
   private LocalRefUseInfo(@NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap,
                           @NotNull Set<PsiAnchor> myDclsUsedMap,
-                          @NotNull Map<PsiReference, PsiImportStatementBase> myImportStatements) {
+                          @NotNull Set<PsiImportStatementBase> myImportStatements) {
     this.myLocalRefsMap = myLocalRefsMap;
     this.myDclsUsedMap = myDclsUsedMap;
-    this.myImportStatements = myImportStatements;
+    this.myUsedImports = myImportStatements;
   }
 
   @NotNull
@@ -96,7 +95,7 @@ public final class LocalRefUseInfo {
   }
 
   boolean isRedundant(@NotNull PsiImportStatementBase importStatement) {
-    return !myImportStatements.containsValue(importStatement);
+    return !myUsedImports.contains(importStatement);
   }
 
   /**
@@ -250,10 +249,10 @@ public final class LocalRefUseInfo {
     private final @NotNull PsiFile myFile;
     private final @NotNull Set<PsiAnchor> myDclsUsedMap;
     private final @NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap;
-    private final @NotNull Map<PsiReference, PsiImportStatementBase> myImportStatements;
+    private final @NotNull Set<PsiImportStatementBase> myImportStatements;
 
     Builder(@NotNull PsiFile file) {
-      myImportStatements = new HashMap<>();
+      myImportStatements = new HashSet<>();
       myDclsUsedMap = new HashSet<>();
       myFile = file;
       myLocalRefsMap = MultiMap.createLinkedSet();
@@ -357,20 +356,20 @@ public final class LocalRefUseInfo {
       }
 
       if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatement) {
-        registerImportStatement(ref, importStatement);
+        registerImportStatement(importStatement);
       }
       else if (refElement == null && ref instanceof PsiJavaReference javaReference) {
         JavaResolveResult[] results = javaReference.multiResolve(true);
         if (results.length > 0) {
           for (JavaResolveResult result : results) {
             if (result.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatement) {
-              registerImportStatement(ref, importStatement);
+              registerImportStatement(importStatement);
               break;
             }
           }
         } else if (ref instanceof PsiJavaCodeReferenceElement javaRef) {
           for (PsiImportStatementBase potentialImport : IncompleteModelUtil.getPotentialImports(javaRef)) {
-            registerImportStatement(ref, potentialImport);
+            registerImportStatement(potentialImport);
           }
         }
       }
@@ -446,8 +445,8 @@ public final class LocalRefUseInfo {
       }
     }
 
-    private void registerImportStatement(@NotNull PsiReference ref, @NotNull PsiImportStatementBase importStatement) {
-      myImportStatements.put(ref, importStatement);
+    private void registerImportStatement(@NotNull PsiImportStatementBase importStatement) {
+      myImportStatements.add(importStatement);
     }
 
     private void registerLocalRef(@NotNull PsiReference ref, PsiElement refElement) {
