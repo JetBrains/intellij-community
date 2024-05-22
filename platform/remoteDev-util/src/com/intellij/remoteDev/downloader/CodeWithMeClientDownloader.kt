@@ -140,9 +140,6 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private const val buildNumberPattern = """[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)"""
-  val buildNumberRegex = Regex(buildNumberPattern)
-
   private fun getClientDistributionName(clientBuildVersion: String) = when {
     clientBuildVersion.contains("SNAPSHOT") -> "JetBrainsClient"
     VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
@@ -165,7 +162,10 @@ object CodeWithMeClientDownloader {
       jreBuild ?: error("JRE build number must be passed for client build number < $clientBuildVersion")
     }
 
-    val hostBuildNumber = buildNumberRegex.find(clientBuildVersion)!!.value
+    val hostBuildNumber = BuildNumber.fromStringOrNull(clientBuildVersion).let {
+      requireNotNull(it) { "Invalid build version: $clientBuildVersion" }
+      it.asString()
+    }
 
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
