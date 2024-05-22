@@ -35,6 +35,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,7 +154,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
   }
 
   @Override
-  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
+  public @NotNull LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalSameParameterValueInspection(this);
   }
 
@@ -267,14 +268,13 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
       }
 
       int parameterIndex = method.getParameterList().getParameterIndex(parameter);
-      Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
+      Map<PsiParameter, Collection<PsiReferenceExpression>> paramsToInline = new HashMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
         RefactoringConflictsUtil.getInstance().analyzeMethodConflictsAfterParameterDelete(psiMethod, psiParameter, conflicts);
-        final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
-        for (PsiReference reference : refsToInline) {
-          PsiElement referenceElement = reference.getElement();
-          if (referenceElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+        final Collection<PsiReferenceExpression> refsToInline = VariableAccessUtils.getVariableReferences(psiParameter);
+        for (PsiReferenceExpression referenceElement : refsToInline) {
+          if (PsiUtil.isAccessedForWriting(referenceElement)) {
             conflicts.putValue(referenceElement, JavaBundle.message("dialog.message.parameter.has.write.usages.inline.not.supported"));
             break;
           }
@@ -309,16 +309,14 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
       }
     }
 
-    private static void inlineParameters(PsiExpression defToInline, Map<PsiParameter, Collection<PsiReference>> paramsToInline) {
-      for (Map.Entry<PsiParameter, Collection<PsiReference>> entry : paramsToInline.entrySet()) {
-        Collection<PsiReference> refsToInline = entry.getValue();
+    private static void inlineParameters(PsiExpression defToInline, Map<PsiParameter, Collection<PsiReferenceExpression>> paramsToInline) {
+      for (Map.Entry<PsiParameter, Collection<PsiReferenceExpression>> entry : paramsToInline.entrySet()) {
+        Collection<PsiReferenceExpression> refsToInline = entry.getValue();
         try {
           PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
           int idx = 0;
-          for (PsiReference reference : refsToInline) {
-            if (reference instanceof PsiJavaCodeReferenceElement) {
-              exprs[idx++] = CommonJavaInlineUtil.getInstance().inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference, null);
-            }
+          for (PsiReferenceExpression reference : refsToInline) {
+            exprs[idx++] = CommonJavaInlineUtil.getInstance().inlineVariable(entry.getKey(), defToInline, reference, null);
           }
 
           for (PsiExpression expr : exprs) {

@@ -18,13 +18,13 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -719,12 +719,11 @@ public final class ControlFlowUtils {
    */
   public static boolean isExecutedOnceInLoop(PsiStatement statement, PsiLoopStatement loop) {
     if (flowBreaksLoop(statement, loop)) return true;
-    if (loop instanceof PsiForStatement) {
+    if (loop instanceof PsiForStatement forLoop) {
       // Check that we're inside counted loop which increments some loop variable and
       // the code is executed under condition like if(var == something)
-      PsiDeclarationStatement initialization =
-        ObjectUtils.tryCast(((PsiForStatement)loop).getInitialization(), PsiDeclarationStatement.class);
-      PsiStatement update = ((PsiForStatement)loop).getUpdate();
+      PsiDeclarationStatement initialization = ObjectUtils.tryCast(forLoop.getInitialization(), PsiDeclarationStatement.class);
+      PsiStatement update = forLoop.getUpdate();
       if (initialization != null && update != null) {
         PsiLocalVariable variable = StreamEx.of(initialization.getDeclaredElements()).select(PsiLocalVariable.class)
           .findFirst(var -> LoopDirection.evaluateLoopDirection(var, update) != null).orElse(null);
@@ -733,10 +732,8 @@ public final class ControlFlowUtils {
             .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
             .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
           if (hasLoopVarCheck) {
-            return ReferencesSearch.search(variable).allMatch(ref -> {
-              PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-              return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
-            });
+            return ContainerUtil.and(VariableAccessUtils.getVariableReferences(variable), expression -> 
+              PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression));
           }
         }
       }

@@ -30,7 +30,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -82,8 +81,7 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
         ref = expression;
       }
       else {
-        PsiReference reference = ReferencesSearch.search(variable, new LocalSearchScope(expression)).findFirst();
-        ref = reference != null ? reference.getElement() : null;
+        ref = ContainerUtil.getFirstItem(VariableAccessUtils.getVariableReferences(variable));
       }
       if (ref != null) {
         PsiElement[] elements = StreamEx.of(DefUseUtil.getDefs(block, variable, expression)).prepend(expression).toArray(PsiElement[]::new);
@@ -311,8 +309,8 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiLoopStatement loop = getOutermostCommonLoop(expression, var);
       // Do not add IntroduceStringBuilderFix if there's only 0 or 1 reference to the variable outside loop:
       // in this case the result is usually similar to ReplaceWithStringBuilderFix or worse
-      if (ReferencesSearch.search(var).findAll().stream()
-            .map(PsiReference::getElement).filter(e -> !PsiTreeUtil.isAncestor(loop, e, true))
+      if (VariableAccessUtils.getVariableReferences(var).stream()
+            .filter(e -> !PsiTreeUtil.isAncestor(loop, e, true))
             .limit(2).count() > 1) {
         fixes.add(new IntroduceStringBuilderFix(var, false));
         if (needNullSafe) {

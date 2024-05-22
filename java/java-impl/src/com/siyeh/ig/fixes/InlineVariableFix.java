@@ -18,11 +18,14 @@ package com.siyeh.ig.fixes;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,11 +46,11 @@ public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
       return;
     }
 
-    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+    final Collection<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
     final Collection<PsiElement> replacedElements = new ArrayList<>();
-    for (PsiReference reference : references) {
+    for (PsiReferenceExpression reference : references) {
       var inlineUtil = CommonJavaInlineUtil.getInstance();
-      final PsiExpression expression = inlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+      final PsiExpression expression = inlineUtil.inlineVariable(variable, initializer, reference, null);
       replacedElements.add(expression);
     }
 

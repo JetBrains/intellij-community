@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -18,6 +17,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,11 +111,8 @@ public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiI
     if (name != null) {
       final PsiParameter[] sourceLambdaParams = sourceLambda.getParameterList().getParameters();
       if (sourceLambdaParams.length > 0 && !name.equals(sourceLambdaParams[0].getName())) {
-        for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
-          final PsiElement referenceElement = reference.getElement();
-          if (referenceElement instanceof PsiReferenceExpression) {
-            ExpressionUtils.bindReferenceTo((PsiReferenceExpression)referenceElement, name);
-          }
+        for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(sourceLambdaParams[0])) {
+          ExpressionUtils.bindReferenceTo(reference, name);
         }
       }
     }

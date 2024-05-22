@@ -474,7 +474,7 @@ public final class VariableAccessUtils {
       return false;
     }
     if (!(initialization instanceof PsiLocalVariable || initialization instanceof PsiParameter)) {
-      if (!isFinalChain(reference) || ReferencesSearch.search(variable).findAll().size() != 1) {
+      if (!isFinalChain(reference) || getVariableReferences(variable).size() != 1) {
         // only warn when variable is referenced once, to avoid warning when a field is cached in local variable
         // as in e.g. gnu.trove.TObjectHash#forEach()
         return false;

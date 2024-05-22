@@ -3,13 +3,12 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
@@ -101,10 +100,9 @@ public final class KeySetIterationMayUseEntrySetInspection extends BaseInspectio
       } else {
         processLoop(project, expression, mapRef, myMode);
       }
-      if (toRemove != null && ReferencesSearch.search(toRemove).findFirst() == null) {
-        final PsiElement statement = toRemove.getParent();
-        if (statement instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)statement).getDeclaredElements().length == 1) {
-          statement.delete();
+      if (toRemove != null && VariableAccessUtils.getVariableReferences(toRemove).isEmpty()) {
+        if (toRemove.getParent() instanceof PsiDeclarationStatement declaration && declaration.getDeclaredElements().length == 1) {
+          declaration.delete();
         }
         else {
           toRemove.delete();

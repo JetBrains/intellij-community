@@ -4,15 +4,14 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,9 +83,7 @@ public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInsp
       if (isSuperClassExceptionCaughtLater(parameter, catchSection)) {
         return;
       }
-      final Query<PsiReference> query = ReferencesSearch.search(parameter);
-      for (PsiReference reference : query) {
-        final PsiElement element = reference.getElement();
+      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(parameter)) {
         if (element != expression) {
           return;
         }

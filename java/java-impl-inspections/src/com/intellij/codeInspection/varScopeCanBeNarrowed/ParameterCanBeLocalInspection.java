@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
@@ -14,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -25,6 +23,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -153,7 +152,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
 
     @NotNull
     private static List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
-      final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+      final Collection<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
       if (references.isEmpty()) return Collections.emptyList();
       final PsiElement scope = variable.getDeclarationScope();
       if (!(scope instanceof PsiMethod method)) return Collections.emptyList();
@@ -211,7 +210,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     }
 
     @Nullable
-    private static PsiElement copyVariableToMethodBody(PsiParameter variable, Collection<? extends PsiReference> references) {
+    private static PsiElement copyVariableToMethodBody(PsiParameter variable, Collection<? extends PsiReferenceExpression> references) {
       final PsiCodeBlock anchorBlock = findAnchorBlock(references);
       if (anchorBlock == null) return null; // was assertion, but need to fix the case when obsolete inspection highlighting is left
       final PsiElement firstElement = getLowestOffsetElement(references);
@@ -228,10 +227,9 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       }
       final PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(variable.getProject());
       final PsiDeclarationStatement declaration = psiFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
-      if (references.stream()
-        .map(PsiReference::getElement)
-        .anyMatch(element -> element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element))
-      ) PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+      if (ContainerUtil.exists(references, PsiUtil::isAccessedForWriting)) {
+        PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+      }
       final PsiElement newDeclaration;
       if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
         newDeclaration = new CommentTracker().replaceAndRestoreComments(anchor, declaration);
@@ -252,10 +250,10 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       if (newVariable != null) {
         final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
         if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
-          Collection<PsiReference> references = ReferencesSearch.search(newVariable).findAll();
+          Collection<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(newVariable);
           IntentionPreviewUtils.write(() -> {
-            for (PsiReference reference : references) {
-              CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+            for (PsiReferenceExpression reference : references) {
+              CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, reference, null);
             }
             declaration.delete();
           });

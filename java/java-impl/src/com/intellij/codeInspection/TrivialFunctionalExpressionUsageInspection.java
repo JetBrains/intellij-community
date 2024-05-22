@@ -7,7 +7,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -290,13 +289,9 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
     for (int i = 0; i < parameters.length; i++) {
       final PsiParameter parameter = parameters[i];
       final PsiExpression initializer = args[i];
-      for (PsiReference reference : ReferencesSearch.search(parameter)) {
-        final PsiElement referenceElement = reference.getElement();
-        if (referenceElement instanceof PsiJavaCodeReferenceElement) {
-          ct.markUnchanged(initializer);
-          CommonJavaInlineUtil.getInstance()
-            .inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement, null);
-        }
+      for (PsiReferenceExpression referenceElement : VariableAccessUtils.getVariableReferences(parameter)) {
+        ct.markUnchanged(initializer);
+        CommonJavaInlineUtil.getInstance().inlineVariable(parameter, initializer, referenceElement, null);
       }
     }
   }
