@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.progress.Cancellation
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -12,6 +13,8 @@ fun <T> inModalContext(modalEntity: Any, action: (ModalityState) -> T): T {
     return action(newModalityState)
   }
   finally {
-    LaterInvocator.leaveModal(modalEntity)
+    Cancellation.executeInNonCancelableSection {
+      LaterInvocator.leaveModal(modalEntity)
+    }
   }
 }
