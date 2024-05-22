@@ -1,15 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsight.utils
+package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.psi.KtElement
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-object ChangeToFunctionInvocationUtils {
+class ChangeToFunctionInvocationFix(
+    element: KtExpression,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit) {
 
-    fun applyTo(project: Project, element: KtElement) {
-        val psiFactory = KtPsiFactory(project)
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
+        val psiFactory = KtPsiFactory(actionContext.project)
         val nextLiteralStringEntry = element.parent.nextSibling as? KtLiteralStringTemplateEntry
         val nextText = nextLiteralStringEntry?.text
         if (nextText != null && nextText.startsWith("(") && nextText.contains(")")) {
@@ -25,4 +35,6 @@ object ChangeToFunctionInvocationUtils {
             element.replace(psiFactory.createExpression("${element.text}()"))
         }
     }
+
+    override fun getFamilyName(): String = KotlinBundle.message("fix.change.to.function.invocation")
 }
