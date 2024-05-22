@@ -109,7 +109,7 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
 
   private fun awaitBlocksFinalized(outputModel: TerminalOutputModel, commandBlocks: Int, duration: Duration = 20.seconds) {
     val latch = CountDownLatch(commandBlocks)
-    outputModel.addListener(object : TerminalOutputModel.TerminalOutputListener {
+    outputModel.addListener(object : TerminalOutputModelListener {
       override fun blockFinalized(block: CommandBlock) {
         if (block.withCommand) {
           latch.countDown()

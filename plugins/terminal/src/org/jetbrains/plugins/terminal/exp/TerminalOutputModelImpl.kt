@@ -31,9 +31,9 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   private var allHighlightingsSnapshot: AllHighlightingsSnapshot? = null
 
   private val document: Document = editor.document
-  private val listeners: MutableList<TerminalOutputListener> = CopyOnWriteArrayList()
+  private val listeners: MutableList<TerminalOutputModelListener> = CopyOnWriteArrayList()
 
-  fun addListener(listener: TerminalOutputListener, disposable: Disposable? = null) {
+  fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null) {
     listeners.add(listener)
     if (disposable != null) {
       Disposer.register(disposable) { listeners.remove(listener) }
@@ -282,15 +282,6 @@ internal class TerminalOutputModel(val editor: EditorEx) {
 
   private fun getMaxCapacity(): Int {
     return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
-  }
-
-  interface TerminalOutputListener {
-    fun blockCreated(block: CommandBlock) {}
-    fun blockRemoved(block: CommandBlock) {}
-
-    /** Block length is finalized, so block bounds won't expand if the text is added before or after the block. */
-    fun blockFinalized(block: CommandBlock) {}
-    fun blockInfoUpdated(block: CommandBlock, newInfo: CommandBlockInfo) {}
   }
 
   companion object {

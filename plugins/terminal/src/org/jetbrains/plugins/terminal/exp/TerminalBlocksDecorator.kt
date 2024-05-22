@@ -18,7 +18,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
-import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.getAwtForegroundByIndex
 import org.jetbrains.plugins.terminal.exp.ui.GradientTextureCache
@@ -32,7 +31,7 @@ internal class TerminalBlocksDecorator(
   private val focusModel: TerminalFocusModel,
   private val selectionModel: TerminalSelectionModel,
   private val editor: EditorEx
-) : TerminalOutputListener {
+) : TerminalOutputModelListener {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
   private val gradientCache: GradientTextureCache = GradientTextureCache(
@@ -53,7 +52,7 @@ internal class TerminalBlocksDecorator(
       customRenderer = TerminalRightAreaRenderer()
     }
 
-    outputModel.addListener(object : TerminalOutputListener {
+    outputModel.addListener(object : TerminalOutputModelListener {
       override fun blockFinalized(block: CommandBlock) {
         decorations[block]?.let {
           it.backgroundHighlighter.isGreedyToRight = false

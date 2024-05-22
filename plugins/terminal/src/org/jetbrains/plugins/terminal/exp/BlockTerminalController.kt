@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
-import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
@@ -100,7 +99,7 @@ internal class BlockTerminalController(
     // If the command is finished very fast, the prompt will be shown back before repainting.
     // So it will look like it was not hidden at all.
     val disposable = Disposer.newDisposable(session)
-    outputController.outputModel.addListener(object : TerminalOutputListener {
+    outputController.outputModel.addListener(object : TerminalOutputModelListener {
       override fun blockCreated(block: CommandBlock) {
         promptController.promptIsVisible = false
         Disposer.dispose(disposable)
