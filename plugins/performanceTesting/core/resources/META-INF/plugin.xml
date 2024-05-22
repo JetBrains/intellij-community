@@ -63,8 +63,6 @@
 
     <annotator language="IntegrationPerformanceTest" implementationClass="com.jetbrains.performancePlugin.lang.inspections.IJPerfStartStopProfileInspection"/>
 
-    <documentationProvider implementation="com.jetbrains.performancePlugin.lang.doc.IJPerfDocumentationProvider"/>
-
     <initProjectActivity implementation="com.jetbrains.performancePlugin.PerformancePluginInitProjectActivity"/>
     <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
     <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
