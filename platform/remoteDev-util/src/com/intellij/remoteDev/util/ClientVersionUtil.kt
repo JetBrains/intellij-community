@@ -14,7 +14,7 @@ object ClientVersionUtil {
   private val separateConfigEnabledByDefaultSince232: BuildNumber
     get() = BuildNumber("", 232, 9552)
   private val sameDefaultPathsAsLocalIdesUsedSince: BuildNumber
-    get() = BuildNumber("", 242, 13670) //todo refine the build number after the new behavior is enabled
+    get() = BuildNumber("", 242, 13718)
 
   fun isJBCSeparateConfigSupported(clientVersion: String): Boolean {
     val clientBuild = BuildNumber.fromString(clientVersion)
