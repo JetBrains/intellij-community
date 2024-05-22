@@ -7,8 +7,32 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
+
+/**
+ * [CoroutineDispatcher] returned by [softLimitedParallelism] behaves almost as one returned by [limitedParallelism] but allows temporarily
+ * exceeding the parallelism limit in case [parallelism compensation](https://github.com/JetBrains/intellij-deps-kotlinx.coroutines/blob/master/IntelliJ-patches.md#parallelism-compensation-for-coroutinedispatchers)
+ * was requested (e.g., by [kotlinx.coroutines.runBlocking]).
+ *
+ * This extension throws [UnsupportedOperationException] if [this] does not support parallelism compensation.
+ * * [Dispatchers.Default][kotlinx.coroutines.Dispatchers.Default] and [Dispatchers.IO][kotlinx.coroutines.Dispatchers.IO] support
+ *  parallelism compensation.
+ * * Result of [softLimitedParallelism] supports parallelism compensation.
+ * * Result of [limitedParallelism] _does not_ support parallelism compensation.
+ *
+ * Be advised that not every call to [limitedParallelism] can be interchangeably replaced with [softLimitedParallelism], because parallelism
+ * compensation breaks the contract of [kotlinx.coroutines.internal.LimitedDispatcher]. For example, it is likely that `.limitedParallelism(1)`
+ * _should not_ be replaced by `.softLimitedParallelism(1)`.
+ */
+@ExperimentalCoroutinesApi
+fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+  @OptIn(InternalCoroutinesApi::class)
+  with(IntellijCoroutines) {
+    return softLimitedParallelism(parallelism)
+  }
+}
 
 /**
  * Behaves like [CoroutineDispatcher.limitedParallelism], but adds "#[dispatcherName]" suffix to its string representation
