@@ -27,22 +27,29 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
                                                                   javaParameters: JavaParameters,
                                                                   runnerSettings: RunnerSettings?) {
-    val appConfiguration = configuration as? ApplicationConfiguration ?: return
-    val project = appConfiguration.project
+    val project = configuration.project
     if (!PsiUtil.isIdeaProject(project)) {
       return
     }
+    if (configuration !is JavaRunConfigurationBase) {
+      return
+    }
+    val mainClass = configuration.runClass ?: return
+    
     passDataAboutBuiltInServer(javaParameters, project)
-
     val vmParameters = javaParameters.vmParametersList
-    val isDevBuild = configuration.mainClassName == "org.jetbrains.intellij.build.devServer.DevMainKt"
+    val module = configuration.configurationModule.module
+    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
+    if (!vmParameters.getPropertyValue("intellij.devkit.skip.automatic.add.opens").toBoolean()) {
+      JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
+    }
+
+    val isDevBuild = mainClass == "org.jetbrains.intellij.build.devServer.DevMainKt"
     val vmParametersAsList = vmParameters.list
-    if (vmParametersAsList.contains("--add-modules") || (!isDevBuild && configuration.mainClassName != "com.intellij.idea.Main")) {
+    if (vmParametersAsList.contains("--add-modules") || (!isDevBuild && mainClass != "com.intellij.idea.Main")) {
       return
     }
 
-    val module = configuration.configurationModule.module
-    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
     if (!vmParameters.hasProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY)) {
       val qualifiedName = "com.intellij.util.lang.PathClassLoader"
       if (JUnitDevKitPatcher.loaderValid(project, module, qualifiedName)) {
@@ -50,8 +57,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
         vmParameters.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true")
       }
     }
-
-    JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
 
     val is17 = javaParameters.jdk?.versionString?.contains("17") == true
     if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
@@ -148,6 +153,8 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
   override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
     return configuration is ApplicationConfiguration
+           //use this instead of 'is KotlinRunConfiguration' to avoid having dependency on Kotlin plugin here
+           || configuration.factory?.id == "JetRunConfigurationType"
   }
 }
 
