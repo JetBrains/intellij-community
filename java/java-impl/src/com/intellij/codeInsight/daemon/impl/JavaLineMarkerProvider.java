@@ -165,7 +165,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
     if (aClass == null) return AllIcons.Gutter.OverridingMethod;
 
     PsiReferenceList list = aClass.getImplementsList();
-    if (list != null && aClass.getExtendsList() == null) {
+    if (list != null && (aClass.getExtendsList() == null || aClass.getExtendsList().getReferences().length == 0)) {
       // has some interfaces to implement
       String methodName = method.getName();
       if (!methodName.equals("equals")

@@ -65,6 +65,7 @@ public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCas
         PsiElement psiElement = getFile().findElementAt(getEditor().getCaretModel().getOffset());
         LineMarkerInfo<?> info = new JavaLineMarkerProvider().getLineMarkerInfo(psiElement);
         assertNotNull(info);
+        assertEquals(AllIcons.Gutter.ImplementingMethod, info.getIcon());
       });
   }
 }
