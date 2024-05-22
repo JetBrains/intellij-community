@@ -1113,6 +1113,7 @@ private suspend fun openFile(
     fileEditorStateProvider = fileEditorStateProvider,
     options = options,
     providerWithBuilderList = providerWithBuilderList,
+    isOpenedInBulk = true,
   )
 }
 

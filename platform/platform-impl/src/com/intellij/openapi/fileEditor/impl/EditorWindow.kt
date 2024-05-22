@@ -12,6 +12,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +21,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -42,9 +42,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -58,7 +56,7 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
 
-class EditorWindow internal constructor(val owner: EditorsSplitters, private val coroutineScope: CoroutineScope) {
+class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField internal val coroutineScope: CoroutineScope) {
   companion object {
     @JvmField
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
@@ -291,7 +289,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   @RequiresEdt
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
-    addComposite(composite = composite, options = options, isNewEditor = findCompositeIndex(composite) == -1)
+    addComposite(composite = composite, options = options, isNewEditor = findCompositeIndex(composite) == -1, isOpenedInBulk = false)
   }
 
   @RequiresEdt
@@ -299,7 +297,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     composite: EditorComposite,
     options: FileEditorOpenOptions,
     isNewEditor: Boolean,
-    isOpenedInBulk: Boolean = AsyncEditorLoader.isOpenedInBulk(composite.file),
+    isOpenedInBulk: Boolean,
   ) {
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
@@ -322,7 +320,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         component = EditorWindowTopComponent(window = this, composite = composite),
         tooltip = null,
         indexToInsert = indexToInsert,
-        composite = composite,
+        selectedEditor = composite.selectedEditor,
         parentDisposable = composite,
         isOpenedInBulk = isOpenedInBulk,
       )
@@ -344,7 +342,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
 
-      if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
+      if (!isOpenedInBulk) {
         trimToSize(fileToIgnore = file, transferFocus = false)
       }
 
@@ -724,8 +722,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     //                    |-- PsiAwareTextEditorComponent
     //
     //assuming that it's safe to `!!`, if `showSplitChooser` is called, we expect that selected editor exists and it's not null
-    val editorComposite: EditorComposite = tabbedPane.getSelectedComposite()!!
-    val componentToFocus: JComponent = editorComposite.component.getComponent(0) as JComponent
+    val editorComposite = tabbedPane.getSelectedComposite()!!
+    val componentToFocus = editorComposite.component.getComponent(0) as JComponent
 
     componentToFocus.repaint()
     componentToFocus.isFocusable = true
@@ -1094,9 +1092,9 @@ internal class EditorWindowTopComponent(
     add(composite.component, BorderLayout.CENTER)
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        ApplicationManager.getApplication().invokeLater {
+        window.coroutineScope.launch(Dispatchers.EDT) {
           if (!hasFocus()) {
-            return@invokeLater
+            return@launch
           }
           val focus = composite.selectedWithProvider?.fileEditor?.preferredFocusedComponent
           if (focus != null && !focus.hasFocus()) {

@@ -1145,6 +1145,7 @@ open class FileEditorManagerImpl(
         fileEditorStateProvider = null,
         options = effectiveOptions,
         providerWithBuilderList = CompletableDeferred(providers),
+        isOpenedInBulk = false,
       ) ?: FileEditorComposite.EMPTY
     }
   }
@@ -2163,6 +2164,7 @@ open class FileEditorManagerImpl(
     fileEditorStateProvider: FileEditorStateProvider?,
     options: FileEditorOpenOptions,
     providerWithBuilderList: Deferred<List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>>?,
+    isOpenedInBulk: Boolean,
   ): EditorComposite? {
     val startTime = System.nanoTime()
     val isNewEditor = existingComposite == null
@@ -2234,6 +2236,7 @@ open class FileEditorManagerImpl(
                   selectedProvider
                 },
                 isNewEditor = isNewEditor,
+                isOpenedInBulk = isOpenedInBulk,
               )
             }
             if (isNewEditor && result != null) {
@@ -2314,18 +2317,19 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     isNewEditor: Boolean,
     selectedProvider: FileEditorProvider?,
+    isOpenedInBulk: Boolean,
   ): EditorComposite {
     if (selectedProvider != null) {
       composite.setSelectedEditor(selectedProvider.editorTypeId)
     }
 
-    window.addComposite(composite = composite, options = options, isNewEditor = isNewEditor)
+    window.addComposite(composite = composite, options = options, isNewEditor = isNewEditor, isOpenedInBulk = isOpenedInBulk)
 
     // notify editors about selection changes
     val splitters = window.owner
 
     addSelectionRecord(file, window)
-    if (!AsyncEditorLoader.isOpenedInBulk(file)) {
+    if (!isOpenedInBulk) {
       splitters.setCurrentWindowAndComposite(window = window)
       composite.selectedEditor?.selectNotify()
     }

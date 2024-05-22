@@ -276,7 +276,7 @@ class EditorTabbedContainer internal constructor(
     component: JComponent,
     tooltip: @NlsContexts.Tooltip String?,
     indexToInsert: Int,
-    composite: EditorComposite,
+    selectedEditor: FileEditor?,
     parentDisposable: Disposable,
     isOpenedInBulk: Boolean,
   ) {
@@ -310,7 +310,7 @@ class EditorTabbedContainer internal constructor(
     val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
     val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
-    composite.selectedEditor?.tabActions?.let {
+    selectedEditor?.tabActions?.let {
       tab.setTabPaneActions(it)
     }
 
@@ -329,7 +329,7 @@ class EditorTabbedContainer internal constructor(
     get() = editorTabs
 
   fun requestFocus(forced: Boolean) {
-    IdeFocusManager.getInstance(window.manager.project).requestFocus(editorTabs.component, forced)
+    IdeFocusManager.getGlobalInstance().requestFocus(editorTabs.component, forced)
   }
 
   override fun close() {
