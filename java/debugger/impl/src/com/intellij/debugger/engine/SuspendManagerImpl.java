@@ -15,7 +15,10 @@ import com.sun.jdi.request.EventRequest;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class SuspendManagerImpl implements SuspendManager {
@@ -188,7 +191,7 @@ public class SuspendManagerImpl implements SuspendManager {
     if (context.isExplicitlyResumed(thread)) {
       context.myResumedThreads.remove(thread);
       context.myNotExecutableThreads.remove(thread);
-      thread.suspend();
+      performIfNoNewInvocationWatcherTrackThisContext(context, () -> thread.suspend());
     }
   }
 
@@ -202,7 +205,18 @@ public class SuspendManagerImpl implements SuspendManager {
     }
     context.myResumedThreads.add(thread);
     context.myNotExecutableThreads.remove(thread);
-    thread.resume();
+    performIfNoNewInvocationWatcherTrackThisContext(context, () -> thread.resume());
+  }
+
+  private void performIfNoNewInvocationWatcherTrackThisContext(@NotNull SuspendContextImpl context, @NotNull Runnable runnable) {
+    ThreadBlockedMonitor.InvocationWatcherNewImpl watching = myDebugProcess.myThreadBlockedMonitor.myInvocationWatching;
+    if (watching != null && watching.mySuspendAllContext == context) {
+      // Now there is a long invocation in progress, so do not perform actual operations.
+      // The watcher will block all when the invocation finished.
+    }
+    else {
+      runnable.run();
+    }
   }
 
   @Override
