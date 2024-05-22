@@ -18,6 +18,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyVersionAwareElementVisitor;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,7 +216,14 @@ public class ScopeImpl implements Scope {
     final Set<String> nonlocals = new HashSet<>();
     final Set<String> augAssignments = new HashSet<>();
     final List<PyTargetExpression> targetExpressions = new ArrayList<>();
-    myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
+    final LanguageLevel languageLevel;
+    if (myFlowOwner instanceof PyFile || myFlowOwner instanceof PyClass) {
+      languageLevel = PyiUtil.getOriginalLanguageLevel(myFlowOwner);
+    }
+    else {
+      languageLevel = null;
+    }
+    myFlowOwner.acceptChildren(new PyVersionAwareElementVisitor(languageLevel) {
       @Override
       public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         targetExpressions.add(node);

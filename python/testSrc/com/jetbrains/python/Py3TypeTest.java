@@ -2732,6 +2732,28 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-34617
+  public void testTopLevelFunctionUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      doMultiFileTest("str",
+                      """
+                        from mod import foo
+                        expr = foo()
+                        """);
+    });
+  }
+
+  // PY-34617
+  public void testClassMethodUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      doMultiFileTest("float",
+                      """
+                        from mod import Foo
+                        expr = Foo().foo()
+                        """);
+    });
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

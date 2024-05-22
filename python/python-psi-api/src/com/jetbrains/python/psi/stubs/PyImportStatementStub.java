@@ -5,5 +5,5 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyImportStatement;
 
 
-public interface PyImportStatementStub extends StubElement<PyImportStatement> {
+public interface PyImportStatementStub extends StubElement<PyImportStatement>, PyVersionSpecificStub {
 }
