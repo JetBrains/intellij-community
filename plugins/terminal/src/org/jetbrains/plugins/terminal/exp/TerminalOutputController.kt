@@ -272,7 +272,7 @@ internal class TerminalOutputController(
     init {
       Disposer.register(disposable, caretPainter)
       val eventsHandler = BlockTerminalEventsHandler(session, settings, this@TerminalOutputController)
-      setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
+      setupKeyEventDispatcher(editor, eventsHandler, disposable)
       setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
       setupContentListener(disposable)
     }
