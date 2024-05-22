@@ -12,5 +12,5 @@ class B {
 }
 
 fun foo() {
-    <caret>B.foo()
+    <caret>B.Companion.foo()
 }

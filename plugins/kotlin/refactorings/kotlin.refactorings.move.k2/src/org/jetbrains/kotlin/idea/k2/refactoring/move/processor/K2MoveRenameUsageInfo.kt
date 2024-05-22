@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
@@ -137,12 +139,18 @@ sealed class K2MoveRenameUsageInfo(
             if (refExpr.isUnqualifiable()) return true
             analyze(refExpr) {
                 val resolvedSymbol = refExpr.mainReference.resolveToSymbol()
+                if (resolvedSymbol is KtClassOrObjectSymbol && resolvedSymbol.classKind == KtClassKind.COMPANION_OBJECT) return true
                 if (resolvedSymbol is KtConstructorSymbol) return true
                 val containingSymbol = resolvedSymbol?.getContainingSymbol()
                 if (containingSymbol == null) return true // top levels are static
+                if (containingSymbol is KtClassOrObjectSymbol) {
+                    when (containingSymbol.classKind) {
+                        KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ENUM_CLASS -> return true
+                        else -> { }
+                    }
+                }
                 if (containingSymbol is KtSymbolWithMembers) {
-                    val staticScope = containingSymbol.getStaticMemberScope()
-                    return resolvedSymbol in staticScope.getAllSymbols()
+                    if (resolvedSymbol in containingSymbol.getStaticMemberScope().getAllSymbols()) return true
                 }
                 return false
             }

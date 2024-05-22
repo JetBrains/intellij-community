@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -92,19 +91,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 if (oldTarget?.kotlinFqName == fqName) return expression
             }
             if (fqName.isRoot) return expression
-            val writableFqn = if (fqName.pathSegments().last().asString() == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()) {
-                fqName.parent()
-            } else {
-                fqName
-            }
             val elementToReplace = expression.getQualifiedElementOrCallableRef()
             val result = modifyPsiWithOptimizedImports(expression.containingKtFile) {
                 when (elementToReplace) {
-                    is KtUserType -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtCallExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtCallableReferenceExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
+                    is KtUserType -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtQualifiedExpression -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtCallExpression -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtCallableReferenceExpression -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtSimpleNameExpression -> elementToReplace.replaceWith(fqName, targetElement)
                     else -> null
                 }
             } ?: return expression

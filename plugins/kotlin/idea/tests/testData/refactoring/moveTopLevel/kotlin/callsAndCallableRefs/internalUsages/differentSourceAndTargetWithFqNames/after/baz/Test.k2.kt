@@ -16,7 +16,7 @@ fun test() {
     O.objectMember2()
     O.objectExtension()
     A.companionMember()
-    A.companionExtension()
+    A.Companion.companionExtension()
     J().javaClassMember()
     J.javaClassStaticMember()
     topLevel()

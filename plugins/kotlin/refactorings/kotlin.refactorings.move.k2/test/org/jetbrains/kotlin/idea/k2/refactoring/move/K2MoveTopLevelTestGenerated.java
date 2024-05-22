@@ -283,6 +283,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/movePropertyToPackage/movePropertyToPackage.test");
     }
 
+    @TestMetadata("kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test")
+    public void testKotlin_moveReferenceToImportedJavaStatic_MoveReferenceToImportedJavaStatic() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test");
+    }
+
     @TestMetadata("kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
     public void testKotlin_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
@@ -321,6 +326,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
     @TestMetadata("kotlin/objectAlreadyInaccessible/objectAlreadyInaccessible.test")
     public void testKotlin_objectAlreadyInaccessible_ObjectAlreadyInaccessible() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
+    }
+
+    @TestMetadata("kotlin/objectMemberImport/objectMemberImport.test")
+    public void testKotlin_objectMemberImport_ObjectMemberImport() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/objectMemberImport/objectMemberImport.test");
     }
 
     @TestMetadata("kotlin/operationReference/operationReference.test")

@@ -16,16 +16,16 @@ fun test() {
     A().classMember()
     A().classExtension()
     O.objectMember1()
-    objectMember2()
+    O.objectMember2()
     O.objectExtension()
-    A.companionMember()
-    A.companionExtension()
+    A.Companion.companionMember()
+    A.Companion.companionExtension()
     J().javaClassMember()
     J.javaClassStaticMember()
     topLevel()
     with(O) { 1.objectExtensionMember1() }
     1.objectExtensionMember2()
-    with(A) { 1.companionExtensionMember() }
+    with(A.Companion) { 1.companionExtensionMember() }
 
     A()::classMember
     A::classMember
@@ -35,9 +35,9 @@ fun test() {
     O::objectMember2
     O::objectExtension
     A.Companion::companionMember
-    (A)::companionMember
+    (A.Companion)::companionMember
     A.Companion::companionExtension
-    (A)::companionExtension
+    (A.Companion)::companionExtension
     J()::javaClassMember
     J::javaClassMember
     J::javaClassStaticMember

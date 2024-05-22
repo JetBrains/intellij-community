@@ -1,15 +1,25 @@
-package foo
+package bar
 
+import foo.A
+import foo.J
+import foo.JConstr
+import foo.O
 import foo.O.objectExtensionMember2
+import foo.X
+import foo.XConstr
+import foo.classExtension
+import foo.companionExtension
+import foo.objectExtension
+import foo.topLevel
 
 fun test() {
     A().classMember()
     A().classExtension()
     O.objectMember1()
-    objectMember2()
+    O.objectMember2()
     O.objectExtension()
     A.companionMember()
-    A.companionExtension()
+    A.Companion.companionExtension()
     J().javaClassMember()
     J.javaClassStaticMember()
     topLevel()
@@ -32,9 +42,9 @@ fun test() {
     J::javaClassMember
     J::javaClassStaticMember
     ::topLevel
-    ::Y
-    ::YConstr
-    Y::YY
+    ::X
+    ::XConstr
+    X::XX
     ::J
     ::JConstr
     J::JJ
