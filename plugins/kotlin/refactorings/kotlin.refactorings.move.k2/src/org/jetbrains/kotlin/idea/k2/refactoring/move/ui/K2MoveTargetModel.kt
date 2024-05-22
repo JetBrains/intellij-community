@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
@@ -40,6 +41,8 @@ sealed interface K2MoveTargetModel {
         override var pkgName: FqName,
         override var directory: PsiDirectory
     ) : K2MoveTargetModel {
+        private val initialDirectory = directory
+
         override fun toDescriptor(): K2MoveTargetDescriptor.SourceDirectory = K2MoveTargetDescriptor.SourceDirectory(pkgName, directory)
 
         protected lateinit var pkgChooser: PackageNameReferenceEditorCombo
@@ -69,7 +72,17 @@ sealed interface K2MoveTargetModel {
             }
 
             fun updateDirectory() {
-                directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
+                val selected = destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper
+                if (selected == null || selected == DirectoryChooser.ItemWrapper.NULL) {
+                    ReadAction.nonBlocking<PsiDirectory> {
+                        val projectIndex = ProjectFileIndex.getInstance(project)
+                        projectIndex.getSourceRootForFile(initialDirectory.virtualFile)?.toPsiDirectory(project) ?: initialDirectory
+                    }.finishOnUiThread(ModalityState.stateForComponent(destinationChooser)) { rootDir ->
+                        directory = rootDir
+                    }.submit(AppExecutorUtil.getAppExecutorService())
+                } else {
+                    directory = selected.directory ?: directory
+                }
                 revalidateButtons()
             }
 
