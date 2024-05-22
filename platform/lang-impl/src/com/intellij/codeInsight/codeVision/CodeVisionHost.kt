@@ -129,13 +129,7 @@ open class CodeVisionHost(val project: Project) {
       openCodeVisionSettings()
       return
     }
-    val frontendProvider = providers.firstOrNull { it.id == entry.providerId }
-    if (frontendProvider != null) {
-      frontendProvider.handleClick(editor, range, entry)
-      return
-    }
-
-    logger.trace { "No provider found with id ${entry.providerId}" }
+    firstProviderWithId(entry.providerId)?.handleClick(editor, range, entry)
   }
 
   open fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
@@ -144,14 +138,7 @@ open class CodeVisionHost(val project: Project) {
       openCodeVisionSettings(provider)
       return
     }
-
-    val frontendProvider = providers.firstOrNull { it.id == entry.providerId }
-    if (frontendProvider != null) {
-      frontendProvider.handleExtraAction(editor, range, actionId)
-      return
-    }
-
-    logger.trace { "No provider found with id ${entry.providerId}" }
+    firstProviderWithId(entry.providerId)?.handleExtraAction(editor, range, actionId)
   }
 
   open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
@@ -346,8 +333,15 @@ open class CodeVisionHost(val project: Project) {
     var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = context.zombies
     val openTimeNs = System.nanoTime()
     editor.putUserData(editorTrackingStart, openTimeNs)
-    val mergingQueueFront = MergingUpdateQueue(CodeVisionHost::class.simpleName!!, 100, true, null, editorLifetime.createNestedDisposable(),
-                                               null, Alarm.ThreadToUse.POOLED_THREAD)
+    val mergingQueueFront = MergingUpdateQueue(
+      CodeVisionHost::class.simpleName!!,
+      100,
+      true,
+      null,
+      editorLifetime.createNestedDisposable(),
+      null,
+      Alarm.ThreadToUse.POOLED_THREAD
+    )
     mergingQueueFront.isPassThrough = false
     var calcRunning = false
 
@@ -403,8 +397,9 @@ open class CodeVisionHost(val project: Project) {
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
       object : FileEditorManagerListener {
         override fun selectionChanged(event: FileEditorManagerEvent) {
-          if (isAllowedFileEditor(
-              event.newEditor) && (event.newEditor as TextEditor).editor == editor && recalculateWhenVisible)
+          if (isAllowedFileEditor(event.newEditor) &&
+              (event.newEditor as TextEditor).editor == editor &&
+              recalculateWhenVisible)
             recalculateLenses()
         }
       }
@@ -569,5 +564,13 @@ open class CodeVisionHost(val project: Project) {
       val entry = RichTextCodeVisionEntry(it.second.providerId, richText)
       it.first to entry
     }.toMutableList()
+  }
+
+  private fun firstProviderWithId(providerId: String): CodeVisionProvider<*>? {
+    val provider = providers.firstOrNull { it.id == providerId }
+    if (provider == null) {
+      logger.trace { "No provider found with id $providerId" }
+    }
+    return provider
   }
 }
