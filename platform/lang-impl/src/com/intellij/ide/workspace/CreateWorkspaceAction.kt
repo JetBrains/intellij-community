@@ -6,21 +6,18 @@ import com.intellij.ide.impl.TrustedPaths
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Files
 import java.nio.file.Path
 
 internal abstract class BaseWorkspaceAction(private val workspaceOnly: Boolean): DumbAwareAction() {
@@ -107,17 +104,7 @@ private fun createAndOpenWorkspaceProject(project: Project,
       true
     }
   }
+  Files.createDirectories(workspacePath)
   TrustedPaths.getInstance().setProjectPathTrusted(workspacePath, true)
-  val workspace = ProjectManagerEx.getInstanceEx().openProject(workspacePath, options) ?: return
-  activateProjectToolwindowLater(workspace)
-}
-
-private fun activateProjectToolwindowLater(workspace: Project) {
-  StartupManager.getInstance(workspace).runAfterOpened {
-    invokeLater {
-      if (workspace.isDisposed) return@invokeLater
-      val toolWindow = ToolWindowManager.getInstance(workspace).getToolWindow(ToolWindowId.PROJECT_VIEW)
-      toolWindow?.activate(null)
-    }
-  }
+  ProjectManagerEx.getInstanceEx().openProject(workspacePath, options)
 }
