@@ -30,6 +30,9 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
   @JvmField
   var mySkipPrimitives: Boolean = true
 
+  @JvmField
+  var mySkipWithTheOnlyException: Boolean = false
+
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
       OptPane.dropdown(
@@ -47,7 +50,9 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
                        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.trace.level.option")),
       ),
       OptPane.checkbox("mySkipPrimitives",
-                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.primitives"))
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.primitives")),
+      OptPane.checkbox("mySkipWithTheOnlyException",
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.only.exception"))
     )
   }
 
@@ -113,11 +118,10 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         return true
       }
 
-      //strange behavior for last parameter as exception. let's ignore this case
       val injected = parts.filter { it !is ULiteralExpression }
-      if ((injected.size == 1 &&
-           InheritanceUtil.isInheritor(injected.first().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE)) ||
-          ((valueArguments.lastIndex - indexStringExpression) == 1 &&
+      if ((injected.isNotEmpty() &&
+           InheritanceUtil.isInheritor(injected.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE)) ||
+          (mySkipWithTheOnlyException && (valueArguments.lastIndex - indexStringExpression) == 1 &&
            InheritanceUtil.isInheritor(valueArguments.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE))
       ) {
         return true

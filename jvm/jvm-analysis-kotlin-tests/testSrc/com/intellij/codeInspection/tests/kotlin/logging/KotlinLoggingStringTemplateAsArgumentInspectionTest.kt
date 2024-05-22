@@ -2,10 +2,10 @@ package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.logging.LoggingStringTemplateAsArgumentInspection
+import com.intellij.codeInspection.logging.LoggingUtil
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingStringTemplateAsArgumentInspectionTestBase
 import com.intellij.testFramework.TestDataPath
-import com.intellij.codeInspection.logging.LoggingUtil
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 
@@ -82,6 +82,19 @@ class KotlinLoggingStringTemplateAsArgumentInspectionTest {
 
     fun `test fix`() {
       myFixture.testQuickFix(file = "StringTemplateAsArgumentFix.kt", checkPreview = true)
+    }
+  }
+
+  class TestCaseSkipExceptions : KotlinLoggingStringTemplateAsArgumentInspectionTestBase() {
+    override val inspection: InspectionProfileEntry
+      get() = LoggingStringTemplateAsArgumentInspection().apply {
+        mySkipPrimitives = false
+        myLimitLevelType = LoggingUtil.LimitLevelType.ALL
+        mySkipWithTheOnlyException = true
+      }
+
+    fun `test highlighting`() {
+      myFixture.testHighlighting("StringTemplateAsArgumentSkipException.kt")
     }
   }
 }
