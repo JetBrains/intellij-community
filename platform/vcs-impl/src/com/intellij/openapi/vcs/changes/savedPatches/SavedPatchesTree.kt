@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
@@ -60,11 +61,16 @@ class SavedPatchesTree(project: Project,
     return ChangesGroupingSupport.Disabled(myProject, this)
   }
 
-  override fun getData(dataId: String): Any? {
-    val selectedObjects = selectedPatchObjects()
-    val data = visibleProvidersList.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
-    if (data != null) return data
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    if (visibleProvidersList.isNotEmpty()) {
+      val selectedObjects = selectedPatchObjects()
+      visibleProvidersList.forEach { provider ->
+        DataSink.uiDataSnapshot(sink) { dataId: String ->
+          provider.getData(dataId, selectedObjects)
+        }
+      }
+    }
   }
 
   internal fun selectedPatchObjects(): Stream<SavedPatchesProvider.PatchObject<*>> {

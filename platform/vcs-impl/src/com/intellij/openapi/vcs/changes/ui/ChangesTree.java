@@ -67,7 +67,7 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 /**
  * Consider implementing {@link AsyncChangesTree} instead.
  */
-public abstract class ChangesTree extends Tree implements DataProvider {
+public abstract class ChangesTree extends Tree implements EdtCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(ChangesTree.class);
 
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
@@ -807,22 +807,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myScrollToSelection = scrollToSelection;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myTreeCopyProvider;
-    }
-    if (ChangesGroupingSupport.KEY.is(dataId)) {
-      return myGroupingSupport;
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myTreeCopyProvider);
+    sink.set(ChangesGroupingSupport.KEY, myGroupingSupport);
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
   }
 
   @Override

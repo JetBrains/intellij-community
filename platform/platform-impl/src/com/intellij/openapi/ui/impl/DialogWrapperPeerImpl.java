@@ -616,7 +616,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public void uiDataSnapshot(@NotNull DataSink sink) {
       Project project = getProject();
       if (project != null && project.isInitialized()) {
-        sink.invoke(CommonDataKeys.PROJECT, project);
+        sink.set(CommonDataKeys.PROJECT, project);
       }
       DialogWrapper wrapper = myDialogWrapper.get();
       DataSink.uiDataSnapshot(sink, wrapper);
@@ -1200,7 +1200,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       public void uiDataSnapshot(@NotNull DataSink sink) {
         DialogWrapper wrapper = myDialogWrapper.get();
         if (wrapper == null) return;
-        sink.invoke(PlatformDataKeys.UI_DISPOSABLE, wrapper.getDisposable());
+        sink.set(PlatformDataKeys.UI_DISPOSABLE, wrapper.getDisposable());
       }
     }
 

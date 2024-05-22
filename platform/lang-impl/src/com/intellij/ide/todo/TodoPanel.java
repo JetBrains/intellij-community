@@ -34,10 +34,8 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.Alarm;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -275,50 +273,38 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (TODO_PANEL_DATA_KEY.is(dataId)) {
-      return this;
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      Object userObject = TreeUtil.getLastUserObject(myTree.getSelectionPath());
-      if (!(userObject instanceof NodeDescriptor)) return null;
-      DataProvider superProvider = (DataProvider)super.getData(PlatformCoreDataKeys.BGT_DATA_PROVIDER.getName());
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, (NodeDescriptor<?>)userObject), superProvider);
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return "find.todoList";
-    }
-    return super.getData(dataId);
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(TODO_PANEL_DATA_KEY, this);
+    sink.set(PlatformCoreDataKeys.HELP_ID, "find.todoList");
 
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull NodeDescriptor<?> nodeDescriptor) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      PsiFile file = TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor);
+    NodeDescriptor<?> selection = ObjectUtils.tryCast(TreeUtil.getLastUserObject(myTree.getSelectionPath()), NodeDescriptor.class);
+    if (selection == null) return;
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      PsiFile file = TodoTreeBuilder.getFileForNodeDescriptor(selection);
       return PsiUtilCore.getVirtualFile(file);
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(nodeDescriptor);
+    });
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(selection);
       if (selectedElement != null) return selectedElement;
-      return TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      VirtualFile file = PsiUtilCore.getVirtualFile(TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor));
+      return TodoTreeBuilder.getFileForNodeDescriptor(selection);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
+      VirtualFile file = PsiUtilCore.getVirtualFile(TodoTreeBuilder.getFileForNodeDescriptor(selection));
       return file == null ? null : new VirtualFile[]{file};
-    }
-    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      Object element = nodeDescriptor.getElement();
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      Object element = selection.getElement();
       if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
         return null;
       }
       TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
-      if (pointer != null) {
-        return PsiNavigationSupport.getInstance().createNavigatable(
-          myProject,
-          pointer.getValue().getTodoItem().getFile().getVirtualFile(),
-          pointer.getValue().getRangeMarker().getStartOffset());
-      }
-    }
-    return null;
+      SmartTodoItemPointer value = pointer == null ? null : pointer.getValue();
+      return value == null ? null : PsiNavigationSupport.getInstance().createNavigatable(
+        myProject,
+        value.getTodoItem().getFile().getVirtualFile(),
+        value.getRangeMarker().getStartOffset());
+    });
   }
 
   @Override

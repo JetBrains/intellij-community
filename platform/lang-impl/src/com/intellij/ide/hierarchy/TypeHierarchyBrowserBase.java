@@ -94,11 +94,9 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  public final Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteElementProvider;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteElementProvider);
   }
 
   @Override

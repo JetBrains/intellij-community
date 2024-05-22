@@ -746,34 +746,21 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFileEditor;
-    }
-    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getCutProvider();
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getCopyProvider();
-    }
-    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getPasteProvider();
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      DataProvider superProvider = (DataProvider)super.getData(dataId);
-      JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreePath::getLastPathComponent);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selection), superProvider);
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return getHelpID();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myFileEditor);
+    sink.set(PlatformDataKeys.CUT_PROVIDER, myCopyPasteDelegator.getCutProvider());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyPasteDelegator.getCopyProvider());
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, myCopyPasteDelegator.getPasteProvider());
+
+    JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreePath::getLastPathComponent);
+    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER,
+                dataId -> getSlowData(dataId, selection));
+    sink.set(PlatformCoreDataKeys.HELP_ID, getHelpID());
   }
 
-  private static Object getSlowData(String dataId, JBIterable<Object> selection) {
+  private static Object getSlowData(@NotNull String dataId, @NotNull JBIterable<Object> selection) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement element = getSelectedValues(selection).filter(PsiElement.class).single();
       return element != null && element.isValid() ? element : null;
