@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -1261,9 +1262,30 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"year: int"});
   }
 
+  // PY-58497
+  public void testSimplePopupWithHintsOff() {
+    Map<String, PsiElement> marks = loadTest(5);
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a: int, b, c, d, e", new String[]{"a: int, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg2>").getTextOffset()).check("a, b: str, c, d, e", new String[]{"b: str, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg3>").getTextOffset()).check("a, b, c: bool, d, e", new String[]{"c: bool, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg4>").getTextOffset()).check("a, b, c, d: list, e", new String[]{"d: list, "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg5>").getTextOffset()).check("a, b, c, d, e: set", new String[]{"e: set"});
+  }
+
+  // PY-58497
+  public void testSimplePopupWithHintsOffAndDefaultArgument() {
+    Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a, b, c: str = \"default\"", new String[]{"c: str = \"default\""});
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
-    return feignCtrlP(offset, myFixture.getFile());
+    return feignCtrlP(offset, myFixture.getFile(), true);
+  }
+
+  @NotNull
+  private Collector feignCtrlPWithHintsForHighlightedOnly(int offset) {
+    return feignCtrlP(offset, myFixture.getFile(), false);
   }
 
   /**
@@ -1273,26 +1295,31 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
    * @return a {@link Collector} with collected hint info.
    */
   @NotNull
-  private static Collector feignCtrlP(int offset, @NotNull PsiFile file) {
-    final PyParameterInfoHandler handler = new PyParameterInfoHandler();
+  private static Collector feignCtrlP(int offset, @NotNull PsiFile file, boolean showAllHints) {
+    boolean oldKeyValue = Registry.is("python.parameter.info.show.all.hints");
+    try {
+      Registry.get("python.parameter.info.show.all.hints").setValue(showAllHints);
+      final PyParameterInfoHandler handler = new PyParameterInfoHandler();
+      final Collector collector = new Collector(file, offset);
+      collector.setParameterOwner(handler.findElementForParameterInfo(collector));
 
-    final Collector collector = new Collector(file, offset);
-    collector.setParameterOwner(handler.findElementForParameterInfo(collector));
+      if (collector.getParameterOwner() != null) {
+        handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector);
 
-    if (collector.getParameterOwner() != null) {
-      handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector);
-
-      for (Object itemToShow : collector.getItemsToShow()) {
-        //noinspection unchecked
-        handler.updateUI((Pair<PyCallExpression, PyCallableType>)itemToShow, collector);
+        for (Object itemToShow : collector.getItemsToShow()) {
+          //noinspection unchecked
+          handler.updateUI((Pair<PyCallExpression, PyCallableType>)itemToShow, collector);
+        }
       }
+      return collector;
     }
-
-    return collector;
+    finally {
+      Registry.get("python.parameter.info.show.all.hints").setValue(oldKeyValue);
+    }
   }
 
   public static void checkParameters(int offset, @NotNull PsiFile file, @NotNull String text, String @NotNull [] highlighted) {
-    Collector collector = feignCtrlP(offset, file);
+    Collector collector = feignCtrlP(offset, file, true);
     collector.check(text, highlighted);
   }
 

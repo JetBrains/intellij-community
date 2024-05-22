@@ -63,29 +63,30 @@ public final class PyParameterInfoUtils {
    * @param hintFlags             mark parameter as deprecated/highlighted/strikeout
    * @param context               context to be used to get parameter representation
    */
-  public static Pair<List<String>, List<String>> buildParameterListHint(@NotNull List<PyCallableParameter> parameters,
-                                                                        @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
-                                                                        @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
-                                                                        @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
-                                                                        @NotNull TypeEvalContext context) {
-    final List<String> hintsList = new ArrayList<>();
-    final List<String> annotations = new ArrayList<>();
+  public static List<ParameterDescription> buildParameterListHint(@NotNull List<PyCallableParameter> parameters,
+                                                                  @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
+                                                                  @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
+                                                                  @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
+                                                                  @NotNull TypeEvalContext context) {
     final int[] currentParameterIndex = new int[]{0};
+    final List<ParameterDescription> parameterDescriptions = new ArrayList<>();
     ParamHelper.walkDownParameters(
       parameters,
       new ParamHelper.ParamWalker() {
         @Override
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add("(");
-          annotations.add("");
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
+          ParameterDescription parameterDescription = new ParameterDescription();
+          parameterDescription.setFullRepresentation("(");
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
         public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? ")" : "), ");
-          annotations.add("");
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
+          ParameterDescription parameterDescription = new ParameterDescription();
+          parameterDescription.setFullRepresentation(last ? ")" : "), ");
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
@@ -95,48 +96,45 @@ public final class PyParameterInfoUtils {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? PySlashParameter.TEXT : (PySlashParameter.TEXT + ", "));
-          annotations.add("");
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
+          ParameterDescription parameterDescription = new ParameterDescription(PySlashParameter.TEXT, "", last);
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? PySingleStarParameter.TEXT : (PySingleStarParameter.TEXT + ", "));
-          annotations.add("");
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
+          ParameterDescription parameterDescription = new ParameterDescription(PySingleStarParameter.TEXT, "", last);
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
-          boolean annotationAdded = false;
+          ParameterDescription parameterDescription = new ParameterDescription(parameter.getName(), "", last);
           if (parameter.getParameter() instanceof PyNamedParameter) {
             final String annotation = ((PyNamedParameter)parameter.getParameter()).getAnnotationValue();
             if (annotation != null) {
               String annotationText = ParamHelper.getNameInSignature(parameter) + ": " +
                                       annotation.replaceAll("\n", "").replaceAll("\\s+", " ");
-              annotations.add(last ? annotationText : (annotationText + ", "));
-              annotationAdded = true;
+              parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
             }
-          }
-          if (!annotationAdded) {
-            annotations.add("");
           }
           stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
-          final int hintIndex = hintsList.size();
+          final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);
           hintFlags.put(hintIndex, EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(stringBuilder.toString());
           currentParameterIndex[0]++;
+          parameterDescription.setFullRepresentation(stringBuilder.toString());
+          parameterDescriptions.add(parameterDescription);
         }
       }
     );
-    return new Pair<>(hintsList, annotations);
+    return parameterDescriptions;
   }
 
   public static void highlightParameter(@NotNull final PyCallableParameter parameter,
@@ -331,14 +329,63 @@ public final class PyParameterInfoUtils {
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterFlag>> hintFlags = new HashMap<>();
 
-    final Pair<List<String>, List<String>> hintsAndAnnotations =
+    final List<ParameterDescription> hintsAndAnnotations =
       buildParameterListHint(parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, typeEvalContext);
-    final List<String> hintsList = hintsAndAnnotations.first;
-    final List<String> annotations = hintsAndAnnotations.second;
 
     highlightParameters(callExpression, callableType, parameters, mapping, indexToNamedParameter, parameterToHintIndex, hintFlags,
                         currentParamOffset);
 
-    return new ParameterHints(hintsList, hintFlags, annotations);
+    return new ParameterHints(hintsAndAnnotations, hintFlags);
+  }
+
+  public static class ParameterDescription {
+
+    String name = "";
+    String annotation = "";
+    boolean isLast = false;
+    String fullRepresentation = "";
+
+    public ParameterDescription() { }
+
+    public ParameterDescription(String name, String annotation, boolean isLast) {
+      this.name = name;
+      this.annotation = annotation;
+      this.isLast = isLast;
+    }
+
+    public String getFullRepresentation(boolean showHints) {
+      StringBuilder stringBuilder = new StringBuilder();
+      if (showHints) {
+        if (fullRepresentation.isEmpty()) {
+          stringBuilder.append(name);
+          if (!annotation.isEmpty()) {
+            stringBuilder.append(": ").append(annotation);
+          }
+        }
+        else {
+          stringBuilder.append(fullRepresentation);
+          return stringBuilder.toString();
+        }
+      }
+      else {
+        stringBuilder.append(name);
+      }
+      if (!isLast) {
+        stringBuilder.append(", ");
+      }
+      return stringBuilder.toString();
+    }
+
+    public void setFullRepresentation(String fullRepresentation) {
+      this.fullRepresentation = fullRepresentation;
+    }
+
+    public String getAnnotation() {
+      return annotation;
+    }
+
+    public void setAnnotation(String annotation) {
+      this.annotation = annotation;
+    }
   }
 }

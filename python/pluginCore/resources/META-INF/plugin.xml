@@ -625,6 +625,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <registryKey key="python.new.interpreter.creation.ui" defaultValue="true"
                  description="Enable new UI for adding Python interpreter in New Project dialog."/>
+
+    <!-- Parameter Info -->
+    <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
+                 description="Show type hints for all parameters in parameter info window"/>
   </extensions>
 
   <extensionPoints>
