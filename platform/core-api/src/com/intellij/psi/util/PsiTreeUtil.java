@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -1218,7 +1219,14 @@ public class PsiTreeUtil {
    * @return true if it contains at least one {@link PsiErrorElement} descendant or is {@link PsiErrorElement} itself.
    */
   public static boolean hasErrorElements(@NotNull PsiElement element) {
-    return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
+    Ref<Boolean> result = new Ref<>(false);
+    WalkingState.processAll(element, PsiWalkingState.PsiTreeGuide.instance, el -> {
+      if (el instanceof PsiErrorElement) {
+        result.set(true);
+        return false;
+      } else return true;
+    });
+    return result.get();
   }
 
   public static @NotNull PsiElement @NotNull [] filterAncestors(@NotNull PsiElement @NotNull [] elements) {
