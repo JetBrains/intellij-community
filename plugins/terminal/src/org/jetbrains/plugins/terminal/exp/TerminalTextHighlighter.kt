@@ -62,15 +62,15 @@ internal fun List<HighlightingInfo>.rebase(adjustmentValue: Int): List<Highlight
 }
 
 internal class TerminalTextHighlighter private constructor(
-  private val allHighlightingsSnapshotProvider: () -> AllHighlightingsSnapshot
+  private val highlightingsSnapshotProvider: () -> TerminalOutputHighlightingsSnapshot
 ) : EditorHighlighter {
   private var editor: HighlighterClient? = null
 
   constructor(model: TerminalOutputModel) : this({ model.getHighlightingsSnapshot() })
-  internal constructor(allHighlightingsSnapshot: AllHighlightingsSnapshot) : this({ allHighlightingsSnapshot })
+  internal constructor(highlightingsSnapshot: TerminalOutputHighlightingsSnapshot) : this({ highlightingsSnapshot })
 
   override fun createIterator(startOffset: Int): HighlighterIterator {
-    val highlightingsSnapshot = allHighlightingsSnapshotProvider()
+    val highlightingsSnapshot = highlightingsSnapshotProvider()
     val curInd = highlightingsSnapshot.findHighlightingIndex(startOffset)
     return MyHighlighterIterator(editor?.document, highlightingsSnapshot, curInd)
   }
@@ -80,7 +80,7 @@ internal class TerminalTextHighlighter private constructor(
   }
 
   private class MyHighlighterIterator(private val document: Document?,
-                                      private val highlightings: AllHighlightingsSnapshot,
+                                      private val highlightings: TerminalOutputHighlightingsSnapshot,
                                       private var curInd: Int) : HighlighterIterator {
 
     override fun getStart(): Int = highlightings[curInd].startOffset

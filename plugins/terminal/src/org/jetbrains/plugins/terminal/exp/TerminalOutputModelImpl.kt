@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -28,7 +27,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
-  private var allHighlightingsSnapshot: AllHighlightingsSnapshot? = null
+  private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
 
   private val document: Document = editor.document
   private val listeners: MutableList<TerminalOutputModelListener> = CopyOnWriteArrayList()
@@ -99,7 +98,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
 
     blocks.remove(block)
     highlightings.remove(block)
-    allHighlightingsSnapshot = null
+    highlightingsSnapshot = null
 
     listeners.forEach { it.blockRemoved(block) }
 
@@ -174,11 +173,11 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   fun getBlocksSize(): Int = blocks.size
 
   @RequiresEdt
-  internal fun getHighlightingsSnapshot(): AllHighlightingsSnapshot {
-    var snapshot: AllHighlightingsSnapshot? = allHighlightingsSnapshot
+  internal fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
+    var snapshot = highlightingsSnapshot
     if (snapshot == null) {
-      snapshot = AllHighlightingsSnapshot(editor.document, highlightings.flatMap { it.value })
-      allHighlightingsSnapshot = snapshot
+      snapshot = TerminalOutputHighlightingsSnapshot(editor.document, highlightings.flatMap { it.value })
+      highlightingsSnapshot = snapshot
     }
     return snapshot
   }
@@ -191,7 +190,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
-    allHighlightingsSnapshot = null
+    highlightingsSnapshot = null
   }
 
   @RequiresEdt
@@ -328,62 +327,6 @@ internal class TerminalOutputModel(val editor: EditorEx) {
       return TextWithHighlightings(command, highlightings)
     }
   }
-}
-
-internal class AllHighlightingsSnapshot(private val document: Document, highlightings: List<HighlightingInfo>) {
-  private val allSortedHighlightings: List<HighlightingInfo> = buildAndSortHighlightings(document, highlightings)
-
-  val size: Int
-    get() = allSortedHighlightings.size
-
-  operator fun get(index: Int): HighlightingInfo = allSortedHighlightings[index]
-
-  /**
-   * @return index of a highlighting containing the `documentOffset` (`highlighting.startOffset <= documentOffset < highlighting.endOffset`).
-   *         If no such highlighting is found:
-   *           - returns 0 for negative `documentOffset`
-   *           - total count of highlightings for `documentOffset >= document.textLength`
-   */
-  fun findHighlightingIndex(documentOffset: Int): Int {
-    if (documentOffset <= 0) return 0
-    val binarySearchInd = allSortedHighlightings.binarySearch(0, allSortedHighlightings.size) {
-      it.startOffset.compareTo(documentOffset)
-    }
-    return if (binarySearchInd >= 0) binarySearchInd
-    else {
-      val insertionIndex = -binarySearchInd - 1
-      if (insertionIndex == 0 || insertionIndex == allSortedHighlightings.size && documentOffset >= document.textLength) {
-        insertionIndex
-      }
-      else {
-        insertionIndex - 1
-      }
-    }
-  }
-}
-
-private fun buildAndSortHighlightings(document: Document, highlightings: List<HighlightingInfo>): List<HighlightingInfo> {
-  val sortedHighlightings = highlightings.sortedBy { it.startOffset }
-  val documentLength = document.textLength
-  val result: MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2 + 1)
-  var startOffset = 0
-  for (highlighting in sortedHighlightings) {
-    if (highlighting.startOffset < 0 || highlighting.endOffset > documentLength) {
-      logger<TerminalOutputModel>().error("Terminal highlightings range should be within document")
-    }
-    if (startOffset > highlighting.startOffset) {
-      logger<TerminalOutputModel>().error("Terminal highlightings should not overlap")
-    }
-    if (startOffset < highlighting.startOffset) {
-      result.add(HighlightingInfo(startOffset, highlighting.startOffset, EmptyTextAttributesProvider))
-    }
-    result.add(highlighting)
-    startOffset = highlighting.endOffset
-  }
-  if (startOffset < documentLength) {
-    result.add(HighlightingInfo(startOffset, documentLength, EmptyTextAttributesProvider))
-  }
-  return result
 }
 
 internal data class CommandBlockInfo(val exitCode: Int)
