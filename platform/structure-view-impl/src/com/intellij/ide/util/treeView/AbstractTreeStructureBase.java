@@ -88,6 +88,8 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   public abstract @Nullable List<TreeStructureProvider> getProviders();
 
+  /** @deprecated Drop together with {@link TreeStructureProvider#getData(Collection, String)} */
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public @Nullable Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
     List<TreeStructureProvider> providers = getProvidersDumbAware();

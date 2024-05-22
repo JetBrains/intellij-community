@@ -4,9 +4,9 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.BackgroundableDataProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -43,7 +42,7 @@ private val LOG = logger<TextEditorComponent>()
 open class TextEditorComponent(
   val file: VirtualFile,
   @JvmField internal val editorImpl: EditorImpl,
-) : JLayeredPane(), DataProvider, BackgroundableDataProvider {
+) : JLayeredPane(), EdtCompatibleDataProvider {
   /**
    * Whether the editor's document is modified or not
    */
@@ -183,31 +182,11 @@ open class TextEditorComponent(
     textEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, isValid)
   }
 
-  override fun createBackgroundDataProvider(): DataProvider? {
-    val project = editorImpl.project
-    if (editorImpl.isDisposed) {
-      return null
-    }
-
-    // There's no FileEditorManager for default project (which is used in diff command-line application)
-    val fileEditorManager = if (project != null && !project.isDisposed && !project.isDefault) FileEditorManager.getInstance(project) else null
-    val currentCaret = editorImpl.caretModel.currentCaret
-    return DataProvider { dataId ->
-      if (fileEditorManager != null) {
-        val o = fileEditorManager.getData(dataId, editorImpl, currentCaret)
-        if (o != null) {
-          return@DataProvider o
-        }
-      }
-      if (CommonDataKeys.EDITOR.`is`(dataId)) {
-        return@DataProvider editorImpl
-      }
-      if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) {
-        // fix for SCR 40329
-        return@DataProvider if (file.isValid) file else null
-      }
-      null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    if (editorImpl.isDisposed) return
+    sink[CommonDataKeys.EDITOR] = editorImpl
+    sink[CommonDataKeys.CARET] = editorImpl.caretModel.currentCaret
+    sink[CommonDataKeys.VIRTUAL_FILE] = file
   }
 
   /**

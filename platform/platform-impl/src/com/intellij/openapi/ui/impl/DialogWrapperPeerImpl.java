@@ -4,7 +4,6 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -549,7 +548,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
   }
 
-  private static final class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog, DisposableWindow {
+  private static final class MyDialog extends JDialog implements DialogWrapperDialog, EdtDataProvider, Queryable, AbstractDialog, DisposableWindow {
     private final WeakReference<DialogWrapper> myDialogWrapper;
 
     /**
@@ -614,19 +613,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        Project project = getProject();
-        if (project != null && project.isInitialized()) {
-          return project;
-        }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      Project project = getProject();
+      if (project != null && project.isInitialized()) {
+        sink.invoke(CommonDataKeys.PROJECT, project);
       }
       DialogWrapper wrapper = myDialogWrapper.get();
-      Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
-      if (wrapperData != null) {
-        return DataValidators.validOrNull(wrapperData, dataId, wrapper);
-      }
-      return null;
+      DataSink.uiDataSnapshot(sink, wrapper);
     }
 
     private void fitToScreen(Rectangle rect) {
@@ -1125,7 +1118,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    private final class DialogRootPane extends JRootPane implements DataProvider {
+    private final class DialogRootPane extends JRootPane implements EdtDataProvider {
 
       private final boolean myGlassPaneIsSet;
 
@@ -1203,11 +1196,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
 
-
       @Override
-      public Object getData(@NotNull String dataId) {
+      public void uiDataSnapshot(@NotNull DataSink sink) {
         DialogWrapper wrapper = myDialogWrapper.get();
-        return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
+        if (wrapper == null) return;
+        sink.invoke(PlatformDataKeys.UI_DISPOSABLE, wrapper.getDisposable());
       }
     }
 

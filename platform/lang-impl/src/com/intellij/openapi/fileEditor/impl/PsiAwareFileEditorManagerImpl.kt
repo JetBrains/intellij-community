@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -23,9 +22,6 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
    * Updates icons for open files when project roots change
    */
   init {
-    @Suppress("LeakingThis")
-    registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
-
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
     // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types of attributes in LayeredLexerEditorHighlighter
     @Suppress("LeakingThis")

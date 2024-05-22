@@ -16,6 +16,10 @@ import com.intellij.ide.workspace.getAllSubprojects
 import com.intellij.ide.workspace.isWorkspace
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.EdtDataRule
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -24,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
+import com.intellij.util.containers.JBIterable
 import java.awt.Color
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -40,20 +45,6 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       return overrideWorkspaceDirectory(children, settings, parent) ?: return children
     }
     return children
-  }
-
-  override fun getData(selected: MutableCollection<out AbstractTreeNode<*>>, dataId: String): Any? {
-    if (WORKSPACE_NODE.`is`(dataId) && selected.firstOrNull() is WorkspaceNode) {
-      return true
-    }
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId)) {
-      val directoryNodes = selected.filterIsInstance<PsiDirectoryNode>()
-      val workspaceNode = directoryNodes.firstNotNullOfOrNull { it.parent as? WorkspaceNode } ?: return null
-      val subprojects = directoryNodes.mapNotNull { workspaceNode.getSubproject(it.value) }
-      if (subprojects.isEmpty()) return null
-      return SubprojectDeleteProvider(subprojects)
-    }
-    return null
   }
 
   private fun overrideWorkspaceDirectory(children: Collection<AbstractTreeNode<*>>,
@@ -119,6 +110,25 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     }
 
     fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
+  }
+
+  class DataRule : EdtDataRule {
+
+    override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+      val selected = JBIterable.of(snapshot[PlatformCoreDataKeys.SELECTED_ITEMS])
+        .filter(AbstractTreeNode::class.java)
+      if (selected.firstOrNull() is WorkspaceNode) {
+        sink[WORKSPACE_NODE] = true
+      }
+      val directoryNodes = selected.filterIsInstance<PsiDirectoryNode>()
+      val workspaceNode = directoryNodes.firstNotNullOfOrNull { it.parent as? WorkspaceNode }
+      if (workspaceNode != null) {
+        val subprojects = directoryNodes.mapNotNull { workspaceNode.getSubproject(it.value) }
+        if (!subprojects.isEmpty()) {
+          sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = SubprojectDeleteProvider(subprojects)
+        }
+      }
+    }
   }
 
   private class SubprojectNode(original: PsiDirectoryNode,

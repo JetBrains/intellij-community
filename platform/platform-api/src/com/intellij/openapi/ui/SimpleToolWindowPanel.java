@@ -3,7 +3,8 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.EdtCompatibleDataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -12,7 +13,6 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import java.awt.event.ContainerEvent;
 import java.util.Collections;
 import java.util.List;
 
-public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, DataProvider {
+public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, EdtCompatibleDataProvider {
   public static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
   private static final int GAP = 1;
 
@@ -142,11 +142,10 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (QuickActionProvider.KEY.is(dataId) && myProvideQuickActions) {
-      return this;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myProvideQuickActions) {
+      sink.set(QuickActionProvider.KEY, this);
     }
-    return null;
   }
 
   public SimpleToolWindowPanel setProvideQuickActions(boolean provide) {

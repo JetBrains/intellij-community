@@ -5,7 +5,8 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
@@ -56,7 +57,7 @@ private val LOG: Logger
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
-) : IdeFrameEx, AccessibleContextAccessor, DataProvider {
+) : IdeFrameEx, AccessibleContextAccessor, EdtDataProvider {
   constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   private val isUpdatingTitle = AtomicBoolean()
@@ -86,7 +87,9 @@ open class ProjectFrameHelper internal constructor(
     // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane
     frameDecorator = rootPane.createDecorator()
     frame.setFrameHelper(object : FrameHelper {
-      override fun getData(dataId: String) = this@ProjectFrameHelper.getData(dataId)
+      override fun uiDataSnapshot(sink: DataSink) {
+        return this@ProjectFrameHelper.uiDataSnapshot(sink)
+      }
 
       override val accessibleName: String
         get() {
@@ -267,29 +270,17 @@ open class ProjectFrameHelper internal constructor(
 
   override fun getCurrentAccessibleContext(): AccessibleContext = frame.accessibleContext
 
-  override fun getData(dataId: String): Any? {
+  override fun uiDataSnapshot(sink: DataSink) {
     val project = project
-    return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> if (project != null && project.isInitialized) project else null
-      IdeFrame.KEY.`is`(dataId) -> this
-      PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) {
-          return null
-        }
-
-        val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
-        manager.getLastActiveToolWindows().toList().toTypedArray()
-      }
-      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) {
-          null
-        }
-        else {
-          (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)?.selectedEditor
-        }
-      }
-      else -> null
-    }
+    sink[IdeFrame.KEY] = this
+    if (project == null || !project.isInitialized) return
+    sink[CommonDataKeys.PROJECT] = project
+    sink[PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS] =
+      (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl)
+        ?.getLastActiveToolWindows()?.toList()?.toTypedArray()
+    sink[PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR] =
+      (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)
+        ?.selectedEditor
   }
 
   override fun getProject(): Project? = project

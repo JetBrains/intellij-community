@@ -3,6 +3,10 @@ package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.EdtDataRule
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -203,6 +207,19 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     dataProviders.add(provider)
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) { dataProviders.remove(provider) }
+    }
+  }
+
+  @Deprecated("Drop together with [registerExtraEditorDataProvider]")
+  internal class DataRule : EdtDataRule {
+    override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+      val project = snapshot[PlatformDataKeys.PROJECT] ?: return
+      val caret = snapshot[PlatformDataKeys.CARET] ?: return
+      getInstanceEx(project).dataProviders.forEach { provider ->
+        DataSink.uiDataSnapshot(sink) { dataId: String ->
+          provider.getData(dataId, caret.editor, caret)
+        }
+      }
     }
   }
 

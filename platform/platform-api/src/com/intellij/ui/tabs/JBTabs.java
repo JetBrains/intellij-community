@@ -45,6 +45,8 @@ public interface JBTabs extends DropAreaAware {
   @NotNull
   JBTabsPresentation getPresentation();
 
+  /** Use {@link com.intellij.openapi.actionSystem.DataContext} API instead */
+  @Deprecated(forRemoval = true)
   @Nullable
   DataProvider getDataProvider();
 

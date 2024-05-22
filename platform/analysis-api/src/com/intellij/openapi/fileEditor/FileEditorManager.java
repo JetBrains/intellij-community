@@ -259,12 +259,19 @@ public abstract class FileEditorManager {
    */
   public abstract @NotNull Project getProject();
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
+   */
+  @Deprecated(forRemoval = true)
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
 
   /**
    * Returns data associated with given editor/caret context. Data providers are registered via
    * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
+   *
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
    */
+  @Deprecated(forRemoval = true)
   public abstract @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**

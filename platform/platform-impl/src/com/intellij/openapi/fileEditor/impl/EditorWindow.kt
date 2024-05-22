@@ -1081,7 +1081,7 @@ private fun hasClientPropertyInHierarchy(owner: Component, @Suppress("SameParame
 internal class EditorWindowTopComponent(
   @JvmField val window: EditorWindow,
   @JvmField val composite: EditorComposite,
-) : JPanel(BorderLayout()), DataProvider, EditorWindowHolder {
+) : JPanel(BorderLayout()), EdtDataProvider, EditorWindowHolder {
   init {
     add(composite.component, BorderLayout.CENTER)
     addFocusListener(object : FocusAdapter() {
@@ -1113,13 +1113,10 @@ internal class EditorWindowTopComponent(
 
   override fun getEditorWindow(): EditorWindow = window
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file.takeIf { it.isValid }
-      CommonDataKeys.PROJECT.`is`(dataId) -> window.owner.manager.project
-      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> window.owner.currentCompositeFlow.value?.selectedEditor
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
+    sink[CommonDataKeys.PROJECT] = window.owner.manager.project
+    sink[PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR] = window.owner.currentCompositeFlow.value?.selectedEditor
   }
 }
 

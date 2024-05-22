@@ -79,7 +79,7 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public final class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+public final class EditorComponentImpl extends JTextComponent implements Scrollable, EdtCompatibleDataProvider, Queryable, TypingTarget, Accessible,
                                                                          UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
@@ -162,45 +162,28 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (myEditor.isDisposed()) return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myEditor.isDisposed()) return;
 
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      // enable copying from editor in renderer mode
-      return myEditor.getCopyProvider();
-    }
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myEditor.getCopyProvider());
 
-    if (myEditor.isRendererMode()) return null;
+    if (myEditor.isRendererMode()) return;
 
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
+    sink.set(CommonDataKeys.EDITOR, myEditor);
+    sink.set(CommonDataKeys.CARET, myEditor.getCaretModel().getCurrentCaret());
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myEditor.getDeleteProvider());
+    sink.set(PlatformDataKeys.CUT_PROVIDER, myEditor.getCutProvider());
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, myEditor.getPasteProvider());
+
+    LogicalPosition location = myEditor.myLastMousePressedLocation;
+    if (location == null) {
+      location = myEditor.getCaretModel().getLogicalPosition();
     }
-    if (CommonDataKeys.CARET.is(dataId)) {
-      return myEditor.getCaretModel().getCurrentCaret();
+    sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(myEditor, location));
+    Point point = myEditor.myLastMousePressedPoint;
+    if (point != null) {
+      sink.set(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT, EditorUtil.isPointOverText(myEditor, point));
     }
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myEditor.getDeleteProvider();
-    }
-    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-      return myEditor.getCutProvider();
-    }
-    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myEditor.getPasteProvider();
-    }
-    if (CommonDataKeys.EDITOR_VIRTUAL_SPACE.is(dataId)) {
-      LogicalPosition location = myEditor.myLastMousePressedLocation;
-      if (location == null) {
-        location = myEditor.getCaretModel().getLogicalPosition();
-      }
-      return EditorCoreUtil.inVirtualSpace(myEditor, location);
-    }
-    if (PlatformDataKeys.EDITOR_CLICK_OVER_TEXT.is(dataId)) {
-      Point point = myEditor.myLastMousePressedPoint;
-      if (point != null) {
-        return EditorUtil.isPointOverText(myEditor, point);
-      }
-    }
-    return null;
   }
 
   @DirtyUI

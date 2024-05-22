@@ -6,8 +6,7 @@ import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.actionSystem.CompositeDataProvider
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -90,20 +89,13 @@ private class PsiAwareTextEditorComponent(file: VirtualFile, editor: EditorImpl)
     project?.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
   }
 
-  override fun createBackgroundDataProvider(): DataProvider? {
-    val superProvider = super.createBackgroundDataProvider() ?: return null
-    return CompositeDataProvider.compose(
-      { dataId ->
-        if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId)) {
-          val project = editor.project
-          project?.let { (LookupManager.getInstance(project).activeLookup as LookupImpl?)?.takeIf { it.isVisible }?.bounds }
-        }
-        else {
-          null
-        }
-      },
-      superProvider,
-    )
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    val project = editor.project
+    if (project != null) {
+      sink[PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE] = (LookupManager.getInstance(project).activeLookup as LookupImpl?)
+        ?.takeIf { it.isVisible }?.bounds
+    }
   }
 }
 

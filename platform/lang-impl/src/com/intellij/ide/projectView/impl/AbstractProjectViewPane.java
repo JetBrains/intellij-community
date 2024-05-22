@@ -75,8 +75,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
-import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
 
 /**
  * Allows to add additional panes to the Project view.
@@ -85,7 +83,7 @@ import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PR
  * @see AbstractProjectViewPaneWithAsyncSupport
  * @see ProjectViewPane
  */
-public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
+public abstract class AbstractProjectViewPane implements EdtCompatibleDataProvider, Disposable, BusyObject {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ProjectExtensionPointName<AbstractProjectViewPane> EP
     = new ProjectExtensionPointName<>("com.intellij.projectViewPane");
@@ -311,51 +309,49 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PROJECT.is(dataId)) {
-      return myProject;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath[] paths = getSelectionPaths();
+    Object[] selectedUserObjects =
+      paths == null ? ArrayUtil.EMPTY_OBJECT_ARRAY :
+      ArrayUtil.toObjectArray(ContainerUtil.map(paths, TreeUtil::getLastUserObject));
+    Object[] singleSelectedPathUserObjects =
+      paths == null || paths.length != 1 ? null :
+      ArrayUtil.toObjectArray(ContainerUtil.map(paths[0].getPath(), TreeUtil::getUserObject));
 
-    Object[] selectedUserObjects = getSelectedUserObjects();
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, selectedUserObjects);
+    sink.set(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR,
+             FileEditorManagerEx.getInstanceEx(myProject).getSelectedEditor());
+    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER,
+             dataId -> getSlowDataFromSelection(
+               selectedUserObjects, singleSelectedPathUserObjects, dataId));
 
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      return selectedUserObjects;
-    }
-    if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
-      return FileEditorManagerEx.getInstanceEx(myProject).getSelectedEditor();
-    }
+    sink.set(PlatformDataKeys.TREE_EXPANDER, getTreeExpander());
 
-    if (BGT_DATA_PROVIDER.is(dataId)) {
-      return slowProviders(selectedUserObjects);
-    }
-
-    Object treeStructureData = getFromTreeStructure(selectedUserObjects, dataId);
-    if (treeStructureData != null) {
-      return treeStructureData;
-    }
-
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
-
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      TreePath[] paths = getSelectionPaths();
-      if (paths == null) return null;
-      final ArrayList<Navigatable> navigatables = new ArrayList<>();
+    if (paths != null) {
+      ArrayList<Navigatable> navigatables = new ArrayList<>();
       for (TreePath path : paths) {
         Object node = path.getLastPathComponent();
         Object userObject = TreeUtil.getUserObject(node);
-        if (userObject instanceof Navigatable) {
-          navigatables.add((Navigatable)userObject);
+        if (userObject instanceof Navigatable o) {
+          navigatables.add(o);
         }
-        else if (node instanceof Navigatable) {
-          navigatables.add((Navigatable)node);
+        else if (node instanceof Navigatable o) {
+          navigatables.add(o);
         }
-        else if (userObject instanceof CachedTreePresentationNode cached) {
-          navigatables.add(new CachedNodeNavigatable(myProject, cached));
+        else if (userObject instanceof CachedTreePresentationNode o) {
+          navigatables.add(new CachedNodeNavigatable(myProject, o));
         }
       }
-      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
+               navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
     }
-    return null;
+    if (myTreeStructure instanceof AbstractTreeStructureBase treeStructure) {
+      //noinspection unchecked
+      List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(
+        selectedUserObjects, AbstractTreeNode.class);
+      DataSink.uiDataSnapshot(sink, o -> treeStructure.getDataFromProviders(selection, o));
+    }
   }
 
   // used for sorting tabs in the tabbed pane
@@ -399,21 +395,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       result.addAll(getElementsFromNode(path.getLastPathComponent()));
     }
     return PsiUtilCore.toPsiElementArray(result);
-  }
-
-  private @Nullable DataProvider slowProviders(@Nullable Object @NotNull [] selectedUserObjects) {
-    DataProvider structureProvider = (DataProvider)getFromTreeStructure(selectedUserObjects, BGT_DATA_PROVIDER.getName());
-    DataProvider selectionProvider = selectionProvider(selectedUserObjects);
-    return structureProvider != null ? CompositeDataProvider.compose(structureProvider, selectionProvider) : selectionProvider;
-  }
-
-  @RequiresEdt
-  private @Nullable DataProvider selectionProvider(@Nullable Object @NotNull [] selectedUserObjects) {
-    if (selectedUserObjects.length == 0) {
-      return null;
-    }
-    Object[] singleSelectedPathUserObjects = getSingleSelectedPathUserObjects();
-    return dataId -> getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
   }
 
   @RequiresReadLock(generateAssertion = false)
@@ -467,19 +448,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
     }
     return null;
-  }
-
-  private @Nullable Object getFromTreeStructure(@Nullable Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
-    if (!(myTreeStructure instanceof AbstractTreeStructureBase)) {
-      return null;
-    }
-    List<AbstractTreeNode<?>> nodes = new ArrayList<>(selectedUserObjects.length);
-    for (Object userObject : selectedUserObjects) {
-      if (userObject instanceof AbstractTreeNode) {
-        nodes.add((AbstractTreeNode<?>)userObject);
-      }
-    }
-    return ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(nodes, dataId);
   }
 
   @RequiresReadLock(generateAssertion = false)

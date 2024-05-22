@@ -3,7 +3,8 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
@@ -19,7 +20,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -31,7 +31,7 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
+class IdeFrameImpl : JFrame(), IdeFrame, EdtDataProvider, DisposableWindow {
   companion object {
     @JvmStatic
     val activeFrame: Window?
@@ -56,14 +56,16 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
 
-  @Internal
+  @ApiStatus.Internal
   var mouseReleaseCountSinceLastActivated = 0
 
   private var isDisposed = false
 
-  override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    frameHelper?.uiDataSnapshot(sink)
+  }
 
-  interface FrameHelper : DataProvider {
+  interface FrameHelper : EdtDataProvider {
     val accessibleName: @Nls String?
     val project: Project?
     val helper: IdeFrame

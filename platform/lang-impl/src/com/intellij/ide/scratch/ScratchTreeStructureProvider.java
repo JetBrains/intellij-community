@@ -12,9 +12,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -191,24 +189,21 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     return new MyProjectNode(project, settings);
   }
 
-  @Override
-  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId, selected);
-    }
-    return null;
-  }
+  static class DataRule implements EdtDataRule {
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends AbstractTreeNode<?>> selected) {
-    if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
-      AbstractTreeNode<?> single = JBIterable.from(selected).single();
-      if (single instanceof MyRootNode) {
-        VirtualFile file = ((MyRootNode)single).getVirtualFile();
-        Project project = single.getProject();
-        return file == null || project == null ? null : PsiManager.getInstance(project).findDirectory(file);
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+      AbstractTreeNode<?> node = JBIterable.of(snapshot.get(PlatformCoreDataKeys.SELECTED_ITEMS))
+        .filter(AbstractTreeNode.class)
+        .single();
+      if (node instanceof MyRootNode selection) {
+        sink.lazy(LangDataKeys.PASTE_TARGET_PSI_ELEMENT, () -> {
+          VirtualFile file = selection.getVirtualFile();
+          Project project = selection.getProject();
+          return file == null || project == null ? null : PsiManager.getInstance(project).findDirectory(file);
+        });
       }
     }
-    return null;
   }
 
   private static final class MyProjectNode extends ProjectViewNode<String> {

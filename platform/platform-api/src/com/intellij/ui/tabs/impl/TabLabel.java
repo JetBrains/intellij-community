@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class TabLabel extends JPanel implements Accessible, DataProvider {
+public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
   private static final int MIN_WIDTH_TO_CROP_ICON = 39;
 
@@ -758,11 +758,9 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (info.getComponent() instanceof DataProvider provider) {
-      return provider.getData(dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    JComponent component = info.getComponent();
+    DataSink.uiDataSnapshot(sink, component);
   }
 
   public enum ActionsPosition {

@@ -44,7 +44,10 @@ public interface TreeStructureProvider extends PossiblyDumbAware {
    *                 {@link com.intellij.openapi.actionSystem.PlatformDataKeys})
    * @return the data object, or null if no data object can be returned by this provider.
    * @see com.intellij.openapi.actionSystem.DataProvider
+   *
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.EdtDataRule} instead.
    */
+  @Deprecated(forRemoval = true)
   default @Nullable Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     return null;
   }

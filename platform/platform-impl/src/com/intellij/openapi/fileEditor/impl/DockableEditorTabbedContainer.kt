@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -121,10 +122,7 @@ class DockableEditorTabbedContainer internal constructor(
     val sameWindow = currentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(currentOver)
     val dropSide = currentDropSide
     if (currentOver != null) {
-      val provider = currentOver!!.dataProvider
-      if (provider != null) {
-        window = EditorWindow.DATA_KEY.getData(provider)
-      }
+      window = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(currentOver!!.component))
       if (window != null && dropSide != -1 && dropSide != SwingConstants.CENTER) {
         window.split(
           orientation = if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,

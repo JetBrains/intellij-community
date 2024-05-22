@@ -5,10 +5,10 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.diagnostic.logger
@@ -482,7 +482,7 @@ open class EditorComposite internal constructor(
   }
 }
 
-private class EditorCompositePanel(private val composite: EditorComposite) : JPanel(BorderLayout()), DataProvider {
+private class EditorCompositePanel(private val composite: EditorComposite) : JPanel(BorderLayout()), EdtDataProvider {
   lateinit var focusComponent: () -> JComponent?
     private set
 
@@ -509,22 +509,14 @@ private class EditorCompositePanel(private val composite: EditorComposite) : JPa
   @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
   override fun requestDefaultFocus(): Boolean = focusComponent()?.requestDefaultFocus() ?: false
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
-      PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> composite.selectedEditor
-      CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> arrayOf(composite.file)
-      else -> {
-        val component = composite.preferredFocusedComponent
-        if (component is DataProvider && component !== this) {
-          val data = component.getData(dataId)
-          if (data == null) null else DataValidators.validOrNull(data, dataId, component)
-        }
-        else {
-          null
-        }
-      }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.PROJECT] = composite.project
+    sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
+    sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
+    val component = composite.preferredFocusedComponent
+    if (component !== this) {
+      DataSink.uiDataSnapshot(sink, component)
     }
   }
 }

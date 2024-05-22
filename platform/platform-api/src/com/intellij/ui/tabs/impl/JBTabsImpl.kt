@@ -93,7 +93,7 @@ private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 open class JBTabsImpl(
   private var project: Project?,
   private val parentDisposable: Disposable,
-) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
+) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, EdtCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
   companion object {
@@ -2920,16 +2920,11 @@ open class JBTabsImpl(
     return this
   }
 
-  override fun getData(dataId: @NonNls String): Any? {
-    if (dataProvider != null) {
-      dataProvider!!.getData(dataId)?.let {
-        return it
-      }
-    }
-    if (QuickActionProvider.KEY.`is`(dataId) || MorePopupAware.KEY.`is`(dataId) || JBTabsEx.NAVIGATION_ACTIONS_KEY.`is`(dataId)) {
-      return this
-    }
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    DataSink.uiDataSnapshot(sink, dataProvider)
+    sink[QuickActionProvider.KEY] = this@JBTabsImpl
+    sink[MorePopupAware.KEY] =this@JBTabsImpl
+    sink[JBTabsEx.NAVIGATION_ACTIONS_KEY] = this@JBTabsImpl
   }
 
   override fun getActions(originalProvider: Boolean): List<AnAction> {

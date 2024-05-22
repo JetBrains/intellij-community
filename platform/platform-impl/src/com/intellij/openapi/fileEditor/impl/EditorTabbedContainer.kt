@@ -102,18 +102,16 @@ class EditorTabbedContainer internal constructor(
     })
     editorTabs.component.isFocusable = false
     editorTabs.component.transferHandler = MyTransferHandler()
-    editorTabs
-      .setDataProvider { dataId ->
-        when {
-          CommonDataKeys.PROJECT.`is`(dataId) -> window.manager.project
-          CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> window.getContextComposite()?.file?.takeIf { it.isValid }
-          EditorWindow.DATA_KEY.`is`(dataId) -> window
-          PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> window.getContextComposite()?.selectedEditor
-          PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> HELP_ID
-          CloseTarget.KEY.`is`(dataId) -> if (editorTabs.selectedInfo == null) null else this@EditorTabbedContainer
-          else -> null
-        }
+    editorTabs.setDataProvider(object : EdtCompatibleDataProvider {
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[CommonDataKeys.PROJECT] = window.manager.project
+        sink[CommonDataKeys.VIRTUAL_FILE] = window.getContextComposite()?.file
+        sink[EditorWindow.DATA_KEY] = window
+        sink[PlatformCoreDataKeys.FILE_EDITOR] = window.getContextComposite()?.selectedEditor
+        sink[PlatformCoreDataKeys.HELP_ID] = HELP_ID
+        sink[CloseTarget.KEY] = if (editorTabs.selectedInfo == null) null else this@EditorTabbedContainer
       }
+    })
       .setPopupGroup(
         /* popupGroup = */ { CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP) as ActionGroup },
         /* place = */ ActionPlaces.EDITOR_TAB_POPUP,

@@ -3,9 +3,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -20,9 +18,9 @@ import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +130,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : ActionCallback.DONE;
   }
 
-  private final class MyNonOpaquePanel extends JBPanelWithEmptyText implements DataProvider {
+  private final class MyNonOpaquePanel extends JBPanelWithEmptyText implements EdtDataProvider {
     MyNonOpaquePanel() {
       super(new BorderLayout());
 
@@ -140,24 +138,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (PlatformDataKeys.CONTENT_MANAGER.is(dataId) || PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && getContentCount() > 1) {
-        return ContentManagerImpl.this;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.CONTENT_MANAGER, ContentManagerImpl.this);
+      if (getContentCount() > 1) {
+        sink.set(PlatformDataKeys.NONEMPTY_CONTENT_MANAGER, ContentManagerImpl.this);
       }
-
-      for (DataProvider dataProvider : dataProviders) {
-        Object data = dataProvider.getData(dataId);
-        if (data != null) {
-          return data;
-        }
+      for (Object dataProvider : ContainerUtil.concat(dataProviders, Arrays.asList(myUI, DataManager.getDataProvider(this)))) {
+        DataSink.uiDataSnapshot(sink, dataProvider);
       }
-
-      if (myUI instanceof DataProvider) {
-        return ((DataProvider)myUI).getData(dataId);
-      }
-
-      DataProvider provider = DataManager.getDataProvider(this);
-      return provider == null ? null : provider.getData(dataId);
     }
   }
 
