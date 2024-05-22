@@ -125,7 +125,7 @@ internal class ShellCommandTreeSuggestionsProvider(
     for (generator in arg.generators) {
       val result = generatorsExecutor.execute(context, generator)
       // Wrap ordinary completion suggestions into ShellArgumentSuggestion to be able to get the argument spec in ShellCommandTreeBuilder
-      val adjustedSuggestions = result.map { if (it !is ShellCommandSpec) ShellArgumentSuggestion(it, arg) else it }
+      val adjustedSuggestions = result.map { if (it !is ShellCommandSpec && it !is ShellAliasSuggestion) ShellArgumentSuggestion(it, arg) else it }
       suggestions.addAll(adjustedSuggestions)
     }
     return suggestions
