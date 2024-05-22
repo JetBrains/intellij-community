@@ -32,6 +32,8 @@ public class SuspendManagerImpl implements SuspendManager {
   private final Deque<SuspendContextImpl> myPausedContexts = new ConcurrentLinkedDeque<>();
   private final Set<ThreadReferenceProxyImpl> myFrozenThreads = ConcurrentCollectionFactory.createConcurrentSet();
 
+  protected final Set<ThreadReferenceProxyImpl> myExplicitlyResumedThreads = ConcurrentCollectionFactory.createConcurrentSet();
+
   private final DebugProcessImpl myDebugProcess;
 
   private int suspends = 0;
@@ -148,6 +150,13 @@ public class SuspendManagerImpl implements SuspendManager {
 
     myDebugProcess.logThreads();
     popContext(context);
+    if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+      if (!ContainerUtil.exists(myPausedContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL)) {
+        myExplicitlyResumedThreads.clear();
+      } else if (eventThread != null && !ContainerUtil.exists(myEventContexts, c -> c.suspends(eventThread))) {
+        myExplicitlyResumedThreads.add(eventThread);
+      }
+    }
     Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads;
     if (resumedThreads != null) {
       for (ThreadReferenceProxyImpl thread : resumedThreads) {

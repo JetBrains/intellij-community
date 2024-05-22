@@ -778,7 +778,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
     boolean noStandardSuspendNeeded;
     if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
-      noStandardSuspendNeeded = specialSuspendProcessingForAlwaysSwitch(suspendContext, requestor, suspendManager, thread);
+      noStandardSuspendNeeded = specialSuspendProcessingForAlwaysSwitch(suspendContext, requestor, (SuspendManagerImpl)suspendManager, thread);
     }
     else {
       noStandardSuspendNeeded = requestor instanceof CustomProcessingLocatableEventRequestor customRequestor &&
@@ -792,7 +792,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private static boolean specialSuspendProcessingForAlwaysSwitch(@NotNull SuspendContextImpl suspendContext,
                                                                  @NotNull LocatableEventRequestor requestor,
-                                                                 @NotNull SuspendManager suspendManager,
+                                                                 @NotNull SuspendManagerImpl suspendManager,
                                                                  @NotNull ThreadReference thread) {
     if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
       if (!(requestor instanceof SuspendOtherThreadsRequestor)) {
@@ -815,15 +815,44 @@ public class DebugProcessEvents extends DebugProcessImpl {
       afterSwitch = c -> true;
     }
     boolean noStandardSuspendNeeded;
-    if (ContainerUtil.exists(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext)) {
+    List<SuspendContextImpl> suspendAllContexts =
+      ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+    if (!suspendAllContexts.isEmpty()) {
+      if (suspendAllContexts.size() > 1) {
+        LOG.error("Many suspend all switch contexts: " + suspendAllContexts);
+      }
+
       // Already stopped, so this is "remaining" event. Need to resume the event.
       noStandardSuspendNeeded = true;
-      if (thread.suspendCount() == 1) {
-        // There are some errors in evaluation-resume-suspend logic
-        LOG.error("This means resuming this thead to the running state");
+      DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+      ThreadReferenceProxyImpl threadProxy = debugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
+      if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
+        for (SuspendContextImpl context : suspendManager.getEventContexts()) {
+          if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL && !context.suspends(threadProxy)) {
+            suspendManager.suspendThread(context, threadProxy);
+          }
+        }
+        suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
+        suspendManager.voteResume(suspendContext);
+        SuspendContextImpl suspendAllContext = suspendAllContexts.get(0);
+        debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl c) {
+            DebuggerSession session = debugProcess.getSession();
+            DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(session, suspendAllContext, threadProxy, null);
+            DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
+                                               () -> session.getContextManager().setState(debuggerContext, DebuggerSession.State.PAUSED, DebuggerSession.Event.CONTEXT, null));
+          }
+        });
       }
-      suspendManager.voteResume(suspendContext);
-      suspendContext.getDebugProcess().notifyStoppedOtherThreads();
+      else {
+        if (thread.suspendCount() == 1) {
+          // There are some errors in evaluation-resume-suspend logic
+          LOG.error("This means resuming this thead to the running state");
+        }
+        suspendManager.voteResume(suspendContext);
+        debugProcess.notifyStoppedOtherThreads();
+      }
     }
     else {
       noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, afterSwitch);
