@@ -23,6 +23,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.remoteDev.util.ProductInfo
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
@@ -149,6 +150,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
           CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
         }
         else {
+          LOG.info("Cannot use launcher because $homePath doesn't look like a path with installation")
           null
         }
       }
@@ -165,7 +167,11 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val javaParameters = SimpleJavaParameters()
     javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
     javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
-    if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
+    val customIdeaPropertiesPath = EnvironmentUtil.getValue("JETBRAINS_CLIENT_PROPERTIES")
+    if (customIdeaPropertiesPath != null) {
+      javaParameters.vmParametersList.addProperty(PathManager.PROPERTIES_FILE, customIdeaPropertiesPath)
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
       val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
       val configDir = tempDir / "config"
       if (!configDir.exists()) {
