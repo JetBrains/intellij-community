@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
@@ -212,6 +213,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       GradleJvmResolutionUtil.setupGradleJvm(project, projectSettings, gradleVersion);
       GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, gradleVersion);
 
+      TrustedPaths.getInstance().setProjectPathTrusted(rootProjectPath, true);
       settings.linkProject(projectSettings);
     }
     if (isCreatingNewProject) {
