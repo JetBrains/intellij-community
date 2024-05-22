@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -372,11 +372,17 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         else if (aClass instanceof PsiTypeParameter) {
           pattern = "type.parameter.is.not.used";
         }
+        else if (aClass.isAnnotationType()) {
+          pattern = "annotation.interface.is.not.used";
+        }
         else if (aClass.isInterface()) {
           pattern = "interface.is.not.used";
         }
         else if (aClass.isEnum()) {
           pattern = "enum.is.not.used";
+        }
+        else if (aClass.isRecord()) {
+          pattern = "record.is.not.used";
         }
         else {
           pattern = "class.is.not.used";
