@@ -88,9 +88,9 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
-  // used externally
-  @Suppress("MemberVisibilityCanBePrivate")
   val codeVisionLifetime: Lifetime = project.createLifetime()
+
+  val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
   /**
    * Pass empty list to update ALL providers in editor
@@ -101,12 +101,7 @@ open class CodeVisionHost(val project: Project) {
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
-  @Suppress("MemberVisibilityCanBePrivate")
-  // Uses in Rider
-  public val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
-
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
-
 
   open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
@@ -115,19 +110,19 @@ open class CodeVisionHost(val project: Project) {
         val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
         liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
           if (isEditorApplicable(editor)) {
-            subscribeForFrontendEditor(editorLifetime, editor)
+            onEditorCreated(editorLifetime, editor)
           }
         }
 
         val viewService = project.service<CodeVisionView>()
         viewService.setPerAnchorLimits(
-          CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+          CodeVisionAnchorKind.entries.associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
 
 
         invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
           if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
             viewService.setPerAnchorLimits(
-              CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+              CodeVisionAnchorKind.entries.associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
         }
 
 
@@ -314,7 +309,7 @@ open class CodeVisionHost(val project: Project) {
   private fun isAllowedFileEditor(fileEditor: FileEditor?) = fileEditor is TextEditor && fileEditor !is BaseRemoteFileEditor
 
 
-  private fun subscribeForFrontendEditor(editorLifetime: Lifetime, editor: Editor) {
+  private fun onEditorCreated(editorLifetime: Lifetime, editor: Editor) {
     val context = editor.lensContext
     if (context == null || editor.document !is DocumentImpl) return
 
@@ -359,7 +354,8 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
-          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + ModalityState.stateForComponent(editor.contentComponent).asContextElement()) {
+          val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
+          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState) {
             blockingContext {
               recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
             }
@@ -377,17 +373,19 @@ open class CodeVisionHost(val project: Project) {
     context.notifyPendingLenses()
     recalculateLenses()
 
-    application.messageBus.connect(editorLifetime.createNestedDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
-                                                                                      object : FileEditorManagerListener {
-                                                                                        override fun selectionChanged(event: FileEditorManagerEvent) {
-                                                                                          if (isAllowedFileEditor(
-                                                                                              event.newEditor) && (event.newEditor as TextEditor).editor == editor && recalculateWhenVisible)
-                                                                                            recalculateLenses()
-                                                                                        }
-                                                                                      })
+    application.messageBus.connect(editorLifetime.createNestedDisposable()).subscribe(
+      FileEditorManagerListener.FILE_EDITOR_MANAGER,
+      object : FileEditorManagerListener {
+        override fun selectionChanged(event: FileEditorManagerEvent) {
+          if (isAllowedFileEditor(
+              event.newEditor) && (event.newEditor as TextEditor).editor == editor && recalculateWhenVisible)
+            recalculateLenses()
+        }
+      }
+    )
 
-    subscribeForDocumentChanges(editor, editorLifetime) { 
-      pokeEditor() 
+    subscribeForDocumentChanges(editor, editorLifetime) {
+      pokeEditor()
     }
 
     editorLifetime.onTermination {
@@ -422,35 +420,44 @@ open class CodeVisionHost(val project: Project) {
 
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
+      val isEditorInsideSettingsPanel = isInlaySettingsEditor(editor)
+      val editorOpenTimeNs = editor.getUserData(editorTrackingStart)
+
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
       val providerWhoWantToUpdate = mutableListOf<String>()
-
       var everyProviderReadyToUpdate = true
-      val inlaySettingsEditor = isInlaySettingsEditor(editor)
-      val editorOpenTimeNs = editor.getUserData(editorTrackingStart)
-      providers.forEach {
-        @Suppress("UNCHECKED_CAST")
-        it as CodeVisionProvider<Any?>
-        if (!inlaySettingsEditor && !lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
-          runSafe("shouldRecomputeForEditor for ${it.id}") {
-            if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
-              everyProviderReadyToUpdate = false
-              return@forEach
-            }
+      for (p in providers) {
+        val provider = p as CodeVisionProvider<Any?>
+        val providerId = provider.id
+        val isGroupEnabled = !lifeSettingModel.disabledCodeVisionProviderIds.contains(provider.groupId)
+
+        if (isGroupEnabled && !isEditorInsideSettingsPanel) {
+          val shouldRecompute = shouldRecomputeForEditor(editor, provider, precalculatedUiThings)
+          if (!shouldRecompute) {
+            everyProviderReadyToUpdate = false
+            continue
           }
         }
-        if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@forEach
+
+        if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(providerId)) {
+          continue
+        }
+
         ProgressManager.checkCanceled()
-        if (project.isDisposed) return@executeOnPooledThread
-        if (!inlaySettingsEditor && lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
-          if (context.hasProviderCodeVision(it.id)) {
-            providerWhoWantToUpdate.add(it.id)
-          }
-          return@forEach
+        if (project.isDisposed) {
+          return@executeOnPooledThread
         }
-        providerWhoWantToUpdate.add(it.id)
-        runSafe("computeCodeVision for ${it.id}") {
-          val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
+
+        if (!isGroupEnabled && !isEditorInsideSettingsPanel) {
+          if (context.hasProviderCodeVision(providerId)) {
+            providerWhoWantToUpdate.add(providerId)
+          }
+          continue
+        }
+
+        providerWhoWantToUpdate.add(providerId)
+        runSafe("computeCodeVision for $providerId") {
+          val state = provider.computeCodeVision(editor, precalculatedUiThings[providerId])
           if (state.isReady) {
             results.addAll(state.result)
           }
@@ -467,18 +474,18 @@ open class CodeVisionHost(val project: Project) {
 
       val previewData = CodeVisionGroupDefaultSettingModel.isEnabledInPreview(editor)
       if (previewData == false) {
-        results = results.map {
-          val richText = RichText()
-          richText.append(it.second.longPresentation, SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null))
-          val entry = RichTextCodeVisionEntry(it.second.providerId, richText)
-          it.first to entry
-        }.toMutableList()
+        results = enrichTextWithStrikeoutLine(results)
       }
 
       if (!inTestSyncMode) {
-        application.invokeLater({
-                                  calcLifetime.executeIfAlive { consumer(results, providerWhoWantToUpdate) }
-                                }, ModalityState.stateForComponent(editor.component))
+        application.invokeLater(
+          Runnable {
+            calcLifetime.executeIfAlive {
+              consumer(results, providerWhoWantToUpdate)
+            }
+          },
+          ModalityState.stateForComponent(editor.component)
+        )
       }
       else {
         consumer(results, providerWhoWantToUpdate)
@@ -538,5 +545,21 @@ open class CodeVisionHost(val project: Project) {
   private fun shouldConsiderProvider(editorOpenTimeNs: Long): Boolean {
     val oneMinute = 60_000_000_000
     return System.nanoTime() - editorOpenTimeNs < oneMinute
+  }
+
+  private fun shouldRecomputeForEditor(editor: Editor, provider: CodeVisionProvider<Any?>, uiThings: Map<String, Any?>): Boolean {
+    runSafe("shouldRecomputeForEditor for ${provider.id}") {
+      return provider.shouldRecomputeForEditor(editor, uiThings[provider.id])
+    }
+    return true
+  }
+
+  private fun enrichTextWithStrikeoutLine(results: List<Pair<TextRange, CodeVisionEntry>>): MutableList<Pair<TextRange, CodeVisionEntry>> {
+    return results.map {
+      val richText = RichText()
+      richText.append(it.second.longPresentation, SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null))
+      val entry = RichTextCodeVisionEntry(it.second.providerId, richText)
+      it.first to entry
+    }.toMutableList()
   }
 }
