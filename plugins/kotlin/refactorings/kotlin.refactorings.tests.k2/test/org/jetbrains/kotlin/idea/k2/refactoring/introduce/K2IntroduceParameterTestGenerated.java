@@ -156,6 +156,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
         public void testSingleEntrySuffix() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/stringTemplates/singleEntrySuffix.kt");
         }
+
+        @TestMetadata("singleEntrySuffixSingle.kt")
+        public void testSingleEntrySuffixSingle() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/stringTemplates/singleEntrySuffixSingle.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

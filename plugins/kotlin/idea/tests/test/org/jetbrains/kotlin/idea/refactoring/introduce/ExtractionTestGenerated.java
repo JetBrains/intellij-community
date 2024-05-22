@@ -3417,6 +3417,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testSingleEntrySuffix() throws Exception {
                 runTest("testData/refactoring/introduceParameter/stringTemplates/singleEntrySuffix.kt");
             }
+
+            @TestMetadata("singleEntrySuffixSingle.kt")
+            public void testSingleEntrySuffixSingle() throws Exception {
+                runTest("testData/refactoring/introduceParameter/stringTemplates/singleEntrySuffixSingle.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
