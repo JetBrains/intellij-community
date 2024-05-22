@@ -51,18 +51,18 @@ public class CachedValueWithParameter<P, R>(public val source: (EntityStorage, P
  *
  * As this is not a list of change operations, but a list of changes, the order of events is not defined.
  */
-public abstract class VersionedStorageChange(versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
-  public abstract val storageBefore: ImmutableEntityStorage
-  public abstract val storageAfter: ImmutableEntityStorage
+public interface VersionedStorageChange {
+  public val storageBefore: ImmutableEntityStorage
+  public val storageAfter: ImmutableEntityStorage
 
   /**
    * Get changes for some type of entity.
    *
    * There is no order in this set of changes. You can sort them using [orderToRemoveReplaceAdd] function or manually, if needed.
    */
-  public abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
+  public fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
 
-  public abstract fun getAllChanges(): Sequence<EntityChange<*>>
+  public fun getAllChanges(): Sequence<EntityChange<*>>
 }
 
 /**

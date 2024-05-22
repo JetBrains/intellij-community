@@ -142,9 +142,7 @@
 - a:toString():java.lang.String
 *f:com.intellij.platform.workspace.storage.VersionedEntityStorageKt
 - sf:orderToRemoveReplaceAdd(java.util.Collection):java.util.List
-*a:com.intellij.platform.workspace.storage.VersionedStorageChange
-- java.util.EventObject
-- <init>(com.intellij.platform.workspace.storage.VersionedEntityStorage):V
+*:com.intellij.platform.workspace.storage.VersionedStorageChange
 - a:getAllChanges():kotlin.sequences.Sequence
 - a:getChanges(java.lang.Class):java.util.List
 - a:getStorageAfter():com.intellij.platform.workspace.storage.ImmutableEntityStorage
