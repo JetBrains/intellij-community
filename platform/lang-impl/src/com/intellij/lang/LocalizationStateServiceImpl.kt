@@ -25,8 +25,13 @@ class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateCo
     this.localizationState = state
   }
 
-  override fun getLocalizationState(): LocalizationState {
-    return state
+  override fun getSelectedLocale(): String {
+    return localizationState.selectedLocale
+  }
+
+  override fun setSelectedLocale(locale: String) {
+    localizationState.lastSelectedLocale = localizationState.selectedLocale
+    localizationState.selectedLocale = locale
   }
 
 }

@@ -139,7 +139,7 @@ object LocalizationUtil {
 
   fun getLocale(): Locale {
     val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY)
-    else LocalizationStateService.getInstance()?.getLocalizationState()?.selectedLocale ?: return Locale.ENGLISH
+    else LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
     return locale
   }
