@@ -142,6 +142,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
                 // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
                 // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
                 indexOneFileOfJob(indexingJob)
+                indexingJob.oneMoreFileProcessed() // indexOneFileOfJob may throw, then this line is not executed, and this is what we need.
 
                 if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
                   // TODO: suspend, not block
@@ -202,7 +203,6 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
       throw e
     }
     catch (e: TooLargeContentException) {
-      indexingJob.oneMoreFileProcessed()
       val statistics = indexingJob.getStatistics(fileIndexingJob)
       synchronized(statistics) {
         statistics.addTooLargeForIndexingFile(e.file)
@@ -210,11 +210,9 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
       FileBasedIndexImpl.LOG.info("File: " + e.file.url + " is too large for indexing")
     }
     catch (e: FailedToLoadContentException) {
-      indexingJob.oneMoreFileProcessed()
       logFailedToLoadContentException(e)
     }
     catch (e: Throwable) {
-      indexingJob.oneMoreFileProcessed()
       FileBasedIndexImpl.LOG.error("""
   Error while indexing ${fileIndexingRequest.file.presentableUrl}
   To reindex this file IDEA has to be restarted
@@ -411,7 +409,6 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
                                        applicationTime
           )
         }
-        indexingJob.oneMoreFileProcessed()
         releaseFile(file)
       }, false)
     }
