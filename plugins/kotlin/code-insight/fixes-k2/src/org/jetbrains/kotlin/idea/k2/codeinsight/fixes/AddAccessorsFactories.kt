@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.psi.KtProperty
 object AddAccessorsFactories {
 
     val addAccessorsToUninitializedProperty =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.MustBeInitialized ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.MustBeInitialized ->
             createQuickFix(diagnostic.psi)
         }
 
     val addAccessorsToUninitializedOrAbstractProperty =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeAbstract ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrBeAbstract ->
             createQuickFix(diagnostic.psi)
         }
 

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object ReplaceCallFixFactories {
     val unsafeCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeCall ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
             val psi = diagnostic.psi
             val target = if (psi is KtBinaryExpression && psi.operationToken in KtTokens.ALL_ASSIGNMENTS) {
                 // UNSAFE_CALL for assignments (e.g., `foo.bar = value`) is reported on the entire statement (KtBinaryExpression).
@@ -46,7 +46,7 @@ object ReplaceCallFixFactories {
         }
 
     val unsafeInfixCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
             val psi = diagnostic.psi
             val target = psi.parent as? KtBinaryExpression
                 ?: return@IntentionBased emptyList()
@@ -54,7 +54,7 @@ object ReplaceCallFixFactories {
         }
 
     val unsafeOperatorCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
             val psi = diagnostic.psi
             val operationToken = when (psi) {
                 is KtOperationReferenceExpression -> psi.getReferencedNameElementType()
@@ -80,7 +80,7 @@ object ReplaceCallFixFactories {
         }
 
     val unsafeImplicitInvokeCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeImplicitInvokeCall ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeImplicitInvokeCall ->
             val target = diagnostic.psi as? KtNameReferenceExpression
                 ?: return@IntentionBased emptyList()
 

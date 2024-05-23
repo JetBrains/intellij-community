@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
  */
 @Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = allowAnalysisOnEdt {
         return allowAnalysisFromWriteAction {
             when (ktReference) {
@@ -74,7 +74,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private class ReplaceResult(val replacedElement: KtElement, val isUnQualifiable: Boolean)
 
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     @RequiresWriteLock
     override fun bindToFqName(
         simpleNameReference: KtSimpleNameReference,
@@ -230,7 +230,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         expr: KtExpression,
         context: PsiElement
     ): String {
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
             analyze(expr) {
                 return KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL).suggestExpressionNames(expr).first()
@@ -239,10 +239,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             if (ktReference is KtSymbolBasedReference) {
-                @OptIn(KtAllowAnalysisOnEdt::class)
+                @OptIn(KaAllowAnalysisOnEdt::class)
                 allowAnalysisOnEdt {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()

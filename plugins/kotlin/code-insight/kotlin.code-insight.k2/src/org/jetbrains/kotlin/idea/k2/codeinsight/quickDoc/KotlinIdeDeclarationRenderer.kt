@@ -24,23 +24,23 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationR
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KtAnnotationArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KtAnnotationListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.renderers.KtAnnotationQualifierRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtRendererTypeApproximator
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KtDeclarationModifiersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModalityModifierProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererVisibilityModifierProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtCallableParameterRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtDeclarationNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReturnTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableSignatureRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtClassTypeQualifierRenderer
@@ -105,9 +105,9 @@ internal class KotlinIdeDeclarationRenderer(
         singleTypeParameterRenderer = createSingleTypeParameterRenderer()
         typeParametersRenderer = createTypeParametersRenderer()
 
-        returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
-        propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
-        bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
+        returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+        propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
+        bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
         parameterDefaultValueRenderer = object : KtParameterDefaultValueRenderer {
             override fun renderDefaultValue(analysisSession: KtAnalysisSession, symbol: KtValueParameterSymbol, printer: PrettyPrinter) {
                 val defaultValue = with(analysisSession) { symbol.defaultValue }
@@ -121,7 +121,7 @@ internal class KotlinIdeDeclarationRenderer(
             }
         }
 
-        valueParameterRenderer = object : KtValueParameterSymbolRenderer {
+        valueParameterRenderer = object : KaValueParameterSymbolRenderer {
             override fun renderSymbol(
                 analysisSession: KtAnalysisSession,
                 symbol: KtValueParameterSymbol,
@@ -154,7 +154,7 @@ internal class KotlinIdeDeclarationRenderer(
             typeNameRenderer = createTypeNameRenderer()
             classIdRenderer = createClassIdRenderer()
             usualClassTypeRenderer = createUsualClassTypeRenderer()
-            typeApproximator = KtRendererTypeApproximator.NO_APPROXIMATION
+            typeApproximator = KaRendererTypeApproximator.NO_APPROXIMATION
             typeParameterTypeRenderer = createTypeParameterTypeRenderer()
             functionalTypeRenderer = createFunctionalTypeRenderer()
         }
@@ -258,8 +258,8 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     private fun KtDeclarationModifiersRenderer.modifiersRenderer(): KtDeclarationModifiersRenderer = with {
-        visibilityProvider = KtRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
-        modalityProvider = KtRendererModalityModifierProvider.WITH_IMPLICIT_MODALITY.onlyIf { symbol ->
+        visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
+        modalityProvider = KaRendererModalityModifierProvider.WITH_IMPLICIT_MODALITY.onlyIf { symbol ->
             when {
                 symbol is KtClassOrObjectSymbol -> !(symbol.classKind == KtClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
 

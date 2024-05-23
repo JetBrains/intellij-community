@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.OptInAnnotationWrongTargetFixUtils
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 object OptInAnnotationWrongTargetFixFactory {
 
     val optInAnnotationWrongTargetFixFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInMarkerOnWrongTarget ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInMarkerOnWrongTarget ->
             val annotationEntry = diagnostic.psi.safeAs<KtAnnotationEntry>()
                 ?: return@IntentionBased emptyList()
 

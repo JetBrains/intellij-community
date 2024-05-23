@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import com.intellij.util.containers.sequenceOfNotNull
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -17,13 +17,13 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 
 class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = null) : AbstractSuggestVariableNameMacro() {
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun suggestNames(declaration: KtCallableDeclaration): Collection<String> {
         if (declaration is KtDeclarationWithInitializer) {
             val initializer = declaration.initializer
             if (initializer != null) {
                 allowAnalysisOnEdt {
-                    @OptIn(KtAllowAnalysisFromWriteAction::class)
+                    @OptIn(KaAllowAnalysisFromWriteAction::class)
                     allowAnalysisFromWriteAction {
                         analyze(initializer) {
                             val nameValidator = KotlinDeclarationNameValidator(
@@ -42,7 +42,7 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
         }
 
         allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(declaration) {
                     val symbol = declaration.getSymbolOfTypeSafe<KtVariableLikeSymbol>()

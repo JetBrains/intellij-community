@@ -1,6 +1,6 @@
 package org.jetbrains.kotlin.idea.highlighting
 
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.highlighting.AbstractKotlinHighlightExitPointsHandlerFactory
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsI
 
 class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPointsHandlerFactory() {
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody? {
         val psi = allowAnalysisOnEdt {
             analyze(returnExpression) {
@@ -22,7 +22,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
         return psi as? KtDeclarationWithBody
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun isInlinedArgument(declaration: KtDeclarationWithBody): Boolean {
         return declaration is KtFunction && allowAnalysisOnEdt {
             analyze(declaration) {
@@ -31,7 +31,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun hasNonUnitReturnType(functionLiteral: KtFunctionLiteral): Boolean =
         allowAnalysisOnEdt {
             analyze(functionLiteral) {

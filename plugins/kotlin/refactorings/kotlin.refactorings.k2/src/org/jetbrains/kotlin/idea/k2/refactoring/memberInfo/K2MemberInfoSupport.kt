@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.memberInfo
 
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KtSuperTypesFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -17,9 +17,9 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         annotationRenderer = annotationRenderer.with {
             keywordsRenderer = KtKeywordsRenderer.NONE
-            annotationFilter = KtRendererAnnotationsFilter.NONE
-            superTypesFilter = KtSuperTypesFilter.NONE
-            propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
+            annotationFilter = KaRendererAnnotationsFilter.NONE
+            superTypesFilter = KaSuperTypesFilter.NONE
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         }
     }
 

@@ -51,7 +51,7 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             is KtScriptModule, is KtScriptDependencyModule -> emptySet()
             is NotUnderContentRootModuleByModuleInfo -> emptySet()
 
-            else -> throw KotlinExceptionWithAttachments("Unexpected ${KtModule::class.simpleName}").withAttachment("module.txt", module)
+            else -> throw KotlinExceptionWithAttachments("Unexpected ${module::class.simpleName}").withAttachment("module.txt", module)
         }
     }
 

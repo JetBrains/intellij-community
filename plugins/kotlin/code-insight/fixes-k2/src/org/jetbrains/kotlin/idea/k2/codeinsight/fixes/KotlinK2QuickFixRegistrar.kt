@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
@@ -14,75 +14,75 @@ import org.jetbrains.kotlin.idea.quickfix.*
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantModifier::class, RemoveModifierFixBase.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFixBase.removeNonRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.RepeatedModifier::class, RemoveModifierFixBase.removeNonRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFixBase.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFixBase.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.NonAbstractFunctionWithNoBody::class, AddFunctionBodyFix, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.RedundantModifier::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.RepeatedModifier::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.NonAbstractFunctionWithNoBody::class, AddFunctionBodyFix, AddModifierFix.addAbstractModifier)
 
         registerPsiQuickFixes(
-            KtFirDiagnostic.AbstractPropertyInNonAbstractClass::class,
+            KaFirDiagnostic.AbstractPropertyInNonAbstractClass::class,
             AddModifierFix.addAbstractToContainingClass,
             RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.AbstractFunctionInNonAbstractClass::class,
+            KaFirDiagnostic.AbstractFunctionInNonAbstractClass::class,
             AddModifierFix.addAbstractToContainingClass,
             RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.NonFinalMemberInFinalClass::class,
+            KaFirDiagnostic.NonFinalMemberInFinalClass::class,
             AddModifierFix.addOpenToContainingClass,
             RemoveModifierFixBase.removeOpenModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.NonFinalMemberInObject::class,
+            KaFirDiagnostic.NonFinalMemberInObject::class,
             RemoveModifierFixBase.removeOpenModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.PrivateSetterForOpenProperty::class,
+            KaFirDiagnostic.PrivateSetterForOpenProperty::class,
             AddModifierFix.addFinalToProperty,
             RemoveModifierFixBase.removePrivateModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.PrivateSetterForAbstractProperty::class,
+            KaFirDiagnostic.PrivateSetterForAbstractProperty::class,
             RemoveModifierFixBase.removePrivateModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.NestedClassNotAllowed::class,
+            KaFirDiagnostic.NestedClassNotAllowed::class,
             AddModifierFix.addInnerModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.WrongModifierTarget::class,
+            KaFirDiagnostic.WrongModifierTarget::class,
             RemoveModifierFixBase.removeNonRedundantModifier,
             ChangeVariableMutabilityFix.CONST_VAL_FACTORY
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.AbstractMemberNotImplemented::class,
+            KaFirDiagnostic.AbstractMemberNotImplemented::class,
             AddModifierFix.addAbstractModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.AbstractClassMemberNotImplemented::class,
+            KaFirDiagnostic.AbstractClassMemberNotImplemented::class,
             AddModifierFix.addAbstractModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.VirtualMemberHidden::class,
+            KaFirDiagnostic.VirtualMemberHidden::class,
             AddModifierFix.addOverrideModifier
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.NonDataClassJvmRecord::class,
+            KaFirDiagnostic.NonDataClassJvmRecord::class,
             AddModifierFix.addDataModifier
         )
         registerFactory(AddDataModifierFixFactory.addDataModifierFixFactory)
         registerPsiQuickFixes(
-            KtFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters::class,
+            KaFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters::class,
             RemoveModifierFixBase.removeAbstractModifier
         )
-        registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnLoopParameter::class, RemoveValVarFromParameterFix)
-        registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnFunParameter::class, RemoveValVarFromParameterFix)
-        registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnCatchParameter::class, RemoveValVarFromParameterFix)
-        registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnSecondaryConstructorParameter::class, RemoveValVarFromParameterFix)
+        registerPsiQuickFixes(KaFirDiagnostic.ValOrVarOnLoopParameter::class, RemoveValVarFromParameterFix)
+        registerPsiQuickFixes(KaFirDiagnostic.ValOrVarOnFunParameter::class, RemoveValVarFromParameterFix)
+        registerPsiQuickFixes(KaFirDiagnostic.ValOrVarOnCatchParameter::class, RemoveValVarFromParameterFix)
+        registerPsiQuickFixes(KaFirDiagnostic.ValOrVarOnSecondaryConstructorParameter::class, RemoveValVarFromParameterFix)
         registerFactory(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
         registerFactory(MakeSuperTypeOpenFixFactory.makeUpperBoundOpenFixFactory)
         registerFactory(AddFunModifierFixFactory.addFunModifierFixFactory)
@@ -100,17 +100,17 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstract::class, AddModifierFix.addAbstractModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class, AddModifierFix.addAbstractModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addAbstractModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrBeAbstract::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addAbstractModifier)
     }
 
     private val addFinal = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinal::class, AddModifierFix.addFinalToProperty)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class, AddModifierFix.addFinalToProperty)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addFinalToProperty)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrBeFinal::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrBeFinalWarning::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addFinalToProperty)
     }
 
     private val addInline = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -119,7 +119,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddInlineModifierFixFactories.inlineSuspendFunctionTypeUnsupported)
         registerFactory(MakeTypeParameterReifiedAndFunctionInlineFixFactory.cannotCheckForErasedFactory)
         registerFactory(AddInlineToFunctionFixFactories.illegalInlineParameterModifierFactory)
-        registerPsiQuickFixes(KtFirDiagnostic.ReifiedTypeParameterNoInline::class, AddModifierFix.addInlineToFunctionWithReified)
+        registerPsiQuickFixes(KaFirDiagnostic.ReifiedTypeParameterNoInline::class, AddModifierFix.addInlineToFunctionWithReified)
     }
 
     private val changeToLabeledReturn = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -147,9 +147,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddAccessorsFactories.addAccessorsToUninitializedProperty)
         registerFactory(AddAccessorsFactories.addAccessorsToUninitializedOrAbstractProperty)
 
-        registerPsiQuickFixes(KtFirDiagnostic.LocalVariableWithTypeParameters::class, RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
+        registerPsiQuickFixes(KaFirDiagnostic.LocalVariableWithTypeParameters::class, RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
         registerPsiQuickFixes(
-            KtFirDiagnostic.LocalVariableWithTypeParametersWarning::class,
+            KaFirDiagnostic.LocalVariableWithTypeParametersWarning::class,
             RemovePsiElementSimpleFix.RemoveTypeParametersFactory
         )
     }
@@ -167,46 +167,46 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ImportQuickFix.invisibleReferenceFactory)
-        registerPsiQuickFixes(KtFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
-        registerPsiQuickFixes(KtFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
+        registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
+        registerPsiQuickFixes(KaFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.VarOverriddenByVal::class, ChangeVariableMutabilityFix.VAR_OVERRIDDEN_BY_VAL_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.VarAnnotationParameter::class, ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.ValWithSetter::class, ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.VarOverriddenByVal::class, ChangeVariableMutabilityFix.VAR_OVERRIDDEN_BY_VAL_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.VarAnnotationParameter::class, ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.InapplicableLateinitModifier::class, ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.ValWithSetter::class, ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
         registerFactory(ChangeVariableMutabilityFix.VAL_REASSIGNMENT)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitialized::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinal::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitialized::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrBeFinal::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
         registerPsiQuickFixes(
-            KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class,
+            KaFirDiagnostic.MustBeInitializedOrBeFinalWarning::class,
             ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
         )
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstract::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KaFirDiagnostic.MustBeInitializedOrBeAbstract::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
         registerPsiQuickFixes(
-            KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class,
-            ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
-        )
-        registerPsiQuickFixes(
-            KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class,
+            KaFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class,
             ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class,
+            KaFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class,
             ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
         )
-        registerPsiQuickFixes(KtFirDiagnostic.VolatileOnValue::class, ChangeVariableMutabilityFix.VOLATILE_ON_VALUE_FACTORY)
+        registerPsiQuickFixes(
+            KaFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class,
+            ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
+        )
+        registerPsiQuickFixes(KaFirDiagnostic.VolatileOnValue::class, ChangeVariableMutabilityFix.VOLATILE_ON_VALUE_FACTORY)
     }
 
     private val expressions = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ReplaceWithDotCallFixFactory.replaceWithDotCallFactory)
-        registerPsiQuickFixes(KtFirDiagnostic.UnnecessaryNotNullAssertion::class, RemoveExclExclCallFix)
-        registerPsiQuickFixes(KtFirDiagnostic.UselessElvis::class, RemoveUselessElvisFix)
-        registerPsiQuickFixes(KtFirDiagnostic.UselessElvisRightIsNull::class, RemoveUselessElvisFix)
-        registerPsiQuickFixes(KtFirDiagnostic.UselessCast::class, RemoveUselessCastFix)
-        registerPsiQuickFixes(KtFirDiagnostic.UselessIsCheck::class, RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
+        registerPsiQuickFixes(KaFirDiagnostic.UnnecessaryNotNullAssertion::class, RemoveExclExclCallFix)
+        registerPsiQuickFixes(KaFirDiagnostic.UselessElvis::class, RemoveUselessElvisFix)
+        registerPsiQuickFixes(KaFirDiagnostic.UselessElvisRightIsNull::class, RemoveUselessElvisFix)
+        registerPsiQuickFixes(KaFirDiagnostic.UselessCast::class, RemoveUselessCastFix)
+        registerPsiQuickFixes(KaFirDiagnostic.UselessIsCheck::class, RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
         registerFactory(ReplaceCallFixFactories.unsafeCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeInfixCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeOperatorCallFactory)
@@ -227,10 +227,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(WrapWithSafeLetCallFixFactories.forUnsafeOperatorCall)
         registerFactory(WrapWithSafeLetCallFixFactories.forArgumentTypeMismatch)
 
-        registerPsiQuickFixes(KtFirDiagnostic.NullableSupertype::class, RemoveNullableFix.removeForSuperType)
-        registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, RemoveNullableFix.removeForLateInitProperty)
+        registerPsiQuickFixes(KaFirDiagnostic.NullableSupertype::class, RemoveNullableFix.removeForSuperType)
+        registerPsiQuickFixes(KaFirDiagnostic.InapplicableLateinitModifier::class, RemoveNullableFix.removeForLateInitProperty)
         registerPsiQuickFixes(
-            KtFirDiagnostic.TypeArgumentsRedundantInSuperQualifier::class,
+            KaFirDiagnostic.TypeArgumentsRedundantInSuperQualifier::class,
             RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory
         )
 
@@ -240,10 +240,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
         // TODO: NON_EXHAUSTIVE_WHEN[_ON_SEALED_CLASS] will be replaced in future. We need to register the fix for those diagnostics as well
-        registerPsiQuickFixes(KtFirDiagnostic.NoElseInWhen::class, AddWhenElseBranchFix)
+        registerPsiQuickFixes(KaFirDiagnostic.NoElseInWhen::class, AddWhenElseBranchFix)
         registerFactory(AddWhenRemainingBranchFixFactories.noElseInWhen)
-        registerPsiQuickFixes(KtFirDiagnostic.CommaInWhenConditionWithoutArgument::class, CommaInWhenConditionWithoutArgumentFix)
-        registerPsiQuickFixes(KtFirDiagnostic.SenselessNullInWhen::class, RemoveWhenBranchFix)
+        registerPsiQuickFixes(KaFirDiagnostic.CommaInWhenConditionWithoutArgument::class, CommaInWhenConditionWithoutArgumentFix)
+        registerPsiQuickFixes(KaFirDiagnostic.SenselessNullInWhen::class, RemoveWhenBranchFix)
     }
 
     private val typeMismatch = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -286,18 +286,18 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     private val vararg = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(
-            KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationError::class,
+            KaFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationError::class,
             ReplaceWithArrayCallInAnnotationFix
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationWarning::class,
+            KaFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationWarning::class,
             ReplaceWithArrayCallInAnnotationFix
         )
         registerFactory(SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory.assigningSingleElementToVarargInNamedFormFunction)
         registerFactory(SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory.assigningSingleElementToVarargInNamedFormFunctionWarning)
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInAnnotation::class, ReplaceWithArrayCallInAnnotationFix)
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInFunction::class, RemoveRedundantSpreadOperatorFix)
-        registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
+        registerPsiQuickFixes(KaFirDiagnostic.RedundantSpreadOperatorInNamedFormInAnnotation::class, ReplaceWithArrayCallInAnnotationFix)
+        registerPsiQuickFixes(KaFirDiagnostic.RedundantSpreadOperatorInNamedFormInFunction::class, RemoveRedundantSpreadOperatorFix)
+        registerPsiQuickFixes(KaFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
     }
 
     private val visibility = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -309,43 +309,43 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(
-            KtFirDiagnostic.InapplicableTargetOnPropertyWarning::class,
+            KaFirDiagnostic.InapplicableTargetOnPropertyWarning::class,
             RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
             RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.InapplicableTargetOnProperty::class,
+            KaFirDiagnostic.InapplicableTargetOnProperty::class,
             RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
             RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.DataClassCopyVisibilityWillBeChangedWarning::class,
+            KaFirDiagnostic.DataClassCopyVisibilityWillBeChangedWarning::class,
             AddAnnotationFix.AddConsistentCopyVisibilityAnnotationFactory,
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.DataClassCopyVisibilityWillBeChangedError::class,
+            KaFirDiagnostic.DataClassCopyVisibilityWillBeChangedError::class,
             AddAnnotationFix.AddConsistentCopyVisibilityAnnotationFactory,
         )
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
-        registerPsiQuickFixes(KtFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
-        registerPsiQuickFixes(KtFirDiagnostic.DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations::class, RemoveAnnotationFix)
+        registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
+        registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
+        registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations::class, RemoveAnnotationFix)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(
-            KtFirDiagnostic.OptInMarkerWithWrongRetention::class,
+            KaFirDiagnostic.OptInMarkerWithWrongRetention::class,
             RemoveAnnotationFix.RemoveForbiddenOptInRetention
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.OptInWithoutArguments::class,
+            KaFirDiagnostic.OptInWithoutArguments::class,
             RemoveAnnotationFix
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.OptInMarkerWithWrongTarget::class,
+            KaFirDiagnostic.OptInMarkerWithWrongTarget::class,
             RemoveWrongOptInAnnotationTargetFix
         )
         registerPsiQuickFixes(
-            KtFirDiagnostic.OptInMarkerOnWrongTarget::class,
+            KaFirDiagnostic.OptInMarkerOnWrongTarget::class,
             RemoveAnnotationFix
         )
 

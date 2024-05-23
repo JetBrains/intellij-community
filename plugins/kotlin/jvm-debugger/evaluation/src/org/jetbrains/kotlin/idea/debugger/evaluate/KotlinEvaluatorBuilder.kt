@@ -31,9 +31,9 @@ import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacility
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -276,11 +276,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         return analyze(codeFragment) {
             try {
-                val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
                 when (val result = compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
-                    is KtCompilationResult.Success -> {
+                    is KaCompilationResult.Success -> {
                         logCompilation(codeFragment)
 
                         val classes: List<ClassToLoad> = result.output
@@ -294,7 +294,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         val ideCompilationResult = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
                         createCompiledDataDescriptor(ideCompilationResult)
                     }
-                    is KtCompilationResult.Failure -> {
+                    is KaCompilationResult.Failure -> {
                         val firstError = result.errors.first()
                         throw EvaluateExceptionUtil.createEvaluateException(firstError.defaultMessage)
                     }
@@ -310,7 +310,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun computeCodeFragmentParameterInfo(result: KtCompilationResult.Success): K2CodeFragmentParameterInfo {
+    private fun computeCodeFragmentParameterInfo(result: KaCompilationResult.Success): K2CodeFragmentParameterInfo {
         val parameters = ArrayList<CodeFragmentParameter.Dumb>(result.capturedValues.size)
         val crossingBounds = HashSet<CodeFragmentParameter.Dumb>()
 

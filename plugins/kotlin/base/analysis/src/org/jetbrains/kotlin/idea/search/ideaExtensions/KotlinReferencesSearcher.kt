@@ -132,7 +132,8 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
     ) : RequestResultProcessor(myTarget) {
         override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
             val importStatement = element.parent as? KtImportDirective ?: return true
-            val importAlias = importStatement.alias?.name ?: return true
+            val alias = importStatement.alias ?: return true
+            val importAlias = alias.name ?: return true
 
             val reference = importStatement.importedReference?.getQualifiedElementSelector()?.mainReference ?: return true
             if (!reference.isReferenceTo(myTarget)) {
@@ -141,7 +142,7 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
 
             val collector = SearchRequestCollector(mySession)
             val fileScope: SearchScope = LocalSearchScope(element.containingFile)
-            collector.searchWord(importAlias, fileScope, UsageSearchContext.IN_CODE, true, myTarget)
+            collector.searchWord(importAlias, fileScope, UsageSearchContext.IN_CODE, true, alias)
             return PsiSearchHelper.getInstance(element.project).processRequests(collector, consumer)
         }
     }

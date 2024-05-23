@@ -33,6 +33,7 @@ internal object KotlinTypedHandlerHelper {
         val tokenType = iterator.tokenType
         if (KtTokens.COMMENTS.contains(tokenType) ||
             tokenType === KtTokens.REGULAR_STRING_PART ||
+            tokenType === KtTokens.INTERPOLATION_PREFIX ||
             tokenType === KtTokens.OPEN_QUOTE ||
             tokenType === KtTokens.CHARACTER_LITERAL
         ) {

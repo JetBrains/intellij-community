@@ -16,12 +16,12 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererVisibilityModifierProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -187,13 +187,13 @@ class ImportQuickFix(
     }
 
     companion object {
-        val invisibleReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.InvisibleReference ->
+        val invisibleReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InvisibleReference ->
             getFixes(diagnostic.psi)
         }
 
         // this factory is used only for importing references on the fly; in all other cases import fixes for unresolved references
         // are created by [org.jetbrains.kotlin.idea.quickfix.KotlinFirUnresolvedReferenceQuickFixProvider]
-        val unresolvedReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnresolvedReference ->
+        val unresolvedReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
             getFixes(diagnostic.psi)
         }
 
@@ -251,12 +251,12 @@ class ImportQuickFix(
 
         private val renderer: KtDeclarationRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
-                visibilityProvider = KtRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
+                visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
             }
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter.NONE
+                annotationFilter = KaRendererAnnotationsFilter.NONE
             }
-            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
+            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
         }
 
 

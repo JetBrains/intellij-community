@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
@@ -55,7 +55,7 @@ class ChangeVariableMutabilityFix(
                 listOf(ChangeVariableMutabilityFix(psiElement.property, true))
             }
 
-        val VAL_REASSIGNMENT = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ValReassignment ->
+        val VAL_REASSIGNMENT = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ValReassignment ->
             (diagnostic.variable.psi as? KtValVarKeywordOwner)?.takeIf(PsiElement::isWritable)?.let {
                 listOf(ChangeVariableMutabilityFix(it, makeVar = true))
             } ?: emptyList()

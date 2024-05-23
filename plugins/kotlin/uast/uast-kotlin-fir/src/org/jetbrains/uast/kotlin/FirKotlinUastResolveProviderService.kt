@@ -8,7 +8,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
@@ -267,13 +267,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         return analyzeForUast(ktSimpleNameExpression) {
-            val variableAccessCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>() ?: return null
+            val variableAccessCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KaSimpleVariableAccessCall>() ?: return null
             val propertySymbol = variableAccessCall.symbol as? KtSyntheticJavaPropertySymbol ?: return null
             when (variableAccessCall.simpleAccess) {
-                is KtSimpleVariableAccess.Read -> {
+                is KaSimpleVariableAccess.Read -> {
                     toPsiMethod(propertySymbol.javaGetterSymbol, ktSimpleNameExpression)
                 }
-                is KtSimpleVariableAccess.Write -> {
+                is KaSimpleVariableAccess.Write -> {
                     toPsiMethod(propertySymbol.javaSetterSymbol?: return null, ktSimpleNameExpression)
                 }
             }
@@ -783,7 +783,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyzeForUast(ktExpression) {
             return ktExpression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
-                ?.takeUnless { it is KtConstantValue.KtErrorConstantValue }?.value
+                ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
         }
     }
 }

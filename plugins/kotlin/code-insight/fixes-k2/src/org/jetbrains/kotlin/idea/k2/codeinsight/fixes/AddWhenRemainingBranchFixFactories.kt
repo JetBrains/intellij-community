@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 
 object AddWhenRemainingBranchFixFactories {
 
-    val noElseInWhen = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoElseInWhen ->
+    val noElseInWhen = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoElseInWhen ->
         val whenExpression = diagnostic.psi
         val subjectExpression = whenExpression.subjectExpression
             ?: return@IntentionBased emptyList()

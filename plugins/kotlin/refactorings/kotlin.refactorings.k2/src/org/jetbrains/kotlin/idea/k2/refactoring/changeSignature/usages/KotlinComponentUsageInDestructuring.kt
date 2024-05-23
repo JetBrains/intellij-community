@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEntry) :
   UsageInfo(element), KotlinBaseChangeSignatureUsage {
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,

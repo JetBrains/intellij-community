@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils.createContext
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 object ConvertToBlockBodyFixFactory {
 
     val convertToBlockBodyFixFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ReturnInFunctionWithExpressionBody ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBody ->
             val element = diagnostic.psi
             val declaration = element.getStrictParentOfType<KtDeclarationWithBody>()
                 ?: return@IntentionBased emptyList()

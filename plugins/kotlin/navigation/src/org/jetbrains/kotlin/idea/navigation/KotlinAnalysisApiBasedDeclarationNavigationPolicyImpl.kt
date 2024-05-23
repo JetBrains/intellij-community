@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -226,9 +226,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     // Maybe called from EDT by IJ Platfrom :(
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun renderTypesForComparasion(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(declaration) {
                 buildString {

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -18,17 +18,17 @@ import org.jetbrains.kotlin.psi.KtFunction
 
 object SpecifyExplicitTypeFixFactories {
     val ambiguousAnonymousTypeInferred =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AmbiguousAnonymousTypeInferred ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AmbiguousAnonymousTypeInferred ->
             createQuickFix(diagnostic.psi)
         }
 
     val noExplicitReturnTypeInApiMode =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoExplicitReturnTypeInApiMode ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoExplicitReturnTypeInApiMode ->
             createQuickFix(diagnostic.psi)
         }
 
     val noExplicitReturnTypeInApiModeWarning =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoExplicitReturnTypeInApiModeWarning ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoExplicitReturnTypeInApiModeWarning ->
             createQuickFix(diagnostic.psi)
         }
 

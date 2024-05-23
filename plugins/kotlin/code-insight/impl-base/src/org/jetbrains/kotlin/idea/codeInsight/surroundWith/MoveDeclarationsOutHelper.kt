@@ -7,8 +7,8 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -115,10 +115,10 @@ private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
     return assignment
 }
 
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 private fun createVariableDeclaration(property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
     allowAnalysisOnEdt {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(property) {
                 val propertyType = property.getReturnKtType()
@@ -146,7 +146,7 @@ private fun createVariableDeclaration(property: KtProperty, generateDefaultIniti
 
 private fun needToDeclareOut(element: PsiElement, lastStatementOffset: Int, scope: SearchScope): Boolean {
     if (element is KtProperty || element is KtClassOrObject || element is KtFunction) {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         val refs = allowAnalysisFromWriteAction { ReferencesSearch.search(element, scope, false).toArray(PsiReference.EMPTY_ARRAY) }
         if (refs.isNotEmpty()) {
             val lastRef = refs.maxByOrNull { it.element.textOffset } ?: return false

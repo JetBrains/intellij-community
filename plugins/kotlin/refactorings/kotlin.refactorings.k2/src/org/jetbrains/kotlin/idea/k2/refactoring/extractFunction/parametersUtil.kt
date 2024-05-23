@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
@@ -522,8 +522,8 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
         fun hasResolveErrors(): Boolean =
             analyze(newRef) { newRef.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS) }
                 .any {
-                    it.diagnosticClass == KtFirDiagnostic.UnresolvedReferenceWrongReceiver::class ||
-                            it.diagnosticClass == KtFirDiagnostic.UnresolvedReference::class
+                    it.diagnosticClass == KaFirDiagnostic.UnresolvedReferenceWrongReceiver::class ||
+                            it.diagnosticClass == KaFirDiagnostic.UnresolvedReference::class
                 }
         if ((isBadRef || hasResolveErrors() || smartCast != null) &&
             !originalResolveResult.declaration.isInsideOf(physicalElements)

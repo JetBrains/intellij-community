@@ -23,7 +23,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -100,7 +100,7 @@ private val LOGGER_CLASS_ID = Logger::class.qualifiedName?.let { ClassId.topLeve
  * This property can be called from the EDT by [CreateObjectAndMoveProhibitedDeclarationsQuickFix],
  * so we have to resort to [allowAnalysisOnEdt].
  */
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 private val KtProperty.isLoggerInstance: Boolean
   get() = allowAnalysisOnEdt {
     val property = this

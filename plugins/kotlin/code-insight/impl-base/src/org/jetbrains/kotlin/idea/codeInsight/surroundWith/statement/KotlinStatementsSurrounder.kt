@@ -7,13 +7,13 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 
 abstract class KotlinStatementsSurrounder : ModCommandSurrounder() {
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     final override fun isApplicable(elements: Array<PsiElement>): Boolean {
         if (elements.isEmpty()) {
             return false

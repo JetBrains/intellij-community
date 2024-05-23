@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
@@ -14,15 +14,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object AddExclExclCallFixFactories {
 
-    val unsafeCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeCall ->
+    val unsafeCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeInfixCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
+    val unsafeInfixCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeOperatorCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
+    val unsafeOperatorCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
@@ -89,7 +89,7 @@ object AddExclExclCallFixFactories {
         return listOfNotNull(target.asAddExclExclCallFix(hasImplicitReceiver = hasImplicitReceiver))
     }
 
-    val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.IteratorOnNullable ->
+    val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
         val expression = diagnostic.psi as? KtExpression
             ?: return@IntentionBased emptyList()
         val type = expression.getKtType()

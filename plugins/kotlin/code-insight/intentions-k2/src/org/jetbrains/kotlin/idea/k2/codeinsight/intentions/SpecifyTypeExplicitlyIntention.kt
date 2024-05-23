@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
@@ -32,9 +32,9 @@ internal class SpecifyTypeExplicitlyIntention:
     private fun skip(element: KtCallableDeclaration): Boolean =
         element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .any { diagnostic ->
-                diagnostic is KtFirDiagnostic.AmbiguousAnonymousTypeInferred
-                        || diagnostic is KtFirDiagnostic.PropertyWithNoTypeNoInitializer
-                        || diagnostic is KtFirDiagnostic.MustBeInitialized
+                diagnostic is KaFirDiagnostic.AmbiguousAnonymousTypeInferred
+                        || diagnostic is KaFirDiagnostic.PropertyWithNoTypeNoInitializer
+                        || diagnostic is KaFirDiagnostic.MustBeInitialized
             }
 
     override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
