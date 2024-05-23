@@ -16,15 +16,15 @@ public final class LombokBasicsWithExplicitImport {
 @<info descr="Not resolved until the project is fully loaded">Getter</info>
 @<info descr="Not resolved until the project is fully loaded">SuperBuilder</info>
 class UserDao extends UserId {
-  <info descr="Not resolved until the project is fully loaded">private final String name;</info>
-  <info descr="Not resolved until the project is fully loaded">private final String surname;</info>
-  <info descr="Not resolved until the project is fully loaded">private final String email;</info>
+  <info descr="Not initialized until the project is fully loaded">private final String name;</info>
+  <info descr="Not initialized until the project is fully loaded">private final String surname;</info>
+  <info descr="Not initialized until the project is fully loaded">private final String email;</info>
 }
 
 @<info descr="Not resolved until the project is fully loaded">SuperBuilder</info>
 abstract class UserId {
-  <info descr="Not resolved until the project is fully loaded">private final long id;</info>
-  <info descr="Not resolved until the project is fully loaded">private final String info;</info>
+  <info descr="Not initialized until the project is fully loaded">private final long id;</info>
+  <info descr="Not initialized until the project is fully loaded">private final String info;</info>
 }
 
 class UserChain {

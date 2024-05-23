@@ -280,13 +280,22 @@ final class IncompleteModelUtil {
       .descriptionAndTooltip(JavaErrorBundle.message("incomplete.project.state.pending.reference"));
   }
 
+  /**
+   * @param elementToHighlight element to attach the highlighting
+   * @return HighlightInfo builder that adds a pending initizializing highlight
+   */
+  static HighlightInfo.@NotNull Builder getPendingInitizializingHighlightInfo(@NotNull PsiElement elementToHighlight) {
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.PENDING_REFERENCE).range(elementToHighlight)
+      .descriptionAndTooltip(JavaErrorBundle.message("incomplete.project.state.pending.initalizing"));
+  }
+
   static boolean canBeAugmented(@Nullable PsiClass targetClass) {
     if (targetClass == null) return false;
     return CachedValuesManager.getProjectPsiDependentCache(targetClass,
                                                            psiClass -> PsiAugmentProvider.canBeAugmentedForIncompleteMode(psiClass));
   }
 
-  static boolean canBeUsedImportImplicitly(@Nullable PsiImportStatementBase importStatementBase) {
+  private static boolean canBeUsedImportImplicitly(@Nullable PsiImportStatementBase importStatementBase) {
     if (importStatementBase == null) return false;
     return PsiAugmentProvider.canBeUsedImportForIncompleteMode(importStatementBase);
   }
