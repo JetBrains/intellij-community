@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
+import com.intellij.openapi.editor.impl.stickyLines.StickyLineComponent.Companion.EDITOR_LANGUAGE
 import com.intellij.openapi.editor.state.CustomOutValueModifier
 import com.intellij.openapi.editor.state.ObservableState
 import com.intellij.openapi.editor.state.ObservableStateListener
@@ -338,6 +339,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     refresh(::softMargins)
     refresh(::rightMargin)
     refresh(::myStickyLinesShownForLanguage)
+    editor?.putUserData(EDITOR_LANGUAGE, language)
   }
 }
 
