@@ -17,6 +17,8 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.ListNumberingType
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -24,17 +26,22 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class IncorrectListNumberingInspection: LocalInspectionTool() {
+  private val settings = MarkdownCodeInsightSettings.getInstance()
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (settings.state.listNumberingType == ListNumberingType.PREVIOUS_NUMBER) return PsiElementVisitor.EMPTY_VISITOR
+
     return object: MarkdownElementVisitor() {
       override fun visitList(list: MarkdownList) {
         super.visitList(list)
         if (!list.hasType(MarkdownElementTypes.ORDERED_LIST)) {
           return
         }
-        val quickFix by lazy { ListNumberingFix(list) }
+        val listNumberingIsSequential = settings.state.listNumberingType == ListNumberingType.SEQUENTIAL
+        val quickFix by lazy { ListNumberingFix(list, listNumberingIsSequential) }
         for ((index, item) in list.items.withIndex()) {
           val actualNumber = item.obtainMarkerNumber() ?: continue
-          val expectedNumber = index + 1
+          val expectedNumber = if (listNumberingIsSequential) index + 1 else 1
           if (expectedNumber != actualNumber) {
             val markerElement = item.markerElement!!
             holder.registerProblem(
@@ -49,7 +56,7 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
     }
   }
 
-  private class ListNumberingFix(list: MarkdownList): LocalQuickFixOnPsiElement(list) {
+  private class ListNumberingFix(list: MarkdownList, private val sequentially: Boolean): LocalQuickFixOnPsiElement(list) {
     override fun getFamilyName(): String {
       return text
     }
@@ -65,7 +72,7 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
         thisLogger().error("Failed to find document for the quick fix")
         return
       }
-      startElement.renumberInBulk(document, recursive = false, restart = true, inWriteAction = false)
+      startElement.renumberInBulk(document, recursive = false, restart = true, inWriteAction = false, sequentially = sequentially)
     }
   }
 }
