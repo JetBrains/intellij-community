@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.command.CommandProcessor
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.util.Key
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -320,7 +322,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
               UndoConfirmationPolicy.DEFAULT,
               editor.document
             )
-            UIEventLogger.StickyLineNavigate.log(editor.project)
+            UIEventLogger.StickyLineNavigate.log(editor.project, editor.getUserData(EDITOR_LANGUAGE))
           }
         }
         else -> throwUnhandledEvent(event)
@@ -345,5 +347,9 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     private fun throwUnhandledEvent(event: MouseEvent) {
       throw IllegalArgumentException("unhandled event $event")
     }
+  }
+
+  internal companion object {
+    val EDITOR_LANGUAGE: Key<Language> = Key("editor.settings.language")
   }
 }
