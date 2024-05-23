@@ -27,8 +27,7 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
                                              dict_keys, STATE_RUN,
                                              NEXT_VALUE_SEPARATOR, IS_WINDOWS,
-                                             get_current_thread_id,
-                                             HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME)
+                                             get_current_thread_id)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydev_imps._pydev_saved_modules import threading
 import json
@@ -155,6 +154,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     break
 
             elif cmd_id == CMD_THREAD_RUN:
+                py_db.maybe_kill_active_value_resolve_threads()
                 threads = []
                 if text.strip() == '*':
                     threads = pydevd_utils.get_non_pydevd_threads()
@@ -176,10 +176,7 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                     cmd_id == CMD_STEP_INTO_MY_CODE:
                 # we received some command to make a single step
-
-                if HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME:
-                    # The variable values can be stale, abrupt active resolve threads.
-                    py_db.kill_active_value_resolve_threads()
+                py_db.maybe_kill_active_value_resolve_threads()
 
                 t = pydevd_find_thread_by_id(text)
                 if t:
@@ -191,6 +188,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     sys.stderr.write("Can't make tasklet step command: %s\n" % (text,))
 
             elif cmd_id in (CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_SMART_STEP_INTO):
+                py_db.maybe_kill_active_value_resolve_threads()
                 if cmd_id == CMD_SMART_STEP_INTO:
                     # we received a smart step into command
                     thread_id, frame_id, line, func_name, call_order, start_line, end_line = text.split('\t', 6)
