@@ -138,7 +138,8 @@ public open class VirtualFileIndex internal constructor(
 
   public class MutableVirtualFileIndex private constructor(
     // `@Suppress("RedundantVisibilityModifier")` is used to keep the `internal` modifier and make ApiChecker happy
-    //  Otherwise it thinks that these fields are exposed to the public
+    //  Otherwise it thinks that these fields are exposed to the public.
+    //  This supress can be removed once IJ platform will migrate to kotlin 2.0
     //
     // Do not write to [entityId2VirtualFileUrl] and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
