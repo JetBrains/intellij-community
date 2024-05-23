@@ -19,9 +19,8 @@ class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
-  private val button: StripeButtonComponent by lazy {
-    driver.cast(component, StripeButtonComponent::class)
-  }
+  private val button: StripeButtonComponent
+    get() = driver.cast(component, StripeButtonComponent::class)
 
   fun isSelected() = driver.withContext(OnDispatcher.EDT) {
     button.isSelected()
