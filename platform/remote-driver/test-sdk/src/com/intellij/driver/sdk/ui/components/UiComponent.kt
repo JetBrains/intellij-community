@@ -9,8 +9,8 @@ import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
-import com.intellij.driver.sdk.ui.remote.RobotService
-import com.intellij.driver.sdk.ui.remote.RobotServiceProvider
+import com.intellij.driver.sdk.ui.remote.Robot
+import com.intellij.driver.sdk.ui.remote.RobotProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.waitFor
 import java.awt.Color
@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 data class ComponentData(val xpath: String,
                          val driver: Driver,
                          val searchService: SearchService,
-                         val robotServiceProvider: RobotServiceProvider,
+                         val robotProvider: RobotProvider,
                          val parentSearchContext: SearchContext,
                          val foundComponent: Component?)
 
@@ -32,7 +32,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     get() = data.foundComponent ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull() ?: findThisComponent().apply { cachedComponent = this }
 
   fun setFocus() {
-    robotService.robot.focus(this.component)
+    robot.focus(this.component)
   }
 
   private fun findThisComponent(): Component {
@@ -47,9 +47,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   override val driver: Driver = data.driver
   override val searchService: SearchService = data.searchService
-  override val robotServiceProvider: RobotServiceProvider = data.robotServiceProvider
-  override val robotService: RobotService by lazy {
-    data.robotServiceProvider.getRobotServiceFor(component)
+  override val robotProvider: RobotProvider = data.robotProvider
+
+  val robot: Robot by lazy {
+    data.robotProvider.getRobotFor(component)
   }
 
   override val searchContext: SearchContext = object : SearchContext {
@@ -168,41 +169,41 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   // Mouse
   fun click(point: Point? = null) {
     if (point != null) {
-      robotService.robot.click(component, point)
+      robot.click(component, point)
     }
     else {
-      robotService.robot.click(component)
+      robot.click(component)
     }
   }
 
   fun doubleClick(point: Point? = null) {
     if (point != null) {
-      robotService.robot.click(component, point, RemoteMouseButton.LEFT, 2)
+      robot.click(component, point, RemoteMouseButton.LEFT, 2)
     }
     else {
-      robotService.robot.doubleClick(component)
+      robot.doubleClick(component)
     }
   }
 
   fun rightClick(point: Point? = null) {
     if (point != null) {
-      robotService.robot.click(component, point, RemoteMouseButton.RIGHT, 1)
+      robot.click(component, point, RemoteMouseButton.RIGHT, 1)
     }
     else {
-      robotService.robot.rightClick(component)
+      robot.rightClick(component)
     }
   }
 
   fun click(button: RemoteMouseButton, count: Int) {
-    robotService.robot.click(component, button, count)
+    robot.click(component, button, count)
   }
 
   fun moveMouse() {
-    robotService.robot.moveMouse(component)
+    robot.moveMouse(component)
   }
 
   fun moveMouse(point: Point) {
-    robotService.robot.moveMouse(component, point)
+    robot.moveMouse(component, point)
   }
 
   fun hasFocus(): Boolean {
@@ -210,7 +211,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun mousePressMoveRelease(from: Point, to: Point) {
-    robotService.robot.apply {
+    robot.apply {
       moveMouse(component, from)
       pressMouse(RemoteMouseButton.LEFT)
 

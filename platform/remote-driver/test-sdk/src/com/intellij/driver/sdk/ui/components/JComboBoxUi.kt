@@ -10,7 +10,7 @@ fun Finder.comboBox(@Language("xpath") xpath: String? = null) = x(xpath ?: "//di
                                                                   JComboBoxUiComponent::class.java)
 
 class JComboBoxUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy { driver.new(JComboBoxFixtureRef::class, robotService.robot, component) }
+  private val fixture by lazy { driver.new(JComboBoxFixtureRef::class, robot, component) }
   fun selectItem(text: String) = fixture.select(text)
   fun selectItemContains(text: String) {
     if (fixture.listValues().singleOrNull { it.contains(text) } == null) {

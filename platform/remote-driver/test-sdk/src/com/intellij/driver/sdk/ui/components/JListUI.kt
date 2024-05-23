@@ -14,7 +14,7 @@ fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[
                                                                 JListUiComponent::class.java)
 
 class JListUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy { driver.new(JListFixtureRef::class, robotService.robot, component) }
+  private val fixture by lazy { driver.new(JListFixtureRef::class, robot, component) }
 
   val items: List<String>
     get() = fixture.collectItems()

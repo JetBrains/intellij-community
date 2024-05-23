@@ -1,11 +1,11 @@
 package com.intellij.driver.sdk.ui.keyboard
 
-import com.intellij.driver.sdk.ui.remote.RobotService
+import com.intellij.driver.sdk.ui.remote.RobotProvider
 
 interface WithKeyboard {
-  val robotService: RobotService
+  val robotProvider: RobotProvider
 
   fun keyboard(keyboardActions: RemoteKeyboard.() -> Unit) {
-    RemoteKeyboard(robotService.robot).keyboardActions()
+    RemoteKeyboard(robotProvider.defaultRobot).keyboardActions()
   }
 }
