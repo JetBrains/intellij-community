@@ -4792,7 +4792,6 @@ f:com.intellij.util.indexing.impl.IndexStorageUtil
 - s:adaptKeyDescriptorToStrategy(com.intellij.util.io.KeyDescriptor):com.intellij.util.containers.HashingStrategy
 - s:createKeyDescriptorHashedMap(com.intellij.util.io.KeyDescriptor):java.util.Map
 c:com.intellij.util.indexing.impl.InputData
-- p:<init>(java.util.Map):V
 - s:empty():com.intellij.util.indexing.impl.InputData
 - getKeyValues():java.util.Map
 a:com.intellij.util.indexing.impl.InputDataDiffBuilder

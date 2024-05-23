@@ -12,6 +12,8 @@ import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 
 private val LOG = logger<DefaultIndexStorageLayoutProvider>()
@@ -19,7 +21,9 @@ private val LOG = logger<DefaultIndexStorageLayoutProvider>()
 /**
  * Provides a default index storage implementation: [DefaultStorageLayout]/[SingleEntryStorageLayout]
  */
-internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
+@Internal
+@VisibleForTesting
+class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
 
   override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
     if (extension is SingleEntryFileBasedIndexExtension<V>) {
@@ -32,6 +36,8 @@ internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider 
   override fun isApplicable(extension: FileBasedIndexExtension<*, *>): Boolean = true
 
   override fun isSupported(): Boolean = true
+
+  override fun toString(): String = DefaultIndexStorageLayoutProvider::class.java.simpleName
 
   internal class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
     private val storageLockContext = newStorageLockContext()
