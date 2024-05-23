@@ -75,7 +75,7 @@ internal open class MarkdownFormattingBlock(
       //Code fence alignment is not supported for now because of manipulator problems
       // and the fact that when end of code fence is in blockquote -- parser
       // would treat blockquote as a part of code fence end token
-      MarkdownElementTypes.CODE_FENCE -> emptyList()
+      MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_SPAN -> emptyList()
       MarkdownElementTypes.FRONT_MATTER_HEADER -> emptyList()
       MarkdownElementTypes.LIST_ITEM -> {
         MarkdownBlocks.create(node.children(), settings, spacing) {
