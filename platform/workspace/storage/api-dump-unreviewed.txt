@@ -351,8 +351,6 @@ f:com.intellij.platform.workspace.storage.impl.cache.CachedValue
 f:com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 - <init>(kotlin.sequences.Sequence):V
 - getSize():I
-f:com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheKt
-- sf:cache():com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 f:com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceCollectionsKt
 - sf:toMutableWorkspaceList(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 - sf:toMutableWorkspaceSet(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
