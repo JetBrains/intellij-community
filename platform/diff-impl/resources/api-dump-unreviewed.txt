@@ -1747,15 +1747,18 @@ c:com.intellij.diff.tools.fragmented.UnifiedEditorHighlighter
 - setEditor(com.intellij.openapi.editor.highlighter.HighlighterClient):V
 a:com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder
 - <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Document,com.intellij.diff.util.Side):V
+- <init>(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.util.Side):V
 - pf:finishDocuments():V
 - pf:getChangedLines():java.util.List
 - pf:getChanges():java.util.List
 - pf:getConvertorBuilder1():com.intellij.diff.tools.fragmented.LineNumberConvertor$Builder
 - pf:getConvertorBuilder2():com.intellij.diff.tools.fragmented.LineNumberConvertor$Builder
-- pf:getDocument1():com.intellij.openapi.editor.Document
-- pf:getDocument2():com.intellij.openapi.editor.Document
+- pf:getLineOffsets1():com.intellij.diff.tools.util.text.LineOffsets
+- pf:getLineOffsets2():com.intellij.diff.tools.util.text.LineOffsets
 - pf:getMasterSide():com.intellij.diff.util.Side
 - pf:getRanges():java.util.List
+- pf:getText1():java.lang.CharSequence
+- pf:getText2():java.lang.CharSequence
 - pf:getTextBuilder():java.lang.StringBuilder
 - pf:processChanged(com.intellij.diff.util.Range):com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder$BlockLineRange
 - pf:processEquals(I,I):I
