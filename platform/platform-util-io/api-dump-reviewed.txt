@@ -6,3 +6,6 @@ c:com.intellij.execution.ExecutionException
 a:com.intellij.execution.ExecutionExceptionWithAttachments
 - com.intellij.execution.ExecutionException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
+com.intellij.execution.KillableProcess
+- a:canKillProcess():Z
+- a:killProcess():V
