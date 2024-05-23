@@ -9,3 +9,6 @@ a:com.intellij.execution.ExecutionExceptionWithAttachments
 com.intellij.execution.KillableProcess
 - a:canKillProcess():Z
 - a:killProcess():V
+c:com.intellij.execution.RunCanceledByUserException
+- com.intellij.execution.ExecutionException
+- <init>():V
