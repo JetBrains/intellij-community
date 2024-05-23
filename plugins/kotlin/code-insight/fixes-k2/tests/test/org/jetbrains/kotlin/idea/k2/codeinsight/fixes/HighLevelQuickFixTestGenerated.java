@@ -5951,7 +5951,48 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString")
+    public static class TooLongCharLiteralToString extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("backslash.kt")
+        public void testBackslash() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/backslash.kt");
+        }
+
+        @TestMetadata("backslashShouldNotBeEscaped.kt")
+        public void testBackslashShouldNotBeEscaped() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/backslashShouldNotBeEscaped.kt");
+        }
+
+        @TestMetadata("dollarShouldNotBeEscaped.kt")
+        public void testDollarShouldNotBeEscaped() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/dollarShouldNotBeEscaped.kt");
+        }
+
+        @TestMetadata("doubleQuotesShouldBeEscaped.kt")
+        public void testDoubleQuotesShouldBeEscaped() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/doubleQuotesShouldBeEscaped.kt");
+        }
+
+        @TestMetadata("ecapedDoubleQuotesShouldNotBeEscaped.kt")
+        public void testEcapedDoubleQuotesShouldNotBeEscaped() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/ecapedDoubleQuotesShouldNotBeEscaped.kt");
+        }
+
+        @TestMetadata("startWithBackslash.kt")
+        public void testStartWithBackslash() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/startWithBackslash.kt");
+        }
+
+        @TestMetadata("startWithBackslashInString.kt")
+        public void testStartWithBackslashInString() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/tooLongCharLiteralToString/startWithBackslashInString.kt");
+        }
+    }
 
 
 

@@ -95,6 +95,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddTypeAnnotationToValueParameterFixFactory.addTypeAnnotationToValueParameterFixFactory)
         registerFactory(ChangeToFunctionInvocationFixFactory.changeToFunctionInvocationFixFactory)
         registerFactory(TypeOfAnnotationMemberFixFactory.typeOfAnnotationMemberFixFactory)
+        registerFactory(TooLongCharLiteralToStringFixFactory.illegalEscapeFactory)
+        registerFactory(TooLongCharLiteralToStringFixFactory.tooManyCharactersInCharacterLiteralFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
