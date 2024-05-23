@@ -26,7 +26,7 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
     return canOpenGradleProject(file)
   }
 
-  override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings = GradleImportedProjectSettings(project)
+  override fun importFromProject(project: Project): ImportedProjectSettings = GradleImportedProjectSettings(project)
 
   override fun suppressGenericImportFor(module: Module): Boolean {
     return ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == GradleConstants.SYSTEM_ID.id

@@ -11,15 +11,13 @@ import kotlin.io.path.pathString
 
 internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
   override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-    if (project.isWorkspace) {
-      getCoroutineScope(project).launch {
-        linkToWorkspace(project, projectDir.pathString)
-      }
-      return true
+    if (!project.isWorkspace) {
+      return false
     }
-    else {
-      return createWorkspace(project)
+    getCoroutineScope(project).launch {
+      linkToWorkspace(project, projectDir.pathString)
     }
+    return true
   }
 
   override fun isEnabled(project: Project?, path: Path?): Boolean =

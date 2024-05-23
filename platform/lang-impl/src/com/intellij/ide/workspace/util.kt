@@ -19,10 +19,10 @@ internal fun getCoroutineScope(workspace: Project) = workspace.service<MyCorouti
 internal fun getHandlers(file: VirtualFile): List<SubprojectHandler> =
   SubprojectHandler.EP_NAME.extensionList.filter { it.canImportFromFile(file) }
 
-internal fun addToWorkspace(project: Project, projectPaths: List<String>) {
-  getCoroutineScope(project).launch {
+internal fun addToWorkspace(workspace: Project, projectPaths: List<String>) {
+  getCoroutineScope(workspace).launch {
     projectPaths.forEach { s ->
-      linkToWorkspace(project, s)
+      linkToWorkspace(workspace, s)
     }
   }
 }

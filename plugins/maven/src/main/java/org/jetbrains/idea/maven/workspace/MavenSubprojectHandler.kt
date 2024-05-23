@@ -7,13 +7,10 @@ import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
 import icons.MavenIcons
-import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import javax.swing.Icon
@@ -34,7 +31,7 @@ internal class MavenSubprojectHandler : SubprojectHandler {
     MavenProjectsManager.getInstance(workspace).removeManagedFiles(files, null, null)
   }
 
-  override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings {
+  override fun importFromProject(project: Project): ImportedProjectSettings {
     // FIXME: does not work for new project: AbstractMavenModuleBuilder creates project in 'MavenUtil.runWhenInitialized' callback
     return MavenImportedProjectSettings(project)
   }
@@ -48,16 +45,12 @@ internal class MavenSubprojectHandler : SubprojectHandler {
 }
 
 private class MavenImportedProjectSettings(project: Project) : ImportedProjectSettings {
-  val projectDir = project.guessProjectDir()
+  val projectDir = requireNotNull(project.guessProjectDir())
 
   override suspend fun applyTo(workspace: Project) {
     val openProjectProvider = MavenOpenProjectProvider()
-    if (openProjectProvider.canOpenProject(projectDir!!)) {
-      StartupManager.getInstance(workspace).runAfterOpened {
-        MavenCoroutineScopeProvider.getCoroutineScope(workspace).launch {
-          openProjectProvider.forceLinkToExistingProjectAsync(projectDir, workspace)
-        }
-      }
+    if (openProjectProvider.canOpenProject(projectDir)) {
+      openProjectProvider.forceLinkToExistingProjectAsync(projectDir, workspace)
     }
   }
 }

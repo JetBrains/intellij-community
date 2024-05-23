@@ -7,13 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 
 internal class DefaultWorkspaceSettingsImporter : WorkspaceSettingsImporter {
-  override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings? {
-    if (newWorkspace) {
-      return DefaultImportedProjectSettings(project)
-    }
-    else {
-      return null
-    }
+  override fun importFromProject(project: Project): ImportedProjectSettings {
+    return DefaultImportedProjectSettings(project)
   }
 }
 
@@ -30,7 +25,7 @@ private class DefaultImportedProjectSettings(project: Project) : ImportedProject
   }
 
   override suspend fun applyTo(workspace: Project) {
-    if (projectSdk != null) {
+    if (projectSdk != null && ProjectRootManager.getInstance(workspace).projectSdk == null) {
       writeAction {
         ProjectRootManager.getInstance(workspace).projectSdk = projectSdk
       }

@@ -18,7 +18,7 @@ interface SubprojectHandler {
   fun getSubprojects(project: Project): List<Subproject>
   fun canImportFromFile(file: VirtualFile): Boolean
   fun removeSubprojects(subprojects: List<Subproject>)
-  fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
+  fun importFromProject(project: Project): ImportedProjectSettings?
 
   fun suppressGenericImportFor(module: Module): Boolean = false
 
@@ -30,7 +30,7 @@ interface WorkspaceSettingsImporter {
     val EP_NAME: ExtensionPointName<WorkspaceSettingsImporter> = ExtensionPointName.create("com.intellij.workspace.settingsImporter")
   }
 
-  fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
+  fun importFromProject(project: Project): ImportedProjectSettings?
 }
 
 interface ImportedProjectSettings {
