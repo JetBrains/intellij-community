@@ -296,7 +296,8 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   @ApiStatus.Internal
-  @NotNull @Unmodifiable
+  @NotNull
+  @Unmodifiable
   public static Map<String, ResourceBundle> getResourceBundles() {
     return Collections.unmodifiableMap(bundles);
   }

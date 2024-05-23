@@ -9,12 +9,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface LocalizationStateService {
   companion object {
     fun getInstance(): LocalizationStateService? {
-        if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-          return null
-        }
-        return ApplicationManager.getApplication().getService(
-          LocalizationStateService::class.java)
+      if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+        return null
       }
+      return ApplicationManager.getApplication().getService(
+        LocalizationStateService::class.java)
+    }
   }
 
   fun getSelectedLocale(): String
