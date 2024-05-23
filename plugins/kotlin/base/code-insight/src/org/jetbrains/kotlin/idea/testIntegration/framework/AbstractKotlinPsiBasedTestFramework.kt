@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.java.library.JavaLibraryUtil
@@ -47,7 +47,6 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
 
     override fun checkTestClass(declaration: KtClassOrObject): ThreeState =
         when {
-            declaration.isPrivate() -> NO
             declaration.isAnnotation() -> NO
             (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> NO
             declaration.annotationEntries.isNotEmpty() -> UNSURE

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit3Framework
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFra
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtNamedFunction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
@@ -95,6 +96,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             resolveScope: GlobalSearchScope,
             visitedShortNames: MutableSet<String>
         ): ThreeState {
+            if (declaration.isPrivate()) return NO
             if (declaration is KtClass && declaration.isInner()) return NO
             val objects = if (declaration is KtObjectDeclaration) listOf(declaration) else declaration.companionObjects
             if (objects.flatMap { it.declarations }.filterIsInstance<KtNamedFunction>().any { it.name == "suite" }) {

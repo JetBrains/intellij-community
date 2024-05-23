@@ -1,8 +1,8 @@
 // CONFIGURE_LIBRARY: JUnit5
 package testing
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class <lineMarker descr="Run Test">Simple</lineMarker> {
@@ -49,4 +49,9 @@ class <lineMarker descr="Run Test">Go</lineMarker> {
     class Inner2 {
         fun test1() { }
     }
+}
+
+private class <lineMarker descr="Run Test">Simple</lineMarker> {
+    @Test
+    fun <lineMarker descr="Run Test">foo</lineMarker>() {}
 }
