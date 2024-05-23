@@ -160,6 +160,39 @@ fun loadFileComparisonTestLoggerInitScript(): String {
   )
 }
 
+fun loadApplicationInitScript(
+  gradlePath: String,
+  runAppTaskName: String,
+  mainClassToRun: String,
+  javaExePath: String,
+  sourceSetName: String,
+  params: String?,
+  javaModuleName: String?,
+  intelliJRtPath: String?,
+  workingDirectory: String?,
+  useManifestJar: Boolean,
+  useArgsFile: Boolean,
+  useClasspathFile: Boolean
+): String {
+  return loadInitScript(
+    "/org/jetbrains/plugins/gradle/tooling/internal/init/ApplicationTaskInitScript.gradle",
+    mapOf(
+      "GRADLE_PATH" to gradlePath.toGroovyStringLiteral(),
+      "RUN_APP_TASK_NAME" to runAppTaskName.toGroovyStringLiteral(),
+      "MAIN_CLASS_TO_RUN" to mainClassToRun.toGroovyStringLiteral(),
+      "JAVA_EXE_PATH" to "mapPath(${javaExePath.toGroovyStringLiteral()})",
+      "SOURCE_SET_NAME" to sourceSetName.toGroovyStringLiteral(),
+      "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "null" else javaModuleName.toGroovyStringLiteral(),
+      "INTELLIJ_RT_PATH" to if (intelliJRtPath.isNullOrEmpty()) "null" else "mapPath(${intelliJRtPath.toGroovyStringLiteral()})",
+      "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
+      "PARAMS" to if (params.isNullOrEmpty()) "".toGroovyStringLiteral() else params.toGroovyStringLiteral(),
+      "USE_MANIFEST_JAR" to useManifestJar.toString(),
+      "USE_ARGS_FILE" to useArgsFile.toString(),
+      "USE_CLASSPATH_FILE" to useClasspathFile.toString()
+    )
+  )
+}
+
 /**
  * @param classesNames is list of classes groups.
  * Where a class group represents a class with its dependent classes.
