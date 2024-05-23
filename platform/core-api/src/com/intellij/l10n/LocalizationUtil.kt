@@ -3,9 +3,9 @@ package com.intellij.l10n
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.messages.impl.MessageBusImpl.Companion.LOG
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.nio.file.Path
@@ -18,7 +18,7 @@ import kotlin.io.path.pathString
 @ApiStatus.Internal
 object LocalizationUtil {
   @Volatile
-  var isL10nInitialized: Boolean = false
+  private var isL10nInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
   private const val LOCALIZATION_KEY = "i18n.locale"
 
@@ -137,6 +137,14 @@ object LocalizationUtil {
     return locale
   }
 
+  fun setLocalizationInitialized() {
+    isL10nInitialized = true
+  }
+
+  fun isLocalizationInitialized(): Boolean {
+    return isL10nInitialized
+  }
+
   fun getLocale(): Locale {
     val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY)
     else LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
@@ -169,7 +177,7 @@ object LocalizationUtil {
       throw e
     }
     catch (e: Exception) {
-      LOG.error(e)
+      logger<LocalizationUtil>().error(e)
       return emptyList()
     }
   }

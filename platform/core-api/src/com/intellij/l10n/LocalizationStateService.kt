@@ -20,9 +20,3 @@ interface LocalizationStateService {
   fun getSelectedLocale(): String
   fun setSelectedLocale(locale: String)
 }
-
-@Internal
-data class LocalizationState(
-  var selectedLocale: String = "en",
-  var lastSelectedLocale: String = "en"
-)

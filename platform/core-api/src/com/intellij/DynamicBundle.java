@@ -38,7 +38,7 @@ public class DynamicBundle extends AbstractBundle {
    */
   public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
     super(bundleClass, pathToBundle);
-    isInitializedBeforeL10n = !LocalizationUtil.INSTANCE.isL10nInitialized();
+    isInitializedBeforeL10n = !LocalizationUtil.INSTANCE.isLocalizationInitialized();
   }
 
   /**
@@ -52,7 +52,7 @@ public class DynamicBundle extends AbstractBundle {
   @Obsolete
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
-    isInitializedBeforeL10n = !LocalizationUtil.INSTANCE.isL10nInitialized();
+    isInitializedBeforeL10n = !LocalizationUtil.INSTANCE.isLocalizationInitialized();
   }
 
   // see BundleUtil
@@ -201,7 +201,7 @@ public class DynamicBundle extends AbstractBundle {
   @Override
   @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault) {
-    if (!isDefault && LocalizationUtil.INSTANCE.isL10nInitialized() && isInitializedBeforeL10n) {
+    if (!isDefault && LocalizationUtil.INSTANCE.isLocalizationInitialized() && isInitializedBeforeL10n) {
       isInitializedBeforeL10n = false;
       return null;
     }
