@@ -117,10 +117,35 @@ public class SpotlightPainter extends AbstractPainter implements ComponentHighli
     if (UIUtil.isAncestor(myTarget, component)) {
       myGlassPanel.addSpotlight(component);
       if (isScrollingEnabled(myTarget)) {
-        component.scrollRectToVisible(component.getBounds());
-        disableScrolling(myTarget);
+        if (center(component)) {
+          disableScrolling(myTarget);
+        }
       }
     }
+  }
+
+  private static boolean center(@NotNull JComponent component) {
+    JScrollPane scrollPane = null;
+    for (Component c = component; c != null && !(c instanceof CellRendererPane); c = c.getParent()) {
+      if (c instanceof JScrollPane cScrollPane) scrollPane = cScrollPane;
+      if (c instanceof ConfigurableEditor) break; // We need the topmost scroll pane descendant of the editor.
+    }
+    if (scrollPane == null) return false;
+    var viewport = scrollPane.getViewport();
+    if (viewport == null || viewport.getHeight() <= 0) return false;
+    if (viewport.getView() instanceof JComponent view) {
+      var bounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), view);
+      var extraHeight = viewport.getHeight() - bounds.height;
+      if (extraHeight > 0) {
+        bounds.y -= extraHeight / 2;
+        bounds.height += extraHeight;
+      }
+      bounds.x = 0; // Horizontal scrolling usually does more harm than good.
+      bounds.width = viewport.getWidth();
+      view.scrollRectToVisible(bounds);
+      return true;
+    }
+    return false;
   }
 
   @ApiStatus.Internal
