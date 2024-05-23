@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -339,53 +340,69 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
       fillIntentionsInfoForHighlightInfo(infoAtCursor, intentions, fixes);
     }
 
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-
     if (queryIntentionActions) {
-      PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
+      getRegisteredIntentionActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset, psiElement, fixes);
+    }
+  }
 
-      Collection<String> languages = getLanguagesForIntentions(hostFile, psiElement, injectedFile);
-      List<IntentionAction> availableIntentions = IntentionManager.getInstance().getAvailableIntentions(languages);
+  private static void getRegisteredIntentionActions(@NotNull Editor hostEditor,
+                                                    @NotNull PsiFile hostFile,
+                                                    @NotNull IntentionsInfo intentions,
+                                                    int passIdToShowIntentionsFor,
+                                                    int offset,
+                                                    @Nullable PsiElement psiElement,
+                                                    @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> currentFixes) {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
 
-      for (IntentionAction action : availableIntentions) {
-        if (indicator != null) {
-          indicator.setText(action.getFamilyName());
-        }
-        Pair<PsiFile, Editor> place =
-          ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, offset, injectedFile,
-                     (psiFile, editor, o) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, o, action));
+    Collection<String> languages = getLanguagesForIntentions(hostFile, psiElement, injectedFile);
+    List<IntentionAction> availableIntentions = IntentionManager.getInstance().getAvailableIntentions(languages);
 
-        if (place != null) {
-          List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
-          enableDisableIntentionAction.add(new EnableDisableIntentionAction(action));
-          enableDisableIntentionAction.add(new EditIntentionSettingsAction(action));
-          if (IntentionShortcutManager.getInstance().hasShortcut(action)) {
-            enableDisableIntentionAction.add(new EditShortcutToIntentionAction(action));
-            enableDisableIntentionAction.add(new RemoveIntentionActionShortcut(action));
-          }
-          else {
-            enableDisableIntentionAction.add(new AssignShortcutToIntentionAction(action));
-          }
-          HighlightInfo.IntentionActionDescriptor descriptor =
-            new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
-          if (!fixes.contains(descriptor)) {
-            intentions.intentionsToShow.add(descriptor);
-          }
-        }
+    DumbService dumbService = DumbService.getInstance(hostFile.getProject());
+    for (IntentionAction action : availableIntentions) {
+      ProgressManager.checkCanceled();
+      if (!dumbService.isUsableInCurrentContext(action)) {
+        continue;
       }
 
       if (indicator != null) {
-        indicator.setText(CodeInsightBundle.message("progress.text.searching.for.additional.intention.actions.quick.fixes"));
+        indicator.setText(action.getFamilyName());
       }
-      for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
-        try {
-          if (DumbService.getInstance(hostFile.getProject()).isUsableInCurrentContext(extension)) {
-            extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
-          }
+      Pair<PsiFile, Editor> place =
+        ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, offset, injectedFile,
+                                                                 (psiFile, editor, o) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, o, action));
+
+      if (place != null) {
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
+        enableDisableIntentionAction.add(new EnableDisableIntentionAction(action));
+        enableDisableIntentionAction.add(new EditIntentionSettingsAction(action));
+        if (IntentionShortcutManager.getInstance().hasShortcut(action)) {
+          enableDisableIntentionAction.add(new EditShortcutToIntentionAction(action));
+          enableDisableIntentionAction.add(new RemoveIntentionActionShortcut(action));
         }
-        catch (IntentionPreviewUnsupportedOperationException e) {
-          //can collect action on a mock memory editor and produce exceptions - ignore
+        else {
+          enableDisableIntentionAction.add(new AssignShortcutToIntentionAction(action));
         }
+        HighlightInfo.IntentionActionDescriptor descriptor =
+          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
+        if (!currentFixes.contains(descriptor)) {
+          intentions.intentionsToShow.add(descriptor);
+        }
+      }
+    }
+
+    if (indicator != null) {
+      indicator.setText(CodeInsightBundle.message("progress.text.searching.for.additional.intention.actions.quick.fixes"));
+    }
+    for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
+      ProgressManager.checkCanceled();
+      try {
+        if (dumbService.isUsableInCurrentContext(extension)) {
+          extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
+        }
+      }
+      catch (IntentionPreviewUnsupportedOperationException e) {
+        //can collect action on a mock memory editor and produce exceptions - ignore
       }
     }
   }
