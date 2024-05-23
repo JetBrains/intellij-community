@@ -10,12 +10,8 @@ from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K, IS_PY311_OR_GREA
 try:
     import inspect
 except:
-    try:
-        from _pydev_imps import _pydev_inspect as inspect
-    except:
-        import traceback;
-
-        traceback.print_exc()  # Ok, no inspect available (search will not work)from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K
+    import traceback
+    traceback.print_exc()  # Ok, no inspect available (search will not work)from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K
 
 from _pydev_bundle._pydev_imports_tipper import signature_from_docstring
 
