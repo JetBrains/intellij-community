@@ -101,6 +101,8 @@ __jetbrains_intellij_command_precmd() {
 
 __jetbrains_intellij_report_prompt_state() {
   builtin local current_directory="$PWD"
+  builtin local user_name="${USER:-}"
+  builtin local user_home="${HOME:-}"
   builtin local git_branch=""
   builtin local virtual_env=""
   builtin local conda_env=""
@@ -118,8 +120,10 @@ __jetbrains_intellij_report_prompt_state() {
   fi
   builtin local original_prompt="$(builtin print -rP $PS1 2>/dev/null)"
   builtin local original_right_prompt="$(builtin print -rP $RPROMPT 2>/dev/null)"
-  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;user_name=%s;user_home=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
     "$(__jetbrains_intellij_encode "${current_directory}")" \
+    "$(__jetbrains_intellij_encode "${user_name}")" \
+    "$(__jetbrains_intellij_encode "${user_home}")" \
     "$(__jetbrains_intellij_encode "${git_branch}")" \
     "$(__jetbrains_intellij_encode "${virtual_env}")" \
     "$(__jetbrains_intellij_encode "${conda_env}")" \

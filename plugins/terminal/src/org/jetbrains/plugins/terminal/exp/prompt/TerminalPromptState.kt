@@ -6,6 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class TerminalPromptState(
   val currentDirectory: String,
+  val userName: String? = null,
+  val userHome: String? = null,
   val gitBranch: String? = null,
   /** Absolute path to the virtual env */
   val virtualEnv: String? = null,

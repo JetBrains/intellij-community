@@ -85,11 +85,13 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun processPromptStateUpdatedEvent(event: List<String>) {
     val state = TerminalPromptState(
       currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(1)),
-      gitBranch = Param.GIT_BRANCH.getDecodedNotEmptyValueOrNull(event.getOrNull(2)),
-      virtualEnv = Param.VIRTUAL_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(3)),
-      condaEnv = Param.CONDA_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(4)),
-      originalPrompt = Param.ORIGINAL_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(5)),
-      originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(6))
+      userName = Param.USER_NAME.getDecodedNotEmptyValueOrNull(event.getOrNull(2)),
+      userHome = Param.USER_HOME.getDecodedNotEmptyValueOrNull(event.getOrNull(3)),
+      gitBranch = Param.GIT_BRANCH.getDecodedNotEmptyValueOrNull(event.getOrNull(4)),
+      virtualEnv = Param.VIRTUAL_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(5)),
+      condaEnv = Param.CONDA_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(6)),
+      originalPrompt = Param.ORIGINAL_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(7)),
+      originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(8))
     )
     firePromptStateUpdated(state)
   }
@@ -239,6 +241,8 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     REQUEST_ID,
     RESULT,
     CURRENT_DIRECTORY,
+    USER_NAME,
+    USER_HOME,
     GIT_BRANCH,
     VIRTUAL_ENV,
     CONDA_ENV,

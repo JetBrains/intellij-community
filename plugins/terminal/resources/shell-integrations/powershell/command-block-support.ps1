@@ -82,6 +82,8 @@ function Global:__JetBrainsIntellijCreatePromptStateOSC() {
   $RealExitCode = $Global:LastExitCode
 
   $CurrentDirectory = (Get-Location).Path
+  $UserName = if ($Env:UserName -ne $null) { $Env:UserName } else { "" }
+  $UserHome = if ($Env:HOME -ne $null) { $Env:HOME } else { "" }
   $GitBranch = ""
   if (Get-Command "git.exe" -ErrorAction SilentlyContinue) {
     $GitBranch = git.exe symbolic-ref --short HEAD 2>$null
@@ -98,6 +100,8 @@ function Global:__JetBrainsIntellijCreatePromptStateOSC() {
   $OriginalPrompt = __JetBrainsIntellijOriginalPrompt 6>&1
   $StateOSC = Global:__JetBrainsIntellijOSC ("prompt_state_updated;" +
     "current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory);" +
+    "user_name=$(__JetBrainsIntellijEncode $UserName);" +
+    "user_home=$(__JetBrainsIntellijEncode $UserHome);" +
     "git_branch=$(__JetBrainsIntellijEncode $GitBranch);" +
     "virtual_env=$(__JetBrainsIntellijEncode $VirtualEnv);" +
     "conda_env=$(__JetBrainsIntellijEncode $CondaEnv);" +
