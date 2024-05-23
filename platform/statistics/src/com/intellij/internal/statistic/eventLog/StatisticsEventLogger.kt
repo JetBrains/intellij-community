@@ -118,7 +118,14 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val isHeadless = app != null && app.isHeadlessEnvironment
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
-    val productMode = ProductLoadingStrategy.strategy.currentModeId.takeIf { it != ProductMode.LOCAL_IDE.id }
+    val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
+    val productMode = if (currentProductModeId != ProductMode.LOCAL_IDE.id) {
+      currentProductModeId
+    } else if (detectClionNova()) {
+      ProductMode.NOVA.id
+    } else {
+      null
+    }
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
     val writer = StatisticsEventLogFileWriter(recorderId, this, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
@@ -142,6 +149,15 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val logger = LocalStatisticsFileEventLogger(recorderId, eventLogConfiguration.build, version.toString(), createEventsMergeStrategy())
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
+  }
+
+  /**
+   * Taken from [CLionLanguagePluginKind]
+   *
+   * Remove once CLion Nova is deployed 100%
+   */
+  private fun detectClionNova(): Boolean {
+    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler"
   }
 }
 
