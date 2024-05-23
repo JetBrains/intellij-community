@@ -271,9 +271,11 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
   }
 
   fun setOrUpdateShowName(value: Boolean) {
-    myShowName = value
-    revalidate()
-    repaint()
+    if (myShowName != value) {
+      myShowName = value
+      revalidate()
+      repaint()
+    }
   }
 
   override fun getPreferredSize(): Dimension {
