@@ -23,6 +23,18 @@ interface GradleSyncContributor {
     get() = javaClass.simpleName
 
   /**
+   * Called when Gradle project info resolution is started.
+   * No models are available in the context because the Gradle model fetching isn't started.
+   * Guaranteed that this function will be called only once during the synchronization process.
+   *
+   * @param context contain all information about the current state of the Gradle sync.
+   */
+  suspend fun onResolveProjectInfoStarted(
+    context: ProjectResolverContext,
+    storage: MutableEntityStorage
+  ) = Unit
+
+  /**
    * Called when Gradle model building phase is completed.
    * Guaranteed that all phases will be handled for the successful execution in the strict order.
    *

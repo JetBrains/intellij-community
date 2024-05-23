@@ -743,4 +743,25 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       }
     }
   }
+
+  @Test
+  fun `test project info resolution phases emitting`() {
+    Disposer.newDisposable().use { disposable ->
+
+      val projectInfoResolutionStartAssertion = ListenerAssertion()
+
+      whenResolveProjectInfoStarted(disposable) { _, _ ->
+        projectInfoResolutionStartAssertion.touch()
+      }
+
+      initMultiModuleProject(useBuildSrc = true)
+      importProject()
+      assertMultiModuleProjectStructure(useBuildSrc = true)
+
+      projectInfoResolutionStartAssertion.assertListenerFailures()
+      projectInfoResolutionStartAssertion.assertListenerState(1) {
+        "The project info resolution should be started only once."
+      }
+    }
+  }
 }

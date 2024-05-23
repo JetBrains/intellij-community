@@ -69,6 +69,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionResultHandler;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleProjectResolverResultHandler;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -145,6 +146,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
       syncTaskId, projectPath, settings, listener, gradleResolverPolicy, projectResolverIndicator
     );
+    GradleProjectResolverResultHandler resolverResultHandler = new GradleProjectResolverResultHandler(resolverContext);
 
     return computeCancellable(resolverContext, () -> {
       // Create project preview model w/o request to gradle, there are two main reasons for the it:
@@ -154,6 +156,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         return GradlePreviewCustomizer.Companion.getCustomizer(resolverContext)
           .resolvePreviewProjectInfo(resolverContext);
       }
+
+      resolverResultHandler.onResolveProjectInfoStarted();
+
       return resolveProjectInfo(resolverContext);
     });
   }
