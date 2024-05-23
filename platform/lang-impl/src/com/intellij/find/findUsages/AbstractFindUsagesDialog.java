@@ -3,6 +3,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.find.impl.FindSettingsImpl;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Objects;
 
 public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private final Project myProject;
@@ -286,6 +288,11 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
     String scope = FindSettings.getInstance().getDefaultScopeName();
+    // The default name means we have to fall back to whatever the default scope is set in FindUsagesOptions.
+    // (The default name itself doesn't correspond to any real scope name anyway.)
+    if (Objects.equals(scope, FindSettingsImpl.getDefaultSearchScope())) {
+      scope = FindUsagesOptions.getDefaultScope(myProject).getDisplayName();
+    }
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);

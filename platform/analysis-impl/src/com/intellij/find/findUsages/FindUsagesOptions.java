@@ -46,6 +46,11 @@ public class FindUsagesOptions implements Cloneable {
         return scope;
       }
     }
+    return getDefaultScope(project);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull SearchScope getDefaultScope(@NotNull Project project) {
     return ProjectScope.getProjectScope(project);
   }
 
