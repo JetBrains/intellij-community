@@ -2,6 +2,8 @@
 package com.intellij.util
 
 import com.intellij.ide.IconProvider
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable.IconFlags
 import com.intellij.psi.PsiElement
@@ -12,13 +14,15 @@ object PsiIconUtil {
   @JvmStatic
   fun getIconFromProviders(element: PsiElement, @IconFlags flags: Int): Icon? {
     for (provider in IconProvider.EXTENSION_POINT_NAME.extensionList) {
-      try {
-        val icon = provider.getIcon(element, flags)
-        if (icon != null) {
-          return icon
+      val icon = kotlin.runCatching {
+        provider.getIcon(element, flags)
+      }.getOrLogException {
+        if (it !is IndexNotReadyException) {
+          LOG.warn("IconProvider $provider threw an exception", it)
         }
       }
-      catch (_: IndexNotReadyException) {
+      if (icon != null) {
+        return icon
       }
     }
     return null
@@ -31,3 +35,5 @@ object PsiIconUtil {
     return getIconFromProviders(element, flags)
   }
 }
+
+private val LOG = logger<PsiIconUtil>()
