@@ -246,6 +246,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     ActionCallback callback = myCardPanel.select(configurable, false);
     callback
       .doWhenDone(() -> {
+        if (myConfigurable != configurable) {
+          SpotlightPainter.allowScrolling(this);
+        }
         myConfigurable = configurable;
         updateCurrent(configurable, false);
         postUpdateCurrent(configurable);
