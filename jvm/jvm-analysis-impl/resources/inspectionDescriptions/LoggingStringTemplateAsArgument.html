@@ -30,6 +30,11 @@ It is recommended to use a parameterized log message instead, which will not be 
     Note that, creating string even only with expressions with primitive types,
     their wrappers or String at runtime can negatively impact performance.
   </li>
+  <li>
+    Use the <b>Do not warn when call only with an exception as argument after message argument</b> option to ignore
+    calls, which contain only exception as an argument after message argument.
+    For example, it could be useful to adjust the inspection's behaviour with a custom code style.
+  </li>
 </ul>
 
 <p><small>New in 2023.1</small></p>
