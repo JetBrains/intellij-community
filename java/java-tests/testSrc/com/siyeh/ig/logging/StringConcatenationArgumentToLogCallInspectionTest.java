@@ -86,7 +86,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
                  Logger logger = LoggerFactory.getLogger(X.class);
                  final String CONST = "const";
                  String var = "var";
-                 logger./*Evaluated string as argument to 'debug()' logging call*/debug/**/("string " + var + CONST);
+                 logger./*Non-constant string as argument to 'debug()' logging call*/debug/**/("string " + var + CONST);
                }
              }"""
            );
@@ -109,8 +109,8 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              class Logging {
                private static final Logger LOG = LogManager.getLogger();
                void m(int i) {
-                 LOG./*Evaluated string as argument to 'info()' logging call*/info/**/("hello? " + i);
-                 LOG./*Evaluated string as argument to 'fatal()' logging call*/fatal/**/("you got me " + i);
+                 LOG./*Non-constant string as argument to 'info()' logging call*/info/**/("hello? " + i);
+                 LOG./*Non-constant string as argument to 'fatal()' logging call*/fatal/**/("you got me " + i);
                }
              }""");
   }
@@ -124,7 +124,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
                private static final Logger logger = LogManager.getFormattedLogger();
              
                public static void m(String a) {
-                 logger./*Evaluated string as argument to 'info()' logging call*/info/**/("1" + "2" + a);
+                 logger./*Non-constant string as argument to 'info()' logging call*/info/**/("1" + "2" + a);
                                        }
              }""");
   }
@@ -135,8 +135,8 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              class Logging {
                private static final Logger LOG = LogManager.getLogger();
                void m(int i) {
-                 LOG.atDebug()./*Evaluated string as argument to 'log()' logging call*/log/**/("hello? " + i);
-                 LOG.atInfo()./*Evaluated string as argument to 'log()' logging call*/log/**/("you got me " + i);
+                 LOG.atDebug()./*Non-constant string as argument to 'log()' logging call*/log/**/("hello? " + i);
+                 LOG.atInfo()./*Non-constant string as argument to 'log()' logging call*/log/**/("you got me " + i);
                }
              }""");
   }
@@ -148,7 +148,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              class X {
                void foo() {
                  Logger log = LoggerFactory.getLogger(X.class);
-                 log./*Evaluated string as argument to 'info()' logging call*/info/**/(String.format("%s %d", "1", 1));
+                 log./*Non-constant string as argument to 'info()' logging call*/info/**/(String.format("%s %d", "1", 1));
                }
              }"""
     );
@@ -161,7 +161,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              class X {
                void foo() {
                  Logger log = LoggerFactory.getLogger(X.class);
-                 log./*Evaluated string as argument to 'info()' logging call*/info/**/(MessageFormat.format("{1}, {0}", "1", 2));
+                 log./*Non-constant string as argument to 'info()' logging call*/info/**/(MessageFormat.format("{1}, {0}", "1", 2));
                }
              }"""
     );
