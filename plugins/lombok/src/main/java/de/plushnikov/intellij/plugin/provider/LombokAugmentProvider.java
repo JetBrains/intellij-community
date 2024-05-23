@@ -215,11 +215,16 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
            ContainerUtil.exists(extensibleClass.getOwnFields(), field -> hasAnyLombokAnnotation(field.getAnnotations())) ||
            (file.getImportList() != null &&
             ContainerUtil.exists(file.getImportList().getAllImportStatements(), statement -> {
-              PsiJavaCodeReferenceElement reference = statement.getImportReference();
-              return reference != null && reference.getText().startsWith("lombok");
+              return mightBeUsedImportForIncompleteMode(statement);
             }));
   }
 
+  @Override
+  protected boolean mightBeUsedImportForIncompleteMode(@NotNull PsiImportStatementBase psiImport) {
+    if (psiImport instanceof PsiImportStaticStatement) return false;
+    PsiJavaCodeReferenceElement reference = psiImport.getImportReference();
+    return reference != null && reference.getText().startsWith("lombok");
+  }
 
   /**
    * Checks if the given PsiModifierListOwner has any Lombok annotation.
