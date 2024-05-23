@@ -783,8 +783,20 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun evaluate(uExpression: UExpression): Any? {
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyzeForUast(ktExpression) {
-            return ktExpression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
+            val expressionToEvaluate = ktExpression.unwrapKotlinValPropertyReference()
+            return expressionToEvaluate?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
                 ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtExpression.unwrapKotlinValPropertyReference(): KtExpression? {
+        if (this !is KtNameReferenceExpression) return this
+        val propertySymbol = resolveCallOld()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return this
+        if (!propertySymbol.isVal) {
+            // can't evaluate non-final variables
+            return null
+        }
+        return propertySymbol.initializer?.initializerPsi
     }
 }
