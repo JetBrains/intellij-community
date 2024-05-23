@@ -277,6 +277,11 @@ public abstract class K2IntroducePropertyTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceProperty/extractWithParams.kt");
         }
 
+        @TestMetadata("fromTopLevel.kt")
+        public void testFromTopLevel() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceProperty/fromTopLevel.kt");
+        }
+
         @TestMetadata("functionalType.kt")
         public void testFunctionalType() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceProperty/functionalType.kt");

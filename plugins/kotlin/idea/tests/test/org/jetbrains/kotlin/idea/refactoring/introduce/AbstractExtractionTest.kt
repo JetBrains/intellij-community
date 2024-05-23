@@ -37,6 +37,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
@@ -318,6 +319,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             val extractionTarget = propertyTargets.single {
                 it.targetName == InTextDirectivesUtils.findStringWithPrefixes(file.getText(), "// EXTRACTION_TARGET: ")
             }
+
             val explicitPreviousSibling = file.findElementByCommentPrefix("// SIBLING:")
             val helper = object : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
                 override fun validate(descriptor: ExtractableCodeDescriptor) = descriptor.validate(extractionTarget)

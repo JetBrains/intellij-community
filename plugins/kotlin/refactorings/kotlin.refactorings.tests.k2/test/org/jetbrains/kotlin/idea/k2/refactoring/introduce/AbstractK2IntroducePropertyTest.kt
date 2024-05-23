@@ -32,6 +32,7 @@ abstract class AbstractK2IntroducePropertyTest : AbstractExtractionTest() {
             val extractionTarget = propertyTargets.single {
                 it.targetName == InTextDirectivesUtils.findStringWithPrefixes(file.getText(), "// EXTRACTION_TARGET: ")
             }
+
             val explicitPreviousSibling = file.findElementByCommentPrefix("// SIBLING:")
             val helper = object : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
                 override fun validate(descriptor: ExtractableCodeDescriptor) = descriptor.validate(extractionTarget)
