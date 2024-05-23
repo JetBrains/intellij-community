@@ -83,6 +83,10 @@ class KotlinLoggingStringTemplateAsArgumentInspectionTest {
     fun `test fix`() {
       myFixture.testQuickFix(file = "StringTemplateAsArgumentFix.kt", checkPreview = true)
     }
+
+    fun `test fix with escape symbols`() {
+      myFixture.testQuickFix(file = "StringTemplateAsArgumentWithEscapeSymbolsFix.kt", checkPreview = true)
+    }
   }
 
   class TestCaseSkipExceptions : KotlinLoggingStringTemplateAsArgumentInspectionTestBase() {
