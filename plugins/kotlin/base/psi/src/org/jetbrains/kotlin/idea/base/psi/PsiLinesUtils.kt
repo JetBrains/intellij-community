@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.DocumentUtil
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.math.abs
@@ -17,7 +18,7 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 
 fun PsiFile.getLineStartOffset(line: Int, skipWhitespace: Boolean): Int? {
     val doc = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    if (doc != null && line >= 0 && line < doc.lineCount) {
+    if (doc != null && DocumentUtil.isValidLine(line, doc)) {
         val startOffset = doc.getLineStartOffset(line)
         val element = findElementAt(startOffset) ?: return startOffset
 
@@ -32,7 +33,7 @@ fun PsiFile.getLineStartOffset(line: Int, skipWhitespace: Boolean): Int? {
 
 fun PsiFile.getLineEndOffset(line: Int): Int? {
     val document = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    if (document != null && line >= 0 && line < document.lineCount) {
+    if (document != null && DocumentUtil.isValidLine(line, document)) {
         return document.getLineEndOffset(line)
     }
     return null
