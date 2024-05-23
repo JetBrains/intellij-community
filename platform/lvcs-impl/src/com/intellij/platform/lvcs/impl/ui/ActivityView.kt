@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.DIFF_PLACE
 import com.intellij.platform.util.coroutines.childScope
@@ -55,8 +56,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
 
   private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope("ActivityView")
+  private val settings = service<ActivityViewApplicationSettings>()
 
-  private val model = ActivityViewModel(project, gateway, activityScope, coroutineScope)
+  private val model = ActivityViewModel(project, gateway, activityScope, currentDiffMode, coroutineScope)
 
   private val activityList = ActivityList { model.activityProvider.getPresentation(it) }.apply {
     updateEmptyText(true)
@@ -67,6 +69,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private val editorDiffPreview = if (frameDiffPreview == null) createEditorDiffPreview(changesBrowser) else null
 
   private val changesSplitter: TwoKeySplitter
+
+  private val currentDiffMode get() = if (isSwitchingDiffModeAllowed) settings.diffMode else DirectoryDiffMode.WithNext
+  private val isSwitchingDiffModeAllowed get() = activityScope != ActivityScope.Recent
 
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
@@ -137,6 +142,14 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         activityList.updateEmptyText(false)
       }
     }, this)
+    if (isSwitchingDiffModeAllowed) {
+      settings.addListener(object : ActivityViewApplicationSettings.Listener {
+        override fun settingsChanged() {
+          model.diffMode = settings.diffMode
+        }
+      }, this)
+    }
+    model.diffMode = currentDiffMode
 
     isFocusCycleRoot = true
     focusTraversalPolicy = object: ComponentsListFocusTraversalPolicy() {
@@ -160,17 +173,16 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private fun createChangesBrowser(): ActivityChangesBrowser? {
     if (model.isSingleDiffSupported) return null
 
-    val changesBrowser = ActivityChangesBrowser(project)
+    val changesBrowser = ActivityChangesBrowser(project, isSwitchingDiffModeAllowed)
     model.addListener(object : ActivityModelListener {
       override fun onDiffDataLoadingStarted() {
-        changesBrowser.updateEmptyText(true)
+        changesBrowser.loadingStarted()
       }
       override fun onDiffDataLoadingStopped(diffData: ActivityDiffData?) {
-        changesBrowser.updateEmptyText(false)
-        changesBrowser.diffData = diffData
+        changesBrowser.loadingFinished(diffData)
       }
     }, changesBrowser)
-    changesBrowser.updateEmptyText(true)
+    changesBrowser.loadingStarted()
     Disposer.register(this, changesBrowser)
     return changesBrowser
   }
@@ -277,16 +289,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       return LocalHistoryBundle.message("activity.list.empty.text.recent")
     }
     return LocalHistoryBundle.message("activity.list.empty.text.in.scope", activityScope.presentableName)
-  }
-
-  private fun ActivityChangesBrowser.updateEmptyText(isLoading: Boolean) = viewer.setEmptyText(getBrowserEmptyText(isLoading))
-
-  private fun getBrowserEmptyText(isLoading: Boolean): @NlsContexts.StatusText String {
-    if (isLoading) return LocalHistoryBundle.message("activity.empty.text.loading")
-    if (model.selection?.selectedItems.isNullOrEmpty()) {
-      return LocalHistoryBundle.message("activity.browser.empty.text.no.selection")
-    }
-    return LocalHistoryBundle.message("activity.browser.empty.text")
   }
 
   internal fun showDiff(): Boolean {

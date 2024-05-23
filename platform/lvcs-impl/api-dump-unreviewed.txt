@@ -803,8 +803,19 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityData$Companion
 - f:getEMPTY():com.intellij.platform.lvcs.impl.ActivityData
-*:com.intellij.platform.lvcs.impl.ActivityDiffData
-- a:getPresentableChanges():java.lang.Iterable
+*f:com.intellij.platform.lvcs.impl.ActivityDiffData
+- <init>(java.lang.Iterable,com.intellij.platform.lvcs.impl.DirectoryDiffMode,Z):V
+- f:component1():java.lang.Iterable
+- f:component2():com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- f:component3():Z
+- f:copy(java.lang.Iterable,com.intellij.platform.lvcs.impl.DirectoryDiffMode,Z):com.intellij.platform.lvcs.impl.ActivityDiffData
+- bs:copy$default(com.intellij.platform.lvcs.impl.ActivityDiffData,java.lang.Iterable,com.intellij.platform.lvcs.impl.DirectoryDiffMode,Z,I,java.lang.Object):com.intellij.platform.lvcs.impl.ActivityDiffData
+- equals(java.lang.Object):Z
+- f:getDiffMode():com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- f:getPresentableChanges():java.lang.Iterable
+- hashCode():I
+- f:isSingleSelection():Z
+- toString():java.lang.String
 *:com.intellij.platform.lvcs.impl.ActivityFileChange
 - com.intellij.openapi.vcs.changes.ui.PresentableChange
 - a:createProducer(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
@@ -993,6 +1004,20 @@ f:com.intellij.platform.lvcs.impl.diff.EntryDiffContentKt
 - sf:createCurrentDiffContent(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,java.lang.String,I,I):com.intellij.diff.contents.DiffContent
 - sf:createDiffContent(com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.Entry,J,com.intellij.history.integration.ui.models.SelectionCalculator,com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
 - sf:createDiffContent(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.Entry):com.intellij.diff.contents.DiffContent
+f:com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
+- com.intellij.openapi.components.SimplePersistentStateComponent
+- <init>():V
+- f:addListener(com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings$Listener,com.intellij.openapi.Disposable):V
+- f:getDiffMode():com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- f:setDiffMode(com.intellij.platform.lvcs.impl.DirectoryDiffMode):V
+com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings$Listener
+- java.util.EventListener
+- a:settingsChanged():V
+f:com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings$State
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getDiffMode():com.intellij.platform.lvcs.impl.DirectoryDiffMode
+- f:setDiffMode(com.intellij.platform.lvcs.impl.DirectoryDiffMode):V
 f:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -1030,11 +1055,9 @@ e:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 f:com.intellij.platform.lvcs.impl.ui.ActivityChangesBrowser
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,Z):V
 - dispose():V
 - getData(java.lang.String):java.lang.Object
-- f:getDiffData():com.intellij.platform.lvcs.impl.ActivityDiffData
-- f:setDiffData(com.intellij.platform.lvcs.impl.ActivityDiffData):V
 com.intellij.platform.lvcs.impl.ui.ActivityModelListener
 - java.util.EventListener
 - onDiffDataLoadingStarted():V

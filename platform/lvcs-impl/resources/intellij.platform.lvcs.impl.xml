@@ -88,6 +88,8 @@
 
     <history.activityPresentationProvider implementation="com.intellij.history.integration.CommonActivityPresentationProvider"/>
 
+    <applicationService serviceImplementation="com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings"/>
+
     <notificationGroup displayType="BALLOON" id="LocalHistory.General" bundle="messages.LocalHistoryBundle"
                        key="notification.group.general"/>
 

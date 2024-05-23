@@ -10,8 +10,6 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
-private class ActivityDiffDataImpl(override val presentableChanges: Iterable<PresentableChange>) : ActivityDiffData
-
 internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
                                                selection: ChangeSetSelection,
@@ -20,7 +18,7 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
   val differences = getDiff(gateway, scope, selection, diffMode, isOldContentUsed)
   val presentableChanges = JBIterable.from(differences)
     .mapNotNull { it.toPresentableChange(gateway, scope, selection, isOldContentUsed) }
-  return ActivityDiffDataImpl(presentableChanges)
+  return ActivityDiffData(presentableChanges, diffMode, selection is ChangeSetSelection.Single)
 }
 
 private fun Difference.toPresentableChange(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean): PresentableChange? {

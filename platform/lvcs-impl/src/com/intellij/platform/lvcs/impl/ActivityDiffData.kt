@@ -7,9 +7,9 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface ActivityDiffData {
-  val presentableChanges: Iterable<PresentableChange>
-}
+data class ActivityDiffData(val presentableChanges: Iterable<PresentableChange>,
+                            val diffMode: DirectoryDiffMode,
+                            val isSingleSelection: Boolean)
 
 @ApiStatus.Experimental
 interface ActivityFileChange : PresentableChange {

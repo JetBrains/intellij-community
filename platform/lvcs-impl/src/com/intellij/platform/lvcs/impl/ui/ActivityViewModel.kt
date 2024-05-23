@@ -15,14 +15,15 @@ import kotlinx.coroutines.flow.*
 import java.util.*
 
 @OptIn(FlowPreview::class)
-internal class ActivityViewModel(private val project: Project, gateway: IdeaGateway, internal val activityScope: ActivityScope, coroutineScope: CoroutineScope) {
+internal class ActivityViewModel(private val project: Project, gateway: IdeaGateway, internal val activityScope: ActivityScope,
+                                 diffMode: DirectoryDiffMode, coroutineScope: CoroutineScope) {
   private val eventDispatcher = EventDispatcher.create(ActivityModelListener::class.java)
 
   internal val activityProvider: ActivityProvider = LocalHistoryActivityProvider(project, gateway)
 
   private val activityItemsFlow = MutableStateFlow(ActivityData.EMPTY)
   private val selectionFlow = MutableStateFlow<ActivitySelection?>(null)
-  private val diffModeFlow = MutableStateFlow(DirectoryDiffMode.WithLocal)
+  private val diffModeFlow = MutableStateFlow(diffMode)
 
   private val filterFlow = MutableStateFlow<String?>(null)
 
@@ -90,7 +91,11 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   }
 
   internal val selection get() = selectionFlow.value
-  internal val diffMode get() = diffModeFlow.value
+
+  internal var diffMode get() = diffModeFlow.value
+    set(value) {
+      diffModeFlow.value = value
+    }
 
   internal val isSingleDiffSupported get() = !activityScope.hasMultipleFiles
 
