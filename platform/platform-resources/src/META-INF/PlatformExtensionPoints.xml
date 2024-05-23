@@ -553,5 +553,7 @@
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
 
     <extensionPoint name="endUserAgreementUpdater" beanClass="com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor" dynamic="true"/>
+
+    <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate"/>
   </extensionPoints>
 </idea-plugin>

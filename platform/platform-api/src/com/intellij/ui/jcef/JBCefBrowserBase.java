@@ -89,7 +89,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
-  private static Logger LOG = Logger.getInstance(JBCefBrowserBase.class);
+  private static final Logger LOG = Logger.getInstance(JBCefBrowserBase.class);
   private static final boolean IS_REMOTE_ENABLED = JBCefApp.isRemoteEnabled();
   protected static final @NotNull String BLANK_URI = "about:blank";
   private static final @NotNull Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
@@ -147,6 +147,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   static @Nullable WeakReference<JBCefBrowserBase> focusedBrowser;
 
   protected final @NotNull JBCefClient myCefClient;
+  private final boolean myDefaultCefClient;
   protected final @NotNull CefBrowser myCefBrowser;
   private final boolean myIsOffScreenRendering;
   private final boolean myEnableOpenDevToolsMenuItem;
@@ -166,7 +167,15 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * Nevertheless, it can be disposed manually as well when necessary.
    */
   protected JBCefBrowserBase(@NotNull JBCefBrowserBuilder builder) {
-    myCefClient = ObjectUtils.notNull(builder.myClient, () -> JBCefApp.getInstance().createClient(true));
+    JBCefClient providedClient = builder.myClient;
+    if (providedClient == null) {
+      myCefClient = JBCefApp.getInstance().createClient();
+      myDefaultCefClient = true;
+    }
+    else {
+      myCefClient = providedClient;
+      myDefaultCefClient = false;
+    }
     Disposer.register(myCefClient, this);
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
@@ -175,7 +184,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     CefBrowser cefBrowser = builder.myCefBrowser;
 
     if (cefBrowser == null) {
-      if (myIsOffScreenRendering) {
+      CefDelegate delegate = JBCefApp.getInstance().getDelegate();
+      if (delegate != null) {
+        cefBrowser = delegate.createBrowser(validateUrl(builder.myUrl));
+      }
+      else if (myIsOffScreenRendering) {
         JBCefApp.checkOffScreenRenderingModeEnabled();
         CefBrowserSettings settings = new CefBrowserSettings();
         settings.windowless_frame_rate = builder.myWindowlessFrameRate;
@@ -605,7 +618,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefBrowser.setCloseAllowed();
       myCefBrowser.close(true);
 
-      if (myCefClient.isDefault()) Disposer.dispose(myCefClient);
+      if (myDefaultCefClient) Disposer.dispose(myCefClient);
 
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
     });

@@ -9849,8 +9849,9 @@ f:com.intellij.ui.jcef.JBCefBrowserJsCallKt
 com.intellij.ui.jcef.JBCefCaretListener
 - a:onImeCompositionRangeChanged(org.cef.misc.CefRange,java.awt.Rectangle[]):V
 - a:onTextSelectionChanged(java.lang.String,org.cef.misc.CefRange):V
-f:com.intellij.ui.jcef.JBCefClient
+c:com.intellij.ui.jcef.JBCefClient
 - com.intellij.ui.jcef.JBCefDisposable
+- p:<init>(org.cef.CefClient):V
 - addContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
 - addDialogHandler(org.cef.handler.CefDialogHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
 - addDisplayHandler(org.cef.handler.CefDisplayHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient

@@ -25,6 +25,7 @@ import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.cef.misc.BoolRef;
 import org.jdom.IllegalDataException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,15 +65,18 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 13;
 
-  private final @NotNull CefApp myCefApp;
+  private final @Nullable CefDelegate myDelegate;
+  private final @Nullable CefApp myCefApp;
 
-  private final @NotNull CefSettings myCefSettings;
+  private final @Nullable CefSettings myCefSettings;
   private final @NotNull CompletableFuture<Integer> myDebuggingPort = new CompletableFuture<>();
 
   private final @NotNull Disposable myDisposable = new Disposable() {
     @Override
     public void dispose() {
-      myCefApp.dispose();
+      if (myCefApp != null) {
+        myCefApp.dispose();
+      }
     }
   };
 
@@ -83,10 +87,10 @@ public final class JBCefApp {
   private static final List<JBCefCustomSchemeHandlerFactory> ourCustomSchemeHandlerFactoryList =
     Collections.synchronizedList(new ArrayList<>());
 
-  //fixme use addCefCustomSchemeHandlerFactory method if possible
-  private static final JBCefSourceSchemeHandlerFactory ourSourceSchemeHandlerFactory = new JBCefSourceSchemeHandlerFactory();
-
   static {
+    addCefCustomSchemeHandlerFactory(new JBCefSourceSchemeHandlerFactory());
+    addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
+
     Boolean result = null;
     try {
       // Temporary use reflection to avoid jcef-version increment
@@ -98,70 +102,79 @@ public final class JBCefApp {
   }
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {
-    CefSettings settings = SettingsHelper.loadSettings(config);
-
-    if (SystemInfoRt.isLinux && !settings.no_sandbox) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        if (JBCefAppArmorUtils.areUnprivilegedUserNameSpacesAllowed()) {
-          CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-        }
-        else {
-          Notification notification =
-            getNotificationGroup()
-              .createNotification(
-                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.title"),
-                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.message"),
-                NotificationType.WARNING);
-
-          AnAction installProfileAction = JBCefAppArmorUtils.getInstallInstallAppArmorProfileAction(() -> notification.expire());
-          if (installProfileAction != null) {
-            notification.addAction(installProfileAction);
-          }
-
-          notification.addAction(
-            NotificationAction.createSimple(
-              IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
-              () -> {
-                RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
-                notification.expire();
-                ApplicationManager.getApplication().restart();
-              })
-          );
-
-          notification.addAction(
-            NotificationAction.createSimple(
-              IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.learn.more"),
-              () -> {
-                // TODO(kharitonov): move to https://intellij-support.jetbrains.com/hc/en-us/sections/201620045-Troubleshooting
-                BrowserUtil.browse("https://youtrack.jetbrains.com/articles/JBR-A-11");
-              })
-          );
-
-          Notifications.Bus.notify(notification);
-        }
-      });
+    myDelegate = getActiveDelegate();
+    if (myDelegate != null) {
+      myCefSettings = null;
+      myCefApp = null;
+      myDebuggingPort.completeExceptionally(new UnsupportedOperationException());
     }
     else {
-      CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-    }
+      CefSettings settings = SettingsHelper.loadSettings(config);
 
-    BoolRef trackGPUCrashes = new BoolRef(false);
-    String[] args = SettingsHelper.loadArgs(config, settings, trackGPUCrashes);
-    CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
-    myCefSettings = settings;
-    myCefApp = CefApp.getInstance(settings);
+      if (SystemInfoRt.isLinux && !settings.no_sandbox) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          if (JBCefAppArmorUtils.areUnprivilegedUserNameSpacesAllowed()) {
+            CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+          }
+          else {
+            Notification notification =
+              getNotificationGroup()
+                .createNotification(
+                  IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.title"),
+                  IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.message"),
+                  NotificationType.WARNING);
 
-    if (myCefSettings.remote_debugging_port > 0) {
-      myDebuggingPort.complete(myCefSettings.remote_debugging_port);
-    } else {
-      myCefApp.onInitialization(state -> {
-        try {
-          myDebuggingPort.complete(readDebugPortFile(Path.of(myCefSettings.cache_path, "DevToolsActivePort")));
-        }
-        catch (Exception e) {
-          myDebuggingPort.completeExceptionally(e);
-        }
-      });
+            AnAction installProfileAction = JBCefAppArmorUtils.getInstallInstallAppArmorProfileAction(() -> notification.expire());
+            if (installProfileAction != null) {
+              notification.addAction(installProfileAction);
+            }
+
+            notification.addAction(
+              NotificationAction.createSimple(
+                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
+                () -> {
+                  RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
+                  notification.expire();
+                  ApplicationManager.getApplication().restart();
+                })
+            );
+
+            notification.addAction(
+              NotificationAction.createSimple(
+                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.learn.more"),
+                () -> {
+                  // TODO(kharitonov): move to https://intellij-support.jetbrains.com/hc/en-us/sections/201620045-Troubleshooting
+                  BrowserUtil.browse("https://youtrack.jetbrains.com/articles/JBR-A-11");
+                })
+            );
+
+            Notifications.Bus.notify(notification);
+          }
+        });
+      }
+      else {
+        CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+      }
+
+      BoolRef trackGPUCrashes = new BoolRef(false);
+      String[] args = SettingsHelper.loadArgs(config, settings, trackGPUCrashes);
+      CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
+      myCefSettings = settings;
+      myCefApp = CefApp.getInstance(settings);
+
+      if (myCefSettings.remote_debugging_port > 0) {
+        myDebuggingPort.complete(myCefSettings.remote_debugging_port);
+      }
+      else {
+        myCefApp.onInitialization(state -> {
+          try {
+            myDebuggingPort.complete(readDebugPortFile(Path.of(myCefSettings.cache_path, "DevToolsActivePort")));
+          }
+          catch (Exception e) {
+            myDebuggingPort.completeExceptionally(e);
+          }
+        });
+      }
     }
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
@@ -247,64 +260,72 @@ public final class JBCefApp {
       else if (ourSupported != null) {
         return ourSupported.get();
       }
-      Function<String, Boolean> unsupported = (msg) -> {
-        ourSupported = new AtomicBoolean(false);
-        LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
-        return false;
-      };
-      // warn: do not change to Registry.is(), the method used at startup
-      if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
-        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
-      }
-      if (GraphicsEnvironment.isHeadless() &&
-          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
-        return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
-      }
-      if (SystemInfo.isWindows && !SystemInfo.isWin8OrNewer)
-        return unsupported.apply("JCEF isn't supported in Windows 7");
-
-      if (!SKIP_VERSION_CHECK) {
-        JCefVersionDetails version;
-        try {
-          version = JCefAppConfig.getVersionDetails();
-        }
-        catch (Throwable e) {
-          return unsupported.apply("JCEF runtime version is not supported");
-        }
-        if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
-          return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
-                                   ", current is " + version.cefVersion.major);
-        }
-        if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
-            (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
-             MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor)) {
-          return unsupported.apply("JCEF: minimum supported API version is " +
-                                   MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
-                                   ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
-        }
-      }
-      String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
-      if (altCefPath == null || altCefPath.isEmpty()) {
-        altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
-      }
-
-      final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK || IS_REMOTE_ENABLED;
-      if (!skipModuleCheck) {
-        URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
-        if (url == null) {
-          return unsupported.apply("JCefAppConfig.class not found");
-        }
-        String path = url.toString();
-        String name = JCefAppConfig.class.getName().replace('.', '/');
-        boolean isJbrModule = path != null && path.contains("/jcef/" + name);
-        if (!isJbrModule) {
-          return unsupported.apply("JCefAppConfig.class is not from a JBR module, url: " + path);
-        }
-      }
-
-      ourSupported = new AtomicBoolean(true);
-      return true;
+      boolean supported = isSupportedImpl();
+      ourSupported = new AtomicBoolean(supported);
+      return supported;
     }
+  }
+
+  private static boolean isSupportedImpl() {
+    CefDelegate delegate = getActiveDelegate();
+    if (delegate != null) {
+      return delegate.isCefSupported();
+    }
+    Function<String, Boolean> unsupported = (msg) -> {
+      LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
+      return false;
+    };
+    // warn: do not change to Registry.is(), the method used at startup
+    if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
+      return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
+    }
+    if (GraphicsEnvironment.isHeadless() &&
+        !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
+      return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
+    }
+    if (SystemInfo.isWindows && !SystemInfo.isWin8OrNewer)
+      return unsupported.apply("JCEF isn't supported in Windows 7");
+
+    if (!SKIP_VERSION_CHECK) {
+      JCefVersionDetails version;
+      try {
+        version = JCefAppConfig.getVersionDetails();
+      }
+      catch (Throwable e) {
+        return unsupported.apply("JCEF runtime version is not supported");
+      }
+      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
+        return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                                 ", current is " + version.cefVersion.major);
+      }
+      if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
+          (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
+           MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor)) {
+        return unsupported.apply("JCEF: minimum supported API version is " +
+                                 MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
+                                 ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
+      }
+    }
+    String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
+    if (altCefPath == null || altCefPath.isEmpty()) {
+      altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
+    }
+
+    final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK || IS_REMOTE_ENABLED;
+    if (!skipModuleCheck) {
+      URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
+      if (url == null) {
+        return unsupported.apply("JCefAppConfig.class not found");
+      }
+      String path = url.toString();
+      String name = JCefAppConfig.class.getName().replace('.', '/');
+      boolean isJbrModule = path != null && path.contains("/jcef/" + name);
+      if (!isJbrModule) {
+        return unsupported.apply("JCefAppConfig.class is not from a JBR module, url: " + path);
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -319,6 +340,7 @@ public final class JBCefApp {
 
   @Contract(pure = true)
   @NotNull String getCachePath() {
+    if (myCefSettings == null) throw new UnsupportedOperationException();
     return myCefSettings.cache_path;
   }
 
@@ -330,6 +352,7 @@ public final class JBCefApp {
   @Contract(pure = true)
   @NotNull
   public Integer getRemoteDebuggingPort() {
+    if (myCefSettings == null) throw new UnsupportedOperationException();
     return myCefSettings.remote_debugging_port;
   }
 
@@ -354,12 +377,11 @@ public final class JBCefApp {
   }
 
   public @NotNull JBCefClient createClient() {
-    return createClient(false);
-  }
-
-  @NotNull
-  JBCefClient createClient(boolean isDefault) {
-    return new JBCefClient(myCefApp.createClient(), isDefault);
+    if (myDelegate != null) {
+      return myDelegate.createClient();
+    }
+    assert myCefApp != null;
+    return new JBCefClient(myCefApp.createClient());
   }
 
   /**
@@ -402,12 +424,16 @@ public final class JBCefApp {
    *
    * @throws IllegalStateException if the method is called after {@code JBCefApp} initialization
    */
-  @SuppressWarnings("unused")
   /*public*/ static void addCefCustomSchemeHandlerFactory(@NotNull JBCefApp.JBCefCustomSchemeHandlerFactory factory) {
     if (ourInitialized.get()) {
       throw new IllegalStateException("JBCefApp has already been initialized!");
     }
     ourCustomSchemeHandlerFactoryList.add(factory);
+  }
+
+  @ApiStatus.Internal
+  public static List<JBCefCustomSchemeHandlerFactory> getCefCustomSchemeHandlerFactories() {
+    return Collections.unmodifiableList(ourCustomSchemeHandlerFactoryList);
   }
 
   public interface JBCefCustomSchemeHandlerFactory extends CefSchemeHandlerFactory {
@@ -453,7 +479,6 @@ public final class JBCefApp {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         f.registerCustomScheme(registrar);
       }
-      ourSourceSchemeHandlerFactory.registerCustomScheme(registrar);
     }
 
     @Override
@@ -468,13 +493,6 @@ public final class JBCefApp {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         getInstance().myCefApp.registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
       }
-      ourCustomSchemeHandlerFactoryList.clear(); // no longer needed
-
-      getInstance().myCefApp.registerSchemeHandlerFactory(
-        ourSourceSchemeHandlerFactory.getSchemeName(), ourSourceSchemeHandlerFactory.getDomainName(), ourSourceSchemeHandlerFactory);
-
-      getInstance().myCefApp.registerSchemeHandlerFactory(
-        JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
     }
 
     @Override
@@ -525,5 +543,14 @@ public final class JBCefApp {
 
       throw new IllegalDataException("Invalid JCEF JCEF debugging port number value: " + value);
     }
+  }
+
+  @Nullable
+  CefDelegate getDelegate() {
+    return myDelegate;
+  }
+
+  private static @Nullable CefDelegate getActiveDelegate() {
+    return CefDelegate.EP.findFirstSafe(CefDelegate::isActive);
   }
 }
