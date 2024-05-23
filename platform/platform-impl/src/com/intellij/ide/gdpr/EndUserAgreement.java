@@ -106,10 +106,11 @@ public final class EndUserAgreement {
     }
 
     String docName = getDocumentName();
-    Document document;
     Document defaultDocument = loadDocument(docName);
     Locale locale = SystemLanguage.getInstance().getLocale();
     List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+
+    Document document;
     for (String localizedDocName : localizedDocsNames) {
       document = loadDocument(localizedDocName);
       if (!document.getText().isEmpty() && !defaultDocument.getVersion().isNewer(document.getVersion())) return document;
@@ -135,7 +136,7 @@ public final class EndUserAgreement {
     updateCachedContentToLatestBundledVersion(docName);
   }
 
-  private static void updateCachedContentToLatestBundledVersion(String docName) {
+  private static void updateCachedContentToLatestBundledVersion(@NotNull String docName) {
     try {
       Document cached = loadContent(docName, getDocumentContentFile(docName));
       if (cached == null || cached.getVersion().isUnknown()) {

@@ -117,7 +117,7 @@ object LocalizationUtil {
       path.convertPathToLocaleSuffixUsage(locale, true),
 
       //inspectionDescriptions/name_zh.html
-      path.convertPathToLocaleSuffixUsage(locale, false))
-      .map { FileUtil.toSystemIndependentName(it.toString()) }
+      path.convertPathToLocaleSuffixUsage(locale, false),
+    ).map { FileUtil.toSystemIndependentName(it.toString()) }
   }
 }
