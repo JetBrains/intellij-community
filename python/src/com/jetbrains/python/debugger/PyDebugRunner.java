@@ -702,7 +702,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.putFixedValue(PYCHARM_DEBUG, "True");
     }
 
-    if (registryManager.is("python.debug.use.processes.for.resolve")) {
+    if (registryManager.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
       environmentController.putFixedValue(USE_PROCESSES_FOR_RESOLVE, "True");
     }
   }
