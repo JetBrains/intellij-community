@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.serialization.SerializationException
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
@@ -44,17 +45,22 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     }
 
     fun getOptions(arguments: String): OpenFileCommandOptions? {
-      val myOptions = runCatching {
-        OpenFileCommandOptions().apply { Args.parse(this, arguments.split("|==|").toTypedArray()) }
+      return runCatching {
+        OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
       }.getOrNull()
-      return myOptions
     }
   }
-  
+
   override fun getName(): String = NAME
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val myOptions = getOptions(extractCommandArgument(PREFIX))
+    val arguments = extractCommandArgument(PREFIX)
+    val myOptions = try {
+      deserializeOptionsFromJson(arguments, OpenFileCommandOptions::class.java)
+    }
+    catch (_: Throwable) {
+      getOptions(arguments)
+    }
     val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
     val timeout = myOptions?.timeout ?: 0
     val suppressErrors = myOptions?.suppressErrors ?: false

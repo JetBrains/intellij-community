@@ -68,16 +68,19 @@ fun <T : CommandChain> T.verifyFileEncoding(relativePath: String,
   addCommand("${CMD_PREFIX}assertEncodingFileCommand", relativePath, expectedCharsetName)
 }
 
+fun <T : CommandChain> T.openFileWithJsonArguments(openFileDto: OpenFileDto): T = apply {
+  val options = objectMapper.writeValueAsString(openFileDto)
+  addCommand("${CMD_PREFIX}openFile $options")
+}
+
 fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
                                   disableCodeAnalysis: Boolean = false): T = apply {
-  // For cases when there are spaces in the file path
-  val separator = "|==|"
-  val command = mutableListOf("${CMD_PREFIX}openFile", "-file$separator$relativePath")
+  val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
   if (timeoutInSeconds != 0L) {
-    command.add("-timeout$separator$timeoutInSeconds")
+    command.add("-timeout $timeoutInSeconds")
   }
   if (suppressErrors) {
     command.add("-suppressErrors")
@@ -89,7 +92,7 @@ fun <T : CommandChain> T.openFile(relativePath: String,
     command.add(WARMUP)
   }
 
-  addCommandWithSeparator(separator, *command.toTypedArray())
+  addCommand(*command.toTypedArray())
 }
 
 fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
@@ -357,6 +360,10 @@ fun <T : CommandChain> T.openProjectView(): T = apply {
 
 fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = apply {
   addCommand("${CMD_PREFIX}getLibraryPathByName $name,$path")
+}
+
+fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: Path): T = apply {
+  addCommand("${CMD_PREFIX}convertJavaToKotlin $moduleName $filePath")
 }
 
 fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
