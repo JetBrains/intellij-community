@@ -213,6 +213,7 @@ private fun isKnownViolator() : Boolean {
   return VIOLATORS.any { badTrace -> stackTrace.any { it.startsWith(badTrace) } }
 }
 
+private val shouldWarnAccidentalCancellation = SystemProperties.getBooleanProperty("ide.warn.accidental.cancellation", false)
 
 /**
  * In the IntelliJ codebase, there are some areas that are not supposed to meet [com.intellij.openapi.progress.ProcessCanceledException],
@@ -234,7 +235,7 @@ private fun isKnownViolator() : Boolean {
  *   that are checked for cancellation.
  */
 internal fun warnAccidentalCancellation() {
-  if (!SystemProperties.getBooleanProperty("ide.warn.accidental.cancellation", false)) {
+  if (!shouldWarnAccidentalCancellation) {
     return
   }
   if (Cancellation.isInNonCancelableSection()) {
