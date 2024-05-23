@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
@@ -15,9 +14,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.jdom.CDATA
-import org.jdom.Document
-import org.jdom.Element
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
@@ -1178,27 +1174,6 @@ internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, ar
 
 internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
   Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
-}
-
-internal fun generateLanguagePluginsXml(context: BuildContext, targetPath: Path) {
-  val root = Element("plugins")
-  root.addContent(createPluginNode(context, "com.intellij.ja", "ja", "7 MB"))
-  root.addContent(createPluginNode(context, "com.intellij.ko", "ko", "7 MB"))
-  root.addContent(createPluginNode(context, "com.intellij.zh", "zh", "6 MB"))
-
-  val document = Document()
-  document.rootElement = root
-  JDOMUtil.writeDocument(document, targetPath.resolve("plugins/language-plugins.xml"))
-}
-
-private fun createPluginNode(context: BuildContext, id: String, language: String, size: String): Element {
-  val element = Element("plugin")
-  element.setAttribute("id", id)
-  element.setAttribute("language", language)
-  element.setAttribute("size", size)
-  element.addContent(CDATA("https://plugins.jetbrains.com/pluginManager?id=$id&build=${context.fullBuildNumber}"))
-
-  return element
 }
 
 internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {

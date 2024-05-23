@@ -49,7 +49,6 @@ internal class WindowsDistributionBuilder(
       copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
       generateBuildTxt(context, targetPath)
-      generateLanguagePluginsXml(context, targetPath)
       copyDistFiles(context, newDir = targetPath, OsFamily.WINDOWS, arch)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))

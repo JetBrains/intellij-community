@@ -55,7 +55,6 @@ class LinuxDistributionBuilder(
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
-        generateLanguagePluginsXml(context, targetPath)
         copyDistFiles(context, targetPath, OsFamily.LINUX, arch)
 
         //todo converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;

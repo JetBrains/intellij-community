@@ -4122,13 +4122,6 @@ c:com.intellij.ide.ReopenProjectAction
 - isRemoved():Z
 - setProjectGroup(com.intellij.ide.ProjectGroup):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.SystemLanguage
-- sf:Companion:com.intellij.ide.SystemLanguage$Companion
-- f:doChooseLanguage(java.util.List):V
-- sf:getInstance():com.intellij.ide.SystemLanguage
-- f:getLocale():java.util.Locale
-f:com.intellij.ide.SystemLanguage$Companion
-- f:getInstance():com.intellij.ide.SystemLanguage
 f:com.intellij.ide.TooltipEvent
 - <init>(java.awt.event.InputEvent,Z,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
 - getAction():com.intellij.openapi.actionSystem.AnAction

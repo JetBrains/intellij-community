@@ -2,7 +2,6 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
-import com.intellij.ide.SystemLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -107,7 +106,7 @@ public final class EndUserAgreement {
 
     String docName = getDocumentName();
     Document defaultDocument = loadDocument(docName);
-    Locale locale = SystemLanguage.getInstance().getLocale();
+    Locale locale = Locale.getDefault();
     List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
 
     Document document;
@@ -128,7 +127,7 @@ public final class EndUserAgreement {
 
   public static void updateCachedContentToLatestBundledVersion() {
     String docName = getDocumentName();
-    Locale locale = SystemLanguage.getInstance().getLocale();
+    Locale locale = Locale.getDefault();
     List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
     for (String localizedDocName : localizedDocsNames) {
       updateCachedContentToLatestBundledVersion(localizedDocName);

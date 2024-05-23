@@ -104,7 +104,6 @@ class MacDistributionBuilder(
     layoutMacApp(ideaProperties!!, platformProperties, getDocTypes(), macDistDir, arch)
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
-    generateLanguagePluginsXml(context, macDistDir)
 
     // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {
