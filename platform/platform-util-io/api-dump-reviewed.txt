@@ -65,3 +65,10 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - withRedirectErrorStream(Z):com.intellij.execution.configurations.GeneralCommandLine
 - withWorkDirectory(java.io.File):com.intellij.execution.configurations.GeneralCommandLine
 - withWorkDirectory(java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
+e:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
+- java.lang.Enum
+- sf:CONSOLE:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
+- sf:NONE:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
+- sf:SYSTEM:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
+- s:valueOf(java.lang.String):com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
+- s:values():com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType[]
