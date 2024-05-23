@@ -188,13 +188,16 @@ private class CreateObjectAndMoveProhibitedDeclarationsQuickFix(
     }
   }
 
+  @OptIn(KaAllowAnalysisOnEdt::class)
   private fun suggestNameForObjectInstance(companionObject: KtObjectDeclaration): String {
     val containingClass = companionObject.containingClass()!!
-    analyze(containingClass) {
-      return KotlinNameSuggester.suggestNameByName(
-        DEFAULT_OBJECT_NAME,
-        Fe10KotlinNewDeclarationNameValidator(containingClass, null, KotlinNameSuggestionProvider.ValidatorTarget.CLASS)
-      )
+    allowAnalysisOnEdt {
+      analyze(containingClass) {
+        return KotlinNameSuggester.suggestNameByName(
+          DEFAULT_OBJECT_NAME,
+          Fe10KotlinNewDeclarationNameValidator(containingClass, null, KotlinNameSuggestionProvider.ValidatorTarget.CLASS)
+        )
+      }
     }
   }
 
