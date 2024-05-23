@@ -43,6 +43,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
@@ -335,7 +336,7 @@ open class CodeVisionHost(val project: Project) {
     editor.putUserData(editorTrackingStart, openTimeNs)
     val mergingQueueFront = MergingUpdateQueue(
       CodeVisionHost::class.simpleName!!,
-      100,
+      300,
       true,
       null,
       editorLifetime.createNestedDisposable(),
@@ -438,6 +439,7 @@ open class CodeVisionHost(val project: Project) {
       ProgressManager.checkCanceled()
       val isEditorInsideSettingsPanel = isInlaySettingsEditor(editor)
       val editorOpenTimeNs = editor.getUserData(editorTrackingStart)
+      val modCount = modificationCount(editor)
 
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
       val providerWhoWantToUpdate = mutableListOf<String>()
@@ -481,6 +483,11 @@ open class CodeVisionHost(val project: Project) {
             everyProviderReadyToUpdate = false
           }
         }
+
+        if (modCount != modificationCount(editor)) {
+          // psi or document changed, aborting current run as outdated
+          return@executeOnPooledThread
+        }
       }
 
       if (!everyProviderReadyToUpdate || providerWhoWantToUpdate.isEmpty()) {
@@ -497,7 +504,9 @@ open class CodeVisionHost(val project: Project) {
         application.invokeLater(
           Runnable {
             calcLifetime.executeIfAlive {
-              consumer(results, providerWhoWantToUpdate)
+              if (modCount == modificationCount(editor)) {
+                consumer(results, providerWhoWantToUpdate)
+              }
             }
           },
           ModalityState.stateForComponent(editor.component)
@@ -572,5 +581,9 @@ open class CodeVisionHost(val project: Project) {
       logger.trace { "No provider found with id $providerId" }
     }
     return provider
+  }
+
+  private fun modificationCount(editor: Editor): Long {
+    return PsiModificationTracker.getInstance(editor.project).modificationCount + editor.document.modificationStamp
   }
 }
