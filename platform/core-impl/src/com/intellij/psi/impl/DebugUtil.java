@@ -523,9 +523,9 @@ public final class DebugUtil {
   }
 
   /**
-   * Any PSI/AST elements invalidated inside the give action will contain a debug trace identifying this transaction,
+   * Any PSI/AST elements invalidated inside the given action will contain a debug trace identifying this transaction,
    * and so will {@link PsiInvalidElementAccessException} thrown when accessing such invalid elements.
-   * This should help finding out why a specific PSI element has become invalid.
+   * This should help find out why a specific PSI element has become invalid.
    *
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
    */
