@@ -868,6 +868,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
 
+            @TestMetadata("approximatedReturnType.kt")
+            public void testApproximatedReturnType() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/approximatedReturnType.kt");
+            }
+
             @TestMetadata("callWithLambdaArgument.kt")
             public void testCallWithLambdaArgument() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/callWithLambdaArgument.kt");

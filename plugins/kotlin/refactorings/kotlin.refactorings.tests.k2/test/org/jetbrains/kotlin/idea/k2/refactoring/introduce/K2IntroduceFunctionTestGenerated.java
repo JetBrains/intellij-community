@@ -26,6 +26,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
 
+        @TestMetadata("approximatedReturnType.kt")
+        public void testApproximatedReturnType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/approximatedReturnType.kt");
+        }
+
         @TestMetadata("callWithLambdaArgument.kt")
         public void testCallWithLambdaArgument() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/callWithLambdaArgument.kt");
