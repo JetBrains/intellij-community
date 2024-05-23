@@ -17,7 +17,7 @@ import java.io.File
 
 abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
 
-    public override fun setUp() {
+    override fun setUp() {
         super.setUp()
         myDoCompare = false
     }

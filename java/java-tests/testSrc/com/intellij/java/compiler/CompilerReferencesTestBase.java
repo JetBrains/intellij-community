@@ -6,7 +6,7 @@ import com.intellij.java.codeInsight.completion.AbstractCompilerAwareTest;
 
 public abstract class CompilerReferencesTestBase extends AbstractCompilerAwareTest {
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
 
     CompilerReferenceService.getInstance(getProject());
