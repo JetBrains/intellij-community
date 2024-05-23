@@ -45,6 +45,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   ExternalSystemTaskNotificationListener getListener();
 
+  boolean isPhasedSyncEnabled();
+
   boolean isResolveModulePerSourceSet();
 
   boolean isUseQualifiedModuleNames();

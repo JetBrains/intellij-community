@@ -105,8 +105,7 @@ class GradleModelFetchActionRunner private constructor(
   }
 
   private fun <T : BuildActionExecuter<*>> T.withStreamedValueListener(listener: StreamedValueListener): T {
-    val gradleVersion = resolverContext.projectGradleVersion
-    if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.6")) {
+    if (resolverContext.isStreamingModelFetchingEnabled) {
       modelFetchAction.isUseStreamedValues = true
       setStreamedValueListener(listener)
     }

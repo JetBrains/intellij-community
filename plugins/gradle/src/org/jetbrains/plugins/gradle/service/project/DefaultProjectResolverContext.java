@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
@@ -12,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationToken;
@@ -52,6 +55,11 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable private final GradlePartialResolverPolicy myPolicy;
 
   @NotNull private final ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
+
+  private @Nullable Boolean myPhasedSyncEnabled = null;
+  private @Nullable Boolean myStreamingModelFetchingEnabled = null;
+
+  private final static Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
 
   public DefaultProjectResolverContext(
     @NotNull ExternalSystemTaskId externalSystemTaskId,
@@ -160,6 +168,54 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Override
   public ExternalSystemTaskNotificationListener getListener() {
     return myListener;
+  }
+
+  @Override
+  public boolean isPhasedSyncEnabled() {
+    if (myPhasedSyncEnabled == null) {
+      myPhasedSyncEnabled = isPhasedSyncEnabledImpl(this);
+    }
+    return myPhasedSyncEnabled;
+  }
+
+  private static boolean isPhasedSyncEnabledImpl(@NotNull ProjectResolverContext context) {
+    if (!Registry.is("gradle.phased.sync.enabled")) {
+      LOG.debug("The phased Gradle sync isn't applicable: disabled by registry");
+      return false;
+    }
+    if (!context.isResolveModulePerSourceSet()) {
+      LOG.debug("The phased Gradle sync isn't applicable: unsupported sync mode with isResolveModulePerSourceSet = false");
+      return false;
+    }
+    if (!context.isUseQualifiedModuleNames()) {
+      LOG.debug("The phased Gradle sync isn't applicable: unsupported sync mode with isUseQualifiedModuleNames = false");
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isStreamingModelFetchingEnabled() {
+    if (myStreamingModelFetchingEnabled == null) {
+      myStreamingModelFetchingEnabled = isStreamingModelFetchingEnabledImpl(this);
+    }
+    return myStreamingModelFetchingEnabled;
+  }
+
+  private static boolean isStreamingModelFetchingEnabledImpl(@NotNull ProjectResolverContext context) {
+    if (!Registry.is("gradle.phased.sync.enabled")) {
+      LOG.debug("The streaming Gradle model fetching isn't applicable: disabled by registry");
+      return false;
+    }
+    var gradleVersion = context.getProjectGradleVersion();
+    if (gradleVersion == null) {
+      LOG.debug("The streaming Gradle model fetching isn't applicable: Gradle version cannot be determined");
+      return false;
+    }
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.6")) {
+      LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported Gradle version: " + gradleVersion);
+      return false;
+    }
+    return true;
   }
 
   @Override
