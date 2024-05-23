@@ -137,11 +137,14 @@ public open class VirtualFileIndex internal constructor(
     EntityIdWithProperty(entityId, propertyName)
 
   public class MutableVirtualFileIndex private constructor(
+    // `@Suppress("RedundantVisibilityModifier")` is used to keep the `internal` modifier and make ApiChecker happy
+    //  Otherwise it thinks that these fields are exposed to the public
+    //
     // Do not write to [entityId2VirtualFileUrl] and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
-    override var entityId2VirtualFileUrl: EntityId2Vfu,
-    override var vfu2EntityId: Vfu2EntityId,
-    override var entityId2JarDir: EntityId2JarDir,
+    @Suppress("RedundantVisibilityModifier") internal override var entityId2VirtualFileUrl: EntityId2Vfu,
+    @Suppress("RedundantVisibilityModifier") internal override var vfu2EntityId: Vfu2EntityId,
+    @Suppress("RedundantVisibilityModifier") internal override var entityId2JarDir: EntityId2JarDir,
   ) : VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId, entityId2JarDir), MutableVirtualFileUrlIndex {
 
     private var freezed = true

@@ -406,9 +406,6 @@ f:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex$MutableV
 - com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 - sf:Companion:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex$MutableVirtualFileIndex$Companion
 - index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
-- setEntityId2JarDir(com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap):V
-- setEntityId2VirtualFileUrl(it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap):V
-- setVfu2EntityId(it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap):V
 - f:toImmutable():com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 f:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex$MutableVirtualFileIndex$Companion
 com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
