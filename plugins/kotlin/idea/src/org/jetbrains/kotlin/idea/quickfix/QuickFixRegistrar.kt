@@ -596,8 +596,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(MakeTypeParameterReifiedAndFunctionInlineFix)
 
-        TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL.registerFactory(TooLongCharLiteralToStringFix)
-        ILLEGAL_ESCAPE.registerFactory(TooLongCharLiteralToStringFix)
+        TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL.registerFactory(TooLongCharLiteralToStringFixFactory)
+        ILLEGAL_ESCAPE.registerFactory(TooLongCharLiteralToStringFixFactory)
 
         UNUSED_VALUE.registerFactory(RemoveUnusedValueFix)
 
