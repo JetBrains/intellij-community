@@ -9,11 +9,15 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.services.*
+import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.ExperimentType.ENABLE_SEMANTIC_SEARCH
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.util.xmlb.annotations.OptionTag
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Service(Service.Level.APP)
 @State(
@@ -26,6 +30,12 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
 
   private val isInternal by lazy { ApplicationManager.getApplication().isInternal }
   private val isEAP by lazy { ApplicationManager.getApplication().isEAP }
+
+  private val enabledInClassesTabFlow = MutableStateFlow(enabledInClassesTab)
+  private val enabledInSymbolsTabFlow = MutableStateFlow(enabledInSymbolsTab)
+
+  override fun getEnabledInClassesTabState(): StateFlow<Boolean> = enabledInClassesTabFlow.asStateFlow()
+  override fun getEnabledInSymbolsTabState(): StateFlow<Boolean> = enabledInSymbolsTabFlow.asStateFlow()
 
   override var enabledInActionsTab: Boolean
     get() {
@@ -79,6 +89,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       if (newValue) {
         ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingStoragesManager.getInstance(it).prepareForSearch() }
       }
+      enabledInClassesTabFlow.value = newValue
     }
 
   override var enabledInSymbolsTab: Boolean
@@ -97,6 +108,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       if (newValue) {
         ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingStoragesManager.getInstance(it).prepareForSearch() }
       }
+      enabledInSymbolsTabFlow.value = newValue
     }
 
   override fun isEnabled(): Boolean = enabledInActionsTab || enabledInFilesTab || enabledInSymbolsTab || enabledInClassesTab

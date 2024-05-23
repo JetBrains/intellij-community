@@ -2,15 +2,11 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
-import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticClassesProvider
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +15,7 @@ import java.util.function.Consumer
 
 @ApiStatus.Experimental
 @Internal
-class SemanticClassSearchEverywhereContributor(initEvent: AnActionEvent)
+open class SemanticClassSearchEverywhereContributor(initEvent: AnActionEvent)
   : ClassSearchEverywhereContributor(initEvent), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentPsiElementsFetcher, PossibleSlowContributor {
   override val itemsProvider = SemanticClassesProvider(project)

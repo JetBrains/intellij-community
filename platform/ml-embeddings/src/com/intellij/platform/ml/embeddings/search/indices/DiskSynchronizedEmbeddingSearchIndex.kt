@@ -2,16 +2,18 @@
 package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.platform.ml.embeddings.search.indices.EntitySourceType.DEFAULT
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Concurrent [EmbeddingSearchIndex] that synchronizes all index change operations with disk and
@@ -22,12 +24,15 @@ import java.nio.file.Path
 class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: Int? = null) : EmbeddingSearchIndex {
   private var indexToId: MutableMap<Int, String> = CollectionFactory.createSmallMemoryFootprintMap()
   private var idToEntry: MutableMap<String, IndexEntry> = CollectionFactory.createSmallMemoryFootprintMap()
+  private val eventsBufferedCount = DEFAULT_EVENTS_COUNT
   private val uncheckedIds: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
   var changed: Boolean = false
 
   private val lock = SuspendingReadWriteLock()
 
   private val fileManager = LocalEmbeddingIndexFileManager(root)
+
+  fun incrementEventBufferedCount(count: Long, sourceType: EntitySourceType) = eventsBufferedCount[sourceType]?.addAndGet(count)
 
   override suspend fun setLimit(value: Int?) = lock.write {
     if (value != null) {
@@ -43,6 +48,7 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
   internal data class IndexEntry(
     var index: Int,
     var count: Int,
+    val sourceType: EntitySourceType = DEFAULT,
     val embedding: FloatTextEmbedding
   )
 
@@ -58,13 +64,23 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
     indexToId.clear()
     idToEntry.clear()
     uncheckedIds.clear()
+    eventsBufferedCount.reset()
     changed = false
+  }
+
+  override suspend fun clearBySourceType(sourceType: EntitySourceType) {
+    lock.write {
+      val idsToRemove = idToEntry.filter { it.value.sourceType == sourceType }.map { it.key }
+      idsToRemove.forEach { delete(it, all = true, shouldSaveIds = false) }
+      eventsBufferedCount[sourceType]?.set(0L)
+    }
   }
 
   override suspend fun onIndexingStart() {
     lock.write {
       uncheckedIds.clear()
-      uncheckedIds.addAll(idToEntry.keys)
+      val uncheckedKeys = idToEntry.filter { it.value.sourceType == DEFAULT }.keys
+      uncheckedIds.addAll(uncheckedKeys)
     }
   }
 
@@ -77,39 +93,43 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
     uncheckedIds.clear()
   }
 
-  override suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>,
-                                  shouldCount: Boolean) = lock.write {
-    for ((id, embedding) in values) {
-      ensureActive()
-      uncheckedIds.remove(id)
-      val entry = idToEntry.getOrPut(id) {
-        changed = true
-        if (limit != null && idToEntry.size >= limit!!) return@write
-        val index = idToEntry.size
-        indexToId[index] = id
-        IndexEntry(index, 0, embedding)
-      }
-      if (shouldCount || entry.count == 0) {
-        entry.count += 1
+  override suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, sourceType: EntitySourceType, shouldCount: Boolean) =
+    lock.write {
+      for ((id, embedding) in values) {
+        ensureActive()
+        uncheckedIds.remove(id)
+        val entry = idToEntry.getOrPut(id) {
+          changed = true
+          if (limit != null && idToEntry.size >= limit!!) return@write
+          val index = idToEntry.size
+          indexToId[index] = id
+          IndexEntry(index = index, count = 0, sourceType = sourceType, embedding = embedding)
+        }
+        if (shouldCount || entry.count == 0) {
+          entry.count += 1
+        }
       }
     }
-  }
 
   override suspend fun saveToDisk() = lock.read { save() }
 
   override suspend fun loadFromDisk() = lock.write {
-    val (ids, embeddings) = fileManager.loadIndex() ?: return@write
+    val (ids, idsSourceTypes, embeddings) = fileManager.loadIndex() ?: return@write
     val idToIndex = ids.withIndex().associate { it.value to it.index }
+    val idToSourceType = (ids zip idsSourceTypes).toMap()
     val idToEmbedding = (ids zip embeddings).toMap()
     indexToId = CollectionFactory.createSmallMemoryFootprintMap(ids.withIndex().associate { it.index to it.value })
     idToEntry = CollectionFactory.createSmallMemoryFootprintMap(
-      ids.associateWith { IndexEntry(idToIndex[it]!!, 0, idToEmbedding[it]!!) }
+      ids.associateWith { IndexEntry(index = idToIndex[it]!!, count = 0, sourceType = idToSourceType[it]!!, embedding = idToEmbedding[it]!!) }
     )
   }
 
-  override suspend fun offload() = lock.write {
+  override suspend fun offload(persistEventConsumer: (Map<EntitySourceType, AtomicLong>) -> Unit) = lock.write {
     indexToId = CollectionFactory.createSmallMemoryFootprintMap()
     idToEntry = CollectionFactory.createSmallMemoryFootprintMap()
+
+    persistEventConsumer(eventsBufferedCount)
+    eventsBufferedCount.reset()
   }
 
   override suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredText> = lock.read {
@@ -140,28 +160,29 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
 
   private suspend fun save() {
     val ids = idToEntry.toList().sortedBy { it.second.index }.map { it.first }
+    val idsSourceType = ids.map { idToEntry[it]!!.sourceType }
     val embeddings = ids.map { idToEntry[it]!!.embedding }
-    fileManager.saveIndex(ids, embeddings)
+    fileManager.saveIndex(ids = ids, idsSourceTypes = idsSourceType, embeddings = embeddings)
   }
 
   suspend fun deleteEntry(id: String) = lock.write {
     delete(id)
   }
 
-  suspend fun addEntry(id: String, embedding: FloatTextEmbedding) = lock.write {
+  suspend fun addEntry(id: String, sourceType: EntitySourceType, embedding: FloatTextEmbedding) = lock.write {
     uncheckedIds.remove(id)
-    add(id, embedding)
+    add(id = id, sourceType = sourceType, embedding = embedding)
   }
 
   /* Optimization for consequent delete and add operations */
-  suspend fun updateEntry(id: String, newId: String, embedding: FloatTextEmbedding) = lock.write {
+  suspend fun updateEntry(id: String, newId: String, newSourceType: EntitySourceType, embedding: FloatTextEmbedding) = lock.write {
     if (id !in idToEntry) return@write
     if (idToEntry[id]!!.count == 1 && newId !in idToEntry) {
       val index = idToEntry[id]!!.index
       fileManager.set(index, embedding)
 
       idToEntry.remove(id)
-      idToEntry[newId] = IndexEntry(index, 1, embedding)
+      idToEntry[newId] = IndexEntry(index = index, count = 1, sourceType = newSourceType, embedding = embedding)
       indexToId[index] = newId
 
       saveIds()
@@ -169,18 +190,18 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
     else {
       // Do not apply optimization
       delete(id)
-      add(newId, embedding)
+      add(id = newId, sourceType = newSourceType, embedding = embedding)
     }
   }
 
-  private suspend fun add(id: String, embedding: FloatTextEmbedding, shouldCount: Boolean = false) {
+  private suspend fun add(id: String, sourceType: EntitySourceType, embedding: FloatTextEmbedding, shouldCount: Boolean = false) {
     val entry = idToEntry.getOrPut(id) {
       changed = true
       if (limit != null && idToEntry.size >= limit!!) return@add
       val index = idToEntry.size
       fileManager.set(index, embedding)
       indexToId[index] = id
-      IndexEntry(index, 0, embedding)
+      IndexEntry(index = index, count = 0, sourceType = sourceType, embedding = embedding)
     }
     if (shouldCount || entry.count == 0) {
       entry.count += 1
@@ -216,5 +237,8 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
 
   companion object {
     private val logger = Logger.getInstance(DiskSynchronizedEmbeddingSearchIndex::class.java)
+    private val DEFAULT_EVENTS_COUNT = EntitySourceType.entries.associateWith { AtomicLong(0) }
+
+    fun Map<EntitySourceType, AtomicLong>.reset() = values.forEach{ it.set(0L) }
   }
 }

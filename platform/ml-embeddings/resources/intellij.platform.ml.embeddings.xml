@@ -39,4 +39,11 @@
       implementationClass="com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger"/>
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.embeddings.indexPersistedEventsCounter"
+                    interface="com.intellij.platform.ml.embeddings.services.IndexPersistedEventsCounter"
+                    dynamic="true"
+                    area="IDEA_PROJECT"/>
+  </extensionPoints>
+
 </idea-plugin>

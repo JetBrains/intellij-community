@@ -24,7 +24,7 @@ import java.util.function.Consumer
  * Delegates some of the rendering and data retrieval functionality to [SymbolSearchEverywhereContributor].
  */
 @ApiStatus.Experimental
-class SemanticSymbolSearchEverywhereContributor(initEvent: AnActionEvent)
+open class SemanticSymbolSearchEverywhereContributor(initEvent: AnActionEvent)
   : SymbolSearchEverywhereContributor(initEvent), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentPsiElementsFetcher, PossibleSlowContributor {
   override val itemsProvider = SemanticSymbolsProvider(project)

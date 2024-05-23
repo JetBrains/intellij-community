@@ -10,9 +10,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
@@ -20,28 +19,31 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
-import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
-import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
+import com.intellij.platform.ml.embeddings.search.indices.*
+import com.intellij.platform.ml.embeddings.search.indices.EntityActionType.ADD
+import com.intellij.platform.ml.embeddings.search.indices.EntityActionType.REMOVE
+import com.intellij.platform.ml.embeddings.search.indices.EntitySourceType.DEFAULT
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.normalized
-import com.intellij.psi.PsiManager
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.flow.debounceBatch
+import com.intellij.psi.PsiManager
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.PROJECT)
 class FileBasedEmbeddingStoragesManager(private val project: Project, private val cs: CoroutineScope) {
   private val indexingScope = cs.childScope("Embedding indexing scope")
+  private val indexingEventsScope = cs.childScope("Embedding events indexing scope")
   private var isFirstIndexing = true
   private val isIndexingTriggered = AtomicBoolean(false)
   private var indexLoaded = false
@@ -51,6 +53,22 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val indexingContext = Dispatchers.Default.limitedParallelism(8)
+
+  private val indexEntitiesShards = List(EMBEDDING_WORKER_COUNT) { Channel<EntityIndexAction>(capacity = CHANNEL_CAPACITY) }
+
+  init {
+    for (shard in indexEntitiesShards) {
+      cs.launch {
+        withContext(indexingEventsScope.coroutineContext) {
+          shard.consumeAsFlow().debounceBatch(50.milliseconds).collect { chunk ->
+            chunk.chunked(BATCH_SIZE).forEach { batch ->
+              processEntity(batch)
+            }
+          }
+        }
+      }
+    }
+  }
 
   private val filesLimit: Int?
     get() {
@@ -76,6 +94,52 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     if (isIndexingTriggered.compareAndSet(false, true)) {
       addFileListener()
       prepareForSearch()
+    }
+  }
+
+  suspend fun indexEntities(entities: List<EntityIndexAction>) {
+    startIndexingSession()
+    try {
+      entities.forEach { entity ->
+        val shard = entity.getShard()
+        indexEntitiesShards[shard].send(entity)
+      }
+    }
+    finally {
+      finishIndexingSession()
+    }
+  }
+
+  private fun EntityIndexAction.getShard() = abs(entity.indexableRepresentation.hashCode()) % EMBEDDING_WORKER_COUNT
+
+  suspend fun dropIndex(sourceType: EntitySourceType) {
+    startIndexingSession()
+
+    try {
+      withContext(Dispatchers.IO) {
+        val settings = EmbeddingIndexSettingsImpl.getInstance()
+        val filesIndexLoadingJob = launch {
+          if (settings.shouldIndexFiles) {
+            val index = FileEmbeddingsStorage.getInstance(project).index
+            index.clearBySourceType(sourceType)
+          }
+        }
+        val classIndexLoadingJob = launch {
+          if (settings.shouldIndexClasses) {
+            val index = ClassEmbeddingsStorage.getInstance(project).index
+            index.clearBySourceType(sourceType)
+          }
+        }
+        val symbolIndexLoadingJob = launch {
+          if (settings.shouldIndexSymbols) {
+            val index = SymbolEmbeddingStorage.getInstance(project).index
+            index.clearBySourceType(sourceType)
+          }
+        }
+        listOf(filesIndexLoadingJob, classIndexLoadingJob, symbolIndexLoadingJob).joinAll()
+      }
+    } finally {
+      finishIndexingSession()
     }
   }
 
@@ -190,7 +254,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     }
   }
 
-  suspend fun indexFiles(files: List<VirtualFile>) {
+  suspend fun indexFiles(files: List<VirtualFile>, sourceType: EntitySourceType = DEFAULT) {
     val settings = EmbeddingIndexSettingsImpl.getInstance()
     if (!settings.shouldIndexAnythingFileBased) return
     startIndexingSession()
@@ -301,21 +365,33 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     else -> throw IllegalArgumentException("Unexpected indexable entity type")
   }
 
+  data class EntityChunkGroup(val index: DiskSynchronizedEmbeddingSearchIndex, val actionType: EntityActionType, val sourceType: EntitySourceType)
+
+  private suspend fun processEntity(entityActions: List<EntityIndexAction>) {
+    val entityMap = entityActions.associateBy { it.entity.id }
+    val entityByOperations = entityMap.values.groupBy { EntityChunkGroup(getIndex(it.entity), it.actionType, it.sourceType) }
+
+    entityByOperations.forEach { chunk ->
+      when (chunk.key.actionType) {
+        ADD -> EmbeddingIndexingTask.Add(chunk.value.map { it.entity.id }, chunk.value.map { it.entity.indexableRepresentation }, sourceType = chunk.key.sourceType).run(chunk.key.index)
+        REMOVE -> EmbeddingIndexingTask.DeleteDiskSynchronized(chunk.value.map { it.entity.id }).run(chunk.key.index)
+      }
+      chunk.key.index.incrementEventBufferedCount(chunk.value.size.toLong(), entityActions[0].sourceType)
+    }
+  }
+
   private fun scanFiles(): Flow<VirtualFile> {
     val scanLimit = filesLimit?.let { it * 2 } // do not scan all files if there is a limit
     var filteredFiles = 0
     return channelFlow {
       SEMANTIC_SEARCH_TRACER.spanBuilder(SCANNING_SPAN_NAME).useWithScope {
         withBackgroundProgress(project, EmbeddingsBundle.getMessage("ml.embeddings.indices.scanning.label")) {
-          // ProjectFileIndex.getInstance(project).iterateContent { file ->
-          ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
-            VfsUtilCore.iterateChildrenRecursively(root, null) { file ->
-              if (file.isFile && file.isValid && file.isInLocalFileSystem) {
-                launch { send(file) }
-                filteredFiles += 1
-              }
-              scanLimit == null || filteredFiles < scanLimit
+          ProjectFileIndex.getInstance(project).iterateContent { file ->
+            if (file.isFile && file.isValid && file.isInLocalFileSystem) {
+              launch { send(file) }
+              filteredFiles += 1
             }
+            scanLimit == null || filteredFiles < scanLimit
           }
         }
       }
@@ -377,6 +453,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     private const val FILE_WORKER_COUNT = 4
     private const val EMBEDDING_WORKER_COUNT = 4
     private const val BATCH_SIZE = 256
+    private const val CHANNEL_CAPACITY = 4096
 
     private val logger = Logger.getInstance(FileBasedEmbeddingStoragesManager::class.java)
 

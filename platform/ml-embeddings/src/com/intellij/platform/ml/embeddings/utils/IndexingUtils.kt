@@ -50,7 +50,7 @@ suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts
   return generateEmbeddings(listOf(indexableRepresentation), downloadArtifacts)?.single()
 }
 
-suspend fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
+suspend fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = true): List<FloatTextEmbedding>? {
   return serviceAsync<LocalEmbeddingServiceProvider>().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
 }
 
