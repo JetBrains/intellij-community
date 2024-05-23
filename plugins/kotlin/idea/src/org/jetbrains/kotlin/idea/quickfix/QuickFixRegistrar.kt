@@ -218,8 +218,8 @@ class QuickFixRegistrar : QuickFixContributor {
         INVISIBLE_MEMBER.registerFactory(MakeVisibleFactory)
         INVISIBLE_SETTER.registerFactory(MakeVisibleFactory)
 
-        UNSUPPORTED_WARNING.registerFactory(ConvertCollectionLiteralToIntArrayOfFix)
-        UNSUPPORTED.registerFactory(ConvertCollectionLiteralToIntArrayOfFix)
+        UNSUPPORTED_WARNING.registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory)
+        UNSUPPORTED.registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory)
 
         MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.registerFactory(WrapWithParenthesesFix.ModifierFormForNonBuiltInSuspend)
         MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(WrapWithParenthesesFix.ModifierFormForNonBuiltInSuspend)
