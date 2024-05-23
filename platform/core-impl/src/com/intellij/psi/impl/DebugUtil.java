@@ -529,7 +529,7 @@ public final class DebugUtil {
    *
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
    */
-  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void performPsiModification(@Nullable String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
     beginPsiModification(trace);
     try {
       runnable.run();
@@ -542,7 +542,7 @@ public final class DebugUtil {
   /**
    * @see #performPsiModification(String, ThrowableRunnable)
    */
-  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T performPsiModification(@Nullable String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
     beginPsiModification(trace);
     try {
       return runnable.compute();
