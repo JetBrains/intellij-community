@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.terminal.completion.spec.*
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import javax.swing.Icon
 
@@ -67,12 +68,8 @@ internal class ShellMergedCommandSpec(
     get() = overridingSpecs.first().arguments
 
   private fun createSubcommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> {
-    val firstGenerator = overridingSpecs.first().subcommandsGenerator
-    // Use the same caching as in the first found generator
-    return ShellRuntimeDataGenerator(
-      debugName = "$parentNamesWithSelf merged subcommands",
-      getCacheKey = { if (firstGenerator is ShellCacheableDataGenerator) firstGenerator.getCacheKey(it) else null }
-    ) { context ->
+    val cacheKey = createCacheKey(parentNamesWithSelf, "merged subcommands")
+    return ShellRuntimeDataGenerator(cacheKeyAndDebugName = cacheKey) { context ->
       val specInfoMap = MultiMap<String, CommandSpecInfo>()
 
       val baseSubcommands = baseSpec?.subcommandsGenerator?.generate(context) ?: emptyList()
