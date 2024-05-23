@@ -174,7 +174,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     }
 
     try {
-      val (applier, contentLoadingTime, length) = if (fileIndexingJob.fileIndexingRequest.isDeleteRequest) {
+      val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
         val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, fileIndexingRequest.file, indexingJob)
         if (applierOrNullIfResurrected == null) {
           getApplierForFileIndexUpdate(indexingStamp, startTime, fileIndexingRequest.file, indexingJob)
@@ -188,7 +188,8 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
       }
 
       try {
-        writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime)
+        val statistics = indexingJob.getStatistics(fileIndexingJob)
+        writeIndexesForFile(fileIndexingRequest.file, statistics, indexingJob, applier, startTime, length, contentLoadingTime)
       }
       catch (t: Throwable) {
         releaseFile(fileIndexingRequest.file) // the file is "locked" in the applier constructor
@@ -391,18 +392,18 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     private val ourLoadedBytesLimitLock: Lock = ReentrantLock()
     private val ourLoadedBytesAreReleasedCondition: Condition = ourLoadedBytesLimitLock.newCondition()
 
-    private fun writeIndexesForFile(indexingJob: IndexingJob,
-                                    fileIndexingJob: FileIndexingJob,
+    private fun writeIndexesForFile(file: VirtualFile,
+                                    statistics: IndexingFileSetStatistics,
+                                    indexingJob: IndexingJob,
                                     applier: FileIndexesValuesApplier,
                                     startTime: Long,
                                     length: Long,
                                     contentLoadingTime: Long) {
       val preparingTime = System.nanoTime() - startTime
-      applier.apply(fileIndexingJob.fileIndexingRequest.file, {
-        val statistics = indexingJob.getStatistics(fileIndexingJob)
+      applier.apply(file, {
         synchronized(statistics) {
           val applicationTime = applier.separateApplicationTimeNanos
-          statistics.addFileStatistics(fileIndexingJob.fileIndexingRequest.file,
+          statistics.addFileStatistics(file,
                                        applier.stats,
                                        preparingTime + applicationTime,
                                        contentLoadingTime,
@@ -411,7 +412,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
           )
         }
         indexingJob.oneMoreFileProcessed()
-        releaseFile(fileIndexingJob.fileIndexingRequest.file)
+        releaseFile(file)
       }, false)
     }
 
