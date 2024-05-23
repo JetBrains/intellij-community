@@ -134,7 +134,7 @@ class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionA
 
         @Override
         public Icon getIconFor(T aValue) {
-          return aValue.getIcon(0);
+          return ReadAction.compute(() -> aValue.getIcon(0));
         }
       };
 
