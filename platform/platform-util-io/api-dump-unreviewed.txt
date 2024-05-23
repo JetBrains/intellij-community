@@ -12,10 +12,6 @@ com.intellij.execution.KillableProcess
 c:com.intellij.execution.RunCanceledByUserException
 - com.intellij.execution.ExecutionException
 - <init>():V
-f:com.intellij.execution.WorkingDirectoryNotFoundException
-- com.intellij.execution.ExecutionException
-- <init>(java.nio.file.Path):V
-- f:getWorkDirectory():java.nio.file.Path
 c:com.intellij.execution.configurations.CompositeParameterTargetedValue
 - <init>():V
 - <init>(java.lang.String):V
