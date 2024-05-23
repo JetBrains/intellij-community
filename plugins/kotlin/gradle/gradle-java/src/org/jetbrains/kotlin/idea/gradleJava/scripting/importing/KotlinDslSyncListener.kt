@@ -93,9 +93,9 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
             ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(
                 sync.workingDir, sync.gradleHome, sync.javaHome
             )
-
-            saveScriptModels(project, sync)
         }
+
+        saveScriptModels(project, sync)
     }
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {

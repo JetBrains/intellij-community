@@ -13,9 +13,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.*
 import java.io.File
 import java.nio.file.Path
@@ -112,9 +114,7 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
             for (script in scripts) {
 
                 val sourceCode = VirtualFileScriptSource(script.virtualFile)
-                val definition = K2ScriptDefinitionProvider.getInstance(project).let {
-                    it.findDefinition(sourceCode) ?: it.getDefaultDefinition()
-                }
+                val definition = findScriptDefinition(project, sourceCode)
 
                 val configuration = configurationsByFile[script.virtualFile]?.valueOrNull()?.configuration
                     ?: definition.compilationConfiguration.with {
@@ -127,7 +127,7 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                     }.adjustByDefinition(definition)
 
                 val updatedConfiguration =
-                    refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+                    project.runReadActionInSmartMode { refineScriptCompilationConfiguration(sourceCode, definition, project, configuration) }
                 configurationsByFile[script.virtualFile] = updatedConfiguration
 
                 val configurationWrapper = updatedConfiguration.valueOrNull() ?: continue
