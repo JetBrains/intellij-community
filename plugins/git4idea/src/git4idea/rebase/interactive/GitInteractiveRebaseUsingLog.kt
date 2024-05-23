@@ -52,7 +52,7 @@ internal fun getEntriesUsingLog(
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
   }
 
-  if (details.any { it.subject.startsWith("fixup!") || it.subject.startsWith("squash!") }) {
+  if (details.any { detail -> AUTOSQUASH_SUBJECT_PREFIXES.any { prefix -> detail.subject.startsWith(prefix) } }) {
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.FIXUP_SQUASH)
   }
 

@@ -10,9 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TableUtil
 import git4idea.i18n.GitBundle
-import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.getFullCommitMessage
 import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.interactive.REBASE_SQUASH_SEPARATOR
 import git4idea.rebase.interactive.convertToEntries
 import java.awt.event.InputEvent
 import java.util.function.Supplier
@@ -140,7 +141,7 @@ internal abstract class ChangeEntryStateButtonAction(
   override fun createCustomComponent(presentation: Presentation, place: String) = buttonPanel
 }
 
-internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.FIXUP, null, table) {
+internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.FIXUP(), null, table) {
   override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) =
     getIndicesToUnite(selection, rebaseTodoModel) != null
 
@@ -174,11 +175,18 @@ internal class SquashAction(private val table: GitRebaseCommitsTableView) :
       val model = table.model
       rebaseTodoModel.reword(
         root.index,
-        (listOf(root) + newChildren).joinToString("\n".repeat(3)) { model.getCommitMessage(it.index) }
+        (listOf(root) + newChildren)
+          .map { model.getCommitMessage(it.index) }
+          .toSet()
+          .joinToString(REBASE_SQUASH_SEPARATOR)
       )
     }
     else {
-      rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { (it as GitRebaseEntryWithDetails).commitDetails.fullMessage })
+      val message = root.uniteGroup
+        .map { element -> element.entry.getFullCommitMessage()!! }
+        .toSet()
+        .joinToString(REBASE_SQUASH_SEPARATOR)
+      rebaseTodoModel.reword(root.index, message)
     }
     reword(root.index)
   }

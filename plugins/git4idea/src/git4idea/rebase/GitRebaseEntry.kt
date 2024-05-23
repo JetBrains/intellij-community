@@ -4,7 +4,6 @@ package git4idea.rebase
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
@@ -20,12 +19,21 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
     object DROP : KnownAction("drop", "d", nameKey = "rebase.entry.action.name.drop")
     object REWORD : KnownAction("reword", "r", nameKey = "rebase.entry.action.name.reword")
     object SQUASH : KnownAction("squash", "s", nameKey = "rebase.entry.action.name.squash")
-    object FIXUP : KnownAction("fixup", "f", nameKey = "rebase.entry.action.name.fixup")
+    class FIXUP(val overrideMessage: Boolean = false) : KnownAction("fixup", "f", nameKey = "rebase.entry.action.name.fixup") {
+      override fun parseParameter(parameter: String): Action? {
+        if (!overrideMessage && parameter == "-c" || parameter == "-C") {
+          return FIXUP(true)
+        }
+        return null
+      }
+    }
     object UPDATE_REF : KnownAction("update-ref", isCommit = false, nameKey = "rebase.entry.action.name.update.ref")
 
     class Other(command: String) : Action(command, false, nameKey = "rebase.entry.action.name.unknown")
 
     val visibleName: Supplier<@NlsContexts.Button String> get() = GitBundle.messagePointer(nameKey)
+
+    open fun parseParameter(parameter: String): Action? = null
 
     override fun toString(): String = command
   }
@@ -40,7 +48,7 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
   companion object {
     @JvmStatic
     fun parseAction(action: String): Action {
-      val knownActions = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP, Action.UPDATE_REF)
+      val knownActions = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP(), Action.UPDATE_REF)
       return knownActions.find { it.command == action || it.synonyms.contains(action) } ?: Action.Other(action)
     }
   }
@@ -49,4 +57,4 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
 internal open class GitRebaseEntryWithDetails(val entry: GitRebaseEntry, val commitDetails: VcsCommitMetadata) :
   GitRebaseEntry(entry.action, entry.commit, entry.subject)
 
-internal fun GitRebaseEntry.getFullCommitMessage() = (this as? GitRebaseEntryWithDetails)?.commitDetails?.fullMessage
+internal fun GitRebaseEntry.getFullCommitMessage(): String? = (this as? GitRebaseEntryWithDetails)?.commitDetails?.fullMessage

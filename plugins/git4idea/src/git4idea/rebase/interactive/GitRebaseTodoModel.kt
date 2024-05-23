@@ -323,7 +323,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
       object Drop : NonUnite(GitRebaseEntry.Action.DROP)
     }
 
-    object Unite : Type(GitRebaseEntry.Action.FIXUP)
+    object Unite : Type(GitRebaseEntry.Action.FIXUP())
   }
 
   sealed class Element<out T : GitRebaseEntry>(var index: Int, open val type: Type, val entry: T) {
@@ -361,10 +361,6 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
 
       fun childrenIndicesChanged() {
         _children.sortBy { it.index }
-      }
-
-      fun getUnitedCommitMessage(singleCommitMessageGetter: (T) -> String): String {
-        return uniteGroup.map { element -> singleCommitMessageGetter(element.entry) }.toSet().joinToString("\n".repeat(3))
       }
     }
 

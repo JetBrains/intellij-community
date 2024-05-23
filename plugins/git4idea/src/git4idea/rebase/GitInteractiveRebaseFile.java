@@ -45,11 +45,20 @@ class GitInteractiveRebaseFile {
         continue;
       }
       String command = s.spaceToken();
+      GitRebaseEntry.Action action = GitRebaseEntry.parseAction(command);
+
       String hash = s.spaceToken();
+      while (true) {
+        GitRebaseEntry.Action newAction = action.parseParameter(hash);
+        if (newAction == null) break;
+
+        action = newAction;
+        hash = s.spaceToken();
+      }
+
       String comment = s.line();
       String subject = trimCommentIfNeeded(comment, commentChar);
 
-      GitRebaseEntry.Action action = GitRebaseEntry.parseAction(command);
       entries.add(new GitRebaseEntry(action, hash, subject));
     }
     if (noop && entries.isEmpty()) {
