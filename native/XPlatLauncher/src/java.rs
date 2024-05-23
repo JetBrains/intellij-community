@@ -113,7 +113,12 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         debug!("[JVM] Thread started [{:?}]", thread::current().id());
 
         let mut vm_options = vm_options.clone();
-        vm_options.push(jvm_property!("sun.java.command", main_class));
+        let mut java_command = main_class.clone();
+        args.iter().for_each(|arg| {
+            java_command += " ";
+            java_command += arg
+        });
+        vm_options.push(jvm_property!("sun.java.command", java_command));
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {
