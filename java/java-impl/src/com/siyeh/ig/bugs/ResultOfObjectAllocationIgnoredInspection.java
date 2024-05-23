@@ -63,6 +63,9 @@ public final class ResultOfObjectAllocationIgnoredInspection extends BaseInspect
 
   @Override
   public @NotNull String buildErrorString(Object... infos) {
+    if (infos[0] instanceof PsiMethodReferenceExpression) {
+      return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor.methodRef");
+    }
     return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor");
   }
 
@@ -72,6 +75,23 @@ public final class ResultOfObjectAllocationIgnoredInspection extends BaseInspect
   }
 
   private class ResultOfObjectAllocationIgnoredVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
+        if (expression.isConstructor()) {
+          PsiElement qualifier = expression.getQualifier();
+          if (qualifier instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiClass cls &&
+              !ignoredClasses.contains(cls.getQualifiedName())) {
+            registerError(expression, expression);
+          }
+          if (qualifier instanceof PsiTypeElement typeElement && typeElement.getType() instanceof PsiArrayType) {
+            registerError(expression, expression);
+          }
+        }
+      }
+    }
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {

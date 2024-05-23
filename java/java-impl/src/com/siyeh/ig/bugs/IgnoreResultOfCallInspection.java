@@ -212,8 +212,8 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
         PsiElement resolve = expression.resolve();
-        if (resolve instanceof PsiMethod) {
-          visitCalledExpression(expression, (PsiMethod)resolve, null);
+        if (resolve instanceof PsiMethod method && !method.isConstructor()) {
+          visitCalledExpression(expression, method, null);
         }
       }
     }

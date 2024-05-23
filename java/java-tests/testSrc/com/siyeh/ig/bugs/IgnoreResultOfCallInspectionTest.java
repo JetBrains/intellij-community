@@ -457,6 +457,7 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
           static {
             Runnable r = () -> Util./*Result of 'Util.util()' is ignored*/util/**/();
             Runnable r1 = Util::/*Result of 'Util.util()' is ignored*/util/**/;
+            Runnable r2 = Object::new; // Reported by ResultOfObjectAllocationIgnoredInspection
           }
         }
         """);
