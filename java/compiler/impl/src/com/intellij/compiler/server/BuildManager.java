@@ -1522,7 +1522,6 @@ public final class BuildManager implements Disposable {
     // DepGraph-based IC implementation
     if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
       cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
-      cmdLine.addParameter("-Dkotlin.jps.dumb.mode=true");
     }
 
     // portable caches
