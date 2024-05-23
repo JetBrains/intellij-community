@@ -24,8 +24,11 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
     CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
     CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
-from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN,
-    NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
+from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
+                                             dict_keys, STATE_RUN,
+                                             NEXT_VALUE_SEPARATOR, IS_WINDOWS,
+                                             get_current_thread_id,
+                                             HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydev_imps._pydev_saved_modules import threading
 import json
@@ -174,8 +177,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                     cmd_id == CMD_STEP_INTO_MY_CODE:
                 # we received some command to make a single step
 
-                # The variable values can be stale, abrupt active resolve threads.
-                py_db.kill_active_value_resolve_threads()
+                if HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME:
+                    # The variable values can be stale, abrupt active resolve threads.
+                    py_db.kill_active_value_resolve_threads()
 
                 t = pydevd_find_thread_by_id(text)
                 if t:

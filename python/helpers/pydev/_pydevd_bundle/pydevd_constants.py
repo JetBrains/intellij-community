@@ -176,6 +176,9 @@ USE_LOW_IMPACT_MONITORING = (IS_PY312_OR_GREATER and
 # The tool name to use in the API calls from PEP 669.
 PYDEVD_TOOL_NAME = 'pydevd'
 
+HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = os.environ.get(
+    'HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME', False)
+
 
 class ValuesPolicy:
     SYNC = 0
