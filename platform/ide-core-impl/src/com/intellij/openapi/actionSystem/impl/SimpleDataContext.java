@@ -2,14 +2,8 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomizedDataContext;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,42 +12,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public final class SimpleDataContext extends CustomizedDataContext implements UserDataHolder {
-  private final Map<String, Object> myMap;
-  private final DataContext myParent;
-  private final UserDataHolder myDataHolder;
+public final class SimpleDataContext extends CustomizedDataContext {
 
   private SimpleDataContext(@NotNull Map<String, Object> map,
                             @Nullable DataContext parent) {
-    myMap = map;
-    myParent = Objects.requireNonNullElse(parent, DataContext.EMPTY_CONTEXT);
-    myDataHolder = new UserDataHolderBase();
+    super(Objects.requireNonNullElseGet(parent, () -> IdeUiService.getInstance()
+            .createUiDataContext(PlatformCoreDataKeys.CONTEXT_COMPONENT
+                                   .getData((DataProvider)dataId -> getData(dataId, map)))),
+          dataId -> getData(dataId, map), false);
   }
 
-  @Override
-  public @NotNull DataContext getParent() {
-    return myParent;
-  }
-
-  @Override
-  public @Nullable Object getRawCustomData(@NotNull String dataId) {
-    return myMap.containsKey(dataId) ?
-           Objects.requireNonNullElse(myMap.get(dataId), EXPLICIT_NULL) : null;
-  }
-
-  @Override
-  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
-    return myDataHolder.getUserData(key);
-  }
-
-  @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    myDataHolder.putUserData(key, value);
+  private static @Nullable Object getData(@NotNull String dataId, @NotNull Map<String, Object> map) {
+    return map.containsKey(dataId) ?
+           Objects.requireNonNullElse(map.get(dataId), EXPLICIT_NULL) : null;
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */
   @Deprecated(forRemoval = true)
   public static @NotNull DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data, DataContext parent) {
+    DataKey.create(dataId);
     return new SimpleDataContext(Map.of(dataId, data), parent);
   }
 
@@ -67,6 +44,7 @@ public final class SimpleDataContext extends CustomizedDataContext implements Us
    */
   @Deprecated(forRemoval = true)
   public static @NotNull DataContext getSimpleContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
+    for (String name : dataId2data.keySet()) DataKey.create(name);
     return new SimpleDataContext(dataId2data, parent);
   }
 

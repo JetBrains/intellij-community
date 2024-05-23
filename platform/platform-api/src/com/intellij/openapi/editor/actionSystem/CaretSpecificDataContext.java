@@ -16,12 +16,15 @@
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.editor.Caret;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** @deprecated Use {@link EditorActionHandler#caretDataContext(DataContext, Caret)} instead */
+@Deprecated(forRemoval = true)
 public final class CaretSpecificDataContext extends DataContextWrapper {
   private final Caret myCaret;
 

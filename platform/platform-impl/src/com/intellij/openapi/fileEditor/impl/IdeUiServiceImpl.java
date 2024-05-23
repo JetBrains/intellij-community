@@ -86,7 +86,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public @NotNull DataContext createCustomizedDataContext(@NotNull DataContext dataContext, @NotNull DataProvider dataProvider) {
-    return CustomizedDataContext.create(dataContext, dataProvider);
+    return Utils.createAsyncDataContext(dataContext, dataProvider);
   }
 
   @Override

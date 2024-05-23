@@ -69,9 +69,11 @@ class ExecutorAction private constructor(val origin: AnAction,
       return result
     }
 
-    private fun wrapEvent(e: AnActionEvent, order : Int): AnActionEvent {
+    private fun wrapEvent(e: AnActionEvent, order: Int): AnActionEvent {
       return if (order == 0) e
-      else e.withDataContext(MyDataContext(e.dataContext, order))
+      else e.withDataContext(CustomizedDataContext.withSnapshot(e.dataContext) { sink ->
+        sink[orderKey] = order
+      })
     }
 
     @JvmStatic
@@ -117,13 +119,4 @@ class ExecutorAction private constructor(val origin: AnAction,
     result = 31 * result + order
     return result
   }
-  
-  private class MyDataContext(delegate: DataContext, val order: Int) : DataContextWrapper(delegate) {
-    override fun getRawCustomData(dataId: String): Any? {
-      if (orderKey.`is`(dataId)) {
-        return order
-      }
-      return null
-    }
   }
-}

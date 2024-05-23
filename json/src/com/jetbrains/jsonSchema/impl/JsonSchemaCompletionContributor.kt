@@ -16,7 +16,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.EditorModificationUtilEx
-import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import com.intellij.openapi.project.Project
@@ -637,7 +637,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     private fun invokeEnterHandler(editor: Editor) {
       val handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
       val caret = editor.caretModel.currentCaret
-      handler.execute(editor, caret, CaretSpecificDataContext.create(
+      handler.execute(editor, caret, EditorActionHandler.caretDataContext(
         DataManager.getInstance().getDataContext(editor.contentComponent), caret))
     }
 

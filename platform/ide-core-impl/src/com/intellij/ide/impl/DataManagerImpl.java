@@ -172,6 +172,26 @@ public class DataManagerImpl extends DataManager {
     return data == CustomizedDataContext.EXPLICIT_NULL ? null : data;
   }
 
+  @Override
+  public @NotNull DataContext customizeDataContext(@NotNull DataContext context, @NotNull Object provider) {
+    class MyAdapter implements EdtNoGetDataProvider, DataValidators.SourceWrapper {
+      @Override
+      public @NotNull Object unwrapSource() { return provider; }
+
+      @Override
+      public void dataSnapshot(@NotNull DataSink sink) {
+        if (provider instanceof EdtDataProvider o) o.uiDataSnapshot(sink);
+        else if (provider instanceof DataSnapshotProvider o) o.dataSnapshot(sink);
+      }
+    }
+    DataProvider p = provider instanceof DataProvider o ? o :
+                     provider instanceof EdtDataProvider ? new MyAdapter() :
+                     provider instanceof DataSnapshotProvider ? new MyAdapter() :
+                     null;
+    if (p == null) throw new AssertionError("Unexpected provider: " + provider.getClass().getName());
+    return IdeUiService.getInstance().createCustomizedDataContext(context, p);
+  }
+
   private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
     return switch (ruleType) {
       case FAST -> {

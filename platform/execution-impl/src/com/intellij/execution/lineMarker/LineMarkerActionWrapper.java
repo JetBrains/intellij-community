@@ -86,11 +86,17 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     return e.withDataContext(wrapContext(e.getDataContext()));
   }
 
-  private @NotNull DataContext wrapContext(DataContext dataContext) {
+  private @NotNull DataContext wrapContext(@NotNull DataContext dataContext) {
     Pair<PsiElement, DataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
     PsiElement element = myElement.getElement();
     if (pair == null || pair.first != element) {
-      pair = Pair.pair(element, new MyDataContext(dataContext));
+      DataContext wrapper = CustomizedDataContext.withSnapshot(dataContext, sink -> {
+        sink.lazy(Location.DATA_KEY, () -> {
+          PsiElement e = myElement.getElement();
+          return e != null && e.isValid() ? new PsiLocation<>(e) : null;
+        });
+      });
+      pair = Pair.pair(element, wrapper);
       DataManager.getInstance().saveInDataContext(dataContext, LOCATION_WRAPPER, pair);
     }
     return pair.second;
@@ -109,21 +115,5 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   @Override
   public @NotNull AnAction getDelegate() {
     return myOrigin;
-  }
-
-  private final class MyDataContext extends DataContextWrapper {
-
-    MyDataContext(DataContext delegate) {
-      super(delegate);
-    }
-
-    @Override
-    public @Nullable Object getRawCustomData(@NotNull String dataId) {
-      if (Location.DATA_KEY.is(dataId)) {
-        PsiElement element = myElement.getElement();
-        return element != null && element.isValid() ? new PsiLocation<>(element) : null;
-      }
-      return null;
-    }
   }
 }

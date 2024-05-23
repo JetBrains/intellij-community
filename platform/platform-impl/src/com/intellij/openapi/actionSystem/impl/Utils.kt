@@ -161,23 +161,35 @@ object Utils {
   }
 
   @JvmStatic
+  fun createAsyncDataContext(dataContext: DataContext, provider: DataProvider): DataContext {
+    return when (val asyncContext = createAsyncDataContextImpl(dataContext)) {
+      DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
+        .prependProvider(provider)
+      is PreCachedDataContext -> asyncContext
+        .prependProvider(provider)
+      is CustomizedDataContext -> (asyncContext.customizedDelegate as PreCachedDataContext)
+        .prependProvider(provider)
+      is AsyncDataContext -> PreCachedDataContext.customize(asyncContext, provider)
+      else -> dataContext.also {
+        reportUnexpectedDataContextKind(dataContext)
+      }
+    }
+  }
+
+  @JvmStatic
   private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
     dataContext is EdtDataContext -> createAsyncDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
-    dataContext is CustomizedDataContext ->
-      when (val delegate = createAsyncDataContextImpl(dataContext.getParent())) {
-        DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
-          .prependProvider(dataContext.customDataProvider)
-        is PreCachedDataContext -> delegate
-          .prependProvider(dataContext.customDataProvider)
-        else -> dataContext
-      }
-    !ApplicationManager.getApplication().isUnitTestMode() -> {
-      LOG.warn(Throwable("Unknown data context kind '${dataContext.javaClass.getName()}'. " +
-                         "Use EdtDataContext, CustomizedDataContext or SimpleDataContext"))
-      dataContext
+    !ApplicationManager.getApplication().isUnitTestMode() -> dataContext.also {
+      reportUnexpectedDataContextKind(dataContext)
     }
     else -> dataContext
+  }
+
+  private fun reportUnexpectedDataContextKind(dataContext: DataContext) {
+    LOG.error(PluginException.createByClass(
+      "Unknown data context kind '${dataContext.javaClass.getName()}'. " +
+      "Use DataManager.getDataContext, CustomizedDataContext, or SimpleDataContext", null, dataContext.javaClass))
   }
 
   @JvmStatic
@@ -189,7 +201,10 @@ object Utils {
   fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
-  fun isAsyncDataContext(dataContext: DataContext): Boolean = dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext
+  fun isAsyncDataContext(dataContext: DataContext): Boolean {
+    return dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext ||
+           dataContext is CustomizedDataContext && dataContext.customizedDelegate is AsyncDataContext
+  }
 
   @JvmStatic
   fun checkAsyncDataContext(dataContext: DataContext, place: String) {

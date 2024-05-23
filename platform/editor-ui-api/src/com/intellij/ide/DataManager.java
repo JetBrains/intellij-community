@@ -72,8 +72,14 @@ public abstract class DataManager {
   /**
    * Returns data from the provided data context customized with the provided data provider.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public abstract @Nullable Object getCustomizedData(@NotNull String dataId, @NotNull DataContext dataContext, @NotNull DataProvider provider);
+
+  /**
+   * Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#customize} instead
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull DataContext customizeDataContext(@NotNull DataContext dataContext, @NotNull Object provider);
 
   /**
    * Save doesn't work during fast action update to prevent caching of yet invalid data
