@@ -273,6 +273,7 @@ internal class BlockTerminalView(
       return when (dataId) {
         TerminalPromptController.KEY.name -> promptView.controller
         TerminalOutputController.KEY.name -> outputView.controller
+        TerminalOutputModel.KEY.name -> outputView.controller.outputModel
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController

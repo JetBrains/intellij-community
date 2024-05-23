@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -61,6 +62,10 @@ interface TerminalOutputModel {
   fun getBlockInfo(block: CommandBlock): CommandBlockInfo?
 
   fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null)
+
+  companion object {
+    val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
+  }
 }
 
 /**
