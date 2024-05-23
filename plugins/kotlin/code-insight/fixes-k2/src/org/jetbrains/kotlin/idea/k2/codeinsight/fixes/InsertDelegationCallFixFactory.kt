@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -16,15 +16,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal object InsertDelegationCallFixFactory {
 
-    val explicitDelegationCallRequiredSuper = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ExplicitDelegationCallRequired ->
+    val explicitDelegationCallRequiredSuper = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExplicitDelegationCallRequired ->
         createQuickFix(diagnostic, isThis = false)
     }
 
-    val explicitDelegationCallRequiredThis = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ExplicitDelegationCallRequired ->
+    val explicitDelegationCallRequiredThis = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExplicitDelegationCallRequired ->
         createQuickFix(diagnostic, isThis = true)
     }
 
-    val primaryConstructorDelegationCallExpected = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.PrimaryConstructorDelegationCallExpected ->
+    val primaryConstructorDelegationCallExpected = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.PrimaryConstructorDelegationCallExpected ->
         val secondaryConstructor = diagnostic.psi.getNonStrictParentOfType<KtSecondaryConstructor>() ?: return@ModCommandBased emptyList()
         val containingClass = secondaryConstructor.getContainingClassOrObject()
         if (containingClass.allConstructors.count() <= 1 || !secondaryConstructor.hasImplicitDelegationCall()) {
@@ -34,7 +34,7 @@ internal object InsertDelegationCallFixFactory {
         listOf(InsertDelegationCallFix(element = secondaryConstructor, isThis = true))
     }
 
-    private fun createQuickFix(diagnostic: KtFirDiagnostic.ExplicitDelegationCallRequired, isThis: Boolean): List<InsertDelegationCallFix> {
+    private fun createQuickFix(diagnostic: KaFirDiagnostic.ExplicitDelegationCallRequired, isThis: Boolean): List<InsertDelegationCallFix> {
         val secondaryConstructor = diagnostic.psi.getNonStrictParentOfType<KtSecondaryConstructor>() ?: return emptyList()
         if (!secondaryConstructor.hasImplicitDelegationCall()) return emptyList()
         val klass = secondaryConstructor.getContainingClassOrObject() as? KtClass ?: return emptyList()
