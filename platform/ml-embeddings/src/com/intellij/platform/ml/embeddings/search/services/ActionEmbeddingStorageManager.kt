@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+import com.intellij.platform.ml.embeddings.search.indices.EntitySourceType.DEFAULT
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.normalized
@@ -122,7 +123,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
       }
       .toList()
 
-    index.addEntries(indexed)
+    index.addEntries(indexed, sourceType = DEFAULT)
   }
 
   private suspend fun loadRequirements(project: Project?) {

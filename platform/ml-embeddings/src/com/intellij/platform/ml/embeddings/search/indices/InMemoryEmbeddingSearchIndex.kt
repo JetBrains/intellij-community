@@ -2,13 +2,14 @@
 package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Concurrent [EmbeddingSearchIndex] that stores all embeddings in the memory and allows
@@ -43,6 +44,8 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     uncheckedIds.clear()
   }
 
+  override suspend fun clearBySourceType(sourceType: EntitySourceType) = Unit
+
   override suspend fun onIndexingStart() {
     lock.write {
       uncheckedIds.clear()
@@ -55,26 +58,26 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     uncheckedIds.clear()
   }
 
-  override suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>,
-                                  shouldCount: Boolean) = lock.write {
-    if (limit != null) {
-      val list = values.toList()
-      list.forEach { uncheckedIds.remove(it.first) }
-      idToEmbedding.putAll(list.take(minOf(limit!! - idToEmbedding.size, list.size)))
+  override suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, sourceType: EntitySourceType, shouldCount: Boolean) =
+    lock.write {
+      if (limit != null) {
+        val list = values.toList()
+        list.forEach { uncheckedIds.remove(it.first) }
+        idToEmbedding.putAll(list.take(minOf(limit!! - idToEmbedding.size, list.size)))
+      }
+      else {
+        idToEmbedding.putAll(values)
+      }
     }
-    else {
-      idToEmbedding.putAll(values)
-    }
-  }
 
   override suspend fun saveToDisk() = lock.read { save() }
 
   override suspend fun loadFromDisk() = lock.write {
-    val (ids, embeddings) = fileManager.loadIndex() ?: return@write
+    val (ids, _, embeddings) = fileManager.loadIndex() ?: return@write
     idToEmbedding = (ids zip embeddings).toMap().toMutableMap()
   }
 
-  override suspend fun offload() = idToEmbedding.clear()
+  override suspend fun offload(persistEventConsumer: (Map<EntitySourceType, AtomicLong>) -> Unit) = idToEmbedding.clear()
 
   override suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredText> = lock.read {
     idToEmbedding.findClosest(searchEmbedding, topK, similarityThreshold)
@@ -104,6 +107,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
 
   private suspend fun save() {
     val (ids, embeddings) = idToEmbedding.toList().unzip()
-    fileManager.saveIndex(ids, embeddings)
+    val idsSourceTypes = ids.map { EntitySourceType.DEFAULT }
+    fileManager.saveIndex(ids = ids, idsSourceTypes = idsSourceTypes, embeddings = embeddings)
   }
 }
