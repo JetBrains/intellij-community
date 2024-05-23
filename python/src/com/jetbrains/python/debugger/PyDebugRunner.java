@@ -101,7 +101,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
   protected static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
   protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
-  protected static final @NonNls String USE_PROCESSES_FOR_RESOLVE = "USE_PROCESSES_FOR_RESOLVE";
+  protected static final @NonNls String HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = "HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME";
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
@@ -712,7 +712,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     if (registryManager.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
-      environmentController.putFixedValue(USE_PROCESSES_FOR_RESOLVE, "True");
+      environmentController.putFixedValue(HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME, "True");
     }
   }
 
