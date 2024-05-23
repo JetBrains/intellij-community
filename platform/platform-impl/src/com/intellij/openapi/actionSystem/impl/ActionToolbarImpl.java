@@ -1253,7 +1253,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Component target = myTargetComponent != null ? myTargetComponent : IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
     DataContext context = DataManager.getInstance().getDataContext(target);
     if (myAdditionalDataProvider != null) {
-      return CustomizedDataContext.create(context, myAdditionalDataProvider);
+      return CustomizedDataContext.withProvider(context, myAdditionalDataProvider);
     }
     else {
       return context;

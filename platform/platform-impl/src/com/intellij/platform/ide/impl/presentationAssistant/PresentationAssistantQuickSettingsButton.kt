@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.observable.util.addMouseListener
@@ -27,7 +26,7 @@ import javax.swing.SwingConstants
 internal class PresentationAssistantQuickSettingsButton(private val project: Project,
                                                         private val appearance: ActionInfoPopupGroup.Appearance,
                                                         private val shownStateRequestCountChanged: (Int) -> Unit):
-  JBLabel(IconUtil.colorize(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable, DataContext {
+  JBLabel(IconUtil.colorize(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable {
 
   private var popup: JBPopup? = null
   private var hideAlarm = Alarm()
@@ -142,10 +141,5 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
     }
 
     return popup
-  }
-
-  override fun getData(dataId: String): Any? {
-    if (dataId == CommonDataKeys.PROJECT.name) return project
-    return null
   }
 }

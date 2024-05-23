@@ -221,8 +221,8 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     list.setExpandableItemsEnabled(false)
     (myStep as ActionPopupStep).setSubStepContextAdjuster { context, action ->
       if (action is SelectConfigAction) {
-        CustomizedDataContext.create(context) { dataId ->
-          if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
+        CustomizedDataContext.withSnapshot(context) { sink ->
+          sink[RUN_CONFIGURATION_KEY] = action.configuration
         }
       }
       else context
