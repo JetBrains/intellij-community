@@ -4,7 +4,6 @@ c:com.intellij.DynamicBundle
 - <init>(java.lang.Class,java.lang.String):V
 - p:<init>(java.lang.String):V
 - p:findBundle(java.lang.String,java.lang.ClassLoader,java.util.ResourceBundle$Control):java.util.ResourceBundle
-- s:findLanguageBundle():com.intellij.DynamicBundle$LanguageBundleEP
 - s:getBundle(java.lang.String):java.util.ResourceBundle
 - s:getBundle(java.lang.String,java.lang.Class):java.util.ResourceBundle
 - s:getLocale():java.util.Locale
@@ -12,7 +11,6 @@ c:com.intellij.DynamicBundle
 - s:getResourceBundle(java.lang.ClassLoader,java.lang.String):java.util.ResourceBundle
 - s:getResourceBundle(java.lang.ClassLoader,java.lang.String,java.util.Locale):java.util.ResourceBundle
 - f:getResourceBundle(java.lang.String,java.lang.ClassLoader):java.util.ResourceBundle
-- s:loadLocale(com.intellij.DynamicBundle$LanguageBundleEP):V
 f:com.intellij.application.Topics
 - sf:subscribe(com.intellij.util.messages.Topic,com.intellij.openapi.Disposable,java.lang.Object):V
 com.intellij.codeInsight.ContainerProvider
