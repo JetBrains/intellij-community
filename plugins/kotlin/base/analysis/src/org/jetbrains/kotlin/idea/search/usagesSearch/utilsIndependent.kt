@@ -76,7 +76,7 @@ private fun processInheritorsDelegatingCallToSpecifiedConstructor(
     constructorCallComparator: KotlinSearchUsagesSupport.ConstructorCallHandle,
     process: (KtCallElement) -> Boolean
 ): Boolean {
-    return KotlinFindUsagesSupport.searchInheritors(klass, scope.restrictByFileType(KotlinFileType.INSTANCE), false).all {
+    return runReadAction { KotlinFindUsagesSupport.searchInheritors(klass, scope.restrictByFileType(KotlinFileType.INSTANCE), false) }.all {
         runReadAction {
             val unwrapped = it.takeIf { it.isValid }?.unwrapped
             if (unwrapped is KtClass)
