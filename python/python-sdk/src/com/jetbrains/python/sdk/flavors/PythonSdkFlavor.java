@@ -25,10 +25,7 @@ import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.run.CommandLinePatcher;
-import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,7 +275,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @Deprecated
   @Nullable
   public static PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
-    if (sdkPath == null) return null;
+    if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
 
     for (PythonSdkFlavor<?> flavor : getApplicableFlavors()) {
       if (flavor.isValidSdkHome(sdkPath)) {

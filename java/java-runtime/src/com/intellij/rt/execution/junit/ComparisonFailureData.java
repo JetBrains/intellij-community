@@ -53,7 +53,7 @@ public class ComparisonFailureData {
   }
 
   public ComparisonFailureData(AssertionValue expected, AssertionValue actual) {
-    this(expected.text, actual.text, actual.path, expected.path);
+    this(expected.text, actual.text, expected.path, actual.path);
   }
 
   public ComparisonFailureData(String expected, String actual) {

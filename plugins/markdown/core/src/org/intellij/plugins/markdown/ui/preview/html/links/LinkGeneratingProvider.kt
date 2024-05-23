@@ -5,6 +5,7 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.TransparentInlineHolderProvider
+import org.intellij.markdown.parser.LinkMap
 
 internal abstract class LinkGeneratingProvider: GeneratingProvider {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
@@ -13,7 +14,8 @@ internal abstract class LinkGeneratingProvider: GeneratingProvider {
   }
 
   open fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-    visitor.consumeTagOpen(node, "a", "href=\"${info.destination}\"", info.title?.let { "title=\"$it\"" })
+    val destination = info.destination.let { LinkMap.normalizeDestination(it, true) }
+    visitor.consumeTagOpen(node, "a", "href=\"$destination\"", info.title?.let { "title=\"$it\"" })
     labelProvider.processNode(visitor, text, info.label)
     visitor.consumeTagClose("a")
   }

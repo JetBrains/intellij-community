@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -245,6 +246,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     setMiniModeInner(false);
 
     installPopupHandler(customizable, null, null);
+    UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo(
+      "Toolbar", myActionGroup, myPlace, myPresentationFactory));
   }
 
   protected void installPopupHandler(boolean customizable,

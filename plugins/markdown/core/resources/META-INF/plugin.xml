@@ -171,7 +171,8 @@
 
     <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 
-    <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
+    <breadcrumbsInfoProvider id="MarkdownDefaultBreadcrumbs"
+                             implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
 
     <treeStructureProvider implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownTreeStructureProvider"/>
 

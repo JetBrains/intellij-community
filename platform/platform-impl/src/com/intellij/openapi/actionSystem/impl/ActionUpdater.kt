@@ -558,6 +558,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.updateAction(action, event) {
           if (isDefaultImplementationRecursively(OP_actionPresentation, action)) {
+            action.applyTextOverride(event)
             return@updateAction true
           }
           callAction(action, operationName, action.actionUpdateThread) {

@@ -32,70 +32,55 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
-  private final ActionGroup myActionGroup;
+public class SplitButtonAction extends ActionGroupWrapper implements CustomComponentAction {
   private static final Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
-    myActionGroup = actionGroup;
+    super(actionGroup);
     setPopup(true);
-    getTemplatePresentation().copyFrom(actionGroup.getTemplatePresentation());
   }
 
   public @NotNull ActionGroup getActionGroup() {
-    return myActionGroup;
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myActionGroup.getActionUpdateThread();
+    return getDelegate();
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    UpdateSession session = e.getUpdateSession();
     Presentation presentation = e.getPresentation();
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
-    Presentation groupPresentation = e.getUpdateSession().presentation(myActionGroup);
-    e.getPresentation().copyFrom(groupPresentation, splitButton);
-
-    if (presentation.isVisible()) {
-      AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
-      if (action != null) {
-        Presentation actionPresentation = e.getUpdateSession().presentation(action);
-        presentation.copyFrom(actionPresentation, splitButton);
-        if (splitButton != null) {
-          boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
-          splitButton.actionEnabled = presentation.isEnabled();
-          if (shouldRepaint) splitButton.repaint();
-        }
-        presentation.setEnabledAndVisible(true);
-      }
-
-      presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
+    Presentation groupPresentation = session.presentation(getDelegate()); // do not remove (RemDev)
+    AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
+    if (action != null) {
+      Presentation actionPresentation = session.presentation(action);
+      presentation.copyFrom(actionPresentation, splitButton);
+      presentation.setEnabledAndVisible(true);
     }
+    else {
+      e.getPresentation().copyFrom(groupPresentation, splitButton);
+    }
+    presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
+  }
+
+  @Override
+  public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+    if (!(component instanceof SplitButton splitButton)) return;
+    boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
+    splitButton.actionEnabled = presentation.isEnabled();
+    if (shouldRepaint) splitButton.repaint();
   }
 
   private @Nullable AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
-    var children = session.children(myActionGroup);
+    var children = session.children(getDelegate());
     var firstEnabled = ContainerUtil.find(children, a -> session.presentation(a).isEnabled());
     return firstEnabled != null ? firstEnabled : ContainerUtil.getFirstItem(children);
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return myActionGroup.getChildren(e);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return myActionGroup.isDumbAware();
-  }
-
-  @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new SplitButton(this, presentation, place, myActionGroup);
+    return new SplitButton(this, presentation, place, getDelegate());
   }
 
   private static final class SplitButton extends ActionButton {

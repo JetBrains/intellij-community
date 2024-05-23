@@ -104,6 +104,14 @@ def __get_describe(table):
                                     exclude=[np.complex64, np.complex128])
     except (TypeError, OverflowError, ValueError):
         return
+
+    try:
+        import geopandas
+        if type(table) is geopandas.GeoSeries:
+            return described_
+    except ImportError:
+        pass
+
     if type(table) is pd.Series:
         return described_
     else:
@@ -187,14 +195,7 @@ def analyze_categorical_column(column):
 
 
 def analyze_numeric_column(column):
-    if column.dtype.kind in ['i', 'u']:
-        bins = np.bincount(column)
-        unique_values = np.count_nonzero(bins)
-    else:
-        # for float type we don't compute number of unique values because it's an
-        # expensive operation, just take number of elements in a column
-        unique_values = column.size
-    if unique_values <= ColumnVisualisationUtils.NUM_BINS:
+    if column.size <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
         format_function = int if column.dtype.kind == 'i' else lambda x: round(x, 1)
@@ -216,6 +217,13 @@ def add_custom_key_value_separator(pairs_list):
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
     # type: (Union[pd.DataFrame, pd.Series, pd.Categorical]) -> pd.DataFrame
+    try:
+        import geopandas
+        if type(table) is geopandas.GeoSeries:
+            return __series_to_df(table)
+    except ImportError:
+        pass
+
     if type(table) is pd.Series:
         return __series_to_df(table)
     if type(table) is pd.Categorical:

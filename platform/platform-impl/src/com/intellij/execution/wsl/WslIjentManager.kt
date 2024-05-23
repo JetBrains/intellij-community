@@ -29,6 +29,13 @@ interface WslIjentManager {
    */
   suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi
 
+  @Deprecated(
+    "Use WslIjentAvailabilityService.runWslCommandsViaIjent",
+    replaceWith = ReplaceWith(
+      "WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()",
+      "com.intellij.execution.wsl.WslIjentAvailabilityService",
+    )
+  )
   @get:ApiStatus.Internal
   val isIjentAvailable: Boolean
 

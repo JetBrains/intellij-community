@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.lateinitVal
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 
@@ -59,25 +60,27 @@ fun Release.selectInstallations(installers: List<BinaryInstaller>): List<BinaryI
 }
 
 @RequiresEdt
-fun installBinary(installation: BinaryInstallation, project: Project?) {
+fun <T> installBinary(installation: BinaryInstallation, project: Project?, postInstall: () -> T? = { null }): T? {
   val (release, binary, installer) = installation
   try {
-    ProgressManager.getInstance().run(
-      object : Task.WithResult<Unit, Exception>(project, PyBundle.message("python.sdk.installing", release.title), true) {
-        override fun compute(indicator: ProgressIndicator) {
+    return ProgressManager.getInstance().run(
+      object : Task.WithResult<T, Exception>(project, PyBundle.message("python.sdk.installing", release.title), true) {
+        override fun compute(indicator: ProgressIndicator): T? {
           installer.install(binary, indicator) {
-            BinaryInstallerUsagesCollector.logDownloadEvent(release, BinaryInstallerUsagesCollector.DownloadResult.OK)
+            BinaryInstallerUsagesCollector.logDownloadEvent(project, release, BinaryInstallerUsagesCollector.DownloadResult.OK)
           }
-          BinaryInstallerUsagesCollector.logInstallationEvent(release, BinaryInstallerUsagesCollector.InstallationResult.OK)
+          BinaryInstallerUsagesCollector.logInstallationEvent(project, release, BinaryInstallerUsagesCollector.InstallationResult.OK)
+          return postInstall()
         }
       }
     )
   }
   catch (ex: BinaryInstallerException) {
     LOGGER.info(ex)
-    BinaryInstallerUsagesCollector.logInstallerException(installation.release, ex)
+    BinaryInstallerUsagesCollector.logInstallerException(project, installation.release, ex)
     showErrorNotification(project, release, ex)
   }
+  return null
 }
 
 private fun showErrorNotification(project: Project?, release: Release, ex: BinaryInstallerException) {

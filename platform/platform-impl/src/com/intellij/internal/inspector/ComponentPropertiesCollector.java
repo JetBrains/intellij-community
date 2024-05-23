@@ -285,12 +285,8 @@ public final class ComponentPropertiesCollector {
 
   private void addToolbarInfo(Object component) {
     if (component instanceof ActionToolbarImpl toolbar) {
-      myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
-
-      JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
-      if (targetComponent != null) {
-        myProperties.add(new PropertyBean("Target component", targetComponent.toString(), true));
-      }
+      JComponent targetComponent = toolbar.getTargetComponent();
+      myProperties.add(new PropertyBean("Target component", String.valueOf(targetComponent), true));
     }
   }
 

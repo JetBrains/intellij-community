@@ -346,6 +346,23 @@ abstract class DumbService {
   }
 
   /**
+   * Invokes the given runnable with alternative resolve set to `true` if dumb mode is enabled.
+   *
+   * @see isAlternativeResolveEnabled
+   */
+  inline fun <T> withAlternativeResolveEnabled(runnable: () -> T): T {
+    val isDumb = isDumb
+    val old = isAlternativeResolveEnabled
+    if (isDumb) isAlternativeResolveEnabled = true
+    try {
+      return runnable()
+    }
+    finally {
+      if (isDumb) isAlternativeResolveEnabled = old
+    }
+  }
+
+  /**
    * Enables or disables alternative resolve strategies for the current thread.
    *
    * Normally reference resolution uses indexes, and hence is not available in dumb mode. In some cases, alternative ways

@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubInconsistencyReporter
 import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
@@ -114,7 +115,7 @@ class StubBasedPackageMemberDeclarationProvider(
             val everyObjects = KotlinFullClassNameIndex.get(childName, project, GlobalSearchScope.everythingScope(project))
             if (processor.isFound || everyObjects.isNotEmpty()) {
                 project.messageBus.syncPublisher(KotlinCorruptedIndexListener.TOPIC).corruptionDetected()
-
+                StubInconsistencyReporter.getInstance().reportKotlinMissingClassName(project, processor.isFound, !everyObjects.isEmpty())
                 throw IllegalStateException(
                     """
                      | KotlinFullClassNameIndex ${if (processor.isFound) "has" else "has not"} '$childName' key.

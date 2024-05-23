@@ -40,7 +40,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
   private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 18)
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 19)
   private val CORES: EventId1<Int> = GROUP.registerEvent(
     "cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
   private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent(
@@ -56,6 +56,8 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
   private val AGENTS_COUNT: EventId2<Int, Int> = GROUP.registerEvent("agents.count", Int("java_agents"), Int("native_agents"))
   private val AGENT_PRESENCE_C1: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c1", EventFields.Enabled) // IJPL-856
+  private val AGENT_PRESENCE_C2: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c2", EventFields.Enabled) // IJPL-148313
+  private val ADD_OPENS_PRESENCE_1: EventId1<Boolean> = GROUP.registerEvent("add.opens.presence.1", EventFields.Enabled) // IJPL-148271
   private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -185,31 +187,57 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     var nativeAgents = 0
     var javaAgents = 0
     var isAgentPresentC1 = false
+    var isAgentPresentC2 = false
+    var isAddOpensPresent1 = false
 
     for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
       if (arg.startsWith("-javaagent:")) {
         javaAgents++
-        if (calculateAgentSignature(arg) == "936efb883204705f") {
+        if (calculateAgentSignature(arg).intersect(setOf("936efb883204705f")).isNotEmpty()) {
           isAgentPresentC1 = true
+        }
+        if (calculateAgentSignature(arg, 2).intersect(setOf("40af82251280c73", "37ae04aadf5604b")).isNotEmpty()) {
+          isAgentPresentC2 = true
         }
       }
       if (arg.startsWith("-agentlib:") || arg.startsWith("-agentpath:")) {
         nativeAgents++
+      }
+      if (arg.startsWith("--add-opens=")) {
+        if (komihash(arg.lowercase().removePrefix("--add-opens=").substringBefore("=")) in setOf("fa09d342a2180e7", "99ae514e0c40bd7e")) {
+          isAddOpensPresent1 = true
+        }
       }
     }
 
     return buildSet {
       add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
       add(AGENTS_COUNT.metric(javaAgents, nativeAgents))
-      add(AGENT_PRESENCE_C1.metric(isAgentPresentC1))
+      addAll(
+        listOf(
+          AGENT_PRESENCE_C1 to isAgentPresentC1,
+          AGENT_PRESENCE_C2 to isAgentPresentC2,
+          ADD_OPENS_PRESENCE_1 to isAddOpensPresent1
+        )
+          .filter { it.second }
+          .map { (event, _) -> event.metric(true) }
+      )
     }
   }
 
-  private fun calculateAgentSignature(arg: String): String {
-    val path = arg.removePrefix("-javaagent:").substringBefore("=")
-    val filename = runCatching {
-      Path.of(path).name
-    }.getOrDefault(path)
-    return Hashing.komihash5_0().hashStream().putString(filename).asLong.toULong().toString(16)
+  private fun calculateAgentSignature(arg: String, depth: Int = 1): Set<String> {
+    val pathString = arg.removePrefix("-javaagent:").substringBefore("=")
+    val tokens: Set<String> = runCatching {
+      var path = Path.of(pathString)
+      val result = mutableSetOf<String>()
+      repeat(depth) {
+        result.add(path.name)
+        path = path.parent ?: return@runCatching result
+      }
+      result
+    }.getOrDefault(setOf(pathString))
+    return tokens.map(::komihash).toSet()
   }
+
+  private fun komihash(value: String): String = Hashing.komihash5_0().hashStream().putString(value).asLong.toULong().toString(16)
 }

@@ -28,6 +28,9 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+/** @deprecated do not use directly, create via {@link com.intellij.openapi.fileChooser.FileChooserFactory} */
+@Deprecated(forRemoval = true)
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;

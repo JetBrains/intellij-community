@@ -10,6 +10,7 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
@@ -446,8 +447,11 @@ private fun postProcessReportFolder(durationMs: Long, task: SamplingTask, dir: P
     // so freezes produced by standing at breakpoint are not reported as exceptions
     LOG.info(message)
   }
-  else {
+  else if (ApplicationManagerEx.isInIntegrationTest()) {
     LOG.error(message)
+  }
+  else {
+    LOG.warn(message)
   }
 
   return reportDir

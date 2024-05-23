@@ -15,45 +15,27 @@ public interface StubInconsistencyReporter {
   }
 
   enum SourceOfCheck {
-    DeliberateAdditionalCheckInCompletion(
-      "deliberate_additional_check_in_completion"), //Registry.is("ide.check.stub.text.consistency") is enabled
-    DeliberateAdditionalCheckInIntentions(
-      "deliberate_additional_check_in_intentions"), //Registry.is("ide.check.stub.text.consistency") is enabled
-    WrongTypePsiInStubHelper("wrong_type_psi_in_stub_helper"),
-    OffsetOutsideFileInJava("offset_outside_file_in_java"),
-    CheckAfterExceptionInJava("check_after_exception_in_java"),
-    NoPsiMatchingASTinJava("no_psi_matching_ast_in_java"),
+    DeliberateAdditionalCheckInCompletion, //Registry.is("ide.check.stub.text.consistency") is enabled
+    DeliberateAdditionalCheckInIntentions, //Registry.is("ide.check.stub.text.consistency") is enabled
+    WrongTypePsiInStubHelper,
+    OffsetOutsideFileInJava,
+    CheckAfterExceptionInJava,
+    NoPsiMatchingASTinJava,
 
-    ForTests("for_tests"),//is definitely not expected to actually appear in FUS
-    Other("other");
-
-    private final String fusDescription;
-
-    SourceOfCheck(String fusDescription) {
-      this.fusDescription = fusDescription;
-    }
-
-    public String getFusDescription() {
-      return fusDescription;
-    }
+    ForTests,//is definitely not expected to actually appear in FUS
+    Other //better use null
   }
 
   enum InconsistencyType {
-    DifferentNumberOfPsiTrees("different_number_of_psi_trees"), MismatchingPsiTree("mismatching_psi_tree");
-    private final String fusDescription;
-
-    InconsistencyType(String fusDescription) {
-      this.fusDescription = fusDescription;
-    }
-
-    public String getFusDescription() {
-      return fusDescription;
-    }
+    DifferentNumberOfPsiTrees, MismatchingPsiTree
   }
 
   /**
-   * Sometimes stub inconsistency related exception is thrown even when no inconsistency is found during the usual check
+   * Sometimes stub inconsistency-related exception is thrown even when no inconsistency is found during the usual check
+   *
+   * @deprecated all related methods are deprecated
    */
+  @Deprecated
   enum EnforcedInconsistencyType {
     PsiOfUnexpectedClass("psi_of_unexpected_class"), Other("other");
     private final String fusDescription;
@@ -62,15 +44,41 @@ public interface StubInconsistencyReporter {
       this.fusDescription = fusDescription;
     }
 
+    @SuppressWarnings("unused")
     public String getFusDescription() {
       return fusDescription;
     }
   }
 
+  void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project,
+                                                @Nullable StubInconsistencyReporter.SourceOfCheck reason,
+                                                @NotNull InconsistencyType type);
+
+  /**
+   * @deprecated Use {@link #reportStubInconsistencyBetweenPsiAndText(Project, SourceOfCheck, InconsistencyType)}
+   */
+  @Deprecated
   void reportEnforcedStubInconsistency(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                        @NotNull EnforcedInconsistencyType enforcedInconsistencyType);
 
-  void reportStubInconsistency(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
-                               @NotNull InconsistencyType type,
-                               @Nullable EnforcedInconsistencyType enforcedInconsistencyType);
+  /**
+   * @deprecated Use {@link #reportStubInconsistencyBetweenPsiAndText(Project, SourceOfCheck, InconsistencyType)}
+   */
+  @Deprecated
+  void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
+                                                @NotNull InconsistencyType type,
+                                                @Nullable EnforcedInconsistencyType enforcedInconsistencyType);
+
+  void reportKotlinDescriptorNotFound(@Nullable Project project);
+
+  void reportKotlinMissingClassName(@NotNull Project project,
+                                    boolean foundInKotlinFullClassNameIndex,
+                                    boolean foundInEverythingScope);
+
+  /**
+   * Use nulls for parameters of this type in plugins. These values are reserved for the platform
+   */
+  enum StubTreeAndIndexDoNotMatchSource {FileTreesPsiReconciliation, WrongPsiFileClassInNonPsiStub, ZeroStubIdList, StubPsiCheck}
+
+  void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @NotNull StubTreeAndIndexDoNotMatchSource source);
 }

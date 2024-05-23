@@ -1208,6 +1208,7 @@
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ProductCodeRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator"/>
     <statistics.validation.customValidationRule
@@ -1405,6 +1406,9 @@
     <registryKey key="language.service.status.bar.widget"
                  description="Show Language Services status bar widget"
                  defaultValue="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetUsagesCollector"/>
+    <applicationService serviceInterface="com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActionsService"
+                        serviceImplementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetActionsServiceImpl"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
                             order="after Position"/>
     <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"
@@ -1596,6 +1600,12 @@
     <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElementManipulator"
       order="last"/>
+    <inline.completion.element.manipulator
+      implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionColorTextElementManipulator"
+      order="last"/>
+    <inline.completion.element.manipulator
+      implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionTextElementManipulator"
+      order="last"/>
     <editorFactoryMouseMotionListener
       implementation="com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionMouseMotionListener"/>
 
@@ -1675,6 +1685,8 @@
                        key="notification.group.automatic.indent.detection"/>
     <notificationGroup id="Incorrect Formatting" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="inspection.incorrect.formatting.notification.group"/>
+    <notificationGroup id="Sticky Lines" displayType="BALLOON" bundle="messages.ApplicationBundle"
+                       key="settings.editor.sticky.lines.disabled.title" />
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
     <platform.backend.documentation.inlineDocumentationProvider order="last"
@@ -1718,6 +1730,7 @@
 
     <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.StubInconsistencyFusCollector"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubInconsistencyReporter"
                         serviceImplementation="com.intellij.util.indexing.diagnostic.StubInconsistencyReporterImpl"/>
 

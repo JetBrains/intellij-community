@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.NonEmptyActionGroup;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.*;
@@ -122,7 +123,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     AnAction runContextAction;
     AnAction runNonExistingContextAction;
     if (executor instanceof ExecutorGroup<?> executorGroup) {
-      ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
+      String delegateId = executor.getId() + "_delegate";
+      ExecutorGroupActionGroup actionGroup = new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new);
+      registerAction(actionRegistrar, delegateId, actionGroup, idToAction);
+
+      ActionGroup toolbarActionGroup = new SplitButtonAction(actionGroup);
       Presentation presentation = toolbarActionGroup.getTemplatePresentation();
       presentation.setIconSupplier(executor::getIcon);
       presentation.setText(executor.getStartActionText());
@@ -137,9 +142,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       runNonExistingContextAction = new RunNewConfigurationContextAction(executor);
     }
 
-    Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerActionInGroup(actionRegistrar, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP,
-                          idToAction);
+    registerActionInGroup(actionRegistrar, executor.getId(), toolbarAction, RUNNERS_GROUP, idToAction);
 
     AnAction action = registerAction(actionRegistrar, executor.getContextActionId(), runContextAction, contextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
@@ -243,6 +246,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     ActionManager actionManager = ActionManager.getInstance();
     unregisterAction(executor.getId(), RUNNERS_GROUP, idToAction, actionManager);
+    if (executor instanceof ExecutorGroup<?>) {
+      unregisterAction(executor.getId() + "_delegate", RUNNERS_GROUP, idToAction, actionManager);
+    }
     if (isExecutorInMainGroup(executor)) {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_EXECUTORS_GROUP, contextActionIdToAction, actionManager);
     }
@@ -819,7 +825,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @ApiStatus.Internal
-  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
+  public static class ExecutorGroupActionGroup extends NonEmptyActionGroup implements DumbAware {
     protected final ExecutorGroup<?> myExecutorGroup;
     private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
@@ -844,18 +850,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
-      final Project project = e.getProject();
+      Project project = e.getProject();
       if (project == null || !project.isInitialized() || project.isDisposed()) {
         e.getPresentation().setEnabled(false);
         return;
       }
-      e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
+      if (!myExecutorGroup.isApplicable(project)) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+      super.update(e);
     }
   }
 

@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.GitStandardRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.changesSignalFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.data.GHRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -49,7 +51,7 @@ class GHPRBranchesViewModel internal constructor(
 
   override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(detailsState) { _, details ->
-      val remote = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
+      val remote = details.getHeadRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
       GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
     }.modelFlow(cs, thisLogger())
 
@@ -59,8 +61,8 @@ class GHPRBranchesViewModel internal constructor(
   override fun fetchAndCheckoutRemoteBranch() {
     cs.launch {
       val details = detailsState.first()
-      val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
-      val localPrefix = if (details.headRepository?.isFork == true) "fork" else null
+      val remoteDescriptor = details.getHeadRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
+      val localPrefix = if (details.headRepository?.isFork == true) "fork/${details.headRepository.owner.login}" else null
       GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName, localPrefix)
     }
   }
@@ -69,8 +71,16 @@ class GHPRBranchesViewModel internal constructor(
   override fun fetchAndShowInLog() {
     cs.launch {
       val details = detailsState.first()
-      val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
-      GitRemoteBranchesUtil.fetchAndShowRemoteBranchInLog(gitRepository, remoteDescriptor, details.headRefName, details.baseRefName)
+
+      val headRemote = details.getHeadRemoteDescriptor(mapping.repository.serverPath)
+                         ?.let { GitRemoteBranchesUtil.findRemote(gitRepository, it) } ?: return@launch
+      val baseRemote = details.getBaseRemoteDescriptor(mapping.repository.serverPath)
+                         ?.let { GitRemoteBranchesUtil.findRemote(gitRepository, it) } ?: return@launch
+
+      val headBranch = GitStandardRemoteBranch(headRemote, details.headRefName)
+      val baseBranch = GitStandardRemoteBranch(baseRemote, details.baseRefName)
+
+      GitRemoteBranchesUtil.fetchAndShowRemoteBranchInLog(gitRepository, headBranch, baseBranch)
     }
   }
 
@@ -84,14 +94,13 @@ class GHPRBranchesViewModel internal constructor(
   }
 
   companion object {
-    fun GHPullRequest.getRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote? = headRepository?.let {
-      HostedGitRepositoryRemote(
-        it.owner.login,
-        server.toURI(),
-        it.nameWithOwner,
-        it.url,
-        it.sshUrl
-      )
-    }
+    private fun GHRepository.getRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote =
+      HostedGitRepositoryRemote(owner.login, server.toURI(), nameWithOwner, url, sshUrl)
+
+    fun GHPullRequest.getHeadRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote? =
+      headRepository?.getRemoteDescriptor(server)
+
+    fun GHPullRequest.getBaseRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote? =
+      baseRepository?.getRemoteDescriptor(server)
   }
 }

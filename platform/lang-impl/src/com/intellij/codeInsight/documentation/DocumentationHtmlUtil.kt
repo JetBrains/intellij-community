@@ -27,7 +27,11 @@ import javax.swing.Icon
 object DocumentationHtmlUtil {
 
   @JvmStatic
-  val contentOuterPadding: Int get() = 10
+  val settingsButtonPadding: Int get() = 9
+
+  // hand-picked padding for HTML layout
+  @JvmStatic
+  val contentOuterPadding: Int get() = 14
 
   // Should be minimum 2 to compensate mandatory table border width of 2
   @JvmStatic
@@ -150,7 +154,7 @@ object DocumentationHtmlUtil {
   private class HtmlEditorPaneInputTranspiler(text: String) {
     private val codePoints = text.codePoints().iterator()
     private val result = StringBuilder(text.length + 50)
-    private var codePoint = codePoints.nextInt()
+    private var codePoint = if (!codePoints.hasNext()) -1 else codePoints.nextInt()
     private var openingTag = false
     private val tagStart = StringBuilder()
     private val tagName = StringBuilder()
@@ -301,9 +305,6 @@ object DocumentationHtmlUtil {
     }
 
     fun process(): String {
-      if (!codePoints.hasNext()) return ""
-
-
       while (codePoint >= 0) {
         when {
           // break after dot if surrounded by letters

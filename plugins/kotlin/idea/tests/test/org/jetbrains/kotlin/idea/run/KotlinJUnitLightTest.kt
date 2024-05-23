@@ -16,7 +16,10 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -27,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
 import org.jetbrains.kotlin.psi.KtFunction
@@ -219,18 +221,19 @@ fun main(args: Array<String>) {}
         val marks = myFixture.findGuttersAtCaret()
         assertEquals(1, marks.size)
         val mark = marks[0] as GutterIconRenderer
-        val group = mark.popupMenuActions
+        val group = mark.popupMenuActions as ActionGroup
         assertNotNull(group)
-        val event = TestActionEvent.createTestEvent()
-        val list = ContainerUtil.findAll(group!!.getChildren(event)) { action: AnAction ->
-            val actionEvent = TestActionEvent.createTestEvent()
-            action.update(actionEvent)
-            val text = actionEvent.presentation.text
-            text != null && text.startsWith("Run '") && text.endsWith("'")
+        val presentations = PresentationFactory()
+        val dataContext = TestActionEvent.createTestEvent().dataContext
+        val children = Utils.expandActionGroup(
+            group, presentations, dataContext, ActionPlaces.EDITOR_GUTTER_POPUP)
+        val list = children.filter {
+            presentations.getPresentation(it).text.run {
+                startsWith("Run '") && endsWith("'")
+            }
         }
         assertEquals(list.toString(), 1, list.size)
-        list[0].update(event)
-        assertEquals("Run 'ATest'", event.presentation.text)
+        assertEquals("Run 'ATest'", presentations.getPresentation(list[0]).text)
         myFixture.testAction(list[0])
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         val selectedConfiguration = getInstance(project).selectedConfiguration

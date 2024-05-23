@@ -163,6 +163,7 @@
     <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
     <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
     <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
+    <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
@@ -452,7 +453,6 @@
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.PySdkToInstallCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector"/>

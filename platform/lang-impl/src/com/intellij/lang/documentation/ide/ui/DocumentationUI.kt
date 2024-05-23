@@ -11,6 +11,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUIC
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationScrollPane
 import com.intellij.codeInsight.hint.DefinitionSwitcher
+import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
@@ -89,7 +90,8 @@ internal class DocumentationUI(
     }.apply {
       iconTextGap = 6
       border = JBUI.Borders.empty(
-        0, 2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+        0,
+        LineTooltipRenderer.CONTENT_PADDING,
         2 + DocumentationHtmlUtil.contentOuterPadding, DocumentationHtmlUtil.contentOuterPadding)
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
     }

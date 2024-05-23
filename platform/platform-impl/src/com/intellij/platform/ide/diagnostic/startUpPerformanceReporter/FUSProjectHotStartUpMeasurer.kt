@@ -209,8 +209,10 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
   }
 
-  suspend fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
-    if (!isProperContext()) return
+  fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
+    if (!currentThreadContext().isProperContext()) {
+      return
+    }
     channel.trySend(Event.NoMoreEditorsEvent(nanoTime))
   }
 

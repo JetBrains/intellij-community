@@ -69,15 +69,14 @@ public abstract class Executor {
 
   public abstract @NonNls String getHelpId();
 
-  /**
-   * @return the way to customize {@link com.intellij.execution.ExecutorRegistryImpl.ExecutorAction}
-   * (or {@link com.intellij.execution.ExecutorRegistryImpl.ExecutorGroupActionGroup}) created for this Executor,
-   * that will be shown in {@link com.intellij.execution.ExecutorRegistryImpl#RUNNERS_GROUP} group on the main toolbar
-   */
+  /** @deprecated Use {@link #isApplicable(Project)} and other methods to customize actions instead */
+  @Deprecated(forRemoval = true)
   public @Nullable ActionWrapper runnerActionsGroupExecutorActionCustomizer() {
     return null;
   }
 
+  /** @deprecated Use {@link #isApplicable(Project)} and other methods to customize actions instead */
+  @Deprecated(forRemoval = true)
   @FunctionalInterface
   public interface ActionWrapper {
     @NotNull

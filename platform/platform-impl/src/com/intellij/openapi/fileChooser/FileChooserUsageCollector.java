@@ -10,8 +10,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.mac.MacPathChooserDialog;
-import com.intellij.ui.win.WinPathChooserDialog;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +46,10 @@ public class FileChooserUsageCollector extends CounterUsagesCollector {
     );
   }
 
+  @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
   private static Type chooserType(FileChooserDialog chooser) {
-    return chooser instanceof MacPathChooserDialog ? Type.MAC :
-           chooser instanceof WinPathChooserDialog ? Type.WINDOWS :
+    return chooser instanceof com.intellij.ui.mac.MacPathChooserDialog ? Type.MAC :
+           chooser instanceof com.intellij.ui.win.WinPathChooserDialog ? Type.WINDOWS :
            chooser instanceof FileChooserDialogImpl ? Type.CLASSIC :
            Type.NEW;
   }

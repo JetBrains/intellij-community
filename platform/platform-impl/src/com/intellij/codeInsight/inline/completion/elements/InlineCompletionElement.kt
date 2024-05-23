@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.elements
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.awt.Rectangle
 
 /**
@@ -45,6 +46,7 @@ interface InlineCompletionElement {
      *
      * @return a `Rectangle` representing the bounds of the inline element, or `null` if element is not rendered yet.
      */
+    @OverrideOnly
     fun getBounds(): Rectangle?
 
     /**

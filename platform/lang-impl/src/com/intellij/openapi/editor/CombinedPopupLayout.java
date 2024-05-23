@@ -66,7 +66,7 @@ final class CombinedPopupLayout implements LayoutManager {
       int h2Res;
       if (h1 + h2 <= height) {
         h1Res = h1;
-        h2Res = h2;
+        h2Res = height - h1;
       }
       else if (h1 < height / 2) {
         h1Res = h1;

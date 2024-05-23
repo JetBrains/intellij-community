@@ -16,10 +16,14 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
@@ -89,6 +93,15 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
                              }
                          }""");
     doTest();
+  }
+  
+  public void testTooltipProperlyEscaped() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.ERROR);
+    assertEquals(1, infos.size());
+    assertEquals(
+      "<html>'unmodifiableSet(java.util.Set&lt;? extends java.lang.String&gt;)' in 'java.util.Collections' cannot be applied to '(java.util.TreeSet&lt;java.lang.String&gt;)'</html>",
+      infos.get(0).getToolTip());
   }
 
   private void doTest() {

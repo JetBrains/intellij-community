@@ -158,5 +158,6 @@
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="kotlin.ide" />
+    <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
   </component>
 </module>

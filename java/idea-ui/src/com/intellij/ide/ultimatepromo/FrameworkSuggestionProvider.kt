@@ -11,13 +11,13 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.createTryUltimateActionLabel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
-import java.util.function.Function
 
 private const val APPLICATION_PROPERTIES: String = "application.properties"
 private const val APPLICATION_YAML: String = "application.yaml"
@@ -29,7 +29,7 @@ private const val QUARKUS_MAVEN: String = "io.quarkus:quarkus-core"
 private const val KTOR_MAVEN: String = "io.ktor:ktor-http"
 
 internal class FrameworkSuggestionProvider : PluginSuggestionProvider {
-  override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
+  override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
     if (!isApplicationConfig(file.name)) return null
 
     val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
@@ -45,7 +45,9 @@ internal class FrameworkSuggestionProvider : PluginSuggestionProvider {
   }
 }
 
-internal class FrameworkPluginSuggestion(val project: Project, val framework: Framework) : Function<FileEditor, EditorNotificationPanel?> {
+internal class FrameworkPluginSuggestion(val project: Project, val framework: Framework) : PluginSuggestion {
+  override val pluginIds: List<String> = listOf(framework.pluginId)
+
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Promo)
     panel.text = IdeBundle.message("plugins.advertiser.framework.supported.in.ultimate", framework.name, ideaUltimate.name)

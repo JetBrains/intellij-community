@@ -238,7 +238,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean autoSelection) {
       this(parentPopup, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
                             preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, maxRowCount);
-      UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
+      UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace, presentationFactory));
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,

@@ -4,14 +4,14 @@ package com.intellij.rt.debugger;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings({"KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
 public final class CoroutinesDebugHelper {
-  public static long[] getCoroutinesRunningOnCurrentThread(kotlinx.coroutines.debug.internal.DebugProbesImpl instance) {
+  public static long[] getCoroutinesRunningOnCurrentThread(Object debugProbes) throws ReflectiveOperationException {
     Thread currentThread = Thread.currentThread();
     List<Long> coroutinesIds = new ArrayList<>();
-    for (kotlinx.coroutines.debug.internal.DebugCoroutineInfo info : instance.dumpCoroutinesInfo()) {
-      if (info.getLastObservedThread() == currentThread) {
-        coroutinesIds.add(info.getSequenceNumber());
+    List infos = (List)invoke(debugProbes, "dumpCoroutinesInfo");
+    for (Object info : infos) {
+      if (invoke(info, "getLastObservedThread") == currentThread) {
+        coroutinesIds.add((Long)invoke(info, "getSequenceNumber"));
       }
     }
     long[] res = new long[coroutinesIds.size()];
@@ -19,5 +19,9 @@ public final class CoroutinesDebugHelper {
       res[i] = coroutinesIds.get(i).longValue();
     }
     return res;
+  }
+
+  private static Object invoke(Object object, String methodName) throws ReflectiveOperationException {
+    return object.getClass().getMethod(methodName).invoke(object);
   }
 }

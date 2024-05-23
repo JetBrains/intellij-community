@@ -5,7 +5,7 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>8.2</gradle.version>
+    <gradle.version>8.7</gradle.version>
     <maven.version>3.8.5</maven.version>
     <maven.wrapper.version>3.1.0</maven.wrapper.version>
     <junit.version>5.10.0</junit.version>

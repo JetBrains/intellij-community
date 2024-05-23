@@ -34,7 +34,6 @@ public class AnActionEvent implements PlaceProvider {
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
 
-  private boolean myWorksInInjected;
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
   /**
@@ -79,7 +78,6 @@ public class AnActionEvent implements PlaceProvider {
     if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
                                             myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
-    event.setInjectedContext(myWorksInInjected);
     event.setUpdateSession(myUpdateSession);
     return event;
   }
@@ -175,7 +173,7 @@ public class AnActionEvent implements PlaceProvider {
    * @return the data context instance.
    */
   public @NotNull DataContext getDataContext() {
-    return myWorksInInjected ? getInjectedDataContext(myDataContext) : myDataContext;
+    return myPresentation.isPreferInjectedPsi() ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
   /**
@@ -265,11 +263,11 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   public void setInjectedContext(boolean worksInInjected) {
-    myWorksInInjected = worksInInjected;
+    myPresentation.setPreferInjectedPsi(worksInInjected);
   }
 
   public boolean isInInjectedContext() {
-    return myWorksInInjected;
+    return myPresentation.isPreferInjectedPsi();
   }
 
   public void accept(@NotNull AnActionEventVisitor visitor) {

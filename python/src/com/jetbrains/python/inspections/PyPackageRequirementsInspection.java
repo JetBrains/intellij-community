@@ -169,7 +169,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-        final String possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, "");
+        final String possiblePyPIPackageNames = PyPsiPackageUtil.INSTANCE.moduleToPackageName(packageName, "");
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             !PyPIPackageUtil.INSTANCE.isInPyPI(packageName) &&

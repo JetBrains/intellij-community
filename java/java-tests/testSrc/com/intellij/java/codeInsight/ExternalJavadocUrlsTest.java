@@ -70,6 +70,20 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
              }""",
            "<init>()", "Test--", "Test()");
   }
+  
+  public void testImplicitClass() {
+    doTest("""
+             void <caret>main() {}
+             """, "main()", "main--");
+  }
+  
+  public void testImplicitClassWithPackage() {
+    doTest("""
+             package foo.bar;
+             
+             void <caret>main() {}
+             """);
+  }
 
   protected void doTest(String text, String... expected) {
     myFixture.configureByText("Test.java", text);
@@ -77,8 +91,12 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
     PsiMethod member = PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false);
     assertNotNull(member);
     List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(member);
-    assertNotNull(urls);
-    List<String> actual = ContainerUtil.map(urls, url -> url.substring(url.indexOf('#') + 1));
-    assertOrderedEquals(actual, expected);
+    if (expected.length == 0) {
+      assertNull(urls);
+    } else {
+      assertNotNull(urls);
+      List<String> actual = ContainerUtil.map(urls, url -> url.substring(url.indexOf('#') + 1));
+      assertOrderedEquals(actual, expected);
+    }
   }
 }

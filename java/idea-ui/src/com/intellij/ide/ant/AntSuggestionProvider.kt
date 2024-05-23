@@ -3,6 +3,7 @@ package com.intellij.ide.ant
 
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionIfNeeded
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,7 +18,7 @@ private const val ANT_PLUGIN_ID = "AntSupport"
 private const val ANT_SUGGESTION_DISMISSED_KEY = "ant.suggestion.dismissed"
 
 internal class AntSuggestionProvider : PluginSuggestionProvider {
-  override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
+  override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
     if (file.name != BUILD_XML_NAME
         || !isAntBuild(project, file)) {
       return null

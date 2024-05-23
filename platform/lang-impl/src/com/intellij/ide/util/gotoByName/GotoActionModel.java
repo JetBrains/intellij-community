@@ -911,8 +911,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       promo.setIcon(AllIcons.Ide.External_link_arrow);
       promo.setIconOnTheRight(true);
       promo.setTransparentIconBackground(true);
-      promo.append(IdeBundle.message("plugin.advertiser.product.call.to.action",
-                                     promoAction.getPromotedProductTitle(), promoAction.getCallToAction()));
+      promo.append(promoAction.getCallToAction());
 
       SimpleColoredComponent upgradeTo = new SimpleColoredComponent();
       upgradeTo.setIcon(promoAction.getPromotedProductIcon());
@@ -922,9 +921,12 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       upgradeTo.append(FeaturePromoBundle.message("get.prefix") + " ");
       upgradeTo.setTransparentIconBackground(true);
 
-      BorderLayoutPanel compositeUpgradeHint = JBUI.Panels.simplePanel(promo)
-        .addToLeft(upgradeTo)
-        .andTransparent();
+      BorderLayoutPanel compositeUpgradeHint = JBUI.Panels.simplePanel(promo);
+      if (promoAction.getPromotedProductIcon() != null) {
+        compositeUpgradeHint.addToLeft(upgradeTo);
+      }
+
+      compositeUpgradeHint.andTransparent();
 
       compositeUpgradeHint.setBorder(eastBorder);
 

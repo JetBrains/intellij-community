@@ -59,12 +59,13 @@ internal class SuggestedIdeBanner : JPanel() {
     this.pluginId = pluginId
     this.suggestedIde = PluginAdvertiserService.getIde(suggestedCommercialIde)
 
-    if (suggestedIde != null) {
-      val ideName = suggestedIde?.name
+    val ide = suggestedIde
+    if (ide != null) {
+      val ideName = ide.name
       hintMessage.text = IdeBundle.message("plugin.message.plugin.only.supported.in", ideName)
       downloadLink.text = IdeBundle.message("plugins.advertiser.action.try.ultimate", ideName)
 
-      FUSEventSource.PLUGINS_SEARCH.logPluginSuggested(null, pluginId)
+      FUSEventSource.PLUGINS_SEARCH.logIdeSuggested(null, ide.productCode, pluginId)
     }
   }
 }

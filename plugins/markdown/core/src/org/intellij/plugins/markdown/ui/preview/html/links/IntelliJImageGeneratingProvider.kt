@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.html.links
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
@@ -38,11 +36,10 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratin
   }
 
   override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-    val url = if (SystemInfo.isWindows) StringUtil.replace(info.destination.toString(), "%5C", "/") else info.destination.toString()
     visitor.consumeTagOpen(
       node,
       "img",
-      "src=\"$url\"",
+      "src=\"${info.destination}\"",
       "alt=\"${getPlainTextFrom(info.label, text)}\"",
       info.title?.let { "title=\"$it\"" },
       "$generatedAttributeName=\"true\"",

@@ -529,6 +529,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         downloads = pluginNode.downloads
         date = pluginNode.date
         suggestedCommercialIde = pluginNode.suggestedCommercialIde
+        installSource = pluginNode.installSource
         tags = getTagsForUi(this).distinct()
         name = getPluginNameForUi(pluginNode)
       }

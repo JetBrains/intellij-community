@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.statistics
 
 import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -11,7 +12,7 @@ import com.intellij.openapi.project.Project
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 5)
+  private val GROUP = EventLogGroup("java.debugger", 6)
 
   // fields
 
@@ -41,6 +42,8 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val steppingOverhead = GROUP.registerEvent("stepping.overhead", steppingActionField, languageField, EventFields.DurationMs)
   /** Reports smart step into unexpected end. Could be caused by unexpected exception. */
   private val steppingFailedMethodNotCalled = GROUP.registerEvent("stepping.method.not.called", steppingActionField, languageField)
+
+  private val breakpointSkipped = GROUP.registerEvent("breakpoint.skipped", EventFields.Enum<DebugProcessEvents.SkippedBreakpointReason>("reason"))
 
   @JvmStatic
   fun logProcessStatistics(debugProcess: DebugProcess) {
@@ -81,6 +84,11 @@ object DebuggerStatistics : CounterUsagesCollector() {
   fun logMethodSkippedDuringStepping(project: Project, statistic: SteppingStatistic?) {
     if (statistic == null) return
     steppingFailedMethodNotCalled.log(project, statistic.action, statistic.engine)
+  }
+
+  @JvmStatic
+  fun logBreakpointSkipped(project: Project, reason: DebugProcessEvents.SkippedBreakpointReason) {
+    breakpointSkipped.log(project, reason)
   }
 }
 

@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
 import com.intellij.util.system.CpuArch
-import com.intellij.util.system.OS
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Release
 
@@ -17,16 +17,22 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
 
   enum class DownloadResult { EXCEPTION, SIZE, CHECKSUM, CANCELLED, OK }
   enum class InstallationResult { EXCEPTION, EXIT_CODE, TIMEOUT, CANCELLED, OK }
+  enum class LookupResult { FOUND, NOT_FOUND }
 
-  fun logDownloadEvent(release: Release, downloadResult: DownloadResult) {
-    downloadEvent.log(DownloadEventFields.getEventPairs(release, downloadResult))
+  fun logDownloadEvent(project: Project?, release: Release, downloadResult: DownloadResult) {
+    downloadEvent.log(project, DownloadEventFields.getEventPairs(release, downloadResult))
   }
 
-  fun logInstallationEvent(release: Release, installationResult: InstallationResult) {
-    installationEvent.log(InstallationEventFields.getEventPairs(release, installationResult))
+  fun logInstallationEvent(project: Project?, release: Release, installationResult: InstallationResult) {
+    installationEvent.log(project, InstallationEventFields.getEventPairs(release, installationResult))
   }
 
-  internal fun logInstallerException(release: Release, exception: BinaryInstallerException) {
+  fun logLookupEvent(project: Project?, product: Product, version: String?, lookupResult: LookupResult) {
+    lookupEvent.log(project, LookupEventFields.getEventPairs(product, version, lookupResult))
+  }
+
+
+  internal fun logInstallerException(project: Project?, release: Release, exception: BinaryInstallerException) {
     when (exception) {
       is PrepareException -> {
         when (exception) {
@@ -34,7 +40,7 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
           is WrongChecksumPrepareException -> DownloadResult.CHECKSUM
           is CancelledPrepareException -> DownloadResult.CANCELLED
           else -> DownloadResult.EXCEPTION
-        }.let { logDownloadEvent(release, it) }
+        }.let { logDownloadEvent(project, release, it) }
       }
       is ProcessException -> {
         when (exception) {
@@ -42,7 +48,7 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
           is TimeoutProcessException -> InstallationResult.TIMEOUT
           is CancelledProcessException -> InstallationResult.CANCELLED
           else -> InstallationResult.EXCEPTION
-        }.let { logInstallationEvent(release, it) }
+        }.let { logInstallationEvent(project, release, it) }
       }
     }
   }
@@ -58,21 +64,24 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
      */
     private val version = EventFields.StringValidatedByInlineRegexp("version", """^[\d\-.]+$""")
 
-    private val os = EventFields.Enum("os", OS::class.java)
-
     private val cpuArch = EventFields.Enum("cpu_arch", CpuArch::class.java)
 
     fun getEventPairs(release: Release): List<EventPair<*>> {
-      return listOf(
-        product.with(release.product),
-        version.with(release.version),
-        os.with(OS.CURRENT),
-        cpuArch.with(CpuArch.CURRENT),
-      )
+      return getEventPairs(release.product, release.version)
+    }
+
+    fun getEventPairs(product: Product, version: String?): List<EventPair<*>> {
+      return buildList {
+        add(this@ContextFields.product.with(product))
+        version?.let {
+          add(this@ContextFields.version.with(it))
+        }
+        add(cpuArch.with(CpuArch.CURRENT))
+      }
     }
 
     fun getFields(): MutableList<EventField<*>> {
-      return mutableListOf(product, version, os, cpuArch)
+      return mutableListOf(product, version, cpuArch)
     }
   }
 
@@ -98,7 +107,18 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("python.sdk.installer.events", 1)
+  object LookupEventFields {
+    private val lookupResult = EventFields.Enum("lookup_result", LookupResult::class.java)
+    fun getEventPairs(product: Product, version: String?, result: LookupResult): List<EventPair<*>> {
+      return ContextFields.getEventPairs(product, version) + listOf(lookupResult.with(result))
+    }
+
+    fun getFields(): List<EventField<*>> {
+      return ContextFields.getFields() + listOf(lookupResult)
+    }
+  }
+
+  private val GROUP = EventLogGroup("python.sdk.installer.events", 2)
 
   private val downloadEvent = GROUP.registerVarargEvent(
     eventId = "download.finished", fields = DownloadEventFields.getFields().toTypedArray()
@@ -106,5 +126,9 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
 
   private val installationEvent = GROUP.registerVarargEvent(
     eventId = "installation.finished", fields = InstallationEventFields.getFields().toTypedArray()
+  )
+
+  private val lookupEvent = GROUP.registerVarargEvent(
+    eventId = "lookup.finished", fields = LookupEventFields.getFields().toTypedArray()
   )
 }

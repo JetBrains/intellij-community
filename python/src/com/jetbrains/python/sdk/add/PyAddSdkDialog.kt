@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -34,6 +35,7 @@ import java.util.function.Consumer
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.math.log
 
 /**
  * The dialog may look like the normal dialog with OK, Cancel and Help buttons
@@ -285,19 +287,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       selectedPanel?.complete()
     }
     catch (e: CreateSdkInterrupted) {
+      thisLogger().info(e)
       return
     }
-    catch (e: Exception) {
-      val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
-      if (cause == null) {
-        Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
-      }
-      else {
-        showProcessExecutionErrorDialog(project, cause)
-      }
-      return
-    }
-
     close(OK_EXIT_CODE)
   }
 

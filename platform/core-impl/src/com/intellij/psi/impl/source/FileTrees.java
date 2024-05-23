@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.FileTreesPsiReconciliation;
 import static com.intellij.reference.SoftReference.deref;
 import static com.intellij.reference.SoftReference.dereference;
 
@@ -191,7 +192,7 @@ final class FileTrees {
     catch (Throwable e) {
       myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
       myFile.rebuildStub();
-      throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e);
+      throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e, FileTreesPsiReconciliation);
     }
   }
 

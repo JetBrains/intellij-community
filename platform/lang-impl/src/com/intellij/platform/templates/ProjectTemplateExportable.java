@@ -2,17 +2,14 @@
 package com.intellij.platform.templates;
 
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 @State(name = "ProjectTemplates",
-  storages = @Storage(value = "ProjectTemplates.xml", exportable = true),//no non-default state, so won't ever be created
+  storages = @Storage(value = "ProjectTemplates.xml", exportable = true, roamingType = RoamingType.DISABLED),//no non-default state, so won't ever be created
   additionalExportDirectory = "projectTemplates",
   presentableName = ProjectTemplateExportable.NameGetter.class,
   category = SettingsCategory.CODE)

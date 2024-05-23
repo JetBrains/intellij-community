@@ -1,3 +1,0 @@
-```plantuml
-Alice -> Bob: test
-```

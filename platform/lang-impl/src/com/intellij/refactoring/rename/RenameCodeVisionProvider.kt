@@ -5,18 +5,13 @@ import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
@@ -58,17 +53,12 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
-    try {
-      return ProgressManager.getInstance().runProcess(
-        Computable { runBlockingCancellable { readAction {
-          if (project.isDisposed || editor.isDisposed) CodeVisionState.READY_EMPTY
-          else getCodeVisionState(editor, project)
-        } } },
-        EmptyProgressIndicator()
-      )
-    }
-    catch (e: ProcessCanceledException) {
-      return CodeVisionState.NotReady
+
+    return InlayHintsUtils.computeCodeVisionUnderReadAction {
+      return@computeCodeVisionUnderReadAction when {
+        project.isDisposed || editor.isDisposed -> CodeVisionState.READY_EMPTY
+        else -> getCodeVisionState(editor, project)
+      }
     }
   }
 

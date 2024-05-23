@@ -28,7 +28,7 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class XmlImportOptimizer implements ImportOptimizer {
-  
+
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
   private final Condition<ProblemDescriptor> myCondition = descriptor -> {
     PsiElement element = descriptor.getPsiElement();
@@ -43,40 +43,40 @@ public class XmlImportOptimizer implements ImportOptimizer {
 
   @Override
   public @NotNull CollectingInfoRunnable processFile(final @NotNull PsiFile file) {
+    XmlFile xmlFile = (XmlFile)file;
+    Project project = xmlFile.getProject();
+    HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
+    Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();
+    if (InspectionProjectProfileManager.getInstance(project).getCurrentProfile().isToolEnabled(key, xmlFile)) {
+      ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
+      final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
+      new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          if (element instanceof XmlAttribute) {
+            visitor.visitXmlAttribute((XmlAttribute)element);
+          }
+          else {
+            super.visitElement(element);
+          }
+        }
+      }.visitFile(xmlFile);
+      ProblemDescriptor[] results = holder.getResultsArray();
+      List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
+
+      for (ProblemDescriptor result : list) {
+        for (QuickFix fix : result.getFixes()) {
+          if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {
+            fixes.put((XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix)fix, result);
+          }
+        }
+      }
+    }
     return new CollectingInfoRunnable() {
       int myRemovedNameSpaces = 0;
 
       @Override
       public void run() {
-        XmlFile xmlFile = (XmlFile)file;
-        Project project = xmlFile.getProject();
-        HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
-        if (!InspectionProjectProfileManager.getInstance(project).getCurrentProfile().isToolEnabled(key, xmlFile)) return;
-        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
-        final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
-        new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            if (element instanceof XmlAttribute) {
-              visitor.visitXmlAttribute((XmlAttribute)element);
-            }
-            else {
-              super.visitElement(element);
-            }
-          }
-        }.visitFile(xmlFile);
-        ProblemDescriptor[] results = holder.getResultsArray();
-        List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
-
-        Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();
-        for (ProblemDescriptor result : list) {
-          for (QuickFix fix : result.getFixes()) {
-            if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {
-              fixes.put((XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix)fix, result);
-            }
-          }
-        }
-
         SmartPsiElementPointer<XmlTag> pointer = null;
         for (Map.Entry<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fix : fixes.entrySet()) {
           pointer = fix.getKey().doFix(project, fix.getValue(), false);

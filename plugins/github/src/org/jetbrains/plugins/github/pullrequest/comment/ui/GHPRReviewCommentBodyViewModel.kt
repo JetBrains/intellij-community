@@ -40,7 +40,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getRemoteDescriptor
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 
 private val LOG = logger<GHPRReviewCommentBodyViewModel>()
 
@@ -146,7 +146,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   private val loadedDetailsState = detailsData.createLoadedDetailsStateIn(cs)
   val isOnReviewBranch: StateFlow<Boolean> = repository.infoStateIn(cs)
     .combineState(loadedDetailsState) { _, details ->
-      val remote = details?.getRemoteDescriptor(server) ?: return@combineState false
+      val remote = details?.getHeadRemoteDescriptor(server) ?: return@combineState false
       GitRemoteBranchesUtil.isRemoteBranchCheckedOut(repository, remote, details.headRefName)
     }
 

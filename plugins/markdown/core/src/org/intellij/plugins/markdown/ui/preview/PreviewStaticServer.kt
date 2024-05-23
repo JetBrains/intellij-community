@@ -9,7 +9,6 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.BuiltInServerManager.Companion.getInstance
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses.checkCache
@@ -96,7 +95,7 @@ class PreviewStaticServer : HttpRequestHandler() {
         default-src 'none';
         script-src ${StringUtil.join(scripts.map(::stripQueryParameters), " ")};
         style-src https: ${StringUtil.join(styles.map(::stripQueryParameters), " ")} 'unsafe-inline';
-        img-src file: *; connect-src 'none'; font-src * data: *;
+        img-src file: * data:; connect-src 'none'; font-src * data: *;
         object-src 'none'; media-src 'none'; child-src 'none';
       """
     }

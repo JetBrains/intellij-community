@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.concurrency.ThreadContext;
@@ -21,6 +21,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
+/** @deprecated do not use directly, create via {@link com.intellij.openapi.fileChooser.FileChooserFactory} */
+@Deprecated(forRemoval = true)
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class MacFileSaverDialog implements FileSaverDialog {
   private FileDialog myFileDialog;
   private final FileSaverDescriptor myDescriptor;

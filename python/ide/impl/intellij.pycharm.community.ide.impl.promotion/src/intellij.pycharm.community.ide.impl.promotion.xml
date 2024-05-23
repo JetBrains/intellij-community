@@ -15,10 +15,6 @@
   </extensions>
 
   <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
-    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoAiCodeCompletion"
-            id="PromoAiCodeCompletion"
-            icon="AllIcons.Ultimate.PycharmLock"/>
-
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDataFrameAction"
             id="PromoDataFrameAction"
             icon="AllIcons.Ultimate.PycharmLock"/>

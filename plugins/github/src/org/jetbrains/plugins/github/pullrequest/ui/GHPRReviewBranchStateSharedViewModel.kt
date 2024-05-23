@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getRemoteDescriptor
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 
 private val LOG = logger<GHPRReviewBranchStateSharedViewModel>()
 
@@ -57,7 +57,7 @@ internal class GHPRReviewBranchStateSharedViewModel(
       return
     }
     val server = dataContext.repositoryDataService.repositoryCoordinates.serverPath
-    val remoteDescriptor = details.getRemoteDescriptor(server) ?: return
+    val remoteDescriptor = details.getHeadRemoteDescriptor(server) ?: return
 
     val repository = dataContext.repositoryDataService.remoteCoordinates.repository
     val localPrefix = if (details.headRepository?.isFork == true) "fork" else null

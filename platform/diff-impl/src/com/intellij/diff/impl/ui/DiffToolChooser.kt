@@ -12,14 +12,11 @@ import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
-import javax.swing.Icon
 import javax.swing.JComponent
 
 @Suppress("DialogTitleCapitalization")
 abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(), CustomComponentAction {
-  private val segmentedButton = SegmentedButtonComponent { diffTool: DiffTool ->
-    DiffToolItemPresentation(diffTool)
-  }
+  private val segmentedButton = SegmentedButtonComponent { diffTool: DiffTool -> SegmentedButton.createPresentation(text = diffTool.name) }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -63,9 +60,3 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
   }
 }
 
-private class DiffToolItemPresentation(diffTool: DiffTool) : SegmentedButton.ItemPresentation {
-  override var text: String? = diffTool.name
-  override var toolTipText: String? = null
-  override var icon: Icon? = null
-  override var enabled: Boolean = true
-}

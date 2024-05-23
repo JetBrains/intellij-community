@@ -59,10 +59,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -1304,6 +1301,10 @@ public final class PluginManagerConfigurable
     List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
 
     for (IdeaPluginDescriptor plugin : plugins) {
+      if (plugin instanceof PluginNode) {
+        ((PluginNode)plugin).setInstallSource(FUSEventSource.PLUGINS_SUGGESTED_GROUP);
+      }
+
       FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
     }
 
@@ -1628,6 +1629,7 @@ public final class PluginManagerConfigurable
                                                     () -> configurable.select(pluginIds));
   }
 
+  @ApiStatus.Internal
   public static void showSuggestedPlugins(@Nullable Project project, @Nullable FUSEventSource source) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project,
@@ -1867,6 +1869,12 @@ public final class PluginManagerConfigurable
                                           @NotNull @NonNls String showAllQuery) throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
     List<PluginNode> pluginNodes = myMarketplaceRequests.searchPlugins(query, ITEMS_PER_GROUP * 2);
+
+    for (PluginNode plugin : pluginNodes) {
+      plugin.setInstallSource(FUSEventSource.PLUGINS_STAFF_PICKS_GROUP);
+      FUSEventSource.PLUGINS_STAFF_PICKS_GROUP.logPluginSuggested(plugin.getPluginId());
+    }
+
     addGroup(groups,
              name,
              type,

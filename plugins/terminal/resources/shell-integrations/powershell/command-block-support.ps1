@@ -61,11 +61,12 @@ function Global:Prompt() {
     $History = Get-Content -Raw (Get-PSReadlineOption).HistorySavePath
     $HistoryOSC = Global:__JetBrainsIntellijOSC "command_history;history_string=$(__JetBrainsIntellijEncode $History)"
 
+    $ShellInfo = Global:__JetBrainsIntellijCollectShellInfo
     $Global:__JetBrainsIntellijTerminalInitialized = $true
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
       [Console]::WriteLine("initialized")
     }
-    $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized"
+    $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized;shell_info=$(__JetBrainsIntellijEncode $ShellInfo)"
     $Result = $CommandEndMarker + $PromptStateOSC + $HistoryOSC + $InitializedEvent
   }
   return $Result
@@ -97,6 +98,21 @@ function Global:__JetBrainsIntellijCreatePromptStateOSC() {
 
   $Global:LastExitCode = $RealExitCode
   return $StateOSC
+}
+
+function Global:__JetBrainsIntellijCollectShellInfo() {
+  $ShellVersion = if ($PSVersionTable -ne $null) { $PSVersionTable.PSVersion.toString() } else { "" }
+  $IsStarship = ($Env:STARSHIP_START_TIME -ne $null) -or ($Env:STARSHIP_SHELL -ne $null) -or ($Env:STARSHIP_SESSION_KEY -ne $null)
+  $OhMyPoshTheme = ""
+  if (($Env:POSH_THEME -ne $null) -or ($Env:POSH_PID -ne $null) -or ($Env:POSH_SHELL_VERSION -ne $null)) {
+    $OhMyPoshTheme = if ($Env:POSH_THEME -ne $null) { $Env:POSH_THEME } else { "default" }
+  }
+  $ShellInfo = [PSCustomObject]@{
+    shellVersion = $ShellVersion
+    isStarship = $IsStarship
+    ohMyPoshTheme = $OhMyPoshTheme
+  }
+  return $ShellInfo | ConvertTo-Json -Compress
 }
 
 function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {

@@ -186,9 +186,17 @@ else:
         if result is not None:
             return result
 
-        # list | tuple | set | frozenset | dict | array | deque
+        limited_size_collection_classes = [
+            list, tuple, set, frozenset, dict, array, deque, str,
+        ]
+
+        if IS_PY3K:
+            limited_size_collection_classes.append(bytes)
+        else:
+            limited_size_collection_classes.append(unicode)
+
         if hasattr(value, '__class__'):
-            if value.__class__ in (list, tuple, set, frozenset, dict, array, deque):
+            if value.__class__ in limited_size_collection_classes:
                 if len(value) > MAX_REPR_ITEM_SIZE:
                     return ('%s' % take_first_n_coll_elements(value, MAX_REPR_ITEM_SIZE)).rstrip(')]}') + '...'
                 return None

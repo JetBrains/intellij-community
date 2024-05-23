@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.icons.AllIcons
@@ -26,6 +26,7 @@ open class SavedPatchesUi(project: Project,
                           @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
                           private val isVertical: () -> Boolean,
                           private val isEditorDiffPreview: () -> Boolean,
+                          isShowDiffWithLocal: () -> Boolean,
                           focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
@@ -41,7 +42,7 @@ open class SavedPatchesUi(project: Project,
     tree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
     PopupHandler.installPopupMenu(tree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
-    changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
+    changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, isShowDiffWithLocal, this)
     CombinedSpeedSearch(changesBrowser.viewer, tree.speedSearch)
 
     val bottomToolbar = buildBottomToolbar()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.diff.FrameDiffTool
@@ -17,6 +17,7 @@ import javax.swing.JTree
 class SavedPatchesDiffPreview(project: Project,
                               private val tree: ChangesTree,
                               private val isInEditor: Boolean,
+                              private val isShowDiffWithLocal: () -> Boolean,
                               parentDisposable: Disposable)
   : ChangeViewDiffRequestProcessor(project, SAVED_PATCHES_UI_PLACE) {
   private val disposableFlag = Disposer.newCheckedDisposable()
@@ -65,7 +66,13 @@ class SavedPatchesDiffPreview(project: Project,
   private inner class MyChangeWrapper(private val change: SavedPatchesProvider.ChangeObject) : Wrapper(), PresentableChange by change {
     override fun getUserObject(): Any = change
     override fun getPresentableName(): @Nls String = change.filePath.name
-    override fun createProducer(project: Project?): DiffRequestProducer? = change.createDiffRequestProducer(project)
+    override fun createProducer(project: Project?): DiffRequestProducer? {
+      if (isShowDiffWithLocal()) {
+        return change.createDiffWithLocalRequestProducer(project, useBeforeVersion = false)
+      }
+      return change.createDiffRequestProducer(project)
+    }
+
     override fun getTag(): ChangesBrowserNode.Tag? = change.tag
   }
 }

@@ -249,7 +249,7 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
   }
 }
 
-private data class ItemPresentationImpl(override var text: @Nls String? = null,
+internal data class ItemPresentationImpl(override var text: @Nls String? = null,
                                         override var toolTipText: @Nls String? = null,
                                         override var icon: Icon? = null,
                                         override var enabled: Boolean = true) : SegmentedButton.ItemPresentation

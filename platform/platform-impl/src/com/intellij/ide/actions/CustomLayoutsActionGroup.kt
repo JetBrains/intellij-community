@@ -10,11 +10,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
-class LayoutsGroup : DefaultActionGroup() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-  override fun update(e: AnActionEvent) { }
-}
-
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {

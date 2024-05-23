@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -96,11 +97,10 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   private static @NotNull ModCommand perform(ActionContext context) {
-    PsiElement element = context.findLeaf();
-    if (!(element instanceof PsiIdentifier)) {
-      element = context.findLeafOnTheLeft();
-    }
-    final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
+    PsiElement parent = context.findLeaf() instanceof PsiIdentifier id ? id.getParent() :
+                        context.findLeafOnTheLeft() instanceof PsiIdentifier id ? id.getParent() :
+                        null;
+    final PsiReferenceExpression refExpr = ObjectUtils.tryCast(parent, PsiReferenceExpression.class);
     InlineMode mode;
     if (refExpr != null && PlatformUtils.isFleetBackend() && JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS) {
       // Conflicts mode is handled separately in Fleet, for now

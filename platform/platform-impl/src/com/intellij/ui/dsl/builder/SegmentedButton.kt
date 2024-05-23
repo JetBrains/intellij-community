@@ -3,10 +3,12 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.ui.dsl.builder.impl.ItemPresentationImpl
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -21,9 +23,15 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   companion object {
     const val DEFAULT_MAX_BUTTONS_COUNT: Int = 6
+
+    @ApiStatus.Experimental
+    fun createPresentation(text: @Nls String? = null, toolTipText: @Nls String? = null, icon: Icon? = null, enabled: Boolean = true): ItemPresentation {
+      return ItemPresentationImpl(text, toolTipText, icon, enabled)
+    }
   }
 
   @LayoutDslMarker
+  @NonExtendable
   interface ItemPresentation {
 
     var text: @Nls String?

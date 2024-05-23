@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -375,7 +376,7 @@ class VariableView(override val variableName: String, private val variable: Vari
                 script?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                   object : XSourcePositionWrapper(it) {
                     override fun createNavigatable(project: Project): Navigatable {
-                      return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
+                      return ReadAction.compute<Navigatable, Throwable> { PsiVisitors.visit(myPosition, project, null) { _, element, _, _ ->
                         // element will be "open paren", but we should navigate to function name,
                         // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
                         var referenceCandidate: PsiElement? = element
@@ -393,17 +394,18 @@ class VariableView(override val variableName: String, private val variable: Vari
                           while (true) {
                             referenceCandidate = referenceCandidate?.prevSibling ?: break
                             if (referenceCandidate is PsiReference) {
-                            psiReference = referenceCandidate
-                            break
+                              psiReference = referenceCandidate
+                              break
+                            }
                           }
                         }
-                      }
 
-                      (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
-                    } ?: super.createNavigatable(project)
+                        (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
+                      }} ?: super.createNavigatable(project)
+                    }
                   }
                 }
-              })
+              )
             }
         }
     }

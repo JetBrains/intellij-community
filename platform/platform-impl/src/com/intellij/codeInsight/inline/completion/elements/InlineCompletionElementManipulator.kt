@@ -61,3 +61,25 @@ class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipu
     return if (element.text.length > 1) InlineCompletionGrayTextElement(element.text.drop(1)) else null
   }
 }
+
+class InlineCompletionColorTextElementManipulator : InlineCompletionElementManipulator {
+  override fun isApplicable(element: InlineCompletionElement): Boolean {
+    return element is InlineCompletionColorTextElement && element !is InlineCompletionGrayTextElement
+  }
+
+  override fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement? {
+    element as InlineCompletionColorTextElement
+    return if (element.text.length > 1) InlineCompletionColorTextElement(element.text.drop(1), element.getColor) else null
+  }
+}
+
+class InlineCompletionTextElementManipulator : InlineCompletionElementManipulator {
+  override fun isApplicable(element: InlineCompletionElement): Boolean {
+    return element is InlineCompletionTextElement && element !is InlineCompletionColorTextElement
+  }
+
+  override fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement? {
+    element as InlineCompletionTextElement
+    return if (element.text.length > 1) InlineCompletionTextElement(element.text.drop(1), element.getAttributes) else null
+  }
+}

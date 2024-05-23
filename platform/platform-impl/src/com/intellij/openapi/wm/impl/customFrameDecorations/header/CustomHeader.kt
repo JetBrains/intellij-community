@@ -275,7 +275,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
       }
     }
 
-    if (ApplicationManager.getApplication().isInternal) {
+    if (ApplicationManager.getApplication()?.isInternal == true) {
       @Suppress("HardCodedStringLiteral")
       ic.accessibleContext.accessibleName = "Application icon"
     }

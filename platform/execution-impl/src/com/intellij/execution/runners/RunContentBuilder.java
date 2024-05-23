@@ -348,22 +348,24 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  private static final class EmptyWhenDuplicate extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+  private static final class EmptyWhenDuplicate extends ActionGroupWrapper {
 
-    private final @NotNull ActionGroup myDelegate;
     private final @NotNull Predicate<? super ActionGroup> myDuplicatePredicate;
 
     private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<? super ActionGroup> isDuplicate) {
-      myDelegate = delegate;
+      super(delegate);
       myDuplicatePredicate = isDuplicate;
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      if (isToolbarDuplicatedAnywhere(getEventComponent(e))) {
+      if (e == null) return AnAction.EMPTY_ARRAY;
+      if (e.getUpdateSession().compute(
+        this, "isToolbarDuplicatedAnywhere", ActionUpdateThread.EDT,
+        () -> isToolbarDuplicatedAnywhere(getEventComponent(e)))) {
         return AnAction.EMPTY_ARRAY;
       }
-      return myDelegate.getChildren(e);
+      return super.getChildren(e);
     }
 
     @Nullable
@@ -383,11 +385,6 @@ public final class RunContentBuilder extends RunTab {
         }
       }
       return false;
-    }
-
-    @Override
-    public @NotNull ActionGroup getDelegate() {
-      return myDelegate;
     }
   }
 

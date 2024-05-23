@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -16,6 +17,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.installer.BinaryInstallation
+import com.jetbrains.python.sdk.installer.installBinary
 import com.jetbrains.python.sdk.installer.toResourcePreview
 import org.jetbrains.annotations.CalledInAny
 
@@ -73,6 +75,13 @@ class PySdkToInstall(val installation: BinaryInstallation)
 
   @RequiresEdt
   fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
-    return PySdkToInstallManager.install(this, module, systemWideSdksDetector)
+    val project = module?.project
+    return installBinary(installation, project) {
+      PySdkToInstallManager.findInstalledSdk(
+        languageLevel = Version.parseVersion(installation.release.version).toLanguageLevel(),
+        project = project,
+        systemWideSdksDetector = systemWideSdksDetector
+      )
+    }
   }
 }

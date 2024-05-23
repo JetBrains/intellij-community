@@ -70,12 +70,8 @@ class ExecutorAction private constructor(val origin: AnAction,
     }
 
     private fun wrapEvent(e: AnActionEvent, order : Int): AnActionEvent {
-      val dataContext = wrapContext(e.dataContext, order)
-      return AnActionEvent(e.inputEvent, dataContext, e.place, e.presentation, e.actionManager, e.modifiers)
-    }
-
-    private fun wrapContext(dataContext: DataContext, order : Int): DataContext {
-      return if (order == 0) dataContext else MyDataContext(dataContext, order)
+      return if (order == 0) e
+      else e.withDataContext(MyDataContext(e.dataContext, order))
     }
 
     @JvmStatic

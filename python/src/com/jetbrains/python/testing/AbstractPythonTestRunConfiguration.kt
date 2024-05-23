@@ -8,15 +8,20 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.*
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import java.nio.file.Path
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Parent of all test configurations
@@ -66,11 +71,29 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
       pyClass = location.fixedClass
     }
     val pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
-    val virtualFile = location.virtualFile
-    return virtualFile?.canonicalPath?.let { localPath ->
-      val targetPath = targetPath(Path.of(localPath))
-      (listOf(targetPath) + listOfNotNull(pyClass?.name, pyFunction?.name).map(::constant))
-        .joinToStringFunction(separator = TEST_NAME_PARTS_SPLITTER)
+    val virtualFile = location.virtualFile ?: return null
+
+    return createTargetEnvFunction(virtualFile, pyClass?.name, pyFunction?.name)
+  }
+
+  /**
+   * Creates a target environment function based on the provided parameters.
+   *
+   * @param virtualFile The [virtualFile] representing the Python file.
+   * @param className The name of the class (can be null).
+   * @param funName The name of the function (can be null).
+   * @return The created target environment function, or null if it is impossible to compute the testSpec.
+   */
+  @Internal
+  protected open fun createTargetEnvFunction(virtualFile: VirtualFile, className: String?, funName: String?): TargetEnvironmentFunction<String>? {
+    val testSpec = ReadAction.compute<String?, IllegalStateException> {
+      val pythonFile = PsiManager.getInstance(project).findFile(virtualFile) as? PyFile ?: return@compute null
+      val qName = pythonFile.getQName() ?: return@compute null
+      (listOf(qName) + listOfNotNull(className, funName)).joinToString(TEST_NAME_PARTS_SPLITTER)
+    } ?: return null
+
+    return TargetEnvironmentFunction {
+      testSpec
     }
   }
 

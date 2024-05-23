@@ -103,7 +103,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
         Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
-      UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
+      UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo(
+        "Menu", myGroup, myPlace, myPresentationFactory));
     }
 
     @Override

@@ -7,13 +7,16 @@ import com.intellij.find.FindUtil
 import com.intellij.find.SearchSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
+import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -58,7 +61,7 @@ class BlockTerminalController(
       }
     }
     // report event even if it is an empty command, because it will be reported as a separate command type
-    TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isBlockTerminal = true)
+    TerminalUsageTriggerCollector.triggerCommandStarted(project, command, isBlockTerminal = true)
   }
 
   @RequiresEdt(generateAssertion = false)
@@ -79,12 +82,22 @@ class BlockTerminalController(
     TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
   }
 
+  override fun shellInfoReceived(rawShellInfo: String) {
+    thisLogger().info("Started shell info: $rawShellInfo")
+    ApplicationManager.getApplication().executeOnPooledThread {
+      TerminalShellInfoStatistics.getLoggableShellInfo(rawShellInfo)?.let {
+        TerminalUsageTriggerCollector.triggerLocalShellStarted(project, session.shellIntegration.shellType.toString(), it)
+      }
+    }
+  }
+
   override fun initialized() {
     finishCommandBlock(exitCode = 0)
   }
 
   override fun commandFinished(event: CommandFinishedEvent) {
     finishCommandBlock(event.exitCode)
+    TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
   }
 
   private fun finishCommandBlock(exitCode: Int) {

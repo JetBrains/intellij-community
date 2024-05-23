@@ -39,6 +39,7 @@ import org.toml.lang.psi.ext.kind
 class TomlJsonSchemaCompletionContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         if (!TomlExperiments.isJsonSchemaEnabled) return
+        if (!TomlJsonSchemaCompletionFileFilter.shouldCompleteInFile(parameters.originalFile)) return
 
         val position = parameters.position
         val jsonSchemaService = JsonSchemaService.Impl.get(position.project)

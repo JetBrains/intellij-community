@@ -45,6 +45,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -74,12 +75,13 @@ val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.
 
 private const val TAG_PINNED = "pinned"
 private const val TAG_RECENT = "recent"
-private const val TAG_REGULAR_HIDE = "regular-hide"
-private const val TAG_REGULAR_SHOW = "regular-show"
-private const val TAG_HIDDEN = "hidden"
+private const val TAG_REGULAR_HIDE = "regular-hide" // hidden behind "All configurations" toggle
+private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
+private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
+private const val TAG_HIDDEN = "hidden"             // hidden until search
 
 class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
-  override fun getBehavior() = ActionRemoteBehavior.BackendOnly
+  override fun getBehavior() = if (PlatformUtils.isRider()) ActionRemoteBehavior.FrontendThenBackend else ActionRemoteBehavior.BackendOnly
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
@@ -157,9 +159,9 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
               val folderName = folderEntry.key
               if (folderName == null) {
                 folderEntry.value.forEach { cfg ->
-                  if (alreadyShownIds.contains(cfg.uniqueID)) return@forEach
+                  val tag = if (alreadyShownIds.contains(cfg.uniqueID)) TAG_REGULAR_DUPE else regularTag
                   result.add(actionCreator(cfg).also {
-                    it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
+                    it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, tag)
                   })
                 }
               }
@@ -254,7 +256,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     val isFiltering = mySpeedSearch.isHoldingFilter
     val tag = value.getClientProperty(ActionUtil.SEARCH_TAG)
     return when {
-      isFiltering -> true
+      isFiltering -> tag != TAG_REGULAR_DUPE
       tag == TAG_REGULAR_SHOW -> true
       serviceState.state.allConfigurationsExpanded -> tag != TAG_HIDDEN
       else -> tag == null || tag == TAG_PINNED || tag == TAG_RECENT

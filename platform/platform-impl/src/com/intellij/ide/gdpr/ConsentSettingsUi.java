@@ -3,8 +3,10 @@ package com.intellij.ide.gdpr;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -104,6 +106,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     final JPanel pane;
     final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
                                                   && StatisticsUploadAssistant.isCollectionForceDisabled();
+    final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
+                                                  && isAllowedByFreeLicense();
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
@@ -112,7 +116,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
-      cb.setEnabled(!dataSharingDisabledExternally);
+      if (dataSharingDisabledExternally) {
+        cb.setEnabled(false);
+      }
+      else if (dataSharingEnabledByFreeLicense) {
+        cb.setEnabled(false);
+        //cb.setSelected(true);
+      }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
@@ -151,13 +161,22 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       consentMapping.add(Pair.create(null, consent));
     }
     pane.setOpaque(false);
-    return !dataSharingDisabledExternally ? pane : wrapPanelWithWarning(pane);
+
+    if (dataSharingDisabledExternally) return wrapPanelWithWarning(pane, Objects.requireNonNullElse(StatisticsUploadAssistant.getConsentWarning(),
+                                                                                                    IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning")));
+    if (dataSharingEnabledByFreeLicense) return wrapPanelWithWarning(pane, IdeBundle.message("gdpr.usage.statistics.enabled.for.free.license.warning"));
+    return pane;
   }
 
-  private static JPanel wrapPanelWithWarning(JPanel panel) {
-    final String warningText = Objects.requireNonNullElse(
-      StatisticsUploadAssistant.getConsentWarning(), IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning"));
+  private static JPanel wrapPanelWithWarning(JPanel panel, @NlsContexts.DetailedDescription String warningText) {
     return UI.PanelFactory.panel(panel).withCommentIcon(AllIcons.General.Warning).withComment(warningText).createPanel();
+  }
+
+  private static boolean isAllowedByFreeLicense() {
+    return Optional.ofNullable(ApplicationManager.getApplication())
+      .map(application -> application.getService(ConsentOptionsProvider.class))
+      .map(provider -> provider.isActivatedWithFreeLicense())
+      .orElse(false);
   }
 
   @Contract(pure = true)
