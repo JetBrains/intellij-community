@@ -12,7 +12,7 @@ internal open class ManageWorkspaceAction: BaseWorkspaceAction(true) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = requireNotNull(e.project)
     val subprojects = SubprojectHandler.getAllSubprojects(project)
-    val dialog = NewWorkspaceDialog(project, subprojects)
+    val dialog = NewWorkspaceDialog(project, subprojects, false)
     if (!dialog.showAndGet()) return
 
     if (dialog.projectName != project.name) {

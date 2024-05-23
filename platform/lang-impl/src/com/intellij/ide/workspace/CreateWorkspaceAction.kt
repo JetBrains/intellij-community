@@ -41,7 +41,7 @@ internal open class CreateWorkspaceAction: BaseWorkspaceAction(false) {
 @RequiresEdt
 internal fun createWorkspace(project: Project): Boolean {
   val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
-  val dialog = NewWorkspaceDialog(project, subprojects.values)
+  val dialog = NewWorkspaceDialog(project, subprojects.values, true)
   if (!dialog.showAndGet()) return false
 
   val settings = importSettingsFromProject(project, true)

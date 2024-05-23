@@ -20,6 +20,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.SystemProperties
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -30,8 +31,9 @@ import javax.swing.JList
 import kotlin.io.path.pathString
 
 internal class NewWorkspaceDialog(
-  val project: Project,
-  initialProjects: Collection<Subproject>
+  private val project: Project,
+  initialProjects: Collection<Subproject>,
+  private val isNewWorkspace: Boolean
 ) : DialogWrapper(project) {
   private lateinit var nameField: JBTextField
   private lateinit var locationField: TextFieldWithBrowseButton
@@ -45,12 +47,12 @@ internal class NewWorkspaceDialog(
   val projectPath: Path get() = location.resolve(nameField.text)
 
   init {
-    if (project.isWorkspace) {
-      title = LangBundle.message("manage.workspace.dialog.title")
-    }
-    else {
+    if (isNewWorkspace) {
       title = LangBundle.message("new.workspace.dialog.title")
       okAction.putValue(Action.NAME, IdeBundle.message("button.create"))
+    }
+    else {
+      title = LangBundle.message("manage.workspace.dialog.title")
     }
     init()
   }
@@ -60,11 +62,11 @@ internal class NewWorkspaceDialog(
 
   override fun createCenterPanel(): JComponent {
     val suggestLocation = RecentProjectsManager.getInstance().suggestNewProjectLocation()
-    val suggestName = if (project.isWorkspace)
-      project.name
-    else
+    val suggestName = if (isNewWorkspace)
       FileUtil.createSequentFileName(File(suggestLocation),
                                      LangBundle.message("new.workspace.dialog.default.workspace.name"), "") { !it.exists() }
+    else
+      project.name
 
     val toolbarDecorator = ToolbarDecorator.createDecorator(projectList)
       .setPanelBorder(IdeBorderFactory.createTitledBorder(LangBundle.message("border.title.linked.projects")))
@@ -79,7 +81,7 @@ internal class NewWorkspaceDialog(
           .align(Align.FILL)
           .component
       }
-      if (!project.isWorkspace) {
+      if (isNewWorkspace) {
         row(LangBundle.message("new.workspace.dialog.location.label")) {
           val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
           descriptor.isHideIgnored = false
@@ -95,7 +97,7 @@ internal class NewWorkspaceDialog(
       row {
         cell(toolbarDecorator.createPanel()).align(Align.FILL)
       }
-      if (!project.isWorkspace) {
+      if (isNewWorkspace) {
         row {
           comment(LangBundle.message("new.workspace.dialog.hint"), maxLineLength = 60)
         }
@@ -104,7 +106,7 @@ internal class NewWorkspaceDialog(
   }
 
   override fun doOKAction() {
-    if (!project.isWorkspace) {
+    if (isNewWorkspace) {
       RecentProjectsManager.getInstance().setLastProjectCreationLocation(location)
     }
     super.doOKAction()
@@ -127,7 +129,7 @@ internal class NewWorkspaceDialog(
       value ?: return
       icon = value.icon
       append(value.name + "   ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-      @Suppress("HardCodedStringLiteral") val userHome = System.getProperty("user.home")
+      @Suppress("HardCodedStringLiteral") val userHome = SystemProperties.getUserHome()
       append(Path.of(value.path).parent.pathString.replaceFirst(userHome, "~"), SimpleTextAttributes.GRAY_ATTRIBUTES)
     }
   }
