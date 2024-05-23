@@ -19,7 +19,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -183,7 +183,7 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
 
 private class OverrideUsageInfo(element: PsiElement) : UsageInfo(element)
 
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 fun findCallableConflictForUsage(usage: PsiElement): @NlsContexts.DialogMessage String? {
     val usageParent = usage.parent as? KtCallableReferenceExpression ?: return null
     if (usageParent.callableReference != usage) return null

@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
@@ -57,7 +57,7 @@ internal class KotlinTryPostfixTemplate : StringBasedPostfixTemplate {
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
     private companion object {
         val THROWS_ANNOTATION_FQ_NAMES = listOf(
@@ -108,7 +108,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         }
 
         allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(element) {
                     processCall(element.resolveCall())
@@ -122,12 +122,12 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
 
         when (call) {
             is KtSimpleFunctionCall -> processCallable(call.symbol)
-            is KtSimpleVariableAccessCall -> {
+            is KaSimpleVariableAccessCall -> {
                 val symbol = call.symbol
                 if (symbol is KtPropertySymbol) {
                     when (call.simpleAccess) {
-                        KtSimpleVariableAccess.Read -> symbol.getter?.let { processCallable(it) }
-                        is KtSimpleVariableAccess.Write -> symbol.setter?.let { processCallable(it) }
+                        KaSimpleVariableAccess.Read -> symbol.getter?.let { processCallable(it) }
+                        is KaSimpleVariableAccess.Write -> symbol.setter?.let { processCallable(it) }
                         else -> {}
                     }
                 }

@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun resolveSupertypes(expression: KtExpression, file: KtFile): Collection<PsiNamedElement> {
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {

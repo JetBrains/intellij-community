@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtElement
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.patternMatching.AbstractKotlinPsiUnifierTest
 abstract class AbstractK2PsiUnifierTest : AbstractKotlinPsiUnifierTest() {
     override fun isFirPlugin(): Boolean = true
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun KtElement.getMatches(file: KtFile): List<TextRange> = allowAnalysisOnEdt {
         analyze(file) {
             val matches = K2SemanticMatcher.findMatches(patternElement = this@getMatches, scopeElement = file)

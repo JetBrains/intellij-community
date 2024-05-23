@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
 import com.intellij.openapi.util.NlsContexts
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -21,7 +21,7 @@ abstract class ExtractionEngineHelper(@NlsContexts.DialogTitle operationName: St
 
 
     // called under potemkin progress, still in EDT but the progress is visible
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun generateDeclaration(config: ExtractionGeneratorConfiguration): ExtractionResult {
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {

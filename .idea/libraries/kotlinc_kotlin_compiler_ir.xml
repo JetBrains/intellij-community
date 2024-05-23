@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-ir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.0.20-dev-3805">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.0.20-dev-4468">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.0.20-dev-3805/kotlin-compiler-ir-for-ide-2.0.20-dev-3805.jar">
-          <sha256sum>04844dd5c7cd8096e673db62a50098f3aca2e5c5cda48ebdc30fa79a12ccf58f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.0.20-dev-4468/kotlin-compiler-ir-for-ide-2.0.20-dev-4468.jar">
+          <sha256sum>60ff24dd111824d5b571e7c09fb99e92370e9196d1f6984f8e788cb8974cd976</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.0.20-dev-3805/kotlin-compiler-ir-for-ide-2.0.20-dev-3805.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.0.20-dev-4468/kotlin-compiler-ir-for-ide-2.0.20-dev-4468.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.0.20-dev-3805/kotlin-compiler-ir-for-ide-2.0.20-dev-3805-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.0.20-dev-4468/kotlin-compiler-ir-for-ide-2.0.20-dev-4468-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

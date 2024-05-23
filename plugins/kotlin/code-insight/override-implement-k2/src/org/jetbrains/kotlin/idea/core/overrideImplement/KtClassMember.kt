@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
@@ -116,7 +116,7 @@ fun generateMember(
     val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
         if (mode == MemberGenerateMode.OVERRIDE) {
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter { annotation, _ -> keepAnnotation(annotation, containingKtFile) }
+                annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> keepAnnotation(annotation, containingKtFile) }
             }
         }
 

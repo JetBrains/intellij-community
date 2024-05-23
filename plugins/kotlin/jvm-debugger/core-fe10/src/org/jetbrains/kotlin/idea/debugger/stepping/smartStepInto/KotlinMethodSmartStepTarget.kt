@@ -11,8 +11,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KtDeclarationModifiersRenderer
@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParameterRendererFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReceiverRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
@@ -47,7 +47,7 @@ class KotlinMethodSmartStepTarget(
     companion object {
         private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter.NONE
+                annotationFilter = KaRendererAnnotationsFilter.NONE
             }
             keywordsRenderer = keywordsRenderer.with {
                 keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD)
@@ -56,12 +56,12 @@ class KotlinMethodSmartStepTarget(
                 modifierListRenderer = NO_MODIFIER_LIST
             }
             typeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
-                functionalTypeRenderer = KtFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+                functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
             }
             returnTypeFilter = NO_RETURN_TYPE
             typeParametersFilter = KtTypeParameterRendererFilter { _, _ -> false }
-            constructorRenderer = KtConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            valueParameterRenderer = KtValueParameterSymbolRenderer.TYPE_ONLY
+            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
+            valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
             callableReceiverRenderer = NO_CALLABLE_RECEIVER
         }
 
@@ -115,7 +115,7 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
     this?.let { runReadAction { element } }
 
 
-private val NO_RETURN_TYPE = object : KtCallableReturnTypeFilter {
+private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
     override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean = false
 }
 

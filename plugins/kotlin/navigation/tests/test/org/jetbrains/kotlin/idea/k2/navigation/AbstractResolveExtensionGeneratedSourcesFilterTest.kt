@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.navigation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlFile
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
@@ -35,7 +35,7 @@ abstract class AbstractResolveExtensionGeneratedSourcesFilterTest : AbstractRefe
             .registerExtension(KtResolveExtensionProviderForTests(), testRootDisposable)
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun checkResolvedTo(element: PsiElement) {
         assertTrue(filter.isGeneratedSource(element.containingFile.virtualFile, project))
         // This method is usually called from a background thread, but we need to call it inline here

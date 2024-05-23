@@ -32,12 +32,12 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
         ?: FirKotlinUastLanguagePlugin()
 }
 
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
     useSiteKtElement: KtElement,
     action: KtAnalysisSession.() -> R
 ): R = allowAnalysisOnEdt {
-    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class)
     allowAnalysisFromWriteAction {
         analyze(useSiteKtElement, action)
     }

@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConstantValue
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractReturnsContractEffectDeclaration.*
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConstantValue
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractReturnsContractEffectDeclaration.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.booleans.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -149,14 +149,14 @@ class KotlinFunctionCallInstruction(
         }
     }
 
-    private fun KtContractEffectDeclaration.toContractReturnValue(): ContractReturnValue? {
+    private fun KaContractEffectDeclaration.toContractReturnValue(): ContractReturnValue? {
         return when (this) {
-            is KtContractReturnsNotNullEffectDeclaration -> ContractReturnValue.returnNotNull()
-            is KtContractReturnsSuccessfullyEffectDeclaration -> ContractReturnValue.returnAny()
-            is KtContractReturnsSpecificValueEffectDeclaration -> when (value.constantType) {
-                KtContractConstantValue.KtContractConstantType.FALSE -> ContractReturnValue.returnFalse()
-                KtContractConstantValue.KtContractConstantType.TRUE -> ContractReturnValue.returnTrue()
-                KtContractConstantValue.KtContractConstantType.NULL -> ContractReturnValue.returnNull()
+            is KaContractReturnsNotNullEffectDeclaration -> ContractReturnValue.returnNotNull()
+            is KaContractReturnsSuccessfullyEffectDeclaration -> ContractReturnValue.returnAny()
+            is KaContractReturnsSpecificValueEffectDeclaration -> when (value.constantType) {
+                KaContractConstantValue.KaContractConstantType.FALSE -> ContractReturnValue.returnFalse()
+                KaContractConstantValue.KaContractConstantType.TRUE -> ContractReturnValue.returnTrue()
+                KaContractConstantValue.KaContractConstantType.NULL -> ContractReturnValue.returnNull()
             }
 
             else -> null

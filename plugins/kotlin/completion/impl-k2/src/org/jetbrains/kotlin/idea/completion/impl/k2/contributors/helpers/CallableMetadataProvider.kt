@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -88,16 +88,16 @@ internal object CallableMetadataProvider {
         if (symbol.isExtensionCall(isFunctionalVariableCall)) return extensionWeight(signature, context, isFunctionalVariableCall)
 
         return when (val scopeKind = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
-            is KtScopeKind.LocalScope -> CallableMetadata(CallableKind.LOCAL, scopeKind.indexInTower)
+            is KaScopeKind.LocalScope -> CallableMetadata(CallableKind.LOCAL, scopeKind.indexInTower)
 
-            is KtScopeKind.TypeScope,
-            is KtScopeKind.StaticMemberScope -> nonExtensionWeight(signature, context)
+            is KaScopeKind.TypeScope,
+            is KaScopeKind.StaticMemberScope -> nonExtensionWeight(signature, context)
 
-            is KtScopeKind.TypeParameterScope -> null
+            is KaScopeKind.TypeParameterScope -> null
 
-            is KtScopeKind.ImportingScope,
-            is KtScopeKind.PackageMemberScope,
-            is KtScopeKind.ScriptMemberScope,
+            is KaScopeKind.ImportingScope,
+            is KaScopeKind.PackageMemberScope,
+            is KaScopeKind.ScriptMemberScope,
             null -> CallableMetadata(CallableKind.GLOBAL, scopeKind?.indexInTower)
         }
     }

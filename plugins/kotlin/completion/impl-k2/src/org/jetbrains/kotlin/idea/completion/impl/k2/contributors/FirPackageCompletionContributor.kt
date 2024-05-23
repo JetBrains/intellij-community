@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -33,7 +33,7 @@ internal class FirPackageCompletionContributor(
             positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KtPackageSymbol>()?.singleOrNull()
         } ?: return
 
-        val symbolOrigin = CompletionSymbolOrigin.Scope(KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
+        val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
 
         rootSymbol.getPackageScope()
             .getPackageSymbols(scopeNameFilter)

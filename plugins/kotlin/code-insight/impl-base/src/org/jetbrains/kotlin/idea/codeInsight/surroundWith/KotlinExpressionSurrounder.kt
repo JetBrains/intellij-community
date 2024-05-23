@@ -6,7 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -25,7 +25,7 @@ abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
         } else isApplicable(expression)
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     protected open fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
             return analyze(expression) {

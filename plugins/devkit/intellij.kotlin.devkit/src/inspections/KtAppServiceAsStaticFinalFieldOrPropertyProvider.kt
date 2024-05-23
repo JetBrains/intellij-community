@@ -15,8 +15,8 @@ import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -48,7 +48,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
       override fun visitProperty(property: KtProperty) {
         if (property.isVar || !property.isStatic() || !property.hasBackingField()) return
 
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         val typeClassElement = allowAnalysisOnEdt {
           analyze(property) {
             // return if it's an explicit constructor call
@@ -105,7 +105,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
   }
 
 
-  @OptIn(KtAllowAnalysisOnEdt::class)
+  @OptIn(KaAllowAnalysisOnEdt::class)
   private fun KtProperty.hasBackingField(): Boolean {
     allowAnalysisOnEdt {
       val property = this
@@ -129,9 +129,9 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
     val supplierPropertyName = suggestSupplierPropertyName(element)
 
     // can be called both from EDT and from the preview
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     val ktPropertyType = allowAnalysisOnEdt {
-      @OptIn(KtAllowAnalysisFromWriteAction::class)
+      @OptIn(KaAllowAnalysisFromWriteAction::class)
       allowAnalysisFromWriteAction {
         analyze(element) {
           val returnType = element.getReturnKtType().lowerBoundIfFlexible()

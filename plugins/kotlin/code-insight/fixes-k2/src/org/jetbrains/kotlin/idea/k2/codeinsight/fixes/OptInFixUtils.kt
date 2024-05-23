@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
@@ -12,11 +12,11 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 internal object OptInFixUtils {
-    fun optInMarkerClassId(diagnostic: KtFirDiagnostic<PsiElement>): ClassId? = when (diagnostic) {
-        is KtFirDiagnostic.OptInUsage -> diagnostic.optInMarkerClassId
-        is KtFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerClassId
-        is KtFirDiagnostic.OptInOverride -> diagnostic.optInMarkerClassId
-        is KtFirDiagnostic.OptInOverrideError -> diagnostic.optInMarkerClassId
+    fun optInMarkerClassId(diagnostic: KaFirDiagnostic<PsiElement>): ClassId? = when (diagnostic) {
+        is KaFirDiagnostic.OptInUsage -> diagnostic.optInMarkerClassId
+        is KaFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerClassId
+        is KaFirDiagnostic.OptInOverride -> diagnostic.optInMarkerClassId
+        is KaFirDiagnostic.OptInOverrideError -> diagnostic.optInMarkerClassId
         else -> null
     }
 

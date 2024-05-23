@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
@@ -89,8 +89,8 @@ private fun KtAnnotationApplicationWithArgumentsInfo.getStringValueOfArgument(ar
     val argumentValueExpression =
         arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KtConstantAnnotationValue ?: return null
     return when (val argumentAsConstant = argumentValueExpression.constantValue) {
-        is KtConstantValue.KtStringConstantValue -> argumentAsConstant.value
-        is KtConstantValue.KtErrorConstantValue -> error("We cannot render this argument as a constant")
+        is KaConstantValue.KaStringConstantValue -> argumentAsConstant.value
+        is KaConstantValue.KaErrorConstantValue -> error("We cannot render this argument as a constant")
         else -> argumentAsConstant.renderAsKotlinConstant()
     }
 }

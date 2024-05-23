@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.psi.typeArguments
@@ -20,12 +20,12 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes3
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ChangeToStarProjectionFixFactory {
-    val uncheckedCastFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UncheckedCast ->
+    val uncheckedCastFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UncheckedCast ->
         val quickFix = getQuickFix(diagnostic.psi) ?: return@ModCommandBased emptyList()
         listOf(quickFix)
     }
 
-    val cannotCheckForErased = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.CannotCheckForErased ->
+    val cannotCheckForErased = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.CannotCheckForErased ->
         val element = diagnostic.psi
 
         // We don't suggest this quick-fix for array instance checks because there is ConvertToIsArrayOfCallFix

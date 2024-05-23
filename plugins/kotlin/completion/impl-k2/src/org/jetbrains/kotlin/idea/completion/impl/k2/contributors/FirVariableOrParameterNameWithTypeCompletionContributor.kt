@@ -11,8 +11,8 @@ import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -80,7 +80,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         lookupNamesAdded: MutableSet<String>,
         scopeContext: KtScopeContext
     ) {
-        val typeParametersScope = scopeContext.getCompositeScope { it is KtScopeKind.TypeParameterScope }
+        val typeParametersScope = scopeContext.getCompositeScope { it is KaScopeKind.TypeParameterScope }
         val availableTypeParameters = getAvailableTypeParameters(typeParametersScope).toSet()
 
         val variableOrParameterInOriginal = getOriginalElementOfSelf(variableOrParameter, basicContext.originalKtFile)

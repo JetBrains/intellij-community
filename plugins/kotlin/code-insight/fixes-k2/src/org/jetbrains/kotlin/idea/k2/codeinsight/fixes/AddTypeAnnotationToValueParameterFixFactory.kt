@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.types.Variance
 internal object AddTypeAnnotationToValueParameterFixFactory {
 
     val addTypeAnnotationToValueParameterFixFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ValueParameterWithNoTypeAnnotation ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ValueParameterWithNoTypeAnnotation ->
             val element = diagnostic.psi
             val defaultValue = element.defaultValue ?: return@ModCommandBased emptyList()
             val elementContext = getTypeName(element, defaultValue) ?: return@ModCommandBased emptyList()

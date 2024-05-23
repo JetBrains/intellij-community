@@ -7,8 +7,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
@@ -104,12 +104,12 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         shortenReferences(element)
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
         fun KtCallableDeclaration.overridesNothing(): Boolean {
             val declaration = this
 
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(this) {
                     val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
@@ -176,7 +176,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
      * Please, do not try to move this function to some util module. Usage of
      * [allowAnalysisOnEdt] should generally be avoided.
      */
-    @OptIn(KtAllowAnalysisOnEdt::class, ExperimentalContracts::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, ExperimentalContracts::class)
     private inline fun <T> analyseOnEdt(element: KtElement, action: KtAnalysisSession.() -> T) {
         contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
 

@@ -15,7 +15,7 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
@@ -204,17 +204,17 @@ internal fun KtType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 context(KtAnalysisSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val type = expr.getKtType()
-    val constant: KtConstantValue? = if (type == null) null else expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+    val constant: KaConstantValue? = if (type == null) null else expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
     return when (constant) {
-        is KtConstantValue.KtNullConstantValue -> DfTypes.NULL
-        is KtConstantValue.KtBooleanConstantValue -> DfTypes.booleanValue(constant.value)
-        is KtConstantValue.KtByteConstantValue -> DfTypes.intValue(constant.value.toInt())
-        is KtConstantValue.KtShortConstantValue -> DfTypes.intValue(constant.value.toInt())
-        is KtConstantValue.KtCharConstantValue -> DfTypes.intValue(constant.value.code)
-        is KtConstantValue.KtIntConstantValue -> DfTypes.intValue(constant.value)
-        is KtConstantValue.KtLongConstantValue -> DfTypes.longValue(constant.value)
-        is KtConstantValue.KtFloatConstantValue -> DfTypes.floatValue(constant.value)
-        is KtConstantValue.KtDoubleConstantValue -> DfTypes.doubleValue(constant.value)
+        is KaConstantValue.KaNullConstantValue -> DfTypes.NULL
+        is KaConstantValue.KaBooleanConstantValue -> DfTypes.booleanValue(constant.value)
+        is KaConstantValue.KaByteConstantValue -> DfTypes.intValue(constant.value.toInt())
+        is KaConstantValue.KaShortConstantValue -> DfTypes.intValue(constant.value.toInt())
+        is KaConstantValue.KaCharConstantValue -> DfTypes.intValue(constant.value.code)
+        is KaConstantValue.KaIntConstantValue -> DfTypes.intValue(constant.value)
+        is KaConstantValue.KaLongConstantValue -> DfTypes.longValue(constant.value)
+        is KaConstantValue.KaFloatConstantValue -> DfTypes.floatValue(constant.value)
+        is KaConstantValue.KaDoubleConstantValue -> DfTypes.doubleValue(constant.value)
         else -> DfType.TOP
     }
 }

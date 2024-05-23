@@ -1,5 +1,15 @@
 <idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.konan.K2KotlinNativeMetadataDecompiler"/>
-    </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.konan.K2KotlinNativeMetadataDecompiler"/>
+
+    <projectService
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsModelChangeService"/>
+    <postStartupActivity
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsStartupActivity"/>
+
+    <workspaceModel.fileIndexContributor
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
+    <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFileSystemImpl"
+                       key="fwd" physical="false"/>
+  </extensions>
 </idea-plugin>
