@@ -851,6 +851,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val project = instantiateProject(projectStoreBaseDir, options)
+    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
     saveTemplateJob?.join()
     val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
     initProject(file = projectStoreBaseDir,
@@ -859,8 +860,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 preloadServices = options.preloadServices,
                 template = template,
                 isTrustCheckNeeded = false)
-
-    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
     return project
   }
 
