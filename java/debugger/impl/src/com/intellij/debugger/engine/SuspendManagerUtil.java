@@ -86,7 +86,7 @@ public final class SuspendManagerUtil {
     ThreadReferenceProxyImpl thread = context.getThread();
 
     Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads != null ? Set.copyOf(context.myResumedThreads) : null;
-    ResumeData resumeData = new ResumeData(suspendManager.isFrozen(thread), resumedThreads);
+    ResumeData resumeData = new ResumeData(thread != null && suspendManager.isFrozen(thread), resumedThreads);
 
     if (resumeData.myIsFrozen) {
       suspendManager.unfreezeThread(thread);
