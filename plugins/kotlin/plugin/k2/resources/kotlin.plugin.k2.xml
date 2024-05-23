@@ -42,6 +42,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastAnalysisPlugin"/>
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.IdeaFirKotlinUastCodeGenerationPlugin"/>
   </extensions>
 

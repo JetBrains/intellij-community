@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.uast.test.kotlin.analysis
+package org.jetbrains.fir.uast.test
 
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
@@ -9,14 +9,14 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
-import org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin
+import org.jetbrains.uast.kotlin.FirKotlinUastAnalysisPlugin
+import org.jetbrains.uast.test.common.kotlin.orFail
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import kotlin.test.assertTrue as kAssertTrue
-import kotlin.test.fail as kFail
+import kotlin.text.trimIndent
 
-class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = false
+class FirUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
+    override fun isFirPlugin(): Boolean = true
 
     fun `test dataflow not null`() = doTest("""
         fun dataFlowNotNull(b: Boolean) {
@@ -133,20 +133,20 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     """.trimIndent())
 
-    fun `test class var property nullability`() = doTest("""
+    fun `test class mutable var property nullability`() = doTest("""
         class SomeClass {
             var a: String? = if (kotlin.random.Random.nextBoolean()) null else "a"
             private fun notNullIfWithElvisStrangeType() = java.util.stream.Stream.of(1, 2).map {
                 if (a != null) {
-                    return@map (/*NOT_NULL*/ a)
+                    return@map (/*NULLABLE*/ a)
                 } else {
-                    return@map (/*NULL*/ a)
+                    return@map (/*NULLABLE*/ a)
                 }
             }
         }
     """.trimIndent())
 
-    fun `test another class var property nullability`() = doTest("""
+    fun `test another class mutable var property nullability`() = doTest("""
         class Other {
           var a: String? = if (kotlin.random.Random.nextBoolean()) null else "a"  
         }
@@ -161,13 +161,10 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     """.trimIndent())
 
-    private fun doTest(
-        @Language("kotlin") source: String
-    ) {
-        val uastAnalysisPlugin = UastLanguagePlugin.byLanguage(KotlinLanguage.INSTANCE)?.analysisPlugin
-        kAssertTrue(uastAnalysisPlugin is KotlinUastAnalysisPlugin, "Cannot find analysis plugin for Kotlin")
-
-        val file = myFixture.configureByText("file.kt", source).toUElement() ?: kFail("Cannot create UFile")
+    private fun doTest(@Language("kotlin") source: String) {
+        val uastAnalysisPlugin = UastLanguagePlugin.byLanguage(KotlinLanguage.INSTANCE)?.analysisPlugin.orFail("Can not find analysis plugin for Kotlin")
+        assertInstanceOf(uastAnalysisPlugin, FirKotlinUastAnalysisPlugin::class.java)
+        val file = myFixture.configureByText("file.kt", source).toUElement().orFail("Cannot create UFile")
         var visitAny = false
         file.accept(object : AbstractUastVisitor() {
             override fun visitExpression(node: UExpression): Boolean {
@@ -190,6 +187,6 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
             }
         })
 
-        kAssertTrue(visitAny, "Test do nothing")
+        assertTrue(visitAny)
     }
 }
