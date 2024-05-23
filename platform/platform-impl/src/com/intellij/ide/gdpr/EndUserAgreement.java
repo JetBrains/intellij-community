@@ -2,11 +2,12 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.ide.SystemLanguage;
+import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.LocalizationUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
