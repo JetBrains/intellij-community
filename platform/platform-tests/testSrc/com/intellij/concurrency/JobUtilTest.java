@@ -68,7 +68,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     COUNT.set(0);
     t = setTimeout(2, TimeUnit.MINUTES);
     int parallelism = JobSchedulerImpl.getJobPoolParallelism();
-    Assume.assumeTrue("Too low parallelism: " + parallelism + ", but I need at least 4, I give up", parallelism >= 4);
+    Assume.assumeTrue("Too low parallelism: " + parallelism + ", I give up", parallelism >= 4);
   }
 
   public void testUnbalancedTaskJobUtilPerformance() {
@@ -194,7 +194,9 @@ public class JobUtilTest extends LightPlatformTestCase {
             if (objects.size() <= 1 || JobSchedulerImpl.getJobPoolParallelism() <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
               ThreadingAssertions.assertEventDispatchThread();
             }
-            // else, in general, we know nothing about the current thread since FJP can help other tasks to execute while in the current context
+            else {
+              // generally, we know nothing about the current thread since FJP can help other tasks to execute while in the current context
+            }
             ProgressIndicator actualIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progress == null) {
               assertNotNull(actualIndicator);
@@ -571,7 +573,7 @@ public class JobUtilTest extends LightPlatformTestCase {
         int jobs0 = jobsStarted.get();
         while (jobsStarted.get() < jobs0 + JobSchedulerImpl.getJobPoolParallelism() && jobsStarted.get() < N_JOBS) {
           if (n.timedOut(finalI)) {
-            System.out.println(ThreadDumper.dumpThreadsToString());
+            System.err.println(ThreadDumper.dumpThreadsToString());
             fail();
             break;
           }
@@ -741,164 +743,6 @@ public class JobUtilTest extends LightPlatformTestCase {
       while (!w.isTimedOut()) {
         assertEquals(count, executed.get());
       }
-    }
-  }
-
-  public void testEvenTwoJobsAreParallelized() {
-    ThreadingAssertions.assertEventDispatchThread();
-    TestTimeOut w = setTimeout(100, TimeUnit.SECONDS);
-    ForkJoinPool pool = new ForkJoinPool(4);
-    JobLauncherImpl launcher = new JobLauncherImpl(pool);
-    try {
-      for (int i = 0; i < 1000; i++) {
-        LOG.debug(String.valueOf(i));
-        int finali = i;
-        record R(AtomicBoolean hold, ForkJoinTask<?> future, AtomicBoolean started) {
-        }
-        R[] r = new R[3];
-        // saturate half of the pool, start invokeConcurrentlyUnderProgress() which will stuck because of not enough thread workers, then free one worker
-        for (int k = 0; k < r.length; k++) {
-          AtomicBoolean started = new AtomicBoolean();
-          AtomicBoolean hold = new AtomicBoolean(true);
-          ForkJoinTask<?> f = pool.submit(() -> {
-            started.set(true);
-            while (hold.get()) Thread.yield();
-          });
-          r[k] = new R(hold, f, started);
-          while (!started.get()) {
-            Thread.yield();
-          }
-        }
-
-        try {
-          AtomicBoolean ready1 = new AtomicBoolean();
-          AtomicBoolean ready2 = new AtomicBoolean();
-          LOG.debug("before submit "+pool);
-          ForkJoinTask<Boolean> future =
-            pool.submit(() -> {
-              LOG.debug("F: finali=" + finali + "; r=" + Arrays.toString(r));
-              return launcher.invokeConcurrentlyUnderProgress(List.of(ready1, ready2), new DaemonProgressIndicator(), item -> {
-                item.set(true);
-                while (!ready1.get() || !ready2.get()) {
-                  r[2].hold().set(false);
-                  // wait
-                  if (w.timedOut()) throw new RuntimeException(ThreadDumper.dumpThreadsToString());
-                }
-                return true;
-              });
-            });
-          LOG.debug("after  submit "+pool+"; future:"+future);
-          Boolean res;
-          try {
-            res = future.get(20, TimeUnit.SECONDS);
-          }
-          catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException(e);
-          }
-          assertTrue(res);
-        }
-        finally {
-          for (R value : r) {
-            value.hold().set(false);
-            value.future().join();
-          }
-        }
-      }
-    }
-    finally {
-      pool.shutdownNow();
-    }
-  }
-
-  public void test2EvenTwoJobsAreParallelized() {
-    ThreadingAssertions.assertEventDispatchThread();
-    TestTimeOut w = setTimeout(100, TimeUnit.SECONDS);
-    ForkJoinPool pool = new ForkJoinPool(4);
-    try {
-      for (int i = 0; i < 1000; i++) {
-        LOG.debug(String.valueOf(i));
-        int finali = i;
-        record R(AtomicBoolean hold, ForkJoinTask<?> future, AtomicBoolean started) {
-        }
-        R[] r = new R[3];
-        // saturate half of the pool, start invokeConcurrentlyUnderProgress() which will stuck because of not enough thread workers, then free one worker
-        for (int k = 0; k < r.length; k++) {
-          AtomicBoolean started = new AtomicBoolean();
-          AtomicBoolean hold = new AtomicBoolean(true);
-          ForkJoinTask<?> f = pool.submit(() -> {
-            started.set(true);
-            try {
-              ForkJoinPool.managedBlock(new ForkJoinPool.ManagedBlocker() {
-                @Override
-                public boolean block() {
-                  while (hold.get()) {
-                    if (w.timedOut()) throw new RuntimeException();
-                    Thread.yield();
-                  }
-                  return true;
-                }
-
-                @Override
-                public boolean isReleasable() {
-                  return false;
-                }
-              });
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-          });
-          r[k] = new R(hold, f, started);
-          while (!started.get()) {
-            if (w.timedOut()) throw new RuntimeException();
-            Thread.yield();
-          }
-        }
-
-        try {
-          LOG.debug("before submit "+pool);
-
-          ForkJoinTask<Boolean> future =
-            pool.submit(() -> {
-              try {
-                ForkJoinPool.managedBlock(new ForkJoinPool.ManagedBlocker() {
-                  @Override
-                  public boolean block() {
-                    LOG.debug("F: finali=" + finali + "; r=" + Arrays.toString(r));
-                    return true;
-                  }
-
-                  @Override
-                  public boolean isReleasable() {
-                    return false;
-                  }
-                });
-                return true;
-              }
-              catch (InterruptedException e) {
-                throw new RuntimeException(e);
-              }
-            });
-          LOG.debug("after  submit "+pool+"; future:"+future);
-          Boolean res;
-          try {
-            res = future.get(20, TimeUnit.SECONDS);
-          }
-          catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException(e);
-          }
-          assertTrue(res);
-        }
-        finally {
-          for (R value : r) {
-            value.hold().set(false);
-            value.future().join();
-          }
-        }
-      }
-    }
-    finally {
-      pool.shutdownNow();
     }
   }
 }
