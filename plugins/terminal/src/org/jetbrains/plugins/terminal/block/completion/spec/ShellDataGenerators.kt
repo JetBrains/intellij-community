@@ -66,7 +66,7 @@ object ShellDataGenerators {
     }
   }
 
-  fun <T> emptyListGenerator(): ShellRuntimeDataGenerator<List<T>> = ShellRuntimeDataGenerator { emptyList() }
+  fun <T> emptyListGenerator(): ShellRuntimeDataGenerator<List<T>> = ShellRuntimeDataGenerator(debugName = "empty list") { emptyList() }
 
   /**
    * Creates a cache key or debug name of the generator in the following format:

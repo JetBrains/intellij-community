@@ -40,7 +40,22 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
   fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit)
 
   /**
-   * Specifies that this Shell command can have an option.
+   * Allows specifying options that depend on the shell state. For example, on the command version.
+   * Must be called only once. The second call will override the result.
+   *
+   * Use ordinary [option] if you need to define the option that doesn't depend on the shell state.
+   *
+   * @param [content] is suspending function that will be executed at the moment of requesting the options.
+   * Inside [content] you can access the values of [ShellRuntimeContext] and generate the list of options depending on
+   * current shell directory, typed prefix, project and so on.
+   */
+  fun dynamicOptions(content: suspend ShellChildOptionsContext.(ShellRuntimeContext) -> Unit)
+
+  /**
+   * Specifies that this option can be used in the current command not depending on the shell state.
+   *
+   * Use [dynamicOptions] if your option can be used only in some particular shell state.
+   *
    * @param names the names of the option (for example, short and long form: `-o` and `--option`)
    * @param content description of the option
    */

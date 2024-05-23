@@ -12,13 +12,14 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpe
  */
 internal class ShellCommandContextImpl(
   names: List<String>,
-  parentNames: List<String> = emptyList()
+  private val parentNames: List<String> = emptyList()
 ) : ShellSuggestionContextBase(names), ShellCommandContext {
   override var requiresSubcommand: Boolean = false
   override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
   private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
-  private var optionSuppliers: MutableList<() -> List<ShellOptionSpec>> = mutableListOf()
+  private var dynamicOptionsSupplier: (suspend (ShellRuntimeContext) -> List<ShellOptionSpec>)? = null
+  private var staticOptionSuppliers: MutableList<() -> List<ShellOptionSpec>> = mutableListOf()
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
@@ -32,13 +33,21 @@ internal class ShellCommandContextImpl(
     }
   }
 
+  override fun dynamicOptions(content: suspend ShellChildOptionsContext.(ShellRuntimeContext) -> Unit) {
+    dynamicOptionsSupplier = { shellContext ->
+      val context = ShellChildOptionsContextImpl(parentNamesWithSelf)
+      content.invoke(context, shellContext)
+      context.build()
+    }
+  }
+
   override fun option(vararg names: String, content: ShellOptionContext.() -> Unit) {
     val supplier = {
       val context = ShellOptionContextImpl(names.asList(), parentNamesWithSelf)
       content.invoke(context)
       context.build()
     }
-    optionSuppliers.add(supplier)
+    staticOptionSuppliers.add(supplier)
   }
 
   override fun argument(content: ShellArgumentContext.() -> Unit) {
@@ -62,8 +71,10 @@ internal class ShellCommandContextImpl(
         requiresSubcommand = requiresSubcommand,
         parserOptions = parserOptions,
         subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
-        optionsSupplier = { optionSuppliers.flatMap { it() } },
-        argumentsSupplier = { argumentSuppliers.map { it() } }
+        dynamicOptionsSupplier = dynamicOptionsSupplier,
+        staticOptionsSupplier = { staticOptionSuppliers.flatMap { it() } },
+        argumentsSupplier = { argumentSuppliers.map { it() } },
+        parentNames = parentNames
       )
     }
   }

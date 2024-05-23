@@ -39,7 +39,16 @@ interface ShellCommandSpec : ShellCompletionSuggestion {
   val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>
 
   /**
-   * Available options of this shell command.
+   * Generator that provides all options for this command for the given [ShellRuntimeContext].
+   */
+  val allOptionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>>
+
+  /**
+   * Available static options of this shell command.
+   * Static option is the option that always can be used in this shell command
+   * (not depending on the current directory, command version, or other shell state).
+   *
+   * **It can be not all options.** Use [allOptionsGenerator] to get all options.
    */
   val options: List<ShellOptionSpec>
 

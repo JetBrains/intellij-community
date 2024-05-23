@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.json
 
 import com.intellij.terminal.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellCommand
 import javax.swing.Icon
@@ -59,7 +60,11 @@ internal class ShellJsonBasedCommandSpec(
     data.args.map { ShellJsonBasedArgumentSpec(it, parentNamesWithSelf) }
   }
 
-  override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator { subcommands }
+  override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> =
+    ShellRuntimeDataGenerator(debugName = createCacheKey(parentNamesWithSelf, "subcommands")) { subcommands }
+
+  override val allOptionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> =
+    ShellRuntimeDataGenerator(debugName = createCacheKey(parentNamesWithSelf, "options")) { options }
 
   override fun toString(): String {
     return "ShellJsonBasedCommandSpec(name=$name, parentNamesWithSelf=$parentNamesWithSelf, data=$data)"

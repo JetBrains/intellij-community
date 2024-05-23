@@ -45,18 +45,12 @@ internal class ShellMergedCommandSpec(
 
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = createSubcommandsGenerator()
 
+  override val allOptionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = createAllOptionsGenerator()
+
   override val options: List<ShellOptionSpec> by lazy {
-    val optionsMap = mutableMapOf<String, ShellOptionSpec>()
-    for (option in baseSpec?.options ?: emptyList()) {
-      optionsMap[option.name] = option
-    }
-    // Override the options, the last of the same name will be effective
-    for (spec in overridingSpecs) {
-      for (option in spec.options) {
-        optionsMap[option.name] = option
-      }
-    }
-    optionsMap.values.toList()
+    val baseOptions = baseSpec?.options ?: emptyList()
+    val overridingOptions = overridingSpecs.map { it.options }
+    mergeOptions(baseOptions, overridingOptions)
   }
 
   /**
@@ -87,6 +81,29 @@ internal class ShellMergedCommandSpec(
         else ShellMergedCommandSpec(base, overriding, parentNamesWithSelf)
       }
     }
+  }
+
+  private fun createAllOptionsGenerator(): ShellRuntimeDataGenerator<List<ShellOptionSpec>> {
+    val cacheKey = createCacheKey(parentNamesWithSelf, "merged options")
+    return ShellRuntimeDataGenerator(cacheKeyAndDebugName = cacheKey) { context ->
+      val baseOptions = baseSpec?.allOptionsGenerator?.generate(context) ?: emptyList()
+      val overridingOptions = overridingSpecs.map { it.allOptionsGenerator.generate(context) }
+      mergeOptions(baseOptions, overridingOptions)
+    }
+  }
+
+  private fun mergeOptions(baseOptions: List<ShellOptionSpec>, overridingOptions: List<List<ShellOptionSpec>>): List<ShellOptionSpec> {
+    val optionsMap = mutableMapOf<String, ShellOptionSpec>()
+    for (option in baseOptions) {
+      optionsMap[option.name] = option
+    }
+    // Override the options, the last of the same name will be effective
+    for (options in overridingOptions) {
+      for (option in options) {
+        optionsMap[option.name] = option
+      }
+    }
+    return optionsMap.values.toList()
   }
 
   private fun MultiMap<String, CommandSpecInfo>.addSpecs(specs: List<ShellCommandSpec>, strategy: ShellCommandSpecConflictStrategy) {

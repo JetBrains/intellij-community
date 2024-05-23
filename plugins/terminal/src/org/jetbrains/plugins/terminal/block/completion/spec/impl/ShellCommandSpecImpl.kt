@@ -3,7 +3,9 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.emptyListGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -16,10 +18,12 @@ internal class ShellCommandSpecImpl(
   override val requiresSubcommand: Boolean = false,
   override val parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT,
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = emptyListGenerator(),
-  private val optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() },
-  private val argumentsSupplier: () -> List<ShellArgumentSpec> = { emptyList() }
+  private val dynamicOptionsSupplier: (suspend (ShellRuntimeContext) -> List<ShellOptionSpec>)? = null,
+  private val staticOptionsSupplier: () -> List<ShellOptionSpec> = { emptyList() },
+  private val argumentsSupplier: () -> List<ShellArgumentSpec> = { emptyList() },
+  private val parentNames: List<String> = emptyList()
 ) : ShellCommandSpec {
-  override val options: List<ShellOptionSpec> by lazy { optionsSupplier() }
+  override val options: List<ShellOptionSpec> by lazy { staticOptionsSupplier() }
   override val arguments: List<ShellArgumentSpec> by lazy { argumentsSupplier() }
 
   override val description: String?
@@ -34,7 +38,23 @@ internal class ShellCommandSpecImpl(
     }
   }
 
+  override val allOptionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = createOptionsGenerator()
+
+  // Return non cacheable generator if there are no dynamic options. Static options are already lazy.
+  private fun createOptionsGenerator(): ShellRuntimeDataGenerator<List<ShellOptionSpec>> {
+    val cacheKey = createCacheKey(parentNames + name, "options")
+    return if (dynamicOptionsSupplier == null) {
+      ShellRuntimeDataGenerator(debugName = cacheKey) { options }
+    }
+    else {
+      ShellRuntimeDataGenerator(cacheKeyAndDebugName = cacheKey) { context ->
+        val dynamicOptions = dynamicOptionsSupplier.invoke(context)
+        (dynamicOptions + options).distinctBy { it.name }
+      }
+    }
+  }
+
   override fun toString(): String {
-    return "ShellCommandSpecImpl(name=$name, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserOptions=$parserOptions, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
+    return "ShellCommandSpecImpl(name=$name, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserOptions=$parserOptions, description=$description, subcommandsGenerator=$subcommandsGenerator, optionsGenerator=$allOptionsGenerator, options=$options, arguments=$arguments)"
   }
 }
