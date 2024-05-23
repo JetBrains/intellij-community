@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import java.io.BufferedWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -23,22 +24,27 @@ internal class NsisFileListGenerator {
         }
 
         out.write("\n")
-        @Suppress("SpellCheckingInspection")
-        out.write("SetOutPath \"\$INSTDIR${if (relativePath.isEmpty()) "" else "\\"}${escapeWinPath(relativePath)}\"\n")
 
-        for (file in files) {
-          out.write("File \"${file.toAbsolutePath().normalize()}\"\n")
+        val installDir = "\$INSTDIR"
+        scriptWithLongPathSupport(out, installDir, relativePath, files.map { it.fileName.toString() }) {
+          out.write("SetOutPath \"$installDir${if (relativePath.isEmpty()) "" else "\\"}${escapeWinPath(relativePath)}\"\n")
+
+          for (file in files) {
+            out.write("File \"${file.toAbsolutePath().normalize()}\"\n")
+          }
         }
       }
     }
   }
 
-  fun generateUninstallerFile(outputFile: Path, @Suppress("SpellCheckingInspection") installDir: String = "\$INSTDIR") {
+  fun generateUninstallerFile(outputFile: Path, installDir: String = "\$INSTDIR") {
     Files.newBufferedWriter(outputFile).use { out ->
       filesRelativePaths.sorted().forEach {
-        out.write("Delete \"${installDir}\\${escapeWinPath(it)}\"\n")
-        if (it.endsWith(".py")) {
-          out.write("Delete \"${installDir}\\${escapeWinPath(it)}c\"\n") //.pyc
+        scriptWithLongPathSupport(out, installDir, null, listOf(it)) {
+          out.write("Delete \"${installDir}\\${escapeWinPath(it)}\"\n")
+          if (it.endsWith(".py")) {
+            out.write("Delete \"${installDir}\\${escapeWinPath(it)}c\"\n") //.pyc
+          }
         }
       }
 
@@ -46,8 +52,10 @@ internal class NsisFileListGenerator {
 
       for (it in directoryToFiles.keys.sorted().asReversed()) {
         if (!it.isEmpty()) {
-          out.write("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"\n")
-          out.write("RmDir \"${installDir}\\${escapeWinPath(it)}\"\n")
+          scriptWithLongPathSupport(out, installDir, null, listOf(it)) {
+            out.write("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"\n")
+            out.write("RmDir \"${installDir}\\${escapeWinPath(it)}\"\n")
+          }
         }
       }
       out.write("RmDir \"${installDir}\"\n")
@@ -80,3 +88,45 @@ internal class NsisFileListGenerator {
 private fun escapeWinPath(dir: String): String {
   return dir.replace('/', '\\').replace("\\$", "\\$\\$")
 }
+
+private fun scriptWithLongPathSupport(
+  writer: BufferedWriter,
+  instDirVariable: String,
+  relativePath: String?,
+  files: List<String>,
+  actionWithOutPath: () -> Unit
+) {
+  assert(instDirVariable.startsWith("$"))
+
+  val areLongPathsPresent = guessMaxPathLength(relativePath, files) > MAX_PATH
+  if (areLongPathsPresent) {
+    // For long paths in the installer, we perform a special maneuver.
+    // Prepend the INSTDIR with "\\?\" so that WinAPI functions won't check its length and will allow working with the file.
+    writer.write(
+      """
+        Push $instDirVariable
+        GetFullPathName $instDirVariable $instDirVariable
+        StrCpy $instDirVariable "\\?\$instDirVariable"
+      """.trimIndent() + "\n"
+    )
+  }
+
+  actionWithOutPath()
+
+  if (areLongPathsPresent) {
+    // Clean up:
+    writer.write("Pop $instDirVariable\n")
+  }
+}
+
+private fun guessMaxPathLength(relativePath: String?, files: List<String>): Int {
+  // Guess the typical length of $INSTDIR plus a small margin to be safe.
+  // NOTE: The AppData path for non-admin installation might be longer than the one in Program Files, so let's consider that here.
+  // Also, "IntelliJ IDEA Community Edition" is the longest product name so far.
+  val instDirGuessedLength = "C:\\Users\\some-reasonably-long-user-name\\AppData\\Local\\JetBrains\\IntelliJ IDEA Community Edition 2024.1.2.SNAPSHOT\\".length + 10
+  if (files.isEmpty()) return (relativePath?.length?.let { it + 1 } ?: 0) + instDirGuessedLength
+
+  return instDirGuessedLength + (relativePath?.length?.let { it + 1 } ?: 0) + files.maxOf { it.length }
+}
+
+private const val MAX_PATH = 260
