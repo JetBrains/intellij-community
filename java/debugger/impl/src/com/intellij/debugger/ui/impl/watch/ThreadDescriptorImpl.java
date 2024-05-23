@@ -90,7 +90,7 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     }
     myIsExpandable = calcExpandable(myIsSuspended);
     mySuspendContext = suspendManager != null ? SuspendManagerUtil.findContextByThread(suspendManager, thread) : suspendContext;
-    myIsAtBreakpoint = thread.isAtBreakpoint();
+    myIsAtBreakpoint = myIsSuspended && thread.isAtBreakpoint();
     myIsCurrent = suspendContext != null ? suspendContext.getThread() == thread : false;
     myIsFrozen = suspendManager != null ? suspendManager.isFrozen(thread) : myIsSuspended;
   }
