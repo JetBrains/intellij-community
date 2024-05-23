@@ -46,10 +46,10 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 
 @ApiStatus.Internal
-class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
-                        private val indexingRequest: IndexingRequestToken) {
-  private val myIndexingAttemptCount = AtomicInteger()
-  private val myIndexingSuccessfulCount = AtomicInteger()
+class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
+                        indexingRequest: IndexingRequestToken) {
+
+  private val indexer: Indexer = Indexer(fileBasedIndex, indexingRequest)
 
   init {
     LOG.info("Using $INDEXING_THREADS_NUMBER indexing and ${IndexUpdateWriter.TOTAL_WRITERS_NUMBER} writing threads for indexing")
@@ -180,7 +180,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
       val contentLoader = indexingJob.myContentLoader
       val statistics = indexingJob.getStatistics(fileIndexingJob)
 
-      indexOneFile(fileIndexingRequest, parentDisposable, startTime, project, contentLoader, statistics)
+      indexer.indexOneFile(fileIndexingRequest, parentDisposable, startTime, project, contentLoader, statistics)
     }
     catch (e: ProcessCanceledException) {
       // Push back the file.
@@ -205,117 +205,125 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     }
   }
 
-  private fun indexOneFile(fileIndexingRequest: FileIndexingRequest,
-                           parentDisposableForInvokeLater: Disposable,
-                           startTime: Long,
-                           project: Project,
-                           contentLoader: CachedFileContentLoader,
-                           statistics: IndexingFileSetStatistics) {
+  @ApiStatus.Internal
+  class Indexer(private val fileBasedIndex: FileBasedIndexImpl,
+                private val indexingRequest: IndexingRequestToken) {
 
-    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-    val indexingStamp = indexingRequest.getFileIndexingStamp(fileIndexingRequest.file)
+    private val indexingAttemptCount = AtomicInteger()
+    private val indexingSuccessfulCount = AtomicInteger()
 
-    val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
-      val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, fileIndexingRequest.file, parentDisposableForInvokeLater)
-      if (applierOrNullIfResurrected == null) {
-        getApplierForFileIndexUpdate(indexingStamp, startTime, fileIndexingRequest.file, parentDisposableForInvokeLater, project, contentLoader)
+    fun indexOneFile(fileIndexingRequest: FileIndexingRequest,
+                     parentDisposableForInvokeLater: Disposable,
+                     startTime: Long,
+                     project: Project,
+                     contentLoader: CachedFileContentLoader,
+                     statistics: IndexingFileSetStatistics) {
+
+      // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
+      val indexingStamp = indexingRequest.getFileIndexingStamp(fileIndexingRequest.file)
+
+      val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
+        val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, fileIndexingRequest.file, parentDisposableForInvokeLater)
+        if (applierOrNullIfResurrected == null) {
+          getApplierForFileIndexUpdate(indexingStamp, startTime, fileIndexingRequest.file, parentDisposableForInvokeLater, project, contentLoader)
+        }
+        else {
+          Triple(applierOrNullIfResurrected, 0L, 0L)
+        }
       }
       else {
-        Triple(applierOrNullIfResurrected, 0L, 0L)
+        getApplierForFileIndexUpdate(indexingStamp, startTime, fileIndexingRequest.file, parentDisposableForInvokeLater, project, contentLoader)
+      }
+
+      try {
+        writeIndexesForFile(fileIndexingRequest.file, statistics, applier, startTime, length, contentLoadingTime)
+      }
+      catch (t: Throwable) {
+        releaseFile(fileIndexingRequest.file) // the file is "locked" in the applier constructor
+        throw t
       }
     }
-    else {
-      getApplierForFileIndexUpdate(indexingStamp, startTime, fileIndexingRequest.file, parentDisposableForInvokeLater, project, contentLoader)
-    }
 
-    try {
-      writeIndexesForFile(fileIndexingRequest.file, statistics, applier, startTime, length, contentLoadingTime)
-    }
-    catch (t: Throwable) {
-      releaseFile(fileIndexingRequest.file) // the file is "locked" in the applier constructor
-      throw t
-    }
-  }
-
-  private fun incIndexingSuccessfulCountAndLogIfNeeded(){
-    myIndexingSuccessfulCount.incrementAndGet()
-    if (LOG.isTraceEnabled && myIndexingSuccessfulCount.toLong() % 10000 == 0L) {
-      LOG.trace("File indexing attempts = ${myIndexingAttemptCount.get()}, indexed file count = ${myIndexingSuccessfulCount.get()}")
-    }
-  }
-
-  private fun getApplierForFileIndexDelete(indexingStamp: FileIndexingStamp,
-                                           file: VirtualFile, parentDisposable: Disposable): FileIndexesValuesApplier? {
-    val applier = ReadAction
-      .nonBlocking<FileIndexesValuesApplier?> {
-        myFileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
+    private fun incIndexingSuccessfulCountAndLogIfNeeded() {
+      indexingSuccessfulCount.incrementAndGet()
+      if (LOG.isTraceEnabled && indexingSuccessfulCount.toLong() % 10000 == 0L) {
+        LOG.trace("File indexing attempts = ${indexingAttemptCount.get()}, indexed file count = ${indexingSuccessfulCount.get()}")
       }
-      .expireWith(parentDisposable)
-      .executeSynchronously()
-    incIndexingSuccessfulCountAndLogIfNeeded()
-    return applier
-  }
+    }
 
-  private fun getApplierForFileIndexUpdate(indexingStamp: FileIndexingStamp, startTime: Long,
-                                           file: VirtualFile,
-                                           parentDisposable: Disposable,
-                                           project: Project,
-                                           loader: CachedFileContentLoader
-  ): Triple<FileIndexesValuesApplier, Long, Long> {
-    // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
-    val loadingResult: ContentLoadingResult = loadContent(file, loader)
-    val contentLoadingTime: Long = System.nanoTime() - startTime
-
-    val fileContent = loadingResult.cachedFileContent
-    val length = loadingResult.fileLength
-
-    try {
-      val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
-      val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
+    private fun getApplierForFileIndexDelete(indexingStamp: FileIndexingStamp,
+                                             file: VirtualFile, parentDisposable: Disposable): FileIndexesValuesApplier? {
       val applier = ReadAction
-        .nonBlocking<FileIndexesValuesApplier> {
-          myIndexingAttemptCount.incrementAndGet()
-          val fileType = if (fileTypeChangeChecker.get()) type else null
-          myFileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp)
+        .nonBlocking<FileIndexesValuesApplier?> {
+          fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
         }
         .expireWith(parentDisposable)
         .executeSynchronously()
       incIndexingSuccessfulCountAndLogIfNeeded()
-      return Triple(applier, contentLoadingTime, length)
-    }
-    finally {
-      signalThatFileIsUnloaded(length)
-    }
-  }
-
-  @Throws(TooLargeContentException::class, FailedToLoadContentException::class)
-  private fun loadContent(file: VirtualFile,
-                          loader: CachedFileContentLoader): ContentLoadingResult {
-    if (myFileBasedIndex.isTooLarge(file)) {
-      throw TooLargeContentException(file)
+      return applier
     }
 
-    val fileLength: Long
-    try {
-      fileLength = file.length
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      throw FailedToLoadContentException(file, e)
+    private fun getApplierForFileIndexUpdate(indexingStamp: FileIndexingStamp, startTime: Long,
+                                             file: VirtualFile,
+                                             parentDisposable: Disposable,
+                                             project: Project,
+                                             loader: CachedFileContentLoader
+    ): Triple<FileIndexesValuesApplier, Long, Long> {
+      // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
+      val loadingResult: ContentLoadingResult = loadContent(file, loader)
+      val contentLoadingTime: Long = System.nanoTime() - startTime
+
+      val fileContent = loadingResult.cachedFileContent
+      val length = loadingResult.fileLength
+
+      try {
+        val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
+        val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
+        val applier = ReadAction
+          .nonBlocking<FileIndexesValuesApplier> {
+            indexingAttemptCount.incrementAndGet()
+            val fileType = if (fileTypeChangeChecker.get()) type else null
+            fileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp)
+          }
+          .expireWith(parentDisposable)
+          .executeSynchronously()
+        incIndexingSuccessfulCountAndLogIfNeeded()
+        return Triple(applier, contentLoadingTime, length)
+      }
+      finally {
+        signalThatFileIsUnloaded(length)
+      }
     }
 
-    // Reserve bytes for the file.
-    waitForFreeMemoryToLoadFileContent(fileLength)
+    @Throws(TooLargeContentException::class, FailedToLoadContentException::class)
+    private fun loadContent(file: VirtualFile,
+                            loader: CachedFileContentLoader): ContentLoadingResult {
+      if (fileBasedIndex.isTooLarge(file)) {
+        throw TooLargeContentException(file)
+      }
 
-    try {
-      val fileContent = loader.loadContent(file)
-      return ContentLoadingResult(fileContent, fileLength)
-    }
-    catch (e: Throwable) {
-      signalThatFileIsUnloaded(fileLength)
-      throw e
+      val fileLength: Long
+      try {
+        fileLength = file.length
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        throw FailedToLoadContentException(file, e)
+      }
+
+      // Reserve bytes for the file.
+      waitForFreeMemoryToLoadFileContent(fileLength)
+
+      try {
+        val fileContent = loader.loadContent(file)
+        return ContentLoadingResult(fileContent, fileLength)
+      }
+      catch (e: Throwable) {
+        signalThatFileIsUnloaded(fileLength)
+        throw e
+      }
     }
   }
 
