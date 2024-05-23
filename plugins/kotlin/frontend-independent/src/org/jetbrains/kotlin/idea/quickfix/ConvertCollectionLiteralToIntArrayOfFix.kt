@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
@@ -26,4 +28,13 @@ class ConvertCollectionLiteralToIntArrayOfFix(
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.arrayof")
+
+    companion object {
+        fun createIfApplicable(element: PsiElement, unsupportedFeature: String): ModCommandAction? {
+            return element
+                .takeIf { unsupportedFeature == "Collection literals outside of annotations" }
+                ?.let { it as? KtCollectionLiteralExpression }
+                ?.let(::ConvertCollectionLiteralToIntArrayOfFix)
+        }
+    }
 }

@@ -5340,7 +5340,33 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf")
+    public static class ConvertCollectionLiteralToIntArrayOf extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf/companionObject.kt");
+        }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf/constructor.kt");
+        }
+
+        @TestMetadata("NestedClass.kt")
+        public void testNestedClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf/NestedClass.kt");
+        }
+
+        @TestMetadata("NestedObject.kt")
+        public void testNestedObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf/NestedObject.kt");
+        }
+    }
 
 
 
