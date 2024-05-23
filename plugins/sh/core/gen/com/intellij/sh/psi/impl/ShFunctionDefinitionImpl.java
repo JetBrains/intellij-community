@@ -16,6 +16,7 @@ public class ShFunctionDefinitionImpl extends ShFunctionDefinitionMixin implemen
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitFunctionDefinition(this);
   }

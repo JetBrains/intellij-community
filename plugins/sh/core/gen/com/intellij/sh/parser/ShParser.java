@@ -120,22 +120,21 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(''(' expression? ')'')'
+  // '((' expression? '))'
   public static boolean arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_expansion")) return false;
-    if (!nextTokenIs(b, LEFT_PAREN)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, LEFT_PAREN, LEFT_PAREN);
-    r = r && arithmetic_expansion_2(b, l + 1);
-    r = r && consumeTokens(b, 0, RIGHT_PAREN, RIGHT_PAREN);
-    exit_section_(b, m, ARITHMETIC_EXPANSION, r);
+    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, "<arithmetic expansion>");
+    r = consumeToken(b, "((");
+    r = r && arithmetic_expansion_1(b, l + 1);
+    r = r && consumeToken(b, "))");
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // expression?
-  private static boolean arithmetic_expansion_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_expansion_2")) return false;
+  private static boolean arithmetic_expansion_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_expansion_1")) return false;
     expression(b, l + 1, -1);
     return true;
   }
@@ -836,7 +835,6 @@ public class ShParser implements PsiParser, LightPsiParser {
   //                               | shell_parameter_expansion
   static boolean composed_var_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_inner")) return false;
-    if (!nextTokenIs(b, "", LEFT_CURLY, LEFT_PAREN)) return false;
     boolean r;
     r = arithmetic_expansion(b, l + 1);
     if (!r) r = subshell_command(b, l + 1);
