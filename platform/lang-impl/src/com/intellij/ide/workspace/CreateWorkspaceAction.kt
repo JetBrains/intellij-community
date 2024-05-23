@@ -6,6 +6,7 @@ import com.intellij.ide.impl.TrustedPaths
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -14,9 +15,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.addIfNotNull
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -80,7 +79,7 @@ internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
     }
   }
   finally {
-    // TODO: fix 'already disposed' failures
+    (referentProject as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
     withContext(Dispatchers.EDT) {
       projectManagerImpl.forceCloseProject(referentProject)
     }
