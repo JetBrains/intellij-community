@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameToIgnoredFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
@@ -61,12 +61,11 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       UParameter parameter = refParameter.getUastElement();
       PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
       if (anchor != null) {
-        final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
         final List<LocalQuickFix> fixes = new ArrayList<>(2);
         fixes.add(new AcceptSuggested(refParameter.getName()));
         PsiElement parent = anchor.getParent();
-        if (parent instanceof PsiNamedElement) {
-          fixes.add(quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)parent, true));
+        if (parent instanceof PsiVariable) {
+          fixes.add(LocalQuickFix.from(RenameToIgnoredFix.createRenameToIgnoreFix((PsiVariable)parent, true)));
         }
         String message;
         if (refMethod.isAbstract()) {

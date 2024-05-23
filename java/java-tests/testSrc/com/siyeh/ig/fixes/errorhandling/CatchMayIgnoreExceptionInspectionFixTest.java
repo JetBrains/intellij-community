@@ -47,6 +47,10 @@ public class CatchMayIgnoreExceptionInspectionFixTest extends IGQuickFixesTestCa
     doTest("Rename 'ex' to 'ignored'");
   }
 
+  public void testRenameToIgnoredFixAll() {
+    doTest("Fix all 'Catch block may ignore exception' problems in file");
+  }
+
   public void testRenameToIgnoredJava21() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> doTest("Rename 'ex' to '_'"));
   }

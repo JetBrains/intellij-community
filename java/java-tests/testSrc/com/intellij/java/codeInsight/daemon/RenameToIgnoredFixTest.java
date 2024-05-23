@@ -63,6 +63,30 @@ public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTes
                               }""");
     });
   }
+  
+  public void testRenameToIgnoredMultiple() {
+    myFixture.configureByText("Test.java", """
+      class X {
+        void test(int[] data) {
+          for(int <caret>x : data) System.out.println(1);
+          for(int x : data) System.out.println(2);
+          for(int x : data) System.out.println(3);
+        }
+      }
+      """);
+    myFixture.enableInspections(new UnusedDeclarationInspection());
+    IntentionAction intention = myFixture.findSingleIntention("Fix all 'Unused declaration' problems in file");
+    myFixture.launchAction(intention);
+    myFixture.checkResult("""
+                            class X {
+                              void test(int[] data) {
+                                for(int _ : data) System.out.println(1);
+                                for(int _ : data) System.out.println(2);
+                                for(int _ : data) System.out.println(3);
+                              }
+                            }
+                            """);
+  }
 
   public void testRenameToIgnoredSwitch2() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {

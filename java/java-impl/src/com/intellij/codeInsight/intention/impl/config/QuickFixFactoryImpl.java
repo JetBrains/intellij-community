@@ -681,9 +681,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement,
-                                                                                       boolean useElementNameAsSuffix) {
-    return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix);
+  public @NotNull IntentionAction createRenameToIgnoredFix(@NotNull PsiVariable namedElement, boolean useElementNameAsSuffix) {
+    return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix).asIntention();
   }
 
   @Override
