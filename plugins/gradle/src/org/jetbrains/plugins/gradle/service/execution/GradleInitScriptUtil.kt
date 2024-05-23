@@ -3,6 +3,8 @@
 
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
+import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
@@ -174,21 +176,24 @@ fun loadApplicationInitScript(
   useArgsFile: Boolean,
   useClasspathFile: Boolean
 ): String {
-  return loadInitScript(
-    "/org/jetbrains/plugins/gradle/tooling/internal/init/ApplicationTaskInitScript.gradle",
-    mapOf(
-      "GRADLE_PATH" to gradlePath.toGroovyStringLiteral(),
-      "RUN_APP_TASK_NAME" to runAppTaskName.toGroovyStringLiteral(),
-      "MAIN_CLASS_TO_RUN" to mainClassToRun.toGroovyStringLiteral(),
-      "JAVA_EXE_PATH" to "mapPath(${javaExePath.toGroovyStringLiteral()})",
-      "SOURCE_SET_NAME" to sourceSetName.toGroovyStringLiteral(),
-      "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "null" else javaModuleName.toGroovyStringLiteral(),
-      "INTELLIJ_RT_PATH" to if (intelliJRtPath.isNullOrEmpty()) "null" else "mapPath(${intelliJRtPath.toGroovyStringLiteral()})",
-      "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
-      "PARAMS" to if (params.isNullOrEmpty()) "".toGroovyStringLiteral() else params.toGroovyStringLiteral(),
-      "USE_MANIFEST_JAR" to useManifestJar.toString(),
-      "USE_ARGS_FILE" to useArgsFile.toString(),
-      "USE_CLASSPATH_FILE" to useClasspathFile.toString()
+  return joinInitScripts(
+    loadToolingApiProvidingInitScript(),
+    loadInitScript(
+      "/org/jetbrains/plugins/gradle/tooling/internal/init/ApplicationTaskInitScript.gradle",
+      mapOf(
+        "GRADLE_PATH" to gradlePath.toGroovyStringLiteral(),
+        "RUN_APP_TASK_NAME" to runAppTaskName.toGroovyStringLiteral(),
+        "MAIN_CLASS_TO_RUN" to mainClassToRun.toGroovyStringLiteral(),
+        "JAVA_EXE_PATH" to "mapPath(${javaExePath.toGroovyStringLiteral()})",
+        "SOURCE_SET_NAME" to sourceSetName.toGroovyStringLiteral(),
+        "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "null" else javaModuleName.toGroovyStringLiteral(),
+        "INTELLIJ_RT_PATH" to if (intelliJRtPath.isNullOrEmpty()) "null" else "mapPath(${intelliJRtPath.toGroovyStringLiteral()})",
+        "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
+        "PARAMS" to if (params.isNullOrEmpty()) "".toGroovyStringLiteral() else params.toGroovyStringLiteral(),
+        "USE_MANIFEST_JAR" to useManifestJar.toString(),
+        "USE_ARGS_FILE" to useArgsFile.toString(),
+        "USE_CLASSPATH_FILE" to useClasspathFile.toString()
+      )
     )
   )
 }
@@ -255,6 +260,17 @@ fun createInitScript(prefix: String, content: String): Path {
       return candidate
     }
   }
+}
+
+private fun loadToolingApiProvidingInitScript(): String {
+  val tapiClasspath = getToolingExtensionsJarPaths(setOf(
+    GradleToolingExtensionImplClass::class.java,
+    GradleToolingExtensionClass::class.java
+  )).toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
+  return loadInitScript(
+    "/org/jetbrains/plugins/gradle/tooling/internal/init/ClassPathExtensionInitScript.gradle",
+    mapOf("EXTENSIONS_JARS_PATH" to tapiClasspath)
+  )
 }
 
 private fun isContentEquals(path: Path, content: ByteArray): Boolean {

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import org.gradle.util.GradleVersion
 
 import java.util.jar.JarOutputStream
@@ -59,7 +60,7 @@ allprojects {
     else {
       projectPath = project.identityPath.toString()
     }
-    if (projectPath == Properties.gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
+    if (projectPath == Properties.gradlePath && JavaPluginUtil.isJavaPluginApplied(project)) {
       def overwrite = project.tasks.findByName(Properties.runAppTaskName) != null
       project.tasks.create(name: Properties.runAppTaskName, overwrite: overwrite, type: JavaExec) {
         if (javaExePath) executable = javaExePath
