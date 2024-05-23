@@ -191,6 +191,7 @@ com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension
 - sf:RUNTIME_MODULE_DIR_KEY:com.intellij.openapi.util.Key
 - a:debugConfigurationSettings(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.execution.RunnerAndConfigurationSettings
 - a:id():java.lang.String
+- initializationCode(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.util.List
 - initializationCode(java.lang.String,java.lang.String):java.util.List
 - splitParameters(java.lang.String):java.util.HashMap
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact

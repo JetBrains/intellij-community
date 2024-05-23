@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.debugger;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,14 @@ public interface DebuggerBackendExtension {
 
   String id();
 
+  default List<String> initializationCode(@Nullable Project project, @NotNull String dispatchPort, @NotNull String parameters) {
+    return initializationCode(dispatchPort, parameters);
+  }
+
+  /**
+   * @deprecated use {@link #initializationCode(Project, String, String)}
+   */
+  @Deprecated
   default List<String> initializationCode(@NotNull String dispatchPort, @NotNull String parameters) {
     return new ArrayList();
   }

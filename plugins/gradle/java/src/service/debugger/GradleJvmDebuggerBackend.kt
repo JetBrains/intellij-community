@@ -31,10 +31,9 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     return runSettings
   }
 
-  override fun initializationCode(dispatchPort: String, parameters: String): List<String> {
+  override fun initializationCode(project: Project?, dispatchPort: String, parameters: String): List<String> {
     val javaParameters = JavaParameters()
-    // TODO: need to pass project instance here to support @Async annotations
-    RemoteConnectionBuilder.addDebuggerAgent(javaParameters, null, false)
+    RemoteConnectionBuilder.addDebuggerAgent(javaParameters, project, false)
     val jvmArgs = javaParameters.vmParametersList.list.filterNot { it.startsWith("-agentlib:jdwp=") }
     val initScript = loadJvmDebugInitScript(id(), parameters, jvmArgs)
     return initScript.split("\n")

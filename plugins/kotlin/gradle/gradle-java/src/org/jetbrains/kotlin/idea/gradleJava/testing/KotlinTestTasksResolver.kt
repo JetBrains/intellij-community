@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
 import org.gradle.tooling.model.idea.IdeaModule
@@ -84,9 +85,10 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
     }
 
     override fun enhanceTaskProcessing(
-        taskNames: MutableList<String>,
-        initScriptConsumer: Consumer<String>,
-        parameters: MutableMap<String, String>
+      project: Project?,
+      taskNames: MutableList<String>,
+      initScriptConsumer: Consumer<String>,
+      parameters: MutableMap<String, String>
     ) {
         if (!Registry.`is`(ENABLED_REGISTRY_KEY))
             return

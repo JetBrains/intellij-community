@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.google.gson.GsonBuilder;
@@ -142,7 +142,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       setupDebuggerDispatchPort(settings);
       setupBuiltInTestEvents(settings, gradleVersion);
 
-      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
+      appendInitScriptArgument(id.findProject(), tasks, jvmParametersSetup, settings, gradleVersion);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
@@ -334,10 +334,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings
   ) {
-    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
+    appendInitScriptArgument(null, taskNames, jvmParametersSetup, effectiveSettings, null);
   }
 
   private static void appendInitScriptArgument(
+    @Nullable Project project,
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings,
@@ -371,7 +372,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
       }
 
-      resolverExtension.enhanceTaskProcessing(taskNames, script -> {
+      resolverExtension.enhanceTaskProcessing(project, taskNames, script -> {
         if (StringUtil.isNotEmpty(script)) {
           addAllNotNull(
             initScripts,
