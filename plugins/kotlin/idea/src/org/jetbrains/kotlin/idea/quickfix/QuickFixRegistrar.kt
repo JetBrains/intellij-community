@@ -740,7 +740,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MUST_BE_INITIALIZED.registerFactory(ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
 
-        TOO_MANY_ARGUMENTS.registerFactory(RemoveArgumentFix)
+        TOO_MANY_ARGUMENTS.registerFactory(RemoveArgumentFixFactory)
 
         AMBIGUOUS_SUPER.registerFactory(SpecifySuperTypeFix)
 
