@@ -40,7 +40,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.idea.community.customization",
             "intellij.java.ide.resources",
             "intellij.xml.dom",
-            "intellij.platform.coverage"        // layout.withModule("intellij.platform.coverage", productLayout.mainJarName)
         )
 
         productLayout.addPlatformSpec(javaCompiler)
