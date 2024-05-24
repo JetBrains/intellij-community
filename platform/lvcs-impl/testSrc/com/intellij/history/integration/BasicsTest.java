@@ -3,13 +3,13 @@ package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,12 +24,14 @@ public class BasicsTest extends IntegrationTestCase {
   public void testProcessingCommands() {
     final VirtualFile[] f = new VirtualFile[1];
 
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
-      @Override
-      public void doRun() throws IOException {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
         f[0] = createChildData(myRoot, "f1.txt");
         f[0].setBinaryContent(new byte[]{1});
         f[0].setBinaryContent(new byte[]{2});
+      }
+      catch (IOException e) {
+        ExceptionUtil.rethrow(e);
       }
     }, "name", null));
 

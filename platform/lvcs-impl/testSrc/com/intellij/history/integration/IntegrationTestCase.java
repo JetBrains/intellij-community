@@ -8,7 +8,6 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
-import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,6 +25,7 @@ import com.intellij.platform.lvcs.impl.RevisionId;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,10 +64,12 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
 
     myGateway = new IdeaGateway();
 
-    ApplicationManager.getApplication().runWriteAction(new RunnableAdapter() {
-      @Override
-      public void doRun() throws Exception {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
         setUpInWriteAction();
+      }
+      catch (Exception e) {
+        ExceptionUtil.rethrow(e);
       }
     });
   }
