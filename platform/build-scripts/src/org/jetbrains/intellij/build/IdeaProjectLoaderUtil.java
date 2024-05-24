@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build;
 
 import com.intellij.util.lang.UrlClassLoader;
@@ -88,6 +88,10 @@ public final class IdeaProjectLoaderUtil {
 
     var path = getPathFromClass(klass);
     if (!path.toString().endsWith("class")) {
+      String ideaHomePath = System.getProperty("idea.home.path");
+      if (ideaHomePath != null) {
+        return Path.of(ideaHomePath);
+      }
       throw new IllegalArgumentException(
         String.format("To guess idea home, you must provide class that resides in .class file inside of idea home dir. " +
                       "But provided %s resides in %s", klass, path));
