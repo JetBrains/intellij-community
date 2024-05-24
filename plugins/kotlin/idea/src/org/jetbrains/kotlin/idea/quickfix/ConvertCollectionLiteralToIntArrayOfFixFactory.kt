@@ -7,11 +7,11 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters1
 
 internal object ConvertCollectionLiteralToIntArrayOfFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-        val value = (diagnostic as? DiagnosticWithParameters1<*, *>)?.a as? String ?: return null
+        val unsupported = (diagnostic as? DiagnosticWithParameters1<*, *>)?.a as? String ?: return null
 
         return ConvertCollectionLiteralToIntArrayOfFix.createIfApplicable(
             element = diagnostic.psiElement,
-            unsupportedFeature = value
+            unsupportedFeature = unsupported
         )?.asIntention()
     }
 }
