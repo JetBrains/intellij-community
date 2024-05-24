@@ -16,6 +16,7 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ import java.util.function.Function;
  * 
  * @param <T> type of the elements in the list, for which the preview is supported.
  */
+@ApiStatus.Internal
 public final class PreviewHandler<T> {
   private final IntentionPreviewPopupUpdateProcessor myProcessor;
   private final ListPopup myListPopup;

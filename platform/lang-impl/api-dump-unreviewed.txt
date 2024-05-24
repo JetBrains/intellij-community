@@ -7881,9 +7881,6 @@ f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdatePro
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
 - java.lang.UnsupportedOperationException
 - <init>():V
-f:com.intellij.codeInsight.intention.impl.preview.PreviewHandler
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.ListPopup,java.lang.Class,java.util.function.Function):V
-- showInitially():V
 com.intellij.codeInsight.lookup.LookupActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:fillActions(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.Lookup,com.intellij.util.Consumer):V
