@@ -5,6 +5,8 @@ public class Test {
       switch (object) {
           case String s -> System.out.println("string");
           case Object o -> System.out.println("object");
+          case null -> {
+          }
       }
   }
 }
