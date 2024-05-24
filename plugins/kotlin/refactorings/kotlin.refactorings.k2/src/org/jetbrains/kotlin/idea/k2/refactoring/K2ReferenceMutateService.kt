@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -234,10 +234,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
-        allowAnalysisFromWriteAction {
-            if (ktReference is KtSymbolBasedReference) {
-                @OptIn(KaAllowAnalysisOnEdt::class)
-                allowAnalysisOnEdt {
+        return allowAnalysisFromWriteAction {
+            @OptIn(KaAllowAnalysisOnEdt::class)
+            allowAnalysisOnEdt {
+                if (ktReference is KaSymbolBasedReference) {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()
                         if (symbol is KtSyntheticJavaPropertySymbol) {
@@ -250,9 +250,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                         }
                     }
                 }
-            }
 
-            return super.handleElementRename(ktReference, newElementName)
+                super.handleElementRename(ktReference, newElementName)
+            }
         }
     }
 
