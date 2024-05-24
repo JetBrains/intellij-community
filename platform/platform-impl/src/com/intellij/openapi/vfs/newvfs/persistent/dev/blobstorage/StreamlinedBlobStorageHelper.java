@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
@@ -8,10 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
-import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
-import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.blobstorage.*;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
@@ -39,7 +36,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
  * of responsibilities -- i.e. extracting all storage-specific functionality under common interface,
  * and implement adapters for different storages.
  */
-public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobStorage {
+public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobStorage, BlobStorageStatistics {
 
   /** First header int32, used to recognize this storage's file type */
   protected static final int MAGIC_WORD = IOUtil.asciiToMagicWord("SBlS");
@@ -260,22 +257,27 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     return recordsAllocated.get() - recordsDeleted.get() - recordsRelocated.get();
   }
 
+  @Override
   public int recordsAllocated() {
     return recordsAllocated.get();
   }
 
+  @Override
   public int recordsRelocated() {
     return recordsRelocated.get();
   }
 
+  @Override
   public int recordsDeleted() {
     return recordsDeleted.get();
   }
 
+  @Override
   public long totalLiveRecordsPayloadBytes() {
     return totalLiveRecordsPayloadBytes.get();
   }
 
+  @Override
   public long totalLiveRecordsCapacityBytes() {
     return totalLiveRecordsCapacityBytes.get();
   }
