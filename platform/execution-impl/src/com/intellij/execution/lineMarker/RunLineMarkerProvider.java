@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -65,6 +67,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     Icon icon = null;
     List<Info> infos = null;
     for (RunLineMarkerContributor contributor : contributors) {
+      ProgressManager.checkCanceled();
       Info info = contributor.getInfo(element);
       if (info == null) {
         continue;
