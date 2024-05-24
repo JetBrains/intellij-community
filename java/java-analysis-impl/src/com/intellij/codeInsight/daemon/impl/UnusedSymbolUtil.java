@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -135,8 +135,17 @@ public final class UnusedSymbolUtil {
                                      @NotNull GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(method)) return true;
 
-    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
+    if ("value".equals(method.getName()) && 
+        method.getReturnType() instanceof PsiArrayType && 
+        containingClass != null && 
+        containingClass.isAnnotationType() &&
+        isClassUsed(project, containingFile, containingClass, helper)) {
+      // conservative @Repeatable container annotation check
+      // consider value() method with array return type used, when the containing @interface is used
+      return true;
+    }
+    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return true;
     if (isPrivate) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {

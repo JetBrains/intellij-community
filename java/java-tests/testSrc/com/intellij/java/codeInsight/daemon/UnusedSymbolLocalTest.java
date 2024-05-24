@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -21,6 +7,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -33,13 +20,14 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+    enableInspectionTool(new UnusedDeclarationInspection(true));
   }
 
   public void testInnerClass() throws Exception { doTest(); }
   public void testInnerClassWithMainMethod() throws Exception { doTest(); }
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
+  public void testRepeatableAnnotation() throws Exception { doTest(); }
   public void testPrivateConstructor() throws Exception { doTest(); }
   public void testImplicitClassInstanceMainWithoutParams() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_21_PREVIEW, () -> {
@@ -58,7 +46,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
     doTest();
     final Document document = myEditor.getDocument();
     Collection<HighlightInfo> collection = doHighlighting(HighlightSeverity.WARNING);
-    assertEquals(0, collection.size());
+    assertEquals(2, collection.size());
 
     final int offset = myEditor.getCaretModel().getOffset();
     WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(offset, "//"));
@@ -66,10 +54,15 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
 
     Collection<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-    assertEquals(1, infos.size());
+    assertEquals(3, infos.size());
   }
 
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }
