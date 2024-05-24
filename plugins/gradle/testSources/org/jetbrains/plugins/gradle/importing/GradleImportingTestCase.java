@@ -350,10 +350,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     importProject();
   }
 
-  protected void importProject() {
-    importProject((Boolean)null);
-  }
-
   protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
     throws IOException {
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
@@ -365,7 +361,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   @Override
-  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
     }

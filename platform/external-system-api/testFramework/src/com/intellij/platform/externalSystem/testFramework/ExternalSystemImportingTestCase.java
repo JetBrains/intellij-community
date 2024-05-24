@@ -47,7 +47,6 @@ import com.intellij.testFramework.utils.module.ModuleAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -438,21 +437,21 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     ProjectDataManager.getInstance().importData(projectDataNode, myProject);
   }
 
-  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
     createProjectConfig(config);
     importProject(skipIndexing);
   }
 
-  protected void importProject(Boolean skipIndexing) {
+  protected void importProject(@Nullable Boolean skipIndexing) {
     if (skipIndexing != null) {
-      PlatformTestUtil.withSystemProperty("idea.skip.indices.initialization", skipIndexing.toString(), () -> doImportProject());
+      PlatformTestUtil.withSystemProperty("idea.skip.indices.initialization", skipIndexing.toString(), () -> importProject());
     }
     else {
-      doImportProject();
+      importProject();
     }
   }
 
-  private void doImportProject() {
+  protected void importProject() {
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, getExternalSystemId());
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
     projectSettings.setExternalProjectPath(getProjectPath());
