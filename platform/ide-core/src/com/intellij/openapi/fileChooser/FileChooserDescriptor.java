@@ -215,7 +215,7 @@ public class FileChooserDescriptor implements Cloneable {
   @ApiStatus.Internal
   FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter, String type) {
     myFileFilter = filter;
-    putUserData(FILTER_TYPE, type);
+    putUserData(FILTER_TYPE, filter != null ? "other" : null);
     return this;
   }
 
