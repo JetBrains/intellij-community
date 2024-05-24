@@ -430,7 +430,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
                     is KtLibraryModule -> {
                         // For decompiled declarations, we can try light element conversion (only).
-                        (resolvedTargetElement as? KtElement)?.toPsiElementAsLightElement()?.let { return it }
+                        (resolvedTargetElement as? KtElement)?.toPsiElementAsLightElement(ktExpression)?.let { return it }
                     }
 
                     else -> {}

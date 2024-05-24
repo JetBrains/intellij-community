@@ -104,6 +104,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLocalResolve(myFixture)
     }
 
+    fun testGetJavaClass() {
+        checkGetJavaClass(myFixture)
+    }
+
     fun testResolveLocalDefaultConstructor() {
         checkResolveLocalDefaultConstructor(myFixture)
     }
@@ -294,5 +298,17 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveInnerInlineFromLibrary() {
         checkResolveInnerInlineFromLibrary(myFixture)
+    }
+
+    fun testResolveJvmNameOnFunctionFromLibrary() {
+        checkResolveJvmNameOnFunctionFromLibrary(myFixture)
+    }
+
+    fun testResolveJvmNameOnGetterFromLibrary() {
+        checkResolveJvmNameOnGetterFromLibrary(myFixture)
+    }
+
+    fun testResolveJvmNameOnSetterFromLibrary() {
+        checkResolveJvmNameOnSetterFromLibrary(myFixture)
     }
 }

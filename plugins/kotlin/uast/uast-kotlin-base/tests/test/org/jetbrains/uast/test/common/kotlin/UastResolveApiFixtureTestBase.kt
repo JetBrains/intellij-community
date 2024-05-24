@@ -9,6 +9,7 @@ import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.replaceService
@@ -413,6 +414,25 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolved = uCallExpression.resolve()
             .orFail("cant resolve from $uCallExpression")
         TestCase.assertEquals("bar", resolved.name)
+    }
+
+    fun checkGetJavaClass(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  fun test() {
+                    val x = Test::class.ja<caret>va
+                  }
+                }
+            """
+        )
+        val j = myFixture.file.findElementAt(myFixture.caretOffset).toUElement()?.getParentOfType<USimpleNameReferenceExpression>()
+            .orFail("cant convert to USimpleNameReferenceExpression")
+        val resolved = j.resolve() as? PsiMethod
+        // With @JvmName("getJavaClass") on getter
+        TestCase.assertEquals("getJavaClass", resolved?.name)
+        // Java Class, not KClass
+        TestCase.assertEquals("java.lang.Class<T>", resolved?.returnType?.canonicalText)
     }
 
     fun checkResolveLocalDefaultConstructor(myFixture: JavaCodeInsightTestFixture) {
@@ -2330,6 +2350,108 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         })
 
         mockLibraryFacility.tearDown(myFixture.module)
+    }
+
+    fun checkResolveJvmNameOnFunctionFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "test/pkg/LibObj.kt", """
+                package test.pkg
+
+                object LibObj{
+                    @JvmName("notFoo")
+                    fun foo() {}
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.LibObj
+
+                fun test() {
+                    LibObj.f<caret>oo()
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+                .orFail("cant convert to UCallExpression")
+            val resolved = uCallExpression.resolve()
+            TestCase.assertNotNull(resolved)
+            TestCase.assertEquals("notFoo", resolved!!.name)
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
+    fun checkResolveJvmNameOnGetterFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "test/pkg/util.kt", """
+                package test.pkg
+                
+                val Int.prop: Int
+                    @JvmName("ownPropGetter")
+                    get() = this * 31
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.*
+
+                fun test() {
+                    42.p<caret>rop
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val p = myFixture.file.findElementAt(myFixture.caretOffset).toUElement()?.getParentOfType<USimpleNameReferenceExpression>()
+                .orFail("cant convert to USimpleNameReferenceExpression")
+            val resolved = p.resolve() as? PsiMethod
+            TestCase.assertNotNull(resolved)
+            TestCase.assertEquals("ownPropGetter", resolved!!.name)
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
+    fun checkResolveJvmNameOnSetterFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "test/pkg/Test.kt", """
+                package test.pkg
+                
+                class Test(
+                    var x: Int
+                ) {
+                }
+
+                var Test.ext: Int
+                    get() = this.x
+                    @JvmName("ownPropSetter")
+                    set(value) {
+                        this.x = value * 31
+                    }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.*
+
+                fun test(t: Test) {
+                    t.ex<caret>t = 42
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val ext = myFixture.file.findElementAt(myFixture.caretOffset).toUElement()?.getParentOfType<USimpleNameReferenceExpression>()
+                .orFail("cant convert to USimpleNameReferenceExpression")
+            val resolved = ext.resolve() as? PsiMethod
+            TestCase.assertNotNull(resolved)
+            TestCase.assertEquals("ownPropSetter", resolved!!.name)
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
     }
 
     private fun JavaCodeInsightTestFixture.configureLibraryByText(
