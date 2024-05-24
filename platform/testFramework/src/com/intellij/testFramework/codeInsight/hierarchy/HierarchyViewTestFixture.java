@@ -6,7 +6,7 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,9 +63,9 @@ public final class HierarchyViewTestFixture {
     catch (Throwable e) {
       String actual = dump(treeStructure, null, comparator, 0);
       if (!expectedStructure.equals(actual)) {
-        throw new FileComparisonFailure("XML structure comparison for your convenience, actual failure details BELOW",
-                                        expectedStructure, actual,
-                                        expectedFile == null ? null : expectedFile.getAbsolutePath());
+        throw new FileComparisonFailedError("XML structure comparison for your convenience, actual failure details BELOW",
+                                            expectedStructure, actual,
+                                            expectedFile == null ? null : expectedFile.getAbsolutePath());
       }
       throw new RuntimeException(e);
     }

@@ -46,12 +46,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
@@ -488,7 +488,7 @@ public final class EditorTestUtil {
         String actual = CaretAndSelectionMarkup.renderActualState(editor);
         if (expectedFilePath != null) {
           if (!expected.equals(actual)) {
-            throw new FileComparisonFailure(e.getMessage(), expected, actual, expectedFilePath);
+            throw new FileComparisonFailedError(e.getMessage(), expected, actual, expectedFilePath);
           }
         } else {
           assertEquals(e.getMessage(), expected, actual);

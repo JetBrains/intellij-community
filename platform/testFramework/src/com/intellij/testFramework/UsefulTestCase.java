@@ -23,10 +23,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -987,7 +987,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Objects.equals(expected, actual)) {
-      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+      throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
 
@@ -997,7 +997,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertTextEquals(@Nullable String message, @NotNull String expectedText, @NotNull String actualText) {
     if (!expectedText.equals(actualText)) {
-      throw new FileComparisonFailure(Strings.notNullize(message), expectedText, actualText, null);
+      throw new FileComparisonFailedError(Strings.notNullize(message), expectedText, actualText, null);
     }
   }
 

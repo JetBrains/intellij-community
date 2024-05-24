@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.util.TextRange
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import junit.framework.ComparisonFailure
@@ -87,7 +87,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       entries.asReversed().forEach { proposedText.insert(it.first, it.second) }
 
       VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
-        throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
+        throw FileComparisonFailedError("Hints differ", originalText, proposedText.toString(), originalPath)
       } ?: throw ComparisonFailure("Hints differ", originalText, proposedText.toString())
     }
 

@@ -5,7 +5,7 @@ import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
 import org.intellij.lang.annotations.Language
@@ -29,7 +29,7 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
 
     val expected = JDOMUtil.load(file)
     if (!JDOMUtil.areElementsEqual(actual, expected)) {
-      throw FileComparisonFailure(null, StringUtilRt.convertLineSeparators(Files.readString(file)), JDOMUtil.writeElement(actual!!), file.toString())
+      throw FileComparisonFailedError(null, StringUtilRt.convertLineSeparators(Files.readString(file)), JDOMUtil.writeElement(actual!!), file.toString())
     }
     return this
   }

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -35,7 +36,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
@@ -404,7 +404,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
       String actualText = StringUtil.convertLineSeparators(myFile.getText());
       if (!Objects.equals(expectedText, actualText)) {
-        throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+        throw new FileComparisonFailedError("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
       }
 
       EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);

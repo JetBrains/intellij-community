@@ -37,11 +37,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -443,7 +443,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       String fileText1 = myFile.getText();
       String failMessage = getMessage("Text mismatch", message);
       if (filePath != null && !newFileText.equals(fileText1)) {
-        throw new FileComparisonFailure(failMessage, newFileText, fileText1, filePath);
+        throw new FileComparisonFailedError(failMessage, newFileText, fileText1, filePath);
       }
       assertEquals(failMessage, newFileText, fileText1);
 
@@ -469,7 +469,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       String fileText1 = editor.getDocument().getText();
       String failMessage = getMessage("Text mismatch", message);
       if (filePath != null && !newFileText.equals(fileText1)) {
-        throw new FileComparisonFailure(failMessage, newFileText, fileText1, filePath);
+        throw new FileComparisonFailedError(failMessage, newFileText, fileText1, filePath);
       }
       assertEquals(failMessage, newFileText, fileText1);
 

@@ -108,6 +108,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -124,7 +125,6 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.api.RenameTarget;
 import com.intellij.refactoring.rename.impl.RenameKt;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
@@ -1881,7 +1881,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     if (!Objects.equals(expectedText, actualText)) {
       if (loader.filePath == null) {
-        throw new FileComparisonFailure(expectedFile, expectedText, actualText, null);
+        throw new FileComparisonFailedError(expectedFile, expectedText, actualText, null);
       }
 
       if (loader.caretState.hasExplicitCaret()) {
@@ -1895,7 +1895,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           expectedText = stripTrailingSpaces(expectedText);
         }
       }
-      throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
+      throw new FileComparisonFailedError(expectedFile, expectedText, actualText, loader.filePath);
     }
 
     EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState, expectedFile, loader.filePath);
@@ -2016,7 +2016,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     String actual = getFoldingDescription(doCheckCollapseStatus);
     if (!expectedContent.equals(actual)) {
-      throw new FileComparisonFailure(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
+      throw new FileComparisonFailedError(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
     }
   }
 
