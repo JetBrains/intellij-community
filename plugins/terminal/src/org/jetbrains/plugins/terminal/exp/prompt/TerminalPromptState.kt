@@ -13,5 +13,6 @@ data class TerminalPromptState(
   val virtualEnv: String? = null,
   val condaEnv: String? = null,
   val originalPrompt: String? = null,
-  val originalRightPrompt: String? = null
+  val originalRightPrompt: String? = null,
+  val shellName: String? = null
 )

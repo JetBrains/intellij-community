@@ -14,6 +14,10 @@ import org.jetbrains.annotations.ApiStatus
 interface TerminalPromptModel : Disposable {
   val editor: EditorEx
 
+  /** Values used to build the prompt string */
+  @get:RequiresEdt
+  val promptState: TerminalPromptState
+
   /** Text and highlightings of the prompt string. Command text is not included there. */
   @get:RequiresEdt
   val renderingInfo: TerminalPromptRenderingInfo

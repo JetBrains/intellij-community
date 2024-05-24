@@ -40,7 +40,8 @@ internal class TerminalPromptModelImpl(
 
   private var rightPromptManager: RightPromptManager? = null
 
-  private var curPromptState: TerminalPromptState = TerminalPromptState(currentDirectory = "")
+  override var promptState: TerminalPromptState = TerminalPromptState(currentDirectory = "")
+    private set
 
   override var renderingInfo: TerminalPromptRenderingInfo = TerminalPromptRenderingInfo("", emptyList())
     private set
@@ -65,7 +66,7 @@ internal class TerminalPromptModelImpl(
     })
     TerminalOptionsProvider.instance.addListener(this) {
       renderer = createPromptRenderer()
-      updatePrompt(curPromptState)
+      updatePrompt(promptState)
     }
   }
 
@@ -82,7 +83,7 @@ internal class TerminalPromptModelImpl(
     val updatedInfo = renderer.calculateRenderingInfo(state)
     runInEdt {
       doUpdatePrompt(updatedInfo)
-      curPromptState = state
+      promptState = state
       renderingInfo = updatedInfo
     }
   }

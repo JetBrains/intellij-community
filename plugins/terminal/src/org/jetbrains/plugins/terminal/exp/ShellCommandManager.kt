@@ -91,7 +91,8 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
       virtualEnv = Param.VIRTUAL_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(5)),
       condaEnv = Param.CONDA_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(6)),
       originalPrompt = Param.ORIGINAL_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(7)),
-      originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(8))
+      originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(8)),
+      shellName = session.shellIntegration.shellType.toString().lowercase()
     )
     firePromptStateUpdated(state)
   }
