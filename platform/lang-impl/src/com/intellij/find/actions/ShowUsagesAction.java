@@ -287,17 +287,24 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandlerBase handler;
+    FindUsagesOptions options;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
+      if (handler == null) return null;
+      //noinspection deprecation
+      DataContext dataContext = DataManager.getInstance().getDataContext();
+      options = handler.getFindUsagesOptions(dataContext);
+      if (options instanceof PersistentFindUsagesOptions) {
+        ((PersistentFindUsagesOptions)options).setDefaults(project);
+      }
+      if (scope != null) {
+        options.searchScope = scope;
+      }
+      else {
+        options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+      }
     }
-    if (handler == null) return null;
-    //noinspection deprecation
-    FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
-    if (options instanceof PersistentFindUsagesOptions) {
-      ((PersistentFindUsagesOptions)options).setDefaults(project);
-    }
-    if (scope != null) options.searchScope = scope;
-    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), 
+    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition),
                                        createActionHandler(handler, options, title));
   }
 
