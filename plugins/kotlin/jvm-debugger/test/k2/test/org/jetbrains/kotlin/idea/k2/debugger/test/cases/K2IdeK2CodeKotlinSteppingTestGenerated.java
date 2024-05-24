@@ -1328,6 +1328,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/filterPropertyAccessCallsFromInlineClass.kt");
         }
 
+        @TestMetadata("filterSameFunctionCalls.kt")
+        public void testFilterSameFunctionCalls() throws Exception {
+            runTest("../testData/stepping/custom/filterSameFunctionCalls.kt");
+        }
+
         @TestMetadata("filterSingleFunctionCall.kt")
         public void testFilterSingleFunctionCall() throws Exception {
             runTest("../testData/stepping/custom/filterSingleFunctionCall.kt");
@@ -1741,6 +1746,16 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
         @TestMetadata("smartStepIntoSamLambdaFromKotlinFunInterface.kt")
         public void testSmartStepIntoSamLambdaFromKotlinFunInterface() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoSamLambdaFromKotlinFunInterface.kt");
+        }
+
+        @TestMetadata("smartStepIntoSameMethods.kt")
+        public void testSmartStepIntoSameMethods() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoSameMethods.kt");
+        }
+
+        @TestMetadata("smartStepIntoSamePropertyAccess.kt")
+        public void testSmartStepIntoSamePropertyAccess() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoSamePropertyAccess.kt");
         }
 
         @TestMetadata("smartStepIntoStoredLambda.kt")

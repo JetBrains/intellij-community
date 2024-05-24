@@ -306,11 +306,14 @@ class SmartStepTargetVisitor(
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
+        // Collect arguments first for correct method ordinals.
+        // Here `_i` suffixes represent the ordinals:
+        // foo_2(foo_1(foo_0())) + foo_3()
+        super.visitCallExpression(expression)
         val calleeExpression = expression.calleeExpression
         if (calleeExpression != null && checkLineRangeFits(expression.getLineRange())) {
             recordFunctionCall(expression, calleeExpression)
         }
-        super.visitCallExpression(expression)
     }
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {

@@ -33,6 +33,8 @@ open class KotlinMethodFilter(
 ) : NamedMethodFilter {
     private val elementPtr = element?.createSmartPointer()
 
+    override fun getSkipCount(): Int = methodInfo.ordinal
+
     // TODO(KTIJ-23034): make Location non-null (because actually it's always non null) in next PR.
     //  This wasn't done in current PR because this it going to be cherry-picked to kt- branches, and we can't modify java debugger part.
     override fun locationMatches(process: DebugProcessImpl, location: Location?, frameProxy: StackFrameProxyImpl?): Boolean {

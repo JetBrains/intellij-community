@@ -84,6 +84,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         if (session != null) {
             targets = calculateSmartStepTargetsToShow(targets, session.process, lines.toClosedRange())
         }
+        targets = targets.sortedBy { it.highlightElement?.textOffset ?: 0 }
         return reorderWithSteppingFilters(targets)
     }
 }
@@ -98,7 +99,10 @@ private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<Sm
 private fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarget>, debugProcess: DebugProcessImpl, lines: ClosedRange<Int>): List<SmartStepTarget> {
     val methodTargets = targets.filterIsInstance<KotlinMethodSmartStepTarget>()
     val notYetExecutedMethodTargets = methodTargets.filterAlreadyExecuted(debugProcess, lines).toHashSet()
-    return targets.filter { it !is KotlinMethodSmartStepTarget || it in notYetExecutedMethodTargets }
+    val targetsToShow = targets.filter { it !is KotlinMethodSmartStepTarget || it in notYetExecutedMethodTargets }
+    val removed = methodTargets.toHashSet() - notYetExecutedMethodTargets
+    fixOrdinalsAfterFiltering(targets, removed)
+    return targetsToShow
 }
 
 private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
@@ -111,6 +115,21 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
     val location = frameProxy?.safeLocation() ?: return this
     return filterSmartStepTargets(location, lines, this, debugProcess)
+}
+
+private fun fixOrdinalsAfterFiltering(all: List<SmartStepTarget>, removed: Set<KotlinMethodSmartStepTarget>) {
+    for (removedTarget in removed) {
+        fixOrdinalsAfterTargetRemoval(removedTarget, all)
+    }
+}
+
+private fun fixOrdinalsAfterTargetRemoval(removedTarget: KotlinMethodSmartStepTarget, all: List<SmartStepTarget>) {
+    val removedOrdinal = removedTarget.methodInfo.ordinal
+    for (target in all.targetsWithDeclaration(removedTarget.getDeclaration())) {
+        if (target.methodInfo.ordinal > removedOrdinal) {
+            target.methodInfo.ordinal -= 1
+        }
+    }
 }
 
 /**

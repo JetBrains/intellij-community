@@ -57,7 +57,7 @@ class KotlinLambdaAsyncMethodFilter(
         // We failed to get the location inside lambda (it can happen for SAM conversions in IR backend).
         // So we fall back to ordinal check.
         if (locationInLambda == null) {
-            return visitedLocations == lambdaInfo.callerMethodInfo.ordinal
+            return visitedLocations == 1 + lambdaInfo.callerMethodInfo.ordinal
         }
         return lambdaFilter.locationMatches(process, locationInLambda)
     }
