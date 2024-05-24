@@ -15,8 +15,6 @@ public class LombokIncompleteModeHighlightingTest extends LightDaemonAnalyzerTes
 
   public void testLombokBasicsWithExplicitImport() { doTest(); }
 
-  public void testLombokLogs() { doTest(); }
-
   private void doTest() {
     doTest(getTestName(false) + ".java");
   }

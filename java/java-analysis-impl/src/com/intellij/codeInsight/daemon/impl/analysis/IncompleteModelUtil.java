@@ -236,7 +236,6 @@ final class IncompleteModelUtil {
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         PsiClass psiClass = ClassUtils.getContainingClass(ref);
-        if (canBeAugmented(psiClass)) return true;
         while (psiClass != null) {
           if (!isHierarchyResolved(psiClass)) return true;
           psiClass = ClassUtils.getContainingClass(psiClass);
