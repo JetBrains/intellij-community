@@ -25,6 +25,7 @@ import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
+import com.intellij.platform.ml.embeddings.utils.normalized
 import com.intellij.psi.PsiManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.TimeoutUtil
@@ -195,7 +196,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
         LocalEmbeddingServiceProvider.getInstance().indexingSession {
           suspend fun processChunk(chunk: HashMap<CharSequence, MutableList<IndexableEntity>>) {
             val orderedRepresentations = chunk.map { it.key as String }.toList()
-            val embeddings = embed(orderedRepresentations)
+            val embeddings = orderedRepresentations.map { embed(it).normalized() }
             // Associate embeddings with actual indexable entities again
             (orderedRepresentations.asSequence() zip embeddings.asSequence())
               .flatMap { (representation, embedding) -> chunk[representation]!!.map { it to embedding } }
