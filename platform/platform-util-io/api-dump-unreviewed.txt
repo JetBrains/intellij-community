@@ -12,7 +12,7 @@ com.intellij.execution.KillableProcess
 c:com.intellij.execution.RunCanceledByUserException
 - com.intellij.execution.ExecutionException
 - <init>():V
-c:com.intellij.execution.configurations.CompositeParameterTargetedValue
+*c:com.intellij.execution.configurations.CompositeParameterTargetedValue
 - <init>():V
 - <init>(java.lang.String):V
 - addLocalPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue

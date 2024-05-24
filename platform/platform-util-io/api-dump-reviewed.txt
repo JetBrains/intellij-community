@@ -12,6 +12,18 @@ com.intellij.execution.KillableProcess
 c:com.intellij.execution.RunCanceledByUserException
 - com.intellij.execution.ExecutionException
 - <init>():V
+*c:com.intellij.execution.configurations.CompositeParameterTargetedValue
+- <init>():V
+- <init>(java.lang.String):V
+- addLocalPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addPathPart(java.io.File):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addPathPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addPathSeparator():com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addTargetPart(java.lang.String,org.jetbrains.concurrency.Promise):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- getLocalValue():java.lang.String
+- getParts():java.util.List
+- s:targetizeParameters(java.util.List):java.util.Collection
+- toString():java.lang.String
 c:com.intellij.execution.configurations.GeneralCommandLine
 - com.intellij.openapi.util.UserDataHolder
 - <init>():V
