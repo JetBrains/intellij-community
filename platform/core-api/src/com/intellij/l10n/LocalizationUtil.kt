@@ -22,6 +22,7 @@ object LocalizationUtil {
   private var isL10nInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
   const val LOCALIZATION_KEY = "i18n.locale"
+  val l10nPluginIdToLanguageTag = mapOf(Pair("com.intellij.ja", "ja"), Pair("com.intellij.ko", "ko"), Pair("com.intellij.zh", "zh-CN"))
 
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {

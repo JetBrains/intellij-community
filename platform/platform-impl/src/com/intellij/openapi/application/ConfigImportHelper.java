@@ -80,6 +80,7 @@ import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FIL
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.AI_PLUGIN_ID;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.migrateAiForToolbox;
+import static com.intellij.openapi.application.migrations.Localization242Kt.enableL10nIfPluginInstalled;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
@@ -952,6 +953,8 @@ public final class ConfigImportHelper {
         Files.isDirectory(oldPluginsDir) ? collectPendingPluginUpdates(actionCommands, options.log) : __ -> false;
       migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, options, hasPendingUpdate);
     }
+
+    enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir, options.bundledPluginPath, options.brokenPluginVersions, options.compatibleBuildNumber);
 
     if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
