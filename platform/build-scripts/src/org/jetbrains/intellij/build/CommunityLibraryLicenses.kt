@@ -271,6 +271,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Clikt", libraryName = "clikt", url = "https://github.com/ajalt/clikt")
       .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
       .suppliedByOrganizations("AJ Alt"),
+    LibraryLicense(name = "CMake For VisualStudio Code", attachedTo = "intellij.textmate", version = "0.0.17",
+                   url = "https://github.com/twxs/vs.language.cmake",
+                   licenseUrl = "https://github.com/twxs/vs.language.cmake/blob/master/LICENSE").mit(),
     LibraryLicense(name = "Command Line Interface Parser for Java", libraryName = "cli-parser",
                    url = "https://code.google.com/p/cli-parser/").apache(),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
