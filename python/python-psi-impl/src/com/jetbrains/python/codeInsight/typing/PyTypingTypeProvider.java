@@ -1619,11 +1619,18 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   @Nullable
   public static PyVariadicType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    // TODO Add support for Unpacked here
-    if (!(element instanceof PyStarExpression starExpression)) return null;
-    var typeHint = starExpression.getExpression();
+    PyExpression typeHint;
+    if (element instanceof PyStarExpression starExpression) {
+      typeHint = starExpression.getExpression();
+    }
+    else if (element instanceof PySubscriptionExpression subscription &&
+             resolvesToQualifiedNames(subscription.getOperand(), context, UNPACK, UNPACK_EXT)) {
+      typeHint = subscription.getIndexExpression();
+    }
+    else {
+      return null;
+    }
     if (!(typeHint instanceof PyReferenceExpression) && !(typeHint instanceof PySubscriptionExpression)) return null;
-
     var typeRef = getType(typeHint, context);
     if (typeRef == null) return null;
     var expressionType = typeRef.get();
