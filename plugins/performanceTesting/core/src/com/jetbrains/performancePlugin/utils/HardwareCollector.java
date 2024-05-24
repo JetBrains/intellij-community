@@ -23,6 +23,7 @@
  */
 package com.jetbrains.performancePlugin.utils;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import java.util.Map;
 
 public class HardwareCollector implements TroubleInfoCollector {
   final List<String> info = new ArrayList<>();
+  final static Logger logger = Logger.getInstance(HardwareCollector.class);
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
@@ -47,46 +49,87 @@ public class HardwareCollector implements TroubleInfoCollector {
   }
 
   public String collectHardwareInfo(){
-    SystemInfo si = new SystemInfo();
+    try {
+      SystemInfo si = new SystemInfo();
 
-    HardwareAbstractionLayer hal = si.getHardware();
-    OperatingSystem os = si.getOperatingSystem();
+      HardwareAbstractionLayer hal = si.getHardware();
+      OperatingSystem os = si.getOperatingSystem();
 
-    info.add("=====OS SUMMARY=====\n");
-    printOperatingSystem(os);
-    printComputerSystem(hal.getComputerSystem());
-
-    info.add("\n=====CPU SUMMARY=====\n");
-    printProcessor(hal.getProcessor());
-    printCpu(hal.getProcessor());
-
-    info.add("\n=====MEMORY SUMMARY=====\n");
-    printMemory(hal.getMemory());
-
-    info.add("\n=====PROCESSES SUMMARY=====\n");
-    printProcesses(os, hal.getMemory());
-
-    info.add("\n=====FILESYSTEM SUMMARY=====\n");
-    printDisks(hal.getDiskStores());
-    printLVgroups(hal.getLogicalVolumeGroups());
-    printFileSystem(os.getFileSystem());
-
-    info.add("\n=====NETWORK SUMMARY=====\n");
-    printNetworkInterfaces(hal.getNetworkIFs());
-    printNetworkParameters(os.getNetworkParams());
-
-    info.add("\n=====GRAPHICS SUMMARY=====\n");
-    printDisplays(hal.getDisplays());
-    printGraphicsCards(hal.getGraphicsCards());
-
-    StringBuilder output = new StringBuilder();
-    for (String s : info) {
-      output.append(s);
-      if (s != null && !s.endsWith("\n")) {
-        output.append('\n');
+      try {
+        info.add("=====OS SUMMARY=====\n");
+        printOperatingSystem(os);
+        printComputerSystem(hal.getComputerSystem());
       }
+      catch (Exception e) {
+        logger.warn("Failed to collect computer system info", e);
+        info.add("Failed to collect computer system info: " + e.getMessage());
+      }
+
+      try {
+        info.add("\n=====CPU SUMMARY=====\n");
+        CentralProcessor processor = hal.getProcessor();
+        printProcessor(processor);
+        printCpu(processor);
+      }
+      catch (Exception e) {
+        logger.warn("Failed to collect processor info", e);
+        info.add("Failed to collect processor info: " + e.getMessage());
+      }
+
+      try {
+        GlobalMemory memory = hal.getMemory();
+        info.add("\n=====MEMORY SUMMARY=====\n");
+        printMemory(memory);
+
+        info.add("\n=====PROCESSES SUMMARY=====\n");
+        printProcesses(os, memory);
+      }
+      catch (Exception e) {
+        logger.warn("Failed to collect memory info", e);
+        info.add("Failed to collect memory info: " + e.getMessage());
+      }
+
+      try {
+        info.add("\n=====FILESYSTEM SUMMARY=====\n");
+        printDisks(hal.getDiskStores());
+        printLVgroups(hal.getLogicalVolumeGroups());
+        printFileSystem(os.getFileSystem());
+      }
+      catch (Exception e) {
+        logger.warn("Failed to collect filesystem info", e);
+        info.add("Failed to collect filesystem info: " + e.getMessage());
+      }
+
+      try {
+        info.add("\n=====NETWORK SUMMARY=====\n");
+        printNetworkInterfaces(hal.getNetworkIFs());
+        printNetworkParameters(os.getNetworkParams());
+      }
+      catch (Exception e) {
+        logger.warn("Failed to collect network info", e);
+        info.add("Failed to collect network info: " + e.getMessage());
+      }
+
+      try {
+        info.add("\n=====GRAPHICS SUMMARY=====\n");
+        printDisplays(hal.getDisplays());
+        printGraphicsCards(hal.getGraphicsCards());
+      }
+      catch (Exception e) {
+        logger.warn("Failed to collect network info", e);
+        info.add("Failed to collect network info: " + e.getMessage());
+      }
+      StringBuilder output = new StringBuilder();
+      for (String s : info) {
+        output.append(s);
+        if (s != null && !s.endsWith("\n")) {
+          output.append('\n');
+        }
+      }
+      return output.toString();
+    } finally {
+      info.clear();
     }
-    return output.toString();
   }
 
   private void printOperatingSystem(final OperatingSystem os) {
