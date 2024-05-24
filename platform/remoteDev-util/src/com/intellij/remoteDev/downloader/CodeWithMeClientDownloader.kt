@@ -247,7 +247,7 @@ object CodeWithMeClientDownloader {
       }
     }
     finally {
-      Files.delete(tempFile)
+      Files.deleteIfExists(tempFile)
     }
   }
 
