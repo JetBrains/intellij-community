@@ -160,3 +160,16 @@ f:com.intellij.execution.configurations.ParametersList
 - set(I,java.lang.String):V
 - s:setTestMacros(java.util.Map):V
 - toString():java.lang.String
+f:com.intellij.execution.configurations.ParamsGroup
+- java.lang.Cloneable
+- <init>(java.lang.String):V
+- addParameter(java.lang.String):V
+- addParameterAt(I,java.lang.String):V
+- addParameters(java.util.List):V
+- addParameters(java.lang.String[]):V
+- addParametersString(java.lang.String):V
+- clone():com.intellij.execution.configurations.ParamsGroup
+- getId():java.lang.String
+- getParameters():java.util.List
+- getParametersList():com.intellij.execution.configurations.ParametersList
+- toString():java.lang.String
