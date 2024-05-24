@@ -2,6 +2,8 @@
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"
                     qualifiedName="com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.dataextractor.TextExtractorExtension"
+                    qualifiedName="com.jetbrains.performancePlugin.remotedriver.textExtractorExtension" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
