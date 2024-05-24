@@ -68,17 +68,12 @@ fun <T : CommandChain> T.verifyFileEncoding(relativePath: String,
   addCommand("${CMD_PREFIX}assertEncodingFileCommand", relativePath, expectedCharsetName)
 }
 
-fun <T : CommandChain> T.openFileWithJsonArguments(openFileDto: OpenFileDto): T = apply {
-  val options = objectMapper.writeValueAsString(openFileDto)
-  addCommand("${CMD_PREFIX}openFile $options")
-}
-
 fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
                                   disableCodeAnalysis: Boolean = false): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
+  val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
   }

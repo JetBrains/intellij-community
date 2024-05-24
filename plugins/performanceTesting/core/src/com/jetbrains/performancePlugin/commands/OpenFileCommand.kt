@@ -15,7 +15,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.serialization.SerializationException
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
@@ -55,13 +54,8 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
   override suspend fun doExecute(context: PlaybackContext) {
     val arguments = extractCommandArgument(PREFIX)
-    val myOptions = try {
-      deserializeOptionsFromJson(arguments, OpenFileCommandOptions::class.java)
-    }
-    catch (_: Throwable) {
-      getOptions(arguments)
-    }
-    val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
+    val myOptions = getOptions(arguments)
+    val filePath = (myOptions?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
     val timeout = myOptions?.timeout ?: 0
     val suppressErrors = myOptions?.suppressErrors ?: false
 
