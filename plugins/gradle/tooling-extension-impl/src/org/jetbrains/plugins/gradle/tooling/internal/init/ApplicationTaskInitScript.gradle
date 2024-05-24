@@ -19,8 +19,6 @@ interface Properties {
   //noinspection GrUnresolvedAccess
   public static final String javaModuleName = JAVA_MODULE_NAME
   //noinspection GrUnresolvedAccess
-  public static final String params = PARAMS
-  //noinspection GrUnresolvedAccess
   public static final boolean useManifestJar = USE_MANIFEST_JAR
   //noinspection GrUnresolvedAccess
   public static final boolean useArgsFile = USE_ARGS_FILE
@@ -70,7 +68,7 @@ allprojects {
         else {
           mainClass = Properties.mainClassToRun
         }
-        Properties.params
+        PARAMS
         if (workingDirectory) {
           workingDir = workingDirectory
         }
