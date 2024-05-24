@@ -30,64 +30,41 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     provider = FakeIterator()
   }
 
-  fun testNoAddCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.commit()
-    }
+  fun testNoAddClose() {
+    queue.getSink(provider, DEFAULT_SCANNING_ID).close()
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
   }
 
-  fun testAddCommit() {
+  fun testAddClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
     }
     val (filesInQueue) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
     TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
-  fun testAddNoCommit() {
+  fun testAddCloseClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
-    }
-    val (filesInQueue, _) = getAndResetQueuedFiles(queue)
-    TestCase.assertEquals(0, filesInQueue.size)
-  }
-
-  fun testAddClearCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.clear()
-      sink.commit()
-    }
-    val (filesInQueue, _) = getAndResetQueuedFiles(queue)
-    TestCase.assertEquals(0, filesInQueue.size)
-  }
-
-  fun testAddCommitCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
-      sink.commit()
+      sink.close()
+      sink.close()
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
     TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
-  fun testAddCommitTwoSinks() {
+  fun testAddCloseTwoSinks() {
     val provider2 = FakeIterator()
 
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
     }
 
     queue.getSink(provider2, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f2"))
-      sink.commit()
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(2, filesInQueue.size)
@@ -184,9 +161,8 @@ class PerProviderSinkTest : LightPlatformTestCase() {
           queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
             for (f in 1..batchSize) {
               sink.addFile(LightVirtualFile("$producerName batch $batch file $f"))
+              filesSubmitted.incrementAndGet()
             }
-            sink.commit()
-            filesSubmitted.addAndGet(batchSize)
           }
         }
       }

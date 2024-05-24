@@ -378,7 +378,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
           finally {
             scanningStatistics.tryFinishFilesChecking()
           }
-          perProviderSink.commit()
         }
     }
 

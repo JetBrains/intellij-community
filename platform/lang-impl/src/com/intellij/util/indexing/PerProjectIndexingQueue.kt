@@ -58,23 +58,12 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
       uncommittedListener.onUncommittedCountChanged(cntDirty)
     }
 
-    override fun clear() {
-      LOG.assertTrue(!closed, "Should not invoke 'clear' after 'close'")
-
-      if (files.isNotEmpty()) {
-        val cntDirty = cntFilesDirty.addAndGet(-files.size)
-        LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: ${cntDirty}")
-        files.clear()
-        uncommittedListener.onUncommittedCountChanged(cntDirty)
-      }
-    }
-
-    override fun commit() {
+    private fun commit() {
       LOG.assertTrue(!closed, "Should not invoke 'commit' after 'close'")
 
       if (files.isNotEmpty()) {
         val cntDirty = cntFilesDirty.addAndGet(-files.size)
-        LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: ${cntDirty}")
+        LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: $cntDirty")
         uncommittedListener.commit(iterator, files, scanningId)
         files.clear()
       }
@@ -82,7 +71,9 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
 
     override fun close() {
       try {
-        clear()
+        if (!closed) {
+          commit()
+        }
       }
       finally {
         closed = true
@@ -127,14 +118,10 @@ class PerProjectIndexingQueue(private val project: Project) {
   /**
    *  Not thread safe. These classes are cheap to construct and use - don't share instances.
    *  <p>
-   *  Invoke [commit] to commit the changes. All the uncommitted changes will be lost after invocation of [close].
-   *  <p>
    *  Always use try-with-resources when creating instances of this interface, otherwise [cancelAllTasksAndWait] may never end waiting
    */
   interface PerProviderSink : AutoCloseable {
     fun addFile(file: VirtualFile)
-    fun clear()
-    fun commit()
     override fun close()
   }
 
