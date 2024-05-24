@@ -37,6 +37,7 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
 
                 if (newRoot is Imported && KotlinPluginModeProvider.isK2Mode()) {
                     val definitions = loadGradleDefinitions(it.externalProjectPath, newRoot.data.gradleHome, newRoot.data.javaHome, project)
+                    GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
 
                     val scripts = newRoot.data.models.mapNotNull {
                         val path = Paths.get(it.file)
@@ -50,7 +51,7 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
                         }
                     }.toSet()
 
-                    configureGradleScriptsK2(newRoot.data.javaHome, project, scripts, definitions)
+                    configureGradleScriptsK2(newRoot.data.javaHome, project, scripts)
                 }
             }
         }

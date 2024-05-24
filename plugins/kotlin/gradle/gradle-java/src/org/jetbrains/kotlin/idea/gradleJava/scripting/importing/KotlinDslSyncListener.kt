@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptModel
 import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
+import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -80,6 +81,7 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
 
         if (KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
+            GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
 
             val scripts = sync.models.mapNotNull {
                 val path = Path.of(it.file)
@@ -87,7 +89,7 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
                     ScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports)
                 }
             }.toSet()
-            coroutineScope.launch { configureGradleScriptsK2(sync.javaHome, project, scripts, definitions) }
+            coroutineScope.launch { configureGradleScriptsK2(sync.javaHome, project, scripts) }
         } else {
             @Suppress("DEPRECATION")
             ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(

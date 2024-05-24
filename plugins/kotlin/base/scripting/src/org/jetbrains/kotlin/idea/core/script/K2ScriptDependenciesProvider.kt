@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
@@ -102,6 +103,19 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
 
     private val configurationsByFile = ConcurrentHashMap<VirtualFile, ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>>()
 
+    fun addConfiguration(script: SourceCode): ScriptCompilationConfigurationResult {
+        val definition = findScriptDefinition(project, script)
+        val virtualFile = script.getVirtualFile(definition)
+
+        val configuration = project.runReadActionInSmartMode {
+            refineScriptCompilationConfiguration(script, definition, project, definition.compilationConfiguration)
+        }
+
+        configurationsByFile[virtualFile] = configuration
+
+        return configuration
+    }
+
     fun reloadConfigurations(scripts: Set<ScriptModel>, javaHome: String?) {
         val classes = mutableSetOf<VirtualFile>()
         val sources = mutableSetOf<VirtualFile>()
@@ -115,15 +129,14 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                 val sourceCode = VirtualFileScriptSource(script.virtualFile)
                 val definition = findScriptDefinition(project, sourceCode)
 
-                val configuration = configurationsByFile[script.virtualFile]?.valueOrNull()?.configuration
-                    ?: definition.compilationConfiguration.with {
-                        javaHome?.let {
-                            jvm.jdkHome(Path.of(javaHome).toFile())
-                        }
-                        defaultImports(script.imports)
-                        dependencies(JvmDependency(script.classPath.map { File(it) }))
-                        ide.dependenciesSources(JvmDependency(script.sourcePath.map { File(it) }))
-                    }.adjustByDefinition(definition)
+                val configuration = definition.compilationConfiguration.with {
+                    javaHome?.let {
+                        jvm.jdkHome(Path.of(javaHome).toFile())
+                    }
+                    defaultImports(script.imports)
+                    dependencies(JvmDependency(script.classPath.map { File(it) }))
+                    ide.dependenciesSources(JvmDependency(script.sourcePath.map { File(it) }))
+                }.adjustByDefinition(definition)
 
                 val updatedConfiguration = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
                 configurationsByFile[script.virtualFile] = updatedConfiguration
