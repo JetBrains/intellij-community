@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.stickyLines
+package com.intellij.openapi.editor.impl.stickyLines.ui
 
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLine
+import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel

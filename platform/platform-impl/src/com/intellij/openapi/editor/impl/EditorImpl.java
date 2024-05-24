@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.*;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;

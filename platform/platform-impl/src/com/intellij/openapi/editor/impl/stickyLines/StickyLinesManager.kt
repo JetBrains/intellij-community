@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColorUtil
 import java.awt.Rectangle

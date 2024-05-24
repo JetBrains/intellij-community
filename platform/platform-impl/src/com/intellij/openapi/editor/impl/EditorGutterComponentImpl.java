@@ -51,7 +51,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLineComponent;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineComponent;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
