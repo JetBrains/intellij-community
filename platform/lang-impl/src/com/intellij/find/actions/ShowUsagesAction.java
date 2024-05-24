@@ -618,7 +618,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         nodes.add(USAGES_OUTSIDE_SCOPE_NODE);
       }
       List<UsageNode> data = new ArrayList<>(nodes);
-      int filteredOutCount = getFilteredOutNodeCount(copy, usageView);
+      int filteredOutCount = usageView.getFilteredOutNodeCount();
       if (filteredOutCount != 0) {
         DefaultActionGroup filteringActions = popup.getUserData(DefaultActionGroup.class);
         if (filteringActions == null) return;
@@ -1263,10 +1263,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   static @Nullable KeyboardShortcut getShowUsagesShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut(ID);
-  }
-
-  private static int getFilteredOutNodeCount(@NotNull List<? extends Usage> usages, @NotNull UsageViewImpl usageView) {
-    return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
   private static @Nullable UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {

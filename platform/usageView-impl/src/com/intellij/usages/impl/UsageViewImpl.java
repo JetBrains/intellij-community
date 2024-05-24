@@ -132,6 +132,11 @@ public class UsageViewImpl implements UsageViewEx {
     return o1.toString().compareTo(o2.toString());
   };
 
+  @ApiStatus.Internal
+  public int getFilteredOutNodeCount() {
+    return myBuilder.getFilteredUsagesCount();
+  }
+
   private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
     VirtualFile file1 = o1 instanceof UsageInFile ? ((UsageInFile)o1).getFile() : null;
     VirtualFile file2 = o2 instanceof UsageInFile ? ((UsageInFile)o2).getFile() : null;
@@ -1273,6 +1278,7 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     myUsageNodes.clear();
     myModel.reset();
+    myBuilder.reset();
     synchronized (modelToSwingNodeChanges) {
       modelToSwingNodeChanges.clear();
     }
