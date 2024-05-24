@@ -65,7 +65,7 @@ final class LineMarkersUtil {
           TextRange textRange = element.getTextRange();
           if (textRange == null) continue;
           TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
-          if (bounds.contains(elementRange)) {
+          if (bounds.intersects(elementRange)) {
             createOrReuseLineMarker(info, markupModel, toReuse);
           }
         }

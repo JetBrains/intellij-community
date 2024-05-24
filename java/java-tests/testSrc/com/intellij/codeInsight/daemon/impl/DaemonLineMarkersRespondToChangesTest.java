@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
@@ -24,10 +25,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
@@ -302,5 +300,47 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       System.err.println("Log:\n"+log+"\n---");
       throw e;
     }
+  }
+
+  public void testLineMarkerRegisteredOnWrongPsiElementForExampleOnFileLevelYeahCrazyIKnowMustNotRemoveItselfOnTypingOutsideTheLineMarkerRange() {
+    configureByText(JavaFileType.INSTANCE, """
+      class X {
+        // blah
+        int foo;
+      }
+      <caret>
+      """);
+
+    GutterIconNavigationHandler<PsiFile> MY_NAVIGATION_HANDLER = (_1, _2) -> { };
+    LineMarkerProvider provider = element -> {
+      if (element instanceof PsiFile psiFile) {
+        return new LineMarkerInfo<>(psiFile, element.getTextRange(), AllIcons.Ide.Dislike, (_3) -> "my tooltip", MY_NAVIGATION_HANDLER, GutterIconRenderer.Alignment.LEFT, () -> "");
+      }
+      return null;
+    };
+    LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
+    myDaemonCodeAnalyzer.restart();
+
+    {
+      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      LineMarkerInfo<?> info = assertOneElement(DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
+      assertSame(MY_NAVIGATION_HANDLER, info.getNavigationHandler());
+    }
+
+    type("\n\n\n\n\n\n\n\n\n\n");
+
+    {
+      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      LineMarkerInfo<?> info = assertOneElement(DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
+      assertSame(MY_NAVIGATION_HANDLER, info.getNavigationHandler());
+    }
+    type("\n\n\n\n\n\n\n\n\n\n");
+
+    {
+      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      LineMarkerInfo<?> info = assertOneElement(DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
+      assertSame(MY_NAVIGATION_HANDLER, info.getNavigationHandler());
+    }
+
   }
 }
