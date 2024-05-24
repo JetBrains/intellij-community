@@ -199,7 +199,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                     targetExpression.parent?.safeAs<KtCallExpression>()?.calleeExpression == targetExpression
                 getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it) }
                 if (expectedType.isBoolean()) {
-                    actions.add(AddEqEqTrueFix(targetExpression))
+                    actions.add(AddEqEqTrueFix(targetExpression).asIntention())
                 }
             }
         }
