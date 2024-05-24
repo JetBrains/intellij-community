@@ -4,12 +4,15 @@ package com.intellij;
 import com.intellij.l10n.LocalizationOrder;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
@@ -224,6 +227,20 @@ public class DynamicBundle extends AbstractBundle {
   @ScheduledForRemoval
   public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
     return getResourceBundle(loader, pathToBundle);
+  }
+
+  @ApiStatus.Internal
+  public static final class LanguageBundleEP implements PluginAware {
+    public static final ExtensionPointName<LanguageBundleEP> EP_NAME = new ExtensionPointName<>("com.intellij.languageBundle");
+
+    @Attribute("locale")
+    public String locale = Locale.ENGLISH.getLanguage();
+    public PluginDescriptor pluginDescriptor;
+
+    @Override
+    public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+      this.pluginDescriptor = pluginDescriptor;
+    }
   }
 
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();

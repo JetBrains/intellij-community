@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
+import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
@@ -114,7 +114,7 @@ public class CoreApplicationEnvironment {
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
-    registerApplicationExtensionPoint(LanguageBundleEP.EP_NAME, LanguageBundleEP.class);
+    registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {

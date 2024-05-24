@@ -36,7 +36,7 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
   private fun getCurrentSessionTime() = (System.currentTimeMillis() - application.startTime - application.idleTime).coerceAtLeast(0)
 
   fun getLanguagePack() =
-    LocalizationUtil.findLanguageBundle()?.getPluginDescriptor()?.let { it.pluginId.idString to it.version } ?: ("none" to "none")
+    LocalizationUtil.findLanguageBundle()?.pluginDescriptor?.let { it.pluginId.idString to it.version } ?: ("none" to "none")
 
   fun isEnabled() = (PlatformUtils.isRider() && application.isEAP) || isTesting()
 

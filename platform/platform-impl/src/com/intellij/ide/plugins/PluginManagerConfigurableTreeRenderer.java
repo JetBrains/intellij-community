@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.DynamicBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
-import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.NlsSafe;
@@ -49,7 +49,7 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
       myTree = (SimpleTree)tree;
     }
 
-    Icon icon = LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.General.LocalizationSettings : null;
+    Icon icon = DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.General.LocalizationSettings : null;
     if (icon == null && myCountValue == null) {
       return null;
     }

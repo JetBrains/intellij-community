@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -94,7 +94,7 @@ public final class Presentation implements Cloneable {
   private @NotNull FList<PropertyChangeListener> myListeners = FList.emptyList();
 
   private static final @NotNull NotNullLazyValue<Boolean> outRemoveMnemonics = NotNullLazyValue.createValue(() -> {
-    return SystemInfoRt.isMac && LanguageBundleEP.EP_NAME.hasAnyExtensions();
+    return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
   });
 
   public static @NotNull Presentation newTemplatePresentation() {

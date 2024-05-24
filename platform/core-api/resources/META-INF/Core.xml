@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="languageBundle" beanClass="com.intellij.l10n.LanguageBundleEP"/>
+    <extensionPoint name="languageBundle" beanClass="com.intellij.DynamicBundle$LanguageBundleEP"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <!--suppress PluginXmlValidity -->

@@ -3,6 +3,7 @@ package com.intellij.compiler.server;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.intellij.DynamicBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -28,7 +29,6 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.l10n.LanguageBundleEP;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -120,8 +120,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1541,9 +1540,9 @@ public final class BuildManager implements Disposable {
         cmdLine.addParameter("-D" + name + '=' + value);
       }
     }
-    final LanguageBundleEP languageBundle = LocalizationUtil.INSTANCE.findLanguageBundle();
+    final DynamicBundle.LanguageBundleEP languageBundle = LocalizationUtil.INSTANCE.findLanguageBundle();
     if (languageBundle != null) {
-      final PluginDescriptor pluginDescriptor = languageBundle.getPluginDescriptor();
+      final PluginDescriptor pluginDescriptor = languageBundle.pluginDescriptor;
       final ClassLoader loader = pluginDescriptor == null ? null : pluginDescriptor.getClassLoader();
       final String bundlePath = loader == null ? null : PathManager.getResourceRoot(loader, "META-INF/plugin.xml");
       if (bundlePath != null) {
