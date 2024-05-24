@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -25,8 +26,6 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.vcs.log.UnsupportedHistoryFiltersException;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -236,6 +235,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
   @NotNull
   FileHistoryDiffProcessor createDiffPreview(boolean isInEditor) {
     FileHistoryDiffProcessor diffPreview = new FileHistoryDiffProcessor(myProject, () -> getSelectedChange(), isInEditor, this);
+
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
@@ -251,15 +251,10 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
                                                         o -> Disposer.isDisposed(diffPreview));
       }
     };
-    UiNotifyConnector.installOn(diffPreview.getComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-        diffPreview.updatePreview();
-      }
-    });
-
     myGraphTable.getModel().addTableModelListener(modelListener);
     Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
+
+    DiffUtil.installShowNotifyListener(diffPreview.getComponent(), () -> diffPreview.updatePreview());
 
     return diffPreview;
   }

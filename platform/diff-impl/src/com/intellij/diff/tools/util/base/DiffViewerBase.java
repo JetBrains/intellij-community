@@ -21,6 +21,7 @@ import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffTaskQueue;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +37,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    UiNotifyConnector.installOn(getComponent(), new Activatable() {
+    DiffUtil.installShowNotifyListener(getComponent(), new Activatable() {
       private boolean wasNotShownYet = true;
 
       @Override

@@ -101,6 +101,8 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
@@ -557,6 +559,43 @@ public final class DiffUtil {
       result.append(HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.gray) + "; font-size:small").addText(appendix));
     }
     return result.wrapWithHtmlBody().toString();
+  }
+
+  /**
+   * RemDev-friendly UI listener
+   * <p>
+   * {@link UIUtil#markAsShowing} is not firing the events, so the components with delayed intitialization will not function correctly.
+   */
+  public static void runWhenFirstShown(@NotNull JComponent component, @NotNull Runnable runnable) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      runnable.run();
+    }
+    else {
+      UiNotifyConnector.doWhenFirstShown(component, runnable);
+    }
+  }
+
+  public static void installShowNotifyListener(@NotNull JComponent component, @NotNull Runnable runnable) {
+    installShowNotifyListener(component, new Activatable() {
+      @Override
+      public void showNotify() {
+        runnable.run();
+      }
+    });
+  }
+
+  /**
+   * RemDev-friendly UI listener
+   * <p>
+   * {@link UIUtil#markAsShowing} is not firing the events, so the components with delayed intitialization will not function correctly.
+   */
+  public static void installShowNotifyListener(@NotNull JComponent component, @NotNull Activatable activatable) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      activatable.showNotify();
+    }
+    else {
+      UiNotifyConnector.installOn(component, activatable);
+    }
   }
 
   //

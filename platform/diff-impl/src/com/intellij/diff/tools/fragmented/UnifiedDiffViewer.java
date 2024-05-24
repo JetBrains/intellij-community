@@ -65,9 +65,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
 import org.jetbrains.annotations.Nls;
@@ -159,12 +157,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
     DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
 
-    UiNotifyConnector.installOn(getComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-        myMarkupUpdater.scheduleUpdate();
-      }
-    });
+    DiffUtil.installShowNotifyListener(getComponent(), () -> myMarkupUpdater.scheduleUpdate());
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.diff.util.DiffUtil
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
@@ -20,7 +21,6 @@ import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 
 internal class SingleFileActivityDiffPreview(project: Project, private val model: ActivityViewModel, disposable: Disposable) : EditorTabDiffPreview(project) {
@@ -69,9 +69,7 @@ internal class SingleFileActivityDiffPreview(project: Project, private val model
       model.addListener(object : ActivityModelListener {
         override fun onSelectionChanged(selection: ActivitySelection?) = processor.updatePreview()
       }, processor)
-      UiNotifyConnector.installOn(processor.component, object : Activatable {
-        override fun showNotify() = processor.updatePreview()
-      })
+      DiffUtil.installShowNotifyListener(processor.component) { processor.updatePreview() }
       return processor
     }
   }

@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Checks.fail
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.*
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
@@ -17,7 +18,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.util.ui.update.Update
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -96,7 +96,7 @@ open class TreeHandlerChangesTreeTracker(
     }
 
     if (updateWhileShown) {
-      UiNotifyConnector.installOn(editorViewer.component, object : Activatable {
+      DiffUtil.installShowNotifyListener(editorViewer.component, object : Activatable {
         override fun showNotify() {
           updatePreview(UpdateType.FULL)
           updatePreviewQueue.cancelAllUpdates()

@@ -2802,6 +2802,8 @@ f:com.intellij.diff.util.DiffUtil
 - s:installLineConvertor(com.intellij.openapi.editor.ex.EditorEx,com.intellij.diff.contents.DocumentContent):V
 - s:installLineConvertor(com.intellij.openapi.editor.ex.EditorEx,com.intellij.diff.contents.DocumentContent,com.intellij.diff.tools.util.FoldingModelSupport,I):V
 - s:installLineConvertor(com.intellij.openapi.editor.ex.EditorEx,com.intellij.diff.tools.util.FoldingModelSupport):V
+- s:installShowNotifyListener(javax.swing.JComponent,com.intellij.util.ui.update.Activatable):V
+- s:installShowNotifyListener(javax.swing.JComponent,java.lang.Runnable):V
 - s:invertIndexes(I[]):I[]
 - s:isDiffEditor(com.intellij.openapi.editor.Editor):Z
 - s:isEditable(com.intellij.openapi.editor.Editor):Z
@@ -2830,6 +2832,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:requestFocus(com.intellij.openapi.project.Project,java.awt.Component):V
 - s:requestFocusInWindow(java.awt.Component):V
 - s:runPreservingFocus(com.intellij.diff.FocusableContext,java.lang.Runnable):V
+- s:runWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
 - s:scrollEditor(com.intellij.openapi.editor.Editor,I,I,Z):V
 - s:scrollEditor(com.intellij.openapi.editor.Editor,I,Z):V
 - s:scrollToCaret(com.intellij.openapi.editor.Editor,Z):V

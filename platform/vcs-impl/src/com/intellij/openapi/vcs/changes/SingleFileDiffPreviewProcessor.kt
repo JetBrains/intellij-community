@@ -4,11 +4,12 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.requests.NoDiffRequest
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil
 
 abstract class SingleFileDiffPreviewProcessor(project: Project, place: String) : CacheDiffRequestProcessor.Simple(project, place), DiffPreviewUpdateProcessor {
 
   fun updatePreview() {
-    val state = component.isShowing
+    val state = UIUtil.isShowing(component)
     if (state) {
       refresh(false)
     }
