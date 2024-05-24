@@ -4,6 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.openapi.project.IncompleteDependenciesService.IncompleteDependenciesAccessToken
+import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -56,8 +57,12 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
     }
   }
 
+  @RequiresWriteLock
   private fun updateState(stateBefore: DependenciesState, stateAfter: DependenciesState) {
+    ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
+
     if (stateAfter != stateBefore) {
+      PsiManager.getInstance(project).dropPsiCaches()
       stateFlow.update { stateAfter }
     }
   }
