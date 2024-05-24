@@ -199,12 +199,7 @@ final class IncompleteModelUtil {
     PsiImportList list = file.getImportList();
     List<PsiImportStatementBase> imports = new ArrayList<>();
     if (list != null) {
-      boolean incompleteModel = isIncompleteModel(file);
       for (PsiImportStatementBase statement : list.getAllImportStatements()) {
-        if (incompleteModel && canBeUsedImportImplicitly(statement)) {
-          imports.add(statement);
-          continue;
-        }
         if (statement instanceof PsiImportStaticStatement staticImport && staticImport.resolveTargetClass() != null) continue;
         if (!statement.isOnDemand()) {
           PsiJavaCodeReferenceElement reference = statement.getImportReference();
@@ -284,10 +279,5 @@ final class IncompleteModelUtil {
     if (targetClass == null) return false;
     return CachedValuesManager.getProjectPsiDependentCache(targetClass,
                                                            psiClass -> PsiAugmentProvider.canBeAugmentedForIncompleteMode(psiClass));
-  }
-
-  static boolean canBeUsedImportImplicitly(@Nullable PsiImportStatementBase importStatementBase) {
-    if (importStatementBase == null) return false;
-    return PsiAugmentProvider.canBeUsedImportForIncompleteMode(importStatementBase);
   }
 }

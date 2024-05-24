@@ -279,18 +279,6 @@ public abstract class PsiAugmentProvider implements PossiblyDumbAware {
     return false;
   }
 
-
-  /**
-   * Checks if the given PsiImportStatementBase might be used.
-   * This method is usually called in incomplete mode.
-   *
-   * @param psiImport the PsiImportStatementBase to be checked
-   * @return true if the import might be used, false otherwise
-   */
-  protected boolean mightBeUsedImportForIncompleteMode(@NotNull PsiImportStatementBase psiImport) {
-    return false;
-  }
-
   /**
    * Checks if the given PsiClass might be augmented.
    * This method is usually called in incomplete mode.
@@ -303,16 +291,6 @@ public abstract class PsiAugmentProvider implements PossiblyDumbAware {
 
     forEach(targetClass.getProject(), provider -> {
       boolean augmentedForIncompleteMode = provider.mightBeAugmentedForIncompleteMode(targetClass);
-      result.set(augmentedForIncompleteMode);
-      return !augmentedForIncompleteMode;
-    });
-    return result.get();
-  }
-
-  public static boolean canBeUsedImportForIncompleteMode(@NotNull PsiImportStatementBase psiImport) {
-    Ref<Boolean> result = Ref.create();
-    forEach(psiImport.getProject(), provider -> {
-      boolean augmentedForIncompleteMode = provider.mightBeUsedImportForIncompleteMode(psiImport);
       result.set(augmentedForIncompleteMode);
       return !augmentedForIncompleteMode;
     });

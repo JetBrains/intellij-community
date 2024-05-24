@@ -1,7 +1,6 @@
 package com.intellij.java.lomboktest;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -23,7 +22,6 @@ public class LombokIncompleteModeHighlightingTest extends LightDaemonAnalyzerTes
   }
 
   private void doTest(String fileName) {
-    enableInspectionTools(new UnusedImportInspection());
     IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
     try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
       doTest("/plugins/lombok/testData/highlightingIncompleteMode/" + fileName, true, true);
