@@ -1122,7 +1122,7 @@
     <group id="EditorGutterPopupMenu.Appearance" popup="true">
       <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
       <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
-      <action id="EditorGutterToggleGlobalStickyLines" class="com.intellij.openapi.editor.impl.stickyLines.actions.ToggleShowStickyLinesGloballyAction"/>
+      <action id="EditorGutterToggleGlobalStickyLines" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesShowToggleAction"/>
     </group>
 
     <group id="EditorGutterPopupMenu">
@@ -1605,7 +1605,7 @@
     <group id="EditorStickyLinesSettings" popup="true" searchable="false">
       <action id="EditorStickyConfigure" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesConfigureAction"/>
       <action id="EditorStickyLinesDisableForLang" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableForLangAction"/>
-      <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesSettingsDisableAction"/>
+      <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableAction"/>
     </group>
 
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>

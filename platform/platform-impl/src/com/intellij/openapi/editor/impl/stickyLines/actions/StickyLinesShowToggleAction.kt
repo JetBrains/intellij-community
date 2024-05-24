@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.DumbAware
 
-internal class ToggleShowStickyLinesGloballyAction : ToggleAction(), DumbAware {
+internal class StickyLinesShowToggleAction : ToggleAction(), DumbAware {
 
   override fun isSelected(event: AnActionEvent): Boolean {
     val settings = EditorSettingsExternalizable.getInstance()

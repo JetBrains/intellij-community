@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 
-internal class StickyLinesSettingsDisableAction : StickyLinesAbstractAction() {
+internal class StickyLinesDisableAction : StickyLinesAbstractAction() {
 
   override fun update(e: AnActionEvent) {
     val settings = EditorSettingsExternalizable.getInstance()
