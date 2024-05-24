@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -31,7 +32,8 @@ import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfD
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
-import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.GRAPH_OPTIONS;
+import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
@@ -81,63 +83,10 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     if (projectLog != null) {
       MainVcsLogUi ui = projectLog.getMainLogUi();
       if (ui != null) {
-        MainVcsLogUiProperties properties = ui.getProperties();
-        VcsLogUiProperties defaultProperties = createDefaultPropertiesInstance();
-
         Set<MetricEvent> metricEvents = ContainerUtil.newHashSet(UI_INITIALIZED.metric());
 
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DETAILS), DETAILS);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DIFF_PREVIEW), DIFF_PREVIEW);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(DIFF_PREVIEW_VERTICAL_SPLIT), DIFF_PREVIEW_ON_THE_BOTTOM);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_CHANGES_FROM_PARENTS), PARENT_CHANGES);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ONLY_AFFECTED_CHANGES), ONLY_AFFECTED_CHANGES);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_LONG_EDGES), LONG_EDGES);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(PREFER_COMMIT_DATE), SHOW_COMMIT_DATE);
-
-        addIfDiffers(metricEvents, properties, defaultProperties, p -> GraphOptionsUtil.getKindName(p.get(GRAPH_OPTIONS)),
-                     GRAPH_OPTIONS_TYPE, GRAPH_OPTIONS_TYPE_FIELD);
-        if (properties.get(GRAPH_OPTIONS) instanceof PermanentGraph.Options.Base) {
-          addIfDiffers(metricEvents, properties, defaultProperties, p -> {
-            PermanentGraph.Options options = p.get(GRAPH_OPTIONS);
-            if (options instanceof PermanentGraph.Options.Base baseOptions) {
-              return baseOptions.getSortType();
-            }
-            return null;
-          }, SORT, SORT_TYPE_FIELD);
-        }
-
-        if (ui.getTable().getColorManager().hasMultiplePaths()) {
-          addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ROOT_NAMES), ROOTS);
-        }
-
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(COMPACT_REFERENCES_VIEW), LABELS_COMPACT);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_TAG_NAMES), LABELS_SHOW_TAG_NAMES);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(LABELS_LEFT_ALIGNED), LABELS_ON_THE_LEFT);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(MainVcsLogUiProperties.TEXT_FILTER_REGEX), TEXT_FILTER_REGEX);
-        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE),
-                         TEXT_FILTER_MATCH_CASE);
-
-        for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
-          if (factory.showMenuItem()) {
-            addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
-                             HIGHLIGHTER, new ArrayList<>(List.of(LOG_HIGHLIGHTER_ID_FIELD.with(getFactoryIdSafe(factory)))));
-          }
-        }
-
-        for (VcsLogFilterCollection.FilterKey<?> key : VcsLogFilterCollection.STANDARD_KEYS) {
-          if (properties.getFilterValues(key.getName()) != null) {
-            metricEvents.add(FILTER.metric(EventFields.Enabled.with(true), FILTER_NAME.with(key.getName())));
-          }
-        }
-
-        VcsLogColumnManager modelIndices = VcsLogColumnManager.getInstance();
-        Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> modelIndices.getModelIndex(it));
-        Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> modelIndices.getModelIndex(it));
-        for (VcsLogDefaultColumn<?> column : getDefaultDynamicColumns()) {
-          String columnName = column.getStableName();
-          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(modelIndices.getModelIndex(column)),
-                           COLUMN, new ArrayList<>(List.of(COLUMN_NAME.with(columnName))));
-        }
+        recordApplicationProperties(ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class), metricEvents);
+        recordUiProperties(ui, metricEvents);
 
         VcsLogTabsManager tabManager = projectLog.getTabManager();
         if (tabManager != null) {
@@ -149,6 +98,70 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
       }
     }
     return Collections.emptySet();
+  }
+
+  private static void recordApplicationProperties(@NotNull VcsLogApplicationSettings properties, @NotNull Set<MetricEvent> metricEvents) {
+    VcsLogApplicationSettings defaultProperties = new VcsLogApplicationSettings();
+
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DIFF_PREVIEW), DIFF_PREVIEW);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(DIFF_PREVIEW_VERTICAL_SPLIT), DIFF_PREVIEW_ON_THE_BOTTOM);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_CHANGES_FROM_PARENTS), PARENT_CHANGES);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(COMPACT_REFERENCES_VIEW), LABELS_COMPACT);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_TAG_NAMES), LABELS_SHOW_TAG_NAMES);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(LABELS_LEFT_ALIGNED), LABELS_ON_THE_LEFT);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(PREFER_COMMIT_DATE), SHOW_COMMIT_DATE);
+
+    VcsLogColumnManager modelIndices = VcsLogColumnManager.getInstance();
+    Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> modelIndices.getModelIndex(it));
+    Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> modelIndices.getModelIndex(it));
+    for (VcsLogDefaultColumn<?> column : getDefaultDynamicColumns()) {
+      String columnName = column.getStableName();
+      addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(modelIndices.getModelIndex(column)),
+                       COLUMN, new ArrayList<>(List.of(COLUMN_NAME.with(columnName))));
+    }
+  }
+
+  private static void recordUiProperties(@NotNull MainVcsLogUi ui, @NotNull Set<MetricEvent> metricEvents) {
+    MainVcsLogUiProperties properties = ui.getProperties();
+    VcsLogUiProperties defaultProperties = createDefaultPropertiesInstance();
+
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DETAILS), DETAILS);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ONLY_AFFECTED_CHANGES), ONLY_AFFECTED_CHANGES);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_LONG_EDGES), LONG_EDGES);
+
+    addIfDiffers(metricEvents, properties, defaultProperties, p -> GraphOptionsUtil.getKindName(p.get(GRAPH_OPTIONS)),
+                 GRAPH_OPTIONS_TYPE, GRAPH_OPTIONS_TYPE_FIELD);
+    if (properties.get(GRAPH_OPTIONS) instanceof PermanentGraph.Options.Base) {
+      addIfDiffers(metricEvents, properties, defaultProperties, p -> {
+        PermanentGraph.Options options = p.get(GRAPH_OPTIONS);
+        if (options instanceof PermanentGraph.Options.Base baseOptions) {
+          return baseOptions.getSortType();
+        }
+        return null;
+      }, SORT, SORT_TYPE_FIELD);
+    }
+
+    if (ui.getTable().getColorManager().hasMultiplePaths()) {
+      addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ROOT_NAMES), ROOTS);
+    }
+
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
+                     TEXT_FILTER_REGEX);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE),
+                     TEXT_FILTER_MATCH_CASE);
+
+    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
+      if (factory.showMenuItem()) {
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
+                         HIGHLIGHTER, new ArrayList<>(List.of(LOG_HIGHLIGHTER_ID_FIELD.with(getFactoryIdSafe(factory)))));
+      }
+    }
+
+    for (VcsLogFilterCollection.FilterKey<?> key : VcsLogFilterCollection.STANDARD_KEYS) {
+      if (properties.getFilterValues(key.getName()) != null) {
+        metricEvents.add(FILTER.metric(EventFields.Enabled.with(true), FILTER_NAME.with(key.getName())));
+      }
+    }
   }
 
   private static @NotNull String getFactoryIdSafe(@NotNull VcsLogHighlighterFactory factory) {
