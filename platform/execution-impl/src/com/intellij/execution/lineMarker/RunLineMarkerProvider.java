@@ -119,6 +119,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
                                                                      @NotNull Icon icon,
                                                                      @NotNull List<? extends Info> infos) {
     if (infos.size() > 1) {
+      infos = new ArrayList<>(infos);
       infos.sort(COMPARATOR);
       final Info first = infos.get(0);
       infos.removeIf(info -> info != first && first.shouldReplace(info));
