@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
@@ -37,7 +38,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumns
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 8);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final EventId MAIN_UI_INITIALIZED = GROUP.registerEvent("mainUiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
@@ -73,7 +74,8 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final StringEventField COLUMN_NAME =
     EventFields.String("name", ContainerUtil.map(getDefaultDynamicColumns(), it -> it.getStableName()));
   private static final VarargEventId COLUMN = GROUP.registerVarargEvent("column", EventFields.Enabled, COLUMN_NAME);
-  private static final VarargEventId ADDITIONAL_TABS = GROUP.registerVarargEvent("additionalTabs", EventFields.Count);
+  private static final VarargEventId ADDITIONAL_TOOL_WINDOW_TABS = GROUP.registerVarargEvent("additionalTabs.ToolWindow", EventFields.Count);
+  private static final VarargEventId ADDITIONAL_EDITOR_TABS = GROUP.registerVarargEvent("additionalTabs.Editor", EventFields.Count);
 
   @Override
   public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
@@ -86,10 +88,9 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
     MainVcsLogUi mainUi = projectLog.getMainLogUi();
     Set<String> additionalTabIds = logManager.getTabsManager().getTabs();
-    List<? extends MainVcsLogUi> additionalLogUis =
-      ContainerUtil.filter(ContainerUtil.filterIsInstance(logManager.getLogUis(), MainVcsLogUi.class),
-                           ui -> additionalTabIds.contains(ui.getId()));
-    if (mainUi == null && additionalLogUis.isEmpty()) return Collections.emptySet();
+    List<? extends MainVcsLogUi> additionalToolWindowUis = getAdditionalLogUis(logManager.getLogUis(VcsLogTabLocation.TOOL_WINDOW), additionalTabIds);
+    List<? extends MainVcsLogUi> additionalEditorUis = getAdditionalLogUis(logManager.getLogUis(VcsLogTabLocation.EDITOR), additionalTabIds);
+    if (mainUi == null && additionalToolWindowUis.isEmpty() && additionalEditorUis.isEmpty()) return Collections.emptySet();
 
     Set<MetricEvent> metricEvents = ContainerUtil.newHashSet(UI_INITIALIZED.metric());
 
@@ -98,12 +99,15 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
       metricEvents.add(MAIN_UI_INITIALIZED.metric());
       recordUiProperties(mainUi, metricEvents);
     }
-    for (MainVcsLogUi ui : additionalLogUis) {
+    for (MainVcsLogUi ui : ContainerUtil.union(additionalToolWindowUis, additionalEditorUis)) {
       recordUiProperties(ui, metricEvents);
     }
 
-    if (!additionalLogUis.isEmpty()) {
-      metricEvents.add(ADDITIONAL_TABS.metric(EventFields.Count.with(additionalLogUis.size())));
+    if (!additionalToolWindowUis.isEmpty()) {
+      metricEvents.add(ADDITIONAL_TOOL_WINDOW_TABS.metric(EventFields.Count.with(additionalToolWindowUis.size())));
+    }
+    if (!additionalEditorUis.isEmpty()) {
+      metricEvents.add(ADDITIONAL_EDITOR_TABS.metric(EventFields.Count.with(additionalEditorUis.size())));
     }
 
     return metricEvents;
@@ -171,6 +175,12 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         metricEvents.add(FILTER.metric(EventFields.Enabled.with(true), FILTER_NAME.with(key.getName())));
       }
     }
+  }
+
+  private static @NotNull List<? extends MainVcsLogUi> getAdditionalLogUis(@NotNull List<? extends VcsLogUi> uis,
+                                                                           @NotNull Set<String> additionalTabIds) {
+    return ContainerUtil.filter(ContainerUtil.filterIsInstance(uis, MainVcsLogUi.class),
+                                ui -> additionalTabIds.contains(ui.getId()));
   }
 
   private static @NotNull String getFactoryIdSafe(@NotNull VcsLogHighlighterFactory factory) {
