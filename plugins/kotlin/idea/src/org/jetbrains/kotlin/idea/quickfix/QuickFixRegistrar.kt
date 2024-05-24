@@ -264,7 +264,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNUSED_VARIABLE.registerFactory(RemovePsiElementSimpleFix.RemoveVariableFactory)
         UNUSED_VARIABLE.registerFactory(RenameToUnderscoreFix.Factory)
 
-        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnExpressionFix)
+        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnExpressionFixFactory)
         NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnToLastExpressionInFunctionFix)
         UNUSED_EXPRESSION.registerFactory(AddReturnToUnusedLastExpressionInFunctionFix)
 
