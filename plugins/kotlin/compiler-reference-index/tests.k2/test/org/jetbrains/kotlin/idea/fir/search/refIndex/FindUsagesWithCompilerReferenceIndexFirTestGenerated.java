@@ -688,6 +688,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
+            public static class TestRecursive extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("recursive.0.kt")
+                public void testRecursive() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/recursive.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestSet extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

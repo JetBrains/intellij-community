@@ -112,7 +112,7 @@ class ExpressionsOfTypeProcessor(
     }
 
     private val tasks = ArrayDeque<Task>()
-    private val taskSet = HashSet<Task>()
+    private val taskElementSet = HashSet<PsiElement>()
 
     private val scopesToUsePlainSearch = LinkedHashMap<KtFile, ArrayList<PsiElement>>()
 
@@ -166,11 +166,10 @@ class ExpressionsOfTypeProcessor(
         return searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }
     }
 
-    private fun addTask(task: Task) {
-        if (taskSet.add(task)) {
+    private fun addTask(task: Task, element: PsiElement? = null) {
+        if (element == null || taskElementSet.add(element)) {
             tasks.push(task)
         }
-
     }
 
     private fun processTasks() {
@@ -253,7 +252,7 @@ class ExpressionsOfTypeProcessor(
                 ((classToSearch as? KtLightClass)?.kotlinOrigin ?: classToSearch as? KtElement)?.let { usePlainSearch(it) }
             }
         }
-        addTask(ProcessClassUsagesTask())
+        addTask(ProcessClassUsagesTask(), classToSearch)
     }
 
     private fun getFallbackDiagnosticsMessage(reference: PsiReference, debugInfo: StringBuilder? = null): String {
@@ -386,7 +385,6 @@ class ExpressionsOfTypeProcessor(
         }
 
         addTask(ProcessStaticCallableUsagesTask())
-        return
     }
 
     private fun addCallableDeclarationToProcess(declaration: PsiElement, scope: SearchScope, processor: ReferenceProcessor) {
@@ -482,7 +480,7 @@ class ExpressionsOfTypeProcessor(
                 }
             }
         }
-        addTask(ProcessSamInterfaceTask(psiClass))
+        addTask(ProcessSamInterfaceTask(psiClass), psiClass)
     }
 
     private fun processClassUsageInKotlin(element: PsiElement, debugInfo: StringBuilder?): Boolean {

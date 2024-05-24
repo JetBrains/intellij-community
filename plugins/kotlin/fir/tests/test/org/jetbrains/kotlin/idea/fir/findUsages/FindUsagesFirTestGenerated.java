@@ -305,6 +305,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                     runTest("../../idea/tests/testData/findUsages/kotlin/conventions/plusAssign.0.kt");
                 }
 
+                @TestMetadata("recursive.0.kt")
+                public void testRecursive() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/recursive.0.kt");
+                }
+
                 @TestMetadata("set.0.kt")
                 public void testSet() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/conventions/set.0.kt");
