@@ -73,7 +73,6 @@ class CodeMetaInfoTestCase(
     val codeMetaInfoTypes: Collection<AbstractCodeMetaInfoRenderConfiguration>,
     val checkNoDiagnosticError: Boolean = false,
     val dumbMode: Boolean = false,
-    val focusMode: Boolean = false,
     private val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
 ) : DaemonAnalyzerTestCase() {
 
@@ -182,8 +181,6 @@ class CodeMetaInfoTestCase(
                 }
             }
         }
-
-        EditorSettingsExternalizable.getInstance().isFocusMode = focusMode
 
         if (dumbMode) {
             val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")
