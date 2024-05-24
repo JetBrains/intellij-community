@@ -58,7 +58,7 @@ public final class DocRenderManager {
    */
   @RequiresEdt
   public static void resetAllEditorsToDefaultState() {
-    for (Iterator<Editor> it = ClientEditorManager.Companion.getCurrentInstance().editors().iterator(); it.hasNext(); ) {
+    for (Iterator<Editor> it = ClientEditorManager.Companion.getCurrentInstance().editorsSequence().iterator(); it.hasNext(); ) {
       Editor editor = it.next();
       DocRenderItemManager.getInstance().resetToDefaultState(editor);
       DocRenderPassFactory.forceRefreshOnNextPass(editor);

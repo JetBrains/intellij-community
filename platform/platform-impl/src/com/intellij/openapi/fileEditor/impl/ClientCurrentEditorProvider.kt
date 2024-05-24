@@ -12,7 +12,7 @@ private class ClientCurrentEditorProvider : CurrentEditorProvider {
   override fun getCurrentEditor(project: Project?): FileEditor? {
     if (project == null) {
       // fallback to search by focus
-      return ClientEditorManager.getCurrentInstance().editors()
+      return ClientEditorManager.getCurrentInstance().editorsSequence()
         .firstOrNull { UIUtil.hasFocus(it.contentComponent) }
         ?.let { TextEditorProvider.getInstance().getTextEditor(it) }
     }

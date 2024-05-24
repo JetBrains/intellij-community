@@ -181,7 +181,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       activeEditors.add(localEditor);
     }
     for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, ClientKind.REMOTE)) {
-      Iterator<Editor> iterator = manager.editors().iterator();
+      Iterator<Editor> iterator = manager.editorsSequence().iterator();
       while (iterator.hasNext()) {
         Editor editor = iterator.next();
         if (UIUtil.hasFocus(editor.getContentComponent()) && editor.getDocument() == document) {
