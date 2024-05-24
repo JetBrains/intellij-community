@@ -274,7 +274,7 @@ public final class ClassInnerStuffCache {
 
     @Override
     public String toString() {
-      return null;
+      return "EnumSyntheticMethod:" + getName();
     }
 
     @Override
