@@ -16,6 +16,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassPropertyMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightFieldForCompanionObject
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.utils.addToStdlib.popLast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.concurrent.Callable
 
@@ -160,12 +162,11 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         private val kotlinOptions = queryParameters.safeAs<KotlinAwareReferencesSearchParameters>()?.kotlinOptions ?: Empty
 
-        private val longTasks = mutableListOf<() -> Unit>()
+        private val longTasks = ContainerUtil.createConcurrentList<() -> Unit>()
 
         fun executeLongRunningTasks() {
-            longTasks.forEach {
-                ProgressManager.checkCanceled()
-                it()
+            while (longTasks.isNotEmpty()) {
+                longTasks.popLast()()
             }
         }
 
@@ -300,13 +301,18 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                         .flatMap { getLightClassMethods(it) }
 
                     psiMethods.forEach { psiMethod ->
-                        MethodReferencesSearch.search(
-                            psiMethod,
-                            queryParameters.effectiveSearchScope.excludeFileTypes(
-                                project, KotlinFileType.INSTANCE
-                            ),
-                            true
-                        ).forEach(consumer)
+                        val pointer = psiMethod.createSmartPointer()
+                        longTasks.add {
+                            runReadAction { pointer.element }?.let {
+                                MethodReferencesSearch.search(
+                                    it,
+                                    queryParameters.effectiveSearchScope.excludeFileTypes(
+                                        project, KotlinFileType.INSTANCE
+                                    ),
+                                    true
+                                ).forEach(consumer)
+                            }
+                        }
                     }
                 }
 
@@ -373,7 +379,12 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         @RequiresReadLock
         private fun searchMethodAware(element: PsiNamedElement) {
             if (element is PsiMethod) {
-                MethodReferencesSearch.search(element, queryParameters.effectiveSearchScope, true).forEach(consumer)
+                val pointer = element.createSmartPointer()
+                longTasks.add {
+                    runReadAction { pointer.element }?.let {
+                        MethodReferencesSearch.search(it, queryParameters.effectiveSearchScope, true).forEach(consumer)
+                    }
+                }
             } else {
                 searchNamedElement(element)
             }
