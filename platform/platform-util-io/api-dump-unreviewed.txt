@@ -110,7 +110,7 @@ f:com.intellij.execution.configurations.ParameterTargetValuePart$PromiseValue
 f:com.intellij.execution.configurations.ParametersList
 - java.lang.Cloneable
 - <init>():V
-- add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+- *:add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - add(java.lang.String):V
 - add(java.lang.String,java.lang.String):V
 - addAll(java.util.List):V
@@ -144,14 +144,14 @@ f:com.intellij.execution.configurations.ParametersList
 - getProperties():java.util.Map
 - getProperties(java.lang.String):java.util.Map
 - getPropertyValue(java.lang.String):java.lang.String
-- getTargetedList():java.util.List
+- *:getTargetedList():java.util.List
 - hasParameter(java.lang.String):Z
 - hasProperty(java.lang.String):Z
 - s:join(java.util.List):java.lang.String
 - s:join(java.lang.String[]):java.lang.String
 - s:parse(java.lang.String):java.lang.String[]
 - patchMacroWithEnvs(java.util.Map):V
-- prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+- *:prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - prepend(java.lang.String):V
 - prependAll(java.lang.String[]):V
 - removeParamsGroup(I):com.intellij.execution.configurations.ParamsGroup
