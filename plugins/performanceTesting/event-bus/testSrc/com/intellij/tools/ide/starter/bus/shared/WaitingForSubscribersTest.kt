@@ -48,7 +48,9 @@ class WaitingForSubscribersTest : SharedEventsTest() {
 
 
     val secondEventDuration = measureTime {
+      println("WaitingForSubscribersTest: before postAndWaitProcessing SharedEvent")
       EventsBus.postAndWaitProcessing(SharedEvent())
+      println("WaitingForSubscribersTest: after postAndWaitProcessing SharedEvent")
     }
     checkIsEventProcessed(true) { firstSubscriberProcessedEvent.get() }
     checkIsEventProcessed(true) { secondSubscriberProcessedEvent.get() }

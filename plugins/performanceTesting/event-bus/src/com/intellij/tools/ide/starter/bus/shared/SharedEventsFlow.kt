@@ -40,6 +40,7 @@ class SharedEventsFlow(private val client: EventBusServerClient,
   }
 
   override fun <T : Event> postAndWaitProcessing(event: T) {
+    LOG.debug("Post event $event")
     client.postAndWaitProcessing(
       SharedEventDto(event::class.java.simpleName, UUID.randomUUID().toString(), objectMapper.writeValueAsString(event)))
   }

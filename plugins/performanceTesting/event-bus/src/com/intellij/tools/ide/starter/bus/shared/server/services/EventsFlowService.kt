@@ -26,7 +26,9 @@ class EventsFlowService {
   }
 
   fun postAndWaitProcessing(sharedEventDto: SharedEventDto) {
+    LOG.debug("Before synchronized")
     synchronized(getLock(sharedEventDto.eventId)) {
+      LOG.debug("Start synchronized")
       val latch = CountDownLatch(eventsPerProcessLock.readLock().withLock {
         eventsPerProcess.values.filter { it[sharedEventDto.eventName] != null }.size
       })
@@ -34,7 +36,9 @@ class EventsFlowService {
       eventsPerProcessLock.writeLock().withLock {
         eventsPerProcess.values.forEach { it[sharedEventDto.eventName]?.add(sharedEventDto) }
       }
+      LOG.debug("Before latch awaiting. Count ${latch.count}")
       latch.await()
+      LOG.debug("After latch awaiting")
     }
   }
 

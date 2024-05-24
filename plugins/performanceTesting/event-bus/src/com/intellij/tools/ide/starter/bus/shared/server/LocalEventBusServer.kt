@@ -41,10 +41,12 @@ object LocalEventBusServer : EventBusServer {
 
       server.createContext("/postAndWaitProcessing") { exchange ->
         CompletableFuture.runAsync {
+          LOG.debug("Got postAndWait request")
           val json = exchange.requestBody.bufferedReader().use(BufferedReader::readText)
           eventsFlowService.postAndWaitProcessing(objectMapper.readValue(json, SharedEventDto::class.java))
         }
           .thenRun {
+            LOG.debug("Processed postAndWait request")
             val response = "Processed"
             exchange.sendResponseHeaders(200, response.length.toLong())
             exchange.responseBody.bufferedWriter().use { it.write(response) }
