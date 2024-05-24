@@ -145,9 +145,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
   @Override
   public @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode() {
-    if (NOTIFICATION_ANNOUNCING_MODE != null) return NOTIFICATION_ANNOUNCING_MODE;
-    else if (SystemInfo.isWindows) return NotificationAnnouncingMode.NONE;
-    else return NotificationAnnouncingMode.MEDIUM;
+    return NOTIFICATION_ANNOUNCING_MODE != null ? NOTIFICATION_ANNOUNCING_MODE : NotificationAnnouncingMode.MEDIUM;
   }
 
   @Override
