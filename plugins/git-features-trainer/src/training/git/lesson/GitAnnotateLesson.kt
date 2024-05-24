@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.ide.IdeBundle
@@ -17,7 +18,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation
-import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.HtmlPanel
@@ -247,7 +247,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
     task("EditorEscape") {
       text(GitLessonsBundle.message("git.annotate.close.all.windows",
-                                    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
+                                    if (DiffEditorTabFilesManager.isDiffInWindow) 0 else 1, action(it)))
       stateCheck {
         firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }

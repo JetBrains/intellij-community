@@ -16,10 +16,17 @@ interface DiffEditorTabFilesManager {
   companion object {
     private const val SHOW_DIFF_IN_EDITOR_SETTING = "show.diff.as.editor.tab"
 
+    /**
+     * If enabled - the [DiffViewerVirtualFile] will open like a normal editor in current split.
+     * If disabled - it will use [com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.NEW_WINDOW].
+     */
     @JvmStatic
     var isDiffInEditor: Boolean
       get() = AdvancedSettings.getBoolean(SHOW_DIFF_IN_EDITOR_SETTING)
       set(value) = AdvancedSettings.setBoolean(SHOW_DIFF_IN_EDITOR_SETTING, value)
+
+    @JvmStatic
+    val isDiffInWindow: Boolean get() = !isDiffInEditor
 
     @JvmStatic
     fun isDiffOpenedInNewWindow(file: VirtualFile): Boolean = DIFF_OPENED_IN_NEW_WINDOW.get(file, false)
