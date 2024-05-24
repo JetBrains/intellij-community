@@ -76,6 +76,30 @@ object DarculaNewUIUtil {
     }
   }
 
+  fun fillRoundedRectangle(g: Graphics, rect: Rectangle, color: Color) {
+    if (rect.width <= 0 || rect.height <= 0) {
+      return
+    }
+
+    val g2 = g.create() as Graphics2D
+
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+
+      val arc = DarculaUIUtil.COMPONENT_ARC.float
+      val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
+      border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
+      g2.translate(rect.x, rect.y)
+      g2.color = color
+      g2.fill(border)
+    }
+    finally {
+      g2.dispose()
+    }
+  }
+
   /**
    * Using DarculaUIUtil.doPaint and similar methods doesn't give good results when line thickness is 1 (right corners too thin)
    */
