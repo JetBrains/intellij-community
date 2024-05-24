@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 
 class PerformanceTestInfoLoader {
@@ -10,27 +11,21 @@ class PerformanceTestInfoLoader {
     private val instance: SynchronizedClearableLazy<PerformanceTestInfo> = SynchronizedClearableLazy {
       val log = logger<PerformanceTestInfo>()
 
-      val instance = try {
+      val instance = run {
         val aClass = PerformanceTestInfo::class.java
         val implementations = ServiceLoader.load(aClass, aClass.classLoader).toList()
         if (implementations.isEmpty()) {
-          log.info("No implementation found for MetricsPublisher - NOOP implementation will be used")
-          NoOpPerformanceTestInfo()
+          throw ServiceConfigurationError("No implementations of ${aClass.name} found")
         }
         else if (implementations.size > 1) {
-          log.error("More than one implementation for ${aClass.simpleName} found: ${implementations.map { it::class.qualifiedName }}")
-          NoOpPerformanceTestInfo()
+          throw ServiceConfigurationError("More than one implementation for ${aClass.simpleName} found: ${implementations.map { it::class.qualifiedName }}")
         }
         else {
           implementations.single()
         }
       }
-      catch (e: Throwable) {
-        log.info("Cannot create MetricsPublisher, falling back to NOOP implementation", e)
-        NoOpPerformanceTestInfo()
-      }
 
-      log.info("Loaded metrics publisher implementation ${instance::class.java.name}")
+      log.info("Loaded PerformanceTestInfo implementation ${instance::class.java.name}")
       instance
     }
 
