@@ -276,7 +276,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
       // Non-Java JVM languages sometimes use Java breakpoints but they should only use "all positions" variant.
       // Because otherwise the code below is not able to analyze non-Java PSI.
-      LOG.assertTrue(position.getFile().getLanguage().isKindOf(JavaLanguage.INSTANCE));
+      var language = position.getFile().getLanguage();
+      LOG.assertTrue(language.isKindOf(JavaLanguage.INSTANCE), language.getID());
 
       PsiElement containingMethod = getContainingMethod(breakpoint);
       if (containingMethod == null) return false;
