@@ -1199,7 +1199,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         myEvaluationContext.setThreadForEvaluation(invokeThread);
 
-        getVirtualMachineProxy().clearCaches();
+        invokeThread.getVirtualMachineProxy().clearCaches();
 
         return invokeMethodAndFork(suspendContext, invokeThread);
       }
@@ -1235,7 +1235,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
 
         LOG.debug("getVirtualMachine().clearCaches()");
-        getVirtualMachineProxy().clearCaches();
+        invokeThread.getVirtualMachineProxy().clearCaches();
         afterMethodInvocation(suspendContext, internalEvaluate);
 
         myEvaluationDispatcher.getMulticaster().evaluationFinished(suspendContext);
@@ -1252,8 +1252,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         try {
           try {
             if (LOG.isDebugEnabled()) {
-              final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
-              virtualMachineProxy.logThreads();
+              thread.getVirtualMachineProxy().logThreads();
               LOG.debug("Invoke in " + thread.name());
               assertThreadSuspended(thread, context);
             }
