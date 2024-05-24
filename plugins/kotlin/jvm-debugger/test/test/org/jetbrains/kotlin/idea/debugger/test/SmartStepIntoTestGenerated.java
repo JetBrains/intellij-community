@@ -208,6 +208,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/object.kt");
     }
 
+    @TestMetadata("ordinals.kt")
+    public void testOrdinals() throws Exception {
+        runTest("testData/smartStepInto/ordinals.kt");
+    }
+
     @TestMetadata("param.kt")
     public void testParam() throws Exception {
         runTest("testData/smartStepInto/param.kt");

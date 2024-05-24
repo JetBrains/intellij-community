@@ -19,7 +19,8 @@ data class CallableMemberInfo(
     val isInternalMethod: Boolean,
     val isExtension: Boolean,
     val isInline: Boolean,
-    val name: String
+    val name: String,
+    var ordinal: Int,
 ) {
     val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInValueParameters
 }
@@ -27,6 +28,7 @@ data class CallableMemberInfo(
 context(KtAnalysisSession)
 internal fun CallableMemberInfo(
     symbol: KtFunctionLikeSymbol,
+    ordinal: Int = 0,
     name: String = symbol.methodName()
 ): CallableMemberInfo {
     val isInvoke = symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke
@@ -41,6 +43,7 @@ internal fun CallableMemberInfo(
         isExtension = symbol.isExtension,
         isInline = symbol is KtFunctionSymbol && symbol.isInline,
         name = effectiveName,
+        ordinal = ordinal,
     )
 }
 

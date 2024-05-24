@@ -8,4 +8,4 @@ fun foo() {
 
 fun f1() = A()
 
-// EXISTS: f1(), plus(A), plus(A)
+// EXISTS: f1(), plus(A)_0, plus(A)_1

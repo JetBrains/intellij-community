@@ -34,7 +34,7 @@ class KotlinLambdaAsyncMethodFilter(
 ) : MethodFilter {
     private var visitedLocations = 0
     private val methodFilter = if (element is PsiMethod) {
-        BasicStepMethodFilter(element, lambdaInfo.callerMethodOrdinal, callingExpressionLines)
+        BasicStepMethodFilter(element, lambdaInfo.callerMethodInfo.ordinal, callingExpressionLines)
     } else {
         KotlinMethodFilter(element, callingExpressionLines, lambdaInfo.callerMethodInfo)
     }
@@ -57,7 +57,7 @@ class KotlinLambdaAsyncMethodFilter(
         // We failed to get the location inside lambda (it can happen for SAM conversions in IR backend).
         // So we fall back to ordinal check.
         if (locationInLambda == null) {
-            return visitedLocations == lambdaInfo.callerMethodOrdinal
+            return visitedLocations == lambdaInfo.callerMethodInfo.ordinal
         }
         return lambdaFilter.locationMatches(process, locationInLambda)
     }

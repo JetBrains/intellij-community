@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -17,17 +19,15 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.kotlin.internalName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 
 // TODO support class initializers, local functions, delegated properties with specified type, setter for properties
 class SmartStepTargetVisitor(
@@ -111,7 +111,7 @@ class SmartStepTargetVisitor(
             val delegate = property.delegate ?: return false
             val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false
             val delegatedSymbol = delegatedMethod.getSymbol() as? KtFunctionLikeSymbol ?: return false
-            val methodInfo = CallableMemberInfo(delegatedSymbol)
+            val methodInfo = CallableMemberInfo(delegatedSymbol, countExistingMethodCalls(delegatedMethod))
             val label = propertyAccessLabel(symbol, delegatedSymbol)
             appendPropertyFilter(methodInfo, delegatedMethod, label, expression, lines)
             return true
@@ -120,11 +120,14 @@ class SmartStepTargetVisitor(
         if (property is KtPropertyAccessor && property.hasBody()) {
             val methodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) {
                 symbol.javaSetterName ?: return false
-            }
-            else {
+            } else {
                 symbol.javaGetterName
             }
-            val methodInfo = CallableMemberInfo(propertyAccessSymbol, name = methodName.asString())
+            val methodInfo = CallableMemberInfo(
+                propertyAccessSymbol,
+                ordinal = countExistingMethodCalls(property),
+                name = methodName.asString()
+            )
             val label = propertyAccessLabel(symbol, propertyAccessSymbol)
             appendPropertyFilter(methodInfo, property, label, expression, lines)
             return true
@@ -252,11 +255,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    private fun countExistingMethodCalls(declaration: KtDeclaration): Int =
-        consumer.filterIsInstance<KotlinMethodSmartStepTarget>().count {
-            val targetDeclaration = it.getDeclaration() ?: return@count false
-            areElementsEquivalent(declaration, targetDeclaration)
-        }
+    private fun countExistingMethodCalls(declaration: KtDeclaration): Int = consumer.targetsWithDeclaration(declaration).count()
 
     private fun countExistingMethodCalls(psiMethod: PsiMethod): Int =
         consumer.filterIsInstance<MethodSmartStepTarget>().count { psiMethod === it.method }
@@ -373,7 +372,7 @@ class SmartStepTargetVisitor(
                     label,
                     declaration,
                     ordinal,
-                    CallableMemberInfo(symbol)
+                    CallableMemberInfo(symbol, ordinal)
                 )
             )
         }
@@ -392,15 +391,12 @@ class SmartStepTargetVisitor(
         lineRange != null && lines.isWithin(lineRange.first) && lines.isWithin(lineRange.last)
 }
 
-private fun PropertyAccessorDescriptor.getJvmMethodName(): String =
-    DescriptorUtils.getJvmName(this) ?: when (this) {
-        is PropertySetterDescriptor -> JvmAbi.setterName(correspondingProperty.name.asString())
-        else -> JvmAbi.getterName(correspondingProperty.name.asString())
+@VisibleForTesting
+@ApiStatus.Internal
+fun Collection<SmartStepTarget>.targetsWithDeclaration(declaration: KtDeclaration?): Sequence<KotlinMethodSmartStepTarget> {
+    if (declaration == null) return emptySequence()
+    return asSequence().filterIsInstance<KotlinMethodSmartStepTarget>().filter {
+        val targetDeclaration = it.getDeclaration() ?: return@filter false
+        areElementsEquivalent(declaration, targetDeclaration)
     }
-
-fun DeclarationDescriptor.getMethodName() =
-    when (this) {
-        is ClassDescriptor, is ConstructorDescriptor -> "<init>"
-        is PropertyAccessorDescriptor -> getJvmMethodName()
-        else -> name.asString()
-    }
+}

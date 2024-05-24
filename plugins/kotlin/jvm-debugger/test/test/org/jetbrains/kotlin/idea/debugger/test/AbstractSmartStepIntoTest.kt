@@ -2,13 +2,16 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.openapi.application.readAction
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinMethodSmartStepTarget
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.targetsWithDeclaration
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockSourcePosition
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -35,7 +38,15 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
         )
 
         val actual = withContext(Dispatchers.Default) {
-            KotlinSmartStepIntoHandler().findSmartStepTargets(position).map { it.presentation }
+            val targets = KotlinSmartStepIntoHandler().findSmartStepTargets(position)
+            readAction {
+                targets.map { target ->
+                    val suffix = if (target is KotlinMethodSmartStepTarget && targets.targetsWithDeclaration(target.getDeclaration()).count() > 1) {
+                        "_${target.methodInfo.ordinal}"
+                    } else ""
+                    "${target.presentation}$suffix"
+                }
+            }
         }
 
         val expected = InTextDirectivesUtils.findListWithPrefixes(fixture.file?.text!!.replace("\\,", "+++"), "// EXISTS: ")
