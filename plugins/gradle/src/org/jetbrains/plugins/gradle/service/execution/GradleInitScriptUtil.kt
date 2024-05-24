@@ -33,12 +33,11 @@ const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
 const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME = "ijIdeaPluginConfigurator"
 
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
-  val jarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses)
   val initScript = joinInitScripts(
+    loadToolingExtensionProvidingInitScript(toolingExtensionClasses),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/RegistryProcessor.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JetGradlePlugin.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
-      "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
       "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
     ))
   )
@@ -75,14 +74,15 @@ fun loadTaskInitScript(
   toolingExtensionClasses: Set<Class<*>>,
   taskConfiguration: String?
 ): String {
-  val jarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses)
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TaskInit.gradle", mapOf(
-    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
-    "PROJECT_PATH" to projectPath.toGroovyStringLiteral(),
-    "TASK_NAME" to taskName.toGroovyStringLiteral(),
-    "TASK_TYPE" to taskType,
-    "TASK_CONFIGURATION" to (taskConfiguration ?: "")
-  ))
+  return joinInitScripts(
+    loadToolingExtensionProvidingInitScript(toolingExtensionClasses),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TaskInit.gradle", mapOf(
+      "PROJECT_PATH" to projectPath.toGroovyStringLiteral(),
+      "TASK_NAME" to taskName.toGroovyStringLiteral(),
+      "TASK_TYPE" to taskType,
+      "TASK_CONFIGURATION" to (taskConfiguration ?: "")
+    ))
+  )
 }
 
 fun createTargetPathMapperInitScript(): Path {
@@ -177,7 +177,7 @@ fun loadApplicationInitScript(
   useClasspathFile: Boolean
 ): String {
   return joinInitScripts(
-    loadToolingApiProvidingInitScript(),
+    loadToolingExtensionProvidingInitScript(),
     loadInitScript(
       "/org/jetbrains/plugins/gradle/tooling/internal/init/ApplicationTaskInitScript.gradle",
       mapOf(
@@ -262,11 +262,11 @@ fun createInitScript(prefix: String, content: String): Path {
   }
 }
 
-private fun loadToolingApiProvidingInitScript(): String {
-  val tapiClasspath = getToolingExtensionsJarPaths(setOf(
-    GradleToolingExtensionImplClass::class.java,
-    GradleToolingExtensionClass::class.java
-  )).toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
+private fun loadToolingExtensionProvidingInitScript(
+  toolingExtensionClasses: Set<Class<*>> = setOf(GradleToolingExtensionImplClass::class.java, GradleToolingExtensionClass::class.java)
+): String {
+  val tapiClasspath = getToolingExtensionsJarPaths(toolingExtensionClasses)
+    .toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
   return loadInitScript(
     "/org/jetbrains/plugins/gradle/tooling/internal/init/ClassPathExtensionInitScript.gradle",
     mapOf("EXTENSIONS_JARS_PATH" to tapiClasspath)

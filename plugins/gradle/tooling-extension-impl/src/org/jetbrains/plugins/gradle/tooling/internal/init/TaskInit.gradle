@@ -7,13 +7,6 @@ String taskName = TASK_NAME
 //noinspection GrUnresolvedAccess
 Class<?> taskType = TASK_TYPE
 
-initscript {
-  dependencies {
-    //noinspection GrUnresolvedAccess
-    classpath files(EXTENSIONS_JARS_PATH)
-  }
-}
-
 allprojects {
   afterEvaluate { Project project ->
     if (project.path == projectPath || (':' + rootProject.projectDir.name + project.path) == projectPath) {
