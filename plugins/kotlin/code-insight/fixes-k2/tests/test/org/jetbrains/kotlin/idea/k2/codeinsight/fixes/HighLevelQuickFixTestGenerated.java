@@ -6119,6 +6119,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/variables/changeToFunctionInvocation/funInvWithoutParentheses.kt");
         }
 
+        @TestMetadata("genericFunction.kt")
+        public void testGenericFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/variables/changeToFunctionInvocation/genericFunction.kt");
+        }
+
         @TestMetadata("inStringTemplate.kt")
         public void testInStringTemplate() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/variables/changeToFunctionInvocation/inStringTemplate.kt");

@@ -17718,6 +17718,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/variables/changeToFunctionInvocation/funInvWithoutParentheses.kt");
             }
 
+            @TestMetadata("genericFunction.kt")
+            public void testGenericFunction() throws Exception {
+                runTest("testData/quickfix/variables/changeToFunctionInvocation/genericFunction.kt");
+            }
+
             @TestMetadata("inStringTemplate.kt")
             public void testInStringTemplate() throws Exception {
                 runTest("testData/quickfix/variables/changeToFunctionInvocation/inStringTemplate.kt");
