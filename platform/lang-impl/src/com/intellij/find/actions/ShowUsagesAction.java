@@ -530,7 +530,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
     ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
 
-    addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
+    addUsageNodes(usageView.getRoot(), new ArrayList<>());
 
     List<Usage> usages = new ArrayList<>();
     Set<Usage> visibleUsages = new LinkedHashSet<>();
@@ -605,7 +605,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef))) {
           return;
         }
-        addUsageNodes(usageView.getRoot(), usageView, nodes);
+        addUsageNodes(usageView.getRoot(), nodes);
         copy = new ArrayList<>(usages);
       }
 
@@ -1473,17 +1473,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return bounds;
   }
 
-  private static void addUsageNodes(@NotNull GroupNode root, @NotNull UsageViewImpl usageView, @NotNull List<? super UsageNode> outNodes) {
+  private static void addUsageNodes(@NotNull GroupNode root, @NotNull List<? super UsageNode> outNodes) {
     for (UsageNode node : root.getUsageNodes()) {
-      Usage usage = node.getUsage();
-      if (usageView.isVisible(usage)) {
-        node.setParent(root);
-        outNodes.add(node);
-      }
+      node.setParent(root);
+      outNodes.add(node);
     }
     for (GroupNode groupNode : root.getSubGroups()) {
       groupNode.setParent(root);
-      addUsageNodes(groupNode, usageView, outNodes);
+      addUsageNodes(groupNode, outNodes);
     }
   }
 
