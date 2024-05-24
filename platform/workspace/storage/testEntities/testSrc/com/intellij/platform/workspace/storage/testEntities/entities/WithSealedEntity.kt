@@ -43,7 +43,7 @@ interface WithSealedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyWithSealedEntity(
   entity: WithSealedEntity,
   modification: WithSealedEntity.Builder.() -> Unit,
 ): WithSealedEntity {

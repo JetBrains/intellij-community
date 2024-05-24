@@ -2,12 +2,17 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 
 // Use "Generate Workspace Model Implementation" action once interface is updated.
-interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
+interface KotlinScriptEntity : WorkspaceEntityWithSymbolicId {
 
     val path: String
 
@@ -47,7 +52,7 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyKotlinScriptEntity(
     entity: KotlinScriptEntity,
     modification: KotlinScriptEntity.Builder.() -> Unit,
 ): KotlinScriptEntity {
@@ -55,7 +60,7 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource
+data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
 
 data class KotlinScriptId(val path: String) : SymbolicEntityId<KotlinScriptEntity> {
     override val presentableName: String

@@ -43,7 +43,7 @@ interface IndexingTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyIndexingTestEntity(
   entity: IndexingTestEntity,
   modification: IndexingTestEntity.Builder.() -> Unit,
 ): IndexingTestEntity {

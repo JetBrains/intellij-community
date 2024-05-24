@@ -59,7 +59,7 @@ interface FinalFieldsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyFinalFieldsEntity(
   entity: FinalFieldsEntity,
   modification: FinalFieldsEntity.Builder.() -> Unit,
 ): FinalFieldsEntity {

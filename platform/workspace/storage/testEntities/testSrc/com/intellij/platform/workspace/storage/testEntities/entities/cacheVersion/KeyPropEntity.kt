@@ -49,7 +49,7 @@ interface KeyPropEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyKeyPropEntity(
   entity: KeyPropEntity,
   modification: KeyPropEntity.Builder.() -> Unit,
 ): KeyPropEntity {

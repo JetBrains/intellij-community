@@ -174,7 +174,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     PerformanceTestUtil.newPerformanceTest(testInfo.displayName) {
       repeat(size) {
         val value = newBuilder.resolve(NameId("$it"))!!
-        newBuilder.modifyEntity(value) {
+        newBuilder.modifyNamedEntity(value) {
           myName = "--- $it ---"
         }
       }
@@ -492,7 +492,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       builder.toSnapshot().toBuilder().also { mutable ->
         repeat(1000) {
           val namedEntity = mutable.resolve(NameId("MyName$it"))!!
-          mutable.modifyEntity(namedEntity) {
+          mutable.modifyNamedEntity(namedEntity) {
             this.myName = "newName$it"
           }
         }
@@ -501,7 +501,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         }
         mutable.entities(ChildEntity::class.java).forEach { mutable.removeEntity(it) }
         mutable.entities(OoChildWithNullableParentEntity::class.java).forEach {
-          mutable.modifyEntity(it) {
+          mutable.modifyOoChildWithNullableParentEntity(it) {
             this.parentEntity = null
           }
         }
@@ -542,7 +542,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       builder.toSnapshot().toBuilder().also { mutable ->
         repeat(1000) {
           val namedEntity = mutable.resolve(NameId("MyName$it"))!!
-          mutable.modifyEntity(namedEntity) {
+          mutable.modifyNamedEntity(namedEntity) {
             this.myName = "newName$it"
           }
         }
@@ -551,7 +551,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         }
         mutable.entities(ChildEntity::class.java).forEach { mutable.removeEntity(it) }
         mutable.entities(OoChildWithNullableParentEntity::class.java).forEach {
-          mutable.modifyEntity(it) {
+          mutable.modifyOoChildWithNullableParentEntity(it) {
             this.parentEntity = null
           }
         }
@@ -594,13 +594,13 @@ class WorkspaceModelBenchmarksPerformanceTest {
         // Populate builder with changes
         repeat(1000) {
           val namedEntity = builder.resolve(NameId("MyName$it"))!!
-          builder.modifyEntity(namedEntity) {
+          builder.modifyNamedEntity(namedEntity) {
             this.children = listOf(NamedChildEntity("prop", MySource))
           }
         }
         builder.entities(ChildEntity::class.java).forEach { builder.removeEntity(it) }
         builder.entities(OoChildWithNullableParentEntity::class.java).forEach {
-          builder.modifyEntity(it) {
+          builder.modifyOoChildWithNullableParentEntity(it) {
             this.parentEntity = null
           }
         }
@@ -675,7 +675,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
       repeat(baseSize / 2) { // Half of all entities
         val namedEntity = builder.resolve(NameId("MyName$it"))!!
-        builder.modifyEntity(namedEntity) {
+        builder.modifyNamedEntity(namedEntity) {
           this.myName = "newName$it"
         }
       }
@@ -896,7 +896,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Modify 10% of entities
       builder1.entities<NamedEntity>().take(size / 10).forEach {
-        builder1.modifyEntity(it) {
+        builder1.modifyNamedEntity(it) {
           this.myName += "MyName"
         }
       }
@@ -997,12 +997,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Modify 10% of entities
       builder1.entities<NamedEntity>().take(size / 10).forEach {
-        builder1.modifyEntity(it) {
+        builder1.modifyNamedEntity(it) {
           this.myName += "MyName"
         }
       }
       builder1.entities<NamedChildEntity>().toList().takeLast(size / 10).forEach {
-        builder1.modifyEntity(it) {
+        builder1.modifyNamedChildEntity(it) {
           this.childProperty = "Prop"
         }
       }
@@ -1101,7 +1101,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         val intBuilder = baseSnapshot.toBuilder()
         repeat((size / 100) * percent) { entitiesBatch ->
           val entity = intBuilder.resolve(NameId("Name$entitiesBatch"))!!
-          intBuilder.modifyEntity(entity) {
+          intBuilder.modifyNamedEntity(entity) {
             this.myName = "Another$entitiesBatch"
           }
         }
@@ -1240,7 +1240,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(1000) { count ->
         val newBuilder = snapshot.toBuilder().also {
           val id = it.resolve(NameId("Another$count"))!!
-          it.modifyEntity(id) {
+          it.modifyNamedEntity(id) {
             this.myName = "Third$count"
           }
         }

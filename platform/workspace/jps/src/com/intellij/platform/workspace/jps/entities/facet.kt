@@ -62,7 +62,7 @@ interface FacetEntity: ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyFacetEntity(
   entity: FacetEntity,
   modification: FacetEntity.Builder.() -> Unit,
 ): FacetEntity {

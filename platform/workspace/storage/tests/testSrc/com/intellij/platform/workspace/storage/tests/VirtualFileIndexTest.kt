@@ -41,7 +41,7 @@ class VirtualFileIndexTest {
     val entity = builder addEntity VFUEntity("hello", virtualFileManager.getOrCreateFromUrl(fileUrl), SampleEntitySource("test"))
     assertEquals(fileUrl, entity.fileProperty.url)
 
-    val modifiedEntity = builder.modifyEntity(entity) {
+    val modifiedEntity = builder.modifyVFUEntity(entity) {
       this.fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrl2)
       this.fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrl3)
     } as VFUEntityImpl
@@ -156,7 +156,7 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
 
-    entityB = diff.modifyEntity((entityB as VFUEntity).from(diff)) {
+    entityB = diff.modifyVFUEntity((entityB as VFUEntity).from(diff)) {
       fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrlC)
     } as VFUEntityImpl
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())

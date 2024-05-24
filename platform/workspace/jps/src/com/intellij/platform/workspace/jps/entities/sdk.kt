@@ -61,7 +61,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySdkEntity(
   entity: SdkEntity,
   modification: SdkEntity.Builder.() -> Unit,
 ): SdkEntity {

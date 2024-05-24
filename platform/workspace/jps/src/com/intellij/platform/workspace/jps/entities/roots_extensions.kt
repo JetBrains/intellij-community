@@ -53,7 +53,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySourceRootOrderEntity(
   entity: SourceRootOrderEntity,
   modification: SourceRootOrderEntity.Builder.() -> Unit,
 ): SourceRootOrderEntity {
@@ -104,7 +104,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyCustomSourceRootPropertiesEntity(
   entity: CustomSourceRootPropertiesEntity,
   modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit,
 ): CustomSourceRootPropertiesEntity {
@@ -154,7 +154,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyExcludeUrlOrderEntity(
   entity: ExcludeUrlOrderEntity,
   modification: ExcludeUrlOrderEntity.Builder.() -> Unit,
 ): ExcludeUrlOrderEntity {

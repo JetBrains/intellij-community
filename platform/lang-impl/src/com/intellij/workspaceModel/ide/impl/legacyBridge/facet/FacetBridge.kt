@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 import com.intellij.facet.Facet
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
@@ -30,7 +30,7 @@ interface FacetBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>>
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
     config.init(moduleEntity, entitySource)
-    mutableStorage.modifyEntity(moduleEntity) module@{
+    mutableStorage.modifyModuleEntity(moduleEntity) module@{
       val settingsEntity = mutableStorage addEntity  config.getEntityBuilder(this@module)
       mutableFacetMapping(mutableStorage).addMapping(settingsEntity, this@FacetBridge as Facet<*>)
     }

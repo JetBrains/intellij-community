@@ -38,7 +38,7 @@ interface ChangedEnumNameEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChangedEnumNameEntity(
   entity: ChangedEnumNameEntity,
   modification: ChangedEnumNameEntity.Builder.() -> Unit,
 ): ChangedEnumNameEntity {

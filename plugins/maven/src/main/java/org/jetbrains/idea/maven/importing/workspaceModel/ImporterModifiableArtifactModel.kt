@@ -196,14 +196,14 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
           val existingProperty = artifactEntity.customProperties.find { it.providerType == provider.id }
 
           if (existingProperty == null) {
-            storage.modifyEntity(artifactEntity) {
+            storage.modifyArtifactEntity(artifactEntity) {
               this.customProperties += ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
                 this.propertiesXmlTag = tag
               }
             }
           }
           else {
-            storage.modifyEntity(existingProperty) {
+            storage.modifyArtifactPropertiesEntity(existingProperty) {
               this.propertiesXmlTag = tag
             }
           }

@@ -24,7 +24,7 @@ class WithNullsEntityMultipleTest {
     val builder = MutableEntityStorage.create()
     val child = builder addEntity ChildWithNullsMultiple("data", MySource)
 
-    builder.modifyEntity(child) {
+    builder.modifyChildWithNullsMultiple(child) {
       this.parent = ParentWithNullsMultiple("Parent", MySource)
     }
 

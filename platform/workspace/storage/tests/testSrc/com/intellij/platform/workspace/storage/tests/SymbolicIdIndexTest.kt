@@ -2,10 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.asBase
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntityImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -21,7 +18,7 @@ class SymbolicIdIndexTest {
     assertEquals(oldName, symbolicId!!.presentableName)
     assertEquals(entity.asBase().id, builder.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
 
-    val newEntity = builder.modifyEntity(entity) {
+    val newEntity = builder.modifySymbolicIdEntity(entity) {
       data = newName
     } as SymbolicIdEntityImpl
     val newSymbolicId = builder.indexes.symbolicIdIndex.getEntryById(newEntity.id)
@@ -91,7 +88,7 @@ class SymbolicIdIndexTest {
     val diff = createBuilderFrom(builder.toSnapshot())
     assertEquals(entity.asBase().id, diff.indexes.symbolicIdIndex.getIdsByEntry(symbolicId))
 
-    val newEntity = diff.modifyEntity(entity.from(diff)) {
+    val newEntity = diff.modifySymbolicIdEntity(entity.from(diff)) {
       data = newName
     }
     val newSymbolicId = diff.indexes.symbolicIdIndex.getEntryById(newEntity.asBase().id)

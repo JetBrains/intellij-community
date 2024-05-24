@@ -139,7 +139,7 @@ class ModuleDependencyIndexTest {
 
     projectModel.project.workspaceModel.update {
       val resolved = it.resolve(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId))!!
-      it.modifyEntity(resolved) {
+      it.modifyLibraryEntity(resolved) {
         this.name = "NewName"
       }
     }
@@ -169,7 +169,7 @@ class ModuleDependencyIndexTest {
       writeAction {
         GlobalWorkspaceModel.getInstance().updateModel("Test") {
           val resolved = it.resolve(LibraryId("GlobalLib", LibraryTableId.GlobalLibraryTableId("application")))!!
-          it.modifyEntity(resolved) {
+          it.modifyLibraryEntity(resolved) {
             this.name = "NewGlobalName"
           }
         }

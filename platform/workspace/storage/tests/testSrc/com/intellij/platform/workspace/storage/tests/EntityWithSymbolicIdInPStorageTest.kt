@@ -44,7 +44,7 @@ class EntityWithSymbolicIdInPStorageTest {
     val bar = builder addEntity LinkedListEntity("bar", LinkedListEntityId("baz"), MySource)
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    builder.modifyEntity(bar) {
+    builder.modifyLinkedListEntity(bar) {
       myName = "baz"
     }
     builder.assertConsistency()
@@ -59,7 +59,7 @@ class EntityWithSymbolicIdInPStorageTest {
     val baz = builder addEntity LinkedListEntity("baz", LinkedListEntityId("foo"), MySource)
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    val newFoo = builder.modifyEntity(foo) {
+    val newFoo = builder.modifyLinkedListEntity(foo) {
       next = LinkedListEntityId("baz")
     }
     builder.assertConsistency()
@@ -70,7 +70,7 @@ class EntityWithSymbolicIdInPStorageTest {
   fun `remove child entity with parent entity`() {
     val parent = builder addEntity XParentEntity("parent", MySource)
     builder addEntity XChildEntity("child", MySource) child@{
-      builder.modifyEntity(parent) parent@{
+      builder.modifyXParentEntity(parent) parent@{
         this@child.parentEntity = this@parent
       }
     }
@@ -127,7 +127,7 @@ class EntityWithSymbolicIdInPStorageTest {
         this.additionalProperty = null
         children = emptyList()
       }
-      builder.modifyEntity(namedEntity) {
+      builder.modifyNamedEntity(namedEntity) {
         this.myName = "MyName"
       }
     }
@@ -142,7 +142,7 @@ class EntityWithSymbolicIdInPStorageTest {
         children = emptyList()
       }
       val namedEntity = builder addEntity NamedEntity("AnotherId", MySource)
-      builder.modifyEntity(namedEntity) {
+      builder.modifyNamedEntity(namedEntity) {
         this.myName = "MyName"
       }
     }

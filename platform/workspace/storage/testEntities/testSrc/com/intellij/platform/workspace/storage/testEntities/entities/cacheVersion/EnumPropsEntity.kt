@@ -39,7 +39,7 @@ interface EnumPropsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyEnumPropsEntity(
   entity: EnumPropsEntity,
   modification: EnumPropsEntity.Builder.() -> Unit,
 ): EnumPropsEntity {

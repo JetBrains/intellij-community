@@ -134,7 +134,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyKotlinSettingsEntity(
     entity: KotlinSettingsEntity,
     modification: KotlinSettingsEntity.Builder.() -> Unit,
 ): KotlinSettingsEntity {

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ArrayUtil
 import org.jetbrains.idea.maven.execution.MavenRunner
@@ -76,7 +76,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         artifactModel: ModifiableArtifactModel
     ) {
         if (!isMigratedToConfigurator) return
-        storage.modifyEntity(module) {
+        storage.modifyModuleEntity(module) {
             this.kotlinSettings += createWorkspaceEntity(module)
         }
 
@@ -222,7 +222,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         }
 
         val kotlinSettingsEntity = storage.entities(KotlinSettingsEntity::class.java).first { it.module.name == moduleName }
-        storage.modifyEntity(kotlinSettingsEntity) {
+        storage.modifyKotlinSettingsEntity(kotlinSettingsEntity) {
             this.sourceRoots = sourceRoots.toMutableList()
             this.useProjectSettings = kotlinFacetSettings.useProjectSettings
             this.implementedModuleNames = kotlinFacetSettings.implementedModuleNames.toMutableList()

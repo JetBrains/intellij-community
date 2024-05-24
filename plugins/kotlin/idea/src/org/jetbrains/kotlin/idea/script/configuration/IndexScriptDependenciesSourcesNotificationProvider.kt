@@ -13,10 +13,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
-import org.jetbrains.kotlin.idea.core.script.ucache.findDependentScripts
-import org.jetbrains.kotlin.idea.core.script.ucache.modifyEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.*
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -48,7 +45,7 @@ class IndexScriptDependenciesSourcesNotificationProvider : EditorNotificationPro
                     runWriteAction {
                         WorkspaceModel.getInstance(project).updateProjectModel("Marking sources to index...") { storage ->
                             libsToIndex.forEach {
-                                storage.modifyEntity(it) { indexSourceRoots = true }
+                                storage.modifyKotlinScriptLibraryEntity(it) { indexSourceRoots = true }
                             }
                         }
                     }

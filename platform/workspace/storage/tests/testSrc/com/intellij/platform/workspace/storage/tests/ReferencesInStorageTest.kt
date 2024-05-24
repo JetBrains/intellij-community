@@ -82,7 +82,7 @@ class ReferencesInStorageTest {
     }
     builder.assertConsistency()
     val child = builder addEntity XChildEntity("child", MySource) child@{
-      builder.modifyEntity(parent1) parent1@{
+      builder.modifyXParentEntity(parent1) parent1@{
         this@child.dataClass = DataClassX("data", parent2.createPointer())
         this@child.parentEntity = this@parent1
         this@child.childChild = emptyList()
@@ -95,7 +95,7 @@ class ReferencesInStorageTest {
     assertEquals("parent2", child.dataClass!!.parent.resolve(builder)?.parentProperty)
     assertEquals(setOf(parent1, parent2), builder.entities(XParentEntity::class.java).toSet())
 
-    builder.modifyEntity(child) {
+    builder.modifyXChildEntity(child) {
       dataClass = null
     }
     builder.assertConsistency()

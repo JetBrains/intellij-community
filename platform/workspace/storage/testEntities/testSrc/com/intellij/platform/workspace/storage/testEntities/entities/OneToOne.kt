@@ -49,7 +49,7 @@ interface OoParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoParentEntity(
   entity: OoParentEntity,
   modification: OoParentEntity.Builder.() -> Unit,
 ): OoParentEntity {
@@ -94,7 +94,7 @@ interface OoChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoChildEntity(
   entity: OoChildEntity,
   modification: OoChildEntity.Builder.() -> Unit,
 ): OoChildEntity {
@@ -133,7 +133,7 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoChildWithNullableParentEntity(
   entity: OoChildWithNullableParentEntity,
   modification: OoChildWithNullableParentEntity.Builder.() -> Unit,
 ): OoChildWithNullableParentEntity {
@@ -187,7 +187,7 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoParentWithPidEntity(
   entity: OoParentWithPidEntity,
   modification: OoParentWithPidEntity.Builder.() -> Unit,
 ): OoParentWithPidEntity {
@@ -231,7 +231,7 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoChildForParentWithPidEntity(
   entity: OoChildForParentWithPidEntity,
   modification: OoChildForParentWithPidEntity.Builder.() -> Unit,
 ): OoChildForParentWithPidEntity {
@@ -276,7 +276,7 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoChildAlsoWithPidEntity(
   entity: OoChildAlsoWithPidEntity,
   modification: OoChildAlsoWithPidEntity.Builder.() -> Unit,
 ): OoChildAlsoWithPidEntity {
@@ -320,7 +320,7 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoParentWithoutPidEntity(
   entity: OoParentWithoutPidEntity,
   modification: OoParentWithoutPidEntity.Builder.() -> Unit,
 ): OoParentWithoutPidEntity {
@@ -371,7 +371,7 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOoChildWithPidEntity(
   entity: OoChildWithPidEntity,
   modification: OoChildWithPidEntity.Builder.() -> Unit,
 ): OoChildWithPidEntity {

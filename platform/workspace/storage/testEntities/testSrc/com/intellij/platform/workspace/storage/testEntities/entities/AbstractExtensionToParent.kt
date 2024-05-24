@@ -42,7 +42,7 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyParentWithLinkToAbstractChild(
   entity: ParentWithLinkToAbstractChild,
   modification: ParentWithLinkToAbstractChild.Builder.() -> Unit,
 ): ParentWithLinkToAbstractChild {
@@ -113,7 +113,7 @@ interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEnt
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySpecificChildWithLinkToParentEntity(
   entity: SpecificChildWithLinkToParentEntity,
   modification: SpecificChildWithLinkToParentEntity.Builder.() -> Unit,
 ): SpecificChildWithLinkToParentEntity {

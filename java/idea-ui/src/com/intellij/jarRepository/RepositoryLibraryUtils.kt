@@ -270,7 +270,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
     if (entity.propertiesXmlTag == newXmlTag) return false
 
-    builder.modifyEntity(entity) {
+    builder.modifyLibraryPropertiesEntity(entity) {
       propertiesXmlTag = newXmlTag
     }
     return true

@@ -46,7 +46,7 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyHeadAbstractionEntity(
   entity: HeadAbstractionEntity,
   modification: HeadAbstractionEntity.Builder.() -> Unit,
 ): HeadAbstractionEntity {
@@ -151,7 +151,7 @@ interface MiddleEntity : BaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyMiddleEntity(
   entity: MiddleEntity,
   modification: MiddleEntity.Builder.() -> Unit,
 ): MiddleEntity {
@@ -190,7 +190,7 @@ interface LeftEntity : CompositeBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyLeftEntity(
   entity: LeftEntity,
   modification: LeftEntity.Builder.() -> Unit,
 ): LeftEntity {
@@ -229,7 +229,7 @@ interface RightEntity : CompositeBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyRightEntity(
   entity: RightEntity,
   modification: RightEntity.Builder.() -> Unit,
 ): RightEntity {

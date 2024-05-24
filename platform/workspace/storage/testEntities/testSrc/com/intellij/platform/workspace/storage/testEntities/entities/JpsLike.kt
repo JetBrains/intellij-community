@@ -47,7 +47,7 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyModuleTestEntity(
   entity: ModuleTestEntity,
   modification: ModuleTestEntity.Builder.() -> Unit,
 ): ModuleTestEntity {
@@ -87,7 +87,7 @@ interface ContentRootTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyContentRootTestEntity(
   entity: ContentRootTestEntity,
   modification: ContentRootTestEntity.Builder.() -> Unit,
 ): ContentRootTestEntity {
@@ -130,7 +130,7 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySourceRootTestOrderEntity(
   entity: SourceRootTestOrderEntity,
   modification: SourceRootTestOrderEntity.Builder.() -> Unit,
 ): SourceRootTestOrderEntity {
@@ -170,7 +170,7 @@ interface SourceRootTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySourceRootTestEntity(
   entity: SourceRootTestEntity,
   modification: SourceRootTestEntity.Builder.() -> Unit,
 ): SourceRootTestEntity {
@@ -227,7 +227,7 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyFacetTestEntity(
   entity: FacetTestEntity,
   modification: FacetTestEntity.Builder.() -> Unit,
 ): FacetTestEntity {

@@ -48,7 +48,7 @@ interface DefaultPropEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyDefaultPropEntity(
   entity: DefaultPropEntity,
   modification: DefaultPropEntity.Builder.() -> Unit,
 ): DefaultPropEntity {

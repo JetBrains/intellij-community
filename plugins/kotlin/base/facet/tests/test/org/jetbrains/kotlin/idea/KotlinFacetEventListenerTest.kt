@@ -12,7 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.testFramework.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
@@ -111,7 +111,7 @@ class KotlinFacetEventListenerTest {
                     val workspaceModel = WorkspaceModel.getInstance(project)
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add kotlin setting entity") {
-                        it.modifyEntity(moduleEntity) {
+                        it.modifyModuleEntity(moduleEntity) {
                             this.kotlinSettings += createEmptyEntity()
                         }
                     }
@@ -124,7 +124,7 @@ class KotlinFacetEventListenerTest {
 
                     workspaceModel.updateProjectModel("rename") {
                         val kotlinSettingsEntity = it.entities(KotlinSettingsEntity::class.java).first()
-                        it.modifyEntity(kotlinSettingsEntity) {
+                        it.modifyKotlinSettingsEntity(kotlinSettingsEntity) {
                             name = "New Name"
                         }
                     }
@@ -161,7 +161,7 @@ class KotlinFacetEventListenerTest {
                     val workspaceModel = WorkspaceModel.getInstance(project)
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add Kotlin setting entity") {
-                        it.modifyEntity(moduleEntity) {
+                        it.modifyModuleEntity(moduleEntity) {
                             this.kotlinSettings += createEmptyEntity()
                         }
                     }
@@ -174,7 +174,7 @@ class KotlinFacetEventListenerTest {
 
                     workspaceModel.updateProjectModel("Don't use project settings") {
                         val kotlinSettingsEntity = it.entities(KotlinSettingsEntity::class.java).first()
-                        it.modifyEntity(kotlinSettingsEntity) {
+                        it.modifyKotlinSettingsEntity(kotlinSettingsEntity) {
                             useProjectSettings = false
                         }
                     }

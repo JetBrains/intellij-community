@@ -45,10 +45,10 @@ class JpsProjectSaveAfterChangesTest {
       val builder = if (unloadedHolder.isUnloaded("util")) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
-      builder.modifyEntity(sourceRoot) {
+      builder.modifySourceRootEntity(sourceRoot) {
         url = configLocation.baseDirectoryUrl.append("util/src2")
       }
-      builder.modifyEntity(utilModule.customImlData!!) {
+      builder.modifyModuleCustomImlDataEntity(utilModule.customImlData!!) {
         rootManagerTagCustomData = """<component>
   <annotation-paths>
     <root url="${configLocation.baseDirectoryUrlString}/lib/anno2" />
@@ -58,15 +58,15 @@ class JpsProjectSaveAfterChangesTest {
   </javadoc-paths>
 </component>"""
       }
-      builder.modifyEntity(utilModule) {
+      builder.modifyModuleEntity(utilModule) {
         dependencies.removeLast()
         dependencies.removeLast()
       }
-      builder.modifyEntity(utilModule.contentRoots.first()) {
+      builder.modifyContentRootEntity(utilModule.contentRoots.first()) {
         excludedPatterns = mutableListOf()
         excludedUrls = mutableListOf()
       }
-      builder.modifyEntity(sourceRoot.asJavaSourceRoot()!!) {
+      builder.modifyJavaSourceRootPropertiesEntity(sourceRoot.asJavaSourceRoot()!!) {
         packagePrefix = ""
       }
     }
@@ -76,7 +76,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `rename module`() {
     checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, _, _, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
-      builder.modifyEntity(utilModule) {
+      builder.modifyModuleEntity(utilModule) {
         name = "util2"
       }
     }
@@ -150,7 +150,7 @@ class JpsProjectSaveAfterChangesTest {
       val root = LibraryRoot(
         virtualFileManager.getOrCreateFromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
         LibraryRootTypeId.COMPILED)
-      builder.modifyEntity(junitLibrary) {
+      builder.modifyLibraryEntity(junitLibrary) {
         roots = mutableListOf(root)
       }
     }
@@ -160,7 +160,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `rename library`() {
     checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, _, _, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
-      builder.modifyEntity(junitLibrary) {
+      builder.modifyLibraryEntity(junitLibrary) {
         name = "junit2"
       }
     }
@@ -178,7 +178,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `set group for the module`() {
     checkSaveProjectAfterChange("directoryBased/addModuleGroup", "fileBased/addModuleGroup") { builder, _, _, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
-      builder.modifyEntity(utilModule) {
+      builder.modifyModuleEntity(utilModule) {
         this.groupPath = ModuleGroupPathEntity(listOf("group"), utilModule.entitySource)
       }
     }

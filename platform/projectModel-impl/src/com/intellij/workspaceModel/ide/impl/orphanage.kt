@@ -250,7 +250,7 @@ private class ContentRootAdder : EntityAdder {
     log.info("Move content roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
-      builder.modifyEntity(resolvedModule) {
+      builder.modifyModuleEntity(resolvedModule) {
         this.contentRoots += rootsToAdd
       }
     }
@@ -315,7 +315,7 @@ private class SourceRootAdder : EntityAdder {
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, sources) ->
         val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
-        builder.modifyEntity(contentRoot) {
+        builder.modifyContentRootEntity(contentRoot) {
           this.sourceRoots += sources
         }
       }
@@ -389,7 +389,7 @@ private class ExcludeRootAdder : EntityAdder {
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, excludes) ->
         val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
-        builder.modifyEntity(contentRoot) {
+        builder.modifyContentRootEntity(contentRoot) {
           this.excludedUrls += excludes
         }
       }

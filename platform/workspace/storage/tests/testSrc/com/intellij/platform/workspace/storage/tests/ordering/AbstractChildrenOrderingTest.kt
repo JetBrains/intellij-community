@@ -27,7 +27,7 @@ class AbstractChildrenOrderingTest {
     }
     val builder2 = builder.toSnapshot().toBuilder()
 
-    builder2.modifyEntity(entity.from(builder2)) {
+    builder2.modifyNamedEntity(entity.from(builder2)) {
       this.children = listOf(NamedChildEntity("Zero", MySource)) + this.children
     }
 
@@ -118,7 +118,7 @@ class AbstractChildrenOrderingTest {
       )
     }
 
-    builder.modifyEntity(entity) {
+    builder.modifyLeftEntity(entity) {
       this.children = listOf(this.children[2], this.children[1], this.children[0])
     }
     val newEntity = when (enState) {
@@ -145,7 +145,7 @@ class AbstractChildrenOrderingTest {
     val builder2 = builder.toSnapshot().toBuilder()
 
     builder2.removeEntity(entity.children.first().from(builder2))
-    builder2.modifyEntity(entity.from(builder2)) {
+    builder2.modifyLeftEntity(entity.from(builder2)) {
       this.children += MiddleEntity("Four", MySource)
     }
 
@@ -196,7 +196,7 @@ class AbstractChildrenOrderingTest {
     }
     val builder2 = builder.toSnapshot().toBuilder()
 
-    builder2.modifyEntity(entity.from(builder2)) {
+    builder2.modifyLeftEntity(entity.from(builder2)) {
       this.children = listOf(MiddleEntity("Zero", MySource)) + this.children
     }
 

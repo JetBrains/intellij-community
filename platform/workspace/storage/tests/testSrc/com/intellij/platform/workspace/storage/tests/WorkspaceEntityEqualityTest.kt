@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -40,7 +40,7 @@ class WorkspaceEntityEqualityTest {
   fun `equality modified entity in builder`() {
     val entityOne = builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(),
                                                       VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
-    val entityTwo = builderOne.modifyEntity(entityOne) {
+    val entityTwo = builderOne.modifySampleEntity(entityOne) {
       stringProperty = "AnotherData"
     }
 
@@ -55,7 +55,7 @@ class WorkspaceEntityEqualityTest {
     val storage = builderOne.toSnapshot()
     val entityOne = storage.entities(SampleEntity::class.java).single()
     val builder = storage.toBuilder()
-    builder.modifyEntity(entityOne) {
+    builder.modifySampleEntity(entityOne) {
       stringProperty = "AnotherData"
     }
     val entityTwo = builder.toSnapshot().entities(SampleEntity::class.java).single()
@@ -73,7 +73,7 @@ class WorkspaceEntityEqualityTest {
     val entityOne = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
     val entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data2" }
     val builder = storage.toBuilder()
-    builder.modifyEntity(entityForModification) {
+    builder.modifySampleEntity(entityForModification) {
       stringProperty = "AnotherData"
     }
     val entityTwo = builder.toSnapshot().entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
@@ -97,7 +97,7 @@ class WorkspaceEntityEqualityTest {
 
     var entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data2" }
     var builder = storage.toBuilder()
-    builder.modifyEntity(entityForModification) {
+    builder.modifySampleEntity(entityForModification) {
       stringProperty = "AnotherData"
     }
     storage = builder.toSnapshot()
@@ -107,7 +107,7 @@ class WorkspaceEntityEqualityTest {
 
     entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
     builder = storage.toBuilder()
-    builder.modifyEntity(entityForModification) {
+    builder.modifySampleEntity(entityForModification) {
       stringProperty = "AnotherData2"
     }
     val entityThree = builder.toSnapshot().entities(SampleEntity::class.java).single { it.stringProperty == "AnotherData2" }
@@ -128,7 +128,7 @@ class WorkspaceEntityEqualityTest {
     assertEquals(entityInSnapshot, entityInEvent)
 
     val newBuilder = MutableEntityStorage.from(snapshot) as MutableEntityStorageInstrumentation
-    newBuilder.modifyEntity(entityInSnapshot) {
+    newBuilder.modifySampleEntity(entityInSnapshot) {
       stringProperty = "Data"
     }
     //no events will be fired because nothing was changed

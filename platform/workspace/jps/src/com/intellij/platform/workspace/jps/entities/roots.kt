@@ -62,7 +62,7 @@ interface ContentRootEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyContentRootEntity(
   entity: ContentRootEntity,
   modification: ContentRootEntity.Builder.() -> Unit,
 ): ContentRootEntity {
@@ -131,7 +131,7 @@ interface SourceRootEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySourceRootEntity(
   entity: SourceRootEntity,
   modification: SourceRootEntity.Builder.() -> Unit,
 ): SourceRootEntity {

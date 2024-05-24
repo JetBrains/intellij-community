@@ -52,7 +52,7 @@ interface KotlinForwardDeclarationsWorkspaceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyKotlinForwardDeclarationsWorkspaceEntity(
     entity: KotlinForwardDeclarationsWorkspaceEntity,
     modification: KotlinForwardDeclarationsWorkspaceEntity.Builder.() -> Unit,
 ): KotlinForwardDeclarationsWorkspaceEntity {

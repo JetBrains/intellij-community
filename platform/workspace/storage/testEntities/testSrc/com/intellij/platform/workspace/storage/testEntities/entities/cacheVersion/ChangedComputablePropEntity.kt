@@ -40,7 +40,7 @@ interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChangedComputablePropEntity(
   entity: ChangedComputablePropEntity,
   modification: ChangedComputablePropEntity.Builder.() -> Unit,
 ): ChangedComputablePropEntity {

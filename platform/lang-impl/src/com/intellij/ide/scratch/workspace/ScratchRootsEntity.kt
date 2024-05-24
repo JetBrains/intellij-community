@@ -39,7 +39,7 @@ interface ScratchRootsEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyScratchRootsEntity(
   entity: ScratchRootsEntity,
   modification: ScratchRootsEntity.Builder.() -> Unit,
 ): ScratchRootsEntity {

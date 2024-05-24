@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +57,7 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
 
                                     // a hack to bypass workspace model issues; without the extra check entity updates lead to recursion
                                     if (libraryEntity.kotlinForwardDeclarationsWorkspaceEntity == null) {
-                                        storage.modifyEntity(libraryEntity) {
+                                        storage.modifyLibraryEntity(libraryEntity) {
                                             this.kotlinForwardDeclarationsWorkspaceEntity = builder
                                         }
                                         storage.addEntity(builder)

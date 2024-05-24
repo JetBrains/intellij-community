@@ -118,7 +118,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdk) as? SdkEntity
     existingEntity?.let { entity ->
       globalWorkspaceModel.updateModel("Modifying SDK ${SdkId(originalEntity.name, originalEntity.type)}") {
-        it.modifyEntity(entity) {
+        it.modifySdkEntity(entity) {
           this.applyChangesFrom(modifiedSdkEntity)
         }
       }

@@ -72,7 +72,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyArtifactEntity(
   entity: ArtifactEntity,
   modification: ArtifactEntity.Builder.() -> Unit,
 ): ArtifactEntity {
@@ -116,7 +116,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   entity: ArtifactPropertiesEntity,
   modification: ArtifactPropertiesEntity.Builder.() -> Unit,
 ): ArtifactPropertiesEntity {
@@ -218,7 +218,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyDirectoryPackagingElementEntity(
   entity: DirectoryPackagingElementEntity,
   modification: DirectoryPackagingElementEntity.Builder.() -> Unit,
 ): DirectoryPackagingElementEntity {
@@ -260,7 +260,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyArchivePackagingElementEntity(
   entity: ArchivePackagingElementEntity,
   modification: ArchivePackagingElementEntity.Builder.() -> Unit,
 ): ArchivePackagingElementEntity {
@@ -297,7 +297,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyArtifactRootElementEntity(
   entity: ArtifactRootElementEntity,
   modification: ArtifactRootElementEntity.Builder.() -> Unit,
 ): ArtifactRootElementEntity {
@@ -335,7 +335,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyArtifactOutputPackagingElementEntity(
   entity: ArtifactOutputPackagingElementEntity,
   modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit,
 ): ArtifactOutputPackagingElementEntity {
@@ -379,7 +379,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyModuleOutputPackagingElementEntity(
   entity: ModuleOutputPackagingElementEntity,
   modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit,
 ): ModuleOutputPackagingElementEntity {
@@ -417,7 +417,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyLibraryFilesPackagingElementEntity(
   entity: LibraryFilesPackagingElementEntity,
   modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit,
 ): LibraryFilesPackagingElementEntity {
@@ -455,7 +455,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyModuleSourcePackagingElementEntity(
   entity: ModuleSourcePackagingElementEntity,
   modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit,
 ): ModuleSourcePackagingElementEntity {
@@ -493,7 +493,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
   entity: ModuleTestOutputPackagingElementEntity,
   modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit,
 ): ModuleTestOutputPackagingElementEntity {
@@ -563,7 +563,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyDirectoryCopyPackagingElementEntity(
   entity: DirectoryCopyPackagingElementEntity,
   modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit,
 ): DirectoryCopyPackagingElementEntity {
@@ -606,7 +606,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyExtractedDirectoryPackagingElementEntity(
   entity: ExtractedDirectoryPackagingElementEntity,
   modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit,
 ): ExtractedDirectoryPackagingElementEntity {
@@ -647,7 +647,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyFileCopyPackagingElementEntity(
   entity: FileCopyPackagingElementEntity,
   modification: FileCopyPackagingElementEntity.Builder.() -> Unit,
 ): FileCopyPackagingElementEntity {
@@ -693,7 +693,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyCustomPackagingElementEntity(
   entity: CustomPackagingElementEntity,
   modification: CustomPackagingElementEntity.Builder.() -> Unit,
 ): CustomPackagingElementEntity {
@@ -736,7 +736,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyArtifactsOrderEntity(
   entity: ArtifactsOrderEntity,
   modification: ArtifactsOrderEntity.Builder.() -> Unit,
 ): ArtifactsOrderEntity {

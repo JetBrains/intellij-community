@@ -85,13 +85,13 @@ class RiderEntitiesTest {
       it.descriptor.data.contains("left")
     }
     assertNotNull(existingProjectModelEntity.contentRoot)
-    anotherBuilder.modifyEntity(existingProjectModelEntity) {
+    anotherBuilder.modifyProjectModelTestEntity(existingProjectModelEntity) {
       this.descriptor = DescriptorInstance("project model data left")
     }
 
     existingProjectModelEntity = anotherBuilder.entities(ProjectModelTestEntity::class.java).single { it.descriptor.data.contains("right") }
     assertNotNull(existingProjectModelEntity.contentRoot)
-    anotherBuilder.modifyEntity(existingProjectModelEntity) {
+    anotherBuilder.modifyProjectModelTestEntity(existingProjectModelEntity) {
       this.descriptor = DescriptorInstance("project model data right")
     }
 

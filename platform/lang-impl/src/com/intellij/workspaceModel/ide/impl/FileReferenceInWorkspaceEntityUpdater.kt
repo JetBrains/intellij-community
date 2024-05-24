@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
@@ -78,13 +78,13 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
     val description = "Update module name when iml file is renamed"
     if (moduleEntity != null) {
       workspaceModel.updateProjectModel(description) { diff ->
-        diff.modifyEntity(moduleEntity) { this.name = newModuleName }
+        diff.modifyModuleEntity(moduleEntity) { this.name = newModuleName }
       }
     }
     val unloadedModule = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
     if (unloadedModule != null) {
       (workspaceModel as WorkspaceModelInternal).updateUnloadedEntities(description) { diff ->
-        diff.modifyEntity(unloadedModule) { this.name = newModuleName }
+        diff.modifyModuleEntity(unloadedModule) { this.name = newModuleName }
       }
     }
   }

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.externalSystem.settings.workspaceModel.EntitiesKt.modifyEntity;
+import static com.intellij.openapi.externalSystem.settings.workspaceModel.EntitiesKt.modifyExternalProjectsBuildClasspathEntity;
 import static com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt.getExternalProjectBuildClasspathPojo;
 import static com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt.getExternalProjectsBuildClasspathEntity;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
@@ -217,7 +217,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
         if (!entityIterator.hasNext()) {
           return;
         }
-        modifyEntity(storage, entityIterator.next(), modifiableEntity -> {
+        modifyExternalProjectsBuildClasspathEntity(storage, entityIterator.next(), modifiableEntity -> {
           Map<String, ExternalProjectBuildClasspathEntity> classpath = modifiableEntity.getProjectsBuildClasspath();
           Iterator<Map.Entry<String, ExternalProjectBuildClasspathEntity>> classpathIterator = classpath.entrySet().iterator();
           while (classpathIterator.hasNext()) {
@@ -248,7 +248,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
           storage.addEntity(newClasspathEntity);
         }
         else {
-          modifyEntity(storage, entityIterator.next(), modifiableEntity -> {
+          modifyExternalProjectsBuildClasspathEntity(storage, entityIterator.next(), modifiableEntity -> {
             modifiableEntity.setProjectsBuildClasspath(newClasspathEntity.getProjectsBuildClasspath());
             return null;
           });

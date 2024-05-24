@@ -67,7 +67,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyModuleEntity(
   entity: ModuleEntity,
   modification: ModuleEntity.Builder.() -> Unit,
 ): ModuleEntity {

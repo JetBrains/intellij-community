@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import org.junit.jupiter.api.Assertions
@@ -246,15 +246,15 @@ class ExternalEntityMappingTest {
     val entity3 = builder addEntity SampleEntity(false, "3", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                  SampleEntitySource("test"))
     builder.getMutableExternalMapping(INDEX_ID).addMapping(entity3, 3)
-    val entity1a = builder.modifyEntity(entity1.from(builder)) {
+    val entity1a = builder.modifySampleEntity(entity1.from(builder)) {
       stringProperty = "1a"
     }
     val diff = MutableEntityStorage.from(storage)
-    val entity2a = diff.modifyEntity(entity2.from(diff)) {
+    val entity2a = diff.modifySampleEntity(entity2.from(diff)) {
       stringProperty = "2a"
     }
     builder.applyChangesFrom(diff)
-    val entity3a = builder.modifyEntity(entity3) {
+    val entity3a = builder.modifySampleEntity(entity3) {
       stringProperty = "3a"
     }
 

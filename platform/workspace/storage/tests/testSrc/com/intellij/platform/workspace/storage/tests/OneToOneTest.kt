@@ -17,7 +17,7 @@ class OneToOneTest {
 
     val newBuilder = builder.toSnapshot().toBuilder()
     newBuilder addEntity OoParentEntity("newData", MySource) parent@{
-      newBuilder.modifyEntity(parent.from(newBuilder).child!!) child@{
+      newBuilder.modifyOoChildEntity(parent.from(newBuilder).child!!) child@{
         this@parent.child = this@child
       }
     }
@@ -38,8 +38,8 @@ class OneToOneTest {
     }
 
     val newBuilder = builder.toSnapshot().toBuilder()
-    newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
-      newBuilder.modifyEntity(parentForChildSource.from(newBuilder).child!!) child@{
+    newBuilder.modifyOoParentEntity(parent.from(newBuilder)) parent@{
+      newBuilder.modifyOoChildEntity(parentForChildSource.from(newBuilder).child!!) child@{
         this@parent.child = this@child
       }
     }
@@ -54,15 +54,15 @@ class OneToOneTest {
 
     val newBuilder = builder.toSnapshot().toBuilder()
     newBuilder addEntity OoChildWithNullableParentEntity(MySource) child@{
-      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+      newBuilder.modifyOoParentEntity(parent.from(newBuilder)) parent@{
         this@child.parentEntity = this@parent
       }
     }
-    newBuilder.modifyEntity(parent.from(newBuilder)) {
+    newBuilder.modifyOoParentEntity(parent.from(newBuilder)) {
       this.entitySource = AnotherSource
     }
     newBuilder addEntity OoChildWithNullableParentEntity(AnotherSource) child@{
-      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+      newBuilder.modifyOoParentEntity(parent.from(newBuilder)) parent@{
         this@child.parentEntity = this@parent
       }
     }

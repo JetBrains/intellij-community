@@ -60,7 +60,7 @@ internal class WorkspaceFolderImporter(
       root.sourceFolders.forEach { folder ->
         registerSourceRootFolder(newContentRootEntity, folder)
       }
-      val updatedModule = builder.modifyEntity(module) {
+      val updatedModule = builder.modifyModuleEntity(module) {
         this.contentRoots += newContentRootEntity
       }
     }

@@ -81,7 +81,7 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyOneEntityWithSymbolicId(
   entity: OneEntityWithSymbolicId,
   modification: OneEntityWithSymbolicId.Builder.() -> Unit,
 ): OneEntityWithSymbolicId {
@@ -168,7 +168,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyEntityWithSoftLinks(
   entity: EntityWithSoftLinks,
   modification: EntityWithSoftLinks.Builder.() -> Unit,
 ): EntityWithSoftLinks {
@@ -205,7 +205,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySoftLinkReferencedChild(
   entity: SoftLinkReferencedChild,
   modification: SoftLinkReferencedChild.Builder.() -> Unit,
 ): SoftLinkReferencedChild {

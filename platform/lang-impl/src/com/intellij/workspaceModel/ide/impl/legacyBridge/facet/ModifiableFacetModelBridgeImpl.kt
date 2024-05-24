@@ -67,9 +67,9 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
       val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
       val ref = Ref.create<FacetEntity>()
-      diff.modifyEntity(moduleEntity) module@{
+      diff.modifyModuleEntity(moduleEntity) module@{
         if (underlyingEntity != null) {
-          diff.modifyEntity(underlyingEntity) facet@{
+          diff.modifyFacetEntity(underlyingEntity) facet@{
             val newFacet = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
               configurationXmlTag = facetConfigurationXml
               module = this@module
@@ -124,7 +124,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       facet.rename(diff, newName)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
-      val newEntity = diff.modifyEntity(entity) {
+      val newEntity = diff.modifyFacetEntity(entity) {
         this.name = newName
       }
       mutableFacetMapping(diff).removeMapping(entity)
@@ -160,7 +160,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       val facet = mapping.getDataByEntity(facetEntity) ?: return@forEach
       val newFacetConfiguration = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetEntity.configurationXmlTag == newFacetConfiguration) return@forEach
-      val newEntity = diff.modifyEntity(facetEntity) {
+      val newEntity = diff.modifyFacetEntity(facetEntity) {
         this.configurationXmlTag = newFacetConfiguration
       }
       changes.add(Triple(facetEntity, newEntity, facet))
@@ -182,7 +182,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
         val facetExternalSource = facet.externalSource
         val newSource = getUpdatedEntitySource(facetExternalSource, facetEntity)
         if (newSource != null) {
-          diff.modifyEntity(facetEntity) {
+          diff.modifyFacetEntity(facetEntity) {
             this.entitySource = newSource
           }
         }

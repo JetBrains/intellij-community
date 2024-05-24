@@ -67,7 +67,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyLibraryEntity(
   entity: LibraryEntity,
   modification: LibraryEntity.Builder.() -> Unit,
 ): LibraryEntity {

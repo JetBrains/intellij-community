@@ -271,7 +271,7 @@ internal class ModifiableModuleModelBridgeImpl(
         newNameToModule[newName] = module
       }
       val entity = module.findModuleEntity(entityStorageOnDiff.current) ?: error("Unable to find module entity for $module")
-      diff.modifyEntity(entity) {
+      diff.modifyModuleEntity(entity) {
         name = newName
       }
     }
@@ -300,7 +300,7 @@ internal class ModifiableModuleModelBridgeImpl(
     if (moduleGroupEntity?.path != groupPathList) {
       when {
         moduleGroupEntity == null && groupPathList != null -> {
-          diff.modifyEntity(moduleEntity) {
+          diff.modifyModuleEntity(moduleEntity) {
             this.groupPath = ModuleGroupPathEntity(path = groupPathList, entitySource = moduleEntity.entitySource)
           }
         }
@@ -309,7 +309,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
 
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(moduleGroupEntity) {
+        moduleGroupEntity != null && groupPathList != null -> diff.modifyModuleGroupPathEntity(moduleGroupEntity) {
           path = groupPathList
         }
 

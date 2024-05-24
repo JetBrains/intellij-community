@@ -219,7 +219,7 @@ class ParentChildReferenceTest {
 
     // Set parent from store
     val secondChild = ChildMultipleEntity("ChildTwoData", MySource) child@{
-      builder.modifyEntity(parentEntityFromStore) parent@{
+      builder.modifyParentMultipleEntity(parentEntityFromStore) parent@{
         this@child.parentEntity = this@parent
       }
     }

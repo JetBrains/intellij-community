@@ -49,7 +49,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyFacetsOrderEntity(
   entity: FacetsOrderEntity,
   modification: FacetsOrderEntity.Builder.() -> Unit,
 ): FacetsOrderEntity {

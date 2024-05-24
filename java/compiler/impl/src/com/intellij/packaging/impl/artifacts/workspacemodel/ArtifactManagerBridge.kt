@@ -5,7 +5,7 @@ import com.intellij.compiler.server.BuildManager
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.modifyCustomPackagingElementEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -265,7 +265,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       val state = packagingElement.state ?: continue
       val newState = JDOMUtil.write(XmlSerializer.serialize(state))
       if (newState != customEntity.propertiesXmlTag) {
-        diff.modifyEntity(customEntity) {
+        diff.modifyCustomPackagingElementEntity(customEntity) {
           this.propertiesXmlTag = newState
         }
       }

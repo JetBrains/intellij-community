@@ -48,7 +48,7 @@ interface XParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyXParentEntity(
   entity: XParentEntity,
   modification: XParentEntity.Builder.() -> Unit,
 ): XParentEntity {
@@ -97,7 +97,7 @@ interface XChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyXChildEntity(
   entity: XChildEntity,
   modification: XChildEntity.Builder.() -> Unit,
 ): XChildEntity {
@@ -138,7 +138,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyXChildWithOptionalParentEntity(
   entity: XChildWithOptionalParentEntity,
   modification: XChildWithOptionalParentEntity.Builder.() -> Unit,
 ): XChildWithOptionalParentEntity {
@@ -177,7 +177,7 @@ interface XChildChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyXChildChildEntity(
   entity: XChildChildEntity,
   modification: XChildChildEntity.Builder.() -> Unit,
 ): XChildChildEntity {

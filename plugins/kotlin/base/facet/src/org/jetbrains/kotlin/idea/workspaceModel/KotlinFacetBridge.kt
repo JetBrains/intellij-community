@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetConfigurationBridge
@@ -23,9 +23,9 @@ class KotlinFacetBridge(
 
     override fun updateExistingEntityInStorage(existingFacetEntity: KotlinSettingsEntity, mutableStorage: MutableEntityStorage) {
         val moduleEntity = mutableStorage.resolve(existingFacetEntity.moduleId)!!
-        mutableStorage.modifyEntity(moduleEntity) module@{
+        mutableStorage.modifyModuleEntity(moduleEntity) module@{
             val kotlinSettingsEntity = config.getEntityBuilder(this@module)
-            mutableStorage.modifyEntity(existingFacetEntity) {
+            mutableStorage.modifyKotlinSettingsEntity(existingFacetEntity) {
                 if (kotlinSettingsEntity.flushNeeded) flushNeeded = false
                 name = kotlinSettingsEntity.name
                 sourceRoots = kotlinSettingsEntity.sourceRoots.toMutableList()

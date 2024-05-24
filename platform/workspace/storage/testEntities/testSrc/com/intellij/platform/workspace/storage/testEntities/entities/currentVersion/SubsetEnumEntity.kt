@@ -40,7 +40,7 @@ interface SubsetEnumEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySubsetEnumEntity(
   entity: SubsetEnumEntity,
   modification: SubsetEnumEntity.Builder.() -> Unit,
 ): SubsetEnumEntity {

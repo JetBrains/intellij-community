@@ -88,7 +88,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     val scope = DependencyScope.COMPILE
     val libraryDependency = LibraryDependency(libraryId, false, scope)
 
-    builder.modifyEntity(module) {
+    builder.modifyModuleEntity(module) {
       this.dependencies.add(libraryDependency)
     }
   }

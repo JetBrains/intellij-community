@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherDataClass
 import com.intellij.platform.workspace.storage.testEntities.entities.FinalFieldsEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyFinalFieldsEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -37,7 +37,7 @@ class FinalAndDefaultFieldsTest {
     assertEquals(anotherVersion, entityFromStore.anotherVersion)
     assertEquals(defaultDescription, entityFromStore.description)
 
-    snapshot.toBuilder().modifyEntity(entityFromStore) {
+    snapshot.toBuilder().modifyFinalFieldsEntity(entityFromStore) {
       assertEquals(anotherVersion, entityFromStore.anotherVersion)
       assertEquals(defaultDescription, entityFromStore.description)
     }

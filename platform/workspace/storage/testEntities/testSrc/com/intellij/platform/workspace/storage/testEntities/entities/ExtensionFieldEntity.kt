@@ -41,7 +41,7 @@ interface MainEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyMainEntity(
   entity: MainEntity,
   modification: MainEntity.Builder.() -> Unit,
 ): MainEntity {
@@ -85,7 +85,7 @@ interface AttachedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyAttachedEntity(
   entity: AttachedEntity,
   modification: AttachedEntity.Builder.() -> Unit,
 ): AttachedEntity {

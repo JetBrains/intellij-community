@@ -312,7 +312,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
                   else -> it
                 }
               } as MutableList<ModuleDependencyItem>
-              builder.modifyEntity(module) {
+              builder.modifyModuleEntity(module) {
                 dependencies = updated
               }
             }
@@ -393,7 +393,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
                 else -> it
               }
             } as MutableList<ModuleDependencyItem>
-            builder.modifyEntity(module) {
+            builder.modifyModuleEntity(module) {
               dependencies = updated
             }
           }

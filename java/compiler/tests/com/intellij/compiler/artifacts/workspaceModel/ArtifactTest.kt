@@ -65,7 +65,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       val artifactEntity = it.entities(ArtifactEntity::class.java).single()
-      it.modifyEntity(artifactEntity) {
+      it.modifyArtifactEntity(artifactEntity) {
         name = anotherName
       }
     }
@@ -118,7 +118,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     workspaceModel.updateProjectModel {
       val artifactEntity = it.resolve(ArtifactId("MyName"))!!
-      it.modifyEntity(artifactEntity) {
+      it.modifyArtifactEntity(artifactEntity) {
         name = "NameThree"
       }
     }
@@ -190,7 +190,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as ArchivePackagingElementEntity
-        builder.modifyEntity(elementEntity) {
+        builder.modifyArchivePackagingElementEntity(elementEntity) {
           this.fileName = "AnotherName"
         }
       }
@@ -211,7 +211,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as LibraryFilesPackagingElementEntity
-        builder.modifyEntity(elementEntity) {
+        builder.modifyLibraryFilesPackagingElementEntity(elementEntity) {
           this.library = LibraryId("123", LibraryTableId.ModuleLibraryTableId(ModuleId("MyModule")))
         }
       }
@@ -273,7 +273,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     workspaceModel.updateProjectModel {
       val artifactEntity = it.resolve(ArtifactId("MyName"))!!
-      it.modifyEntity(artifactEntity) {
+      it.modifyArtifactEntity(artifactEntity) {
         name = "NameThree"
       }
     }

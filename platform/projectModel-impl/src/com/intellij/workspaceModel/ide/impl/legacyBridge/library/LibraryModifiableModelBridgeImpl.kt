@@ -73,7 +73,7 @@ internal class LibraryModifiableModelBridgeImpl(
     }
 
     entityId = entity.symbolicId.copy(name = name)
-    diff.modifyEntity(entity) {
+    diff.modifyLibraryEntity(entity) {
       this.name = name
     }
 
@@ -126,7 +126,7 @@ internal class LibraryModifiableModelBridgeImpl(
     get() = entityId
 
   private fun update(updater: LibraryEntity.Builder.() -> Unit) {
-    diff.modifyEntity(currentLibrary.libraryEntity, updater)
+    diff.modifyLibraryEntity(currentLibrary.libraryEntity, updater)
   }
 
   override fun setExternalSource(externalSource: ProjectModelExternalSource) {
@@ -148,19 +148,19 @@ internal class LibraryModifiableModelBridgeImpl(
       }
     }
     else if (properties == null) {
-      diff.modifyEntity(currentLibrary.libraryEntity) {
+      diff.modifyLibraryEntity(currentLibrary.libraryEntity) {
         this.libraryProperties = LibraryPropertiesEntity(entity.entitySource) {
           if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
         }
       }
     }
     else {
-      diff.modifyEntity(properties) {
+      diff.modifyLibraryPropertiesEntity(properties) {
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       }
     }
 
-    diff.modifyEntity(entity) {
+    diff.modifyLibraryEntity(entity) {
       this.typeId = libraryType?.let { LibraryTypeId(libraryType) }
     }
   }

@@ -46,7 +46,7 @@ interface TreeEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyTreeEntity(
   entity: TreeEntity,
   modification: TreeEntity.Builder.() -> Unit,
 ): TreeEntity {

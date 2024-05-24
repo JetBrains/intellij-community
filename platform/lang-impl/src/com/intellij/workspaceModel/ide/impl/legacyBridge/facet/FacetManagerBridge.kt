@@ -65,8 +65,8 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
         if (facetConfigurationXml != facetEntity.configurationXmlTag) {
           runWriteAction {
             val change: FacetEntity.Builder.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
-            module.diff?.modifyEntity(facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
-              .updateProjectModel("Update facet configuration (not bridge)") { it.modifyEntity(facetEntity, change) }
+            module.diff?.modifyFacetEntity(facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
+              .updateProjectModel("Update facet configuration (not bridge)") { it.modifyFacetEntity(facetEntity, change) }
           }
         }
       }

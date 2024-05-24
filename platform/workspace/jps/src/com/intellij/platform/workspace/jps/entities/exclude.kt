@@ -44,7 +44,7 @@ interface ExcludeUrlEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyExcludeUrlEntity(
   entity: ExcludeUrlEntity,
   modification: ExcludeUrlEntity.Builder.() -> Unit,
 ): ExcludeUrlEntity {

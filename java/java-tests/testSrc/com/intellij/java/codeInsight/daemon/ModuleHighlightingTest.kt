@@ -18,7 +18,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
@@ -689,7 +689,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(myFixture.project).updateProjectModel { storage ->
         val moduleEntity = storage.resolve(ModuleId(moduleName)) ?: return@updateProjectModel
-        storage.modifyEntity(moduleEntity) {
+        storage.modifyModuleEntity(moduleEntity) {
           this.javaSettings = JavaModuleSettingsEntity(false, false, moduleEntity.entitySource) {
             manifestAttributes = attributes
           }

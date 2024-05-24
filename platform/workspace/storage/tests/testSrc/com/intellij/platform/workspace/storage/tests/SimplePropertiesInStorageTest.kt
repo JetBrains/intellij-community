@@ -50,7 +50,7 @@ class SimplePropertiesInStorageTest {
     val builder = createEmptyBuilder()
     val original = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
                                                   VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
-    val modified = builder.modifyEntity(original) {
+    val modified = builder.modifySampleEntity(original) {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
@@ -76,7 +76,7 @@ class SimplePropertiesInStorageTest {
     val builder = createBuilderFrom(storage)
 
     assertEquals("hello", builder.singleSampleEntity().stringProperty)
-    builder.modifyEntity(builder.singleSampleEntity()) {
+    builder.modifySampleEntity(builder.singleSampleEntity()) {
       stringProperty = "good bye"
     }
 
@@ -95,7 +95,7 @@ class SimplePropertiesInStorageTest {
     assertEquals("hello", builder.singleSampleEntity().stringProperty)
     assertEquals("hello", snapshot.singleSampleEntity().stringProperty)
 
-    builder.modifyEntity(builder.singleSampleEntity()) {
+    builder.modifySampleEntity(builder.singleSampleEntity()) {
       stringProperty = "good bye"
     }
 
@@ -139,7 +139,7 @@ class SimplePropertiesInStorageTest {
     val source2 = SampleEntitySource("2")
     val foo = builder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                              source1)
-    val foo2 = builder.modifyEntity(foo) { this.entitySource = source2 }
+    val foo2 = builder.modifySampleEntity(foo) { this.entitySource = source2 }
     assertEquals(source1, foo.entitySource)
     assertEquals(source2, foo2.entitySource)
     assertEquals(source2, builder.singleSampleEntity().entitySource)
@@ -154,7 +154,7 @@ class SimplePropertiesInStorageTest {
                                                       VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     val anotherBuilder = createEmptyBuilder()
     assertThrows<IllegalStateException> {
-      anotherBuilder.modifyEntity(sampleEntity) {
+      anotherBuilder.modifySampleEntity(sampleEntity) {
         this.stringProperty = "Another prop"
       }
     }

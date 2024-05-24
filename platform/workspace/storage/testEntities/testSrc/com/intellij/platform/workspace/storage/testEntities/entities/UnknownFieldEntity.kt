@@ -42,7 +42,7 @@ interface UnknownFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyUnknownFieldEntity(
   entity: UnknownFieldEntity,
   modification: UnknownFieldEntity.Builder.() -> Unit,
 ): UnknownFieldEntity {

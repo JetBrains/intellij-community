@@ -151,7 +151,7 @@ internal class ModuleBridgeImpl(
   override fun setOption(key: String, value: String?) {
     fun updateOptionInEntity(diff: MutableEntityStorage, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
-        diff.modifyEntity(entity) {
+        diff.modifyModuleEntity(entity) {
           type = if (value != null) ModuleTypeId(value) else null
         }
       }
@@ -159,13 +159,13 @@ internal class ModuleBridgeImpl(
         val customImlData = entity.customImlData
         if (customImlData == null) {
           if (value != null) {
-            diff.modifyEntity(entity) {
+            diff.modifyModuleEntity(entity) {
               this.customImlData = ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource)
             }
           }
         }
         else {
-          diff.modifyEntity(customImlData) {
+          diff.modifyModuleCustomImlDataEntity(customImlData) {
             if (value != null) {
               customModuleOptions = customModuleOptions.toMutableMap().also { it[key] = value }
             }

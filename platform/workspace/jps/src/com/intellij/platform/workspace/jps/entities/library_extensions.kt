@@ -45,7 +45,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyLibraryPropertiesEntity(
   entity: LibraryPropertiesEntity,
   modification: LibraryPropertiesEntity.Builder.() -> Unit,
 ): LibraryPropertiesEntity {

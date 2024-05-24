@@ -12,11 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.toBuilder
@@ -175,7 +171,7 @@ class FacetModelBridgeTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val facetEntity = builder.entities(FacetEntity::class.java).single()
-        builder.modifyEntity(facetEntity) {
+        builder.modifyFacetEntity(facetEntity) {
           configurationXmlTag = """<configuration data="bar" />"""
         }
       }
@@ -205,7 +201,7 @@ class FacetModelBridgeTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val moduleEntity = builder.entities<ModuleEntity>().first()
-        builder.modifyEntity(moduleEntity) module@{
+        builder.modifyModuleEntity(moduleEntity) module@{
           builder addEntity FacetEntity("myName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
             this.module = this@module
             underlyingFacet = FacetEntity("anotherName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {

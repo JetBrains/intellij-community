@@ -21,7 +21,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -399,7 +399,7 @@ class ModuleRootsInProjectFileIndexTest {
     runWriteActionAndWait {
       workspaceModel.updateProjectModel {
         val module = it.resolve(ModuleId(module.name))!!
-        it.modifyEntity(module) {
+        it.modifyModuleEntity(module) {
           this.contentRoots += ContentRootEntity(urlManager.getOrCreateFromUrl(rootUrl),
                                                  emptyList<@NlsSafe String>(),
                                                  module.entitySource) {

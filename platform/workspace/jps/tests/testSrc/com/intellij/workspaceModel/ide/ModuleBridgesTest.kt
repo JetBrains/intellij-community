@@ -101,7 +101,7 @@ class ModuleBridgesTest {
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = module.findModuleEntity(it)!!
-        it.modifyEntity(moduleEntity) {
+        it.modifyModuleEntity(moduleEntity) {
           this.contentRoots += ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource)
         }
       }
@@ -502,7 +502,7 @@ class ModuleBridgesTest {
                                                               roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager),
                                                                                          LibraryRootTypeId.COMPILED)),
                                                               entitySource = source)
-    builder.modifyEntity(moduleEntity) {
+    builder.modifyModuleEntity(moduleEntity) {
       dependencies = listOf(
         LibraryDependency(moduleLibraryEntity.symbolicId, false, DependencyScope.COMPILE)
       ).toMutableList()
@@ -816,7 +816,7 @@ class ModuleBridgesTest {
 
     WorkspaceModel.getInstance(project).updateProjectModel { builder ->
       val entity = builder.resolve(ModuleId("xxx"))!!
-      builder.modifyEntity(entity) {
+      builder.modifyModuleEntity(entity) {
         this.name = "yyy"
       }
     }
@@ -845,7 +845,7 @@ class ModuleBridgesTest {
 
     workspaceModel.updateProjectModel { builder ->
       val entity = builder.resolve(ModuleId(moduleName))!!
-      builder.modifyEntity(entity) {
+      builder.modifyModuleEntity(entity) {
         this.entitySource = moduleEntitySource
       }
     }

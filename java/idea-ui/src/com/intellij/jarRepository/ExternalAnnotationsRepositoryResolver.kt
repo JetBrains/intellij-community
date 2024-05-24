@@ -18,7 +18,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -109,7 +109,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       }
 
     if (!toRemove.isEmpty() || !newUrls.isEmpty()) {
-      diff.modifyEntity(libraryEntity) {
+      diff.modifyLibraryEntity(libraryEntity) {
         roots.removeAll(toRemove)
         roots.addAll(newUrls.map { LibraryRoot(it, annotationsRootType) })
       }

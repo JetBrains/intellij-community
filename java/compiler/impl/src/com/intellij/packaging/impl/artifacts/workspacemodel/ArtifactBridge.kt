@@ -169,7 +169,7 @@ open class ArtifactBridge(
 
   override fun setBuildOnMake(enabled: Boolean) {
     val entity = diff.get(artifactId)
-    diff.modifyEntity(entity) {
+    diff.modifyArtifactEntity(entity) {
       this.includeInProjectBuild = enabled
     }
   }
@@ -179,7 +179,7 @@ open class ArtifactBridge(
       WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(it))
     }
     val entity = diff.get(artifactId)
-    diff.modifyEntity(entity) {
+    diff.modifyArtifactEntity(entity) {
       this.outputUrl = outputUrl
     }
   }
@@ -188,7 +188,7 @@ open class ArtifactBridge(
     val actualArtifactId = artifactId
     val entity = diff.get(actualArtifactId)
     val oldName = actualArtifactId.name
-    diff.modifyEntity(entity) {
+    diff.modifyArtifactEntity(entity) {
       this.name = name
     }
     this.artifactIdRaw = ArtifactId(name)
@@ -215,7 +215,7 @@ open class ArtifactBridge(
           }
         }
       }
-      diff.modifyEntity(entity) {
+      diff.modifyArtifactEntity(entity) {
         this.rootElement = rootEntity
       }
       diff.removeEntity(oldRootElement)
@@ -238,14 +238,14 @@ open class ArtifactBridge(
       val existingProperty = entity.customProperties.find { it.providerType == provider.id }
 
       if (existingProperty == null) {
-        diff.modifyEntity(entity) {
+        diff.modifyArtifactEntity(entity) {
           this.customProperties += ArtifactPropertiesEntity(provider.id, entity.entitySource) {
             this.propertiesXmlTag = tag
           }
         }
       }
       else {
-        diff.modifyEntity(existingProperty) {
+        diff.modifyArtifactPropertiesEntity(existingProperty) {
           this.propertiesXmlTag = tag
         }
       }
@@ -254,7 +254,7 @@ open class ArtifactBridge(
 
   override fun setArtifactType(selected: ArtifactType) {
     val entity = diff.get(artifactId)
-    diff.modifyEntity(entity) {
+    diff.modifyArtifactEntity(entity) {
       this.artifactType = selected.id
     }
 

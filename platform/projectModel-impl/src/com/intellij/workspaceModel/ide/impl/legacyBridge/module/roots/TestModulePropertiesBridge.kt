@@ -32,7 +32,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
       if (moduleName == null) return@updateProjectModel
       val productionModuleId = ModuleId(moduleName)
       builder.resolve(productionModuleId) ?: error("Can't find module by name: $moduleName")
-      builder.modifyEntity(moduleEntity) {
+      builder.modifyModuleEntity(moduleEntity) {
         this.testProperties = TestModulePropertiesEntity(productionModuleId, moduleEntity.entitySource)
       }
     }
@@ -48,7 +48,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
     if (builder.resolve(productionModuleId) == null) {
       thisLogger().warn("Can't find module by name: $moduleName, but it can be a valid case e.g at gradle import")
     }
-    builder.modifyEntity(moduleEntity) {
+    builder.modifyModuleEntity(moduleEntity) {
       this.testProperties = TestModulePropertiesEntity(productionModuleId, moduleEntity.entitySource)
     }
   }

@@ -3,10 +3,10 @@ package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.modifyJavaModuleSettingsEntity
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.ModuleExtension
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.pom.java.LanguageLevel
@@ -30,12 +30,12 @@ internal class LanguageLevelModuleExtensionBridge private constructor(
     val moduleEntity = moduleEntity ?: error("Cannot find entity for $module")
     val javaSettings = moduleEntity.javaSettings
     if (javaSettings != null) {
-      diff.modifyEntity(javaSettings) {
+      diff.modifyJavaModuleSettingsEntity(javaSettings) {
         this.languageLevel = languageLevel
       }
     }
     else if (languageLevel != null) {
-      diff.modifyEntity(moduleEntity) {
+      diff.modifyModuleEntity(moduleEntity) {
         this.javaSettings = JavaModuleSettingsEntity(inheritedCompilerOutput = true,
                                                      excludeOutput = true,
                                                      entitySource = moduleEntity.entitySource) {

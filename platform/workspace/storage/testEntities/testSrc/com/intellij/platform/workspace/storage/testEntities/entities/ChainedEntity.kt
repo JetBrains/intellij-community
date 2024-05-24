@@ -38,7 +38,7 @@ interface ChainedParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChainedParentEntity(
   entity: ChainedParentEntity,
   modification: ChainedParentEntity.Builder.() -> Unit,
 ): ChainedParentEntity {
@@ -82,7 +82,7 @@ interface ChainedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChainedEntity(
   entity: ChainedEntity,
   modification: ChainedEntity.Builder.() -> Unit,
 ): ChainedEntity {

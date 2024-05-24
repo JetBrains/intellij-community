@@ -31,7 +31,7 @@ class SoftLinksTest {
     // Change symbolic id in a different builder
     val newBuilder = createBuilderFrom(builder.toSnapshot())
     val entity = newBuilder.resolve(NameId(id))!!
-    newBuilder.modifyEntity(entity) {
+    newBuilder.modifyNamedEntity(entity) {
       this.myName = newId
     }
 
@@ -58,7 +58,7 @@ class SoftLinksTest {
     // Change symbolic id in a different builder
     val newBuilder = createBuilderFrom(builder.toSnapshot())
     val entity = newBuilder.resolve(NameId(id))!!
-    newBuilder.modifyEntity(entity) {
+    newBuilder.modifyNamedEntity(entity) {
       this.myName = newId
     }
 
@@ -72,7 +72,7 @@ class SoftLinksTest {
     // Change symbolic id to the initial value
     val anotherNewBuilder = createBuilderFrom(builder.toSnapshot())
     val anotherEntity = anotherNewBuilder.resolve(NameId(newId))!!
-    anotherNewBuilder.modifyEntity(anotherEntity) {
+    anotherNewBuilder.modifyNamedEntity(anotherEntity) {
       this.myName = id
     }
 
@@ -93,7 +93,7 @@ class SoftLinksTest {
     }
     builder addEntity WithSoftLinkEntity(entity.symbolicId, MySource)
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "newName"
     }
 
@@ -111,7 +111,7 @@ class SoftLinksTest {
     }
     builder addEntity ComposedIdSoftRefEntity("AnotherName", entity.symbolicId, MySource)
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "newName"
     }
 
@@ -130,7 +130,7 @@ class SoftLinksTest {
     }
     builder.addEntity(WithListSoftLinksEntity("xyz", listOf(NameId("Name")), MySource))
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "newName"
     }
 
@@ -147,7 +147,7 @@ class SoftLinksTest {
     val composedIdEntity = builder addEntity ComposedIdSoftRefEntity("AnotherName", entity.symbolicId, MySource)
     builder addEntity ComposedLinkEntity(composedIdEntity.symbolicId, MySource)
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.myName = "newName"
     }
 
