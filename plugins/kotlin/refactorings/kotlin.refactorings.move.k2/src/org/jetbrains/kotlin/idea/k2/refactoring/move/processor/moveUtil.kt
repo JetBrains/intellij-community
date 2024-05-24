@@ -16,9 +16,19 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
-internal fun Set<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
-    return associateWith { declaration -> targetFile.add(declaration) as KtNamedDeclaration }
+internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
+    val oldToNewMap = mutableMapOf<KtNamedDeclaration, KtNamedDeclaration>()
+    forEach { oldMovedDeclaration ->
+        val newMovedDeclaration = targetFile.add(oldMovedDeclaration) as KtNamedDeclaration
+        oldToNewMap[oldMovedDeclaration] = newMovedDeclaration
+        val oldChildDeclarations = oldMovedDeclaration.collectDescendantsOfType<KtNamedDeclaration>().toList()
+        val newChildDeclarations = newMovedDeclaration.collectDescendantsOfType<KtNamedDeclaration>().toList()
+        // we assume that the children are in the same order before and after the move
+        for ((oldChild, newChild) in oldChildDeclarations.zip(newChildDeclarations)) oldToNewMap[oldChild] = newChild
+    }
+    return oldToNewMap
 }
 
 internal fun K2ChangePackageDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
