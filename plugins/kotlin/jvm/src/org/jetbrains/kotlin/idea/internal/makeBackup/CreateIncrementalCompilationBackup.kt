@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.internal.makeBackup
 
@@ -6,13 +6,13 @@ import com.intellij.compiler.server.BuildManager
 import com.intellij.history.core.RevisionsCollector
 import com.intellij.history.core.revisions.Revision.getDifferencesBetween
 import com.intellij.history.integration.LocalHistoryImpl
-import com.intellij.history.integration.patches.PatchCreator
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,12 +20,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.patch.PatchWriter
+import com.intellij.project.stateStore
 import com.intellij.util.WaitForProgressToShow
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.ZipOutputStream
@@ -96,7 +101,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
                         Change(d.getLeftContentRevision(gateway), d.getRightContentRevision(gateway))
                     }
 
-                    PatchCreator.create(project, changes, patchFile.toPath(), false, null)
+                    createPatch(project, changes, patchFile.toPath(), false)
 
                     if (++patchesCreated >= PATCHES_TO_CREATE) {
                         break
@@ -104,6 +109,13 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
                 }
             }
         }
+    }
+
+    @Throws(IOException::class, VcsException::class)
+    private fun createPatch(project: Project, changes: List<Change>, file: Path, isReverse: Boolean) {
+        val basePath = project.stateStore.projectBasePath
+        val patches = IdeaTextPatchBuilder.buildPatch(project, changes, basePath, isReverse, false)
+        PatchWriter.writePatches(project, file, basePath, patches, null)
     }
 
     private fun copyLogs(backupDir: File, indicator: ProgressIndicator) {
