@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import org.jetbrains.annotations.ApiStatus
+import java.util.stream.Stream
 
 /**
  * Manages editors for particular clients. Take a look a [com.intellij.openapi.client.ClientSession]
@@ -61,7 +62,8 @@ class ClientEditorManager {
     private val COPIED_EDITORS = Key.create<WeakList<Editor>>("COPIED_EDITORS")
   }
 
-  fun editors(): Sequence<Editor> = editors.asSequence()
+  fun editorsSequence(): Sequence<Editor> = editors.asSequence()
+  fun editors(): Stream<Editor> = editors.stream()
 
   fun editors(document: Document, project: Project?): Sequence<Editor> {
     return editors.asSequence().filter { editor -> editor.document == document && (project == null || project == editor.project) }

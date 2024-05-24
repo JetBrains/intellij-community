@@ -208,7 +208,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     editorFactoryEventDispatcher.multicaster.editorCreated(event)
     EP.forEachExtensionSafe { it.editorCreated(event) }
 
-    LOG.debug { "number of editors after create: ${editorManager.editors().count()}" }
+    LOG.debug { "number of editors after create: ${editorManager.editorsSequence().count()}" }
     return editor
   }
 
@@ -228,7 +228,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
       finally {
         for (clientEditors in ClientEditorManager.getAllInstances()) {
           if (clientEditors.editorReleased(editor)) {
-            LOG.debug { "number of Editors after release: ${clientEditors.editors().count()}" }
+            LOG.debug { "number of Editors after release: ${clientEditors.editorsSequence().count()}" }
             if (clientEditors != ClientEditorManager.getCurrentInstance()) {
               LOG.warn("Released editor didn't belong to current session")
             }
@@ -289,5 +289,5 @@ private class MyRawTypedHandler(private val delegate: TypedActionHandler) : Type
 }
 
 private fun collectAllEditors(): Sequence<Editor> {
-  return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editors() }
+  return ClientEditorManager.getAllInstances().asSequence().flatMap { it.editorsSequence() }
 }
