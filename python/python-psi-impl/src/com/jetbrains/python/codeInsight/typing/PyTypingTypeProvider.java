@@ -1619,22 +1619,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   @Nullable
   public static PyVariadicType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    PyExpression typeHint;
-    if (element instanceof PyStarExpression starExpression) {
-      typeHint = starExpression.getExpression();
+    Ref<@Nullable PyType> typeRef = getTypeFromStarExpression(element, context);
+    if (typeRef == null) {
+      typeRef = getTypeFromUnpackOperator(element, context);
     }
-    else if (element instanceof PySubscriptionExpression subscription &&
-             resolvesToQualifiedNames(subscription.getOperand(), context, UNPACK, UNPACK_EXT)) {
-      typeHint = subscription.getIndexExpression();
-    }
-    else {
+    if (typeRef == null) {
       return null;
     }
-    if (!(typeHint instanceof PyReferenceExpression) && !(typeHint instanceof PySubscriptionExpression)) return null;
-    var typeRef = getType(typeHint, context);
-    if (typeRef == null) return null;
     var expressionType = typeRef.get();
-
     if (expressionType instanceof PyTupleType tupleType) {
       return new PyUnpackedTupleTypeImpl(tupleType.getElementTypes(), tupleType.isHomogeneous());
     }
@@ -1644,15 +1636,21 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  @Nullable
-  private static Ref<@Nullable PyType> getTypeFromUnpackOperator(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    if (!(element instanceof PySubscriptionExpression subscriptionExpr)) return null;
-    if (!resolvesToQualifiedNames(subscriptionExpr.getOperand(), context, UNPACK, UNPACK_EXT)) {
+  private static @Nullable Ref<@Nullable PyType> getTypeFromUnpackOperator(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (!(element instanceof PySubscriptionExpression subscriptionExpr) ||
+        !resolvesToQualifiedNames(subscriptionExpr.getOperand(), context, UNPACK, UNPACK_EXT)) {
       return null;
     }
     PyExpression indexExpression = subscriptionExpr.getIndexExpression();
-    if (indexExpression == null) return null;
+    if (!(indexExpression instanceof PyReferenceExpression || indexExpression instanceof PySubscriptionExpression)) return null;
     return Ref.create(Ref.deref(getType(indexExpression, context)));
+  }
+
+  private static @Nullable Ref<@Nullable PyType> getTypeFromStarExpression(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (!(element instanceof PyStarExpression starExpression)) return null;
+    PyExpression starredExpression = starExpression.getExpression();
+    if (!(starredExpression instanceof PyReferenceExpression || starredExpression instanceof PySubscriptionExpression)) return null;
+    return Ref.create(Ref.deref(getType(starredExpression, context)));
   }
 
   @Nullable
