@@ -15,7 +15,8 @@ class PerformanceTestInfoLoader {
         val aClass = PerformanceTestInfo::class.java
         val implementations = ServiceLoader.load(aClass, aClass.classLoader).toList()
         if (implementations.isEmpty()) {
-          throw ServiceConfigurationError("No implementations of ${aClass.name} found")
+          throw ServiceConfigurationError("No implementations of ${aClass.name} found. Make sure to include intellij.tools.ide.metrics.benchmark module" +
+                                          " containing the implementation in the classpath.")
         }
         else if (implementations.size > 1) {
           throw ServiceConfigurationError("More than one implementation for ${aClass.simpleName} found: ${implementations.map { it::class.qualifiedName }}")
