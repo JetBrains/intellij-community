@@ -148,7 +148,9 @@ object CodeWithMeClientDownloader {
   }
 
   fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetBrainsClientDownloadInfo {
-    val isSnapshot = "SNAPSHOT" in clientBuildVersion
+    val buildNumber = requireNotNull(BuildNumber.fromStringOrNull(clientBuildVersion)) { "Invalid build version: $clientBuildVersion" }
+
+    val isSnapshot = buildNumber.isSnapshot
     if (isSnapshot) {
       LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
                "don't forget to update your locally built archive")
@@ -162,10 +164,7 @@ object CodeWithMeClientDownloader {
       jreBuild ?: error("JRE build number must be passed for client build number < $clientBuildVersion")
     }
 
-    val hostBuildNumber = BuildNumber.fromStringOrNull(clientBuildVersion).let {
-      requireNotNull(it) { "Invalid build version: $clientBuildVersion" }
-      it.asString()
-    }
+    val hostBuildNumber = buildNumber.asStringWithoutProductCode()
 
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
