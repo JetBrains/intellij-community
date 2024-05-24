@@ -480,7 +480,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected void processKeyEvent(KeyEvent e) {
-    if (e.isAltDown()) return;
+    if (e.isAltDown() && getNavigationKeyCode(e) == 0) return;
     if (e.isShiftDown() && isNavigationKey(e.getKeyCode())) return;
     if (mySearchPopup != null) {
       mySearchPopup.processKeyEvent(e);
