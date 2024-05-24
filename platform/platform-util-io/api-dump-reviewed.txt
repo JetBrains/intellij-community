@@ -84,6 +84,29 @@ e:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - sf:SYSTEM:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - s:valueOf(java.lang.String):com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - s:values():com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType[]
+*:com.intellij.execution.configurations.ParameterTargetValue
+- a:getLocalValue():java.lang.String
+*a:com.intellij.execution.configurations.ParameterTargetValuePart
+- com.intellij.execution.configurations.ParameterTargetValue
+- getLocalValue():java.lang.String
+- getPathToUpload():java.lang.String
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$Const
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- <init>(java.lang.String):V
+- toString():java.lang.String
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$Path
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- <init>(java.io.File):V
+- <init>(java.lang.String):V
+- getPathToUpload():java.lang.String
+- toString():java.lang.String
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- sf:INSTANCE:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$PromiseValue
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- <init>(java.lang.String,org.jetbrains.concurrency.Promise):V
+- f:getTargetValue():org.jetbrains.concurrency.Promise
 f:com.intellij.execution.configurations.ParametersList
 - java.lang.Cloneable
 - <init>():V
