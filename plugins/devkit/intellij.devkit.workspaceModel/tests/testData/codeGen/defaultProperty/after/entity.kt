@@ -47,7 +47,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyDefaultFieldEntity(
   entity: DefaultFieldEntity,
   modification: DefaultFieldEntity.Builder.() -> Unit,
 ): DefaultFieldEntity {

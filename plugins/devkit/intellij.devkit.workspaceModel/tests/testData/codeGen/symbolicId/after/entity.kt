@@ -54,7 +54,7 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifySimpleSymbolicIdEntity(
   entity: SimpleSymbolicIdEntity,
   modification: SimpleSymbolicIdEntity.Builder.() -> Unit,
 ): SimpleSymbolicIdEntity {

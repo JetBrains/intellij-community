@@ -1349,7 +1349,7 @@ com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx
 - onProjectsUnlinked(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.ExternalSystemManager,java.util.Set):V
 f:com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx$Companion
 f:com.intellij.openapi.externalSystem.settings.workspaceModel.EntitiesKt
-- sf:modifyEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
+- sf:modifyExternalProjectsBuildClasspathEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
 f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalModuleBuildClasspathEntity
 - <init>(java.lang.String,java.util.List):V
 - f:component1():java.lang.String

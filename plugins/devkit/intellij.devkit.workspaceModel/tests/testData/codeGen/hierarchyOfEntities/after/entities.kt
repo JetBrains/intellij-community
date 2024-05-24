@@ -107,7 +107,7 @@ interface ChildEntity: ParentEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyChildEntity(
   entity: ChildEntity,
   modification: ChildEntity.Builder.() -> Unit,
 ): ChildEntity {

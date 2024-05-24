@@ -44,7 +44,7 @@ interface ReferredEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyReferredEntity(
   entity: ReferredEntity,
   modification: ReferredEntity.Builder.() -> Unit,
 ): ReferredEntity {

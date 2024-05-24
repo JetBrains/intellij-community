@@ -17405,7 +17405,7 @@ f:com.intellij.ide.scratch.workspace.ScratchRootsEntityImpl$Builder
 - setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
 - setRoots(java.util.List):V
 f:com.intellij.ide.scratch.workspace.ScratchRootsEntityKt
-- sf:modifyEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.ide.scratch.workspace.ScratchRootsEntity,kotlin.jvm.functions.Function1):com.intellij.ide.scratch.workspace.ScratchRootsEntity
+- sf:modifyScratchRootsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.ide.scratch.workspace.ScratchRootsEntity,kotlin.jvm.functions.Function1):com.intellij.ide.scratch.workspace.ScratchRootsEntity
 c:com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 - <init>():V
