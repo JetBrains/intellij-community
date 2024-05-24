@@ -7,7 +7,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.waitIndexingComplete
@@ -54,12 +56,13 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
                 IndexingTestUtil.waitUntilIndexesAreReady(myProject)
-                val expected = LocalFileSystem.getInstance().findFileByIoFile(afterDirectory)?.apply {
-                    refreshRecursively(this)
-                } ?: error("Expected directory is not found")
 
-                val projectVFile = (LocalFileSystem.getInstance().findFileByIoFile(File("$projectPath"))
-                    ?: error("VirtualFile is not found for project path"))
+                val expected = afterDirectory.toPath().refreshAndGetVirtualDirectory()
+
+                val projectVFile = projectPath.refreshAndGetVirtualDirectory()
+
+                UsefulTestCase.refreshRecursively(expected)
+                UsefulTestCase.refreshRecursively(projectVFile)
 
                 PlatformTestUtil.assertDirectoriesEqual(
                     expected,
