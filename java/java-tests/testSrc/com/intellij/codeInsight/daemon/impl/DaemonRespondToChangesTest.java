@@ -4,7 +4,10 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -32,7 +35,6 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.LanguageFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -53,8 +55,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -89,13 +89,11 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import kotlin.Unit;
@@ -496,43 +494,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-
-
-  public void testOverriddenMethodMarkers() throws Exception {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    assertEmpty(highlightErrors());
-
-    Document document = getEditor().getDocument();
-    List<LineMarkerInfo<?>> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
-
-    type("//xxxx");
-
-    assertEmpty(highlightErrors());
-    markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
-  }
-
-
-  public void testOverriddenMethodMarkersDoNotClearedByChangingWhitespaceNearby() throws Exception {
-    configureByFile(BASE_PATH + "OverriddenMethodMarkers.java");
-    assertEmpty(highlightErrors());
-
-    Document document = getEditor().getDocument();
-    List<LineMarkerInfo<?>> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(markers.toString(), 3, markers.size());
-
-    PsiElement element = ((PsiJavaFile)myFile).getClasses()[0].findMethodsByName("f", false)[0].getReturnTypeElement().getNextSibling();
-    assertEquals("   ", element.getText());
-    getEditor().getCaretModel().moveToOffset(element.getTextOffset() + 1);
-    type(" ");
-
-    assertEmpty(highlightErrors());
-    markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(markers.toString(), 3, markers.size());
-  }
-
-
   public void testChangeXmlIncludeLeadsToRehighlight() {
     LanguageFilter[] extensions = XMLLanguage.INSTANCE.getLanguageExtensions();
     for (LanguageFilter extension : extensions) {
@@ -611,103 +572,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(0, count.get());
   }
 
-  public void testLineMarkersReuse() throws Throwable {
-    configureByFile(BASE_PATH + "LineMarkerChange.java");
-
-    assertEmpty(highlightErrors());
-
-    List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertSize(5, lineMarkers);
-
-    type('X');
-
-    Collection<String> changed = new ArrayList<>();
-    MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
-      @Override
-      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("after added")));
-      }
-
-      @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("before removed")));
-      }
-
-      @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
-      }
-
-      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
-        if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
-        EdtInvocationManager.invokeLaterIfNeeded(() -> {
-          List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-          if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
-            changed.add(highlighter + ": \n" + reason);
-          } // else not line marker
-        });
-      }
-    });
-
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    List<HighlightInfo> infosAfter = CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{/*Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS*/}, false);
-    assertNotEmpty(filter(infosAfter, HighlightSeverity.ERROR));
-    UIUtil.dispatchAllInvocationEvents();
-    assertEmpty(changed);
-    List<LineMarkerInfo<?>> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertEquals(lineMarkersAfter.size(), lineMarkers.size());
-  }
-
-  public void testLineMarkersDoNotBlinkOnBackSpaceRightBeforeMethodIdentifier() {
-    configureByText(JavaFileType.INSTANCE, """
-      package x;\s
-      class  <caret>ToRun{
-        public static void main(String[] args) {
-        }
-      }""");
-
-    assertEmpty(highlightErrors());
-
-    List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertSize(2, lineMarkers);
-
-    backspace();
-
-    Collection<String> changed = Collections.synchronizedList(new ArrayList<>());
-    MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
-      @Override
-      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, "after added");
-      }
-
-      @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, "before removed");
-      }
-
-      @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
-        changed(highlighter, "changed");
-      }
-
-      private void changed(@NotNull RangeHighlighterEx highlighter, @NotNull String reason) {
-        if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
-        List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
-          changed.add(highlighter + ": \n" + ExceptionUtil.getThrowableText(new Throwable(reason)));
-        } // else not line marker
-      }
-    });
-
-    assertEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
-    assertSize(2, DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
-
-    assertEmpty(changed);
-  }
-
   public void testTypeParametersMustNotBlinkWhenTypingInsideClass() {
     configureByText(JavaFileType.INSTANCE, """
       package x;
@@ -784,59 +648,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertOneElement(highlightErrors());
     type("//my comment inside method body, so class modifier won't be visited");
     assertOneElement(highlightErrors());
-  }
-
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() {
-    configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
-    StringBuffer log = new StringBuffer();
-    LineMarkerProvider provider = element -> {
-      String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
-      LineMarkerInfo<PsiComment> info = null;
-      if (element instanceof PsiComment) {
-        info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, null, null, GutterIconRenderer.Alignment.LEFT);
-        msg += " provider info: "+info + "\n";
-      }
-      log.append(msg);
-      return info;
-    };
-    LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
-    myDaemonCodeAnalyzer.restart();
-    try {
-      TextRange range = Objects.requireNonNull(FileStatusMap.getDirtyTextRange(myEditor.getDocument(), myFile, Pass.UPDATE_ALL));
-      log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
-      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
-      log.append("CollectHighlightsUtil.getElementsInRange: " + range + ": " + elements.size() +" elements : "+ elements+"\n");
-      List<HighlightInfo> infos = doHighlighting();
-      log.append(" File text: '" + getFile().getText() + "'\n");
-      log.append("infos: " + infos + "\n");
-      assertEmpty(filter(infos,HighlightSeverity.ERROR));
-
-      List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-      assertOneElement(lineMarkers);
-
-      type(' ');
-      infos = doHighlighting();
-      log.append("File text: '" + getFile().getText() + "'\n");
-      log.append("infos: " + infos + "\n");
-      assertEmpty(filter(infos,HighlightSeverity.ERROR));
-
-      lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-      assertOneElement(lineMarkers);
-
-      backspace();
-      infos = doHighlighting();
-      log.append("File text: '" + getFile().getText() + "'\n");
-      log.append("infos: " + infos + "\n");
-      assertEmpty(filter(infos,HighlightSeverity.ERROR));
-
-      lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-      assertOneElement(lineMarkers);
-    }
-    catch (AssertionError e) {
-      System.err.println("Log:\n"+log+"\n---");
-      throw e;
-    }
   }
 
   public void testWhenTypingOverWrongReferenceItsColorChangesToBlackAndOnlyAfterHighlightingFinishedItReturnsToRed() {
