@@ -52,20 +52,8 @@
     <scriptDefinitionContributor id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
                                  implementation="org.jetbrains.kotlin.jsr223.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
 
-    <scriptDefinitionsProvider id="MainKtsScriptDefinitionSource"
-                               implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptDefinitionSource"/>
-
-    <scripting.support.checker.provider id="MainKtsScriptCheckerProvider"
-            implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptCheckerProvider"/>
-
-    <scripting.support.checker.provider id="SpaceKtsScriptCheckerProvider"
-            implementation="org.jetbrains.kotlin.idea.script.SpaceKtsScriptCheckerProvider"/>
-
-    <scripting.support.checker.provider id="TeamCityKtsScriptCheckerProvider"
-            implementation="org.jetbrains.kotlin.idea.script.TeamCityKtsScriptCheckerProvider"/>
-
-    <scripting.support.checker.provider id="WorkspaceKtsScriptCheckerProvider"
-            implementation="org.jetbrains.kotlin.idea.script.WorkspaceKtsScriptCheckerProvider"/>
+    <scriptDefinitionsProvider id="MainKtsScriptDefinitionProvider"
+                               implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptDefinitionProvider"/>
 
     <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.script.DefaultIdeScriptingConfigurationFacade"/>
 

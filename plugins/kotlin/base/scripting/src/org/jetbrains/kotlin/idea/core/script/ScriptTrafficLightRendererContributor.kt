@@ -35,7 +35,7 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
 
             if (scriptingEnabled) {
                 if (KotlinPluginModeProvider.isK2Mode()) {
-                    if (K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(file.virtualFile) == null) {
+                    if (K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getScriptConfiguration(file) == null) {
                         status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                         status.errorAnalyzingFinished = false
                     }
