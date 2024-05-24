@@ -652,11 +652,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       rebuildTable(project, originUsageCheck, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
       preselectedRow.set(getSelectedUsageNode(table));
     };
-    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, () -> {
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346641, EA-830956")) {
-        runnable.run();
-      }
-    });
+    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, runnable);
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged(usageView, pingEDT, popup));
