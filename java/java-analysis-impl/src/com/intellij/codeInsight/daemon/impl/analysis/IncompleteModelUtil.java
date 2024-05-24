@@ -6,8 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Contract;
@@ -247,9 +245,6 @@ final class IncompleteModelUtil {
         if (qualifierTarget == null && canBePendingReference(qualifierRef)) {
           return true;
         }
-        if (qualifierTarget instanceof PsiClass psiClass && canBeAugmented(psiClass)) {
-          return true;
-        }
         if (qualifierTarget instanceof PsiClass cls && isHierarchyResolved(cls)) {
           return false;
         } 
@@ -272,11 +267,5 @@ final class IncompleteModelUtil {
   static HighlightInfo.@NotNull Builder getPendingReferenceHighlightInfo(@NotNull PsiElement elementToHighlight) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.PENDING_REFERENCE).range(elementToHighlight)
       .descriptionAndTooltip(JavaErrorBundle.message("incomplete.project.state.pending.reference"));
-  }
-
-  static boolean canBeAugmented(@Nullable PsiClass targetClass) {
-    if (targetClass == null) return false;
-    return CachedValuesManager.getProjectPsiDependentCache(targetClass,
-                                                           psiClass -> PsiAugmentProvider.canBeAugmentedForIncompleteMode(psiClass));
   }
 }
