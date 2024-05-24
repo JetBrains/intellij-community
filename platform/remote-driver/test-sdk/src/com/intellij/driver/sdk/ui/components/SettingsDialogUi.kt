@@ -21,7 +21,7 @@ class SettingsDialogUiComponent(data: ComponentData) : UiComponent(data) {
     get() = x("//div[@class='CheckboxTree']", JCheckboxTreeFixture::class.java)
 
   fun openTreeSettingsSection(vararg path: String) {
-    tree().clickPath(*path)
+    tree("//div[@accessiblename='Settings categories']").clickPath(*path)
   }
 
   fun installPluginFromList(pluginName: String) {
