@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -39,9 +38,7 @@ object GradleProjectsLinker {
         val projectFile = localFileSystem.refreshAndFindFileByPath(absoluteProjectPath)
             ?: error("Failed to find projectFile: $absoluteProjectPath")
 
-        val settings = createLinkSettings(projectFile.toNioPath(), project).apply {
-            gradleJvm = GradleImportingTestCase.GRADLE_JDK_NAME
-        }
+        val settings = createLinkSettings(projectFile.toNioPath(), project)
 
         ExternalSystemUtil.linkExternalProject(
             /* externalSystemId = */ GradleConstants.SYSTEM_ID,

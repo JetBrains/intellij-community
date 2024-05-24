@@ -7,6 +7,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,7 +40,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
@@ -106,6 +107,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private final StringBuilder deprecationTextBuilder = new StringBuilder();
   private int deprecationTextLineCount = 0;
 
+  private @Nullable Disposable myTestDisposable = null;
+
   @Override
   protected void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
@@ -116,11 +119,24 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     WriteAction.runAndWait(this::configureJdkTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
 
-    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestDisposable());
     setRegistryPropertyForTest("unknown.sdk.auto", "false");
     TestUnknownSdkResolver.INSTANCE.setUnknownSdkFixMode(TestUnknownSdkResolver.TestUnknownSdkFixMode.REAL_LOCAL_FIX);
 
     cleanScriptsCacheIfNeeded();
+
+    installGradleJvmConfigurator();
+  }
+
+  protected void installGradleJvmConfigurator() {
+    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListener<GradleProjectSettings>() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> settings) {
+        for (var projectSettings : settings) {
+          projectSettings.setGradleJvm(GRADLE_JDK_NAME);
+        }
+      }
+    }, getTestDisposable());
   }
 
   protected void configureJdkTable() {
@@ -288,8 +304,16 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
           GradleSystemSettings.getInstance().setGradleVmOptions("");
         }
       },
-      super::tearDown
+      () -> Disposer.dispose(getTestDisposable()),
+      () -> super.tearDown()
     ).run();
+  }
+
+  private @NotNull Disposable getTestDisposable() {
+    if (myTestDisposable == null) {
+      myTestDisposable = Disposer.newDisposable();
+    }
+    return myTestDisposable;
   }
 
   @Override
@@ -328,20 +352,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   protected void importProject() {
     importProject((Boolean)null);
-  }
-
-  @Override
-  protected void importProject(Boolean skipIndexing) {
-    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListener<>() {
-      @Override
-      public void onProjectsLinked(@NotNull Collection settings) {
-        final Object item = ContainerUtil.getFirstItem(settings);
-        if (item instanceof GradleProjectSettings) {
-          ((GradleProjectSettings)item).setGradleJvm(GRADLE_JDK_NAME);
-        }
-      }
-    });
-    super.importProject(skipIndexing);
   }
 
   protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
