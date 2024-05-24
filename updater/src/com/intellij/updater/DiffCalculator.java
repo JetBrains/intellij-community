@@ -5,15 +5,13 @@ import java.io.File;
 import java.util.*;
 
 public final class DiffCalculator {
-  public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
-    return calculate(oldChecksums, newChecksums, Set.of(), Set.of(), false);
-  }
-
-  public static Result calculate(Map<String, Long> oldChecksums,
-                                 Map<String, Long> newChecksums,
-                                 Set<String> critical,
-                                 Set<String> optional,
-                                 boolean lookForMoved) {
+  public static Result calculate(
+    Map<String, Long> oldChecksums,
+    Map<String, Long> newChecksums,
+    Set<String> critical,
+    Set<String> optional,
+    boolean lookForMoved
+  ) {
     Result result = new Result();
     result.commonFiles = collect(oldChecksums, newChecksums, critical, true);
     result.filesToDelete = withAllRemoved(oldChecksums, newChecksums);
