@@ -30,10 +30,11 @@ private class NotebookCellLinesIntervalDataRule : GetDataRule {
       }
 }
 
-private class EditorsWithOffsetsDataRule : GetDataRule {
-  override fun getData(dataProvider: DataProvider): List<Pair<Editor, Int>>? {
-    val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataProvider)
-    val editor = PlatformDataKeys.EDITOR.getData(dataProvider)
+private class EditorsWithOffsetsDataRule : EdtDataRule {
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    // TODO Simplify. The code below is overcomplicated
+    val contextComponent = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT]
+    val editor = snapshot[PlatformDataKeys.EDITOR]
 
     val result = mutableListOf<Pair<Editor, Int>>()
 
@@ -70,8 +71,7 @@ private class EditorsWithOffsetsDataRule : GetDataRule {
     if (editor != null && NotebookCellLinesProvider.get(editor.document) != null) {
       result += editor to editor.getOffsetFromCaretImpl()
     }
-
-    return result.takeIf(List<*>::isNotEmpty)
+    sink[EDITORS_WITH_OFFSETS_DATA_KEY] = result.takeIf(List<*>::isNotEmpty)
   }
 
   private fun Editor.getOffsetFromCaretImpl(): Int =
