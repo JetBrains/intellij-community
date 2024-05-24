@@ -104,7 +104,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   //     how we use them, and issuing an alarm early on, as we start to use too many
 
   /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
-  private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 512);
+  private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 1024);
 
 
   private static volatile int openedStoragesCount = 0;
