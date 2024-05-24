@@ -71,7 +71,8 @@ class PyTypeHintsInspection : PyInspection() {
         checkParamSpecArguments(node, getTargetFromAssignment(node))
       }
 
-      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_TUPLE) in calleeQName) {
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_TUPLE) in calleeQName ||
+          QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_TUPLE_EXT) in calleeQName) {
         checkTypeVarTupleArguments(node, getTargetFromAssignment(node))
       }
 

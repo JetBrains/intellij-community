@@ -1381,6 +1381,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    Ts1 = TypeVarTuple('Ts1')""");
   }
 
+  // PY-70528
+  public void testTypeVarTupleFromTypingExtensionsNameAndTargetNameEquality() {
+    doTestByText("""
+                   from typing_extensions import TypeVarTuple
+                   
+                   Ts = TypeVarTuple(<warning descr="The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned">'T'</warning>)
+                   Ts1 = TypeVarTuple('Ts1')
+                   """);
+  }
+
   // PY-53105
   public void testTypeVarTupleMoreThanOneUnpacking() {
     doTestByText("""
