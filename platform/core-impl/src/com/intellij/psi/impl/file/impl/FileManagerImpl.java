@@ -83,12 +83,16 @@ public final class FileManagerImpl implements FileManager {
 
   private static final VirtualFile NULL = new LightVirtualFile();
 
+  /**
+   * Removes garbage from myVFileToViewProviderMap
+   */
   public void processQueue() {
-    // just to call processQueue()
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
-    if (map != null) {
-      map.remove(NULL);
-    }
+    if (map == null) return;
+
+    // myVFileToViewProviderMap is in fact ConcurrentWeakValueHashMap.
+    // calling map.remove(unrelated-object) calls ConcurrentWeakValueHashMap#processQueue under the hood
+    map.remove(NULL);
   }
 
   @NotNull
