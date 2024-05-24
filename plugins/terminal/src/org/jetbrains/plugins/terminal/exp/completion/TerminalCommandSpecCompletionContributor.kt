@@ -11,11 +11,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
@@ -37,6 +38,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         parameters.completionType != CompletionType.BASIC) {
       return
     }
+    if (parameters.editor.getUserData(TerminalCommandCompletionAction.SUPPRESS_COMPLETION) == true) {
+      result.stopHere()
+      return
+    }
+
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
     val context = TerminalCompletionContext(session, runtimeContextProvider, generatorsExecutor, shellSupport, parameters)
 
