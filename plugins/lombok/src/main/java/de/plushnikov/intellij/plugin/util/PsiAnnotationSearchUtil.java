@@ -5,16 +5,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 public final class PsiAnnotationSearchUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
-    if (isDumbMode(psiModifierListOwner)) {
+    if (isDumbOrIncompleteMode(psiModifierListOwner)) {
       return findAnnotationInDumbMode(psiModifierListOwner, annotationFQN);
     }
     return psiModifierListOwner.getAnnotation(annotationFQN);
@@ -52,14 +55,15 @@ public final class PsiAnnotationSearchUtil {
            (mayBeOuterClass!=null && importList.findSingleClassImportStatement(mayBeOuterClass) != null);
   }
 
-  private static boolean isDumbMode(@NotNull PsiElement context) {
+  public static boolean isDumbOrIncompleteMode(@NotNull PsiElement context) {
     Project project = context.getProject();
-    return DumbService.isDumb(project);
+    return DumbService.isDumb(project) ||
+           IncompleteModeUtil.isIncompleteMode(context);
   }
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationFQNs) {
-    boolean isDumbMode = isDumbMode(psiModifierListOwner);
+    boolean isDumbMode = isDumbOrIncompleteMode(psiModifierListOwner);
     for (String annotationFQN : annotationFQNs) {
       PsiAnnotation annotation;
       if (isDumbMode) {
@@ -76,7 +80,7 @@ public final class PsiAnnotationSearchUtil {
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
-    if (isDumbMode(psiModifierListOwner)) {
+    if (isDumbOrIncompleteMode(psiModifierListOwner)) {
       return findAnnotationInDumbMode(psiModifierListOwner, annotationFQN) != null;
     }
     return psiModifierListOwner.hasAnnotation(annotationFQN);
@@ -129,9 +133,49 @@ public final class PsiAnnotationSearchUtil {
 
   public static boolean checkAnnotationHasOneOfFQNs(@NotNull PsiAnnotation psiAnnotation,
                                                     String @NotNull ... annotationFQNs) {
-    if (isDumbMode(psiAnnotation)) {
+    if (isDumbOrIncompleteMode(psiAnnotation)) {
       return ContainerUtil.or(annotationFQNs, fqn-> hasQualifiedNameInDumbMode(psiAnnotation, fqn));
     }
     return ContainerUtil.or(annotationFQNs, psiAnnotation::hasQualifiedName);
+  }
+
+  public static boolean checkAnnotationHasOneOfFQNs(@NotNull PsiAnnotation psiAnnotation,
+                                                    @NotNull Set<String> annotationFQNs) {
+    if (isDumbOrIncompleteMode(psiAnnotation)) {
+      return ContainerUtil.or(annotationFQNs, fqn -> hasQualifiedNameInDumbMode(psiAnnotation, fqn));
+    }
+    return ContainerUtil.or(annotationFQNs, psiAnnotation::hasQualifiedName);
+  }
+
+  /**
+   * Finds the fully qualified name of a Lombok annotation based only on psi structure, without resolving.
+   * Only annotations which have processors are supported
+   *
+   * @param psiAnnotation the PsiAnnotation object representing the Lombok annotation
+   * @return the fully qualified name of the Lombok annotation, or null if the annotation is unresolved or not a Lombok annotation
+   */
+  public static @Nullable String findLombokAnnotationQualifiedNameInIncompleteMode(@NotNull PsiAnnotation psiAnnotation) {
+    String qualifiedName = psiAnnotation.getQualifiedName();
+    if (StringUtil.isEmpty(qualifiedName)) return null;
+    if (qualifiedName.startsWith("lombok")) return qualifiedName;
+    LombokProcessorManager instance = LombokProcessorManager.getInstance();
+    MultiMap<String, String> names = instance.getOurSupportedShortNames();
+    Collection<String> fullQualifiedNames = names.get(qualifiedName);
+    for (String fullQualifiedName : fullQualifiedNames) {
+      if (hasQualifiedNameInDumbMode(psiAnnotation, fullQualifiedName)) {
+        return fullQualifiedName;
+      }
+    }
+    String proposedQualifiedName = "lombok." + qualifiedName;
+    if (hasQualifiedNameInDumbMode(psiAnnotation, proposedQualifiedName)) {
+      qualifiedName = proposedQualifiedName;
+    }
+    else {
+      proposedQualifiedName = "lombok.experimental." + qualifiedName;
+      if (hasQualifiedNameInDumbMode(psiAnnotation, proposedQualifiedName)) {
+        qualifiedName = proposedQualifiedName;
+      }
+    }
+    return qualifiedName;
   }
 }

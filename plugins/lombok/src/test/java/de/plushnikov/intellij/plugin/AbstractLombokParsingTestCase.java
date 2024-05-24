@@ -1,14 +1,20 @@
 package de.plushnikov.intellij.plugin;
 
 import com.google.common.base.Objects;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import de.plushnikov.intellij.plugin.util.IncompleteModeUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +25,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.project.IncompleteDependenciesServiceKt.asAutoCloseable;
+
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
@@ -26,8 +34,51 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
   private static final Logger LOG = Logger.getInstance(AbstractLombokParsingTestCase.class);
 
+  @Nullable
+  protected ModeRunnerType myRunnerType;
+
+  @NotNull
+  protected List<ModeRunnerType> modes() {
+    return List.of(ModeRunnerType.INCOMPLETE, ModeRunnerType.DUMB, ModeRunnerType.NORMAL);
+  }
+
+  /**
+   * All tests are run in three modes: normal, incomplete and dumb mode.
+   * If it is necessary to skip some of them, use @SkipMode
+   */
+  @Override
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    String testName = getName();
+
+    for (ModeRunnerType value : modes()) {
+      myRunnerType = value;
+      try {
+        LOG.info("Method: " + testName + " starts with " + value);
+        super.runBare(testRunnable);
+        LOG.info("Method: " + testName + " finish with " + value);
+      }
+      catch (Throwable e) {
+        LOG.warn("Method: " + testName + "failed for " + value);
+        throw e;
+      }
+    }
+  }
+
+  public enum ModeRunnerType {
+    INCOMPLETE, DUMB, NORMAL
+  }
+
   protected boolean shouldCompareAnnotations() {
     return !".*".equals(annotationToComparePattern());
+  }
+
+  @Override
+  protected final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return (myRunnerType == ModeRunnerType.INCOMPLETE) ? LombokTestUtil.WITHOUT_LOMBOK_DESCRIPTOR : getParsingDescriptor();
+  }
+
+  protected @NotNull LightProjectDescriptor getParsingDescriptor() {
+    return super.getProjectDescriptor();
   }
 
   protected String annotationToComparePattern() {
@@ -46,13 +97,25 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     doTest(false);
   }
 
-  public void doTest(final boolean lowercaseFirstLetter) {
-    doTest(getTestName(lowercaseFirstLetter));
+  public final void doTest(final boolean lowercaseFirstLetter) {
+    PsiManager.getInstance(getProject()).dropPsiCaches();
+    if (myRunnerType == ModeRunnerType.DUMB) {
+      DumbModeTestUtils.runInDumbModeSynchronously(getProject(),
+                                                   () -> compareFiles(lowercaseFirstLetter));
+    }
+    else if (myRunnerType == ModeRunnerType.INCOMPLETE) {
+      IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
+      try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
+        compareFiles(lowercaseFirstLetter);
+      }
+    }
+    else {
+      compareFiles(lowercaseFirstLetter);
+    }
   }
 
-  public void doTest(String testName) {
-    DumbModeTestUtils.runInDumbModeSynchronously(getProject(),
-                                                 () -> compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName)));
+  protected void compareFiles(boolean lowercaseFirstLetter) {
+    String testName = getTestName(lowercaseFirstLetter);
     compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName));
   }
 
@@ -193,13 +256,13 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   private void compareAnnotations(PsiModifierList beforeModifierList, PsiModifierList afterModifierList) {
     if (shouldCompareAnnotations()) {
       Collection<String> beforeAnnotations = Arrays.stream(beforeModifierList.getAnnotations())
-        .map(an-> getAnnotationQualifiedName(an))
+        .map(an -> getAnnotationQualifiedName(an))
         .filter(Pattern.compile("lombok.*").asPredicate().negate().or(LombokClassNames.NON_NULL::equals))
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
       Collection<String> afterAnnotations = Arrays.stream(afterModifierList.getAnnotations())
-        .map(an-> getAnnotationQualifiedName(an))
+        .map(an -> getAnnotationQualifiedName(an))
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
@@ -229,9 +292,17 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       .computeWithAlternativeResolveEnabled(() -> modifierList.findAnnotation(qualifiedName));
   }
 
-  private static @Nullable String getAnnotationQualifiedName(PsiAnnotation annotation) {
-    return DumbService.getInstance(annotation.getProject())
+  private static @NotNull String getAnnotationQualifiedName(@NotNull PsiAnnotation annotation) {
+    String qualifiedName = DumbService.getInstance(annotation.getProject())
       .computeWithAlternativeResolveEnabled(() -> annotation.getQualifiedName());
+
+    if (!qualifiedName.contains(".") && IncompleteModeUtil.isIncompleteMode(annotation)) {
+      String lombokAnnotation = PsiAnnotationSearchUtil.findLombokAnnotationQualifiedNameInIncompleteMode(annotation);
+      if (lombokAnnotation.startsWith("lombok")) {
+        qualifiedName = lombokAnnotation;
+      }
+    }
+    return qualifiedName;
   }
 
   private void compareMethods(PsiClass beforeClass, PsiClass afterClass) {
@@ -245,7 +316,10 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
       final Collection<PsiMethod> matchedMethods = filterMethods(beforeMethods, afterMethod);
       if (matchedMethods.isEmpty()) {
-        fail("Method names are not equal, Method: " + afterMethod.getPresentation().getPresentableText() + " not found in class : " + beforeClass.getName());
+        fail("Method names are not equal, Method: " +
+             afterMethod.getPresentation().getPresentableText() +
+             " not found in class : " +
+             beforeClass.getName());
       }
 
       for (PsiMethod beforeMethod : matchedMethods) {
@@ -326,7 +400,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     for (PsiClassType beforeType : beforeTypes) {
       boolean found = false;
       for (PsiClassType afterType : afterTypes) {
-        boolean equals = dumbService.computeWithAlternativeResolveEnabled(()->beforeType.equals(afterType));
+        boolean equals = dumbService.computeWithAlternativeResolveEnabled(() -> beforeType.equals(afterType));
         if (equals) {
           found = true;
           break;

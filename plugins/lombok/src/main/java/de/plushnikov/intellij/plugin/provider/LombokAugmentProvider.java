@@ -8,6 +8,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
@@ -16,6 +19,7 @@ import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.processor.lombok.LombokAnnotationProcessor;
 import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.util.IncompleteModeUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +51,7 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
   @Override
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
     // skip if no lombok library is present
-    if (!hasLombokLibrary(modifierList.getProject())) {
+    if (!hasLombokLibrary(modifierList.getProject()) && !isIncompleteModeWithLombokAnnotation(modifierList)) {
       return modifiers;
     }
 
@@ -68,7 +72,6 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     }
     else {
       runnable.run();
-
     }
     return result;
   }
@@ -154,7 +157,7 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     }
 
     // skip processing if disabled, or no lombok library is present
-    if (!hasLombokLibrary(element.getProject())) {
+    if (!hasLombokLibrary(element.getProject()) && !isIncompleteModeWithLombokAnnotation(psiClass)) {
       return emptyResult;
     }
     if (psiClass.isAnnotationType() && type == PsiMethod.class) {
@@ -200,5 +203,80 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
       return Collections.emptyList();
     }
     return ExtensionMethodsHelper.getExtensionMethods(aClass, nameHint, context);
+  }
+
+
+  /**
+   * Checks if the project is in incomplete mode and the class contains Lombok annotation.
+   * Incomplete mode means that the project contains incomplete dependencies.
+   * There is no purpose to be absolutely accurate, but it can help to reduce false red-code highlighting and help with some completion
+   * This method can be quite slow, but it calls only in incomplete mode and cache value for file
+   * @param context  The PsiElement to check for Lombok annotations.
+   * @return true if the project is in incomplete mode and the class has any Lombok annotation or if any of the class fields have any Lombok annotation;
+   * otherwise, false.
+   */
+  private static boolean isIncompleteModeWithLombokAnnotation(@NotNull PsiElement context) {
+    if (!IncompleteModeUtil.isIncompleteMode(context)) {
+      return false;
+    }
+
+    if (context.getLanguage() != JavaLanguage.INSTANCE) {
+      return false;
+    }
+
+    if (context instanceof PsiModifierList modifierList && hasAnyLombokAnnotation(modifierList.getAnnotations())) {
+      return true;
+    }
+
+    PsiClass psiClass = context instanceof PsiClass castedClass ? castedClass :
+                        PsiTreeUtil.getParentOfType(context, PsiClass.class);
+
+    if (psiClass == null) return false;
+
+    return CachedValuesManager.getProjectPsiDependentCache(psiClass, psiElement -> {
+      if (!(psiElement.getContainingFile() instanceof PsiJavaFile file)) {
+        return false;
+      }
+      if (file.getImportList() != null && ContainerUtil.exists(file.getImportList().getAllImportStatements(), statement -> {
+        PsiJavaCodeReferenceElement reference = statement.getImportReference();
+        return reference != null && reference.getText().startsWith("lombok");
+      })) {
+        return true;
+      }
+      while (psiElement != null) {
+        if (psiElement instanceof PsiExtensibleClass extensibleClass &&
+            (hasAnyLombokAnnotation(extensibleClass.getAnnotations()) ||
+             ContainerUtil.exists(extensibleClass.getOwnFields(), field -> hasAnyLombokAnnotation(field.getAnnotations())) ||
+             ContainerUtil.exists(extensibleClass.getOwnMethods(), method -> hasAnyLombokAnnotation(method.getAnnotations())) ||
+             (file.getImportList() != null && ContainerUtil.exists(file.getImportList().getAllImportStatements(), statement -> {
+               PsiJavaCodeReferenceElement reference = statement.getImportReference();
+               return reference != null && reference.getText().startsWith("lombok");
+             })))) {
+          return true;
+        }
+        psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
+      }
+      return false;
+    });
+  }
+
+  /**
+   * Checks if the given PsiModifierListOwner has any Lombok annotation.
+   * It is used only for incomplete mode.
+   *
+   * @param annotations The annotations to check for Lombok annotations.
+   * @return true if the modifierListOwner has any Lombok annotation, otherwise false.
+   */
+  private static boolean hasAnyLombokAnnotation(PsiAnnotation @NotNull [] annotations) {
+    return ContainerUtil.exists(annotations, annotation -> {
+      if (annotation == null) {
+        return false;
+      }
+      String qualifiedName = annotation.getText();
+      if (qualifiedName == null) {
+        return false;
+      }
+      return qualifiedName.startsWith("@lombok.");
+    });
   }
 }

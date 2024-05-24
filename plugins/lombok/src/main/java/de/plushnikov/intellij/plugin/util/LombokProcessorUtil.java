@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -86,7 +85,7 @@ public final class LombokProcessorUtil {
 
   public static Collection<String> getOldOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
     PsiAnnotationMemberValue onXValue;
-    if (DumbService.isDumb(psiAnnotation.getProject())) {
+    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation)) {
       onXValue = psiAnnotation.findDeclaredAttributeValue(parameterName);
     }
     else {
@@ -100,7 +99,7 @@ public final class LombokProcessorUtil {
   }
 
   public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    if (DumbService.isDumb(psiAnnotation.getProject()) || psiAnnotation.hasAttribute(parameterName)) {
+    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation) || psiAnnotation.hasAttribute(parameterName)) {
       final Collection<PsiAnnotation> annotations =
         PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class, List.of());
       return collectAnnotationStrings(annotations);

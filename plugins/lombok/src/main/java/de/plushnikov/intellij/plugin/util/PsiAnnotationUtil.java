@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +42,7 @@ public final class PsiAnnotationUtil {
                                                       @NotNull List<T> defaultDumbValue) {
     Collection<T> result = Collections.emptyList();
     PsiAnnotationMemberValue attributeValue;
-    if (DumbService.isDumb(psiAnnotation.getProject())) {
+    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation)) {
       attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
       if (attributeValue == null) return defaultDumbValue;
     }
@@ -85,6 +84,10 @@ public final class PsiAnnotationUtil {
 
   public static String getEnumAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String attributeName, @NotNull String defaultValue) {
     PsiAnnotationMemberValue attrValue = psiAnnotation.findDeclaredAttributeValue(attributeName);
+    if (IncompleteModeUtil.isIncompleteMode(psiAnnotation) && attrValue instanceof PsiReferenceExpression referenceExpression) {
+      //more or less good approximation if it is a complete mode
+      return referenceExpression.getReferenceName();
+    }
     String result = attrValue != null ? resolveElementValue(attrValue, String.class) : null;
     return result != null ? result : defaultValue;
   }

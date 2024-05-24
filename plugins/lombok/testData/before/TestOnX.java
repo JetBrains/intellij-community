@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
+import org.jetbrains.annotations.NotNull;
 
 @ToString
 @RequiredArgsConstructor(onConstructor_ = {@Inject, @Named("myName1")})
@@ -15,16 +16,16 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(onParam_ = @Valid)
 public class TestOnX {
     @Getter(onMethod_ = @Max(100))
-    @NonNull
+    @NotNull
     private final Integer someIntField;
 
-    @NonNull
+    @NotNull
     @Deprecated
     @Getter(onMethod_ = @Size(max = 20))
     @Setter(onMethod_ = @Size(min = 10), onParam_ = @Size(min = 15))
     private String someStringField;
 
-    @With(onMethod_ = @NonNull, onParam_ = @Min(1))
+    @With(onMethod_ = @NotNull, onParam_ = @Min(1))
     private float someFloatField;
 
     public static void main(String[] args) {

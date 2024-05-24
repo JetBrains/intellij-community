@@ -7,6 +7,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import de.plushnikov.intellij.plugin.processor.clazz.*;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.*;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
@@ -21,12 +22,15 @@ import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcesso
 import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.modifier.*;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Service
 public final class LombokProcessorManager {
@@ -85,10 +89,18 @@ public final class LombokProcessorManager {
   private final SynchronizedProcessor mySynchronizedProcessor = new SynchronizedProcessor();
   private final JacksonizedProcessor myJacksonizedProcessor = new JacksonizedProcessor();
 
-  private final Set<String> ourSupportedShortNames = getAllProcessors()
-    .stream().flatMap(p -> Arrays.stream(p.getSupportedAnnotationClasses()))
-    .map(StringUtil::getShortName)
-    .collect(Collectors.toSet());
+  private final MultiMap<String, String> ourSupportedShortNames = createSupportedShortNames();
+
+  @NotNull
+  private MultiMap<String, String> createSupportedShortNames() {
+    MultiMap<String, String> map = new MultiMap<>();
+    for (Processor processor : getAllProcessors()) {
+      for (String annotationClass : processor.getSupportedAnnotationClasses()) {
+        map.putValue(StringUtil.getShortName(annotationClass), annotationClass);
+      }
+    }
+    return map;
+  }
 
   public static LombokProcessorManager getInstance() {
     return ApplicationManager.getApplication().getService(LombokProcessorManager.class);
@@ -266,6 +278,10 @@ public final class LombokProcessorManager {
     return myJacksonizedProcessor;
   }
 
+  public MultiMap<String, String> getOurSupportedShortNames() {
+    return ourSupportedShortNames;
+  }
+
   @NotNull
   private Collection<Processor> getAllProcessors() {
     return Arrays.asList(
@@ -348,15 +364,19 @@ public final class LombokProcessorManager {
       return Collections.emptyList();
     }
     String referenceName = nameReferenceElement.getReferenceName();
-    if (referenceName == null || !manager.ourSupportedShortNames.contains(referenceName)) {
+    if (referenceName == null || !manager.ourSupportedShortNames.containsKey(referenceName)) {
       return Collections.emptyList();
     }
-    final String qualifiedName = psiAnnotation.getQualifiedName();
+    String qualifiedName = psiAnnotation.getQualifiedName();
+    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+      qualifiedName = PsiAnnotationSearchUtil.findLombokAnnotationQualifiedNameInIncompleteMode(psiAnnotation);
+    }
     if (StringUtil.isEmpty(qualifiedName) || !qualifiedName.contains("lombok")) {
       return Collections.emptyList();
     }
+    String finalQualifiedName = qualifiedName;
     return manager.getWithCache("byAnnotationFQN_" + qualifiedName,
-                                () -> ContainerUtil.filter(manager.getAllProcessors(), p -> p.isSupportedAnnotationFQN(qualifiedName))
+                                () -> ContainerUtil.filter(manager.getAllProcessors(), p -> p.isSupportedAnnotationFQN(finalQualifiedName))
     );
   }
 }

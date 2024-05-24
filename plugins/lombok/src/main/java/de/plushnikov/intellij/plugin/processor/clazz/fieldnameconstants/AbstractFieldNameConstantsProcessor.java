@@ -28,6 +28,8 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
 
   @Override
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
+    //it can help for dumb mode or incomplete mode
+    if (null != psiAnnotation.findDeclaredAttributeValue("asEnum")) return true;
     // new version of @FieldNameConstants has an attribute "asEnum", the old one not
     return null != psiAnnotation.findAttributeValue("asEnum");
   }

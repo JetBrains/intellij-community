@@ -253,6 +253,8 @@
 
     <registryKey key="lombok.dumb.mode.enabled" defaultValue="true" restartRequired="true"
                  description="Lombok augment works in dumb mode"/>
+    <registryKey key="lombok.incomplete.mode.enabled" defaultValue="true" restartRequired="true"
+                 description="Lombok supports incomplete mode"/>
   </extensions>
 
   <projectListeners>

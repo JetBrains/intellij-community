@@ -1,6 +1,9 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
 import com.intellij.testFramework.DumbModeTestUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class GetterDumbModeTest extends AbstractLombokConfigSystemTestCase {
 
@@ -37,5 +40,11 @@ public class GetterDumbModeTest extends AbstractLombokConfigSystemTestCase {
         doTest(subPath + "/before/inner/" + fileName, subPath + "/after/inner/" + fileName);
       }
     );
+  }
+
+  @Override
+  protected @NotNull List<ModeRunnerType> modes() {
+    //use normal mode, because it is configured manually in tests
+    return List.of(ModeRunnerType.NORMAL);
   }
 }

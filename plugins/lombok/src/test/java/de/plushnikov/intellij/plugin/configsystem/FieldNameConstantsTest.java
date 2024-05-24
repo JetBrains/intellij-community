@@ -1,5 +1,9 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
 public class FieldNameConstantsTest extends AbstractLombokConfigSystemTestCase {
 
   @Override
@@ -13,5 +17,12 @@ public class FieldNameConstantsTest extends AbstractLombokConfigSystemTestCase {
 
   public void testUppercase$FieldNameConstantsUppercased() {
     doTest();
+  }
+
+  @Override
+  protected @NotNull List<ModeRunnerType> modes() {
+    //now incomplete mode is not supported for this processor, because it depends on the lombok version
+    //after returning to normal mode, caches will be dropped
+    return List.of(ModeRunnerType.NORMAL, ModeRunnerType.DUMB);
   }
 }
