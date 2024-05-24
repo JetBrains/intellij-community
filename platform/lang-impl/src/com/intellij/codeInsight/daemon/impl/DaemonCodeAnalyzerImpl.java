@@ -1253,14 +1253,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
-        // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
-        ReadAction.run(() -> HighlightInfoUpdaterImpl.removeInvalidPsiElements(psiFile, this, session));
         // wait for heavy processing to stop, re-schedule daemon but not too soon
         boolean heavyProcessIsRunning = heavyProcessIsRunning();
         HighlightingPass[] passes = ReadAction.compute(() -> {
           if (myProject.isDisposed() || !fileEditor.isValid() || !psiFile.isValid()) {
             return HighlightingPass.EMPTY_ARRAY;
           }
+          // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
+          ((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(myProject)).removeInvalidPsiElements(psiFile, this, session);
           if (session.isCanceled()) {
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
             throw new ProcessCanceledException();

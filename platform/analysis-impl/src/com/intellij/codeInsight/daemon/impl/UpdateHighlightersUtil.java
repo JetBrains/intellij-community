@@ -233,7 +233,7 @@ public final class UpdateHighlightersUtil {
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
       boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; shouldRemove:"+shouldRemove);
+        LOG.debug("incinerateObsoleteHighlighters " + highlighter + "; shouldRemove:" + shouldRemove);
       }
       if (shouldRemove) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);

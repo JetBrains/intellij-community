@@ -147,7 +147,10 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
   }
 
   @Override
-  void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile, @NotNull TextRange restrictRange, @NotNull HighlightingSession highlightingSession, @NotNull Collection<? extends PsiFile> liveInjectedFiles) {
+  synchronized void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
+                                                         @NotNull TextRange restrictRange,
+                                                         @NotNull HighlightingSession highlightingSession,
+                                                         @NotNull Collection<? extends PsiFile> liveInjectedFiles) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostPsiFile.getProject());
     Document hostDocument = hostPsiFile.getFileDocument();
     Map<PsiFile, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(hostDocument);
@@ -165,9 +168,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     });
   }
 
-  static void removeInvalidPsiElements(@NotNull PsiFile psiFile,
-                                       @NotNull Object requestor,
-                                       @NotNull HighlightingSession highlightingSession) {
+  synchronized void removeInvalidPsiElements(@NotNull PsiFile psiFile,
+                                             @NotNull Object requestor,
+                                             @NotNull HighlightingSession session) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
     PsiFile hostFile = injectedLanguageManager.getTopLevelFile(psiFile);
     Document hostDocument = hostFile.getFileDocument();
@@ -188,7 +191,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       if (psi == psiFile) {
         return false;
       }
-      removeAllHighlighterInsideFile(psi, requestor, highlightingSession, toolMap);
+      removeAllHighlighterInsideFile(psi, requestor, session, toolMap);
       return true;
     });
     for (Map<Object, ToolHighlights> map : myMaps) {
@@ -197,26 +200,24 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       }
       for (Map.Entry<Object, ToolHighlights> toolEntry : map.entrySet()) {
         ToolHighlights toolHighlights = toolEntry.getValue();
-        synchronized (toolHighlights) {
-          invokeProcessQueueToTriggerEvictedListener(toolHighlights.elementHighlights);
-          Iterator<Map.Entry<PsiElement, List<? extends HighlightInfo>>> iterator = toolHighlights.elementHighlights.entrySet().iterator();
-          while (iterator.hasNext()) {
-            Map.Entry<PsiElement, List<? extends HighlightInfo>> entry = iterator.next();
-            PsiElement element = entry.getKey();
-            ProgressManager.checkCanceled();
-            if (element == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || element != FAKE_ELEMENT && !element.isValid()) {
-              List<? extends HighlightInfo> infos = entry.getValue();
-              for (HighlightInfo info : infos) {
-                RangeHighlighterEx highlighter = info.getHighlighter();
-                if (highlighter != null) {
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("removeInvalidPsiElements: " + info + " for invalid " + element + " from " + requestor);
-                  }
-                  UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
+        invokeProcessQueueToTriggerEvictedListener(toolHighlights.elementHighlights);
+        Iterator<Map.Entry<PsiElement, List<? extends HighlightInfo>>> iterator = toolHighlights.elementHighlights.entrySet().iterator();
+        while (iterator.hasNext()) {
+          Map.Entry<PsiElement, List<? extends HighlightInfo>> entry = iterator.next();
+          PsiElement element = entry.getKey();
+          ProgressManager.checkCanceled();
+          if (element == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || element != FAKE_ELEMENT && !element.isValid()) {
+            List<? extends HighlightInfo> infos = entry.getValue();
+            for (HighlightInfo info : infos) {
+              RangeHighlighterEx highlighter = info.getHighlighter();
+              if (highlighter != null) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("removeInvalidPsiElements: " + highlighter+" for invalid " + element + " from " + requestor);
                 }
+                UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, session);
               }
-              iterator.remove();
             }
+            iterator.remove();
           }
         }
       }
@@ -271,54 +272,46 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
    * Tool {@code toolId} has generated (maybe empty) {@code newInfos} highlights during visiting PsiElement {@code visitedPsiElement}.
    * Remove all highlights that this tool had generated earlier during visiting this psi element, and replace them with {@code newInfosGenerated}
    * Do not read below, it's very private and just for me
+    Sometimes multiple file editors are submitted for highlighting, some of which may have the same underlying document,
+    e.g., when the editor for the file is opened along with the git log with "preview diff" for the same file.
+    In this case, it's possible that several instances of e.g., LocalInspectionPass can run in parallel,
+    thus making `psiElementVisited` potentially reentrant (i.e., it can be called with the same `toolId` from different threads concurrently),
+    so we need to guard `ToolHighlights` against parallel modification
    * @param toolId one of
    *               {@code String}: the tool is a {@link LocalInspectionTool} with its {@link LocalInspectionTool#getShortName()}==toolId
    *               {@code Class<? extends Annotator>}: the tool is an {@link com.intellij.lang.annotation.Annotator} of the corresponding class
    *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
    */
-  void psiElementVisited(@NotNull Object toolId,
-                         @NotNull PsiElement visitedPsiElement,
-                         @NotNull List<? extends HighlightInfo> newInfos,
-                         @NotNull Document hostDocument,
-                         @NotNull PsiFile psiFile,
-                         @NotNull Project project,
-                         @NotNull HighlightingSession session) {
+  synchronized void psiElementVisited(@NotNull Object toolId,
+                                      @NotNull PsiElement visitedPsiElement,
+                                      @NotNull List<? extends HighlightInfo> newInfos,
+                                      @NotNull Document hostDocument,
+                                      @NotNull PsiFile psiFile,
+                                      @NotNull Project project,
+                                      @NotNull HighlightingSession session) {
     Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
     ToolHighlights toolHighlights = newInfos.isEmpty() ? data.get(toolId) : data.computeIfAbsent(toolId, __ -> new ToolHighlights());
-    runSynchronized(toolHighlights, () -> {
-      List<? extends HighlightInfo> oldInfos = toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement);
-      List<? extends HighlightInfo> newInfosToStore;
-      if (oldInfos != null || !newInfos.isEmpty()) {
-        newInfosToStore = List.copyOf(newInfos);
-        if (LOG.isDebugEnabled()) {
-          //noinspection removal
-          LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
-                    (psiFile.getViewProvider() instanceof InjectedFileViewProvider ?
-                     " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
-                    "; tool:" + toolId + "; infos:" + newInfosToStore + "; oldInfos:" + oldInfos + "; document:" + hostDocument);
-        }
-        MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
-        setHighlightersInRange(newInfosToStore, oldInfos, markup, session);
+    List<? extends HighlightInfo> oldInfos = toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement);
+    List<? extends HighlightInfo> newInfosToStore;
+    if (oldInfos != null || !newInfos.isEmpty()) {
+      newInfosToStore = List.copyOf(newInfos);
+      if (LOG.isDebugEnabled()) {
+        //noinspection removal
+        LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
+                  (psiFile.getViewProvider() instanceof InjectedFileViewProvider ?
+                   " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
+                  "; tool:" + toolId + "; infos:" + newInfosToStore + "; oldInfos:" + oldInfos + "; session:" + System.identityHashCode(session.getProgressIndicator()));
       }
-      else {
-        newInfosToStore = List.of();
-      }
-      // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
-      putInfosForVisitedPsi(data, toolId, visitedPsiElement, newInfosToStore, toolHighlights);
-    });
+      MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
+      setHighlightersInRange(newInfosToStore, oldInfos, markup, session);
+    }
+    else {
+      newInfosToStore = List.of();
+    }
+    // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
+    putInfosForVisitedPsi(data, toolId, visitedPsiElement, newInfosToStore, toolHighlights);
   }
 
-  private void runSynchronized(@Nullable ToolHighlights toolHighlights, @NotNull Runnable runnable) {
-    // Sometimes multiple file editors are submitted for highlighting, some of which may have the same underlying document,
-    // e.g., when the editor for file v is opened along with the git log with "preview diff" for the same file.
-    // In this case, it's possible that several instances of e.g., LocalInspectionPass can run in parallel,
-    // thus making `psiElementVisited` potentially reentrant (i.e., it can be called with the same `toolId` from different threads concurrently),
-    // so we need to guard `ToolHighlights` against parallel modification:
-    Object monitor = toolHighlights == null ? this : toolHighlights;
-    synchronized (monitor) {
-      runnable.run();
-    }
-  }
   private static void setHighlightersInRange(@NotNull List<? extends HighlightInfo> newInfos,
                                              @Nullable List<? extends HighlightInfo> oldInfos,
                                              @NotNull MarkupModelEx markup,
@@ -377,37 +370,35 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
 
   // remove all highlight infos from `data` generated by tools absent in 'actualToolsRun'
-  void removeHighlightsForObsoleteTools(@NotNull PsiFile containingFile,
-                                        @NotNull Document hostDocument,
-                                        @NotNull List<? extends PsiFile> injectedFragments,
-                                        @NotNull Set<? extends Pair<Object, PsiFile>> actualToolsRun,
-                                        @NotNull HighlightingSession highlightingSession) {
-    synchronized (this) {
-      for (PsiFile psiFile: ContainerUtil.append(injectedFragments, containingFile)) {
-        getData(psiFile, hostDocument).entrySet().removeIf(entry -> {
-          Object toolId = entry.getKey();
-          ToolHighlights toolHighlights = entry.getValue();
-          if (UNKNOWN_ID.equals(toolId) || !isInspectionToolId(toolId)) {
-            return false;
-          }
+  synchronized void removeHighlightsForObsoleteTools(@NotNull PsiFile containingFile,
+                                                     @NotNull Document hostDocument,
+                                                     @NotNull List<? extends PsiFile> injectedFragments,
+                                                     @NotNull Set<? extends Pair<Object, PsiFile>> actualToolsRun,
+                                                     @NotNull HighlightingSession highlightingSession) {
+    for (PsiFile psiFile: ContainerUtil.append(injectedFragments, containingFile)) {
+      getData(psiFile, hostDocument).entrySet().removeIf(entry -> {
+        Object toolId = entry.getKey();
+        ToolHighlights toolHighlights = entry.getValue();
+        if (UNKNOWN_ID.equals(toolId) || !isInspectionToolId(toolId)) {
+          return false;
+        }
 
-          if (actualToolsRun.contains(Pair.create(toolId, psiFile))) {
-            return false;
-          }
-          for (List<? extends HighlightInfo> highlights : toolHighlights.elementHighlights.values()) {
-            for (HighlightInfo info : highlights) {
-              RangeHighlighterEx highlighter = info.highlighter;
-              if (highlighter != null) {
-                if (LOG.isTraceEnabled()) {
-                  LOG.trace("removeHighlightsForObsoleteTools: " + highlighter);
-                }
-                UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
+        if (actualToolsRun.contains(Pair.create(toolId, psiFile))) {
+          return false;
+        }
+        for (List<? extends HighlightInfo> highlights : toolHighlights.elementHighlights.values()) {
+          for (HighlightInfo info : highlights) {
+            RangeHighlighterEx highlighter = info.highlighter;
+            if (highlighter != null) {
+              if (LOG.isTraceEnabled()) {
+                LOG.trace("removeHighlightsForObsoleteTools: " + highlighter);
               }
+              UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
             }
           }
-          return true;
-        });
-      }
+        }
+        return true;
+      });
     }
   }
 
@@ -416,9 +407,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
   }
 
   // TODO very dirty method which throws all incrementality away, but we'd need to rewrite too many inspections to get rid of it
-  void removeWarningsInsideErrors(@NotNull List<? extends PsiFile> injectedFragments,
-                                         @NotNull Document hostDocument,
-                                         @NotNull HighlightingSession highlightingSession) {
+  synchronized void removeWarningsInsideErrors(@NotNull List<? extends PsiFile> injectedFragments,
+                                               @NotNull Document hostDocument,
+                                               @NotNull HighlightingSession highlightingSession) {
     HighlightersRecycler recycler = new HighlightersRecycler();
     for (PsiFile psiFile: ContainerUtil.append(injectedFragments, highlightingSession.getPsiFile())) {
       Map<Object, ToolHighlights> map = getData(psiFile, hostDocument);
@@ -449,22 +440,20 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
             recycler.recycleHighlighter(highlighter);
 
             ToolHighlights elementHighlights = map.get(info.toolId);
-            runSynchronized(elementHighlights, () -> {
-              for (Map.Entry<PsiElement, List<? extends HighlightInfo>> elementEntry : elementHighlights.elementHighlights.entrySet()) {
-                List<? extends HighlightInfo> infos = elementEntry.getValue();
-                int i = infos.indexOf(info);
-                if (i != -1) {
-                  List<HighlightInfo> listMinusInfo = ContainerUtil.concat(infos.subList(0, i), infos.subList(i + 1, infos.size()));
-                  if (listMinusInfo.isEmpty()) {
-                    elementHighlights.elementHighlights.remove(elementEntry.getKey());
-                  }
-                  else {
-                    elementEntry.setValue(listMinusInfo);
-                  }
-                  break;
+            for (Map.Entry<PsiElement, List<? extends HighlightInfo>> elementEntry : elementHighlights.elementHighlights.entrySet()) {
+              List<? extends HighlightInfo> infos = elementEntry.getValue();
+              int i = infos.indexOf(info);
+              if (i != -1) {
+                List<HighlightInfo> listMinusInfo = ContainerUtil.concat(infos.subList(0, i), infos.subList(i + 1, infos.size()));
+                if (listMinusInfo.isEmpty()) {
+                  elementHighlights.elementHighlights.remove(elementEntry.getKey());
                 }
+                else {
+                  elementEntry.setValue(listMinusInfo);
+                }
+                break;
               }
-            });
+            }
           }
         }
         return true;
@@ -481,7 +470,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
    * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
    * to use later in {@link com.intellij.codeInsight.daemon.impl.InspectionProfilerDataHolder#sortByLatencies(PsiFile, List, HighlightInfoUpdaterImpl)}
    */
-  void saveLatencies(@NotNull PsiFile psiFile, @NotNull Map<Object, ToolLatencies> latencies) {
+  synchronized void saveLatencies(@NotNull PsiFile psiFile, @NotNull Map<Object, ToolLatencies> latencies) {
     if (!psiFile.getViewProvider().isPhysical()) {
       // ignore editor text fields/consoles etc.
       return;
@@ -494,12 +483,10 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       // no point saving latencies if nothing was reported
       if (toolHighlights == null) continue;
 
-      runSynchronized(toolHighlights, () -> {
-        ToolLatencies lats = entry.getValue();
-        toolHighlights.latencies = new ToolLatencies(merge(toolHighlights.latencies.errorLatency, lats.errorLatency),
-                                                     merge(toolHighlights.latencies.warningLatency, lats.warningLatency),
-                                                     merge(toolHighlights.latencies.otherLatency, lats.otherLatency));
-      });
+      ToolLatencies lats = entry.getValue();
+      toolHighlights.latencies = new ToolLatencies(merge(toolHighlights.latencies.errorLatency, lats.errorLatency),
+                                                   merge(toolHighlights.latencies.warningLatency, lats.warningLatency),
+                                                   merge(toolHighlights.latencies.otherLatency, lats.otherLatency));
     }
   }
 
