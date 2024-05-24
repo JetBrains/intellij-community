@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -13,12 +14,17 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.api.platform.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -188,8 +194,23 @@ private fun toPsiMethodForDeserialized(
         val candidates =
             if (functionSymbol is KtConstructorSymbol)
                 constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
-            else
-                methods.filter { it.name == psi?.name }
+            else {
+                val jvmName = when (functionSymbol) {
+                    is KtPropertyGetterSymbol -> {
+                        functionSymbol.getJvmNameFromAnnotation(PROPERTY_GETTER.toOptionalFilter())
+                    }
+                    is KtPropertySetterSymbol -> {
+                        functionSymbol.getJvmNameFromAnnotation(PROPERTY_SETTER.toOptionalFilter())
+                    }
+                    else -> {
+                        functionSymbol.getJvmNameFromAnnotation()
+                    }
+                }
+                val id = jvmName
+                    ?: functionSymbol.callableIdIfNonLocal?.callableName?.identifierOrNullIfSpecial
+                    ?: psi?.name
+                methods.filter { it.name == id }
+            }
         return when (candidates.size) {
             0 -> {
                 if (psi != null) {
@@ -234,6 +255,23 @@ private fun toPsiMethodForDeserialized(
                 ?.lookup()
         }
     } else null
+}
+
+private fun KtAnnotatedSymbol.getJvmNameFromAnnotation(
+    useSiteTargetFilter: AnnotationUseSiteTargetFilter = AnyAnnotationUseSiteTargetFilter,
+): String? {
+    val anno = annotationsByClassId(JvmStandardClassIds.JVM_NAME_CLASS_ID, useSiteTargetFilter).firstOrNull() ?: return null
+    return (anno.arguments.firstOrNull()?.expression as? KtConstantAnnotationValue)?.constantValue?.value as? String
+}
+
+private fun AnnotationUseSiteTarget.toOptionalFilter(): AnnotationUseSiteTargetFilter {
+    return annotationUseSiteTargetFilterOf(NoAnnotationUseSiteTargetFilter, toFilter())
+}
+
+private fun annotationUseSiteTargetFilterOf(
+    vararg filters: AnnotationUseSiteTargetFilter,
+): AnnotationUseSiteTargetFilter = AnnotationUseSiteTargetFilter { useSiteTarget ->
+    filters.any { filter -> filter.isAllowed(useSiteTarget) }
 }
 
 context(KtAnalysisSession)
@@ -360,12 +398,24 @@ internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement?
     return symbol.psi
 }
 
-internal fun KtElement.toPsiElementAsLightElement(): PsiElement? {
-    val candidates = toLightElements().takeIf { it.isNotEmpty() } ?: return null
+internal fun KtElement.toPsiElementAsLightElement(
+    sourcePsi: KtExpression? = null
+): PsiElement? {
     if (this is KtProperty) {
-        // Weigh [PsiField]
-        return candidates.firstOrNull { psiMember -> psiMember is PsiField }
-            ?: candidates.firstOrNull()
+        with(getAccessorLightMethods()) {
+            // Weigh [PsiField]
+            backingField?.let { return it }
+            val readWriteAccess = sourcePsi?.readWriteAccess()
+            when {
+                readWriteAccess?.isWrite == true -> {
+                    setter?.let { return it }
+                }
+                readWriteAccess?.isRead == true -> {
+                    getter?.let { return it }
+                }
+                else -> {}
+            }
+        }
     }
-    return candidates.firstOrNull()
+    return toLightElements().firstOrNull()
 }
