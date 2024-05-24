@@ -84,6 +84,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String CLASS_VAR = "typing.ClassVar";
   public static final String TYPE_VAR = "typing.TypeVar";
   public static final String TYPE_VAR_TUPLE = "typing.TypeVarTuple";
+  public static final String TYPE_VAR_TUPLE_EXT = "typing_extensions.TypeVarTuple";
   public static final String TYPING_PARAM_SPEC = "typing.ParamSpec";
   public static final String TYPING_EXTENSIONS_PARAM_SPEC = "typing_extensions.ParamSpec";
   private static final String CHAIN_MAP = "typing.ChainMap";
@@ -171,6 +172,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(ANY)
     .add(TYPE_VAR)
     .add(TYPE_VAR_TUPLE)
+    .add(TYPE_VAR_TUPLE_EXT)
     .add(GENERIC)
     .add(TYPING_PARAM_SPEC)
     .add(TYPING_EXTENSIONS_PARAM_SPEC)
@@ -406,7 +408,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
     final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
     if (initializedClass != null && (TYPE_VAR.equals(initializedClass.getQualifiedName()) ||
-                                     TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()))) {
+                                     TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()) ||
+                                     TYPE_VAR_TUPLE_EXT.equals(initializedClass.getQualifiedName()))) {
       // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
       // but the corresponding type is also returned here to suppress type checker on `T = TypeVar("T")` assignment.
       return Ref.create(getTypeParameterTypeFromDeclaration(callSite, context));
@@ -1490,13 +1493,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
         final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_TUPLE)) {
+        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
           final PyExpression[] arguments = assignedCall.getArguments();
           if (arguments.length > 0) {
             final PyExpression firstArgument = arguments[0];
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
-              if (calleeQNames.contains(TYPE_VAR_TUPLE)) {
+              if (calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
                 return new PyTypeVarTupleTypeImpl(name);
               }
               else {

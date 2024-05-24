@@ -1,6 +1,6 @@
 from typing_extensions import Unpack
+from typing_extensions import TypeVarTuple
 
-from typing import TypeVarTuple
 from typing import Generic
 from typing import Tuple
 
