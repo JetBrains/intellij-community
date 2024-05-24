@@ -33,12 +33,10 @@ import com.intellij.openapi.util.Pair as JBPair
 private object Holder {
   // we need context propagation to be configurable
   // in order to disable it in RT modules
-  @Volatile
   var propagateThreadContext: Boolean = SystemProperties.getBooleanProperty("ide.propagate.context", true)
   val checkIdeAssertion: Boolean = SystemProperties.getBooleanProperty("ide.check.context.assertion", false)
 
-  @Volatile
-  var useImplicitBlockingContext: Boolean = SystemProperties.getBooleanProperty("ide.enable.implicit.blocking.context", false)
+  var useImplicitBlockingContext: Boolean = SystemProperties.getBooleanProperty("ide.enable.implicit.blocking.context", true)
 }
 
 @TestOnly
