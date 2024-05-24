@@ -2,7 +2,6 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
-import com.intellij.ide.SystemLanguage;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
