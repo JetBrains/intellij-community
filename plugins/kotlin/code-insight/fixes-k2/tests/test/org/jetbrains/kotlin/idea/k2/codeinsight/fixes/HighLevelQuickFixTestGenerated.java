@@ -4862,7 +4862,23 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addJvmInline")
+    public static class AddJvmInline extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("genericParameter.kt")
+        public void testGenericParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addJvmInline/genericParameter.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addJvmInline/valueClass.kt");
+        }
+    }
 
 
 
