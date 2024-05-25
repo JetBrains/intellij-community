@@ -97,7 +97,8 @@ public final class ClassInnerStuffCache {
     return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, myClass);
   }
 
-  private @Nullable PsiMethod getValueOfMethod() {
+  @Nullable
+  PsiMethod getValueOfMethod() {
     return myClass.isEnum() && !isAnonymousClass()
            ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValueOfMethod))
            : null;

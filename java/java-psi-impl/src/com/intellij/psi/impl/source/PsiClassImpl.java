@@ -568,4 +568,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   public @Nullable PsiMethod getValuesMethod() {
     return myInnersCache.getValuesMethod();
   }
+  
+  public @Nullable PsiMethod getValueOfMethod() {
+    return myInnersCache.getValueOfMethod();
+  }
 }
