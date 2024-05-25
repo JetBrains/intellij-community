@@ -144,8 +144,8 @@ def get_value_occurrences_count(table):
     df = __convert_to_df(table)
     bin_counts = []
 
-    for col_name in df.columns:
-        column_visualisation_type, result = analyze_column(df[col_name])
+    for _, column_data in df.items():
+        column_visualisation_type, result = analyze_column(column_data)
 
         bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
