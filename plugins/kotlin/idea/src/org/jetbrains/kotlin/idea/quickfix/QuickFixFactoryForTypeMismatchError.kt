@@ -332,7 +332,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                         && expressionType.arguments.isNotEmpty()
                         && expressionType.arguments[0].type.constructor == expectedType.constructor
                     ) {
-                        actions.add(ChangeToUseSpreadOperatorFix(diagnosticElement))
+                        actions.add(ChangeToUseSpreadOperatorFix(diagnosticElement).asIntention())
                     }
                 }
             }
