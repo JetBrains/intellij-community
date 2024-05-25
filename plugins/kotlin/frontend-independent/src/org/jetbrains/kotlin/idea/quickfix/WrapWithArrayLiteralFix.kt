@@ -2,23 +2,32 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
-class WrapWithArrayLiteralFix(expression: KtExpression) : KotlinQuickFixAction<KtExpression>(expression) {
+class WrapWithArrayLiteralFix(
+    element: KtExpression,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit) {
 
     override fun getFamilyName() = KotlinBundle.message("wrap.with.array.literal")
 
-    override fun getText() = KotlinBundle.message("wrap.with")
+    override fun getActionName(
+        actionContext: ActionContext,
+        element: KtExpression,
+        elementContext: Unit,
+    ): String = KotlinBundle.message("wrap.with")
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        element.replace(KtPsiFactory(project).createExpressionByPattern("[$0]", element))
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
+        element.replace(KtPsiFactory(actionContext.project).createExpressionByPattern("[$0]", element))
     }
 }

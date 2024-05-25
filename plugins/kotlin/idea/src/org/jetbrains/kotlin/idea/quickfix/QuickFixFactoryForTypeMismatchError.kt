@@ -302,7 +302,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
                 }
                 actions.add(AddArrayOfTypeFix(diagnosticElement, prefix).asIntention())
-                actions.add(WrapWithArrayLiteralFix(diagnosticElement))
+                actions.add(WrapWithArrayLiteralFix(diagnosticElement).asIntention())
             }
         }
 
