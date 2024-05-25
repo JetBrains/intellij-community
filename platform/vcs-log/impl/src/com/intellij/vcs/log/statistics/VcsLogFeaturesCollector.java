@@ -36,7 +36,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumns
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 6);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
   private static final VarargEventId DIFF_PREVIEW = GROUP.registerVarargEvent("diffPreview", EventFields.Enabled);
@@ -55,6 +55,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final VarargEventId LABELS_COMPACT = GROUP.registerVarargEvent("labels.compact", EventFields.Enabled);
   private static final VarargEventId LABELS_SHOW_TAG_NAMES = GROUP.registerVarargEvent("labels.showTagNames", EventFields.Enabled);
   private static final VarargEventId LABELS_ON_THE_LEFT = GROUP.registerVarargEvent("labels.onTheLeft", EventFields.Enabled);
+  private static final VarargEventId SHOW_COMMIT_DATE = GROUP.registerVarargEvent("showCommitDate", EventFields.Enabled);
   private static final VarargEventId TEXT_FILTER_REGEX = GROUP.registerVarargEvent("textFilter.regex", EventFields.Enabled);
   private static final VarargEventId TEXT_FILTER_MATCH_CASE = GROUP.registerVarargEvent("textFilter.matchCase", EventFields.Enabled);
   public static final String THIRD_PARTY = "THIRD_PARTY";
@@ -91,6 +92,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_CHANGES_FROM_PARENTS), PARENT_CHANGES);
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ONLY_AFFECTED_CHANGES), ONLY_AFFECTED_CHANGES);
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_LONG_EDGES), LONG_EDGES);
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(PREFER_COMMIT_DATE), SHOW_COMMIT_DATE);
 
         addIfDiffers(metricEvents, properties, defaultProperties, p -> GraphOptionsUtil.getKindName(p.get(GRAPH_OPTIONS)),
                      GRAPH_OPTIONS_TYPE, GRAPH_OPTIONS_TYPE_FIELD);
