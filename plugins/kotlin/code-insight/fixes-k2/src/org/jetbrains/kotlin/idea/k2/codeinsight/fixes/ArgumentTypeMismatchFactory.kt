@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddArrayOfTypeFix
+import org.jetbrains.kotlin.idea.quickfix.WrapWithArrayLiteralFix
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.Variance
@@ -32,6 +33,15 @@ internal object ArgumentTypeMismatchFactory {
 
         listOf(
             AddArrayOfTypeFix(expression, prefix)
+        )
+    }
+
+    val wrapWithArrayLiteralFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
+        val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
+        if (!isQuickFixAvailable(diagnostic)) return@ModCommandBased emptyList()
+
+        listOf(
+            WrapWithArrayLiteralFix(expression)
         )
     }
 
