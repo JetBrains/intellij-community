@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -59,6 +60,9 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -388,6 +392,14 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
         removeConfigurations(it, deleteFileIfStoredInArbitraryFile = false)
       }
       .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
+  private fun loadRunConfigsFromArbitraryFiles() {
+    (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default) {
+      readAction {
+        updateRunConfigsFromArbitraryFiles(emptyList(), loadFileWithRunConfigs(project))
+      }
+    }
   }
 
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed
@@ -754,9 +766,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   private fun reloadRunConfigsFromArbitraryFiles(filePaths: Collection<String>) {
-    for (filePath in filePaths) {
-      updateRunConfigsFromArbitraryFiles(emptyList(), filePaths)
-    }
+    updateRunConfigsFromArbitraryFiles(emptyList(), filePaths)
   }
 
   @VisibleForTesting
@@ -820,6 +830,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   override fun noStateLoaded() {
     val isFirstLoadState = isFirstLoadState.getAndSet(false)
     if (isFirstLoadState) {
+      loadRunConfigsFromArbitraryFiles()
       onFirstLoadingStarted()
     }
 
@@ -837,6 +848,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     val oldSelectedConfigurationId = if (isFirstLoadState) null else selectedConfigurationId
     if (isFirstLoadState) {
+      loadRunConfigsFromArbitraryFiles()
       onFirstLoadingStarted()
     }
     else {
