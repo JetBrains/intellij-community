@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.descriptorToDeclaration
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
@@ -293,7 +294,14 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             if (KotlinBuiltIns.isArray(expectedType) && expressionType.isSubtypeOf(expectedType.arguments[0].type)
                 || KotlinBuiltIns.isPrimitiveArray(expectedType)
             ) {
-                actions.add(AddArrayOfTypeFix(diagnosticElement, expectedType))
+                val prefix = if (KotlinBuiltIns.isArray(expectedType)) {
+                    "arrayOf"
+                } else {
+                    val typeName = DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(expectedType)
+                    "${typeName.replaceFirstChar { it.lowercase(Locale.US) }}Of"
+
+                }
+                actions.add(AddArrayOfTypeFix(diagnosticElement, prefix))
                 actions.add(WrapWithArrayLiteralFix(diagnosticElement))
             }
         }
