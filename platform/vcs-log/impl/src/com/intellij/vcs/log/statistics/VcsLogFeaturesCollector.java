@@ -32,14 +32,14 @@ import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfD
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.GRAPH_OPTIONS;
 import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 7);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
+  private static final EventId MAIN_UI_INITIALIZED = GROUP.registerEvent("mainUiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
   private static final VarargEventId DIFF_PREVIEW = GROUP.registerVarargEvent("diffPreview", EventFields.Enabled);
   private static final VarargEventId DIFF_PREVIEW_ON_THE_BOTTOM = GROUP.registerVarargEvent("diffPreviewOnTheBottom", EventFields.Enabled);
@@ -80,24 +80,33 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     if (!TrustedProjects.isTrusted(project)) return Collections.emptySet();
 
     VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
-    if (projectLog != null) {
-      MainVcsLogUi ui = projectLog.getMainLogUi();
-      if (ui != null) {
-        Set<MetricEvent> metricEvents = ContainerUtil.newHashSet(UI_INITIALIZED.metric());
+    if (projectLog == null) return Collections.emptySet();
+    VcsProjectLogManager logManager = projectLog.getProjectLogManager();
+    if (logManager == null) return Collections.emptySet();
 
-        recordApplicationProperties(ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class), metricEvents);
-        recordUiProperties(ui, metricEvents);
+    MainVcsLogUi mainUi = projectLog.getMainLogUi();
+    Set<String> additionalTabIds = logManager.getTabsManager().getTabs();
+    List<? extends MainVcsLogUi> additionalLogUis =
+      ContainerUtil.filter(ContainerUtil.filterIsInstance(logManager.getLogUis(), MainVcsLogUi.class),
+                           ui -> additionalTabIds.contains(ui.getId()));
+    if (mainUi == null && additionalLogUis.isEmpty()) return Collections.emptySet();
 
-        VcsLogTabsManager tabManager = projectLog.getTabManager();
-        if (tabManager != null) {
-          Collection<String> tabs = tabManager.getTabs();
-          metricEvents.add(ADDITIONAL_TABS.metric(EventFields.Count.with(tabs.size())));
-        }
+    Set<MetricEvent> metricEvents = ContainerUtil.newHashSet(UI_INITIALIZED.metric());
 
-        return metricEvents;
-      }
+    recordApplicationProperties(ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class), metricEvents);
+    if (mainUi != null) {
+      metricEvents.add(MAIN_UI_INITIALIZED.metric());
+      recordUiProperties(mainUi, metricEvents);
     }
-    return Collections.emptySet();
+    for (MainVcsLogUi ui : additionalLogUis) {
+      recordUiProperties(ui, metricEvents);
+    }
+
+    if (!additionalLogUis.isEmpty()) {
+      metricEvents.add(ADDITIONAL_TABS.metric(EventFields.Count.with(additionalLogUis.size())));
+    }
+
+    return metricEvents;
   }
 
   private static void recordApplicationProperties(@NotNull VcsLogApplicationSettings properties, @NotNull Set<MetricEvent> metricEvents) {

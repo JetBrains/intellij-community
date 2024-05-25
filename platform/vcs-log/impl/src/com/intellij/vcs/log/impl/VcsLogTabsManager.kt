@@ -43,7 +43,8 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   private val futureToolWindow: CompletableFuture<ToolWindow> = CompletableFuture()
 
   // for statistics
-  val tabs: Collection<String> get() = uiProperties.tabs.keys
+  @get:ApiStatus.Internal
+  val tabs: Set<String> get() = uiProperties.tabs.keys
 
   internal fun createTabs() {
     val savedTabs = uiProperties.tabs

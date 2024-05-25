@@ -1033,7 +1033,6 @@ f:com.intellij.vcs.log.impl.VcsLogSharedSettings$State
 f:com.intellij.vcs.log.impl.VcsLogTabsManager
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
 - sf:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
-- f:getTabs():java.util.Collection
 - f:openAnotherLogTab(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabLocation):com.intellij.vcs.log.ui.MainVcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
 - f:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
