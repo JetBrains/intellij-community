@@ -8,22 +8,19 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class RemoveNoConstructorFix(
-    element: KtValueArgumentList,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtValueArgumentList, Unit>(element, Unit) {
+    element: KtSuperTypeCallEntry,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtSuperTypeCallEntry, Unit>(element, Unit) {
 
     override fun invoke(
         actionContext: ActionContext,
-        element: KtValueArgumentList,
+        element: KtSuperTypeCallEntry,
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        val superTypeCallEntry = element.getStrictParentOfType<KtSuperTypeCallEntry>() ?: return
-        val superTypeEntry = KtPsiFactory(actionContext.project).createSuperTypeEntry(superTypeCallEntry.firstChild.text)
-        superTypeCallEntry.replaced(superTypeEntry)
+        val superTypeEntry = KtPsiFactory(actionContext.project).createSuperTypeEntry(element.firstChild.text)
+        element.replaced(superTypeEntry)
     }
 
     override fun getFamilyName() = KotlinBundle.message("remove.constructor.call")

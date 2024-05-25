@@ -5627,7 +5627,33 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeNoConstructor")
+    public static class RemoveNoConstructor extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeNoConstructor/basic.kt");
+        }
+
+        @TestMetadata("functionType.kt")
+        public void testFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeNoConstructor/functionType.kt");
+        }
+
+        @TestMetadata("functionType2.kt")
+        public void testFunctionType2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeNoConstructor/functionType2.kt");
+        }
+
+        @TestMetadata("suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeNoConstructor/suspend.kt");
+        }
+    }
 
 
 

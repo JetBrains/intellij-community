@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 
 internal object RemoveNoConstructorFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? =
-        (diagnostic.psiElement as? KtValueArgumentList)
+        (diagnostic.psiElement.parent as? KtSuperTypeCallEntry)
             ?.let { RemoveNoConstructorFix(it) }
             ?.let(ModCommandAction::asIntention)
 }
