@@ -22,7 +22,7 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
 
   override fun isEnabled(project: Project?, path: Path?): Boolean =
     isWorkspaceSupportEnabled && project?.isWorkspace == true &&
-    (path == null || !SubprojectHandler.getAllSubprojects(project).any { it.projectPath == path.pathString })
+    (path == null || !getAllSubprojects(project).any { it.projectPath == path.pathString })
 
   override fun getActionText(project: Project): String {
     if (project.isWorkspace) {

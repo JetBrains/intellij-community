@@ -40,15 +40,16 @@ private class GradleImportedProjectSettings(private val project: Project) : Impo
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
   private val projectDir = requireNotNull(project.guessProjectDir())
 
-  override suspend fun applyTo(workspace: Project) {
+  override suspend fun applyTo(workspace: Project): Boolean {
     if (gradleProjectsSettings.isEmpty()) {
       if (canOpenGradleProject(projectDir) && isTrusted(projectDir, project)) {
         linkAndSyncGradleProject(workspace, projectDir)
+        return true
       }
-      return
+      return false
     }
     if (!isTrusted(projectDir, project)) {
-      return
+      return true
     }
     val targetGradleSettings = GradleSettings.getInstance(workspace)
     val specBuilder = ImportSpecBuilder(workspace, GradleConstants.SYSTEM_ID)
@@ -60,6 +61,7 @@ private class GradleImportedProjectSettings(private val project: Project) : Impo
       targetGradleSettings.linkProject(setting)
       ExternalSystemUtil.refreshProject(setting.externalProjectPath, specBuilder)
     }
+    return true
   }
 }
 

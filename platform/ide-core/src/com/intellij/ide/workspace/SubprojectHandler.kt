@@ -12,12 +12,11 @@ import javax.swing.Icon
 interface SubprojectHandler {
   companion object {
     val EP_NAME: ExtensionPointName<SubprojectHandler> = ExtensionPointName.create("com.intellij.workspace.subprojectHandler")
-    fun getAllSubprojects(project: Project): List<Subproject> = EP_NAME.extensionList.flatMap { it.getSubprojects(project) }
   }
 
-  fun getSubprojects(project: Project): List<Subproject>
+  fun getSubprojects(workspace: Project): List<Subproject>
   fun canImportFromFile(file: VirtualFile): Boolean
-  fun removeSubprojects(subprojects: List<Subproject>)
+  fun removeSubprojects(workspace: Project, subprojects: List<Subproject>)
   fun importFromProject(project: Project): ImportedProjectSettings?
 
   fun suppressGenericImportFor(module: Module): Boolean = false
@@ -34,5 +33,5 @@ interface WorkspaceSettingsImporter {
 }
 
 interface ImportedProjectSettings {
-  suspend fun applyTo(workspace: Project)
+  suspend fun applyTo(workspace: Project): Boolean
 }

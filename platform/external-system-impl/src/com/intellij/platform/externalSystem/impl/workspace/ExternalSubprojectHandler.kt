@@ -11,20 +11,20 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
 abstract class ExternalSubprojectHandler(val systemId: ProjectSystemId): SubprojectHandler {
-  override fun getSubprojects(project: Project): List<Subproject> {
-    val infos = ProjectDataManager.getInstance().getExternalProjectsData(project, systemId)
-    return infos.map { projectInfo -> ExternalSubproject(project, projectInfo, this) }
+  override fun getSubprojects(workspace: Project): List<Subproject> {
+    val infos = ProjectDataManager.getInstance().getExternalProjectsData(workspace, systemId)
+    return infos.map { projectInfo -> ExternalSubproject(projectInfo, this) }
   }
 
-  override fun removeSubprojects(subprojects: List<Subproject>) {
+  override fun removeSubprojects(workspace: Project, subprojects: List<Subproject>) {
     subprojects.forEach {
-      removeSubproject(it as ExternalSubproject)
+      removeSubproject(workspace, it as ExternalSubproject)
     }
   }
 
-  private fun removeSubproject(subproject: ExternalSubproject) {
+  private fun removeSubproject(workspace: Project, subproject: ExternalSubproject) {
     val info = requireNotNull(subproject.projectInfo)
     val data = requireNotNull(info.externalProjectStructure?.data)
-    DetachExternalProjectAction.detachProject(subproject.workspace, info.projectSystemId, data, null)
+    DetachExternalProjectAction.detachProject(workspace, info.projectSystemId, data, null)
   }
 }

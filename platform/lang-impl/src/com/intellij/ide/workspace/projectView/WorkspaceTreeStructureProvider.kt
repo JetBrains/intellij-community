@@ -12,7 +12,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectDeleteProvider
-import com.intellij.ide.workspace.SubprojectHandler
+import com.intellij.ide.workspace.getAllSubprojects
 import com.intellij.ide.workspace.isWorkspace
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
@@ -88,7 +88,7 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     private val subprojectMap = HashMap<PsiDirectory, Subproject?>()
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-      val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
+      val subprojects = getAllSubprojects(project).associateBy { it.projectPath }
       subprojectMap.clear()
       val children = projectNode.children.filter { it !is ExternalLibrariesNode }
       val newChildren = ArrayList<AbstractTreeNode<*>>(children.size)

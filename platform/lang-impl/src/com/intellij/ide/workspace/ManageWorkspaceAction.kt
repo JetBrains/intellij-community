@@ -11,7 +11,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 internal open class ManageWorkspaceAction: BaseWorkspaceAction(true) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = requireNotNull(e.project)
-    val subprojects = SubprojectHandler.getAllSubprojects(project)
+    val subprojects = getAllSubprojects(project)
     val dialog = NewWorkspaceDialog(project, subprojects, false)
     if (!dialog.showAndGet()) return
 
@@ -21,7 +21,7 @@ internal open class ManageWorkspaceAction: BaseWorkspaceAction(true) {
     }
     val set = dialog.projectPaths.toSet()
     val removed = subprojects.filter { !set.contains(it.projectPath) }
-    removeSubprojects(removed)
+    removeSubprojects(project, removed)
 
     val added = dialog.projectPaths.filter { !subprojects.any { subproject -> subproject.projectPath == it } }
     addToWorkspace(project, added)

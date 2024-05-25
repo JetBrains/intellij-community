@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.workspace
 
+import com.intellij.CommonBundle
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +33,7 @@ internal abstract class BaseWorkspaceAction(private val workspaceOnly: Boolean):
     e.presentation.isEnabledAndVisible = isWorkspaceSupportEnabled &&
                                          project != null &&
                                          (workspaceOnly && project.isWorkspace
-                                         || !workspaceOnly && SubprojectHandler.getAllSubprojects(project).isNotEmpty())
+                                         || !workspaceOnly && getAllSubprojects(project).isNotEmpty())
   }
 }
 
@@ -44,7 +46,7 @@ internal open class CreateWorkspaceAction: BaseWorkspaceAction(false) {
 
 @RequiresEdt
 internal fun createWorkspace(project: Project) {
-  val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
+  val subprojects = getAllSubprojects(project).associateBy { it.projectPath }
   val dialog = NewWorkspaceDialog(project, subprojects.values, true)
   if (!dialog.showAndGet()) return
 
@@ -74,16 +76,23 @@ private fun importSettingsFromProject(project: Project): List<ImportedProjectSet
 internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
   val projectManagerImpl = blockingContext { ProjectManager.getInstance() as ProjectManagerImpl }
   val referentProject = blockingContext { projectManagerImpl.loadProject(Path.of(projectPath), false, false) }
+  var success = false
   try {
     val settings = importSettingsFromProject(referentProject)
     for (importedSettings in settings) {
-      importedSettings.applyTo(workspace)
+      if (importedSettings.applyTo(workspace)) {
+        success = true
+        break
+      }
     }
   }
   finally {
     (referentProject as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
     withContext(Dispatchers.EDT) {
       projectManagerImpl.forceCloseProject(referentProject)
+      if (!success) {
+        Messages.showErrorDialog(workspace, "Can't add this type of project to workspace", CommonBundle.getErrorTitle())
+      }
     }
   }
 }

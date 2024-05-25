@@ -24,11 +24,12 @@ private class DefaultImportedProjectSettings(project: Project) : ImportedProject
     }
   }
 
-  override suspend fun applyTo(workspace: Project) {
+  override suspend fun applyTo(workspace: Project): Boolean {
     if (projectSdk != null && ProjectRootManager.getInstance(workspace).projectSdk == null) {
       writeAction {
         ProjectRootManager.getInstance(workspace).projectSdk = projectSdk
       }
     }
+    return false
   }
 }
