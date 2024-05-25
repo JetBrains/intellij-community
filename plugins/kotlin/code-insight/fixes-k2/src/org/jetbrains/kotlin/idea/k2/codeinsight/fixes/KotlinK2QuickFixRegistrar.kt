@@ -99,6 +99,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(TooLongCharLiteralToStringFixFactory.tooManyCharactersInCharacterLiteralFactory)
         registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory.convertCollectionLiteralToIntArrayOfFixFactory)
         registerFactory(AddReturnExpressionFixFactory.addReturnExpressionFixFactory)
+        registerFactory(RemoveArgumentFixFactory.removeArgumentFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

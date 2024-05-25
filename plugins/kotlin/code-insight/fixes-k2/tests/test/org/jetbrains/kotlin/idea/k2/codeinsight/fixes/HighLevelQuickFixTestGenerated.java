@@ -5572,7 +5572,38 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeArgument")
+    public static class RemoveArgument extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeArgument/constructor.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeArgument/function.kt");
+        }
+
+        @TestMetadata("lambdaArgument.kt")
+        public void testLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeArgument/lambdaArgument.kt");
+        }
+
+        @TestMetadata("matchedArguments.kt")
+        public void testMatchedArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeArgument/matchedArguments.kt");
+        }
+
+        @TestMetadata("typeMismatch.kt")
+        public void testTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeArgument/typeMismatch.kt");
+        }
+    }
 
 
 
