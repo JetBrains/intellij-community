@@ -22,14 +22,15 @@ internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNa
     val oldToNewMap = mutableMapOf<KtNamedDeclaration, KtNamedDeclaration>()
     forEach { oldMovedDeclaration ->
         val newMovedDeclaration = targetFile.add(oldMovedDeclaration) as KtNamedDeclaration
-        oldToNewMap[oldMovedDeclaration] = newMovedDeclaration
-        val oldChildDeclarations = oldMovedDeclaration.collectDescendantsOfType<KtNamedDeclaration>().toList()
-        val newChildDeclarations = newMovedDeclaration.collectDescendantsOfType<KtNamedDeclaration>().toList()
         // we assume that the children are in the same order before and after the move
-        for ((oldChild, newChild) in oldChildDeclarations.zip(newChildDeclarations)) oldToNewMap[oldChild] = newChild
+        for ((oldChild, newChild) in oldMovedDeclaration.withChildDeclarations().zip(newMovedDeclaration.withChildDeclarations())) {
+            oldToNewMap[oldChild] = newChild
+        }
     }
     return oldToNewMap
 }
+
+internal fun KtNamedDeclaration.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList() + this
 
 internal fun K2ChangePackageDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
     return MoveMultipleElementsViewDescriptor(files.toTypedArray(), target.presentablePkgName())

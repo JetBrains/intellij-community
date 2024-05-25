@@ -52,8 +52,9 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
         }
         val toContinue = showConflicts(conflicts, usages)
         if (!toContinue) return false
-        unMarkNonUpdatableUsages(descriptor.source.elements)
-        refUsages.set(usages.toList().filterUpdatable().toTypedArray())
+        val movedElements = descriptor.source.elements.toList().flatMap { it.withChildDeclarations() }
+        unMarkNonUpdatableUsages(movedElements)
+        refUsages.set(usages.toList().filterUpdatable(movedElements).toTypedArray())
         return true
     }
 
@@ -61,7 +62,6 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         allowAnalysisOnEdt {
             val elementsToMove = descriptor.source.elements
-
             val targetFile = descriptor.target.getOrCreateTarget()
             val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
             val oldToNewMap = elementsToMove.moveInto(targetFile)

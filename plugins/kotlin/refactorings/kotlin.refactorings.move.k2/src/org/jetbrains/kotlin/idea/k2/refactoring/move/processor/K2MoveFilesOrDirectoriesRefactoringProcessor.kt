@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -44,9 +43,10 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.
         val toContinue = super.preprocessUsages(refUsages)
         if (!toContinue) return false
         // after conflict checking, we don't need non-updatable usages anymore
-        unMarkNonUpdatableUsages(myElementsToMove.filterIsInstance<KtElement>().toSet())
+        val movedElements = myElementsToMove.filterIsInstance<KtNamedDeclaration>().flatMap { it.withChildDeclarations() }
+        unMarkNonUpdatableUsages(movedElements)
         val usages = refUsages.get()?.filterNotNull() ?: return false
-        refUsages.set(usages.filterUpdatable().toTypedArray())
+        refUsages.set(usages.filterUpdatable(movedElements).toTypedArray())
         return true
     }
 }

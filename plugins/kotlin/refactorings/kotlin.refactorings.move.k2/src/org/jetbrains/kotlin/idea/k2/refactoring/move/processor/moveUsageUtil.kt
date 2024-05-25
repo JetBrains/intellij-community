@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.diagnostic.fileLogger
@@ -157,7 +157,9 @@ private fun KtNamedDeclaration.findNonCodeUsages(
  * Filters out usages that are not updatable, such usages might be needed for conflict checking but don't need to be touched during the
  * retargeting process.
  */
-internal fun List<UsageInfo>.filterUpdatable() = filter { if (it is K2MoveRenameUsageInfo) it.isUpdatable() else true }
+internal fun List<UsageInfo>.filterUpdatable(movedElements: List<KtNamedDeclaration>) = filter {
+    if (it is K2MoveRenameUsageInfo) it.isUpdatable(movedElements) else true
+}
 
 /**
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
