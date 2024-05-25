@@ -2,33 +2,14 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RemoveNoConstructorFix(constructor: KtValueArgumentList) : KotlinQuickFixAction<KtValueArgumentList>(constructor) {
-
-    override fun getText() = KotlinBundle.message("remove.constructor.call")
-
-    override fun getFamilyName() = text
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val superTypeCallEntry = element?.getStrictParentOfType<KtSuperTypeCallEntry>() ?: return
-        val superTypeEntry = KtPsiFactory(project).createSuperTypeEntry(superTypeCallEntry.firstChild.text)
-        superTypeCallEntry.replaced(superTypeEntry)
-    }
-
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtValueArgumentList>? =
-            (diagnostic.psiElement as? KtValueArgumentList)?.let { RemoveNoConstructorFix(it) }
-    }
-
+internal object RemoveNoConstructorFixFactory : KotlinSingleIntentionActionFactory() {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? =
+        (diagnostic.psiElement as? KtValueArgumentList)
+            ?.let { RemoveNoConstructorFix(it) }
+            ?.let(ModCommandAction::asIntention)
 }

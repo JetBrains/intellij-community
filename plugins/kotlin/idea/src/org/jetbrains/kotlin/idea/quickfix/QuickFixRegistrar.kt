@@ -659,9 +659,9 @@ class QuickFixRegistrar : QuickFixContributor {
         WRONG_ANNOTATION_TARGET.registerFactory(AddAnnotationTargetFix, AddAnnotationUseSiteTargetFix)
         WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET.registerFactory(MoveReceiverAnnotationFix, AddAnnotationTargetFix)
 
-        NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFix)
+        NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFixFactory)
         NO_CONSTRUCTOR.registerFactory(AddDefaultConstructorFix)
-        NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFix)
+        NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFixFactory)
 
         ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgument)
 
