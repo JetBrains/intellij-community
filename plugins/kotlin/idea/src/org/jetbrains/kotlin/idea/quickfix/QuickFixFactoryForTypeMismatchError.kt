@@ -301,7 +301,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                     "${typeName.replaceFirstChar { it.lowercase(Locale.US) }}Of"
 
                 }
-                actions.add(AddArrayOfTypeFix(diagnosticElement, prefix))
+                actions.add(AddArrayOfTypeFix(diagnosticElement, prefix).asIntention())
                 actions.add(WrapWithArrayLiteralFix(diagnosticElement))
             }
         }
