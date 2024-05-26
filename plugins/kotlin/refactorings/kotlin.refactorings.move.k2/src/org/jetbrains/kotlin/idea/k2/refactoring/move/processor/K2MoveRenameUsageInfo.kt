@@ -195,8 +195,7 @@ sealed class K2MoveRenameUsageInfo(
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
         }
 
-        fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
-            if (referenceElement !is KtElement) return this
+        fun refresh(referenceElement: KtElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
             val reference = (referenceElement.mainReference as? KtSimpleNameReference) ?: return this
             return Source(referenceElement, reference, referencedElement, isInternal)
         }
