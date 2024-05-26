@@ -51,11 +51,14 @@ infix fun Path.to(targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>): P
 fun String.tryResolveAsPythonHelperDir(mappings: PythonHelpersMappings): PathMapping? {
   val (communityHelpers, proHelpers) = mappings
   val thisLocalPath = Path.of(this)
-  return listOfNotNull(communityHelpers, proHelpers)
+  val rootPaths = listOfNotNull(communityHelpers, proHelpers)
     .filter { (localPath) -> FileUtil.isAncestor(localPath.absolutePathString(), this, false) }
+  return rootPaths
     .firstNotNullOfOrNull { (localPath, targetPathFun) ->
-      FileUtil.getRelativePath(localPath.absolutePathString(), this, Platform.current().fileSeparator)?.let { relativePath ->
-        thisLocalPath to targetPathFun.getRelativeTargetPath(relativePath)
-      }
+      val relativePath = FileUtil.getRelativePath(localPath.absolutePathString(), this, Platform.current().fileSeparator)
+      relativePath ?: return@firstNotNullOfOrNull null
+      val relTargetPath = targetPathFun.getRelativeTargetPath(relativePath)
+      thisLocalPath to relTargetPath
+
     }
 }

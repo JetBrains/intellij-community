@@ -155,10 +155,14 @@ fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunct
       .map(PathMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
 
-  fun <T> T?.onResolutionFailure(message: String): T? =
-    this ?: if (failOnError) error(message)
-    // log the error and skip this entry
-    else also { LOG.error(message) }
+  fun <T> T?.onResolutionFailure(message: String): T? {
+    if (this != null)
+      return this
+    if (failOnError)
+      error(message)
+    LOG.error(message)
+    return null
+  }
 
   val uploads = pythonPathEntries.mapNotNull { pythonPathEntry ->
     pythonPathEntry
