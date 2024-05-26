@@ -165,7 +165,7 @@ class DisplayDataObject:
             'image_base64': image_bytes_base64,
             'html_string': self.html_string
         }
-        return ('pycharm-plot-image', body)
+        return ('pycharm-matplotlib', body)
 
 
 FigureCanvas = FigureCanvasAgg
