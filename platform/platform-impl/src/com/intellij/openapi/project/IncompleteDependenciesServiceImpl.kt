@@ -62,8 +62,10 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
     ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
 
     if (stateAfter != stateBefore) {
-      PsiManager.getInstance(project).dropPsiCaches()
       stateFlow.update { stateAfter }
+      if (stateAfter.isComplete) {
+        PsiManager.getInstance(project).dropPsiCaches()
+      }
     }
   }
 
