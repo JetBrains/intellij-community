@@ -25,6 +25,17 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
   @NotNull
   Entry<K, V> read(@NotNull ByteBuffer input) throws IOException;
 
+
+  //====== Below are short-circuit/partial versions of 2 main methods above: ======================== //
+
+
+  /**
+   * Assuming that entry binary format is [header][key][value], this method returns a writer for first part of
+   * the entry, [header][key] -- i.e. [value] should be appended afterwards.
+   */
+  KnownSizeRecordWriter writerForEntryHeader(@NotNull K key) throws IOException;
+
+
   //MAYBE RC: instead of series of 'short-circuit' methods -- make Entry an interface with lazy .key/.value/.isValueVoid()
   //          evaluation? I.e. keep reference to ByteBuffer slice, and deserialize key/value only as needed?
   //          But overhead could be quite pronounced? Also I don't want references to a ByteBuffer (which is actually a mmapped

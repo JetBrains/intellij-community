@@ -209,20 +209,23 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
         }
       );
 
-      boolean keyRecordExists = (foundRecordId != DurableIntToMultiIntMap.NO_VALUE);
-      if (!keyRecordExists) {
-        throw new IOException("[" + key + "] entry does not exist -- can't be appended to");
-      }
+      boolean keyRecordExisted = (foundRecordId != DurableIntToMultiIntMap.NO_VALUE);
 
       long potentiallyNewLogRecordId = appendToEntry(foundRecordId, key, appender);
       if (potentiallyNewLogRecordId == foundRecordId) {
         return;//new data appended to the already existing record => no need to update the map
       }
 
-      int storedRecordId = convertLogIdToStoredId(potentiallyNewLogRecordId);
+      int newStoredRecordId = convertLogIdToStoredId(potentiallyNewLogRecordId);
 
-      // (key) record exist, but with different value => replace recordId:
-      keyHashToIdMap.replace(adjustedHash, foundRecordId, storedRecordId);
+      if (keyRecordExisted) {
+        // key record existed in the map => replace the old id with the new one:
+        keyHashToIdMap.replace(adjustedHash, foundRecordId, newStoredRecordId);
+      }
+      else {
+        // key record not existed in the map => add
+        keyHashToIdMap.put(adjustedHash, newStoredRecordId);
+      }
     }
   }
 
@@ -482,48 +485,71 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
   private int appendToEntry(int foundRecordId,
                             @NotNull K key,
                             @NotNull KnownSizeRecordWriter valueAppender) throws IOException {
-    //TODO RC: how to create new entry, if key is not yet exists? 
-    int recordSize = valueAppender.recordSize();
+    int valueAdditionalSize = valueAppender.recordSize();
     int maxPayloadSupported = keyValuesStorage.maxPayloadSupported();
-    if (recordSize > maxPayloadSupported) {
-      throw new IOException("[" + key + "].recordSize(=" + recordSize + ") > max supported payload size(=" + maxPayloadSupported + ")");
+    if (valueAdditionalSize > maxPayloadSupported) {
+      throw new IOException(
+        "[" + key + "].recordSize(=" + valueAdditionalSize + ") > max supported payload size(=" + maxPayloadSupported + ")");
     }
 
-    return keyValuesStorage.writeToRecord(
-      foundRecordId,
-      buffer -> {
-        ByteBuffer toWrite;
-        int currentRecordSize = buffer.limit();
-        int newRecordSize = currentRecordSize + recordSize;
-        if (newRecordSize > buffer.capacity()) {
-          toWrite = ByteBuffer.allocate(newRecordSize)
-            .order(buffer.order());
-          toWrite.put(buffer);
-        }
-        else {
-          toWrite = buffer;
-        }
-        toWrite.position(currentRecordSize)
-          .limit(newRecordSize);
+    if (foundRecordId == DurableIntToMultiIntMap.NO_VALUE) {
+      KnownSizeRecordWriter headerAndKeyWriter = entryExternalizer.writerForEntryHeader(key);
+      int headerAndKeySize = headerAndKeyWriter.recordSize();
+      int totalRecordSize = headerAndKeySize + valueAdditionalSize;
+      return keyValuesStorage.writeToRecord(
+        foundRecordId,
+        buffer -> {
+          buffer.position(0).limit(headerAndKeySize);
 
-        valueAppender.write(toWrite);
+          headerAndKeyWriter.write(buffer);
 
-        toWrite.position(newRecordSize)
-          .limit(newRecordSize);
-        return toWrite;
-      },
-      /*expectedRecordSizeHint: */ -1,
-      /*leaveRedirect: */ false
-    );
+          buffer.position(headerAndKeySize).limit(totalRecordSize);
+
+          valueAppender.write(buffer);
+
+          buffer.position(totalRecordSize).limit(totalRecordSize);
+          return buffer;
+        },
+        /*expectedRecordSizeHint: */ totalRecordSize
+      );
+    }
+    else {
+      return keyValuesStorage.writeToRecord(
+        foundRecordId,
+        buffer -> {
+          ByteBuffer toWrite;
+          int currentRecordSize = buffer.limit();
+          int newRecordSize = currentRecordSize + valueAdditionalSize;
+          if (newRecordSize > buffer.capacity()) {
+            toWrite = ByteBuffer.allocate(newRecordSize)
+              .order(buffer.order());
+            toWrite.put(buffer);
+          }
+          else {
+            toWrite = buffer;
+          }
+          toWrite.position(currentRecordSize)
+            .limit(newRecordSize);
+
+          valueAppender.write(toWrite);
+
+          toWrite.position(newRecordSize)
+            .limit(newRecordSize);
+          return toWrite;
+        },
+        /*expectedRecordSizeHint: */ -1,
+        /*leaveRedirect: */ false
+      );
+    }
   }
 
   public static class Factory<K, V> implements StorageFactory<DurableMapOverBlobStorage<K, V>> {
     private final StorageFactory<? extends StreamlinedBlobStorage> keyValuesStorageFactory;
     private final StorageFactory<? extends ExtendibleHashMap> mapFactory;
 
-    private final @NotNull EqualityPolicy<? super K> keyEquality;
+    private final EqualityPolicy<? super K> keyEquality;
 
-    private final @NotNull EntryExternalizer<K, V> entryExternalizer;
+    private final EntryExternalizer<K, V> entryExternalizer;
 
     private Factory(@NotNull StorageFactory<? extends StreamlinedBlobStorage> keyValuesStorageFactory,
                     @NotNull StorageFactory<? extends ExtendibleHashMap> mapFactory,

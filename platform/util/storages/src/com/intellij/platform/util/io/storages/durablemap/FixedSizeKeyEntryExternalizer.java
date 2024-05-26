@@ -72,6 +72,15 @@ public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K,
   }
 
   @Override
+  public KnownSizeRecordWriter writerForEntryHeader(@NotNull K key) throws IOException {
+    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
+    if (keyWriter.recordSize() != keyRecordSize) {
+      throw new AssertionError("fixedRecordSize(=" + keyRecordSize + ") != keyWriter.recordSize(=" + keyWriter.recordSize() + ")");
+    }
+    return new NonNullValueEntryWriter(keyWriter, /* valueWriter: */ KnownSizeRecordWriter.NOTHING);
+  }
+
+  @Override
   public @Nullable Entry<K, V> readIfKeyMatch(@NotNull ByteBuffer input,
                                               @NotNull K expectedKey) throws IOException {
     byte header = readHeader(input);
