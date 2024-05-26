@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface LocalizationStateService {
   companion object {
     fun getInstance(): LocalizationStateService? {
-      if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
         return null
       }
       return ApplicationManager.getApplication().getService(
