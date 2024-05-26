@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.remoteDev.BeControlAdapter
@@ -71,6 +72,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun collapsePath(vararg path: String, fullMatch: Boolean = true) {
+    fixture.collapseRow(findExpandedPath(*path, fullMatch = fullMatch)?.row ?: throw PathNotFoundException(path.toList()))
+  }
+
   protected fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
 
   private fun findExpandedPaths(vararg path: String,
@@ -82,6 +87,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   fun collectExpandedPaths(): List<TreePathToRow> {
     return fixture.collectExpandedPaths()
   }
+
+  fun collectSelectedPaths(): List<TreePath> = fixture.collectSelectedPaths()
 
   private fun List<String>.containsAllNodes(vararg treePath: String, fullMatch: Boolean): Boolean = zip(treePath).all {
     if (fullMatch) {
@@ -114,6 +121,7 @@ interface JTreeFixtureRef : Component {
   fun valueAt(row: Int): String
   fun valueAt(path: String): String
   fun collectExpandedPaths(): TreePathToRowList
+  fun collectSelectedPaths(): List<TreePath>
   fun selectRow(row: Int): JTreeFixtureRef?
   fun expandAll(timeoutMs: Int)
 }

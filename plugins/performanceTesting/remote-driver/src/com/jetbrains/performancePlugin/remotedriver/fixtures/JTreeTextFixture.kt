@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
+import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.util.ui.tree.TreeUtil
@@ -34,6 +35,17 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
       result.add(TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index))
     }
     return result
+  }
+
+  fun collectSelectedPaths(): List<TreePath> {
+    return computeOnEdt {
+      component.selectionPaths
+    }?.map { path ->
+      path.path.map { cellReader.valueAt(component, it) ?: "" }.run {
+        if (component.isRootVisible) subList(1, size)
+        else this
+      }
+    }?.map(::TreePath) ?: emptyList()
   }
 
   fun expandAll(timeoutMs: Int) {
