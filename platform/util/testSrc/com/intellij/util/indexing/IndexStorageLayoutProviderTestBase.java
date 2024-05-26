@@ -30,10 +30,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -421,9 +418,19 @@ public abstract class IndexStorageLayoutProviderTestBase {
   }
 
 
+  /**
+   * Generates inputs to test index on.
+   * <p>
+   * We want to test indexes on huge amount of inputs. To reduce memory occupied by that huge amount of inputs
+   * (=reduce chance of OoM), the generation process is split into 2 phases: generation of memory-frugal 'substrates',
+   * and unpacking the substrate to the actual {@link Input}.
+   * {@link Input} is supposed to be a short-lived object, so GC could quickly collect it, while 'substrates' are
+   * expected to share lifespan with the test itself.
+   */
   public interface InputDataGenerator<K, V> {
     @NotNull LongStream generateInputSubstrate();
 
+    /** deterministic function of a substrate -- repeated call with the same substrate must produce same Input */
     @NotNull Input<K, V> unpackSubstrate(long substrate);
 
     record Input<K, V>(int inputId,
@@ -444,16 +451,6 @@ public abstract class IndexStorageLayoutProviderTestBase {
     private MocksBuildingBlocks() {
       throw new AssertionError("Not for instantiation, just a namespace");
     }
-
-    /**
-     * Generates inputs to test index on.
-     * We want to test indexes on huge amount of inputs. To reduce memory , occupied by that huge amount of inputs
-     * (=reduce chance of OoM), the generation process is split into 2 phases: generation of memory-frugal 'substrate',
-     * and unpacking the substrate to the actual {@link Input}.
-     * {@link Input} is supposed to be a short-lived object, so GC could quickly collect it, while 'substrates' are
-     * expected to share lifespan with the test itself.
-     */
-
 
     /** Copied from IdIndex, simplified for testing */
     public static class ManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer> {
@@ -518,7 +515,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       public static final int DEFAULT_MAX_FILE_ID = 2_000_000;
       public static final int DEFAULT_KEYS_PER_FILE = 512;
       public static final int DEFAULT_MIN_FILE_ID = PersistentFSRecordsStorage.MIN_VALID_ID;
-      
+
       private final int minFileId;
       private final int maxFileId;
 
@@ -560,12 +557,9 @@ public abstract class IndexStorageLayoutProviderTestBase {
           .distinct()
           .mapToLong(
             inputId -> {
-              //TODO implement Zipf-like keys distribution
-              int keysLow = rnd.nextInt(maxKeysPerFile) & 0xFFFF;
-              int keysHigh = keysLow + rnd.nextInt(maxKeysPerFile) & 0xFFFF;
+              int keysCount = rnd.nextInt(maxKeysPerFile) & 0xFFFF;
               return ((long)inputId) << 32
-                     | (long)keysHigh << 16
-                     | keysLow;
+                     | keysCount;
             }
           );
       }
@@ -573,13 +567,46 @@ public abstract class IndexStorageLayoutProviderTestBase {
       @Override
       public @NotNull Input<Integer, Integer> unpackSubstrate(long substrate) {
         int inputId = (int)(substrate >> 32);
-        int keysLow = (int)(substrate & 0xFFFF);
-        int keysHigh = (int)((substrate >> 16) & 0xFFFF);
+        int keysCount = (int)(substrate & 0xFFFF);
         Map<Integer, Integer> keyValues = new Int2IntOpenHashMap();
-        for (int key = keysLow; key < keysHigh; key++) {
+        KeyGenerator keyGenerator = new KeyGenerator(inputId);
+        for (int i = 0; i < keysCount; i++) {
+          Integer key = keyGenerator.nextKey();
           keyValues.put(key, key);
         }
         return new Input<>(inputId, keyValues);
+      }
+
+
+
+      private static final class KeyGenerator {
+        private final Random rnd = new Random();
+
+        private KeyGenerator(int seed) { this.rnd.setSeed(seed); }
+
+        Integer nextKey() {
+          int random = rnd.nextInt(0, Integer.MAX_VALUE);
+
+          //Goal is to generate keys with some similarity to real-life keys distribution, to test-cover apt branches in code.
+          //    Real-life keys distribution for many indexes are heavy-tailed, i.e. there are rare keys, and there are very
+          //    frequent keys, with very long inputIds associated with them.
+          //    Ideally, we should sample from something like Zipf-distribution, which seems to be a good candidate, but
+          //    for now I decided to use simplest piecewise approximation:
+          //  0.1%: random keys from [0..9]            => ~1000s  inputIds per key
+          //  0.9%: random keys from [10..999]         => ~100s   inputIds per key
+          //   99%: random keys from [100..1_000_100]  => ~1      inputIds per key
+          //MAYBE implement Zipf-like keys distribution?
+
+          if (random % 1000 == 999) {
+            return (random % 10);
+          }
+          else if (random % 100 == 99) {
+            return (random % 990) + 10;
+          }
+          else {
+            return (random % 1_000_000) + 100;
+          }
+        }
       }
 
       @Override
