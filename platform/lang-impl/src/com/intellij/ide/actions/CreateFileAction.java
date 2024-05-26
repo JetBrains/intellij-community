@@ -123,7 +123,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   protected PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception {
     MkDirs mkdirs = new MkDirs(newName, directory);
     PsiFile file = WriteAction.compute(() -> mkdirs.directory.createFile(getFileName(mkdirs.newName)));
-    FileTypeUsageCounterCollector.triggerCreate(file.getProject(), file.getVirtualFile());
+    FileTypeUsageCounterCollector.logCreated(file.getProject(), file.getVirtualFile());
     return new PsiElement[]{file};
   }
 

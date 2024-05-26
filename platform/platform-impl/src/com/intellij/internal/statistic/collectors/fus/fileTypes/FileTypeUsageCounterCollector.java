@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.PluginBundledTemplate;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -18,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorComposite;
@@ -42,22 +47,28 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoByDescriptor;
+
 @ApiStatus.Internal
 public final class FileTypeUsageCounterCollector extends CounterUsagesCollector {
-  private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 70);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 72);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_PREVIEW_TAB = EventFields.Boolean("is_preview_tab");
+
   private static final String FILE_NAME_PATTERN = "file_name_pattern";
+  private static final String FILE_TEMPLATE_NAME = "file_template_name";
+
   private static final EventField<String> FILE_NAME_PATTERN_FIELD =
     EventFields.StringValidatedByCustomRule(FILE_NAME_PATTERN, FileNamePatternCustomValidationRule.class);
+  private static final EventField<String> FILE_TEMPLATE_FIELD =
+    EventFields.StringValidatedByCustomRule(FILE_TEMPLATE_NAME, BundledFileTemplateValidationRule.class);
 
   @Override
   public EventLogGroup getGroup() {
@@ -70,12 +81,15 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
-  private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_NAME_PATTERN_FIELD);
   private static final VarargEventId OPEN = registerFileTypeEvent(
     "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD
   );
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE);
+
+  private static final VarargEventId CREATE_BY_NEW_FILE = registerFileTypeEvent("create_by_new_file");
+  private static final VarargEventId CREATE_WITH_FILE_TEMPLATE = registerFileTypeEvent("create_with_template",
+                                                                                       FILE_TEMPLATE_FIELD, EventFields.PluginInfo);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
     logEdited(project, file);
@@ -90,8 +104,20 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
-  public static void triggerCreate(@NotNull Project project, @NotNull VirtualFile file) {
+  public static void logCreated(@NotNull Project project, @NotNull VirtualFile file) {
     log(CREATE_BY_NEW_FILE, project, file, false);
+  }
+
+  public static void logCreated(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileTemplate fileTemplate) {
+    CREATE_WITH_FILE_TEMPLATE.log(project, pairs -> {
+      pairs.addAll(buildCommonEventPairs(project, file, false));
+      pairs.add(FILE_TEMPLATE_FIELD.with(fileTemplate.getName()));
+
+      if (fileTemplate instanceof PluginBundledTemplate) {
+        PluginDescriptor pluginDescriptor = ((PluginBundledTemplate)fileTemplate).getPluginDescriptor();
+        pairs.add(EventFields.PluginInfo.with(getPluginInfoByDescriptor(pluginDescriptor)));
+      }
+    });
   }
 
   private static void logEdited(@NotNull Project project,
@@ -169,7 +195,8 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
-        LOG.warn("Extension " + ext.implementationClass + " should define a 'schema' attribute");
+        Logger.getInstance(FileTypeUsageCounterCollector.class)
+          .warn("Extension " + ext.implementationClass + " should define a 'schema' attribute");
         continue;
       }
 
@@ -269,10 +296,36 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
       }
       List<FileNameMatcher> fileNameMatchers = ((FileTypeManagerImpl)fileTypeManager).getStandardMatchers(fileType);
       Optional<FileNameMatcher> fileNameMatcher = fileNameMatchers.stream().filter(x -> x.getPresentableString().equals(data)).findFirst();
-      if (fileNameMatcher.isEmpty())
+      if (fileNameMatcher.isEmpty()) {
         return ValidationResultType.THIRD_PARTY;
+      }
 
       return acceptWhenReportedByJetBrainsPlugin(context);
+    }
+  }
+
+  static final class BundledFileTemplateValidationRule extends CustomValidationRule {
+    @Override
+    public @NotNull String getRuleId() {
+      return FILE_TEMPLATE_NAME;
+    }
+
+    @Override
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      for (FileTemplate template : FileTemplateManager.getDefaultInstance().getInternalTemplates()) {
+        if (template instanceof PluginBundledTemplate) {
+          if (StringUtil.equals(template.getName(), data)) {
+            PluginDescriptor plugin = ((PluginBundledTemplate)template).getPluginDescriptor();
+            PluginInfo pluginInfo = getPluginInfoByDescriptor(plugin);
+            if (pluginInfo.isSafeToReport()) {
+              return ValidationResultType.ACCEPTED;
+            }
+            break;
+          }
+        }
+      }
+
+      return ValidationResultType.THIRD_PARTY;
     }
   }
 }
