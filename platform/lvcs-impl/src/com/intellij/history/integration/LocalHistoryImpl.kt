@@ -189,7 +189,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   }
 
   @ApiStatus.Internal
-  fun addVFSListenerAfterLocalHistoryOne(virtualFileListener: BulkFileListener, disposable: Disposable?) {
+  fun addVFSListenerAfterLocalHistoryOne(virtualFileListener: BulkFileListener, disposable: Disposable) {
     eventDispatcher!!.addVirtualFileListener(virtualFileListener, disposable)
   }
 

@@ -1,270 +1,224 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.history.integration;
+package com.intellij.history.integration
 
-import com.intellij.history.ActivityId;
-import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.StoredContent;
-import com.intellij.history.core.tree.Entry;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManagerListener;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.DisposableWrapperList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.history.ActivityId
+import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.integration.LocalHistoryImpl.Companion.getInstanceImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.command.CommandEvent
+import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.DisposableWrapperList
 
-import java.util.List;
-import java.util.Objects;
+internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacade, private val gateway: IdeaGateway) {
+  private val vfsEventListeners = DisposableWrapperList<BulkFileListener>()
 
-final class LocalHistoryEventDispatcher {
-  private static final Key<Boolean> WAS_VERSIONED_KEY =
-    Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
-
-  private static final Boolean USE_WORKSPACE_TRAVERSAL =
-    SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", true);
-
-  private final @NotNull LocalHistoryFacade myVcs;
-  private final @NotNull IdeaGateway myGateway;
-  private final @NotNull DisposableWrapperList<BulkFileListener> myVfsEventListeners = new DisposableWrapperList<>();
-
-  LocalHistoryEventDispatcher(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw) {
-    myVcs = vcs;
-    myGateway = gw;
+  fun startAction() {
+    gateway.registerUnsavedDocuments(facade)
+    facade.forceBeginChangeSet()
   }
 
-  void startAction() {
-    myGateway.registerUnsavedDocuments(myVcs);
-    myVcs.forceBeginChangeSet();
+  fun finishAction(name: @NlsContexts.Label String?, activityId: ActivityId?) {
+    gateway.registerUnsavedDocuments(facade)
+    endChangeSet(name, activityId)
   }
 
-  void finishAction(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
-    myGateway.registerUnsavedDocuments(myVcs);
-    endChangeSet(name, activityId);
+  private fun beginChangeSet() {
+    facade.beginChangeSet()
   }
 
-  private void beginChangeSet() {
-    myVcs.beginChangeSet();
+  private fun endChangeSet(name: @NlsContexts.Label String?, activityId: ActivityId?) {
+    facade.endChangeSet(name, activityId)
   }
 
-  private void endChangeSet(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
-    myVcs.endChangeSet(name, activityId);
-  }
-
-  private void fileCreated(@Nullable VirtualFile file) {
-    if (file == null) return;
-    beginChangeSet();
-    createRecursively(file);
-    endChangeSet(null, null);
+  private fun fileCreated(file: VirtualFile?) {
+    if (file == null) return
+    beginChangeSet()
+    createRecursively(file)
+    endChangeSet(null, null)
   }
 
   /**
    * @return true if the creation was processed
    */
-  private boolean createRecursivelyUsingWorkspaceTraversal(@NotNull VirtualFile dir) {
-    var projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices;
-    ProjectFileIndex containingProjectIndex = null;
-    for (var projectIndex : projectIndexes) {
-      if (!projectIndex.isInProjectOrExcluded(dir)) continue;
-      if (containingProjectIndex != null) return false; // more than 1 project contains this dir
-      containingProjectIndex = projectIndex;
+  private fun createRecursivelyUsingWorkspaceTraversal(dir: VirtualFile): Boolean {
+    val projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices
+    var containingProjectIndex: ProjectFileIndex? = null
+    for (projectIndex in projectIndexes) {
+      if (!projectIndex.isInProjectOrExcluded(dir)) continue
+      if (containingProjectIndex != null) return false // more than 1 project contains this dir
+
+      containingProjectIndex = projectIndex
     }
-    if (containingProjectIndex == null) return false; // no project contains this dir
-    containingProjectIndex.iterateContentUnderDirectory(dir, fileOrDir -> {
+    if (containingProjectIndex == null) return false // no project contains this dir
+
+    containingProjectIndex.iterateContentUnderDirectory(dir, ContentIterator { fileOrDir ->
       if (isVersioned(fileOrDir)) {
-        myVcs.created(myGateway.getPathOrUrl(fileOrDir), fileOrDir.isDirectory());
+        facade.created(gateway.getPathOrUrl(fileOrDir), fileOrDir.isDirectory)
       }
-      return true;
-    }, file -> isVersioned(file));
-    return true;
+      true
+    }, VirtualFileFilter { file -> isVersioned(file) })
+    return true
   }
 
-  private void createRecursively(@NotNull VirtualFile f) {
+  private fun createRecursively(f: VirtualFile) {
     if (USE_WORKSPACE_TRAVERSAL) {
-      if (createRecursivelyUsingWorkspaceTraversal(f)) return;
+      if (createRecursivelyUsingWorkspaceTraversal(f)) return
     }
-    VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile f) {
+    VfsUtilCore.visitChildrenRecursively(f, object : VirtualFileVisitor<Void>() {
+      override fun visitFile(f: VirtualFile): Boolean {
         if (isVersioned(f)) {
-          myVcs.created(myGateway.getPathOrUrl(f), f.isDirectory());
+          facade.created(gateway.getPathOrUrl(f), f.isDirectory)
         }
-        return true;
+        return true
       }
 
-      @Override
-      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile f) {
+      override fun getChildrenIterable(f: VirtualFile): Iterable<VirtualFile> {
         // For unversioned files we try to get cached children in hope that they are already generated by content root manager:
         //  cached children may mean that there are versioned sub-folders or sub-files.
-        return myGateway.isVersioned(f, true)
-               ? IdeaGateway.loadAndIterateChildren(f)
-               : IdeaGateway.iterateDBChildren(f);
+        return if (gateway.isVersioned(f, true)) IdeaGateway.loadAndIterateChildren(f) else IdeaGateway.iterateDBChildren(f)
       }
-    });
+    })
   }
 
-  private void beforeContentsChange(@NotNull VFileContentChangeEvent e) {
-    VirtualFile f = e.getFile();
-    if (!myGateway.areContentChangesVersioned(f)) return;
+  private fun beforeContentsChange(e: VFileContentChangeEvent) {
+    val f = e.file
+    if (!gateway.areContentChangesVersioned(f)) return
 
-    Pair<StoredContent, Long> content = myGateway.acquireAndUpdateActualContent(f, null);
-    if (content != null) {
-      myVcs.contentChanged(myGateway.getPathOrUrl(f), content.first, content.second);
-    }
+    val content = gateway.acquireAndUpdateActualContent(f, null) ?: return
+    facade.contentChanged(gateway.getPathOrUrl(f), content.first, content.second)
   }
 
-  private void handleBeforeEvent(VFileEvent event) {
-    if (event instanceof VFileContentChangeEvent) {
-      beforeContentsChange((VFileContentChangeEvent)event);
+  private fun handleBeforeEvent(event: VFileEvent) {
+    if (event is VFileContentChangeEvent) {
+      beforeContentsChange(event)
     }
-    else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).isRename() ||
-             event instanceof VFileMoveEvent) {
-      VirtualFile f = Objects.requireNonNull(event.getFile());
-      f.putUserData(WAS_VERSIONED_KEY, myGateway.isVersioned(f));
+    else if (event is VFilePropertyChangeEvent && event.isRename || event is VFileMoveEvent) {
+      val f = event.file!!
+      f.putUserData(WAS_VERSIONED_KEY, gateway.isVersioned(f))
     }
-    else if (event instanceof VFileDeleteEvent) {
-      beforeFileDeletion((VFileDeleteEvent)event);
+    else if (event is VFileDeleteEvent) {
+      beforeFileDeletion(event)
     }
   }
 
-  private void propertyChanged(@NotNull VFilePropertyChangeEvent e) {
-    if (e.isRename()) {
-      VirtualFile f = e.getFile();
+  private fun propertyChanged(e: VFilePropertyChangeEvent) {
+    if (e.isRename) {
+      val f = e.file
 
-      boolean isVersioned = myGateway.isVersioned(f);
-      Boolean wasVersioned = f.getUserData(WAS_VERSIONED_KEY);
-      if (wasVersioned == null) return;
-      f.putUserData(WAS_VERSIONED_KEY, null);
+      val isVersioned = gateway.isVersioned(f)
+      val wasVersioned = f.getUserData(WAS_VERSIONED_KEY) ?: return
+      f.putUserData(WAS_VERSIONED_KEY, null)
 
-      if (!wasVersioned && !isVersioned) return;
+      if (!wasVersioned && !isVersioned) return
 
-      String oldName = (String)e.getOldValue();
-      myVcs.renamed(myGateway.getPathOrUrl(f), oldName);
+      val oldName = e.oldValue as String
+      facade.renamed(gateway.getPathOrUrl(f), oldName)
     }
-    else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
-      if (!isVersioned(e.getFile())) return;
-      VirtualFile f = e.getFile();
-      if (!f.isDirectory()) {
-        myVcs.readOnlyStatusChanged(myGateway.getPathOrUrl(f), !(Boolean)e.getOldValue());
+    else if (VirtualFile.PROP_WRITABLE == e.propertyName) {
+      if (!isVersioned(e.file)) return
+      val f = e.file
+      if (!f.isDirectory) {
+        val oldWritableValue = e.oldValue as Boolean
+        facade.readOnlyStatusChanged(gateway.getPathOrUrl(f), !oldWritableValue)
       }
     }
   }
 
-  private void fileMoved(@NotNull VFileMoveEvent e) {
-    VirtualFile f = e.getFile();
+  private fun fileMoved(e: VFileMoveEvent) {
+    val f = e.file
 
-    boolean isVersioned = myGateway.isVersioned(f);
-    Boolean wasVersioned = f.getUserData(WAS_VERSIONED_KEY);
-    if (wasVersioned == null) return;
-    f.putUserData(WAS_VERSIONED_KEY, null);
+    val isVersioned = gateway.isVersioned(f)
+    val wasVersioned = f.getUserData(WAS_VERSIONED_KEY) ?: return
+    f.putUserData(WAS_VERSIONED_KEY, null)
 
-    if (!wasVersioned && !isVersioned) return;
+    if (!wasVersioned && !isVersioned) return
 
-    myVcs.moved(myGateway.getPathOrUrl(f), myGateway.getPathOrUrl(e.getOldParent()));
+    facade.moved(gateway.getPathOrUrl(f), gateway.getPathOrUrl(e.oldParent))
   }
 
-  private void beforeFileDeletion(@NotNull VFileDeleteEvent e) {
-    VirtualFile f = e.getFile();
-    Entry entry = myGateway.createEntryForDeletion(f);
-    if (entry != null) {
-      myVcs.deleted(myGateway.getPathOrUrl(f), entry);
-    }
+  private fun beforeFileDeletion(e: VFileDeleteEvent) {
+    val f = e.file
+    val entry = gateway.createEntryForDeletion(f) ?: return
+    facade.deleted(gateway.getPathOrUrl(f), entry)
   }
 
-  private boolean isVersioned(VirtualFile f) {
-    return myGateway.isVersioned(f);
-  }
+  private fun isVersioned(f: VirtualFile): Boolean = gateway.isVersioned(f)
 
-  private void handleBeforeEvents(@NotNull List<? extends VFileEvent> events) {
-    myGateway.runWithVfsEventsDispatchContext(events, true, () -> {
-      for (VFileEvent event : events) {
-        handleBeforeEvent(event);
+  private fun handleBeforeEvents(events: List<VFileEvent>) {
+    gateway.runWithVfsEventsDispatchContext(events, true) {
+      for (event in events) {
+        handleBeforeEvent(event)
       }
-
-      for (BulkFileListener listener : myVfsEventListeners) {
-        listener.before(events);
+      for (listener in vfsEventListeners) {
+        listener.before(events)
       }
-    });
+    }
   }
 
-  private void handleAfterEvents(@NotNull List<? extends VFileEvent> events) {
-    myGateway.runWithVfsEventsDispatchContext(events, false, () -> {
-      for (VFileEvent event : events) {
-        handleAfterEvent(event);
+  private fun handleAfterEvents(events: List<VFileEvent>) {
+    gateway.runWithVfsEventsDispatchContext(events, false) {
+      for (event in events) {
+        handleAfterEvent(event)
       }
-      for (BulkFileListener listener : myVfsEventListeners) {
-        listener.after(events);
+      for (listener in vfsEventListeners) {
+        listener.after(events)
       }
-    });
-  }
-
-  private void handleAfterEvent(VFileEvent event) {
-    if (event instanceof VFileCreateEvent) {
-      fileCreated(event.getFile());
-    }
-    else if (event instanceof VFileCopyEvent) {
-      fileCreated(((VFileCopyEvent)event).findCreatedFile());
-    }
-    else if (event instanceof VFilePropertyChangeEvent) {
-      propertyChanged((VFilePropertyChangeEvent)event);
-    }
-    else if (event instanceof VFileMoveEvent) {
-      fileMoved((VFileMoveEvent)event);
     }
   }
 
-  void addVirtualFileListener(BulkFileListener virtualFileListener, Disposable disposable) {
-    myVfsEventListeners.add(virtualFileListener, disposable);
-  }
-
-  static final class LocalHistoryFileManagerListener implements VirtualFileManagerListener {
-    @Override
-    public void beforeRefreshStart(boolean asynchronous) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.beginChangeSet();
-    }
-
-    @Override
-    public void afterRefreshFinish(boolean asynchronous) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("activity.name.external.change"), CommonActivity.ExternalChange);
+  private fun handleAfterEvent(event: VFileEvent) {
+    when (event) {
+      is VFileCreateEvent -> fileCreated(event.getFile())
+      is VFileCopyEvent -> fileCreated(event.findCreatedFile())
+      is VFilePropertyChangeEvent -> propertyChanged(event)
+      is VFileMoveEvent -> fileMoved(event)
     }
   }
 
-  static final class LocalHistoryCommandListener implements CommandListener {
-    @Override
-    public void commandStarted(@NotNull CommandEvent e) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.beginChangeSet();
+  fun addVirtualFileListener(virtualFileListener: BulkFileListener, disposable: Disposable) {
+    vfsEventListeners.add(virtualFileListener, disposable)
+  }
+
+  internal class LocalHistoryFileManagerListener : VirtualFileManagerListener {
+    override fun beforeRefreshStart(asynchronous: Boolean) {
+      getInstanceImpl().getEventDispatcher()?.beginChangeSet()
     }
 
-    @Override
-    public void commandFinished(@NotNull CommandEvent e) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName(), CommonActivity.Command);
+    override fun afterRefreshFinish(asynchronous: Boolean) {
+      getInstanceImpl().getEventDispatcher()?.endChangeSet(LocalHistoryBundle.message("activity.name.external.change"), CommonActivity.ExternalChange)
     }
   }
 
-  static final class LocalHistoryBulkFileListener implements BulkFileListener {
-    @Override
-    public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.handleBeforeEvents(events);
+  internal class LocalHistoryCommandListener : CommandListener {
+    override fun commandStarted(e: CommandEvent) {
+      getInstanceImpl().getEventDispatcher()?.beginChangeSet()
     }
 
-    @Override
-    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.handleAfterEvents(events);
+    override fun commandFinished(e: CommandEvent) {
+      getInstanceImpl().getEventDispatcher()?.endChangeSet(e.commandName, CommonActivity.Command)
     }
+  }
+
+  internal class LocalHistoryBulkFileListener : BulkFileListener {
+    override fun before(events: List<VFileEvent>) {
+      getInstanceImpl().getEventDispatcher()?.handleBeforeEvents(events)
+    }
+
+    override fun after(events: List<VFileEvent>) {
+      getInstanceImpl().getEventDispatcher()?.handleAfterEvents(events)
+    }
+  }
+
+  companion object {
+    private val WAS_VERSIONED_KEY = Key.create<Boolean>(LocalHistoryEventDispatcher::class.java.simpleName + ".WAS_VERSIONED_KEY")
+    private val USE_WORKSPACE_TRAVERSAL = SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", true)
   }
 }
