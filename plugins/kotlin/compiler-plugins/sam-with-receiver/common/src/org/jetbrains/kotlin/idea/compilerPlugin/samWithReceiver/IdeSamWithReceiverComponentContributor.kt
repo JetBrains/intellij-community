@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.compilerPlugin.getSpecialAnnotations
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -53,7 +53,7 @@ class IdeSamWithReceiverComponentContributor(val project: Project) : StorageComp
             when (val moduleInfo = moduleDescriptor.getCapability(ModuleInfo.Capability)) {
                 is ScriptModuleInfo -> moduleInfo.scriptDefinition.annotationsForSamWithReceivers
                 is ScriptDependenciesInfo.ForFile -> moduleInfo.scriptDefinition.annotationsForSamWithReceivers
-                is ModuleProductionSourceInfo -> getAnnotationsForModule(moduleInfo.module)
+                is ModuleSourceInfo -> getAnnotationsForModule(moduleInfo.module)
                 else -> null
             } ?: return
 
