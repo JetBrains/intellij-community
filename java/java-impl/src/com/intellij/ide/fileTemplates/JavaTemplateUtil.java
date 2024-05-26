@@ -27,6 +27,7 @@ public final class JavaTemplateUtil {
   public static final String INTERNAL_CLASS_TEMPLATE_NAME = "Class";
   public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";
   public static final String INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME = "AnnotationType";
+  public static final String INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME = "Exception";
   public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
   public static final String INTERNAL_RECORD_TEMPLATE_NAME = "Record";
 

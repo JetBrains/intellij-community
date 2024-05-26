@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
- * The standard "New Class" action.
+ * The standard "New Class" action for Java.
  */
 public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
   public CreateClassAction() {
@@ -33,11 +33,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
-  protected void buildDialog(final Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
+
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);
     if (JavaFeature.RECORDS.isSufficient(level)) {
       builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
@@ -49,9 +50,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       builder.addKind(JavaPsiBundle.message("node.annotation.tooltip"), PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
 
+    builder.addKind(JavaPsiBundle.message("node.exception.tooltip"), PlatformIcons.EXCEPTION_CLASS_ICON,
+                    JavaTemplateUtil.INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME);
+
     PsiDirectory[] dirs = {directory};
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
-      final @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);
+      @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);
       if (handler instanceof JavaCreateFromTemplateHandler && 
           handler.handlesTemplate(template) && 
           handler.canCreate(dirs)) {
@@ -62,7 +66,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.setValidator(new InputValidatorEx() {
       @Override
       public String getErrorText(String inputString) {
-        if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
+        if (!inputString.isEmpty() && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
           return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
         }
         String shortName = StringUtil.getShortName(inputString);
