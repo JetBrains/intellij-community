@@ -1,3 +1,4 @@
+import base64
 import os
 import sys
 import traceback
@@ -25,13 +26,16 @@ def init_plotly_render():
     from plotly.io._renderers import renderers
 
     class DisplayDataObject:
-        def __init__(self, html_string: str):
+        def __init__(self, html_string: str, image_string: str):
             self.html_string = html_string
+            self.image_string = image_string
 
         def _repr_display_(self):
             body = {
-                'html_string': self.html_string
+                'html_string': self.html_string,
             }
+            if self.image_string:
+                body['image_base64'] = self.image_string
             return 'pycharm-plotly-image', body
 
     class PycharmRenderer(ExternalRenderer):
@@ -69,7 +73,25 @@ def init_plotly_render():
                 default_height="100%",
                 validate=False,
             )
-            display(DisplayDataObject(html))
+            image_str = None
+            try:
+                from plotly.io import to_image
+
+                image_bytes = to_image(
+                    fig_dict,
+                    format="png",
+                    width=None,
+                    height=None,
+                    scale=None,
+                    validate=False,
+                    engine="auto",
+                )
+                image_str = base64.b64encode(image_bytes).decode("utf8")
+            except:
+                debug("Failed to render image")
+                debug(traceback.format_exc())
+
+            display(DisplayDataObject(html,image_str))
 
     debug("Set plotly default render")
     renderers._default_renderers = [PycharmRenderer()]
