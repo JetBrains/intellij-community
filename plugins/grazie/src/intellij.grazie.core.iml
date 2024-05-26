@@ -28,21 +28,68 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library" exported="">
       <library name="org.languagetool:languagetool-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.4">
+        <properties maven-id="org.languagetool:languagetool-core:6.4">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar">
               <sha256sum>d294773b397ab740f39add9cf4028f15399599cb762af359448586e777a5e3d3</sha256sum>
             </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
+              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
+            </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="com.carrotsearch:hppc" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.gitlab.dumonts:hunspell" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.hankcs:aho-corasick-double-array-trie" />
+            <dependency maven-id="com.optimaize.languagedetector:language-detector" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-validator:commons-validator" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-circuitbreaker" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-micrometer" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-semconv" />
+            <dependency maven-id="io.grpc:grpc-netty-shaded" />
+            <dependency maven-id="io.grpc:grpc-protobuf" />
+            <dependency maven-id="io.grpc:grpc-stub" />
+            <dependency maven-id="io.micrometer:micrometer-registry-prometheus" />
+            <dependency maven-id="io.prometheus:simpleclient" />
+            <dependency maven-id="io.prometheus:simpleclient_guava" />
+            <dependency maven-id="javax.activation:javax.activation-api" />
+            <dependency maven-id="javax.annotation:javax.annotation-api" />
+            <dependency maven-id="javax.measure:unit-api" />
+            <dependency maven-id="javax.xml.bind:jaxb-api" />
+            <dependency maven-id="net.loomchild:segment" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.apache.commons:commons-pool2" />
+            <dependency maven-id="org.apache.commons:commons-text" />
+            <dependency maven-id="org.apache.lucene:lucene-backward-codecs" />
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.carrot2:morfologik-fsa" />
+            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
+            <dependency maven-id="org.carrot2:morfologik-speller" />
+            <dependency maven-id="org.carrot2:morfologik-stemming" />
+            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="it.unimi.dsi:fastutil-core" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="tech.units:indriya" />
+            <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
