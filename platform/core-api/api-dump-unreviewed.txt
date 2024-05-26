@@ -1674,6 +1674,9 @@ a:com.intellij.openapi.command.CommandProcessor
 - a:runUndoTransparentAction(java.lang.Runnable):V
 - a:setCurrentCommandGroupId(java.lang.Object):V
 - a:setCurrentCommandName(java.lang.String):V
+f:com.intellij.openapi.command.CoroutinesKt
+- *sf:execute(com.intellij.openapi.command.WriteCommandAction$Builder,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:writeCommandAction(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 e:com.intellij.openapi.command.UndoConfirmationPolicy
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.openapi.command.UndoConfirmationPolicy

@@ -230,6 +230,7 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  * before the platform is ready to handle write actions differently.
  *
  * @see readAndWriteAction
+ * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
