@@ -33,4 +33,6 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
   public void testServer() { doTest(); }
   
   public void testStarImports() { doTest(); }
+
+  public void testIncompleteRecursiveParameters() { doTest(); }
 }

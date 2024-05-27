@@ -80,24 +80,32 @@ final class IncompleteModelUtil {
    */
   @Contract("null -> false")
   static boolean hasUnresolvedComponent(@Nullable PsiType psiType) {
+    return hasUnresolvedComponentRecursively(psiType, new HashSet<>());
+  }
+
+  private static boolean hasUnresolvedComponentRecursively(@Nullable PsiType psiType, @NotNull HashSet<PsiClass> visited) {
     if (psiType == null) return false;
     PsiType type = psiType.getDeepComponentType();
     if (isUnresolvedClassType(psiType)) {
       return true;
     }
     if (type instanceof PsiClassType classType) {
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(classType);
+      if (psiClass != null && !visited.add(psiClass)) {
+        return false;
+      }
       for (PsiType parameter : classType.getParameters()) {
-        if (hasUnresolvedComponent(parameter)) {
+        if (hasUnresolvedComponentRecursively(parameter, visited)) {
           return true;
         }
       }
     }
     if (type instanceof PsiWildcardType wildcardType) {
-      return hasUnresolvedComponent(wildcardType.getBound());
+      return hasUnresolvedComponentRecursively(wildcardType.getBound(), visited);
     }
     if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
-      return hasUnresolvedComponent(capturedWildcardType.getLowerBound()) ||
-             hasUnresolvedComponent(capturedWildcardType.getUpperBound());
+      return hasUnresolvedComponentRecursively(capturedWildcardType.getLowerBound(), visited) ||
+             hasUnresolvedComponentRecursively(capturedWildcardType.getUpperBound(), visited);
     }
     return false;
   }
