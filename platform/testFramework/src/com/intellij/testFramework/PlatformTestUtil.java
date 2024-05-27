@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.ThreadContext;
@@ -496,7 +496,7 @@ public final class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
     while (true) {
-      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      try {
         if (dispatchNextEventIfAny() == null) break;
       }
       catch (InterruptedException e) {
@@ -509,13 +509,15 @@ public final class PlatformTestUtil {
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
-    assertEventQueueDispatchThread();
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    AWTEvent event = eventQueue.peekEvent();
-    if (event == null) return null;
-    AWTEvent event1 = eventQueue.getNextEvent();
-    eventQueue.dispatchEvent(event1);
-    return event1;
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      assertEventQueueDispatchThread();
+      IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+      AWTEvent event = eventQueue.peekEvent();
+      if (event == null) return null;
+      AWTEvent event1 = eventQueue.getNextEvent();
+      eventQueue.dispatchEvent(event1);
+      return event1;
+    }
   }
 
   public static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure,

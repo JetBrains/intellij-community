@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Propagation")
 @file:Internal
 @file:Suppress("NAME_SHADOWING")
@@ -169,9 +169,7 @@ internal fun captureRunnableThreadContext(command: Runnable): Runnable {
 internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V> {
   val (childContext, childContinuation) = createChildContext()
   var callable = captureClientIdInCallable(callable)
-  if (childContext != EmptyCoroutineContext) {
-    callable = ContextCallable(true, childContext, callable)
-  }
+  callable = ContextCallable(true, childContext, callable)
   if (childContinuation != null) {
     callable = CancellationCallable(childContinuation, callable)
   }
@@ -264,9 +262,7 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
   val (childContext, childContinuation) =
     if (forceUseContextJob) createChildContextWithContextJob()
     else createChildContext()
-  if (childContext != EmptyCoroutineContext) {
-    command = ContextRunnable(true, childContext, command)
-  }
+  command = ContextRunnable(true, childContext, command)
   if (childContinuation != null) {
     command = CancellationRunnable(childContinuation, command)
   }
@@ -280,9 +276,7 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnab
   }
   val (childContext, childContinuation) = createChildContext()
   var expired = expired
-  if (childContext != EmptyCoroutineContext) {
-    command = ContextRunnable(true, childContext, command)
-  }
+  command = ContextRunnable(true, childContext, command)
   if (childContinuation != null) {
     command = CancellationRunnable(childContinuation, command)
     val childJob = childContinuation.context.job
@@ -294,9 +288,7 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnab
 fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U> {
   val (childContext, childContinuation) = createChildContext()
   var f = captureClientIdInBiConsumer(f)
-  if (childContext != EmptyCoroutineContext) {
-    f = ContextBiConsumer(false, childContext, f)
-  }
+  f = ContextBiConsumer(false, childContext, f)
   if (childContinuation != null) {
     f = CancellationBiConsumer(childContinuation, f)
   }
@@ -324,9 +316,7 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
     return FutureTask(callable)
   }
   val (childContext, childContinuation) = createChildContext()
-  if (childContext != EmptyCoroutineContext) {
-    callable = ContextCallable(false, childContext, callable)
-  }
+  callable = ContextCallable(false, childContext, callable)
   if (childContinuation != null) {
     callable = CancellationCallable(childContinuation, callable)
     val childJob = childContinuation.context.job
@@ -340,9 +330,7 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
 internal fun <T, R> capturePropagationContext(function: Function<T, R>): Function<T, R> {
   val (childContext, childContinuation) = createChildContext()
   var f = captureClientIdInFunction(function)
-  if (childContext != EmptyCoroutineContext) {
-    f = ContextFunction(childContext, f)
-  }
+  f = ContextFunction(childContext, f)
   if (childContinuation != null) {
     f = CancellationFunction(childContinuation, f)
   }
@@ -355,9 +343,7 @@ internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callab
     return wrapper.MyScheduledFutureTask(callable, ns)
   }
   val (childContext, childContinuation) = createChildContext()
-  if (childContext != EmptyCoroutineContext) {
-    callable = ContextCallable(false, childContext, callable)
-  }
+  callable = ContextCallable(false, childContext, callable)
   if (childContinuation != null) {
     callable = CancellationCallable(childContinuation, callable)
     val childJob = childContinuation.context.job
@@ -376,9 +362,7 @@ internal fun capturePropagationContext(
 ): MyScheduledFutureTask<*> {
   val (childContext, childContinuation) = createChildContext()
   var runnable = captureClientIdInRunnable(runnable)
-  if (childContext != EmptyCoroutineContext) {
-    runnable = ContextRunnable(false, childContext, runnable)
-  }
+  runnable = ContextRunnable(false, childContext, runnable)
   if (childContinuation != null) {
     runnable = PeriodicCancellationRunnable(childContinuation, runnable)
     val childJob = childContinuation.context.job

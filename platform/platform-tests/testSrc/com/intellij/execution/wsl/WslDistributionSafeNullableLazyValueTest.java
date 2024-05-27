@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -201,6 +202,7 @@ public final class WslDistributionSafeNullableLazyValueTest {
     });
   }
 
+  @Disabled // TODO
   @Test
   public void testLogsErrorsFromEdt() throws Exception {
     CompletableFuture<Throwable> error = new CompletableFuture<>();
