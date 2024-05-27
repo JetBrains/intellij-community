@@ -94,7 +94,6 @@ pc:com.intellij.execution.process.CapturingAnsiEscapesAwareProcessHandler$AnsiEs
 - coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
 - onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
 f:com.intellij.execution.process.ColoredOutputTypeRegistryImpl
-- com.intellij.execution.process.ColoredOutputTypeRegistry
 - <init>():V
 - s:getAnsiColorKey(I):com.intellij.openapi.editor.colors.TextAttributesKey
 - getOutputType(com.intellij.execution.process.AnsiTerminalEmulator,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType

@@ -245,10 +245,6 @@ c:com.intellij.execution.process.CapturingProcessRunner
 - runProcess(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator,I):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator,I,Z):com.intellij.execution.process.ProcessOutput
-a:com.intellij.execution.process.ColoredOutputTypeRegistry
-- <init>():V
-- s:getInstance():com.intellij.execution.process.ColoredOutputTypeRegistry
-- a:getOutputType(java.lang.String,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 c:com.intellij.execution.process.ColoredProcessHandler
 - com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
