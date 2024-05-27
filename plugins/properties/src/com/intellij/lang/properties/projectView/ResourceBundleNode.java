@@ -71,6 +71,14 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   }
 
   @Override
+  protected @Nullable VirtualFile getCacheableFile() {
+    if (getResourceBundle() instanceof ResourceBundleImpl rb) {
+      return rb.getDefaultVirtualFile();
+    }
+    return null;
+  }
+
+  @Override
   public void update(@NotNull PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
     ResourceBundle rb = getResourceBundle();

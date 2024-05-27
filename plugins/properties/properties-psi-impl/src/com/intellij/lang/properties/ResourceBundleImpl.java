@@ -6,7 +6,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +33,11 @@ public final class ResourceBundleImpl extends ResourceBundle {
   @Override
   public PropertiesFile getDefaultPropertiesFile() {
     return Objects.requireNonNull(PropertiesImplUtil.getPropertiesFile(myDefaultPropertiesFile.getElement()));
+  }
+
+  @ApiStatus.Internal
+  public @Nullable VirtualFile getDefaultVirtualFile() {
+    return myDefaultPropertiesFile.getVirtualFile(); // Don't resolve the pointer to avoid slow ops.
   }
 
   @NotNull
