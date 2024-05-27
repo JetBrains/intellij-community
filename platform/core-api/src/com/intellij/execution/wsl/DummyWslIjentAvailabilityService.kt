@@ -3,4 +3,5 @@ package com.intellij.execution.wsl
 
 internal class DummyWslIjentAvailabilityService : WslIjentAvailabilityService {
   override fun runWslCommandsViaIjent(): Boolean = false
+  override fun useIjentForWslNioFileSystem(): Boolean = false
 }
