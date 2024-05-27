@@ -15,10 +15,7 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -96,10 +93,9 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     if (declarativeHints.isEmpty()) {
       return
     }
-    val contentHash = editor.document.contentHash()
-    val inlayDataList = declarativeHints.map { inlay -> inlay.renderer.toInlayData() }.toList()
+    val state = DeclarativeHintsState(editor.document.contentHash(), inlayDataList(declarativeHints))
     scope.launch(Dispatchers.IO) {
-      cache[file.id] = DeclarativeHintsState(contentHash, inlayDataList)
+      cache[file.id] = state
     }
   }
 
@@ -135,7 +131,19 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     }
   }
 
-  private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk")
+  private fun inlayDataList(declarativeHints: List<Inlay<out DeclarativeInlayRenderer>>): List<InlayData> {
+    val inlayDataList = declarativeHints.map { inlay -> inlay.renderer.toInlayData() }
+    if (isDebugEnabled()) {
+      // transform inlayData -> byteArray -> inlayData to add '?' char at inlay presentation by PresentationTreeExternalizer
+      val state = DeclarativeHintsState(0, inlayDataList).toByteArray()
+      return DeclarativeHintsState.fromByteArray(state).inlayDataList
+    }
+    return inlayDataList
+  }
+
+  private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
+
+  private fun isDebugEnabled() = Registry.`is`("cache.markup.debug", false)
 }
 
 internal class ZombieInlayHintsProvider : InlayHintsProvider {

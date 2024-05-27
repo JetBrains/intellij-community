@@ -5,10 +5,23 @@ import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
-import java.io.DataInput
-import java.io.DataOutput
+import java.io.*
 
 internal class DeclarativeHintsState(val contentHash: Int, val inlayDataList: List<InlayData>) {
+
+  companion object {
+    fun fromByteArray(byteArray: ByteArray): DeclarativeHintsState {
+      val externalizer = Externalizer()
+      return externalizer.read(DataInputStream(ByteArrayInputStream(byteArray)))
+    }
+  }
+
+  fun toByteArray(): ByteArray {
+    val externalizer = Externalizer()
+    val baos = ByteArrayOutputStream()
+    externalizer.save(DataOutputStream(baos), this)
+    return baos.toByteArray()
+  }
 
   class Externalizer : VersionedExternalizer<DeclarativeHintsState> {
 
