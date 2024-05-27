@@ -54,6 +54,7 @@ public final class MultiRoutingFileSystemProvider
    * @param function      A function that either defines a new backend, or deletes an existing one by returning {@code null}.
    *                      The function gets as the first argument {@link #myLocalProvider} and gets as the second the previous filesystem
    *                      assigned to the root, if it has been assigned.
+   *                      <b>Note:</b> the function may be called more than once.
    */
   public static void computeBackend(
     @NotNull FileSystemProvider provider,
