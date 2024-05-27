@@ -1910,7 +1910,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     protected void resumeAction() {
-      myProject.getMessageBus().syncPublisher(DebuggerActionListener.TOPIC).onRunToCursor();
+      myProject.getMessageBus().syncPublisher(DebuggerActionListener.TOPIC).onRunToCursor(getSuspendContext());
       super.resumeAction();
     }
 

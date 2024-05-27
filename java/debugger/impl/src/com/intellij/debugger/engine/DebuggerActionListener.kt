@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface DebuggerActionListener {
 
-  fun onRunToCursor()
+  fun onRunToCursor(context: SuspendContextImpl?)
 
   companion object {
     @JvmField
