@@ -5039,6 +5039,7 @@ com.intellij.psi.meta.PsiWritableMetaData
 - a:setName(java.lang.String):V
 com.intellij.psi.scope.PsiScopeProcessor
 - a:execute(com.intellij.psi.PsiElement,com.intellij.psi.ResolveState):Z
+- executeForUnresolved():Z
 - getHint(com.intellij.openapi.util.Key):java.lang.Object
 - handleEvent(com.intellij.psi.scope.PsiScopeProcessor$Event,java.lang.Object):V
 com.intellij.psi.scope.PsiScopeProcessor$Event

@@ -203,6 +203,21 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
   }
 
   @Override
+  public boolean executeForUnresolved() {
+    if (myCurrentFileContext instanceof PsiImportStatementBase) {
+      PsiImportStatementBase importStatement = (PsiImportStatementBase)myCurrentFileContext;
+      PsiJavaCodeReferenceElement importRef = importStatement.getImportReference();
+      if (importRef != null && !importStatement.isOnDemand()) {
+        String name = importRef.getReferenceName();
+        if (myClassName.equals(name)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (!(element instanceof PsiClass)) return true;
     final PsiClass aClass = (PsiClass)element;
