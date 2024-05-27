@@ -112,6 +112,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.promptCustomEnterHandler" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptCustomEnterHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandHistoryProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.exp.history.TerminalCommandHistoryProvider"/>
   </extensionPoints>
 
   <projectListeners>

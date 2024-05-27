@@ -4,17 +4,14 @@ package org.jetbrains.plugins.terminal.exp.history
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import java.util.*
 
-internal class CommandHistoryManager(private val session: BlockTerminalSession) {
+internal class CommandHistoryManager(
+  private val session: BlockTerminalSession,
+  private val promptModel: TerminalPromptModel
+) {
   private val mutableHistory: MutableSet<String> = Collections.synchronizedSet(LinkedHashSet())
-
-  /**
-   * History in a chronological order, but with removed repetitions.
-   * The latest commands are positioned at the end of the list.
-   */
-  val history: List<String>
-    get() = mutableHistory.toList()
 
   init {
     session.addCommandListener(object : ShellCommandListener {
@@ -31,6 +28,20 @@ internal class CommandHistoryManager(private val session: BlockTerminalSession) 
         }
       }
     })
+  }
+
+  /**
+   * Iterates the custom [TerminalCommandHistoryProvider]'s and returns the first found not null history.
+   * If no providers overridden the history, the default shell command history is returned.
+   *
+   * @return history in a chronological order, but with removed repetitions.
+   * The latest commands are positioned at the end of the list.
+   */
+  fun getHistory(): List<String> {
+    val historyFromProvider = TerminalCommandHistoryProvider.EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
+      provider.getCommandHistory(promptModel)
+    }
+    return historyFromProvider ?: mutableHistory.toList()
   }
 
   private fun initCommandHistory(history: String) {

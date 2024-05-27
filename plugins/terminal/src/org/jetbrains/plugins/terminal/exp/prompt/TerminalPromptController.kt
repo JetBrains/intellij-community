@@ -33,7 +33,7 @@ internal class TerminalPromptController(
   val model: TerminalPromptModel = TerminalPromptModelImpl(editor, TerminalSessionInfoImpl(session))
 
   val commandHistory: List<String>
-    get() = commandHistoryManager.history
+    get() = commandHistoryManager.getHistory()
 
   // should be accessed in EDT
   var promptIsVisible: Boolean by Delegates.observable(true) { _, oldValue, newValue ->
@@ -53,7 +53,7 @@ internal class TerminalPromptController(
     val shellGeneratorsExecutor = ShellDataGeneratorsExecutorImpl(session)
     editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, shellGeneratorsExecutor)
 
-    commandHistoryManager = CommandHistoryManager(session)
+    commandHistoryManager = CommandHistoryManager(session, model)
 
     Disposer.register(session, model)
     session.addCommandListener(object : ShellCommandListener {
