@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl
 
 import com.intellij.util.SystemProperties
@@ -52,6 +52,8 @@ object MapIndexStorageCacheSlruProvider: MapIndexStorageCacheProvider {
       MapIndexStorageSlruCache(keyReader, evictionListener, hashingStrategy, cacheSize)
     }
     else {
+      //FIXME RC: this is incorrect implementation -- it doesn't use evictionListener, hence any changes done
+      //          to the ValueContainers obtained through this cache -- will not be saved.
       MapIndexStoragePassThroughCache(keyReader, evictionListener, hashingStrategy, cacheSize)
     }
   }
