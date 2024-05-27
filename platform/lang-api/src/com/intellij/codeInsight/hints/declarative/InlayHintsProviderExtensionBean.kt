@@ -127,4 +127,8 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
     val resourceBundle = DynamicBundle.getResourceBundle(descriptor.classLoader, baseName)
     return AbstractBundle.message(resourceBundle, key)
   }
+
+  override fun toString(): String {
+    return "InlayHintsProvider(language=$language, group=$group, providerId=$providerId)"
+  }
 }
