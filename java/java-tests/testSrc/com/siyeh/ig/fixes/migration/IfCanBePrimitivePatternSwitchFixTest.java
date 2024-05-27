@@ -31,6 +31,11 @@ public class IfCanBePrimitivePatternSwitchFixTest extends IGQuickFixesTestCase {
   }
 
   public void testPrimitiveIntType() { doTest(); }
+  public void testPrimitiveIntTypeWithDifferent() { assertQuickfixNotAvailable(); }
+  public void testPrimitiveIntTypeWithDifferentRevert() { assertQuickfixNotAvailable(); }
+  public void testPrimitiveIntTypeRevert() { doTest(); }
+  public void testPrimitiveIntTypeRevertComparison() { doTest(); }
+  public void testPrimitiveIntTypeComparison() { doTest(); }
   public void testPrimitiveLongIntType() { assertQuickfixNotAvailable(); }
   public void testPrimitiveLongType() { doTest(); }
   public void testPrimitiveLongType2() { doTest(); }
@@ -53,4 +58,8 @@ public class IfCanBePrimitivePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testComparisonWithPrimitives1() { doTest(); }
   public void testComparisonWithPrimitives2() { doTest(); }
   public void testComparisonWithPrimitives3() { doTest(); }
+
+  public void testComparisonNonPrimitive() { assertQuickfixNotAvailable(); }
+  public void testDoubleComparison() { assertQuickfixNotAvailable(); }
+  public void testPrimitiveDominates() { assertQuickfixNotAvailable(); }
 }

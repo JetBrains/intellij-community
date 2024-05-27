@@ -216,14 +216,14 @@ public final class SwitchUtils {
     if (existingCaseValues != null && existingCaseValues.contains(o)) {
       return false;
     }
+    if (existingCaseValues != null) {
+      existingCaseValues.add(o);
+    }
     PsiType selectorType = selector.getType();
     PsiType valueType = value.getType();
     if (selectorType == null || valueType == null) return false;
     PsiPrimitiveType unwrapped = PsiPrimitiveType.getOptionallyUnboxedType(selectorType);
-    if (unwrapped != null && (PsiTypes.longType().equals(unwrapped) ||
-                              PsiTypes.doubleType().equals(unwrapped) ||
-                              PsiTypes.floatType().equals(unwrapped) ||
-                              PsiTypes.booleanType().equals(unwrapped))) {
+    if (unwrapped != null && (isExtendedPrimitives(unwrapped))) {
       return unwrapped.equals(valueType);
     }
     return TypeConversionUtil.isAssignable(selectorType, valueType);
@@ -374,8 +374,11 @@ public final class SwitchUtils {
     if (JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel) &&
         expression instanceof PsiBinaryExpression psiBinaryExpression) {
       IElementType operationTokenType = psiBinaryExpression.getOperationTokenType();
-      if (operationTokenType.equals(JavaTokenType.OROR) || operationTokenType.equals(JavaTokenType.ANDAND) ||
-          operationTokenType.equals(JavaTokenType.OR) || operationTokenType.equals(JavaTokenType.AND)) {
+      if (!operationTokenType.equals(JavaTokenType.EQEQ) &&
+          !operationTokenType.equals(JavaTokenType.GT) &&
+          !operationTokenType.equals(JavaTokenType.GE) &&
+          !operationTokenType.equals(JavaTokenType.LT) &&
+          !operationTokenType.equals(JavaTokenType.LE)) {
         return null;
       }
       final PsiExpression left = psiBinaryExpression.getLOperand();
@@ -617,11 +620,10 @@ public final class SwitchUtils {
     PsiExpression switchSelector = null;
     for (PsiBinaryExpression binaryExpression : binaryExpressions) {
       IElementType binaryExpressionOperationTokenType = binaryExpression.getOperationTokenType();
-      if (!JavaTokenType.EQEQ.equals(binaryExpressionOperationTokenType) && 
-          !JavaTokenType.OROR.equals(binaryExpressionOperationTokenType) &&
-          !JavaTokenType.ANDAND.equals(binaryExpressionOperationTokenType) && 
-          !JavaTokenType.OR.equals(binaryExpressionOperationTokenType) &&
-          !JavaTokenType.AND.equals(binaryExpressionOperationTokenType)) {
+      if (JavaTokenType.LE.equals(binaryExpressionOperationTokenType) ||
+          JavaTokenType.LT.equals(binaryExpressionOperationTokenType) ||
+          JavaTokenType.GE.equals(binaryExpressionOperationTokenType) ||
+          JavaTokenType.GT.equals(binaryExpressionOperationTokenType)) {
         PsiExpression lOperand = binaryExpression.getLOperand();
         PsiExpression rOperand = binaryExpression.getROperand();
         EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
