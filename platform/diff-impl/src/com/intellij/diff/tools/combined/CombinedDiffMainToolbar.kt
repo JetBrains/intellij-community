@@ -200,7 +200,7 @@ private class MainToolbarLayout(
   override fun removeLayoutComponent(comp: Component?) {}
 
   override fun preferredLayoutSize(parent: Container): Dimension = size(parent)
-  override fun minimumLayoutSize(parent: Container): Dimension = Dimension(parent.width, 0)
+  override fun minimumLayoutSize(parent: Container): Dimension = Dimension(100, 0)
   override fun maximumLayoutSize(target: Container): Dimension = size(target)
 
   private fun size(parent: Container): Dimension {
