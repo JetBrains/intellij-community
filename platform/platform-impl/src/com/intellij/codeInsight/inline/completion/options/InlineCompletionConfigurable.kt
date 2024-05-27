@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.inline.completion.settings
+package com.intellij.codeInsight.inline.completion.options
 
 import com.intellij.application.options.editor.EditorOptionsProvider
 import com.intellij.openapi.application.ApplicationBundle
