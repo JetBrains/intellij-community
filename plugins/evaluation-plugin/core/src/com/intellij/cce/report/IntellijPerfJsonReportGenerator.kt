@@ -35,7 +35,7 @@ class IntellijPerfJsonReportGenerator(
 
 
       val metricsDto = PerformanceMetricsDto
-        .create(projectName = "completion_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
+        .create(projectName = "#feature#_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
                 projectURL = "",
                 projectDescription = "",
                 methodName = "",
@@ -96,12 +96,12 @@ private class TeamCityReportHelper : ReportHelper {
 
   override fun createBuildInfo(): CIServerBuildInfo {
     return CIServerBuildInfo(
-      buildId = "\$teamcity.build.id\$",
-      typeId = "\$teamcity.buildType.id\$",
-      configName = "\$teamcity.buildConfName\$",
-      buildNumber = "\$teamcity.buildNumber\$",
-      branchName = "\$teamcity.build.branch\$",
-      url = "\$teamcity.buildUrl\$",
+      buildId = "#teamcity.build.id#",
+      typeId = "#teamcity.buildType.id#",
+      configName = "#teamcity.buildConfName#",
+      buildNumber = "#teamcity.buildNumber#",
+      branchName = "#teamcity.build.branch#",
+      url = "#teamcity.buildUrl#",
       isPersonal = false,
       timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     )
