@@ -4,7 +4,6 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.ProductIcons
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -74,7 +73,7 @@ internal abstract class UltimateInstaller(
 
   fun notifyAndOfferStart(installationResult: InstallationResult, suggestedIde: SuggestedIde, pluginId: PluginId?) {
     val currentIde = ApplicationInfo.getInstance().fullApplicationName
-    
+
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Ultimate Installed")
       .createNotification(
         IdeBundle.message("notification.group.advertiser.try.ultimate.installed.title", suggestedIde.name),
@@ -97,8 +96,7 @@ internal abstract class UltimateInstaller(
         }
       })
     
-    notification.setIcon(ProductIcons.getInstance().productIcon)
-
+    notification.setIcon(getIcon(suggestedIde))
     notification.notify(project)
   }
 

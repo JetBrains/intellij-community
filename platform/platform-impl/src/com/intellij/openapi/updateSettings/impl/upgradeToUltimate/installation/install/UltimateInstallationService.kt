@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -65,7 +66,7 @@ class UltimateInstallationService(
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
-            if (!suggestedIde.canBeAutoInstalled()) {
+            if (!canBeAutoInstalled(suggestedIde)) {
               useFallback(pluginId, suggestedIde.defaultDownloadUrl)
               return@withBackgroundProgress
             }
@@ -75,7 +76,7 @@ class UltimateInstallationService(
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
 
             disableTryUltimate(project)
-            val isInstalled = tryToInstall(suggestedIde, build, pluginId, productData.name)
+            val isInstalled = tryToInstall(suggestedIde, build, pluginId)
             if (!isInstalled) {
               enableTryUltimate(project)
             }
@@ -93,7 +94,7 @@ class UltimateInstallationService(
     }
   }
 
-  private suspend fun tryToInstall(suggestedIde: SuggestedIde, build: BuildInfo, pluginId: PluginId?, currentIdeName: String): Boolean {
+  private suspend fun tryToInstall(suggestedIde: SuggestedIde, build: BuildInfo, pluginId: PluginId?): Boolean {
     if (Registry.`is`("ide.try.ultimate.automatic.installation.use.toolbox")) {
       val result = tryToInstallViaToolbox(build)
       if (result) {
@@ -224,11 +225,22 @@ class UltimateInstallationService(
   }
 }
 
-private fun SuggestedIde.canBeAutoInstalled(): Boolean {
+private fun canBeAutoInstalled(suggestedIde: SuggestedIde): Boolean {
   return when {
-    PlatformUtils.isIdeaCommunity() && isIdeUltimate() -> true
-    PlatformUtils.isPyCharmCommunity() && isPycharmProfessional() -> true
+    isIdea(suggestedIde) -> true
+    isPycharm(suggestedIde) -> true
     else -> false
+  }
+}
+
+private fun isPycharm(suggestedIde: SuggestedIde) = PlatformUtils.isPyCharmCommunity() && suggestedIde.isPycharmProfessional()
+private fun isIdea(suggestedIde: SuggestedIde) = PlatformUtils.isIdeaCommunity() && suggestedIde.isIdeUltimate()
+
+internal fun getIcon(suggestedIde: SuggestedIde): Icon? {
+  return when {
+    isIdea(suggestedIde) -> AllIcons.Ultimate.IdeaUltimatePromo
+    isPycharm(suggestedIde) -> AllIcons.Ultimate.PycharmPromo
+    else -> null
   }
 }
 

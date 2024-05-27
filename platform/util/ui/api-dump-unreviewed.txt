@@ -1210,9 +1210,11 @@ f:com.intellij.icons.AllIcons$TransferSettings
 - sf:Xcode:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Ultimate
+- sf:IdeaUltimatePromo:javax.swing.Icon
 - sf:Lock:javax.swing.Icon
 - sf:LockWhite:javax.swing.Icon
 - sf:PycharmLock:javax.swing.Icon
+- sf:PycharmPromo:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Vcs
 - sf:Arrow_left:javax.swing.Icon
