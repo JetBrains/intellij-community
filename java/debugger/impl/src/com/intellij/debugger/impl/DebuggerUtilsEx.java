@@ -989,7 +989,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String getLocationMethodName(@NotNull Location location) {
-    return location instanceof GeneratedLocation ? ((GeneratedLocation)location).methodName() : location.method().name();
+    if (location instanceof GeneratedLocation generatedLocation) {
+      return generatedLocation.methodName();
+    }
+    Method method = getMethod(location);
+    if (method == null) {
+      return "<invalid method>";
+    }
+    return method.name();
   }
 
   private static PsiElement getNextElement(PsiElement element) {
