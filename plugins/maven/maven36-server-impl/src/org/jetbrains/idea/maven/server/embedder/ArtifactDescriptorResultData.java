@@ -67,7 +67,7 @@ public class ArtifactDescriptorResultData {
     return repository;
   }
 
-  List<Exception> getExceptions() {
+  public List<Exception> getExceptions() {
     return exceptions;
   }
 
