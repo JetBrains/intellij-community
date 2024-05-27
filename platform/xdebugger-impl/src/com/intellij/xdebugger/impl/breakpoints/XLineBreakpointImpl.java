@@ -95,7 +95,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
               myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
               callOnUpdate.run();
             }
-          });
+          }, getProject().getDisposed());
           return;
         }
         document = FileDocumentManager.getInstance().getDocument(file);
