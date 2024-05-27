@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -28,6 +29,9 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       !MarkdownSettings.getInstance(ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject())).isVerticalSplit()
     );
 
+    // allow launching actions while in preview mode;
+    // FIXME: better solution IDEA-354102
+    editor.getEditor().getContentComponent().putClientProperty(ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
     preview.setMainEditor(editor.getEditor());
 
     final var project = ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject());
