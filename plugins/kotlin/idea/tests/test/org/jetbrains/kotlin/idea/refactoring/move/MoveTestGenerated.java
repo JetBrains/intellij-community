@@ -362,6 +362,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
         }
 
+        @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
+        public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
+        }
+
         @TestMetadata("kotlin/internalReferences/internalReferences.test")
         public void testKotlin_internalReferences_InternalReferences() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/internalReferences/internalReferences.test");
@@ -565,6 +570,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test")
         public void testKotlin_protectedMemberUsageWithThis_ProtectedMemberUsageWithThis() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test");
+        }
+
+        @TestMetadata("kotlin/protectedMembersExternalJavaRefs/protectedMembersExternalJavaRefs.test")
+        public void testKotlin_protectedMembersExternalJavaRefs_ProtectedMembersExternalJavaRefs() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMembersExternalJavaRefs/protectedMembersExternalJavaRefs.test");
         }
 
         @TestMetadata("kotlin/protectedMembersExternalRefs/protectedMembersExternalRefs.test")

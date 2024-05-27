@@ -13,8 +13,8 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -335,14 +335,16 @@ sealed class K2MoveRenameUsageInfo(
             val internalUsages = newDeclarations
                 .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap, fromCopy) }
                 .filterIsInstance<K2MoveRenameUsageInfo>()
-                .sortedByFile()
+                .groupByFile()
+                .sortedByOffset()
             shortenUsages(retargetMoveUsages(internalUsages, oldToNewMap))
         }
 
         private fun retargetExternalUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
             val externalUsages = usages
                 .filter { it.element != null } // if the element is null, it means that this external usage was moved
-                .sortedByFile()
+                .groupByFile()
+                .sortedByOffset()
             shortenUsages(retargetMoveUsages(externalUsages, oldToNewMap))
         }
 

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -17,6 +18,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+
+inline fun <reified T : PsiElement> PsiElement.containsElement(elementsToCheck: List<PsiElement>): Boolean {
+    return collectDescendantsOfType<T>().any { it in elementsToCheck }
+}
 
 internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
     val oldToNewMap = mutableMapOf<KtNamedDeclaration, KtNamedDeclaration>()

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.RenameUtil
@@ -170,21 +169,10 @@ internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<K
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
 }
 
-internal fun <T : MoveRenameUsageInfo> List<T>.sortedByFile(): Map<PsiFile, List<T>> {
-    return buildMap {
-        for (usageInfo in this@sortedByFile) {
-            val element = usageInfo.element
-            if (element == null) {
-                fileLogger().error("Could not update usage because element is invalid")
-                continue
-            }
-            val containingFile = element.containingFile
-            if (containingFile == null) {
-                fileLogger().error("Could not update usage because element has no containing file")
-                continue
-            }
-            val usageInfos: MutableList<T> = getOrPut(containingFile) { mutableListOf() }
-            usageInfos.add(usageInfo)
-        }
-    }.mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
+internal fun <T : MoveRenameUsageInfo> List<T>.groupByFile(): Map<PsiFile, List<T>> = groupBy {
+    it.element?.containingFile ?: error("Could not find containing file")
+}
+
+internal fun <T : MoveRenameUsageInfo> Map<PsiFile, List<T>>.sortedByOffset(): Map<PsiFile, List<T>> = mapValues { (_, value) ->
+    value.sortedBy { it.element?.textOffset }
 }

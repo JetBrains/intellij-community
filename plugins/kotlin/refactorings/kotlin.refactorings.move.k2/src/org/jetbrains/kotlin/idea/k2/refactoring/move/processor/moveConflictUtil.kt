@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
@@ -29,6 +31,8 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
@@ -206,13 +210,48 @@ private fun checkVisibilityConflictForNonMovedUsages(
 ): MultiMap<PsiElement, String> {
     return usages
         .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) && usage.isVisibleBeforeMove() }
-        .mapNotNull { usage ->
-            val usageElement = usage.element ?: return@mapNotNull null
-            val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
-            val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@mapNotNull null
-            val isVisible = declarationCopy.isVisibleTo(usageElement)
-            if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
-        }.toMultiMap()
+        .groupByFile()
+        .mapNotNull { (_, usages) ->
+            val usageElements = usages.mapNotNull { it.element }
+            usages.mapNotNull { usage ->
+                val usageElement = usage.element ?: return@mapNotNull null
+                val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
+                if (usage is K2MoveRenameUsageInfo && usage.mightDependOnSuperClassUpdate(usageElements)) return@mapNotNull null
+                val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@mapNotNull null
+                val isVisible = declarationCopy.isVisibleTo(usageElement)
+                if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+            }
+        }
+        .flatten()
+        .toMultiMap()
+}
+
+/**
+ * Checks whether for a [K2MoveRenameUsageInfo] depends on a super class update to decide whether the usage is visible to the moved
+ * Example:
+ * ```
+ * open class Parent { fun bar() { } }
+ *
+ * class Child : Parent {
+ *   fun foo() { bar() }
+ * }
+ * ```
+ * In this example, checking whether `bar` is visible after moving `Parent` can only be done when updating the usage in the super type list
+ * first.
+ * This is currently not something we can do because of restrictions in AA.
+ */
+private fun K2MoveRenameUsageInfo.mightDependOnSuperClassUpdate(usagesInFile: List<PsiElement>): Boolean {
+    val elem = element ?: return false
+    return if (elem is KtElement) {
+        generateSequence<KtClass>(elem.containingClass()) { it.containingClass() }.any { containingClass ->
+            containingClass.getSuperTypeList()?.containsElement<KtSimpleNameExpression>(usagesInFile) == true
+        }
+    } else {
+        generateSequence<PsiClass>(elem.getStrictParentOfType<PsiClass>()) { it.getStrictParentOfType<PsiClass>() }.any { containingClass ->
+            containingClass.extendsList?.containsElement<PsiJavaCodeReferenceElement>(usagesInFile) == true
+                    || containingClass.implementsList?.containsElement<PsiJavaCodeReferenceElement>(usagesInFile) == true
+        }
+    }
 }
 
 /**
