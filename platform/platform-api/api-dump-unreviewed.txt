@@ -648,11 +648,19 @@ f:com.intellij.ide.Prefs
 - s:putInt(java.lang.String,I):V
 - s:putLong(java.lang.String,J):V
 - s:remove(java.lang.String):V
-f:com.intellij.ide.RegionSettings
-- s:getCountry():java.lang.String
-- s:getCountry(java.lang.String):java.lang.String
-- s:resetCountry():V
-- s:setCountry(java.lang.String):Z
+*e:com.intellij.ide.Region
+- java.lang.Enum
+- sf:AFRICA:com.intellij.ide.Region
+- sf:AMERICA:com.intellij.ide.Region
+- sf:ASIA:com.intellij.ide.Region
+- sf:CHINA:com.intellij.ide.Region
+- sf:EUROPE:com.intellij.ide.Region
+- sf:NOT_SET:com.intellij.ide.Region
+- sf:OTHER:com.intellij.ide.Region
+- s:valueOf(java.lang.String):com.intellij.ide.Region
+- s:values():com.intellij.ide.Region[]
+*f:com.intellij.ide.RegionSettings
+- s:getRegion():com.intellij.ide.Region
 a:com.intellij.ide.RemoteDesktopService
 - <init>():V
 - s:getInstance():com.intellij.ide.RemoteDesktopService

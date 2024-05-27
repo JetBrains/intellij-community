@@ -1,57 +1,47 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-import java.util.Set;
-
+/**
+ * @see Region
+ */
+@ApiStatus.Experimental
 public final class RegionSettings {
-  private static final Set<String> COUNTRIES = Set.of(Locale.getISOCountries());
   /**
-   * A Preferences key to access ISO 3166-1 2-digit country code, see also "user.country" system property
+   * A Preferences key to access region code
    */
-  private static final String REGION_CODE_KEY = "JetBrains.regional.country";
+  private static final String REGION_CODE_KEY = "JetBrains.region.code";
 
   private RegionSettings() {
   }
 
-  /**
-   * @return Configured ISO 3166-1 2-digit country code. If not specified, the country code from default locale is returned, see {@link Locale#getCountry()}
-   */
-  @NotNull
-  public static String getCountry() {
-    return getCountry(Locale.getDefault().getCountry());
-  }
-
-  /**
-   * @param def a value to be returned if country is not explicitly configured.
-   * @return Configured ISO 3166-1 2-digit country code. If not specified, the specified default value is returned
-   */
-  @Contract("!null -> !null")
-  public static String getCountry(String def) {
-    return Prefs.get(REGION_CODE_KEY, def);
-  }
-
-  /**
-   * @param value a 2-letter ISO country code
-   * @return true if the code is successfully set, otherwise false. False value would mean incorrect country value format or an unknown country code
-   */
-  public static boolean setCountry(@NotNull String value) {
-    value = value.toUpperCase(Locale.ENGLISH);
-    if (COUNTRIES.contains(value)) {
-      Prefs.put(REGION_CODE_KEY, value);
-      return true;
+  @ApiStatus.Internal
+  public static void setRegion(@NotNull Region region) {
+    if (region == Region.NOT_SET) {
+      resetCode();
     }
-    return false;
+    else {
+      Prefs.put(REGION_CODE_KEY, region.name());
+    }
+  }
+
+  public static @NotNull Region getRegion() {
+    try {
+      String name = Prefs.get(REGION_CODE_KEY, Region.NOT_SET.name());
+      return Region.valueOf(name);
+    }
+    catch (IllegalArgumentException e) {
+      return Region.NOT_SET;
+    }
   }
 
   /**
-   * Clear region country setting
+   * Clear region setting
    */
-  public static void resetCountry() {
+  @ApiStatus.Internal
+  public static void resetCode() {
     Prefs.remove(REGION_CODE_KEY);
   }
-
 }
