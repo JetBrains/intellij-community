@@ -281,10 +281,17 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Override
   public void tearDown() throws Exception {
     if (myJdkHome == null) {
-      //super.setUp() wasn't called
+      //super.setUpInWriteAction() wasn't called
+
+      RunAll.runAll(
+        () -> Disposer.dispose(getTestDisposable()),
+        () -> super.tearDown()
+      );
+
       return;
     }
-    new RunAll(
+
+    RunAll.runAll(
       () -> {
         WriteAction.runAndWait(() -> {
           Arrays.stream(ProjectJdkTable.getInstance().getAllJdks()).forEach(ProjectJdkTable.getInstance()::removeJdk);
@@ -306,7 +313,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       },
       () -> Disposer.dispose(getTestDisposable()),
       () -> super.tearDown()
-    ).run();
+    );
   }
 
   private @NotNull Disposable getTestDisposable() {
