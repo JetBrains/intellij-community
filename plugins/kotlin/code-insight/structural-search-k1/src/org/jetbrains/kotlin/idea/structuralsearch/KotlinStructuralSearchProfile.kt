@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structuralsearch
 
 import com.intellij.lang.Language
@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -77,6 +78,12 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
     override fun compile(elements: Array<out PsiElement>, globalVisitor: GlobalCompilingVisitor) {
         KotlinCompilingVisitor(globalVisitor).compile(elements)
     }
+
+    override fun createCodeFragment(
+        project: Project,
+        text: String,
+        contextId: String?
+    ): PsiCodeFragment? = KtPsiFactory(project).createBlockCodeFragment(text, null)
 
     override fun getPresentableElement(element: PsiElement): PsiElement {
         val elem = if (isIdentifier(element)) element.parent else return element
