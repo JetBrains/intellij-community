@@ -79,3 +79,252 @@
 *@:com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 - java.lang.annotation.Annotation
 - a:version():I
+*:com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- com.intellij.platform.workspace.storage.EntityStorage
+- *sf:Companion:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
+*f:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
+- f:empty():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+*f:com.intellij.platform.workspace.storage.MetadataStorageImpl
+- com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
+- sf:INSTANCE:com.intellij.platform.workspace.storage.MetadataStorageImpl
+*:com.intellij.platform.workspace.storage.MutableEntityStorage
+- com.intellij.platform.workspace.storage.EntityStorage
+- *sf:Companion:com.intellij.platform.workspace.storage.MutableEntityStorage$Companion
+- a:addEntity(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:applyChangesFrom(com.intellij.platform.workspace.storage.MutableEntityStorage):V
+- s:create():com.intellij.platform.workspace.storage.MutableEntityStorage
+- s:from(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.MutableEntityStorage
+- a:getMutableExternalMapping(com.intellij.platform.workspace.storage.ExternalMappingKey):com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+- a:modifyEntity(java.lang.Class,com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:removeEntity(com.intellij.platform.workspace.storage.WorkspaceEntity):Z
+- a:replaceBySource(kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.EntityStorage):V
+- a:toSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+*f:com.intellij.platform.workspace.storage.MutableEntityStorage$Companion
+- f:create():com.intellij.platform.workspace.storage.MutableEntityStorage
+- f:from(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.MutableEntityStorage
+*:com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+- com.intellij.platform.workspace.storage.ExternalEntityMapping
+- a:addIfAbsent(com.intellij.platform.workspace.storage.WorkspaceEntity,java.lang.Object):Z
+- a:addMapping(com.intellij.platform.workspace.storage.WorkspaceEntity,java.lang.Object):V
+- a:getOrPutDataByEntity(com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.jvm.functions.Function0):java.lang.Object
+- a:removeMapping(com.intellij.platform.workspace.storage.WorkspaceEntity):java.lang.Object
+*a:com.intellij.platform.workspace.storage.SerializationResult
+*f:com.intellij.platform.workspace.storage.SerializationResult$Fail
+- com.intellij.platform.workspace.storage.SerializationResult
+- <init>(java.lang.Throwable):V
+- f:getProblem():java.lang.Throwable
+*f:com.intellij.platform.workspace.storage.SerializationResult$Success
+- com.intellij.platform.workspace.storage.SerializationResult
+- <init>(J):V
+- f:getSize():J
+*:com.intellij.platform.workspace.storage.SymbolicEntityId
+- a:getPresentableName():java.lang.String
+- resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- a:toString():java.lang.String
+*f:com.intellij.platform.workspace.storage.VersionedEntityStorageKt
+- sf:orderToRemoveReplaceAdd(java.util.Collection):java.util.List
+*:com.intellij.platform.workspace.storage.VersionedStorageChange
+- a:getAllChanges():kotlin.sequences.Sequence
+- a:getChanges(java.lang.Class):java.util.List
+- a:getStorageAfter():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- a:getStorageBefore():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+*:com.intellij.platform.workspace.storage.WorkspaceEntity
+- *sf:Companion:com.intellij.platform.workspace.storage.WorkspaceEntity$Companion
+- a:createPointer():com.intellij.platform.workspace.storage.EntityPointer
+- a:getEntityInterface():java.lang.Class
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+*:com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+*f:com.intellij.platform.workspace.storage.WorkspaceEntity$Companion
+*:com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:getSymbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
+@:com.intellij.platform.workspace.storage.annotations.Abstract
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Child
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Default
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Open
+- java.lang.annotation.Annotation
+f:com.intellij.platform.workspace.storage.impl.ConnectionId
+- sf:Companion:com.intellij.platform.workspace.storage.impl.ConnectionId$Companion
+- f:canRemoveParent():Z
+- f:debugStr():java.lang.String
+- equals(java.lang.Object):Z
+- f:getChildClass():I
+- f:getConnectionType():com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- f:getParentClass():I
+- hashCode():I
+- f:isParentNullable():Z
+- toString():java.lang.String
+f:com.intellij.platform.workspace.storage.impl.ConnectionId$Companion
+- f:create(java.lang.Class,java.lang.Class,com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType,Z):com.intellij.platform.workspace.storage.impl.ConnectionId
+e:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- java.lang.Enum
+- sf:ABSTRACT_ONE_TO_ONE:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- sf:ONE_TO_ABSTRACT_MANY:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- sf:ONE_TO_MANY:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- sf:ONE_TO_ONE:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
+- s:values():com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType[]
+f:com.intellij.platform.workspace.storage.impl.EntityLink
+- <init>(Z,com.intellij.platform.workspace.storage.impl.ConnectionId):V
+- f:component1():Z
+- f:component2():com.intellij.platform.workspace.storage.impl.ConnectionId
+- f:copy(Z,com.intellij.platform.workspace.storage.impl.ConnectionId):com.intellij.platform.workspace.storage.impl.EntityLink
+- bs:copy$default(com.intellij.platform.workspace.storage.impl.EntityLink,Z,com.intellij.platform.workspace.storage.impl.ConnectionId,I,java.lang.Object):com.intellij.platform.workspace.storage.impl.EntityLink
+- equals(java.lang.Object):Z
+- f:getConnectionId():com.intellij.platform.workspace.storage.impl.ConnectionId
+- hashCode():I
+- f:isThisFieldChild():Z
+- toString():java.lang.String
+f:com.intellij.platform.workspace.storage.impl.EntityStorageExtensionsKt
+- sf:extractOneToAbstractManyChildren(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):kotlin.sequences.Sequence
+- sf:extractOneToAbstractManyParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:extractOneToAbstractManyParent(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- sf:extractOneToAbstractOneChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:extractOneToAbstractOneParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:extractOneToAbstractOneParent(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- sf:extractOneToManyChildren(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):kotlin.sequences.Sequence
+- sf:extractOneToManyChildren(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):kotlin.sequences.Sequence
+- sf:extractOneToManyParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:extractOneToManyParent(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- sf:extractOneToOneChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:extractOneToOneParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:extractOneToOneParent(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- sf:updateOneToAbstractManyChildrenOfParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,kotlin.sequences.Sequence):V
+- sf:updateOneToAbstractManyParentOfChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+- sf:updateOneToAbstractOneChildOfParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+- sf:updateOneToAbstractOneParentOfChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+- sf:updateOneToManyChildrenOfParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.util.List):V
+- sf:updateOneToManyParentOfChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+- sf:updateOneToOneChildOfParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+- sf:updateOneToOneParentOfChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+a:com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- <init>(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData):V
+- f:addToBuilder():V
+- afterModification():V
+- applyToBuilder(com.intellij.platform.workspace.storage.MutableEntityStorage):V
+- pf:checkModificationAllowed():V
+- pf:checkModificationAllowed(java.lang.String):V
+- a:connectionIdList():java.util.List
+- f:existsInBuilder(com.intellij.platform.workspace.storage.MutableEntityStorage):Z
+- f:getChangedProperty():java.util.Set
+- pf:getCurrentEntityData():com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+- f:getData():com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+- f:getDiff():com.intellij.platform.workspace.storage.MutableEntityStorage
+- a:getEntityClass():java.lang.Class
+- f:getEntityData(Z):com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+- bs:getEntityData$default(com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase,Z,I,java.lang.Object):com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+- f:getEntityInterface():java.lang.Class
+- f:getEntityLinks():java.util.Map
+- f:getId():J
+- f:getModifiable():java.lang.ThreadLocal
+- f:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- f:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,java.util.Collection):V
+- f:indexJarDirectories(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.util.Set):V
+- f:processLinkedEntities(com.intellij.platform.workspace.storage.MutableEntityStorage):V
+- f:referrers(java.lang.Class):kotlin.sequences.Sequence
+- f:referrersBuilders(java.lang.Class,Z):kotlin.sequences.Sequence
+- relabel(com.intellij.platform.workspace.storage.WorkspaceEntity,java.util.Set):V
+- pf:setCurrentEntityData(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData):V
+- f:setDiff(com.intellij.platform.workspace.storage.MutableEntityStorage):V
+- f:setId(J):V
+- f:updateChildToParentReferences(java.util.Set):V
+- f:updateReferenceToEntity(java.lang.Class,Z,java.util.List):V
+com.intellij.platform.workspace.storage.impl.SoftLinkable
+- a:getLinks():java.util.Set
+- a:index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
+- a:updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
+- a:updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
+a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- snapshot:com.intellij.platform.workspace.storage.EntityStorage
+- <init>():V
+- <init>(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData):V
+- b:<init>(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- a:connectionIdList():java.util.List
+- createPointer():com.intellij.platform.workspace.storage.EntityPointer
+- equals(java.lang.Object):Z
+- getEntityInterface():java.lang.Class
+- f:getId():J
+- f:getSnapshot():com.intellij.platform.workspace.storage.EntityStorage
+- hashCode():I
+- pf:readField(java.lang.String):V
+- referrers(java.lang.Class):kotlin.sequences.Sequence
+- f:setId(J):V
+- f:setSnapshot(com.intellij.platform.workspace.storage.EntityStorage):V
+- toString():java.lang.String
+a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+- java.lang.Cloneable
+- entitySource:com.intellij.platform.workspace.storage.EntitySource
+- <init>():V
+- clone():com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+- createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.storage.WorkspaceEntity
+- f:createEntityId():J
+- equals(java.lang.Object):Z
+- equalsByKey(java.lang.Object):Z
+- equalsIgnoringEntitySource(java.lang.Object):Z
+- a:getEntityInterface():java.lang.Class
+- f:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- f:getId():I
+- a:getMetadata():com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+- getRequiredParents():java.util.List
+- hashCode():I
+- hashCodeByKey():I
+- hashCodeIgnoringEntitySource():I
+- f:isEntitySourceInitialized():Z
+- f:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- f:setId(I):V
+- toString():java.lang.String
+- a:wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+c:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
+- <init>():V
+- getValue(com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.reflect.KProperty):java.lang.Object
+f:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegateMutable
+- <init>(java.lang.Class):V
+- f:getValue(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,kotlin.reflect.KProperty):java.lang.Object
+- f:setValue(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,kotlin.reflect.KProperty,java.lang.Object):V
+f:com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceCollectionsKt
+- sf:toMutableWorkspaceList(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+- sf:toMutableWorkspaceSet(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
+f:com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+- java.util.ArrayList
+- <init>(java.util.Collection):V
+- add(I,java.lang.Object):V
+- add(java.lang.Object):Z
+- addAll(I,java.util.Collection):Z
+- addAll(java.util.Collection):Z
+- f:cleanModificationUpdateAction():V
+- clear():V
+- getSize():I
+- f:remove(I):java.lang.Object
+- remove(java.lang.Object):Z
+- removeAll(java.util.Collection):Z
+- removeAt(I):java.lang.Object
+- removeIf(java.util.function.Predicate):Z
+- replaceAll(java.util.function.UnaryOperator):V
+- retainAll(java.util.Collection):Z
+- set(I,java.lang.Object):java.lang.Object
+- f:setModificationUpdateAction(kotlin.jvm.functions.Function1):V
+- f:size():I
+f:com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
+- java.util.LinkedHashSet
+- <init>(java.util.Collection):V
+- add(java.lang.Object):Z
+- addAll(java.util.Collection):Z
+- f:cleanModificationUpdateAction():V
+- clear():V
+- f:getModificationUpdateAction():kotlin.jvm.functions.Function1
+- getSize():I
+- remove(java.lang.Object):Z
+- removeAll(java.util.Collection):Z
+- removeIf(java.util.function.Predicate):Z
+- retainAll(java.util.Collection):Z
+- f:setModificationUpdateAction(kotlin.jvm.functions.Function1):V
+- f:size():I

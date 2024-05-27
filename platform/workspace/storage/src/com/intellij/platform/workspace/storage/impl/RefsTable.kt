@@ -101,7 +101,7 @@ public class ConnectionId private constructor(
   }
 }
 
-public val ConnectionId.isOneToOne: Boolean
+internal val ConnectionId.isOneToOne: Boolean
   get() = this.connectionType == ConnectionType.ONE_TO_ONE || this.connectionType == ConnectionType.ABSTRACT_ONE_TO_ONE
 
 /**

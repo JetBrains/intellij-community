@@ -30,6 +30,7 @@ import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -1078,6 +1079,8 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 }
 
+
 /** This function exposes `brokenConsistency` property to the outside and should be removed along with the property itself */
+@get:ApiStatus.Internal
 public val EntityStorage.isConsistent: Boolean
   get() = !(this as AbstractEntityStorage).brokenConsistency

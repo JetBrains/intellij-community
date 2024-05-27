@@ -165,15 +165,6 @@ e:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
 - s:values():com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType[]
-e:com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
-- java.lang.Enum
-- sf:DISABLED:com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
-- sf:ENABLED:com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
-- s:values():com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode[]
-com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvider
-- a:getMode():com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
 f:com.intellij.platform.workspace.storage.impl.EntityLink
 - <init>(Z,com.intellij.platform.workspace.storage.impl.ConnectionId):V
 - f:component1():Z
@@ -206,8 +197,6 @@ f:com.intellij.platform.workspace.storage.impl.EntityStorageExtensionsKt
 - sf:updateOneToManyParentOfChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
 - sf:updateOneToOneChildOfParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
 - sf:updateOneToOneParentOfChild(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
-f:com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImplKt
-- sf:isConsistent(com.intellij.platform.workspace.storage.EntityStorage):Z
 a:com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 - com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - <init>(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData):V
@@ -241,8 +230,6 @@ a:com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 - f:setId(J):V
 - f:updateChildToParentReferences(java.util.Set):V
 - f:updateReferenceToEntity(java.lang.Class,Z,java.util.List):V
-f:com.intellij.platform.workspace.storage.impl.RefsTableKt
-- sf:isOneToOne(com.intellij.platform.workspace.storage.impl.ConnectionId):Z
 com.intellij.platform.workspace.storage.impl.SoftLinkable
 - a:getLinks():java.util.Set
 - a:index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
@@ -295,34 +282,6 @@ f:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegateM
 - <init>(java.lang.Class):V
 - f:getValue(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,kotlin.reflect.KProperty):java.lang.Object
 - f:setValue(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,kotlin.reflect.KProperty,java.lang.Object):V
-f:com.intellij.platform.workspace.storage.impl.WorkspaceModelDumper
-- sf:INSTANCE:com.intellij.platform.workspace.storage.impl.WorkspaceModelDumper
-- f:simpleEntities(com.intellij.platform.workspace.storage.EntityStorage):java.lang.String
-com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
-com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus$Hit
-- com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
-com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus$ValueChanged
-- com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
-f:com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
-- sf:INSTANCE:com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
-- f:enable():V
-- f:getCacheReset():Z
-- f:getEnabled():Z
-- f:setCacheReset(Z):V
-- f:setEnabled(Z):V
-f:com.intellij.platform.workspace.storage.impl.cache.CachedValue
-- <init>(com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus,java.lang.Object):V
-- f:component1():com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
-- f:component2():java.lang.Object
-- f:copy(com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus,java.lang.Object):com.intellij.platform.workspace.storage.impl.cache.CachedValue
-- bs:copy$default(com.intellij.platform.workspace.storage.impl.cache.CachedValue,com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus,java.lang.Object,I,java.lang.Object):com.intellij.platform.workspace.storage.impl.cache.CachedValue
-- equals(java.lang.Object):Z
-- f:getCacheProcessStatus():com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
-- f:getValue():java.lang.Object
-- hashCode():I
-f:com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
-- <init>(kotlin.sequences.Sequence):V
-- getSize():I
 f:com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceCollectionsKt
 - sf:toMutableWorkspaceList(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 - sf:toMutableWorkspaceSet(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet

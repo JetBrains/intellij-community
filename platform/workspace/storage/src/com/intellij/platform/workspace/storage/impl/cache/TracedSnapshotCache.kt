@@ -24,13 +24,17 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 
+@ApiStatus.Internal
 public data class CachedValue<T>(
   public val cacheProcessStatus: CacheProcessingStatus,
   public val value: T,
 )
 
+@ApiStatus.Internal
 public sealed interface CacheProcessingStatus {
+  @ApiStatus.Internal
   public sealed interface Hit: CacheProcessingStatus
+  @ApiStatus.Internal
   public sealed interface ValueChanged: CacheProcessingStatus
 }
 internal data object CacheHit: CacheProcessingStatus.Hit
@@ -126,6 +130,7 @@ internal fun List<EntityStorageChange>.collapse(): EntityStorageChange {
   return target
 }
 
+@ApiStatus.Internal
 public class ChangeOnVersionedChange(
   private val changes: Sequence<EntityChange<*>>,
 ) : EntityStorageChange {
@@ -227,6 +232,7 @@ internal class ChangeOnWorkspaceBuilderChangeLog(
  * Should be used in tests only.
  */
 @TestOnly
+@ApiStatus.Internal
 public object CacheResetTracker {
   public var enabled: Boolean = false
   public var cacheReset: Boolean = false
