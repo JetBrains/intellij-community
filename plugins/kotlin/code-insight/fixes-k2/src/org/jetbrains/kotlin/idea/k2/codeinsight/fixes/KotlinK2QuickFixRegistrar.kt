@@ -371,6 +371,14 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ActualAnnotationsNotMatchExpectFixFactory.factory)
     }
 
+    private val removePartsFromProperty = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(RemovePartsFromPropertyFixFactory.abstractPropertyWithGetter)
+        registerFactory(RemovePartsFromPropertyFixFactory.abstractPropertyWithInitializer)
+        registerFactory(RemovePartsFromPropertyFixFactory.abstractPropertyWithSetter)
+        registerFactory(RemovePartsFromPropertyFixFactory.inapplicableLateinitModifier)
+        registerFactory(RemovePartsFromPropertyFixFactory.propertyInitializerInInterface)
+    }
+
     private val surroundWithNullCheck = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(SurroundWithNullCheckFixFactory.argumentTypeMismatchFactory)
         registerFactory(SurroundWithNullCheckFixFactory.assignmentTypeMismatchFactory)
@@ -398,6 +406,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         whenStatements,
         typeMismatch,
         needExplicitType,
+        removePartsFromProperty,
         superKeyword,
         surroundWithNullCheck,
         vararg,
