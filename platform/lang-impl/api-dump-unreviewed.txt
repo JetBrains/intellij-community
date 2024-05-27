@@ -23487,7 +23487,8 @@ com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 - documentationTarget(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - documentationTargets(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):java.util.List
 *:com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider
-- a:documentationTarget(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.platform.backend.documentation.DocumentationTarget
+- documentationTarget(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.platform.backend.documentation.DocumentationTarget
+- documentationTargets(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.List
 f:com.intellij.platform.ide.documentation.ActionsKt
 - *sf:DOCUMENTATION_BROWSER:com.intellij.openapi.actionSystem.DataKey
 - sf:DOCUMENTATION_TARGETS:com.intellij.openapi.actionSystem.DataKey

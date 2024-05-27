@@ -12,6 +12,10 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.createMaybeSingletonList;
+
 /**
  * To provide a {@link DocumentationTarget} by a Symbol, either:
  * <ul>
@@ -38,5 +42,17 @@ public interface SymbolDocumentationTargetProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @Nullable DocumentationTarget documentationTarget(@NotNull Project project, @NotNull Symbol symbol);
+  default @Nullable DocumentationTarget documentationTarget(@NotNull Project project, @NotNull Symbol symbol) {
+    throw new IllegalStateException("Override this or documentationTargets(Project, Symbol)");
+  }
+
+  /**
+   * @return targets to handle documentation actions which are invoked on the given {@code symbol}, or an empty list if this provider is
+   * unaware of the given symbol.
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargets(@NotNull Project project, @NotNull Symbol symbol) {
+    return createMaybeSingletonList(documentationTarget(project, symbol));
+  }
 }
