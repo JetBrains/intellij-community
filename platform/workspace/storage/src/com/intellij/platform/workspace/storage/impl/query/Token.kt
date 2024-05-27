@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 internal sealed interface Match {
@@ -73,6 +74,7 @@ internal class MatchWithEntityId(val entityId: EntityId, val basedOn: Match? = n
   }
 }
 
+@ApiStatus.Internal
 public enum class Operation {
   ADDED,
   REMOVED,

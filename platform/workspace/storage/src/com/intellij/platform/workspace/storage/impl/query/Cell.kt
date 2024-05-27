@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.trace.ReadTracker
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 /**
@@ -30,12 +31,13 @@ internal sealed class Cell<T>(val id: CellId) {
   abstract fun data(): T
 }
 
+@ApiStatus.Internal
 public interface Diff<T> {
   public val added: List<T>
   public val removed: List<T>
 }
 
-public class DiffImpl<T>(override val added: List<T>, override val removed: List<T>) : Diff<T>
+internal class DiffImpl<T>(override val added: List<T>, override val removed: List<T>) : Diff<T>
 
 internal class DiffCollectorCell<T>(
   id: CellId,

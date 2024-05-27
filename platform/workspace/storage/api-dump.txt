@@ -342,65 +342,15 @@ f:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex$MutableV
 com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 - a:index(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData,java.lang.Object):V
 - a:remove(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData,java.lang.Object):V
-com.intellij.platform.workspace.storage.impl.query.Diff
-- a:getAdded():java.util.List
-- a:getRemoved():java.util.List
-f:com.intellij.platform.workspace.storage.impl.query.DiffImpl
-- com.intellij.platform.workspace.storage.impl.query.Diff
-- <init>(java.util.List,java.util.List):V
-- getAdded():java.util.List
-- getRemoved():java.util.List
-e:com.intellij.platform.workspace.storage.impl.query.Operation
-- java.lang.Enum
-- sf:ADDED:com.intellij.platform.workspace.storage.impl.query.Operation
-- sf:REMOVED:com.intellij.platform.workspace.storage.impl.query.Operation
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.platform.workspace.storage.impl.query.Operation
-- s:values():com.intellij.platform.workspace.storage.impl.query.Operation[]
-f:com.intellij.platform.workspace.storage.impl.query.QueryId
-- <init>():V
 f:com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEntitiesVersionException
 - java.lang.Exception
 - <init>():V
 f:com.intellij.platform.workspace.storage.impl.serialization.serializer.UnsupportedClassException
 - java.lang.Exception
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
-c:com.intellij.platform.workspace.storage.impl.url.UrlRelativizerImpl
-- com.intellij.platform.workspace.storage.url.UrlRelativizer
-- <init>():V
-- <init>(java.util.List):V
-- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:addBasePathWithProtocols(java.lang.String,java.lang.String):V
-- f:getAllBasePathIdentifiers():java.util.List
-- toAbsoluteUrl(java.lang.String):java.lang.String
-- toRelativeUrl(java.lang.String):java.lang.String
-c:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
-- com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- <init>(I,com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl):V
-- append(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- equals(java.lang.Object):Z
-- getFileName():java.lang.String
-- f:getId():I
-- getParent():com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- getPresentableUrl():java.lang.String
-- getSubTreeFileUrls():java.util.List
-- getUrl():java.lang.String
-- f:getUrlSegments():java.util.List
-- hashCode():I
 f:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt
 - sf:toVirtualFileUrl(java.io.File,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - sf:toVirtualFileUrl(java.nio.file.Path,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-c:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-- com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-- <init>():V
-- p:createVirtualFileUrl(I,com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- findByUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- fromPath(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- f:getCachedVirtualFileUrls():java.util.List
-- getOrCreateFromUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- f:getUrlById(I):java.lang.String
-- f:print():java.lang.String
-- f:processChildrenRecursively(com.intellij.platform.workspace.storage.url.VirtualFileUrl,kotlin.jvm.functions.Function1):Z
 com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 - com.intellij.platform.workspace.storage.EntityStorage
 - a:getManyChildren(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):kotlin.sequences.Sequence
@@ -664,9 +614,6 @@ com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 - com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - a:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - bs:index$default(com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl,I,java.lang.Object):V
-com.intellij.platform.workspace.storage.url.UrlRelativizer
-- a:toAbsoluteUrl(java.lang.String):java.lang.String
-- a:toRelativeUrl(java.lang.String):java.lang.String
 com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:append(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getFileName():java.lang.String
