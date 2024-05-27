@@ -209,3 +209,11 @@ com.intellij.execution.process.AnsiEscapeDecoder$ColoredChunksAcceptor
 - a:coloredChunksAvailable(java.util.List):V
 com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
 - a:coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
+c:com.intellij.execution.process.CapturingProcessAdapter
+- com.intellij.execution.process.ProcessAdapter
+- <init>():V
+- <init>(com.intellij.execution.process.ProcessOutput):V
+- p:addToOutput(java.lang.String,com.intellij.openapi.util.Key):V
+- getOutput():com.intellij.execution.process.ProcessOutput
+- onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
+- processTerminated(com.intellij.execution.process.ProcessEvent):V
