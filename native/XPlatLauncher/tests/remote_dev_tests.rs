@@ -94,16 +94,6 @@ mod tests {
         assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
     }
 
-    #[test]
-    fn remote_dev_jcef_enabled_test() {
-        let test = prepare_test_env(LauncherLocation::RemoteDev);
-        let env = HashMap::from([("REMOTE_DEV_SERVER_JCEF_ENABLED", "0"), ("REMOTE_DEV_SERVER_TRACE", "1")]);
-        let remote_dev_command = &["run", &test.project_dir.display().to_string()];
-        let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
-
-        assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
-    }
-
     #[cfg(target_os = "linux")]
     fn prepare_font_config_dir(dist_root: &PathBuf) {
         let self_contained_root = &dist_root.join("plugins/remote-dev-server/selfcontained");

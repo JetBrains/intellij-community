@@ -207,24 +207,6 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        if parse_bool_env_var("REMOTE_DEV_SERVER_JCEF_ENABLED", false)? {
-            let _ = self.setup_jcef();
-
-            remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
-            remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
-            remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
-        } else {
-            if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
-                if !trace_var.is_empty() {
-                    info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
-                }
-            }
-
-            // Disable JCEF support for now since it does not work in headless environment now
-            // Also see IDEA-241709
-            remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
-        }
-
         match parse_bool_env_var_optional("REMOTE_DEV_JDK_DETECTION")? {
             Some(remote_dev_jdk_detection_value) => {
                 if remote_dev_jdk_detection_value {
@@ -292,16 +274,6 @@ impl RemoteDevLaunchConfiguration {
         writer.flush()?;
 
         Ok(path)
-    }
-
-    #[cfg(target_os = "linux")]
-    fn setup_jcef(&self) -> Result<()> {
-        bail!("XVFB workarounds from linux are not ported yet");
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn setup_jcef(&self) -> Result<()> {
-        Ok(())
     }
 }
 
@@ -433,7 +405,6 @@ impl std::fmt::Display for RemoteDevEnvVars {
 fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
     RemoteDevEnvVars(vec![
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded Chromium) in IDE".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other Linux libraries from plugins/remote-dev-server/self-contained. Use everything from the system. by default bundled libraries are used".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
