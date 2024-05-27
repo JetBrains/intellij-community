@@ -83,17 +83,3 @@ public interface ImmutableEntityStorage : EntityStorage {
 public fun ImmutableEntityStorage.toBuilder(): MutableEntityStorage {
   return MutableEntityStorage.from(this)
 }
-
-/**
- * Convert entity storage to the snapshot. If the storage is a snapshot, return itself.
- *
- * This function is obsolete, use [MutableEntityStorage.toSnapshot].
- */
-@ApiStatus.Obsolete
-public fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
-  return when (this) {
-    is ImmutableEntityStorage -> this
-    is MutableEntityStorage -> this.toSnapshot()
-    else -> error("Unexpected storage: $this")
-  }
-}

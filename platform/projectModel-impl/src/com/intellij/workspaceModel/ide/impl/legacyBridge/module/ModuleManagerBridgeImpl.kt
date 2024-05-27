@@ -677,3 +677,11 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
     setUnloadedModulesTimeCounter, createModuleInstanceTimeCounter, buildModuleGraphTimeCounter, getModulesTimeCounter
   )
 }
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
+  }
+}

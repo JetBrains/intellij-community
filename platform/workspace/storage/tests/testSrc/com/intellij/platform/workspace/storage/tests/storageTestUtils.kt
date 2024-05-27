@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.toSnapshot
 
 fun EntityStorage.checkConsistency() {
   if (this is ImmutableEntityStorageImpl) {
@@ -26,7 +26,12 @@ internal fun createEmptyBuilder(): MutableEntityStorageImpl {
 }
 
 internal fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
-  return MutableEntityStorageImpl(storage.toSnapshot() as ImmutableEntityStorageImpl)
+  val immutable = when (storage) {
+    is ImmutableEntityStorage -> storage
+    is MutableEntityStorage -> storage.toSnapshot()
+    else -> error("Unexpected storage: $storage")
+  }
+  return MutableEntityStorageImpl(immutable as ImmutableEntityStorageImpl)
 }
 
 internal inline fun makeBuilder(from: EntityStorage? = null, action: MutableEntityStorage.() -> Unit): MutableEntityStorageImpl {

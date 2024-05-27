@@ -10,10 +10,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.storage.EntitySource;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.storage.EntityStorageKt;
-import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.*;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -387,8 +384,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
   static <T> T editWorkspaceModel(@NotNull Project project, @NotNull Function<MutableEntityStorage, T> consumer) {
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
-    EntityStorage entityStorage = workspaceModel.getCurrentSnapshot();
-    MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(EntityStorageKt.toSnapshot(entityStorage));
+    ImmutableEntityStorage entityStorage = workspaceModel.getCurrentSnapshot();
+    MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(entityStorage);
     var res = consumer.apply(preliminaryBuilder);
     workspaceModel.updateProjectModel("EntityIndexingServiceTest", storage -> {
       storage.applyChangesFrom(preliminaryBuilder);

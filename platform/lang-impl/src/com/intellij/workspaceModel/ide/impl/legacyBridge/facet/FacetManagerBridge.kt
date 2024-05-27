@@ -295,3 +295,11 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     }
   }
 }
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
+  }
+}
