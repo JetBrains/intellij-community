@@ -13,7 +13,9 @@ import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import javax.swing.JTree
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 
 fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.byType(JTree::class.java),
@@ -47,8 +49,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
-  fun expandAll(timeoutMs: Int) {
-    fixture.expandAll(timeoutMs)
+  fun expandAll(timeout: Duration) {
+    fixture.expandAll(timeout.inWholeMilliseconds.toInt())
   }
 
   fun expandPath(vararg path: String, fullMatch: Boolean = true) = waitFor(10.seconds, errorMessage = "Failed find ${path.toList()}") {
