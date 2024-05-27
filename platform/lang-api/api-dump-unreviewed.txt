@@ -1380,6 +1380,7 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 - f:getOptionToEnabled():java.util.Map
 - f:getProvider():com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 - f:getProviderId():java.lang.String
+- toString():java.lang.String
 com.intellij.codeInsight.hints.declarative.InlayTreeSink
 - a:addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1):V
 - bs:addPresentation$default(com.intellij.codeInsight.hints.declarative.InlayTreeSink,com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):V
