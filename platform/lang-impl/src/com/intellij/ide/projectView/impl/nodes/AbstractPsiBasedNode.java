@@ -44,7 +44,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileTimestamp;
 import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
@@ -70,12 +73,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   protected abstract void updateImpl(@NotNull PresentationData data);
 
-  @Override
   @ApiStatus.Internal
-  public @Nullable Map<String, String> getCacheableAttributes() {
-    var file = getVirtualFile();
-    if (file == null) file = getVirtualFileForValue();
-    return getCacheableAttributesFromFile(file);
+  @Override
+  protected @Nullable VirtualFile getCacheableFile() {
+    var file = super.getCacheableFile();
+    return file != null ? file : getVirtualFileForValue();
   }
 
   @Override
