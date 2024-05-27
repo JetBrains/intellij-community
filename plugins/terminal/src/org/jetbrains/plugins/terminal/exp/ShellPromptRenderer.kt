@@ -163,7 +163,7 @@ internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo)
       // do nothing
     }
 
-    override fun setCursorShape(cursorShape: CursorShape) {
+    override fun setCursorShape(cursorShape: CursorShape?) {
       // do nothing
     }
 
@@ -180,10 +180,6 @@ internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo)
     }
 
     override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
-      // do nothing
-    }
-
-    override fun setBlinkingCursor(isCursorBlinking: Boolean) {
       // do nothing
     }
 
