@@ -161,19 +161,19 @@
     {
       "id": "java",
       "experimentBucketsCount": 2,
-      "includeGroups": [28, 24],
+      "includeGroups": [24, 28],
       "shouldLogElementFeatures": false
     },
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 24, 26],
+      "includeGroups": [24, 26, 28],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 2,
-      "includeGroups": [28, 24],
+      "includeGroups": [24, 28],
       "shouldLogElementFeatures": true
     },
     {
@@ -185,7 +185,7 @@
     {
       "id": "php",
       "experimentBucketsCount": 2,
-      "includeGroups": [28, 24],
+      "includeGroups": [24, 28],
       "shouldLogElementFeatures": false
     },
     {
@@ -197,13 +197,13 @@
     {
       "id": "ruby",
       "experimentBucketsCount": 2,
-      "includeGroups": [28, 24],
+      "includeGroups": [24, 28],
       "shouldLogElementFeatures": true
     },
     {
       "id": "go",
       "experimentBucketsCount": 2,
-      "includeGroups": [28, 24],
+      "includeGroups": [24, 28],
       "shouldLogElementFeatures": true
     },
     {
@@ -251,7 +251,7 @@
     {
       "id": "css",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 24],
+      "includeGroups": [24, 28],
       "shouldLogElementFeatures": true
     },
     {
