@@ -991,7 +991,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.moduleB", "project.moduleB.main", "project.moduleB.test");
 
     assertModuleModuleDeps("project.moduleB.main", "project.moduleA.main");
-    assertModuleLibDeps((actual, expected) -> actual.endsWith(expected), "project.moduleB.main");
+    assertModuleLibDeps("project.moduleB.main");
     assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.main");
   }
 
@@ -1033,7 +1033,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.moduleB", "project.moduleB.main", "project.moduleB.test");
 
     assertModuleModuleDeps("project.moduleB.main", "project.moduleA.main");
-    assertModuleLibDeps((actual, expected) -> actual.endsWith(expected), "project.moduleB.main");
+    assertModuleLibDeps( "project.moduleB.main");
     assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.main");
   }
 
