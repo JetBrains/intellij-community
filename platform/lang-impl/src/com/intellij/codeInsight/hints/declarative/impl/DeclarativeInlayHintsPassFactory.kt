@@ -40,8 +40,12 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     }
 
     fun scheduleRecompute(editor: Editor, project: Project) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, null)
+      resetModificationStamp(editor)
       DaemonCodeAnalyzer.getInstance(project).restart()
+    }
+
+    internal fun resetModificationStamp(editor: Editor) {
+      editor.putUserData(PSI_MODIFICATION_STAMP, null)
     }
 
     private fun getCurrentModificationCount(file: PsiFile) = file.manager.modificationTracker.modificationCount

@@ -50,6 +50,7 @@ private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
     withContext(Dispatchers.EDT) {
       sourceIdToInlayData.forEach {
         DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, it.value, it.key)
+        DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
       }
     }
   }
