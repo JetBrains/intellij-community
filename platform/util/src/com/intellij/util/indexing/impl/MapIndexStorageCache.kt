@@ -6,6 +6,7 @@ import com.intellij.util.containers.SLRUCache
 import com.intellij.util.containers.hash.EqualityPolicy
 import com.intellij.util.io.IOCancellationCallbackHolder
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -52,13 +53,16 @@ object MapIndexStorageCacheSlruProvider: MapIndexStorageCacheProvider {
       MapIndexStorageSlruCache(keyReader, evictionListener, hashingStrategy, cacheSize)
     }
     else {
-      //FIXME RC: this is incorrect implementation -- it doesn't use evictionListener, hence any changes done
-      //          to the ValueContainers obtained through this cache -- will not be saved.
-      MapIndexStoragePassThroughCache(keyReader, evictionListener, hashingStrategy, cacheSize)
+      throw AssertionError("SLRU cache is the only correct implementation available now")
+      //FIXME RC: MapIndexStoragePassThroughCache is an incorrect implementation -- it doesn't use evictionListener, hence
+      //          any changes done to the ValueContainers obtained through this cache -- will not be saved. It could be
+      //          used for _some_ testing scenarios (if you know that you're doing), but in general it is erroneous
+      //MapIndexStoragePassThroughCache(keyReader, evictionListener, hashingStrategy, cacheSize)
     }
   }
 }
 
+@Obsolete
 private class MapIndexStoragePassThroughCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                                           val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                                           hashingStrategy: EqualityPolicy<Key>,
