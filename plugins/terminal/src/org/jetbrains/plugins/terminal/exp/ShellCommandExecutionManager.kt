@@ -118,16 +118,14 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
    * If the command could not be executed right now, then we add it to the queue.
    */
   fun sendCommandToExecute(shellCommand: String) {
-    // in the IDE we use '\n' line separator, but Windows requires '\r\n'
-    val command = shellCommand.replace("\n", System.lineSeparator())
     lock.withLock {
       if (isCommandRunning) {
-        LOG.info("Command '$command' is postponed until currently running command is finished")
+        LOG.info("Command '$shellCommand' is postponed until currently running command is finished")
       }
       if (!isInitialized) {
-        LOG.info("Command '$command' is postponed until `initialized` event is received")
+        LOG.info("Command '$shellCommand' is postponed until `initialized` event is received")
       }
-      scheduledCommands.offer(command)
+      scheduledCommands.offer(shellCommand)
     }
     processQueueIfReady()
   }
@@ -220,6 +218,8 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   private fun doSendCommandToExecute(shellCommand: String, isGenerator: Boolean) {
+    // in the IDE we use '\n' line separator, but Windows requires '\r\n'
+    val adjustedCommand = shellCommand.replace("\n", System.lineSeparator())
     session.terminalStarterFuture.thenAccept { starter ->
       starter ?: return@thenAccept
       val clearPrompt: String = when (session.shellIntegration.shellType) {
@@ -231,7 +231,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
         // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
         else -> "\u0015"
       }
-      TerminalUtil.sendCommandToExecute(clearPrompt + shellCommand, starter)
+      TerminalUtil.sendCommandToExecute(clearPrompt + adjustedCommand, starter)
 
       if (isGenerator) {
         fireGeneratorCommandSent(shellCommand)
