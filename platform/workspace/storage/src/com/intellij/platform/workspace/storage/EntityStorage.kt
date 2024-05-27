@@ -70,6 +70,7 @@ public interface ImmutableEntityStorage : EntityStorage {
    * This function is under development, please don't use it.
    */
   @ApiStatus.Experimental
+  @ApiStatus.Internal
   public fun <T> cached(query: StorageQuery<T>): T
 
   public companion object {

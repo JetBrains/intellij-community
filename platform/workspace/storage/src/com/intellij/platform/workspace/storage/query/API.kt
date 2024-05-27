@@ -4,11 +4,14 @@ package com.intellij.platform.workspace.storage.query
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.query.QueryId
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
+@ApiStatus.Internal
 public inline fun <reified T : WorkspaceEntity> entities(): CollectionQuery<T> = entities(T::class)
 
+@ApiStatus.Internal
 public fun <T: WorkspaceEntity> entities(ofType: KClass<T>): CollectionQuery<T> {
   return CollectionQuery.EachOfType(QueryId(), ofType)
 }
@@ -22,23 +25,28 @@ public fun <T: WorkspaceEntity> entities(ofType: KClass<T>): CollectionQuery<T> 
  * Also, to support this query, we have to store the history of changes of external mappings in cache to make a lazy calculation on call.
  *   This will also lead to objects leak.
  */
+@ApiStatus.Internal
 public fun entitiesByExternalMapping(identifier: String, obj: Any): CollectionQuery<WorkspaceEntity> {
   TODO()
 }
 
+@ApiStatus.Internal
 public fun <T> CollectionQuery<T>.filter(predicate: (T) -> Boolean): CollectionQuery<T> {
   return this.flatMap { item, _ -> if (predicate(item)) setOf(item) else emptySet() }
 }
 
+@ApiStatus.Internal
 public inline fun <reified T> CollectionQuery<*>.filterIsInstance(): CollectionQuery<T> {
   return filter { it != null && it::class.isSubclassOf(T::class) }.map { it as T }
 }
 
+@ApiStatus.Internal
 public fun <T> CollectionQuery<T?>.filterNotNull(): CollectionQuery<T> {
   return filter { it != null }.map { it as T }
 }
 
 
+@ApiStatus.Internal
 public fun <T, K> CollectionQuery<T>.map(mapping: (T) -> K): CollectionQuery<K> {
   // The map function can be represented using the flatMap.
   // This is probably less efficient, but it will reduce the amount of code to implement for now.
@@ -48,6 +56,7 @@ public fun <T, K> CollectionQuery<T>.map(mapping: (T) -> K): CollectionQuery<K> 
   }
 }
 
+@ApiStatus.Internal
 public inline fun <reified T, K> CollectionQuery<T>.mapWithSnapshot(noinline mapping: (T, ImmutableEntityStorage) -> K): CollectionQuery<K> {
   // The map function can be represented using the flatMap.
   // This is probably less efficient, but it will reduce the amount of code to implement for now.
@@ -55,14 +64,17 @@ public inline fun <reified T, K> CollectionQuery<T>.mapWithSnapshot(noinline map
   return this.flatMap { item, snapshot -> setOf(mapping(item, snapshot)) }
 }
 
+@ApiStatus.Internal
 public fun <T, K> CollectionQuery<T>.flatMap(mapping: (T, ImmutableEntityStorage) -> Iterable<K>): CollectionQuery<K> {
   return CollectionQuery.FlatMapTo(this.queryId, this, mapping)
 }
 
+@ApiStatus.Internal
 internal fun <T> CollectionQuery<T>.trackDiff(): CollectionQuery<T>{
   return CollectionQuery.TrackDiff(this.queryId, this)
 }
 
+@ApiStatus.Internal
 public fun <T, K, V> CollectionQuery<T>.groupBy(
   keySelector: (T) -> K,
   valueTransformer: (T) -> V,

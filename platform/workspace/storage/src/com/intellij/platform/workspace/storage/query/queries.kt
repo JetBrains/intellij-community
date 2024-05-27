@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 // Basic interface
+@ApiStatus.Internal
 public sealed interface StorageQuery<T> {
   @get:ApiStatus.Internal
   public val queryId: QueryId
@@ -20,6 +21,7 @@ public sealed interface StorageQuery<T> {
  *
  * Should not be used directly, but via [entities], [map] and other functions.
  */
+@ApiStatus.Internal
 public sealed interface CollectionQuery<T> : StorageQuery<Collection<T>> {
   public class EachOfType<T : WorkspaceEntity> internal constructor(
     override val queryId: QueryId,
@@ -45,6 +47,7 @@ public sealed interface CollectionQuery<T> : StorageQuery<Collection<T>> {
  *
  * Should not be used directly, but via [groupBy] function
  */
+@ApiStatus.Internal
 public sealed interface AssociationQuery<K, V> : StorageQuery<Map<K, V>> {
   public class GroupBy<T, K, V>(
     override val queryId: QueryId,
