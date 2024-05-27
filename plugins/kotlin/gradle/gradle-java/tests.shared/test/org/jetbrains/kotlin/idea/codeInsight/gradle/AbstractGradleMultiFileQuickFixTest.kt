@@ -12,7 +12,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
@@ -55,7 +54,6 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
-                IndexingTestUtil.waitUntilIndexesAreReady(myProject)
 
                 val expected = afterDirectory.toPath().refreshAndGetVirtualDirectory()
 
@@ -81,7 +79,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                 )
             }
 
-            myProject.waitIndexingComplete("indexing new created modules")
+            IndexingTestUtil.waitUntilIndexesAreReady(myProject)
 
             codeInsightTestFixture.doHighlighting()
             DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
