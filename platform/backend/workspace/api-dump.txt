@@ -1,7 +1,3 @@
-f:com.intellij.platform.backend.workspace.UseNewWorkspaceModelApiKt
-- sf:useNewWorkspaceModelApiForUnloadedModules():Z
-- sf:useQueryCacheWorkspaceModelApi():Z
-- sf:useReactiveWorkspaceModelApi():Z
 f:com.intellij.platform.backend.workspace.VirtualFileUrls
 - sf:getVirtualFile(com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.openapi.vfs.VirtualFile
 - sf:toVirtualFileUrl(com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -28,15 +24,3 @@ com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 - changed(com.intellij.platform.workspace.storage.VersionedStorageChange):V
 f:com.intellij.platform.backend.workspace.WorkspaceModelKt
 - sf:getWorkspaceModel(com.intellij.openapi.project.Project):com.intellij.platform.backend.workspace.WorkspaceModel
-f:com.intellij.platform.backend.workspace.WorkspaceModelTopics
-- sf:CHANGED:com.intellij.util.messages.Topic
-- sf:Companion:com.intellij.platform.backend.workspace.WorkspaceModelTopics$Companion
-- sf:UNLOADED_ENTITIES_CHANGED:com.intellij.util.messages.Topic
-- <init>():V
-- f:getModulesAreLoaded():Z
-- f:notifyModulesAreLoaded():V
-f:com.intellij.platform.backend.workspace.WorkspaceModelTopics$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.backend.workspace.WorkspaceModelTopics
-com.intellij.platform.backend.workspace.WorkspaceModelUnloadedStorageChangeListener
-- java.util.EventListener
-- a:changed(com.intellij.platform.workspace.storage.VersionedStorageChange):V

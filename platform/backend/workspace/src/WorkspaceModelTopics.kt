@@ -34,6 +34,7 @@ public interface WorkspaceModelChangeListener : EventListener {
  *
  * See documentation in [WorkspaceModelChangeListener] to understand how events are constructed
  */
+@ApiStatus.Internal
 public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
   /**
    * This method is invoked under Write Action after changes are applied.
@@ -43,6 +44,7 @@ public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
 }
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public class WorkspaceModelTopics {
   public companion object {
     /**
@@ -59,6 +61,7 @@ public class WorkspaceModelTopics {
      */
     @Topic.ProjectLevel
     @JvmField
+    @ApiStatus.Internal
     public val UNLOADED_ENTITIES_CHANGED: Topic<WorkspaceModelUnloadedStorageChangeListener> = Topic(
       WorkspaceModelUnloadedStorageChangeListener::class.java,
       Topic.BroadcastDirection.NONE, true
@@ -69,10 +72,12 @@ public class WorkspaceModelTopics {
   }
 
   @Deprecated("This flag should not be used")
+  @ApiStatus.Internal
   public var modulesAreLoaded: Boolean = false
     private set
 
   @Deprecated("This flag should not be used")
+  @ApiStatus.Internal
   public fun notifyModulesAreLoaded() {
     modulesAreLoaded = true
   }
