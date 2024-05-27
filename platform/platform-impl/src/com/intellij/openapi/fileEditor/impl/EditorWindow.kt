@@ -13,6 +13,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.diagnostic.logger
@@ -43,9 +44,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -133,7 +132,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   fun setAsCurrentWindow(requestFocus: Boolean) {
-    owner.setCurrentWindow(this, requestFocus)
+    owner.setCurrentWindow(window = this, requestFocus = requestFocus)
   }
 
   val isEmptyVisible: Boolean
@@ -175,9 +174,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
    * A composite in a context.
    * For example, if a context menu is shown currently for some tab, the composite for which a menu is invoked will be returned
    */
-  fun getContextComposite(): EditorComposite? {
-    return getSelectedComposite(false)
-  }
+  fun getContextComposite(): EditorComposite? = tabbedPane.tabs.targetInfo?.composite
 
   val allComposites: List<EditorComposite>
     get() = composites().toList()
@@ -360,22 +357,19 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       owner.updateFileIcon(file)
     }
 
-    owner.updateFileColorAsync(file)
+    owner.scheduleUpdateFileColor(file)
+
+    if (options.pin) {
+      setFilePinned(composite = composite, pinned = true)
+    }
 
     if (!isOpenedInBulk) {
       if (options.selectAsCurrent) {
-        setSelectedComposite(file, options.requestFocus)
+        setSelectedComposite(file = file, focusEditor = options.requestFocus)
       }
       updateTabsVisibility()
       owner.validate()
     }
-  }
-
-  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite, requestFocus: Boolean) {
-    composite.selectedEditor?.selectNotify()
-    setSelectedComposite(file = composite.file, focusEditor = requestFocus)
-    updateTabsVisibility()
-    owner.validate()
   }
 
   private fun splitAvailable(): Boolean = tabCount >= 1
@@ -393,12 +387,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       return null
     }
 
-    val fileEditorManager = owner.manager
     if (!forceSplit && inSplitter()) {
       val target = getSiblings()[0]
       if (virtualFile != null) {
         syncCaretIfPossible(
-          fileEditorManager.openFileImpl4(
+          owner.manager.openFileImpl4(
             window = target,
             _file = virtualFile,
             entry = null,
@@ -414,7 +407,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     val splitter = createSplitter(isVertical = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-    val result = EditorWindow(owner = owner, owner.coroutineScope.childScope("EditorWindow"))
+    val result = EditorWindow(owner = owner, coroutineScope = owner.coroutineScope.childScope("EditorWindow"))
     owner.addWindow(result)
     val selectedComposite = selectedComposite
 
@@ -433,15 +426,25 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     // open only selected file in the new splitter instead of opening all tabs
     val nextFile = virtualFile ?: selectedComposite!!.file
-    val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile }
-    val openOptions = FileEditorOpenOptions(requestFocus = focusNew,
-                                            isExactState = true,
-                                            pin = isFileOpen(nextFile) && isFilePinned(nextFile))
-    val editors = fileEditorManager.openFileImpl4(window = result,
-                                                  _file = nextFile,
-                                                  entry = currentState,
-                                                  options = openOptions).allEditors
-    syncCaretIfPossible(editors)
+    val composite = owner.manager.openFileInNewCompositeInEdt(
+      window = result,
+      file = nextFile,
+      entry = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile },
+      options = FileEditorOpenOptions(
+        requestFocus = focusNew,
+        isExactState = true,
+        pin = getComposite(nextFile)?.isPinned ?: false,
+      ),
+    ) ?: return result
+    if (composite is EditorComposite) {
+      composite.coroutineScope.launch {
+        doOnCompositeOpenComplete(composite = composite) {
+          withContext(Dispatchers.EDT) {
+            syncCaretIfPossible(composite.allEditors)
+          }
+        }
+      }
+    }
     if (!focusNew) {
       result.setSelectedComposite(file = selectedComposite!!.file, focusEditor = true)
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
@@ -625,7 +628,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
   }
 
-  fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
+  internal fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
     require(tabCount == 0) { "Tab count expected to be zero" }
     if (EditorEmptyTextPainter.isEnabled() && component.parent === manager.mainSplitters) {
       FileEditorCollector.logEditorEmptyState(manager.project, cause)
@@ -879,12 +882,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     setFilePinned(composite = requireNotNull(getComposite(file)) { "file is not open: $file" }, pinned = pinned)
   }
 
-  internal fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
+  private fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
     val wasPinned = composite.isPinned
     composite.isPinned = pinned
     if (composite.isPreview && pinned) {
       composite.isPreview = false
-      owner.updateFileColorAsync(composite.file)
+      owner.scheduleUpdateFileColor(composite.file)
     }
     if (wasPinned != pinned && EDT.isCurrentThreadEdt()) {
       (tabbedPane.tabs as? JBTabsImpl)?.doLayout()
@@ -893,9 +896,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   fun trimToSize(fileToIgnore: VirtualFile?, transferFocus: Boolean) {
     if (!isDisposed) {
-      doTrimSize(fileToIgnore = fileToIgnore,
-                 closeNonModifiedFilesFirst = UISettings.getInstance().state.closeNonModifiedFilesFirst,
-                 transferFocus = transferFocus)
+      doTrimSize(
+        fileToIgnore = fileToIgnore,
+        closeNonModifiedFilesFirst = UISettings.getInstance().state.closeNonModifiedFilesFirst,
+        transferFocus = transferFocus,
+      )
     }
   }
 
@@ -985,13 +990,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     if (!UISettings.getInstance().reuseNotModifiedTabs || !owner.manager.project.isInitialized) {
       return false
     }
-    if (!isFileOpen(file) || isFilePinned(file)) {
-      return false
-    }
-    if (file == fileToIgnore) {
-      return false
-    }
+
     val composite = getComposite(file) ?: return false
+    if (composite.isPinned || file == fileToIgnore) {
+      return false
+    }
+
     // don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       val owner = IdeFocusManager.getInstance(owner.manager.project).focusOwner

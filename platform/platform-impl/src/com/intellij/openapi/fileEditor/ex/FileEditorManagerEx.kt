@@ -119,10 +119,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     return FileEditorProviderManager.getInstance().getProviderList(project, file).isNotEmpty()
   }
 
-  open suspend fun canOpenFileAsync(file: VirtualFile): Boolean {
-    return FileEditorProviderManager.getInstance().getProvidersAsync(project, file).isNotEmpty()
-  }
-
   abstract val currentFile: VirtualFile?
 
   final override fun getSelectedEditor(file: VirtualFile): FileEditor? = getSelectedEditorWithProvider(file)?.fileEditor

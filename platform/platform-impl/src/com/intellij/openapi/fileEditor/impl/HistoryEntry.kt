@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -17,55 +17,55 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toPersistentList
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
 /**
  * `Heavy` entries should be disposed with [.destroy] to prevent leak of VirtualFilePointer
  */
-internal class HistoryEntry private constructor(@JvmField val filePointer: VirtualFilePointer,
-                                                /**
-                                                 * can be null when read from XML
-                                                 */
-                                                var selectedProvider: FileEditorProvider?,
-                                                @JvmField var isPreview: Boolean,
-                                                private val disposable: Disposable?) {
+internal class HistoryEntry private constructor(
+  @JvmField val filePointer: VirtualFilePointer,
+  /**
+   * can be null when read from XML
+   */
+  @JvmField var selectedProvider: FileEditorProvider?,
+  @JvmField var isPreview: Boolean,
+  private val disposable: Disposable?,
+) {
   // ordered
   private var providerToState = persistentMapOf<FileEditorProvider, FileEditorState>()
 
   val providers: List<FileEditorProvider>
-    get() = providerToState.keys.toPersistentList()
+    get() = java.util.List.copyOf(providerToState.keys)
 
   companion object {
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
 
-    fun createLight(file: VirtualFile,
-                    providers: List<FileEditorProvider?>,
-                    states: List<FileEditorState?>,
-                    selectedProvider: FileEditorProvider,
-                    isPreview: Boolean): HistoryEntry {
+    fun createLight(
+      file: VirtualFile,
+      providers: List<FileEditorProvider?>,
+      states: List<FileEditorState?>,
+      selectedProvider: FileEditorProvider,
+      isPreview: Boolean,
+    ): HistoryEntry {
       val pointer = LightFilePointer(file)
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = selectedProvider,
-                               isPreview = isPreview,
-                               disposable = null)
+      val entry = HistoryEntry(filePointer = pointer, selectedProvider = selectedProvider, isPreview = isPreview, disposable = null)
       for (i in providers.indices) {
         entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
       }
       return entry
     }
 
-    private fun createLight(project: Project,
-                            element: Element,
-                            fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
+    private fun createLight(project: Project, element: Element, fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
       val entryData = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
       val pointer = LightFilePointer(entryData.url)
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = entryData.selectedProvider,
-                               isPreview = entryData.preview,
-                               disposable = null)
+      val entry = HistoryEntry(
+        filePointer = pointer,
+        selectedProvider = entryData.selectedProvider,
+        isPreview = entryData.preview,
+        disposable = null,
+      )
       for (state in entryData.providerStates) {
         entry.putState(state.first, state.second)
       }
@@ -126,7 +126,7 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
   }
 
   fun destroy() {
-    if (disposable != null) Disposer.dispose(disposable)
+    disposable?.let { Disposer.dispose(it) }
   }
 
   /**

@@ -386,7 +386,7 @@ class EditorTabbedContainer internal constructor(
       val composite = (info.component as EditorCompositePanel).composite
       if (composite.isPreview) {
         composite.isPreview = false
-        window.owner.updateFileColorAsync(composite.file)
+        window.owner.scheduleUpdateFileColor(composite.file)
         return
       }
     }
@@ -580,6 +580,7 @@ private class EditorTabs(
   override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.PROJECT.`is`(dataId) -> window.owner.manager.project
+      EditorWindow.DATA_KEY.`is`(dataId) -> window
       PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> window.owner.currentCompositeFlow.value?.selectedEditor
       else -> null
     }

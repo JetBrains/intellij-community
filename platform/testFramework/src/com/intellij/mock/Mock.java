@@ -275,11 +275,6 @@ public final class Mock {
     }
 
     @Override
-    public @Nullable Object canOpenFileAsync(@NotNull VirtualFile file, @NotNull Continuation<? super Boolean> $completion) {
-      return false;
-    }
-
-    @Override
     public VirtualFile @NotNull [] getOpenFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }

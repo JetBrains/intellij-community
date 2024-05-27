@@ -16,6 +16,7 @@ import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.Component
@@ -296,11 +297,20 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     return this
   }
 
-  fun setDefaultForeground(fg: Color?): TabInfo {
-    defaultForeground = fg
+  fun setDefaultForeground(foregroundColor: Color?): TabInfo {
+    defaultForeground = foregroundColor
     defaultAttributes = null
     update()
     return this
+  }
+
+  // avoid calling update several times
+  @Internal
+  fun setDefaultForegroundAndAttributes(foregroundColor: Color?, attributes: TextAttributes?) {
+    defaultForeground = foregroundColor
+    editorAttributes = attributes
+    defaultAttributes = null
+    update()
   }
 
   fun setDefaultAttributes(attributes: TextAttributes?): TabInfo {

@@ -6,11 +6,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.EditorComposite
+import com.intellij.openapi.fileEditor.impl.EditorCompositeModel
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -56,7 +59,11 @@ interface ClientFileEditorManager {
   fun closeFile(file: VirtualFile, closeAllCopies: Boolean)
   fun isFileOpen(file: VirtualFile): Boolean
 
-  fun createComposite(file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>): EditorComposite?
+  fun createComposite(
+    file: VirtualFile,
+    coroutineScope: CoroutineScope,
+    model: Flow<EditorCompositeModel>,
+  ): EditorComposite?
 
   fun getComposite(file: VirtualFile): EditorComposite?
   fun getComposite(editor: FileEditor): EditorComposite?

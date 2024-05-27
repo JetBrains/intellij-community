@@ -12,15 +12,20 @@ import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -28,20 +33,23 @@ import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -54,6 +62,16 @@ import javax.swing.SwingConstants
 
 private val LOG = logger<EditorComposite>()
 
+@Internal
+data class EditorCompositeModel internal constructor(
+  @JvmField val fileEditorAndProviderList: List<FileEditorWithProvider>,
+  @JvmField internal val state: FileEntry?,
+) {
+  @Internal
+  constructor(fileEditorAndProviderList: List<FileEditorWithProvider>)
+    : this(fileEditorAndProviderList = fileEditorAndProviderList, state = null)
+}
+
 /**
  * An abstraction over one or several file editors opened in the same tab (e.g., designer and code-behind).
  * It's a composite that can be pinned in the tab list or opened as a preview, not concrete file editors.
@@ -62,14 +80,18 @@ private val LOG = logger<EditorComposite>()
 @Suppress("LeakingThis")
 open class EditorComposite internal constructor(
   val file: VirtualFile,
-  fileEditorWithProviderList: List<FileEditorWithProvider>,
+  model: Flow<EditorCompositeModel>,
   @JvmField internal val project: Project,
+  @JvmField internal val coroutineScope: CoroutineScope,
+  isLazy: Boolean,
 ) : FileEditorComposite, Disposable {
-  private val clientId: ClientId
+  private val clientId: ClientId = ClientId.current
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
-  private var compositePanel: EditorCompositePanel
-  private val focusWatcher: FocusWatcher
+  private var compositePanel: EditorCompositePanel = EditorCompositePanel(composite = this)
+  private val focusWatcher: FocusWatcher = FocusWatcher().also {
+    it.install(compositePanel)
+  }
 
   private val _selectedEditorWithProvider = MutableStateFlow<FileEditorWithProvider?>(null)
   @JvmField
@@ -85,7 +107,7 @@ open class EditorComposite internal constructor(
   /**
    * Editors opened in the composite
    */
-  private val fileEditorWithProviderList = ContainerUtil.createLockFreeCopyOnWriteList(fileEditorWithProviderList)
+  private val fileEditorWithProviderList = ContainerUtil.createLockFreeCopyOnWriteList<FileEditorWithProvider>()
   private val dispatcher = EventDispatcher.create(EditorCompositeListener::class.java)
 
   internal var selfBorder: Boolean = false
@@ -93,8 +115,30 @@ open class EditorComposite internal constructor(
 
   init {
     EDT.assertIsEdt()
-    clientId = ClientId.current
-    for (editorWithProvider in fileEditorWithProviderList) {
+
+    val shown = if (isLazy) {
+      val shownDeferred = CompletableDeferred<Unit>()
+      UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
+        shownDeferred.complete(Unit)
+      }
+      shownDeferred
+    }
+    else {
+      CompletableDeferred(Unit)
+    }
+
+    coroutineScope.launch {
+      shown.await()
+      model.collect {
+        handleModel(it)
+      }
+    }
+  }
+
+  private suspend fun handleModel(model: EditorCompositeModel) {
+    val fileEditorWithProviders = model.fileEditorAndProviderList
+
+    for (editorWithProvider in fileEditorWithProviders) {
       val editor = editorWithProvider.fileEditor
       FileEditor.FILE_KEY.set(editor, file)
       if (!clientId.isLocal) {
@@ -102,20 +146,123 @@ open class EditorComposite internal constructor(
       }
     }
 
-    compositePanel = EditorCompositePanel(composite = this)
-    if (fileEditorWithProviderList.isNotEmpty()) {
-      if (fileEditorWithProviderList.size > 1) {
-        setTabbedPaneComponent(createTabbedPaneWrapper(component = null))
+    // TODO comment this and log a warning or log something
+    if (fileEditorWithProviders.isEmpty()) {
+      withContext(Dispatchers.EDT) {
+        compositePanel.removeAll()
+        _selectedEditorWithProvider.value = null
       }
-      else {
-        setEditorComponent()
-      }
-
-      _selectedEditorWithProvider.value = fileEditorWithProviderList.get(0)
+      return
     }
 
-    focusWatcher = FocusWatcher()
-    focusWatcher.install(compositePanel)
+    coroutineScope {
+      val startTime = System.nanoTime()
+      val deferredPublishers = async(CoroutineName("FileOpenedSyncListener computing")) {
+        val messageBus = project.messageBus
+        messageBus.syncAndPreloadPublisher(FileOpenedSyncListener.TOPIC) to
+          messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+      }
+      val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+
+      val selectedFileEditor = if (model.state == null) {
+        (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).getSelectedFileEditorProvider(
+          file = file,
+          providers = fileEditorWithProviders.map { it.provider },
+          editorHistoryManager = project.serviceAsync<EditorHistoryManager>(),
+        )
+      }
+      else {
+        model.state.selectedProvider?.let { selectedProvider ->
+          fileEditorWithProviders.firstOrNull { it.provider.editorTypeId == selectedProvider }?.provider
+        }
+      }
+
+      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+
+      span("file opening in EDT and repaint", Dispatchers.EDT) {
+        span("beforeFileOpened event executing") {
+          blockingContext {
+            beforePublisher!!.beforeFileOpened(fileEditorManager, file)
+          }
+        }
+
+        applyFileEditorsInEdt(
+          fileEditorWithProviders = fileEditorWithProviders,
+          model = model,
+          selectedFileEditorProvider = selectedFileEditor,
+        )
+
+        // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
+        // For example, see EditorHistoryManager -
+        // we will get assertion if we return a non-empty list of editors but do not set selected file editor.
+        fileEditorWithProviderList.clear()
+        fileEditorWithProviderList.addAll(fileEditorWithProviders)
+
+        val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
+        blockingContext {
+          goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+          @Suppress("DEPRECATION")
+          deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+        }
+      }
+
+      triggerStatOpen(
+        project = project,
+        file = file,
+        start = startTime,
+        composite = this@EditorComposite,
+        coroutineScope = coroutineScope,
+      )
+
+      val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+      span("fileOpened event executing", Dispatchers.EDT) {
+        blockingContext {
+          publisher.fileOpened(fileEditorManager, file)
+        }
+      }
+    }
+  }
+
+  @RequiresEdt
+  private fun applyFileEditorsInEdt(
+    fileEditorWithProviders: List<FileEditorWithProvider>,
+    model: EditorCompositeModel,
+    selectedFileEditorProvider: FileEditorProvider?,
+  ) {
+    var fileEditorWithProviderToSelect = fileEditorWithProviders.firstOrNull()
+    if (fileEditorWithProviders.size == 1) {
+      setEditorComponent(fileEditorWithProviderToSelect!!.fileEditor)
+    }
+    else {
+      val tabbedPaneWrapper = createTabbedPaneWrapper(component = null, fileEditorWithProviders = fileEditorWithProviders)
+      setTabbedPaneComponent(tabbedPaneWrapper = tabbedPaneWrapper)
+
+      if (selectedFileEditorProvider != null) {
+        val index = fileEditorWithProviders.indexOfFirst { it.provider === selectedFileEditorProvider }
+        if (index != -1) {
+          tabbedPaneWrapper.selectedIndex = index
+          fileEditorWithProviderToSelect = fileEditorWithProviders.get(index)
+        }
+      }
+    }
+
+    for (fileEditorWithProvider in fileEditorWithProviders) {
+      val provider = fileEditorWithProvider.provider
+      val stateData = model.state?.providers?.get(provider.editorTypeId)
+      val state = stateData?.let { provider.readState(stateData, project, file) }
+
+      restoreEditorState(
+        file = file,
+        fileEditorWithProvider = fileEditorWithProvider,
+        storedState = state,
+        isNewEditor = true,
+        exactState = false,
+        project = project,
+      )
+    }
+
+    _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
+    fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
   }
 
   private fun setTabbedPaneComponent(tabbedPaneWrapper: TabbedPaneWrapper) {
@@ -124,10 +271,11 @@ open class EditorComposite internal constructor(
     compositePanel.setComponent(component, focusComponent = { component })
   }
 
-  private fun setEditorComponent() {
-    val editor = fileEditorWithProviderList.single().fileEditor
-    val component = createEditorComponent(editor)
-    compositePanel.setComponent(component, focusComponent = { editor.preferredFocusedComponent })
+  private fun setEditorComponent(fileEditor: FileEditor) {
+    compositePanel.setComponent(
+      newComponent = createEditorComponent(fileEditor),
+      focusComponent = { fileEditor.preferredFocusedComponent },
+    )
   }
 
   @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"), level = DeprecationLevel.ERROR)
@@ -140,13 +288,16 @@ open class EditorComposite internal constructor(
   internal val providerSequence: Sequence<FileEditorProvider>
     get() = fileEditorWithProviderList.asSequence().map { it.provider }
 
-  private fun createTabbedPaneWrapper(component: EditorCompositePanel?): TabbedPaneWrapper {
+  private fun createTabbedPaneWrapper(
+    component: EditorCompositePanel?,
+    fileEditorWithProviders: List<FileEditorWithProvider>,
+  ): TabbedPaneWrapper {
     val descriptor = PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB)
-    val wrapper = TabbedPaneWrapper.createJbTabs(project, SwingConstants.BOTTOM, descriptor, this)
+    val tabbedPane = TabbedPaneWrapper.createJbTabs(project, SwingConstants.BOTTOM, descriptor, this)
     var firstEditor = true
-    for (editorWithProvider in fileEditorWithProviderList) {
+    for (editorWithProvider in fileEditorWithProviders) {
       val editor = editorWithProvider.fileEditor
-      wrapper.addTab(
+      tabbedPane.addTab(
         getDisplayName(editor),
         if (firstEditor && component != null) component.getComponent(0) as JComponent else createEditorComponent(editor),
       )
@@ -154,18 +305,18 @@ open class EditorComposite internal constructor(
     }
 
     // handles changes of selected editor
-    wrapper.addChangeListener {
+    tabbedPane.addChangeListener {
       val selectedIndex = tabbedPaneWrapper!!.selectedIndex
       require(selectedIndex != -1)
-      _selectedEditorWithProvider.value = fileEditorWithProviderList.get(selectedIndex)
+      _selectedEditorWithProvider.value = fileEditorWithProviders.get(selectedIndex)
     }
-    return wrapper
+    return tabbedPane
   }
 
   private fun createEditorComponent(editor: FileEditor): JComponent {
     val component = JPanel(BorderLayout())
     var editorComponent = editor.component
-    if (!FileEditorManagerImpl.isDumbAware(editor)) {
+    if (!isDumbAware(editor)) {
       editorComponent = DumbService.getInstance(project).wrapGently(editorComponent, editor)
     }
     component.add(editorComponent, BorderLayout.CENTER)
@@ -182,9 +333,6 @@ open class EditorComposite internal constructor(
    * @return whether editor composite is pinned
    */
   var isPinned: Boolean = false
-    /**
-     * Sets new "pinned" state
-     */
     set(pinned) {
       field = pinned
        (compositePanel.parent as? JComponent)?.let {
@@ -192,20 +340,18 @@ open class EditorComposite internal constructor(
       }
     }
 
+
+  private val _isPreviewFlow = MutableStateFlow(false)
+  internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
+
   /**
    * Whether the composite is opened as a preview tab or not
    */
-  override var isPreview: Boolean = false
+  override var isPreview: Boolean
+    get() = _isPreviewFlow.value
     set(value) {
-      if (field != value) {
-        field = value
-        _isPreviewFlow.value = value
-      }
+      _isPreviewFlow.value = value
     }
-
-  private val _isPreviewFlow = MutableStateFlow(isPreview)
-
-  internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
 
   fun addListener(listener: EditorCompositeListener, disposable: Disposable?) {
     dispatcher.addListener(listener, disposable!!)
@@ -246,9 +392,7 @@ open class EditorComposite internal constructor(
     return topComponents.get(editor)!!.components.mapNotNull { (it as? NonOpaquePanel)?.targetComponent }
   }
 
-  internal fun containsFileEditor(editor: FileEditor): Boolean {
-    return fileEditorWithProviderList.any { it.fileEditor === editor }
-  }
+  internal fun containsFileEditor(editor: FileEditor): Boolean = fileEditorWithProviderList.any { it.fileEditor === editor }
 
   open val tabs: JBTabs?
     get() = tabbedPaneWrapper?.let { (it.tabbedPane as JBTabsPaneImpl).tabs }
@@ -293,12 +437,11 @@ open class EditorComposite internal constructor(
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)
-      val multicaster = dispatcher.multicaster
       if (top) {
-        multicaster.topComponentAdded(editor, index, component, container)
+        dispatcher.multicaster.topComponentAdded(editor, index, component, container)
       }
       else {
-        multicaster.bottomComponentAdded(editor, index, component, container)
+        dispatcher.multicaster.bottomComponentAdded(editor, index, component, container)
       }
     }
     container.revalidate()
@@ -307,7 +450,7 @@ open class EditorComposite internal constructor(
   fun setDisplayName(editor: FileEditor, name: @NlsContexts.TabTitle String) {
     val index = fileEditorWithProviderList.indexOfFirst { it.fileEditor == editor }
     assert(index != -1)
-    displayNames.set(editor, name)
+    displayNames.put(editor, name)
     tabbedPaneWrapper?.setTitleAt(index, name)
     dispatcher.multicaster.displayNameChanged(editor, name)
   }
@@ -332,13 +475,18 @@ open class EditorComposite internal constructor(
     setSelectedEditor(fileEditorWithProvider)
   }
 
+  internal fun setSelectedEditor(provider: FileEditorProvider) {
+    val fileEditorWithProvider = fileEditorWithProviderList.firstOrNull { it.provider == provider } ?: return
+    setSelectedEditor(fileEditorWithProvider)
+  }
+
   fun setSelectedEditor(editor: FileEditor) {
     val newSelection = fileEditorWithProviderList.firstOrNull { it.fileEditor == editor }
     LOG.assertTrue(newSelection != null, "Unable to find editor=$editor")
     setSelectedEditor(newSelection!!)
   }
 
-  open fun setSelectedEditor(editorWithProvider: FileEditorWithProvider) {
+  fun setSelectedEditor(editorWithProvider: FileEditorWithProvider) {
     if (fileEditorWithProviderList.size == 1) {
       LOG.assertTrue(tabbedPaneWrapper == null)
       LOG.assertTrue(editorWithProvider == fileEditorWithProviderList[0])
@@ -370,14 +518,19 @@ open class EditorComposite internal constructor(
     get() = allEditors.any { it.isModified }
 
   override fun dispose() {
-    _selectedEditorWithProvider.value = null
-    for (editor in fileEditorWithProviderList) {
-      @Suppress("DEPRECATION")
-      if (!Disposer.isDisposed(editor.fileEditor)) {
-        Disposer.dispose(editor.fileEditor)
-      }
+    try {
+      coroutineScope.cancel("disposed")
     }
-    focusWatcher.deinstall(focusWatcher.topComponent)
+    finally {
+      _selectedEditorWithProvider.value = null
+      for (editor in fileEditorWithProviderList) {
+        @Suppress("DEPRECATION")
+        if (!Disposer.isDisposed(editor.fileEditor)) {
+          Disposer.dispose(editor.fileEditor)
+        }
+      }
+      focusWatcher.deinstall(focusWatcher.topComponent)
+    }
   }
 
   @RequiresEdt
@@ -391,11 +544,12 @@ open class EditorComposite internal constructor(
 
     when {
       fileEditorWithProviderList.size == 1 -> {
-        setEditorComponent()
-        _selectedEditorWithProvider.value = fileEditorWithProviderList.get(0)
+        val fileEditorWithProvider = fileEditorWithProviderList.get(0)
+        setEditorComponent(fileEditorWithProvider.fileEditor)
+        _selectedEditorWithProvider.value = fileEditorWithProvider
       }
       tabbedPaneWrapper == null -> {
-        setTabbedPaneComponent(createTabbedPaneWrapper(compositePanel))
+        setTabbedPaneComponent(createTabbedPaneWrapper(compositePanel, fileEditorWithProviderList))
       }
       else -> {
         val component = createEditorComponent(editor)
@@ -411,11 +565,15 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorAdded(editorWithProvider)
   }
 
+  @RequiresEdt
   internal fun removeEditor(editorTypeId: String) {
-    ThreadingAssertions.assertEventDispatchThread()
+    val fileEditorWithProviderList = fileEditorWithProviderList
     for (i in fileEditorWithProviderList.indices.reversed()) {
-      val (fileEditor, provider) = fileEditorWithProviderList[i]
-      if (provider.editorTypeId != editorTypeId) continue
+      val (fileEditor, provider) = fileEditorWithProviderList.get(i)
+      if (provider.editorTypeId != editorTypeId) {
+        continue
+      }
+
       tabbedPaneWrapper?.removeTabAt(i)
       fileEditorWithProviderList.removeAt(i)
       topComponents.remove(fileEditor)
@@ -429,7 +587,7 @@ open class EditorComposite internal constructor(
     }
     else if (fileEditorWithProviderList.size == 1 && tabbedPaneWrapper != null) {
       tabbedPaneWrapper = null
-      setEditorComponent()
+      setEditorComponent(fileEditorWithProviderList.single().fileEditor)
     }
 
     if (selectedEditorWithProvider.value?.provider?.editorTypeId == editorTypeId) {
@@ -440,17 +598,21 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorRemoved(editorTypeId)
   }
 
-  internal fun currentStateAsHistoryEntry(): HistoryEntry {
-    val editors = allEditors
-    val states = editors.map { it.getState(FileEditorStateLevel.FULL) }
-    val selectedProviderIndex = editors.indexOf(selectedEditorWithProvider.value?.fileEditor)
-    LOG.assertTrue(selectedProviderIndex != -1)
+  internal fun currentStateAsHistoryEntry(): HistoryEntry? {
+    if (fileEditorWithProviderList.isEmpty()) {
+      // not initialized
+      return null
+    }
+
+    val states = fileEditorWithProviderList.map { it.fileEditor.getState(FileEditorStateLevel.FULL) }
     val providers = allProviders
-    return HistoryEntry.createLight(file = file,
-                                    providers = providers,
-                                    states = states,
-                                    selectedProvider = providers.get(selectedProviderIndex),
-                                    isPreview = isPreview)
+    return HistoryEntry.createLight(
+      file = file,
+      providers = providers,
+      states = states,
+      selectedProvider = (selectedWithProvider ?: fileEditorWithProviderList.first()).provider,
+      isPreview = isPreview,
+    )
   }
 
   internal fun writeCurrentStateAsHistoryEntry(project: Project): Element {
@@ -492,9 +654,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        // no window - not visible
-        val editorWindow = UIUtil.getParentOfType(EditorWindowHolder::class.java, this@EditorCompositePanel)?.editorWindow ?: return
-        editorWindow.coroutineScope.launch(Dispatchers.EDT) {
+        composite.coroutineScope.launch(Dispatchers.EDT) {
           if (!hasFocus()) {
             return@launch
           }
@@ -618,4 +778,37 @@ fun retrofitEditorComposite(composite: FileEditorComposite?): com.intellij.opena
   else {
     return com.intellij.openapi.util.Pair(composite.allEditors.toTypedArray(), composite.allProviders.toTypedArray())
   }
+}
+
+internal fun restoreEditorState(
+  file: VirtualFile,
+  fileEditorWithProvider: FileEditorWithProvider,
+  isNewEditor: Boolean,
+  storedState: FileEditorState?,
+  exactState: Boolean,
+  project: Project,
+) {
+  var state = storedState
+  if (state == null) {
+    if (isNewEditor) {
+      // We have to try to get state from the history only in case of the editor is not opened.
+      // Otherwise, history entry might have a state out of sync with the current editor state.
+      state = EditorHistoryManager.getInstance(project).getState(file, fileEditorWithProvider.provider)
+    }
+    if (state == null) {
+      return
+    }
+  }
+
+  val editor = fileEditorWithProvider.fileEditor
+  if (isDumbAware(editor)) {
+    editor.setState(state, exactState)
+  }
+  else {
+    DumbService.getInstance(project).runWhenSmart { editor.setState(state, exactState) }
+  }
+}
+
+private fun isDumbAware(editor: FileEditor): Boolean {
+  return editor.getUserData(DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
 }

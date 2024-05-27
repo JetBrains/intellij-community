@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
@@ -81,15 +81,19 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   /**
    * Makes file the most recent one
    */
-  private fun fileOpenedImpl(file: VirtualFile, fallbackEditor: FileEditor?, fallbackProvider: FileEditorProvider?) {
+  private fun fileOpenedImpl(
+    file: VirtualFile,
+    fallbackEditor: FileEditor?,
+    fallbackProvider: FileEditorProvider?,
+    fileEditorManager: FileEditorManagerEx,
+  ) {
     ThreadingAssertions.assertEventDispatchThread()
     // don't add files that cannot be found via VFM (light & etc.)
     if (file !is IncludeInEditorHistoryFile && VirtualFileManager.getInstance().findFileByUrl(file.url) == null) {
       return
     }
 
-    val editorManager = FileEditorManagerEx.getInstanceExIfCreated(project) ?: return
-    val editorComposite = editorManager.getComposite(file)
+    val editorComposite = fileEditorManager.getComposite(file)
     var editors = editorComposite?.allEditors ?: emptyList()
     var oldProviders = editorComposite?.allProviders ?: emptyList()
     LOG.assertTrue(editors.size == oldProviders.size, "Different number of editors and providers")
@@ -102,10 +106,20 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       return
     }
 
-    val selectedEditor = editorManager.getSelectedEditor(file) ?: fallbackEditor
-    LOG.assertTrue(selectedEditor != null)
-    val selectedProviderIndex = editors.indexOf(selectedEditor)
-    LOG.assertTrue(selectedProviderIndex != -1, "Can't find $selectedEditor among $editors")
+    val selectedProvider = if (editorComposite is EditorComposite) {
+      editorComposite.selectedWithProvider?.provider ?: oldProviders.first()
+    }
+    else {
+      val selectedEditor = fileEditorManager.getSelectedEditorWithProvider(file) ?: fallbackEditor
+      val selectedProviderIndex = selectedEditor?.let { editors.indexOf(it) } ?: -1
+      if (selectedProviderIndex == -1) {
+        LOG.error("Can't find $selectedEditor among $editors")
+        oldProviders.first()
+      }
+      else {
+        oldProviders.get(selectedProviderIndex)
+      }
+    }
 
     getEntry(file)?.let {
       moveOnTop(it)
@@ -114,38 +128,44 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     val states = arrayOfNulls<FileEditorState>(editors.size)
     val providers = arrayOfNulls<FileEditorProvider>(editors.size)
-    for (i in editors.indices.reversed()) {
-      providers[i] = oldProviders[i]
-      val editor = editors[i]
+    for (index in editors.indices.reversed()) {
+      providers[index] = oldProviders[index]
+      val editor = editors[index]
       if (editor.isValid) {
-        states[i] = editor.getState(FileEditorStateLevel.FULL)
+        states[index] = editor.getState(FileEditorStateLevel.FULL)
       }
     }
-    val entry = HistoryEntry.createHeavy(project = project,
-                                         file = file,
-                                         providers = providers.asList(),
-                                         states = states.asList(),
-                                         selectedProvider = providers.get(selectedProviderIndex)!!,
-                                         preview = editorComposite != null && editorComposite.isPreview)
+    val entry = HistoryEntry.createHeavy(
+      project = project,
+      file = file,
+      providers = providers.asList(),
+      states = states.asList(),
+      selectedProvider = selectedProvider,
+      preview = editorComposite != null && editorComposite.isPreview,
+    )
     synchronized(this) {
       entries.add(entry)
+      trimToSize()
     }
-    trimToSize()
   }
 
   fun updateHistoryEntry(file: VirtualFile, changeEntryOrderOnly: Boolean) {
-    updateHistoryEntry(fileEditorManager = FileEditorManagerEx.getInstanceEx(project),
-                       file = file,
-                       fileEditor = null,
-                       fileEditorProvider = null,
-                       changeEntryOrderOnly = changeEntryOrderOnly)
+    updateHistoryEntry(
+      fileEditorManager = FileEditorManagerEx.getInstanceEx(project),
+      file = file,
+      fileEditor = null,
+      fileEditorProvider = null,
+      changeEntryOrderOnly = changeEntryOrderOnly,
+    )
   }
 
-  private fun updateHistoryEntry(fileEditorManager: FileEditorManagerEx,
-                                 file: VirtualFile,
-                                 fileEditor: FileEditor?,
-                                 fileEditorProvider: FileEditorProvider?,
-                                 changeEntryOrderOnly: Boolean) {
+  private fun updateHistoryEntry(
+    fileEditorManager: FileEditorManagerEx,
+    file: VirtualFile,
+    fileEditor: FileEditor?,
+    fileEditorProvider: FileEditorProvider?,
+    changeEntryOrderOnly: Boolean,
+  ) {
     val editors: List<FileEditor>
     val providers: List<FileEditorProvider>
     var preview = false
@@ -170,7 +190,12 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       // The size of an entry list can be less than the number of opened editors (some entries can be removed)
       if (file.isValid) {
         // the file could have been deleted, so the isValid() check is essential
-        fileOpenedImpl(file, fileEditor, fileEditorProvider)
+        fileOpenedImpl(
+          file = file,
+          fallbackEditor = fileEditor,
+          fallbackProvider = fileEditorProvider,
+          fileEditorManager = fileEditorManager,
+        )
       }
       return
     }
@@ -260,7 +285,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
    */
   @Synchronized
   private fun trimToSize() {
-    val limit = getInstance().recentFilesLimit + 1
+    val limit = UISettings.getInstance().recentFilesLimit + 1
     while (entries.size > limit) {
       entries.removeAt(0).destroy()
     }
@@ -327,7 +352,12 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
    */
   private inner class MyEditorManagerListener : FileEditorManagerListener {
     override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-      fileOpenedImpl(file = file, fallbackEditor = null, fallbackProvider = null)
+      fileOpenedImpl(
+        file = file,
+        fallbackEditor = null,
+        fallbackProvider = null,
+        fileEditorManager = source as? FileEditorManagerEx ?: return,
+      )
     }
 
     override fun selectionChanged(event: FileEditorManagerEvent) {

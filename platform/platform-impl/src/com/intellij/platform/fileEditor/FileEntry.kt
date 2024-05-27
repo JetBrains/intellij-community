@@ -49,7 +49,7 @@ internal fun writeWindow(result: Element, window: EditorWindow) {
   for (composite in window.composites()) {
     val fileElement = Element("file")
     fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project = window.manager.project))
-    if (window.isFilePinned(composite.file)) {
+    if (composite.isPinned) {
       fileElement.setAttribute(PINNED, "true")
     }
     if (composite != window.selectedComposite) {

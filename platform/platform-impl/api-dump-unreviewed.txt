@@ -6936,28 +6936,12 @@ f:com.intellij.ide.lightEdit.project.LightEditDumbService
 - waitForSmartMode():V
 - wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
 - wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
-f:com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
+c:com.intellij.ide.lightEdit.project.LightEditFileEditorManagerBase
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-- createEditorComposite(com.intellij.ide.lightEdit.LightEditorInfo):com.intellij.openapi.fileEditor.impl.EditorComposite
-- getAllEditors(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
-- getComposite(com.intellij.openapi.fileEditor.FileEditor):com.intellij.openapi.fileEditor.impl.EditorComposite
-- getComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorComposite
-- getCurrentFile():com.intellij.openapi.vfs.VirtualFile
-- getEditorsWithProviders(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.Pair
-- getOpenFiles():com.intellij.openapi.vfs.VirtualFile[]
-- getSelectedEditor():com.intellij.openapi.fileEditor.FileEditor
-- getSelectedEditorWithProvider(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-- getSelectedFiles():com.intellij.openapi.vfs.VirtualFile[]
-- getSelectedTextEditor():com.intellij.openapi.editor.Editor
-- getState():org.jdom.Element
-- hasOpenFiles():Z
-- hasOpenedFile():Z
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:internalInit(kotlin.coroutines.Continuation):java.lang.Object
-- isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
-- loadState(org.jdom.Element):V
-- openFileImpl2(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions):com.intellij.openapi.fileEditor.FileEditorComposite
 f:com.intellij.ide.lightEdit.project.LightEditProjectManager
 - sf:Companion:com.intellij.ide.lightEdit.project.LightEditProjectManager$Companion
 - <init>():V
@@ -15750,7 +15734,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - <init>():V
 - addSelectionRecord(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.EditorWindow):V
 - canOpenFile(com.intellij.openapi.vfs.VirtualFile):Z
-- canOpenFileAsync(com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - a:changeSplitterOrientation():V
 - a:closeAllFiles():V
 - a:closeFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.EditorWindow):V
@@ -15918,7 +15901,7 @@ c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:setPinned(Z):V
 - setPreview(Z):V
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.FileEditor):V
-- setSelectedEditor(com.intellij.openapi.fileEditor.ex.FileEditorWithProvider):V
+- f:setSelectedEditor(com.intellij.openapi.fileEditor.ex.FileEditorWithProvider):V
 - f:setSelectedEditor(java.lang.String):V
 c:com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 - <init>():V
@@ -16027,7 +16010,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:isFilePinned(com.intellij.openapi.vfs.VirtualFile):Z
 - f:isShowing():Z
 - f:isValid():Z
-- f:logEmptyStateIfMainSplitter(com.intellij.featureStatistics.fusCollectors.FileEditorCollector$EmptyStateCause):V
 - f:removeFromSplitter():V
 - f:requestFocus(Z):V
 - f:restoreClosedTab():V

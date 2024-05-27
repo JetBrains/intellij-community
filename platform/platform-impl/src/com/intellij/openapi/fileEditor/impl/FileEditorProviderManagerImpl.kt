@@ -197,8 +197,19 @@ class FileEditorProviderManagerImpl
   }
 
   internal fun getSelectedFileEditorProvider(composite: EditorComposite, project: Project): FileEditorProvider? {
-    val provider = EditorHistoryManager.getInstance(project).getSelectedProvider(composite.file)
-    val providers = composite.allProviders
+    return getSelectedFileEditorProvider(
+      file = composite.file,
+      providers = composite.allProviders,
+      editorHistoryManager = EditorHistoryManager.getInstance(project),
+    )
+  }
+
+  internal fun getSelectedFileEditorProvider(
+    file: VirtualFile,
+    providers: List<FileEditorProvider>,
+    editorHistoryManager: EditorHistoryManager,
+  ): FileEditorProvider? {
+    val provider = editorHistoryManager.getSelectedProvider(file)
     if (provider != null || providers.size < 2) {
       return provider
     }
