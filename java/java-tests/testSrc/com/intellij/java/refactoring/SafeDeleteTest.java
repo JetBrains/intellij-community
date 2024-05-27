@@ -8,6 +8,7 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -33,6 +34,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk21();
   }
 
   @NotNull
@@ -134,6 +140,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testAccidentalPropertyRef() throws Exception {
     doSingleFileTest();
   }
 
