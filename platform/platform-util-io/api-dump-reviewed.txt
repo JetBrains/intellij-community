@@ -200,3 +200,12 @@ c:com.intellij.execution.configurations.PtyCommandLine
 - withOptions(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.configurations.PtyCommandLine
 - withUnixOpenTtyToPreserveOutputAfterTermination(Z):com.intellij.execution.configurations.PtyCommandLine
 - withUseCygwinLaunch(Z):com.intellij.execution.configurations.PtyCommandLine
+c:com.intellij.execution.process.AnsiEscapeDecoder
+- <init>():V
+- escapeText(java.lang.String,com.intellij.openapi.util.Key,com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor):V
+- p:getCurrentOutputAttributes(com.intellij.openapi.util.Key):com.intellij.openapi.util.Key
+com.intellij.execution.process.AnsiEscapeDecoder$ColoredChunksAcceptor
+- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
+- a:coloredChunksAvailable(java.util.List):V
+com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
+- a:coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
