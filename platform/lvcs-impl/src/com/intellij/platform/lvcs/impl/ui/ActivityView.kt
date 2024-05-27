@@ -109,7 +109,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     changesSplitter.firstComponent = mainComponent
     changesSplitter.secondComponent = changesBrowser
 
-    val diffSplitter = OnePixelSplitter(false, "lvcs.diff.splitter.horizontal", 0.2f)
+    val diffSplitter = OnePixelSplitter(false,
+                                        if (changesBrowser != null) "lvcs.diff.with.changes.splitter.horizontal" else "lvcs.diff.with.list.splitter.horizontal",
+                                        if (changesBrowser != null) 0.4f else 0.2f)
     diffSplitter.firstComponent = changesSplitter
     diffSplitter.secondComponent = frameDiffPreview?.component
 
@@ -119,6 +121,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       override fun onSelectionChanged(selection: ActivitySelection) {
         model.setSelection(selection)
       }
+
       override fun onEnter(): Boolean = showDiff()
       override fun onDoubleClick(): Boolean = showDiff()
     }, this)
@@ -127,15 +130,18 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         activityList.updateEmptyText(true)
         progressStripe.startLoading()
       }
+
       override fun onItemsLoadingStopped(data: ActivityData) {
         activityList.setData(data)
         activityList.updateEmptyText(false)
         progressStripe.stopLoading()
       }
+
       override fun onFilteringStarted() {
         filterProgress.startLoading(false)
         activityList.updateEmptyText(true)
       }
+
       override fun onFilteringStopped(result: Set<ActivityItem>?) {
         filterProgress.stopLoading()
         activityList.setVisibleItems(result)
@@ -152,7 +158,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     model.diffMode = currentDiffMode
 
     isFocusCycleRoot = true
-    focusTraversalPolicy = object: ComponentsListFocusTraversalPolicy() {
+    focusTraversalPolicy = object : ComponentsListFocusTraversalPolicy() {
       override fun getOrderedComponents(): List<Component> {
         return listOfNotNull(activityList, changesBrowser?.preferredFocusedComponent, searchField.textComponent,
                              frameDiffPreview?.preferredFocusedComponent)
@@ -178,6 +184,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       override fun onDiffDataLoadingStarted() {
         changesBrowser.loadingStarted()
       }
+
       override fun onDiffDataLoadingStopped(diffData: ActivityDiffData?) {
         changesBrowser.loadingFinished(diffData)
       }
@@ -221,7 +228,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       }
       FilterKind.CONTENT -> SearchFieldComponent.MultiLine().also { field ->
         field.containerComponent.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT),
-                                                              field.containerComponent.border))
+                                                                 field.containerComponent.border))
         field.textComponent.emptyText.text = LocalHistoryBundle.message("activity.filter.empty.text.content")
 
         dumbAwareAction { selectNextOccurence(true) }.registerCustomShortcutSet(Utils.shortcutSetOf(
@@ -380,11 +387,13 @@ private fun dumbAwareAction(runnable: () -> Unit): DumbAwareAction {
 private sealed interface SearchFieldComponent {
   val containerComponent: JPanel
   val textComponent: JTextComponent
-  class SingleLine: SearchFieldComponent {
+
+  class SingleLine : SearchFieldComponent {
     override val containerComponent = SearchTextField("Lvcs.FileFilter.History")
     override val textComponent: JBTextField get() = containerComponent.textEditor
   }
-  class MultiLine: SearchFieldComponent {
+
+  class MultiLine : SearchFieldComponent {
     private val textArea = JBTextArea()
     override val containerComponent = SearchTextArea(textArea, true)
     override val textComponent = textArea
