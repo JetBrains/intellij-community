@@ -35,6 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
@@ -99,7 +100,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
         }
       }
 
-      List<String> inconsistencies = new ArrayList<>();
+      LimitedErrorsList<String> inconsistencies = new LimitedErrorsList<>(64);
       for (long substrate : inputSubstrates) {
         var input = inputDataGenerator.unpackSubstrate(substrate);
         int expectedInputId = input.inputId;
@@ -120,9 +121,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
       assertTrue(
         inconsistencies.isEmpty(),
-        () -> {
-          return "\n\t" + String.join("\n\t", inconsistencies);
-        }
+        () -> inconsistencies.dump()
       );
     }
     finally {
@@ -155,7 +154,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       }
     }
 
-    List<String> inconsistencies = new ArrayList<>();
+    LimitedErrorsList<String> inconsistencies = new LimitedErrorsList<>(64);
     //re-open:
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
       for (long substrate : inputSubstrates) {
@@ -178,9 +177,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
       assertTrue(
         inconsistencies.isEmpty(),
-        () -> {
-          return "\n\t" + String.join("\n\t", inconsistencies);
-        }
+        () -> inconsistencies.dump()
       );
     }
     finally {
@@ -225,7 +222,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       }
 
       //check empty:
-      List<String> inconsistencies = new ArrayList<>();
+      LimitedErrorsList<String> inconsistencies = new LimitedErrorsList<>(64);
       for (long substrate : inputSubstrates) {
         var input = inputDataGenerator.unpackSubstrate(substrate);
         for (Map.Entry<K, V> e : input.inputData.entrySet()) {
@@ -239,9 +236,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
       assertTrue(
         inconsistencies.isEmpty(),
-        () -> {
-          return "\n\t" + String.join("\n\t", inconsistencies);
-        }
+        () -> inconsistencies.dump()
       );
     }
     finally {
@@ -281,7 +276,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
         forwardIndex.put(inputId, serializedData);
       }
 
-      List<String> inconsistencies = new ArrayList<>();
+      LimitedErrorsList<String> inconsistencies = new LimitedErrorsList<>(64);
       for (long substrate : inputSubstrates) {
         var input = inputDataGenerator.unpackSubstrate(substrate);
         int inputId = input.inputId;
@@ -303,9 +298,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
       assertTrue(
         inconsistencies.isEmpty(),
-        () -> {
-          return "\n\t" + String.join("\n\t", inconsistencies);
-        }
+        () -> inconsistencies.dump()
       );
     }
     finally {
@@ -345,7 +338,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       }
     }
 
-    List<String> inconsistencies = new ArrayList<>();
+    LimitedErrorsList<String> inconsistencies = new LimitedErrorsList<>(64);
     //re-open:
     try (ForwardIndex forwardIndex = storageLayout.openForwardIndex()) {
       for (long substrate : inputSubstrates) {
@@ -371,9 +364,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
       assertTrue(
         inconsistencies.isEmpty(),
-        () -> {
-          return "\n\t" + String.join("\n\t", inconsistencies);
-        }
+        () -> inconsistencies.dump()
       );
     }
     finally {
@@ -578,7 +569,6 @@ public abstract class IndexStorageLayoutProviderTestBase {
       }
 
 
-
       private static final class KeyGenerator {
         private final Random rnd = new Random();
 
@@ -766,6 +756,39 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
         return setups.map(setup -> Arguments.of(setup.extension, setup.inputDataGenerator));
       }
+    }
+  }
+
+  /** It could be too many errors => risk of very slow test, and OoM */
+  static class LimitedErrorsList<T> {
+    private final int maxErrorsToKeep;
+    private final List<T> errors = new ArrayList<>();
+    private int errorsCount = 0;
+
+    LimitedErrorsList(int maxErrorsToKeep) {
+      this.maxErrorsToKeep = maxErrorsToKeep;
+    }
+
+    public void add(T error) {
+      if (errorsCount < maxErrorsToKeep) {
+        errors.add(error);
+      }
+      errorsCount++;
+    }
+
+    public boolean isEmpty() {
+      return errors.isEmpty();
+    }
+
+    public String dump() {
+      String title;
+      if (errorsCount <= maxErrorsToKeep) {
+        title = errorsCount + " errors";
+      }
+      else {
+        title = errorsCount + " errors (first " + maxErrorsToKeep + " shown)";
+      }
+      return title + "\n\t" + errors.stream().map(Object::toString).collect(joining("\n\t"));
     }
   }
 }
