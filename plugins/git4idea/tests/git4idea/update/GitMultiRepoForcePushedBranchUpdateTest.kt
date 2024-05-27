@@ -58,6 +58,8 @@ class GitMultiRepoForcePushedBranchUpdateTest : GitForcePushedBranchUpdateBaseTe
     makeCommit("localFile3.txt")
     makeCommit("localFile4.txt")
 
+    updateChangeListManager()
+
     val updateExecutor = project.service<GitForcePushedBranchUpdateExecutor>()
     updateExecutor.updateCurrentBranch()
     updateExecutor.waitForUpdate()

@@ -45,6 +45,8 @@ class GitSingleRepoForcePushedBranchUpdateTest : GitForcePushedBranchUpdateBaseT
     val commitsBeforeUpdate = repository.commitsFrom("origin/master..master")
     assertTrue(commitsBeforeUpdate.size == 2)
 
+    updateChangeListManager()
+
     val updateExecutor = project.service<GitForcePushedBranchUpdateExecutor>()
     updateExecutor.updateCurrentBranch()
     updateExecutor.waitForUpdate()
@@ -77,6 +79,8 @@ class GitSingleRepoForcePushedBranchUpdateTest : GitForcePushedBranchUpdateBaseT
     val commitsBeforeUpdate = repository.commitsFrom("origin/master..master")
     assertTrue(commitsBeforeUpdate.size == 4)
     assertTrue(commitsBeforeUpdate.first().isMergeCommit)
+
+    updateChangeListManager()
 
     val updateExecutor = project.service<GitForcePushedBranchUpdateExecutor>()
     updateExecutor.updateCurrentBranch()
