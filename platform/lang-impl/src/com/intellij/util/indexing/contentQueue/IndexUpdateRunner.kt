@@ -142,8 +142,9 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
                 // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
                 // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
-                indexOneFileOfJob(indexingJob)
-                indexingJob.oneMoreFileProcessed() // indexOneFileOfJob may throw, then this line is not executed, and this is what we need.
+                if (indexOneFileOfJob(indexingJob)) {
+                  indexingJob.oneMoreFileProcessed()
+                }
 
                 if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
                   // TODO: suspend, not block
@@ -158,12 +159,12 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   }
 
   @Throws(ProcessCanceledException::class)
-  private fun indexOneFileOfJob(indexingJob: IndexingJob) {
+  private fun indexOneFileOfJob(indexingJob: IndexingJob): Boolean {
     val startTime = System.nanoTime()
 
     val fileIndexingJob = indexingJob.myQueueOfFiles.poll()
     if (fileIndexingJob == null) {
-      return
+      return false
     }
 
     try {
@@ -203,6 +204,8 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   To reindex this file IDEA has to be restarted
   """.trimIndent(), e)
     }
+
+    return true
   }
 
   @ApiStatus.Internal
