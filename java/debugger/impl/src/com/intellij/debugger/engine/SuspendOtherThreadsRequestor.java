@@ -152,11 +152,9 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
       return false;
     }
     ParametersForSuspendAllReplacing needToResume;
-    synchronized (process.myEvaluationStateLock) { // here can be any (same object) lock just to synchronize this place
-      needToResume = process.myParametersForSuspendAllReplacing;
-      if (needToResume != null) {
-        process.myParametersForSuspendAllReplacing = null;
-      }
+    needToResume = process.myParametersForSuspendAllReplacing;
+    if (needToResume != null) {
+      process.myParametersForSuspendAllReplacing = null;
     }
     if (needToResume != null) {
       enableRequest(process, needToResume);
@@ -167,9 +165,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
   private static long getNumberOfEvaluations(DebugProcessImpl process) {
     SuspendManager suspendManager = process.getSuspendManager();
-    synchronized (process.myEvaluationStateLock) {
-      return suspendManager.getEventContexts().stream().filter(c -> c.isEvaluating()).count();
-    }
+    return suspendManager.getEventContexts().stream().filter(c -> c.isEvaluating()).count();
   }
 
 
