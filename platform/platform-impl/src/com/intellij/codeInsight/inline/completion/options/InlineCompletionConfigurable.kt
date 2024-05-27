@@ -33,10 +33,8 @@ class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigura
       configurables.forEachIndexed { index, configurable ->
         appendDslConfigurable(configurable)
         if (index != configurables.lastIndex) {
-          repeat(2) {
-            row {
-              cell(Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)))
-            }
+          row {
+            cell(Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)))
           }
         }
       }
