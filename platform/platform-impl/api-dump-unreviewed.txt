@@ -5218,12 +5218,6 @@ a:com.intellij.ide.actions.SplitAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.SplitHorizontallyAction
-- com.intellij.ide.actions.SplitAction
-- <init>():V
-f:com.intellij.ide.actions.SplitVerticallyAction
-- com.intellij.ide.actions.SplitAction
-- <init>():V
 a:com.intellij.ide.actions.SplitterAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

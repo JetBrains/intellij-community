@@ -252,16 +252,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   fun getSelectedProvider(file: VirtualFile): FileEditorProvider? = getEntry(file)?.selectedProvider
 
   @Synchronized
-  private fun getEntry(file: VirtualFile): HistoryEntry? {
-    for (i in entries.indices.reversed()) {
-      val entry = entries.get(i)
-      val entryFile = entry.file
-      if (file == entryFile) {
-        return entry
-      }
-    }
-    return null
-  }
+  private fun getEntry(file: VirtualFile): HistoryEntry? = entries.lastOrNull { it.file == file  }
 
   /**
    * If total number of files in history more than `UISettings.RECENT_FILES_LIMIT`

@@ -2414,7 +2414,7 @@ com.intellij.openapi.editor.event.EditorEventMulticaster
 - a:removeEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - a:removeSelectionListener(com.intellij.openapi.editor.event.SelectionListener):V
 - a:removeVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener):V
-c:com.intellij.openapi.editor.event.EditorFactoryEvent
+f:com.intellij.openapi.editor.event.EditorFactoryEvent
 - java.util.EventObject
 - <init>(com.intellij.openapi.editor.EditorFactory,com.intellij.openapi.editor.Editor):V
 - getEditor():com.intellij.openapi.editor.Editor
