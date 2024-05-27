@@ -173,3 +173,15 @@ f:com.intellij.execution.configurations.ParamsGroup
 - getParameters():java.util.List
 - getParametersList():com.intellij.execution.configurations.ParametersList
 - toString():java.lang.String
+f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
+- s:findAllExeFilesInPath(java.lang.String):java.util.List
+- s:findAllExeFilesInPath(java.lang.String,java.io.FileFilter):java.util.List
+- s:findExecutableInPathOnAnyOS(java.lang.String):java.io.File
+- s:findExecutableInWindowsPath(java.lang.String):java.lang.String
+- s:findExecutableInWindowsPath(java.lang.String,java.lang.String):java.lang.String
+- s:findInPath(java.lang.String):java.io.File
+- s:findInPath(java.lang.String,java.io.FileFilter):java.io.File
+- s:findInPath(java.lang.String,java.lang.String,java.io.FileFilter):java.io.File
+- s:getPathDirs(java.lang.String):java.util.List
+- s:getPathVariableValue():java.lang.String
+- s:getWindowsExecutableFileExtensions():java.util.List
