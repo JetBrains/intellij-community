@@ -6,7 +6,7 @@ import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.TableUtil
 import com.intellij.util.ArrayUtil
-import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView
 import java.util.*
 
@@ -26,14 +26,14 @@ internal class MoveTableItemRunnable internal constructor(val delta: Int, val ta
     if (idx.isEmpty()) return
     if (idx[0] + delta < 0) return
     if (idx[idx.size - 1] + delta > rowCount) return
-    val elementsToSelect = mutableListOf<GitRebaseTodoModel.Element<*>>()
+    val elementsToSelect = mutableListOf<GitRebaseEntry>()
     for (i in idx) {
-      elementsToSelect.add(table.model.getElement(i))
+      elementsToSelect.add(table.model.getElement(i).entry)
       table.model.exchangeRows(i, i + delta)
     }
     val indexesToSelect = mutableListOf<Int>()
     for (i in 0 until table.model.rowCount) {
-      if (elementsToSelect.contains(table.model.getElement(i))) {
+      if (elementsToSelect.contains(table.model.getElement(i).entry)) {
         indexesToSelect.add(i)
       }
     }
