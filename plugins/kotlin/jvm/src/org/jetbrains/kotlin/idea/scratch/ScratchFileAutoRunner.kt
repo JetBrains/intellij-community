@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
@@ -19,17 +18,19 @@ import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.scratch.ui.findScratchFileEditorWithPreview
 
 class ScratchFileAutoRunner(private val project: Project) : DocumentListener, Disposable {
+
     companion object {
+
         fun addListener(project: Project, editor: TextEditor) {
             if (editor.getScratchFile() != null) {
-                editor.editor.document.addDocumentListener(getInstance(project))
-                Disposer.register(editor, Disposable {
-                    editor.editor.document.removeDocumentListener(getInstance(project))
-                })
+                editor.editor
+                    .document
+                    .addDocumentListener(
+                        project.service<ScratchFileAutoRunner>(),
+                        editor,
+                    )
             }
         }
-
-        private fun getInstance(project: Project): ScratchFileAutoRunner = project.service()
 
         const val AUTO_RUN_DELAY_IN_SECONDS = 2
     }
