@@ -1,0 +1,14 @@
+// FILE: gradle/libs.versions.toml
+[libraries]
+aaa_bb<caret>b-ccc = { module = "org.junit.jupiter:junit-jupiter"}
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(libs.aaa.bbb.ccc)
+}
