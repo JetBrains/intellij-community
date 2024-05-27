@@ -217,3 +217,20 @@ c:com.intellij.execution.process.CapturingProcessAdapter
 - getOutput():com.intellij.execution.process.ProcessOutput
 - onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
 - processTerminated(com.intellij.execution.process.ProcessEvent):V
+c:com.intellij.execution.process.CapturingProcessHandler
+- com.intellij.execution.process.OSProcessHandler
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.lang.Process,java.nio.charset.Charset,java.lang.String):V
+- p:createProcessAdapter(com.intellij.execution.process.ProcessOutput):com.intellij.execution.process.CapturingProcessAdapter
+- getCharset():java.nio.charset.Charset
+- runProcess():com.intellij.execution.process.ProcessOutput
+- runProcess(I):com.intellij.execution.process.ProcessOutput
+- runProcess(I,Z):com.intellij.execution.process.ProcessOutput
+- runProcessWithProgressIndicator(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
+- runProcessWithProgressIndicator(com.intellij.openapi.progress.ProgressIndicator,I):com.intellij.execution.process.ProcessOutput
+- runProcessWithProgressIndicator(com.intellij.openapi.progress.ProgressIndicator,I,Z):com.intellij.execution.process.ProcessOutput
+c:com.intellij.execution.process.CapturingProcessHandler$Silent
+- com.intellij.execution.process.CapturingProcessHandler
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.lang.Process,java.nio.charset.Charset,java.lang.String):V
+- p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
