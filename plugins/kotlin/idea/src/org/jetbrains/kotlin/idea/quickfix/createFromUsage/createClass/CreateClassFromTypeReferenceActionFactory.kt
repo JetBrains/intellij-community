@@ -40,7 +40,7 @@ object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<K
                 ClassKind.INTERFACE,
                 if (typeRefParent.classExpected()) ClassKind.PLAIN_CLASS else null
             )
-            else -> ClassKind.values().filter {
+            else -> ClassKind.entries.filter {
                 val noTypeArguments = element.typeArgumentsAsTypes.isEmpty()
                 when (it) {
                     ClassKind.OBJECT -> noTypeArguments && isQualifier

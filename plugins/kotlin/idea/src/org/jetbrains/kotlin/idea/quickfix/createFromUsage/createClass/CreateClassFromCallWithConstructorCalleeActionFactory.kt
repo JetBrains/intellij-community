@@ -52,16 +52,16 @@ object CreateClassFromCallWithConstructorCalleeActionFactory : CreateClassFromUs
         val anyType = module.builtIns.nullableAnyType
         val valueArguments = element.valueArguments
         val defaultParamName = if (valueArguments.size == 1) "value" else null
-        val parameterInfos = valueArguments.map {
+        val parameterInfos = valueArguments.map { expr ->
             ParameterInfo(
-                it.getArgumentExpression()?.let { TypeInfo(it, Variance.IN_VARIANCE) } ?: TypeInfo(anyType, Variance.IN_VARIANCE),
-                it.getArgumentName()?.asName?.asString() ?: defaultParamName
+                expr.getArgumentExpression()?.let { TypeInfo(it, Variance.IN_VARIANCE) } ?: TypeInfo(anyType, Variance.IN_VARIANCE),
+                expr.getArgumentName()?.asName?.asString() ?: defaultParamName
             )
         }
 
         val typeArgumentInfos = when {
             isAnnotation -> Collections.emptyList()
-            else -> element.typeArguments.mapNotNull { it.typeReference?.let { TypeInfo(it, Variance.INVARIANT) } }
+            else -> element.typeArguments.mapNotNull { arg -> arg.typeReference?.let { TypeInfo(it, Variance.INVARIANT) } }
         }
 
         return ClassInfo(

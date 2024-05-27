@@ -64,10 +64,10 @@ object CreateClassFromReferenceExpressionActionFactory : CreateClassFromUsageFac
 
             if (!name.checkClassName()) return emptyList()
 
-            return ClassKind.values().filter {
+            return ClassKind.entries.filter {
                 when (it) {
                     ClassKind.ANNOTATION_CLASS -> inImport
-                    ClassKind.ENUM_ENTRY -> inImport && targetParents.any { isEnum(it) }
+                    ClassKind.ENUM_ENTRY -> inImport && targetParents.any { parent -> isEnum(parent) }
                     else -> true
                 }
             }

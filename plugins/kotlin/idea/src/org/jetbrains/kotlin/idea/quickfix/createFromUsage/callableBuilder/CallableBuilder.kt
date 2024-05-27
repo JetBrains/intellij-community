@@ -112,7 +112,7 @@ class TypeCandidate(val theType: KotlinType, scope: HierarchicalScope? = null) {
         }
     }
 
-    override fun toString() = theType.toString()
+    override fun toString(): String = theType.toString()
 }
 
 data class RenderedTypeParameter(
@@ -141,7 +141,7 @@ sealed class CallablePlacement {
 class CallableBuilder(val config: CallableBuilderConfiguration) {
     private var finished: Boolean = false
 
-    val currentFileContext = config.currentFile.analyzeWithContent()
+    val currentFileContext: BindingContext = config.currentFile.analyzeWithContent()
 
     private lateinit var _currentFileModule: ModuleDescriptor
     val currentFileModule: ModuleDescriptor
@@ -262,13 +262,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             when (placement) {
                 is CallablePlacement.NoReceiver -> {
                     containingElement = placement.containingElement
-                    receiverClassDescriptor = with(placement.containingElement) {
-                        when (this) {
-                            is KtClassOrObject -> currentFileContext[BindingContext.CLASS, this]
-                            is PsiClass -> getJavaClassDescriptor()
+                    receiverClassDescriptor =
+                        when (containingElement) {
+                            is KtClassOrObject -> currentFileContext[BindingContext.CLASS, containingElement]
+                            is PsiClass -> containingElement.getJavaClassDescriptor()
                             else -> null
                         }
-                    }
                 }
                 is CallablePlacement.WithReceiver -> {
                     val theType = placement.receiverTypeCandidate.theType
@@ -277,7 +276,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     val classDeclaration = receiverClassDescriptor?.let { DescriptorToSourceUtils.getSourceFromDescriptor(it) }
                     containingElement = if (!config.isExtension && classDeclaration != null) classDeclaration else config.currentFile
                 }
-                else -> throw IllegalArgumentException("Placement wan't initialized")
+                else -> throw IllegalArgumentException("Placement wasn't initialized")
             }
             val receiverType = receiverClassDescriptor?.defaultType?.let {
                 if (nullableReceiver) it.makeNullable() else it
@@ -307,10 +306,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     }
                 }
                 containingFileEditor = dialog.editor
-                with(containingFileEditor.settings) {
-                    additionalColumnsCount = config.currentEditor!!.settings.getRightMargin(project)
-                    additionalLinesCount = 5
-                }
+                containingFileEditor.settings.additionalColumnsCount = config.currentEditor!!.settings.getRightMargin(project)
+                containingFileEditor.settings.additionalLinesCount = 5
                 ktFileToEdit = PsiDocumentManager.getInstance(project).getPsiFile(containingFileEditor.document) as KtFile
                 ktFileToEdit.analysisContext = config.currentFile
                 dialog
@@ -457,194 +454,192 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         }
 
         private fun createDeclarationSkeleton(): KtNamedDeclaration {
-            with(config) {
-                val assignmentToReplace =
-                    if (containingElement is KtBlockExpression && (callableInfo as? PropertyInfo)?.writable == true) {
-                        originalElement as KtBinaryExpression
-                    } else null
-                val pointerOfAssignmentToReplace = assignmentToReplace?.createSmartPointer()
+            val assignmentToReplace =
+                if (containingElement is KtBlockExpression && (callableInfo as? PropertyInfo)?.writable == true) {
+                    config.originalElement as KtBinaryExpression
+                } else null
+            val pointerOfAssignmentToReplace = assignmentToReplace?.createSmartPointer()
 
-                val ownerTypeString = if (isExtension) {
-                    val renderedType = receiverTypeCandidate!!.renderedTypes.first()
-                    val isFunctionType = receiverTypeCandidate.theType.constructor.declarationDescriptor is FunctionClassDescriptor
-                    if (isFunctionType) "($renderedType)." else "$renderedType."
-                } else ""
+            val ownerTypeString = if (config.isExtension) {
+                val renderedType = receiverTypeCandidate!!.renderedTypes.first()
+                val isFunctionType = receiverTypeCandidate.theType.constructor.declarationDescriptor is FunctionClassDescriptor
+                if (isFunctionType) "($renderedType)." else "$renderedType."
+            } else ""
 
-                val classKind = (callableInfo as? ClassWithPrimaryConstructorInfo)?.classInfo?.kind
+            val classKind = (callableInfo as? ClassWithPrimaryConstructorInfo)?.classInfo?.kind
 
-                fun renderParamList(): String {
-                    val prefix = if (classKind == ClassKind.ANNOTATION_CLASS) "val " else ""
-                    val list = callableInfo.parameterInfos.indices.joinToString(", ") { i -> "${prefix}p$i: Any" }
-                    return if (callableInfo.parameterInfos.isNotEmpty()
-                        || callableInfo.kind == CallableKind.FUNCTION
-                        || callableInfo.kind == CallableKind.CONSTRUCTOR
-                    ) "($list)" else list
-                }
-
-                val paramList = when (callableInfo.kind) {
-                    CallableKind.FUNCTION, CallableKind.CLASS_WITH_PRIMARY_CONSTRUCTOR, CallableKind.CONSTRUCTOR ->
-                        renderParamList()
-                    CallableKind.PROPERTY -> ""
-                }
-                val returnTypeString = if (skipReturnType || assignmentToReplace != null) "" else ": Any"
-                val header = "$ownerTypeString${callableInfo.name.quoteIfNeeded()}$paramList$returnTypeString"
-
-                val psiFactory = KtPsiFactory(currentFile.project)
-
-                val modifiers = buildString {
-                    val modifierList = callableInfo.modifierList?.copied() ?: psiFactory.createEmptyModifierList()
-                    val visibilityKeyword = modifierList.visibilityModifierType()
-                    if (visibilityKeyword == null) {
-                        val defaultVisibility =
-                            CreateFromUsageUtil.modifierToString(CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
-                                containingElement,
-                                callableInfo.isAbstract,
-                                isExtension,
-                                (callableInfo.kind == CallableKind.CONSTRUCTOR),
-                                originalElement
-                            ))
-                        append(defaultVisibility)
-                        if (isNotEmpty()) append(" ")
-                    }
-
-                    // TODO: Get rid of isAbstract
-                    if (callableInfo.isAbstract
-                        && containingElement is KtClass
-                        && !containingElement.isInterface()
-                        && !modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)
-                    ) {
-                        modifierList.appendModifier(KtTokens.ABSTRACT_KEYWORD)
-                    }
-
-                    val text = modifierList.normalize().text
-                    if (text.isNotEmpty()) {
-                        append("$text ")
-                    }
-                }
-
-                val isExpectClassMember by lazy {
-                    containingElement is KtClassOrObject && containingElement.resolveToDescriptorIfAny()?.isExpect ?: false
-                }
-
-                val declaration: KtNamedDeclaration = when (callableInfo.kind) {
-                    CallableKind.FUNCTION, CallableKind.CONSTRUCTOR -> {
-                        val body = when {
-                            callableInfo is ConstructorInfo -> if (callableInfo.withBody) "{\n\n}" else ""
-                            callableInfo.isAbstract -> ""
-                            containingElement is KtClass && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
-                            containingElement is KtObjectDeclaration && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
-                            containingElement is KtObjectDeclaration && containingElement.isCompanion() &&
-                                    containingElement.parents.match(KtClassBody::class, last = KtClass::class)
-                                        ?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true -> ""
-                            isExpectClassMember -> ""
-                            else -> "{\n\n}"
-
-                        }
-                        @Suppress("USELESS_CAST") // KT-10755
-                        when {
-                            callableInfo is FunctionInfo -> {
-                                val braces = if (isStartTemplate) "<>" else ""
-                                psiFactory.createFunction("${modifiers}fun$braces $header $body") as KtNamedDeclaration
-                            }
-                            (callableInfo as ConstructorInfo).isPrimary -> {
-                                val constructorText = if (modifiers.isNotEmpty()) "${modifiers}constructor$paramList" else paramList
-                                psiFactory.createPrimaryConstructor(constructorText) as KtNamedDeclaration
-                            }
-                            else -> psiFactory.createSecondaryConstructor("${modifiers}constructor$paramList $body") as KtNamedDeclaration
-                        }
-                    }
-                    CallableKind.CLASS_WITH_PRIMARY_CONSTRUCTOR -> {
-                        val classWithPrimaryConstructorInfo = callableInfo as ClassWithPrimaryConstructorInfo
-                        with(classWithPrimaryConstructorInfo.classInfo) {
-                            val classBody = when (kind) {
-                                ClassKind.ANNOTATION_CLASS, ClassKind.ENUM_ENTRY -> ""
-                                else -> "{\n\n}"
-                            }
-                            val safeName = name.quoteIfNeeded()
-                            when (kind) {
-                                ClassKind.ENUM_ENTRY -> {
-                                    val targetParent = applicableParents.singleOrNull()
-                                    if (!(targetParent is KtClass && targetParent.isEnum())) {
-                                        throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
-                                            .withPsiAttachment("targetParent", targetParent)
-                                    }
-                                    val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
-                                    psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
-                                }
-                                else -> {
-                                    val openMod = if (open && kind != ClassKind.INTERFACE) "open " else ""
-                                    val innerMod = if (inner || isInsideInnerOrLocalClass()) "inner " else ""
-                                    val typeParamList = when (kind) {
-                                        ClassKind.PLAIN_CLASS, ClassKind.INTERFACE -> "<>"
-                                        else -> ""
-                                    }
-                                    val ctor =
-                                        classWithPrimaryConstructorInfo.primaryConstructorVisibility?.name?.let { " $it constructor" } ?: ""
-                                    psiFactory.createDeclaration<KtClassOrObject>(
-                                        "$openMod$innerMod${kind.keyword} $safeName$typeParamList$ctor$paramList$returnTypeString $classBody"
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    CallableKind.PROPERTY -> {
-                        val isVar = (callableInfo as PropertyInfo).writable
-                        val const = if (callableInfo.isConst) "const " else ""
-                        val valVar = if (isVar) "var" else "val"
-                        val braces = if (isStartTemplate) "<>" else ""
-                        val accessors = if (isExtension && !isExpectClassMember) {
-                            buildString {
-                                append("\nget() {}")
-                                if (isVar) {
-                                    append("\nset(value) {}")
-                                }
-                            }
-                        } else ""
-                        psiFactory.createProperty("$modifiers$const$valVar$braces $header$accessors")
-                    }
-                }
-
-                callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
-
-                val newInitializer = pointerOfAssignmentToReplace?.element
-                if (newInitializer != null) {
-                    (declaration as KtProperty).initializer = newInitializer.right
-                    return newInitializer.replace(declaration) as KtCallableDeclaration
-                }
-
-                val container = if (containingElement is KtClass && callableInfo.isForCompanion) {
-                    containingElement.getOrCreateCompanionObject()
-                } else containingElement
-                val declarationInPlace = CreateFromUsageUtil.placeDeclarationInContainer(declaration, container, config.originalElement, ktFileToEdit)
-
-                if (declarationInPlace is KtSecondaryConstructor) {
-                    val containingClass = declarationInPlace.containingClassOrObject!!
-                    val primaryConstructorParameters = containingClass.primaryConstructorParameters
-                    if (primaryConstructorParameters.isNotEmpty()) {
-                        declarationInPlace.replaceImplicitDelegationCallWithExplicit(true)
-                    } else if ((receiverClassDescriptor as ClassDescriptor).getSuperClassOrAny().constructors
-                            .all { it.valueParameters.isNotEmpty() }
-                    ) {
-                        declarationInPlace.replaceImplicitDelegationCallWithExplicit(false)
-                    }
-                    if (declarationInPlace.valueParameters.size > primaryConstructorParameters.size) {
-                        val hasCompatibleTypes = primaryConstructorParameters.zip(callableInfo.parameterInfos).all { (primary, secondary) ->
-                            val primaryType = currentFileContext[BindingContext.TYPE, primary.typeReference] ?: return@all false
-                            val secondaryType = computeTypeCandidates(secondary.typeInfo).firstOrNull()?.theType ?: return@all false
-                            secondaryType.isSubtypeOf(primaryType)
-                        }
-                        if (hasCompatibleTypes) {
-                            val delegationCallArgumentList = declarationInPlace.getDelegationCall().valueArgumentList
-                            primaryConstructorParameters.forEach {
-                                val name = it.name
-                                if (name != null) delegationCallArgumentList?.addArgument(psiFactory.createArgument(name))
-                            }
-                        }
-                    }
-                }
-
-                return declarationInPlace
+            fun renderParamList(): String {
+                val prefix = if (classKind == ClassKind.ANNOTATION_CLASS) "val " else ""
+                val list = callableInfo.parameterInfos.indices.joinToString(", ") { i -> "${prefix}p$i: Any" }
+                return if (callableInfo.parameterInfos.isNotEmpty()
+                    || callableInfo.kind == CallableKind.FUNCTION
+                    || callableInfo.kind == CallableKind.CONSTRUCTOR
+                ) "($list)" else list
             }
+
+            val paramList = when (callableInfo.kind) {
+                CallableKind.FUNCTION, CallableKind.CLASS_WITH_PRIMARY_CONSTRUCTOR, CallableKind.CONSTRUCTOR ->
+                    renderParamList()
+                CallableKind.PROPERTY -> ""
+            }
+            val returnTypeString = if (skipReturnType || assignmentToReplace != null) "" else ": Any"
+            val header = "$ownerTypeString${callableInfo.name.quoteIfNeeded()}$paramList$returnTypeString"
+
+            val psiFactory = KtPsiFactory(config.currentFile.project)
+
+            val modifiers = buildString {
+                val modifierList = callableInfo.modifierList?.copied() ?: psiFactory.createEmptyModifierList()
+                val visibilityKeyword = modifierList.visibilityModifierType()
+                if (visibilityKeyword == null) {
+                    val defaultVisibility =
+                        CreateFromUsageUtil.modifierToString(CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
+                            containingElement,
+                            callableInfo.isAbstract,
+                            config.isExtension,
+                            (callableInfo.kind == CallableKind.CONSTRUCTOR),
+                            config.originalElement
+                        ))
+                    append(defaultVisibility)
+                    if (isNotEmpty()) append(" ")
+                }
+
+                // TODO: Get rid of isAbstract
+                if (callableInfo.isAbstract
+                    && containingElement is KtClass
+                    && !containingElement.isInterface()
+                    && !modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)
+                ) {
+                    modifierList.appendModifier(KtTokens.ABSTRACT_KEYWORD)
+                }
+
+                val text = modifierList.normalize().text
+                if (text.isNotEmpty()) {
+                    append("$text ")
+                }
+            }
+
+            val isExpectClassMember by lazy {
+                containingElement is KtClassOrObject && containingElement.resolveToDescriptorIfAny()?.isExpect ?: false
+            }
+
+            val declaration: KtNamedDeclaration = when (callableInfo.kind) {
+                CallableKind.FUNCTION, CallableKind.CONSTRUCTOR -> {
+                    val body = when {
+                        callableInfo is ConstructorInfo -> if (callableInfo.withBody) "{\n\n}" else ""
+                        callableInfo.isAbstract -> ""
+                        containingElement is KtClass && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
+                        containingElement is KtObjectDeclaration && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
+                        containingElement is KtObjectDeclaration && containingElement.isCompanion() &&
+                                containingElement.parents.match(KtClassBody::class, last = KtClass::class)
+                                    ?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true -> ""
+                        isExpectClassMember -> ""
+                        else -> "{\n\n}"
+
+                    }
+                    @Suppress("USELESS_CAST") // KT-10755
+                    when {
+                        callableInfo is FunctionInfo -> {
+                            val braces = if (isStartTemplate) "<>" else ""
+                            psiFactory.createFunction("${modifiers}fun$braces $header $body") as KtNamedDeclaration
+                        }
+                        (callableInfo as ConstructorInfo).isPrimary -> {
+                            val constructorText = if (modifiers.isNotEmpty()) "${modifiers}constructor$paramList" else paramList
+                            psiFactory.createPrimaryConstructor(constructorText) as KtNamedDeclaration
+                        }
+                        else -> psiFactory.createSecondaryConstructor("${modifiers}constructor$paramList $body") as KtNamedDeclaration
+                    }
+                }
+                CallableKind.CLASS_WITH_PRIMARY_CONSTRUCTOR -> {
+                    val classWithPrimaryConstructorInfo = callableInfo as ClassWithPrimaryConstructorInfo
+                    with(classWithPrimaryConstructorInfo.classInfo) {
+                        val classBody = when (kind) {
+                            ClassKind.ANNOTATION_CLASS, ClassKind.ENUM_ENTRY -> ""
+                            else -> "{\n\n}"
+                        }
+                        val safeName = name.quoteIfNeeded()
+                        when (kind) {
+                            ClassKind.ENUM_ENTRY -> {
+                                val targetParent = applicableParents.singleOrNull()
+                                if (!(targetParent is KtClass && targetParent.isEnum())) {
+                                    throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
+                                        .withPsiAttachment("targetParent", targetParent)
+                                }
+                                val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
+                                psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
+                            }
+                            else -> {
+                                val openMod = if (open && kind != ClassKind.INTERFACE) "open " else ""
+                                val innerMod = if (inner || isInsideInnerOrLocalClass()) "inner " else ""
+                                val typeParamList = when (kind) {
+                                    ClassKind.PLAIN_CLASS, ClassKind.INTERFACE -> "<>"
+                                    else -> ""
+                                }
+                                val ctor =
+                                    classWithPrimaryConstructorInfo.primaryConstructorVisibility?.name?.let { " $it constructor" } ?: ""
+                                psiFactory.createDeclaration<KtClassOrObject>(
+                                    "$openMod$innerMod${kind.keyword} $safeName$typeParamList$ctor$paramList$returnTypeString $classBody"
+                                )
+                            }
+                        }
+                    }
+                }
+                CallableKind.PROPERTY -> {
+                    val isVar = (callableInfo as PropertyInfo).writable
+                    val const = if (callableInfo.isConst) "const " else ""
+                    val valVar = if (isVar) "var" else "val"
+                    val braces = if (isStartTemplate) "<>" else ""
+                    val accessors = if (config.isExtension && !isExpectClassMember) {
+                        buildString {
+                            append("\nget() {}")
+                            if (isVar) {
+                                append("\nset(value) {}")
+                            }
+                        }
+                    } else ""
+                    psiFactory.createProperty("$modifiers$const$valVar$braces $header$accessors")
+                }
+            }
+
+            callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
+
+            val newInitializer = pointerOfAssignmentToReplace?.element
+            if (newInitializer != null) {
+                (declaration as KtProperty).initializer = newInitializer.right
+                return newInitializer.replace(declaration) as KtCallableDeclaration
+            }
+
+            val container = if (containingElement is KtClass && callableInfo.isForCompanion) {
+                containingElement.getOrCreateCompanionObject()
+            } else containingElement
+            val declarationInPlace = CreateFromUsageUtil.placeDeclarationInContainer(declaration, container, config.originalElement, ktFileToEdit)
+
+            if (declarationInPlace is KtSecondaryConstructor) {
+                val containingClass = declarationInPlace.containingClassOrObject!!
+                val primaryConstructorParameters = containingClass.primaryConstructorParameters
+                if (primaryConstructorParameters.isNotEmpty()) {
+                    declarationInPlace.replaceImplicitDelegationCallWithExplicit(true)
+                } else if ((receiverClassDescriptor as ClassDescriptor).getSuperClassOrAny().constructors
+                        .all { it.valueParameters.isNotEmpty() }
+                ) {
+                    declarationInPlace.replaceImplicitDelegationCallWithExplicit(false)
+                }
+                if (declarationInPlace.valueParameters.size > primaryConstructorParameters.size) {
+                    val hasCompatibleTypes = primaryConstructorParameters.zip(callableInfo.parameterInfos).all { (primary, secondary) ->
+                        val primaryType = currentFileContext[BindingContext.TYPE, primary.typeReference] ?: return@all false
+                        val secondaryType = computeTypeCandidates(secondary.typeInfo).firstOrNull()?.theType ?: return@all false
+                        secondaryType.isSubtypeOf(primaryType)
+                    }
+                    if (hasCompatibleTypes) {
+                        val delegationCallArgumentList = declarationInPlace.getDelegationCall().valueArgumentList
+                        primaryConstructorParameters.forEach {
+                            val name = it.name
+                            if (name != null) delegationCallArgumentList?.addArgument(psiFactory.createArgument(name))
+                        }
+                    }
+                }
+            }
+
+            return declarationInPlace
         }
 
         private fun getTypeParameterRenames(scope: HierarchicalScope): Map<TypeParameterDescriptor, String> {
@@ -656,7 +651,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 .toCollection(allTypeParametersNotInScope)
 
             if (!skipReturnType) {
-                computeTypeCandidates(callableInfo.returnTypeInfo).asSequence().flatMapTo(allTypeParametersNotInScope) {
+                computeTypeCandidates(callableInfo.returnTypeInfo).flatMapTo(allTypeParametersNotInScope) {
                     it.typeParameters.asSequence()
                 }
             }
@@ -731,7 +726,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val bodyText = getFunctionBodyTextFromTemplate(
                 func.project,
                 TemplateKind.FUNCTION,
-                if (callableInfo.name.isNotEmpty()) callableInfo.name else null,
+                callableInfo.name.ifEmpty { null },
                 if (skipReturnType) "Unit" else (func as? KtFunction)?.typeReference?.text ?: "",
                 receiverClassDescriptor?.importableFqName ?: receiverClassDescriptor?.name?.let { FqName.topLevel(it) }
             )
@@ -809,8 +804,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val typeParameterMap = HashMap<String, List<RenderedTypeParameter>>()
 
             val mandatoryTypeParameters = ArrayList<RenderedTypeParameter>()
-            //receiverTypeCandidate?.let { mandatoryTypeParameters.addAll(it.renderedTypeParameters!!) }
-            mandatoryTypeParametersAsCandidates.asSequence().flatMapTo(mandatoryTypeParameters) { it.renderedTypeParameters!!.asSequence() }
+            mandatoryTypeParametersAsCandidates.flatMapTo(mandatoryTypeParameters) { it.renderedTypeParameters!!.asSequence() }
 
             callableInfo.parameterInfos.asSequence()
                 .flatMap { typeCandidates[it.typeInfo]!!.asSequence() }
@@ -1119,7 +1113,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 }
 
 
-fun KtNamedDeclaration.getReturnTypeReference() = getReturnTypeReferences().singleOrNull()
+fun KtNamedDeclaration.getReturnTypeReference(): KtTypeReference? = getReturnTypeReferences().singleOrNull()
 
 internal fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference> {
     return when (this) {
