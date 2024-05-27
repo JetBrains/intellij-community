@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -109,11 +110,14 @@ public final class XDebuggerWatchesManager {
       inlineWatches.computeIfAbsent(inlineWatchState.getFileUrl(), (k) -> new HashSet<>()).add(watch);
     }
 
-    ReadAction.run(() -> {
+    // set markers in the background
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (InlineWatch i : ContainerUtil.flatten(inlineWatches.values())) {
-        if (!i.setMarker()) {
-          inlineWatches.get(i.getPosition().getFile().getUrl()).remove(i);
-        }
+        ReadAction.nonBlocking(() -> {
+          if (!i.setMarker()) {
+            inlineWatches.get(i.getPosition().getFile().getUrl()).remove(i);
+          }
+        }).executeSynchronously();
       }
     });
   }
