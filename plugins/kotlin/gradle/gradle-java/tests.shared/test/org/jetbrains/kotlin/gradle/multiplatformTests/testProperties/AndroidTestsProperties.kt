@@ -8,9 +8,9 @@ object AndroidGradlePluginVersionTestsProperty : org.jetbrains.kotlin.gradle.mul
 
     enum class Value(val acronym: String, val version: String) {
         MinSupported("MIN", "7.4.2"),
-        LatestStable("STABLE", "8.0.2"),
-        Beta("BETA", "8.1.0-beta05"),
-        Alpha("ALPHA", "8.2.0-alpha08")
+        LatestStable("STABLE", "8.3.1"),
+        Beta("BETA", "8.5.0-beta01"),
+        Alpha("ALPHA", "8.6.0-alpha03")
     }
 
     override val valuesByAcronyms: Map<String, String> = Value.values().map { it.acronym to it.version }.toMap()
