@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -245,7 +246,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     assertAppRunOutput(configurationSettings, "Hello expected world");
   }
 
-  private static void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
+  private void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
     String output = runAppAndGetOutput(configurationSettings);
     for (String check : checks) {
       assertTrue(String.format("App output should contain substring: %s, but was:\n%s", check, output), output.contains(check));
@@ -253,7 +254,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   }
 
   @NotNull
-  private static String runAppAndGetOutput(RunnerAndConfigurationSettings configurationSettings) {
+  private String runAppAndGetOutput(RunnerAndConfigurationSettings configurationSettings) {
     final Semaphore done = new Semaphore();
     done.down();
     ExternalSystemProgressNotificationManager notificationManager =
@@ -291,6 +292,8 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
     try {
       notificationManager.addNotificationListener(listener);
+      // `waitForSmartMode` should be removed after IDEA-354120. Application run configurations should not rely on Smart-mode.
+      DumbService.getInstance(myProject).waitForSmartMode();
       edt(() -> {
         try {
           ExecutionEnvironment environment =
