@@ -1,0 +1,5 @@
+*a:com.intellij.platform.workspace.storage.EntityType
+- <init>():V
+- <init>(com.intellij.platform.workspace.storage.EntityType):V
+- b:<init>(com.intellij.platform.workspace.storage.EntityType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- pf:builder():com.intellij.platform.workspace.storage.WorkspaceEntity$Builder

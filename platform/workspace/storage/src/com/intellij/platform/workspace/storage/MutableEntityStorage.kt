@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.currentStackTrace
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Writeable interface to storage. 
@@ -278,4 +279,5 @@ public sealed class EntityChange<T : WorkspaceEntity> {
  * Entities will be compared based on properties with this annotation.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
+@ApiStatus.Internal
 public annotation class EqualsBy

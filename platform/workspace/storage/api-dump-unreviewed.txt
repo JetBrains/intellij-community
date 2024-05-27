@@ -1,11 +1,3 @@
-*f:com.intellij.platform.workspace.storage.CachedValue
-- <init>(kotlin.jvm.functions.Function1):V
-- f:getSource():kotlin.jvm.functions.Function1
-*f:com.intellij.platform.workspace.storage.CachedValueWithParameter
-- <init>(kotlin.jvm.functions.Function2):V
-- f:getSource():kotlin.jvm.functions.Function2
-*:com.intellij.platform.workspace.storage.DummyParentEntitySource
-- com.intellij.platform.workspace.storage.EntitySource
 *a:com.intellij.platform.workspace.storage.EntityChange
 - a:getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - a:getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -57,7 +49,6 @@
 - a:resolve(com.intellij.platform.workspace.storage.SymbolicEntityId):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 *f:com.intellij.platform.workspace.storage.EntityStorageKt
 - sf:toBuilder(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.MutableEntityStorage
-- sf:toSnapshot(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.ImmutableEntityStorage
 *:com.intellij.platform.workspace.storage.EntityStorageSerializer
 - a:deserializeCache-IoAF18A(java.nio.file.Path):java.lang.Object
 - a:getSerializerDataFormatVersion():java.lang.String
@@ -67,15 +58,6 @@
 - <init>(com.intellij.platform.workspace.storage.EntityType):V
 - b:<init>(com.intellij.platform.workspace.storage.EntityType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - pf:builder():com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
-- f:getBase():com.intellij.platform.workspace.storage.EntityType
-- getName():java.lang.String
-- p:loadBuilderFactory():kotlin.jvm.functions.Function0
-*:com.intellij.platform.workspace.storage.EntityTypesResolver
-- a:getClassLoader(java.lang.String):java.lang.ClassLoader
-- a:getPluginId(java.lang.Class):java.lang.String
-- a:resolveClass(java.lang.String,java.lang.String):java.lang.Class
-*@:com.intellij.platform.workspace.storage.EqualsBy
-- java.lang.annotation.Annotation
 *:com.intellij.platform.workspace.storage.ExternalEntityMapping
 - a:forEach(kotlin.jvm.functions.Function2):V
 - a:getDataByEntity(com.intellij.platform.workspace.storage.WorkspaceEntity):java.lang.Object
@@ -419,18 +401,6 @@ e:com.intellij.platform.workspace.storage.impl.query.Operation
 - s:values():com.intellij.platform.workspace.storage.impl.query.Operation[]
 f:com.intellij.platform.workspace.storage.impl.query.QueryId
 - <init>():V
-f:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
-- com.intellij.platform.workspace.storage.EntityStorageSerializer
-- sf:Companion:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl$Companion
-- sf:STORAGE_SERIALIZATION_VERSION:java.lang.String
-- <init>(com.intellij.platform.workspace.storage.EntityTypesResolver,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager,com.intellij.platform.workspace.storage.url.UrlRelativizer,java.lang.String):V
-- b:<init>(com.intellij.platform.workspace.storage.EntityTypesResolver,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager,com.intellij.platform.workspace.storage.url.UrlRelativizer,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:calculateCacheDiff(java.nio.file.Path):java.lang.String
-- deserializeCache-IoAF18A(java.nio.file.Path):java.lang.Object
-- getSerializerDataFormatVersion():java.lang.String
-- serializeCache(java.nio.file.Path,com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.SerializationResult
-- setSerializerDataFormatVersion(java.lang.String):V
-f:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl$Companion
 f:com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEntitiesVersionException
 - java.lang.Exception
 - <init>():V
