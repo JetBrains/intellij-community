@@ -295,6 +295,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myIsResumed;
   }
 
+  @ApiStatus.Internal
   public void setIsEvaluating(EvaluationContextImpl evaluationContext) {
     assertNotResumed();
     myEvaluationContext = evaluationContext;

@@ -22,7 +22,7 @@ public final class EvaluationContextImpl implements EvaluationContext {
   private static final Logger LOG = Logger.getInstance(EvaluationContextImpl.class);
 
   private final DebuggerComputableValue myThisObject;
-  private final SuspendContextImpl mySuspendContext;
+  private final @NotNull SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
   private ClassLoaderReference myClassLoader;
@@ -120,6 +120,20 @@ public final class EvaluationContextImpl implements EvaluationContext {
 
   @ApiStatus.Internal
   public void setThreadForEvaluation(@Nullable ThreadReferenceProxyImpl threadForEvaluation) {
+    if (threadForEvaluation != null) {
+      assert myThreadForEvaluation == null;
+      assert !mySuspendContext.isEvaluating();
+      assert !threadForEvaluation.isEvaluating();
+      threadForEvaluation.setEvaluating(true);
+      mySuspendContext.setIsEvaluating(this);
+    }
+    else {
+      assert myThreadForEvaluation != null;
+      assert myThreadForEvaluation.isEvaluating();
+      assert mySuspendContext.getEvaluationContext() == this;
+      mySuspendContext.setIsEvaluating(null);
+      myThreadForEvaluation.setEvaluating(false);
+    }
     myThreadForEvaluation = threadForEvaluation;
   }
 

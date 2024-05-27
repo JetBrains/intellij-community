@@ -1177,7 +1177,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       Object resumeData = null;
       try {
-        invokeThread.setEvaluating(true);
         for (SuspendContextImpl suspendingContext : suspendingContexts) {
           if (suspendingContext == suspendContext) {
             continue;
@@ -1189,7 +1188,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
 
         resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
-        suspendContext.setIsEvaluating(myEvaluationContext);
         myEvaluationContext.setThreadForEvaluation(invokeThread);
 
         invokeThread.getVirtualMachineProxy().clearCaches();
@@ -1210,8 +1208,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
-        invokeThread.setEvaluating(false);
-        suspendContext.setIsEvaluating(null);
         myEvaluationContext.setThreadForEvaluation(null);
         if (resumeData != null) {
           SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
