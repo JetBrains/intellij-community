@@ -55,6 +55,10 @@ open class SavedPatchesUi(project: Project,
       changesBrowser.showDiff()
       return@Processor true
     }
+    patchesTree.enterKeyHandler = Processor {
+      changesBrowser.showDiff()
+      return@Processor true
+    }
 
     val bottomToolbar = buildBottomToolbar()
 
