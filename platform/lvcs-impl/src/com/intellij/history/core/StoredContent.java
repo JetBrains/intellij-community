@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.core;
 
@@ -89,7 +89,9 @@ public class StoredContent extends Content {
 
   @Override
   public boolean equals(Object o) {
-    return myContentId == ((StoredContent)o).myContentId;
+    if (this == o) return true;
+    if (!(o instanceof StoredContent content)) return false;
+    return myContentId == content.myContentId;
   }
 
   @Override
