@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,6 +146,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     return myOptionsBuilder.build();
   }
 
+  @ApiStatus.Internal
   @NotNull
   public Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
     Map<String, String> env = new HashMap<>();
@@ -169,6 +171,7 @@ public class PtyCommandLine extends GeneralCommandLine {
                        myUnixOpenTtyToPreserveOutputAfterTermination);
   }
 
+  @ApiStatus.Internal
   public static @NotNull LocalPtyOptions getDefaultPtyOptions() {
     return LocalPtyOptions.DEFAULT.builder()
       .consoleMode(true)

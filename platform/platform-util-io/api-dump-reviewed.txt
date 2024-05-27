@@ -185,3 +185,18 @@ f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
 - s:getPathDirs(java.lang.String):java.util.List
 - s:getPathVariableValue():java.lang.String
 - s:getWindowsExecutableFileExtensions():java.util.List
+c:com.intellij.execution.configurations.PtyCommandLine
+- com.intellij.execution.configurations.GeneralCommandLine
+- sf:MAX_COLUMNS:I
+- <init>():V
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.util.List):V
+- getPtyOptions():com.intellij.execution.process.LocalPtyOptions
+- s:isEnabled():Z
+- p:startProcess(java.util.List):java.lang.Process
+- withConsoleMode(Z):com.intellij.execution.configurations.PtyCommandLine
+- withInitialColumns(I):com.intellij.execution.configurations.PtyCommandLine
+- withInitialRows(I):com.intellij.execution.configurations.PtyCommandLine
+- withOptions(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.configurations.PtyCommandLine
+- withUnixOpenTtyToPreserveOutputAfterTermination(Z):com.intellij.execution.configurations.PtyCommandLine
+- withUseCygwinLaunch(Z):com.intellij.execution.configurations.PtyCommandLine
