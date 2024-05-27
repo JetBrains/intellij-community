@@ -415,7 +415,11 @@
       "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "questionMark.svg": "general/contextHelp.svg",
-      "warningDialog.svg": "general/warningDialog.svg"
+      "warningDialog.svg": "general/warningDialog.svg",
+      "vcs.svg": [
+        "vcs/branchNode.svg",
+        "vcs/branch.svg"
+      ]
     },
     "graph": {
       "graphLayout.svg": "graph/layout.svg"
@@ -855,6 +859,7 @@
       "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
       "changelist.svg": "vcs/changelist.svg",
+      "shelve.svg": "vcs/shelveSilent.svg",
       "unshelve.svg": [
         "vcs/Unshelve.svg",
         "vcs/unshelveSilent.svg"
