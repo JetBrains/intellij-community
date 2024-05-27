@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
-import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
@@ -27,11 +26,4 @@ abstract class JsonReportGeneratorBase(
 
     metricPerFile[fileInfo.sessionsInfo.filePath] = sessions.map { it.metrics }.flatten()
   }
-
-  protected val gson = GsonBuilder().apply {
-    setPrettyPrinting()
-    serializeNulls()
-    disableHtmlEscaping()
-    serializeSpecialFloatingPointValues()
-  }.create()
 }

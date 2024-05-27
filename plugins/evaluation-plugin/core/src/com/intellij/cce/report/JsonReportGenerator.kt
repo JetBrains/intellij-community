@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
+import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import java.nio.file.Path
 import kotlin.io.path.writeText
@@ -28,4 +29,11 @@ class JsonReportGenerator(
   companion object {
     private const val metricsInfoName = "metrics.json"
   }
+
+  private val gson = GsonBuilder().apply {
+    setPrettyPrinting()
+    serializeNulls()
+    disableHtmlEscaping()
+    serializeSpecialFloatingPointValues()
+  }.create()
 }

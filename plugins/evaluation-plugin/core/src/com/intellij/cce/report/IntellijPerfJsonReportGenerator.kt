@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
+import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.openapi.diagnostic.logger
@@ -58,6 +59,12 @@ class IntellijPerfJsonReportGenerator(
     private const val metricsInfoName = "metrics.performance.json"
     private val LOG = logger<IntellijPerfJsonReportGenerator>()
   }
+
+  private val gson = GsonBuilder().apply {
+    setPrettyPrinting()
+    disableHtmlEscaping()
+    serializeSpecialFloatingPointValues()
+  }.create()
 }
 
 private fun MetricInfo.toPerfMetric(namePrefix: String = "") = PerformanceMetrics.newCounter(
