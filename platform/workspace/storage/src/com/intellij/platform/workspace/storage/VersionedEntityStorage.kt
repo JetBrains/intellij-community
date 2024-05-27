@@ -38,11 +38,13 @@ public interface VersionedEntityStorage {
  */
 // TODO: future: optimized computations if `source` is pure
 // TODO debug by print .ctor call site
+@ApiStatus.Internal
 public class CachedValue<R>(public val source: (EntityStorage) -> R)
 
 /**
  * Represents a key for a parametrized cached value and provide [source] function to evaluate it. [source] must be thread safe.
  */
+@ApiStatus.Internal
 public class CachedValueWithParameter<P, R>(public val source: (EntityStorage, P) -> R)
 
 /**
