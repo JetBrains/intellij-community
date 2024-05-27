@@ -987,6 +987,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
+  /**
+   * @deprecated This method incorrectly prefers {@link com.intellij.openapi.application.ModalityKt#currentThreadContextModality}.
+   * Use {@link ModalityState#defaultModalityState()}.
+   */
+  @Deprecated
   public static @NotNull ModalityState getCurrentThreadProgressModality() {
     ModalityState contextModality = currentThreadContextModality();
     if (contextModality != null) {
