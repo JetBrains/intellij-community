@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRowWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.toml.findOriginInTomlFile
@@ -32,12 +31,25 @@ class KotlinGradleVersionCatalogGotoDeclarationHandler : GotoDeclarationHandler 
         }
         val grandParent = sourceElement.parent?.parent ?: return null
         if (grandParent !is KtDotQualifiedExpression) return null
-        val fullDotExpression = grandParent.getLastParentOfTypeInRowWithSelf<KtDotQualifiedExpression>() ?: return null
-        val propertyGetter = fullDotExpression.toUElement()?.tryResolve()
+        val fullExpression = findFullVersionCatalogExpression(grandParent)
+        val propertyGetter = fullExpression.toUElement()?.tryResolve()
             ?.safeAs<PsiMethod>()
             ?.takeIf(::isInVersionCatalogAccessor)
             ?: return null
-        return findOriginInTomlFile(propertyGetter, fullDotExpression)
+        return findOriginInTomlFile(propertyGetter, fullExpression)
             ?.let { arrayOf(it) }
+    }
+
+    /**
+     * Finds the full dot-qualified expression referring to a version catalog variable.
+     * E.g., if the element is `libs.aaa` in `libs.aaa.b.c` (or in `libs.aaa.b.c.get()`), it will return the element corresponding to
+     * `libs.aaa.b.c` (but before `.get()`).
+     */
+    private fun findFullVersionCatalogExpression(element: KtDotQualifiedExpression): PsiElement {
+        var fullExpression = element
+        while (fullExpression.hasWrappingVersionCatalogExpression()) {
+            fullExpression = fullExpression.parent as KtDotQualifiedExpression
+        }
+        return fullExpression
     }
 }

@@ -36,7 +36,7 @@ class KotlinGradleVersionCatalogReferencesSearcher : QueryExecutorBase<PsiRefere
     class MyProcessor(private val declarationElement: TomlKeyValue) : RequestResultProcessor() {
 
         override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
-            if (element !is KtDotQualifiedExpression || element.parent is KtDotQualifiedExpression) {
+            if (element !is KtDotQualifiedExpression || element.hasWrappingVersionCatalogExpression()) {
                 return true
             }
             val handler = KotlinGradleVersionCatalogGotoDeclarationHandler()
