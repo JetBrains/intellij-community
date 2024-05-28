@@ -1515,7 +1515,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     try {
       return classTypes
         .stream()
-        .filter(t -> !PyNames.ABC_META.equals(t.getClassQName()))
         .max(
           (t1, t2) -> {
             if (Objects.equals(t1, t2)) {
