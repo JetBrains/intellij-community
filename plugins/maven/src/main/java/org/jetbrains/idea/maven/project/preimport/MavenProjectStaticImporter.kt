@@ -172,7 +172,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
             resolveDependencies(it)
             resolveDirectories(it)
             resolvePluginConfigurations(it, resolvedPluginsLockCache)
-            applyChangesToProject(it)
+            applyChangesToProject(it, tree)
           }
         }
       }
@@ -232,11 +232,18 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
    *
    * @param projectData The Maven project data containing the project, model, and root model.
    */
-  private fun applyChangesToProject(projectData: MavenProjectData) {
+  private fun applyChangesToProject(projectData: MavenProjectData, tree: ProjectTree) {
     val dependencies = projectData.resolvedDependencies.map {
-      val file = MavenUtil.makeLocalRepositoryFile(it.id, localRepo, MavenConstants.TYPE_JAR, it.classifier)
+      val file = if (tree.project(it.id) == null) {
+        MavenUtil.makeLocalRepositoryFile(it.id, localRepo, MavenConstants.TYPE_JAR, it.classifier)
+      }
+      else {
+        null
+      }
+
       MavenArtifact(it.id.groupId, it.id.artifactId, it.id.version, null, MavenConstants.TYPE_JAR, it.classifier, it.scope, false, MavenConstants.TYPE_JAR,
                     file, localRepo, true, false)
+
 
     }
 
