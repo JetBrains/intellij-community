@@ -241,41 +241,42 @@ class EditorCellView(
     val interval = intervalPointer.get() ?: error("Invalid interval")
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-    editor.markupModel.addRangeHighlighter(
-      null,
-      startOffset,
-      endOffset,
-      HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
-      HighlighterTargetArea.LINES_IN_RANGE
-    ).also {
-      it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
-      cellHighlighters.add(it)
-    }
-
-    if (interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
+    addCellHighlighter {
       editor.markupModel.addRangeHighlighter(
         null,
         startOffset,
         endOffset,
-        HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
+        HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
         HighlighterTargetArea.LINES_IN_RANGE
       ).also {
-        cellHighlighters.add(it)
+        it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
+      }
+    }
+
+    if (interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
+      addCellHighlighter {
+        editor.markupModel.addRangeHighlighter(
+          null,
+          startOffset,
+          endOffset,
+          HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
+          HighlighterTargetArea.LINES_IN_RANGE
+        )
       }
     }
 
     if (interval.type == NotebookCellLines.CellType.CODE) {
-      editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-        o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
-      }.also {
-        cellHighlighters.add(it)
+      addCellHighlighter {
+        editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
+          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
+        }
       }
     }
     else if (editor.editorKind != EditorKind.DIFF) {
-      editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-        o.lineMarkerRenderer = NotebookTextCellBackgroundLineMarkerRenderer(o)
-      }.also {
-        cellHighlighters.add(it)
+      addCellHighlighter {
+        editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
+          o.lineMarkerRenderer = NotebookTextCellBackgroundLineMarkerRenderer(o)
+        }
       }
     }
 
