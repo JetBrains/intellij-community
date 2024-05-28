@@ -48,10 +48,10 @@ private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
     } ?: return
     val editor = editorSupplier()
     withContext(Dispatchers.EDT) {
-      sourceIdToInlayData.forEach {
-        DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, it.value, it.key)
-        DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+      sourceIdToInlayData.forEach { (sourceId, inlayDataList) ->
+        DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, inlayDataList, sourceId)
       }
+      DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
     }
   }
 }
