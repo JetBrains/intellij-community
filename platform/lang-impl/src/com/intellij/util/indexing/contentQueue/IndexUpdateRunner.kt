@@ -25,7 +25,6 @@ import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
-import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -316,17 +315,9 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     init {
       val maxFilesCount = fileSet.size()
       myQueueOfFiles = ArrayBlockingQueue(maxFilesCount)
-      // UnindexedFilesIndexer may produce duplicates during merging.
-      // E.g., Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
-      // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself
-      // instead of processing and merging queue snapshots
-      val deduplicateFilter = IndexableFilesDeduplicateFilter.create()
       for (file in fileSet.files) {
-        if (deduplicateFilter.accept(file.file)) {
-          myQueueOfFiles.add(FileIndexingJob(file, fileSet))
-        }
+        myQueueOfFiles.add(FileIndexingJob(file, fileSet))
       }
-      // todo: maybe we want to do something with statistics: deduplicateFilter.getNumberOfSkippedFiles();
       progressReporter.setTotalFiles(myQueueOfFiles.size)
     }
 
