@@ -14,7 +14,7 @@ import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 
-internal class DefaultNavBarItemDataRule : GetDataRule {
+public open class DefaultNavBarItemDataRule : GetDataRule {
 
   override fun getData(dataProvider: DataProvider): Pointer<out NavBarItem>? {
     return getNavBarItem(dataProvider)?.createPointer()
