@@ -91,9 +91,6 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
       editor.getDocument().textLength,
       DeclarativeInlayRenderer::class.java
     )
-    if (declarativeHints.isEmpty()) {
-      return
-    }
     val state = DeclarativeHintsState(editor.document.contentHash(), inlayDataList(declarativeHints))
     scope.launch(Dispatchers.IO) {
       cache[file.id] = state
