@@ -11,7 +11,6 @@ import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.util.PatternFilterable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.DefaultExternalFilter
-import org.jetbrains.plugins.gradle.model.ExternalFilter
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
@@ -43,11 +42,19 @@ class GradleResourceFilterModelBuilder {
     def filterableTask = project.tasks.findByName(taskName)
     if (filterableTask instanceof ContentFilterable && filterableTask.metaClass.respondsTo(filterableTask, "getMainSpec")) {
       //noinspection GrUnresolvedAccess
-      def properties = filterableTask.getMainSpec().properties
-      if (properties == null) {
+      def mainSpec = filterableTask.getMainSpec()
+      if (mainSpec == null) {
         return filterReaders
       }
-      def copyActions = properties.allCopyActions ?: properties.copyActions
+      Object copyActions = null
+      if (mainSpec.hasProperty("allCopyActions")) {
+        //noinspection GrUnresolvedAccess
+        copyActions = mainSpec.allCopyActions
+      }
+      else if (mainSpec.hasProperty("copyActions")) {
+        //noinspection GrUnresolvedAccess
+        copyActions = mainSpec.copyActions
+      }
       if (copyActions == null) {
         return filterReaders
       }
