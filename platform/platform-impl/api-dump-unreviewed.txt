@@ -3322,6 +3322,7 @@ f:com.intellij.execution.wsl.WslExecution
 - a:getProcessAdapterScope():kotlinx.coroutines.CoroutineScope
 *f:com.intellij.execution.wsl.WslIjentManager$Companion
 - f:getInstance():com.intellij.execution.wsl.WslIjentManager
+- f:instanceAsync(kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.execution.wsl.WslIjentManagerKt
 - sf:deployAndLaunchIjent(com.intellij.openapi.project.Project,com.intellij.execution.wsl.WSLDistribution,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:deployAndLaunchIjent$default(com.intellij.openapi.project.Project,com.intellij.execution.wsl.WSLDistribution,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object

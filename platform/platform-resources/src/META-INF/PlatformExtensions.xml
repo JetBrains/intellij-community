@@ -1811,6 +1811,9 @@
                         preload="notHeadless" os="linux"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration" headlessImplementation=""
                         preload="notHeadless" os="linux"/>
+
+    <postStartupActivity implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentInProjectStarter"
+                         os="windows"/>
   </extensions>
 
   <applicationListeners>
@@ -1875,6 +1878,13 @@
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+
+    <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsVmOptionsSetter"
+              topic="com.intellij.openapi.application.ApplicationActivationListener"
+              os="windows"/>
+    <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsRegistryListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"
+              os="windows"/>
   </applicationListeners>
 
   <projectListeners>

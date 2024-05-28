@@ -124,7 +124,7 @@ fun runProcessBlocking(
   val workingDirectory = processBuilder.directory()?.toPath()?.let { windowsWorkingDirectory ->
     wslDistribution.getWslPath(windowsWorkingDirectory)
     ?: run {
-      LOG.warn("Working directory $windowsWorkingDirectory can't be mapped to WSL distribution ${wslDistribution.id}")
+      LOG.warn("Working directory $windowsWorkingDirectory can't be mapped to WSL distribution ${wslDistribution.id}", Throwable())
       null
     }
   }

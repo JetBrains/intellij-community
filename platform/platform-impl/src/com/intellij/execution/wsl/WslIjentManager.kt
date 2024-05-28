@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
@@ -42,6 +43,8 @@ interface WslIjentManager {
   companion object {
     @JvmStatic
     fun getInstance(): WslIjentManager = service()
+
+    suspend fun instanceAsync(): WslIjentManager = serviceAsync()
   }
 }
 
