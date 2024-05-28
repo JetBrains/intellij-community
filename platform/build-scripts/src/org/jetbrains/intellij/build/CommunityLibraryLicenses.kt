@@ -21,7 +21,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "AAPT Protos", libraryName = "aapt-proto"),
     LibraryLicense(name = "AhoCorasickDoubleArrayTrie", libraryName = "com.hankcs:aho-corasick-double-array-trie",
                    url = "https://github.com/hankcs/AhoCorasickDoubleArrayTrie")
-      .apache("https://github.com/hankcs/AhoCorasickDoubleArrayTrie#license")
+      .apache("https://github.com/hankcs/AhoCorasickDoubleArrayTrie/blob/master/README.md#license")
       .suppliedByPersons("hankcs"),
     LibraryLicense(name = "Allure java commons", libraryName = "io.qameta.allure.java.commons",
                    url = "https://github.com/allure-framework/allure-java")
@@ -133,6 +133,7 @@ object CommunityLibraryLicenses {
                    url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html"),
     LibraryLicense(name = "ANTLR 4.9 Runtime", libraryName = "antlr4-runtime-4.9",
                    url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html")
+      .copyrightText("Copyright (c) 2012 Terence Parr and Sam Harwell")
       .suppliedByPersons("Terence Parr"),
     LibraryLicense(name = "ap-validation", libraryName = "ap-validation",
                    url = "https://github.com/JetBrains/ap-validation").apache(
@@ -161,6 +162,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Commons Discovery", libraryName = "commons-discovery",
                    url = "https://commons.apache.org/dormant/commons-discovery/")
       .apache("https://commons.apache.org/dormant/commons-discovery/license.html")
+      .copyrightText("Copyright © 2002-2011 The Apache Software Foundation. All Rights Reserved.")
       .suppliedByPersons(
         "Simone Tripodi", "James Strachan", "Robert Burrell Donkin", "Matthew Hawthorne",
         "Richard Sitze", "Craig R. McClanahan", "Costin Manolache", "Davanum Srinivas", "Rory Winston"
@@ -196,9 +198,11 @@ object CommunityLibraryLicenses {
       .apache("https://gitbox.apache.org/repos/asf?p=commons-net.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Text", libraryName = "commons-text",
                    url = "https://github.com/apache/commons-text")
-      .apache("https://github.com/apache/commons-text/blob/master/LICENSE.txt"),
+      .apache("https://github.com/apache/commons-text/blob/master/LICENSE.txt")
+      .copyrightText("Copyright 2014-2024 The Apache Software Foundation"),
     LibraryLicense(name = "Apache Ivy", libraryName = "org.apache.ivy", url = "https://github.com/apache/ant-ivy")
       .apache("https://github.com/apache/ant-ivy/blob/master/LICENSE")
+      .copyrightText("Copyright 2007-2019,2022-2023 The Apache Software Foundation")
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "Apache Lucene",
                    libraryName = "lucene-core", url = "https://lucene.apache.org/java",
@@ -212,10 +216,13 @@ object CommunityLibraryLicenses {
                      "lucene-queries",
                      "lucene-analysis-common",
                      "org.apache.lucene:lucene-core:2.4.1"
-                   )).apache().suppliedByOrganizations("The Apache Software Foundation"),
+                   )).apache()
+      .copyrightText("Copyright © 2011-2024 The Apache Software Foundation")
+      .suppliedByOrganizations(Suppliers.APACHE),
     LibraryLicense(name = "Apache Tuweni-Toml", libraryName = "tuweni-toml",
                    url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
-      .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE"),
+      .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE")
+      .copyrightText("Copyright 2019-2023 The Apache Software Foundation"),
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
                    url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt")
@@ -241,9 +248,11 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Atlassian Commonmark", libraryName = "atlassian.commonmark",
                    url = "https://github.com/commonmark/commonmark-java")
       .simplifiedBsd("https://github.com/commonmark/commonmark-java/blob/main/LICENSE.txt")
+      .copyrightText("Copyright (c) 2015, Atlassian Pty Ltd")
       .suppliedByOrganizations("Atlassian Pty Ltd"),
     LibraryLicense(name = "Automaton", libraryName = "automaton", url = "https://www.brics.dk/automaton/")
-      .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING"),
+      .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING")
+      .copyrightText("Copyright (c) 2001-2022 Anders Moeller"),
     LibraryLicense(name = "Bash-Preexec", attachedTo = "intellij.terminal", url = "https://github.com/rcaloras/bash-preexec", version = "0.5.0")
       .mit("https://github.com/rcaloras/bash-preexec/blob/master/LICENSE.md"),
     LibraryLicense(name = "batik", libraryName = "batik-transcoder", url = "https://xmlgraphics.apache.org/batik/")
@@ -266,12 +275,14 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Ben Manes"),
     LibraryLicense(name = "CGLib", libraryName = "cglib", url = "https://github.com/cglib/cglib/")
       .apache("https://github.com/cglib/cglib/blob/master/LICENSE")
+      .copyrightText("Copyright (c) The Apache Software Foundation")
       .suppliedByPersons("cglib project contributors"),
     LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",
                    url = "https://github.com/classgraph/classgraph",
                    licenseUrl = "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
     LibraryLicense(name = "Clikt", libraryName = "clikt", url = "https://github.com/ajalt/clikt")
       .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
+      .copyrightText("Copyright 2018 AJ Alt")
       .suppliedByOrganizations("AJ Alt"),
     LibraryLicense(name = "CMake For VisualStudio Code", attachedTo = "intellij.textmate", version = "0.0.17",
                    url = "https://github.com/twxs/vs.language.cmake")

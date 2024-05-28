@@ -10,6 +10,7 @@ import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
+import io.ktor.client.plugins.ClientRequestException
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -349,7 +350,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }.toList()
   }
 
-  private fun generate(
+  private suspend fun generate(
     document: SpdxDocument,
     rootPackage: SpdxPackage,
     runtimePackage: SpdxPackage?,
@@ -374,6 +375,9 @@ internal class SoftwareBillOfMaterialsImpl(
         document = document,
         license = license,
       )
+    }
+    if (STRICT_MODE) {
+      checkCopyrightTextForLibraries()
     }
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
@@ -659,6 +663,48 @@ internal class SoftwareBillOfMaterialsImpl(
       }
     }
 
+    suspend fun checkCopyrightText() {
+      if (copyrightText != null) return
+      var licenseUrl = library.licenseUrl ?: return
+      if (licenseUrl.startsWith("https://github.com/") && !licenseUrl.contains("/raw/")) {
+        licenseUrl = "https://raw.githubusercontent.com/" +
+                     licenseUrl.removePrefix("https://github.com/")
+                       .replace("blob/", "")
+      }
+      @Suppress("HardCodedStringLiteral")
+      val licenseHtml = try {
+        downloadAsText(licenseUrl)
+      }
+      catch (e: ClientRequestException) {
+        error(
+          "'copyrightText' for '$library' library is missing, please specify it. " +
+          "Unable to suggest anything due to '${e.message}'"
+        )
+      }
+      val candidates = Jsoup.parse(licenseHtml)
+        .wholeText().lineSequence()
+        .filter { it.contains("Copyright") }
+        .map { it.trim() }
+        .map { "'$it'" }
+        .toList()
+      error(
+        buildString {
+          append("'copyrightText' for '$library' library is missing, please specify it")
+          if (candidates.any()) {
+            append(
+              candidates.joinToString(
+                prefix = ". Suggested options:\n\t",
+                separator = "\t\n"
+              )
+            )
+          }
+          else {
+            append(". No suggested options.")
+          }
+        }
+      )
+    }
+
     val isSupplierJetBrains: Boolean by lazy {
       library.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
         library.url?.startsWith("https://github.com/$it/") == true ||
@@ -916,6 +962,35 @@ internal class SoftwareBillOfMaterialsImpl(
           }
         }
       }
+    }
+  }
+
+  private suspend fun checkCopyrightTextForLibraries() {
+    val sortedLibraries = mavenLibraries.sortedBy {
+      it.library.name ?: it.library.libraryName
+    }
+    val errors = supervisorScope {
+      sortedLibraries.slice(50..100).map {
+        async {
+          it.checkCopyrightText()
+        }
+      }.mapNotNull {
+        try {
+          it.await()
+          null
+        }
+        catch (e: IllegalStateException) {
+          e.message
+        }
+      }
+    }
+    if (errors.any()) {
+      context.messages.error(
+        errors.joinToString(
+          prefix = "Some copyright texts for software bill of materials are missing:\n\n",
+          separator = "\n\n"
+        )
+      )
     }
   }
 }
