@@ -577,6 +577,17 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     @Override
     public void paused(SuspendContextImpl suspendContext) {
+      // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
+      DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(suspendContext.getDebugProcess()).getManagerThread();
+      debuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          pausedImpl(suspendContext);
+        }
+      });
+    }
+
+    private void pausedImpl(SuspendContextImpl suspendContext) {
       try {
         if (myScriptRunnables.isEmpty() && myRepeatingRunnables.isEmpty()) {
           print("resuming ", ProcessOutputTypes.SYSTEM);
