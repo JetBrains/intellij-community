@@ -55,7 +55,8 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
    */
   class IndexingInterruptedException(cause: Throwable) : Exception(cause)
 
-  class FileSet(project: Project, val debugName: String, internal val files: Collection<FileIndexingRequest>) {
+  class FileSet(project: Project, val debugName: String, internal val files: Set<FileIndexingRequest>) {
+    constructor(project: Project, debugName: String, files: Collection<FileIndexingRequest>) : this(project, debugName, files.toSet())
     val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
 
     fun isEmpty(): Boolean = files.isEmpty()
