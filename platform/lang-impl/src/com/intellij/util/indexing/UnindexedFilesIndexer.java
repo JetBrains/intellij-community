@@ -131,10 +131,9 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     for (IndexableFilesIterator provider : providers) {
       Collection<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
       if (!providerFiles.isEmpty()) {
-        String progressText = provider.getIndexingProgressText();
         fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(),
                                                    // TODO: don't copy. Map iterators instead
-                                                   ContainerUtil.map(providerFiles, FileIndexingRequest::updateRequest), progressText));
+                                                   ContainerUtil.map(providerFiles, FileIndexingRequest::updateRequest)));
       }
     }
     return fileSets;

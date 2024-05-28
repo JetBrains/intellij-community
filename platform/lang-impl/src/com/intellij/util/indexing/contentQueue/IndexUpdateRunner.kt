@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -60,8 +59,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
    */
   class IndexingInterruptedException(cause: Throwable) : Exception(cause)
 
-  class FileSet @JvmOverloads constructor(project: Project, val debugName: String, internal val files: Collection<FileIndexingRequest>,
-                                          val progressText: @NlsContexts.ProgressText String? = null) {
+  class FileSet(project: Project, val debugName: String, internal val files: Collection<FileIndexingRequest>) {
     val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
 
     fun isEmpty(): Boolean = files.isEmpty()
@@ -375,7 +373,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
     fun setLocationBeingIndexed(fileIndexingJob: FileIndexingJob) {
       val presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.fileIndexingRequest.file)
-      progressReporter.setLocationBeingIndexed(fileIndexingJob.fileSet.progressText, presentableLocation)
+      progressReporter.setLocationBeingIndexed(presentableLocation)
     }
   }
 
