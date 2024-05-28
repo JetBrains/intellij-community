@@ -14,7 +14,7 @@ import org.intellij.lang.annotations.Language
 import java.awt.Point
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
-  return x(xpath ?: "//div[@class='EditorComponentImpl']",
+  return x(xpath ?: "//div[@class='EditorWindowTopComponent']//div[@class='EditorComponentImpl']",
            JEditorUiComponent::class.java)
 }
 
