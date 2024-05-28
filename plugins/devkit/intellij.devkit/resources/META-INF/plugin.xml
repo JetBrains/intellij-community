@@ -12,6 +12,7 @@
   ]]></description>
 
   <dependencies>
+    <!--Required for correct compatible products. TODO: remove when https://youtrack.jetbrains.com/issue/MP-6600 is fixed-->
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
