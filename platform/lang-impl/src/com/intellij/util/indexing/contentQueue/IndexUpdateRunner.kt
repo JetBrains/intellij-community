@@ -7,9 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.ProgressSuspender
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -20,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
 import com.intellij.util.PathUtil
-import com.intellij.util.application
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
@@ -41,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 
 @ApiStatus.Internal
@@ -88,30 +84,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     }
   }
 
-  // TODO: this method should be removed, and regular runBlockingCancellable should be used after IJPL-578 is implemented
-  //  this is a copy-paste code from platform's runBlockingCancellable with the only one change: invocation from EDT is allowed
-  @OptIn(IntellijInternalApi::class)
-  private fun <T> runBlockingCancellableAllowingEdtInHeadlessModeWithNoEventsPumpingIfEdt(action: suspend CoroutineScope.() -> T): T {
-    LOG.assertTrue(DumbServiceImpl.isSynchronousTaskExecution || !application.isDispatchThread,
-                   "This method may only be invoked on EDT in headless environments")
-
-    return prepareThreadContext { ctx ->
-      if (ctx[Job] == null && !Cancellation.isInNonCancelableSection()) {
-        LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
-      }
-      try {
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + readActionContext(), action)
-      }
-      catch (pce : ProcessCanceledException) {
-        throw pce
-      }
-      catch (ce: CancellationException) {
-        throw CeProcessCanceledException(ce)
-      }
-    }
-  }
-
   private fun doIndexFiles(project: Project, fileSets: List<FileSet>) {
     if (fileSets.all { b: FileSet -> b.isEmpty() }) {
       return
@@ -126,7 +98,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val progressReporter = IndexingProgressReporter2(indicator)
     val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSets)
 
-    runBlockingCancellableAllowingEdtInHeadlessModeWithNoEventsPumpingIfEdt {
+    runBlockingCancellable {
       repeat(INDEXING_THREADS_NUMBER) {
         launch(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash},$it)")) {
           while (!indexingJob.areAllFilesProcessed()) {
