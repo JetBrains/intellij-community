@@ -71,8 +71,8 @@ class EditorCell(
     view?.dispose()
   }
 
-  fun update() {
-    view?.update()
+  fun update(force: Boolean = false) {
+    view?.update(force)
   }
 
   fun onViewportChange() {

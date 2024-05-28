@@ -69,15 +69,19 @@ class NotebookCellInlayManager private constructor(
   }
 
   /** It's public, but think seven times before using it. Called many times in a row, it can freeze UI. */
-  fun updateAllImmediately() {
+  fun updateAllImmediately(force: Boolean = false) {
     if (initialized) {
       updateQueue.cancelAllUpdates()
-      updateConsequentInlays(0..editor.document.lineCount)
+      updateConsequentInlays(0..editor.document.lineCount, force)
     }
   }
 
   fun updateAll() {
     updateQueue.queue(UpdateInlaysTask(this, updateAll = true))
+  }
+
+  fun forceUpdateAll() {
+    updateQueue.queue(UpdateInlaysTask(this, updateAll = true, forceUpdate = true))
   }
 
   fun update(pointers: Collection<NotebookIntervalPointer>) {
@@ -248,7 +252,7 @@ class NotebookCellInlayManager private constructor(
     changedListener?.inlaysChanged()
   }
 
-  private fun updateConsequentInlays(interestingRange: IntRange) {
+  private fun updateConsequentInlays(interestingRange: IntRange, force: Boolean = false) {
     ThreadingAssertions.softAssertReadAccess()
     keepScrollingPositionWhile(editor) {
       val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
@@ -267,7 +271,7 @@ class NotebookCellInlayManager private constructor(
       addHighlighters(intervalsToAddHighlightersFor.values)
 
       for (interval in matchingIntervals) {
-        _cells[interval.ordinal].update()
+        _cells[interval.ordinal].update(force)
       }
 
       inlaysChanged()
@@ -431,12 +435,13 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
                                pointers: Collection<NotebookIntervalPointer>? = null,
-                               private var updateAll: Boolean = false) : Update(Any()) {
+                               private var updateAll: Boolean = false,
+                               private var forceUpdate: Boolean = false) : Update(Any()) {
   private val pointerSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
     if (updateAll) {
-      manager.updateAllImmediately()
+      manager.updateAllImmediately(forceUpdate)
       return
     }
 
@@ -453,6 +458,7 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
     update as UpdateInlaysTask
 
     updateAll = updateAll || update.updateAll
+    forceUpdate = forceUpdate || update.forceUpdate
     if (updateAll) {
       return true
     }
