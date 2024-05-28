@@ -185,7 +185,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   int myTextAnnotationGuttersSize;
   int myTextAnnotationExtraSize;
   final IntList myTextAnnotationGutterSizes = new IntArrayList();
-  final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
+  final List<TextAnnotationGutterProvider> myTextAnnotationGutters = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
