@@ -95,7 +95,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
-    val progressReporter = IndexingProgressReporter2(indicator)
+    val progressReporter = IndexingProgressReporter2(indicator, fileSet.size())
     val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSet)
 
     runBlockingCancellable {
@@ -318,7 +318,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
       for (file in fileSet.files) {
         myQueueOfFiles.add(FileIndexingJob(file, fileSet))
       }
-      progressReporter.setTotalFiles(myQueueOfFiles.size)
     }
 
     fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {

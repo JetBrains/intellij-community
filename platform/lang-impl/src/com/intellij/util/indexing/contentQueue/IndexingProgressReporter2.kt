@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.progress.SubTaskProgressIndicator
@@ -10,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 // TODO: merge with com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter
 @Internal
-internal class IndexingProgressReporter2(private val indicator: ProgressIndicator) {
-  private val totalFiles: AtomicInteger = AtomicInteger(0)
+internal class IndexingProgressReporter2(private val indicator: ProgressIndicator, totalFiles: Int) {
+  private val totalFiles: AtomicInteger = AtomicInteger(totalFiles)
   private var processedFiles: AtomicInteger = AtomicInteger(0)
 
   fun setLocationBeingIndexed(fileProgressName: @NlsContexts.ProgressText String) {
@@ -21,11 +20,6 @@ internal class IndexingProgressReporter2(private val indicator: ProgressIndicato
     else {
       indicator.text2 = fileProgressName
     }
-  }
-
-  fun setTotalFiles(totalFiles: Int) {
-    logger<IndexingProgressReporter2>().assertTrue(this.totalFiles.get() == 0, "totalFiles already set")
-    this.totalFiles.set(totalFiles)
   }
 
   fun oneMoreFileProcessed() {
