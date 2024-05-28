@@ -81,6 +81,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext;
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
@@ -1541,11 +1542,22 @@ public class UsageViewImpl implements UsageViewEx {
   private void updateOnSelectionChanged(@NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     if (myCurrentUsageContextPanel != null) {
-      try {
-        myCurrentUsageContextPanel.updateLayout(project, ContainerUtil.notNullize(getSelectedUsageInfos()), this);
-      }
-      catch (IndexNotReadyException ignore) {
-      }
+      var dataContext = createAsyncDataContext(DataManager.getInstance().getDataContext(myRootPanel));
+      ReadAction.nonBlocking(() -> {
+          List<UsageInfo> result;
+          try {
+            result = ContainerUtil.notNullize(USAGE_INFO_LIST_KEY.getData(dataContext));
+          }
+          catch (IndexNotReadyException ignore) {
+            result = Collections.emptyList();
+          }
+          return result;
+        })
+        .expireWith(this)
+        .finishOnUiThread(ModalityState.current(), usageInfos -> {
+          myCurrentUsageContextPanel.updateLayout(project, usageInfos, this);
+        })
+        .submit(updateRequests);
     }
   }
 
@@ -2217,11 +2229,6 @@ public class UsageViewImpl implements UsageViewEx {
         close();
       }
     }
-  }
-
-  private List<UsageInfo> getSelectedUsageInfos() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
   @NotNull Set<@NotNull GroupNode> selectedGroupNodes() {
