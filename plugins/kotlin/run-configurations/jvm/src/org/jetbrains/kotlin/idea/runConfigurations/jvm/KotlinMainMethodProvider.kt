@@ -52,4 +52,21 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
             val classOrObject = lightClassBase?.kotlinOrigin ?: return@runReadAction null
             mainFunctionDetector.findMain(classOrObject)?.toLightMethods()?.firstOrNull()
         }
+    override fun getMainClassName(clazz: PsiClass): String? {
+        return when (clazz) {
+            is KtLightClassForFacadeBase -> clazz.facadeClassFqName.asString()
+            is KtLightClassBase -> {
+                val classOrObject = clazz.kotlinOrigin ?: return null
+                KotlinRunConfigurationProducer.getMainClassJvmName(classOrObject)
+            }
+            else -> null
+        }
+    }
+
+    override fun isMain(psiElement: PsiElement): Boolean {
+        val ktNamedFunction = psiElement.parentOfType<KtNamedFunction>() ?: return false
+
+        val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(psiElement.project)
+        return runReadAction { mainFunctionDetector.isMain(ktNamedFunction) }
+    }
 }
