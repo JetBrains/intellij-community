@@ -28,8 +28,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     fn get_vm_options(&self) -> Result<Vec<String>> {
         let mut vm_options = self.default.get_vm_options()?;
 
-        // TODO: add default Xmx to productInfo as right now we patch the user one
-        vm_options.push("-Xmx2048m".to_string());
+        let has_xmx = vm_options.iter().any(|opt| opt.starts_with("-Xmx"));
+
+        if !has_xmx {
+            // TODO: add default Xmx to productInfo as right now we patch the user one
+            vm_options.push("-Xmx2048m".to_string());
+        }
 
         #[cfg(target_os = "linux")]
         if is_wsl2() && !parse_bool_env_var("REMOTE_DEV_SERVER_ALLOW_IPV6_ON_WSL2", false)? {
