@@ -3238,9 +3238,8 @@ c:com.intellij.util.ui.update.UiNotifyConnector
 - java.awt.event.HierarchyListener
 - sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
-- p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,java.lang.Void):V
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):V
-- p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Void):V
+- p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Object):V
 - dispose():V
 - sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
 - sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
@@ -3250,14 +3249,15 @@ c:com.intellij.util.ui.update.UiNotifyConnector
 - hierarchyChanged(java.awt.event.HierarchyEvent):V
 - sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
 - sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
-- pf:setupListeners():V
+- pf:setupListeners(java.awt.Component):V
 - p:showNotify():V
 f:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - f:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
 - f:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
-- f:doWhenFirstShown(java.awt.Component,kotlin.jvm.functions.Function0):V
+- f:doWhenFirstShown(java.awt.Component,Z,kotlin.jvm.functions.Function0):V
 - f:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
 - bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable,I,java.lang.Object):V
+- bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 - *f:forceNotifyIsShown(java.awt.Component):V
 - f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
 - f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector

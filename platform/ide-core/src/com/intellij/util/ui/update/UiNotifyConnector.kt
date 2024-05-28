@@ -19,23 +19,16 @@ import javax.swing.SwingUtilities
 open class UiNotifyConnector : Disposable, HierarchyListener {
   private val component: WeakReference<Component>
   private var target: Activatable?
-  private var isDeferred = true
+  private val isDeferred: Boolean
 
   /**
-   * @param sig parameter is used to avoid clash with the deprecated constructor
+   * @param ignored parameter is used to avoid clash with the deprecated constructor
    */
   @Suppress("UNUSED_PARAMETER")
-  protected constructor(component: Component, target: Activatable, sig: Void?) {
+  protected constructor(component: Component, target: Activatable, isDeferred: Boolean, ignored: Any?) {
     this.component = WeakReference(component)
     this.target = target
-  }
-
-  /**
-   * @param sig parameter is used to avoid clash with the deprecated constructor
-   */
-  protected constructor(component: Component, target: Activatable, deferred: Boolean, sig: Void?)
-    : this(component = component, target = target, sig = sig) {
-    isDeferred = deferred
+    this.isDeferred = isDeferred
   }
 
   @Deprecated(
@@ -48,10 +41,10 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
   constructor(component: Component, target: Activatable) {
     this.component = WeakReference(component)
     this.target = target
+    isDeferred = true
     setupListeners(component)
   }
 
-  @Suppress("DEPRECATION")
   @Deprecated(
     """Use the static method {@link UiNotifyConnector#installOn(Component, Activatable, boolean)}.
     <p>
@@ -59,8 +52,11 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     <p>
     Also, note that non-deprecated constructor is side effect free, and you should call for {@link UiNotifyConnector#setupListeners()}
     method""")
-  constructor(component: Component, target: Activatable, deferred: Boolean) : this(component, target) {
+  constructor(component: Component, target: Activatable, deferred: Boolean) {
+    this.component = WeakReference(component)
+    this.target = target
     isDeferred = deferred
+    setupListeners(component)
   }
 
   companion object {
@@ -73,7 +69,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
 
     @JvmStatic
     fun installOn(component: Component, target: Activatable): UiNotifyConnector {
-      val connector = UiNotifyConnector(component, target, null)
+      val connector = UiNotifyConnector(component = component, target = target, isDeferred = true, ignored = null)
       connector.setupListeners(component)
       return connector
     }
@@ -83,26 +79,36 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       doWhenFirstShown(component = component, runnable = runnable, parent = null)
     }
 
-    fun doWhenFirstShown(component: Component, runnable: () -> Unit) {
-      doWhenFirstShown(component, object : Activatable {
-        override fun showNotify() {
-          runnable()
-        }
-      }, null)
+    fun doWhenFirstShown(component: Component, isDeferred: Boolean = true, runnable: () -> Unit) {
+      doWhenFirstShown(
+        component = component,
+        activatable = object : Activatable {
+          override fun showNotify() {
+            runnable()
+          }
+        },
+        parent = null,
+        isDeferred = isDeferred,
+      )
     }
 
     @JvmOverloads
     @JvmStatic
     fun doWhenFirstShown(component: Component, runnable: Runnable, parent: Disposable? = null) {
-      doWhenFirstShown(component, object : Activatable {
-        override fun showNotify() {
-          runnable.run()
-        }
-      }, parent)
+      doWhenFirstShown(
+        component = component,
+        isDeferred = true,
+        activatable = object : Activatable {
+          override fun showNotify() {
+            runnable.run()
+          }
+        },
+        parent = parent,
+      )
     }
 
-    private fun doWhenFirstShown(component: Component, activatable: Activatable, parent: Disposable?) {
-      val connector = object : UiNotifyConnector(component = component, target = activatable, sig = null) {
+    private fun doWhenFirstShown(component: Component, activatable: Activatable, isDeferred: Boolean, parent: Disposable?) {
+      val connector = object : UiNotifyConnector(component = component, target = activatable, isDeferred = isDeferred, ignored = null) {
         override fun showNotify() {
           super.showNotify()
           Disposer.dispose(this)
@@ -203,16 +209,16 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     private var isHidden = false
 
     /**
-     * Use [method][Once.installOn]
-     * @param sig parameter is used to avoid clash with the deprecated constructor
+     * Use [method][doWhenFirstShown]
+     * @param ignored parameter is used to avoid clash with the deprecated constructor
      */
     @Suppress("UNUSED_PARAMETER", "DEPRECATION")
-    private constructor(component: Component, target: Activatable, sig: Void?) : super(component = component, target = target)
+    private constructor(component: Component, target: Activatable, ignored: Any?) : super(component = component, target = target)
 
     companion object {
       @JvmStatic
       fun installOn(component: Component, target: Activatable): Once {
-        val once = Once(component = component, target = target, sig = null)
+        val once = Once(component = component, target = target, ignored = null)
         once.setupListeners(component)
         return once
       }
@@ -224,7 +230,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       <p>
       Also, note that non-deprecated constructor is side effect free, and you should call for {@link Once#setupListeners()}
       method""", level = DeprecationLevel.ERROR)
-    constructor(component: Component, target: Activatable) : super(component, target)
+    constructor(component: Component, target: Activatable) : super(component = component, target = target)
 
     override fun hideNotify() {
       super.hideNotify()
