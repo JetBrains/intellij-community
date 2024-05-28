@@ -125,11 +125,9 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
   }
 
   override fun refreshAllEditors() {
-    for (clientEditorManager in ClientEditorManager.getAllInstances()) {
-      for (editor in clientEditorManager.editors) {
-        if (isEditorLoaded(editor)) {
-          (editor as EditorEx).reinitSettings()
-        }
+    for (editor in ClientEditorManager.getCurrentInstance().editors) {
+      if (isEditorLoaded(editor)) {
+        (editor as EditorEx).reinitSettings()
       }
     }
   }
