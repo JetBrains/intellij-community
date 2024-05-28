@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.opentelemetry.SafepointBean
 import com.intellij.ide.PowerSaveMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
@@ -54,6 +55,8 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 
     var lastCpuTime: Long = 0
     var lastGcTime: Long = -1
+    var lastTimeToSafepoint: Long = 0
+    var lastTimeAtSafepoint: Long = 0
     val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
     while (true) {
       val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
@@ -66,9 +69,11 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
       }
       val swapSize = mxBean.totalSwapSpaceSize.toDouble()
       val swapLoad = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
+
       val totalGcTime = gcBeans.sumOf { it.collectionTime }
       val thisGcTime = if (lastGcTime == -1L) 0 else totalGcTime - lastGcTime
       lastGcTime = thisGcTime
+
       val totalCpuTime = mxBean.processCpuTime
       val thisCpuTime: Long
       if (totalCpuTime < 0) {
@@ -79,12 +84,27 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
         lastCpuTime = thisCpuTime
       }
 
+      val timeToSafepointMs = SafepointBean.totalTimeToSafepointMs()?.let { totalTimeToSafepointMs ->
+        val currentTimeToSafepoint = (totalTimeToSafepointMs - lastTimeToSafepoint).toInt()
+        lastTimeToSafepoint = totalTimeToSafepointMs
+        currentTimeToSafepoint
+      } ?: -1
+      val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs() ?.let { totalTimeAtSafepointMs ->
+        val currentTimeAtSafepoint = (totalTimeAtSafepointMs - lastTimeAtSafepoint).toInt()
+        lastTimeAtSafepoint = totalTimeAtSafepointMs
+        currentTimeAtSafepoint
+      } ?: -1
+
       // don't report total GC time in the first 5 minutes of IJ execution
       UILatencyLogger.HEARTBEAT.log(
         UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInt),
         UILatencyLogger.SWAP_LOAD.with(swapLoad),
         UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(thisCpuTime).toInt()),
+
         UILatencyLogger.GC_TIME.with(thisGcTime.toInt()),
+        UILatencyLogger.TIME_TO_SAFEPOINT.with(timeToSafepointMs),
+        UILatencyLogger.TIME_AT_SAFEPOINT.with(timeAtSafepointMs),
+
         UILatencyLogger.POWER_SOURCE.with(PowerStatus.getPowerStatus()),
         UILatencyLogger.POWER_SAVE_MODE.with(PowerSaveMode.isEnabled())
       )
@@ -95,12 +115,14 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 70)
+  private val GROUP = EventLogGroup("performance", 71)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
   internal val CPU_TIME: IntEventField = Int("cpu_time_ms")
   internal val GC_TIME: IntEventField = Int("gc_time_ms")
+  internal val TIME_TO_SAFEPOINT: IntEventField = Int("time_to_safepoint_ms")
+  internal val TIME_AT_SAFEPOINT: IntEventField = Int("time_at_safepoint_ms")
   internal val POWER_SOURCE: EnumEventField<PowerStatus> = Enum<PowerStatus>("power_source")
   internal val POWER_SAVE_MODE: BooleanEventField = Boolean("power_save_mode")
   internal val HEARTBEAT: VarargEventId = GROUP.registerVarargEvent(
@@ -108,7 +130,11 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     SYSTEM_CPU_LOAD,
     SWAP_LOAD,
     CPU_TIME,
+
     GC_TIME,
+    TIME_TO_SAFEPOINT,
+    TIME_AT_SAFEPOINT,
+
     POWER_SOURCE,
     POWER_SAVE_MODE
   )
@@ -133,13 +159,15 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   @JvmField
   val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
-  
+
   // ==== JVMResponsivenessMonitor: overall system run-time-variability sampling
 
   /** number of samples in this set of measurements */
   private val SAMPLES_COUNT: IntEventField = IntEventField("samples")
+
   /** mean task running time, in nanoseconds */
   private val AVG_NS: FloatEventField = FloatEventField("avg_ns")
+
   /** 50%-tile of task running time, in nanoseconds */
   private val P50_NS: LongEventField = LongEventField("p50_ns")
 

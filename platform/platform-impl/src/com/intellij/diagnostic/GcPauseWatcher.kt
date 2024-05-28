@@ -50,6 +50,7 @@ open class GcPauseWatcher {
 
   protected open fun recordGcPauseTime(name: String, currPauseDuration: Long) {
     if (StartUpMeasurer.isEnabled()) {
+      //MAYBE: add time-to-safepoint metrics, in addition to GC time metrics?
       StartUpMeasurer.addCompletedActivity(System.nanoTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration),
                                            counter.incrementAndGet().toString(), ActivityCategory.GC, null)
     }

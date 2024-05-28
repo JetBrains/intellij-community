@@ -65,7 +65,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
       val osMXBean = ManagementFactory.getOperatingSystemMXBean() as com.sun.management.OperatingSystemMXBean
 
-      val safepointBean = SafepointBean()
+      val safepointBean = SafepointBean
 
 
       batchCallback = otelMeter.batchCallback(
@@ -103,7 +103,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
           //JVM safepoints:
           totalSafepointCounter.record(safepointBean.safepointCount() ?: -1)
           totalTimeToSafepointsCounterMs.record(safepointBean.totalTimeToSafepointMs() ?: -1)
-          totalTimeAtSafepointsCounterMs.record(safepointBean.totalTimeAtSafepointsMs() ?: -1)
+          totalTimeAtSafepointsCounterMs.record(safepointBean.totalTimeAtSafepointMs() ?: -1)
 
           //OS/process load:
           osLoadAverageGauge.record(osMXBean.systemLoadAverage)
@@ -195,60 +195,61 @@ private class JVMStatsToOTelReporter : ProjectActivity {
     }
   }
 
-  /**
-   * Uses [sun.management.HotspotRuntimeMBean] got from [sun.management.ManagementFactoryHelper].
-   * Thanks to Vadim Salavatov
-   *
-   * Requires (see OpenedPackages.txt)
-   * ```
-   * --add-exports=java.management/sun.management=ALL-UNNAMED
-   * --add-opens=java.management/sun.management=ALL-UNNAMED
-   * ```
-   */
-  private class SafepointBean {
-    private val getSafepointCountHandle: () -> Long?
-    private val getTotalSafepointTimeHandle: () -> Long?
-    private val getSafepointSyncTimeHandle: () -> Long?
+}
 
-    init {
-      //type: sun.management.HotspotRuntimeMBean
-      val hotspotRuntimeMBean: Any? = try {
-        val clazz = Class.forName("sun.management.ManagementFactoryHelper")
-        clazz.getMethod("getHotspotRuntimeMBean").invoke(null)!!
-      }
-      catch (t: Throwable) {
-        currentClassLogger().warn("Can't get HotspotRuntimeMBean", t)
-        null
-      }
+/**
+ * Uses [sun.management.HotspotRuntimeMBean] got from [sun.management.ManagementFactoryHelper].
+ * Thanks to Vadim Salavatov
+ *
+ * Requires (see OpenedPackages.txt)
+ * ```
+ * --add-exports=java.management/sun.management=ALL-UNNAMED
+ * --add-opens=java.management/sun.management=ALL-UNNAMED
+ * ```
+ */
+internal object SafepointBean {
+  private val getSafepointCountHandle: () -> Long?
+  private val getTotalSafepointTimeHandle: () -> Long?
+  private val getSafepointSyncTimeHandle: () -> Long?
 
-      /** @return method call wrapped in lambda. Lambda return null if method call fails*/
-      fun wrapMethodCall(methodName: String): () -> Long? {
-        try {
-          val method = hotspotRuntimeMBean!!.javaClass.getMethod(methodName)
-          method.isAccessible = true
-          method.invoke(hotspotRuntimeMBean) // test if works (=if supported at all)
-
-          return { method.invoke(hotspotRuntimeMBean) as Long }
-        }
-        catch (_: Throwable) {
-          //if method call fails right away => likely, method/bean is not supported
-          //   => don't call it again, reduce an overhead:
-          return { null }
-        }
-      }
-
-      getSafepointCountHandle = wrapMethodCall("getSafepointCount")
-      getTotalSafepointTimeHandle = wrapMethodCall("getTotalSafepointTime")
-      getSafepointSyncTimeHandle = wrapMethodCall("getSafepointSyncTime")
+  init {
+    //type: sun.management.HotspotRuntimeMBean
+    val hotspotRuntimeMBean: Any? = try {
+      val clazz = Class.forName("sun.management.ManagementFactoryHelper")
+      clazz.getMethod("getHotspotRuntimeMBean").invoke(null)!!
+    }
+    catch (t: Throwable) {
+      currentClassLogger().warn("Can't get HotspotRuntimeMBean", t)
+      null
     }
 
-    /** @return the number of safepoints taken place since the JVM start. */
-    fun safepointCount(): Long? = getSafepointCountHandle()
+    /** @return method call wrapped in lambda. Lambda return null if method call fails*/
+    fun wrapMethodCall(methodName: String): () -> Long? {
+      try {
+        val method = hotspotRuntimeMBean!!.javaClass.getMethod(methodName)
+        method.isAccessible = true
+        method.invoke(hotspotRuntimeMBean) // test if works (=if supported at all)
 
-    /** @return the accumulated time spent _at_ safepoints (milliseconds), since JVM start */
-    fun totalTimeAtSafepointsMs(): Long? = getTotalSafepointTimeHandle()
+        return { method.invoke(hotspotRuntimeMBean) as Long }
+      }
+      catch (_: Throwable) {
+        //if method call fails right away => likely, method/bean is not supported
+        //   => don't call it again, reduce an overhead:
+        return { null }
+      }
+    }
 
-    /** @return the accumulated time spent _getting to_ safepoints (milliseconds), since JVM start */
-    fun totalTimeToSafepointMs(): Long? = getSafepointSyncTimeHandle()
+    getSafepointCountHandle = wrapMethodCall("getSafepointCount")
+    getTotalSafepointTimeHandle = wrapMethodCall("getTotalSafepointTime")
+    getSafepointSyncTimeHandle = wrapMethodCall("getSafepointSyncTime")
   }
+
+  /** @return the number of safepoints taken place since the JVM start. */
+  fun safepointCount(): Long? = getSafepointCountHandle()
+
+  /** @return the accumulated time spent _at_ safepoints (milliseconds), since JVM start */
+  fun totalTimeAtSafepointMs(): Long? = getTotalSafepointTimeHandle()
+
+  /** @return the accumulated time spent _getting to_ safepoints (milliseconds), since JVM start */
+  fun totalTimeToSafepointMs(): Long? = getSafepointSyncTimeHandle()
 }
