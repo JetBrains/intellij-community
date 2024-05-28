@@ -449,9 +449,23 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
       public static final int VERSION = 42;
 
+      private final int cacheSize;
+
+      public ManyKeysIntegerToIntegerIndexExtension() { this(-1); }
+
+      public ManyKeysIntegerToIntegerIndexExtension(int size) { cacheSize = size; }
+
       @Override
       public int getVersion() {
         return VERSION;
+      }
+
+      @Override
+      public int getCacheSize() {
+        if (cacheSize > 0) {
+          return cacheSize;
+        }
+        return super.getCacheSize();
       }
 
       @Override
