@@ -223,7 +223,6 @@ c:com.intellij.coverage.lcov.LcovCoverageReport$LineHits
 - getFunctionName():java.lang.String
 - getHits():I
 - getLineNumber():I
-- toString():java.lang.String
 f:com.intellij.coverage.lcov.LcovSerializationUtils
 - <init>():V
 - s:convertToProjectData(com.intellij.coverage.lcov.LcovCoverageReport,java.util.function.Function):com.intellij.rt.coverage.data.ProjectData

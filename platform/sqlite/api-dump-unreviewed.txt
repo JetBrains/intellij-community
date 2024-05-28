@@ -27,7 +27,6 @@ f:org.jetbrains.sqlite.IntBinder
 - f:bind(I):V
 - f:bind(I,I):V
 - f:bind(I,I,I):V
-- toString():java.lang.String
 f:org.jetbrains.sqlite.LongBinder
 - org.jetbrains.sqlite.BaseBinder
 - <init>(I,I):V
@@ -37,7 +36,6 @@ f:org.jetbrains.sqlite.LongBinder
 - f:bind(J,J):V
 - f:bind(J,J,J):V
 - f:bind(J,J,J,J):V
-- toString():java.lang.String
 a:org.jetbrains.sqlite.MyObjectBinder
 - org.jetbrains.sqlite.Binder
 - b:<init>(I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -57,7 +55,6 @@ f:org.jetbrains.sqlite.ObjectBinder
 - f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
 - f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
 - f:bindMultiple(java.lang.Object[]):V
-- toString():java.lang.String
 f:org.jetbrains.sqlite.ObjectBinder1
 - org.jetbrains.sqlite.MyObjectBinder
 - <init>(I):V
@@ -233,7 +230,6 @@ e:org.jetbrains.sqlite.SqliteErrorCode
 - f:code:I
 - f:message:java.lang.String
 - s:getEntries():kotlin.enums.EnumEntries
-- toString():java.lang.String
 - s:valueOf(java.lang.String):org.jetbrains.sqlite.SqliteErrorCode
 - s:values():org.jetbrains.sqlite.SqliteErrorCode[]
 f:org.jetbrains.sqlite.SqliteErrorCode$Companion
@@ -247,7 +243,6 @@ f:org.jetbrains.sqlite.SqliteIntPreparedStatement
 - f:ensureCapacity(I):V
 - executeBatch():V
 - f:getBinder():org.jetbrains.sqlite.IntBinder
-- toString():java.lang.String
 f:org.jetbrains.sqlite.SqlitePreparedStatement
 - org.jetbrains.sqlite.SqliteStatement
 - close():V
@@ -259,7 +254,6 @@ f:org.jetbrains.sqlite.SqlitePreparedStatement
 - f:selectByteArray():B[]
 - f:selectInt():java.lang.Integer
 - f:selectNotNullInt():I
-- toString():java.lang.String
 f:org.jetbrains.sqlite.SqliteResultSet
 - <init>(org.jetbrains.sqlite.SqlitePreparedStatement):V
 - f:getBoolean(I):Z

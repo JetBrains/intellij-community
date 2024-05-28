@@ -68,7 +68,6 @@ c:com.intellij.dvcs.push.PushSpec
 - <init>(com.intellij.dvcs.push.PushSource,com.intellij.dvcs.push.PushTarget):V
 - getSource():com.intellij.dvcs.push.PushSource
 - getTarget():com.intellij.dvcs.push.PushTarget
-- toString():java.lang.String
 a:com.intellij.dvcs.push.PushSupport
 - sf:PUSH_SUPPORT_EP:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

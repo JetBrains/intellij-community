@@ -54,7 +54,6 @@ f:com.intellij.application.options.ReplacePathToMacroMap
 - put(java.lang.String,java.lang.String):V
 - substitute(java.lang.String,Z):java.lang.String
 - substituteRecursively(java.lang.String,Z):java.lang.CharSequence
-- toString():java.lang.String
 a:com.intellij.configurationStore.BaseXmlOutputter
 - sf:Companion:com.intellij.configurationStore.BaseXmlOutputter$Companion
 - <init>(java.lang.String):V
@@ -308,7 +307,6 @@ f:com.intellij.openapi.module.impl.ModulePointerImpl
 - sf:Companion:com.intellij.openapi.module.impl.ModulePointerImpl$Companion
 - getModule():com.intellij.openapi.module.Module
 - getModuleName():java.lang.String
-- toString():java.lang.String
 f:com.intellij.openapi.module.impl.ModulePointerImpl$Companion
 f:com.intellij.openapi.module.impl.ModulePointerManagerImpl
 - com.intellij.openapi.module.ModulePointerManager
@@ -349,7 +347,6 @@ c:com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 - <init>(java.util.Set):V
 - hasUnloaded():Z
 - isUnloaded(java.lang.String):Z
-- toString():java.lang.String
 a:com.intellij.openapi.options.BaseSchemeProcessor
 - com.intellij.openapi.options.NonLazySchemeProcessor
 - <init>():V
@@ -382,7 +379,6 @@ a:com.intellij.openapi.options.ExternalizableSchemeAdapter
 - <init>():V
 - getName():java.lang.String
 - setName(java.lang.String):V
-- toString():java.lang.String
 a:com.intellij.openapi.options.NonLazySchemeProcessor
 - com.intellij.openapi.options.SchemeProcessor
 - <init>():V
@@ -493,7 +489,6 @@ c:com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 - setName(java.lang.String):V
 - setSdkAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData):V
 - f:setVersionString(java.lang.String):V
-- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 f:com.intellij.openapi.projectRoots.impl.ProjectRootUtil
 - s:getAllContentRoots(com.intellij.openapi.project.Project):com.intellij.psi.PsiDirectory[]
@@ -723,7 +718,6 @@ f:com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 - equals(java.lang.Object):Z
 - s:getOrCreate(java.lang.String):com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind$UnknownLibraryProperties
 - com.intellij.openapi.roots.libraries.LibraryProperties
 - <init>():V
@@ -849,7 +843,6 @@ f:com.intellij.util.modules.CircularModuleDependenciesDetector
 - f:getChildClass():java.lang.Class
 - f:getParentGetter():kotlin.jvm.functions.Function1
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnParent
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 - <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
@@ -861,7 +854,6 @@ f:com.intellij.util.modules.CircularModuleDependenciesDetector
 - f:getChildrenGetter():kotlin.jvm.functions.Function1
 - f:getParentClass():java.lang.Class
 - hashCode():I
-- toString():java.lang.String
 *e:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 - java.lang.Enum
 - sf:MAIN:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
@@ -988,7 +980,6 @@ f:com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
 - isValid():Z
-- toString():java.lang.String
 f:com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity
 - com.intellij.openapi.startup.ProjectActivity
 - <init>():V
@@ -1055,7 +1046,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryE
 - bs:copy$default(com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource,java.lang.String,I,java.lang.Object):com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 - com.intellij.openapi.roots.impl.libraries.LibraryEx
 - a:getLibraryId():com.intellij.platform.workspace.jps.entities.LibraryId
@@ -1293,7 +1283,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkModificatorBridgeImpl
 - setName(java.lang.String):V
 - setSdkAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData):V
 - setVersionString(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
 - <init>(java.util.List,java.util.List):V
 - f:findByUrl(java.lang.String):com.intellij.openapi.vfs.pointers.VirtualFilePointer
@@ -1312,7 +1301,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescript
 - f:getDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:getRecursive():Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.workspaceModel.ide.impl.reactive.WmReactive
 - <init>(com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl):V
 - f:flowOfDiff(com.intellij.platform.workspace.storage.query.CollectionQuery,kotlin.coroutines.Continuation):java.lang.Object

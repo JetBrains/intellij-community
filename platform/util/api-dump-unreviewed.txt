@@ -150,7 +150,6 @@ c:com.intellij.execution.process.BaseOSProcessHandler
 - p:processHasSeparateErrorStream():Z
 - p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
 - startNotify():V
-- toString():java.lang.String
 - waitFor():Z
 - waitFor(J):Z
 pf:com.intellij.execution.process.BaseOSProcessHandler$SimpleOutputReader
@@ -242,7 +241,6 @@ c:com.intellij.execution.process.ProcessOutputType
 - s:isStderr(com.intellij.openapi.util.Key):Z
 - isStdout():Z
 - s:isStdout(com.intellij.openapi.util.Key):Z
-- toString():java.lang.String
 - s:tryCast(com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 com.intellij.execution.process.ProcessOutputTypes
 - sf:STDERR:com.intellij.openapi.util.Key
@@ -405,7 +403,6 @@ f:com.intellij.openapi.diagnostic.Attachment
 - isIncluded():Z
 - openContentStream():java.io.InputStream
 - setIncluded(Z):V
-- toString():java.lang.String
 f:com.intellij.openapi.diagnostic.AttachmentFactory
 - <init>():V
 - s:createAttachment(java.lang.String,java.io.InputStream,J,Z):com.intellij.openapi.diagnostic.Attachment
@@ -579,7 +576,6 @@ f:com.intellij.openapi.diagnostic.ThrottledLogger
 - info(java.lang.String):V
 - info(java.lang.String,java.lang.Throwable):V
 - info(java.util.function.Supplier):V
-- toString():java.lang.String
 - warn(java.lang.String):V
 - warn(java.lang.String,java.lang.Throwable):V
 - warn(java.util.function.Supplier):V
@@ -646,7 +642,6 @@ f:com.intellij.openapi.util.Computable$PredefinedValueComputable
 - com.intellij.openapi.util.Computable
 - <init>(java.lang.Object):V
 - compute():java.lang.Object
-- toString():java.lang.String
 com.intellij.openapi.util.Condition
 - java.util.function.Predicate
 - sf:FALSE:com.intellij.openapi.util.Condition
@@ -713,7 +708,6 @@ f:com.intellij.openapi.util.EmptyRunnable
 - <init>():V
 - s:getInstance():java.lang.Runnable
 - run():V
-- toString():java.lang.String
 com.intellij.openapi.util.Factory
 - java.util.function.Supplier
 - a:create():java.lang.Object
@@ -749,7 +743,6 @@ f:com.intellij.openapi.util.IntRef
 - get():I
 - inc():V
 - set(I):V
-- toString():java.lang.String
 @:com.intellij.openapi.util.IntellijInternalApi
 - java.lang.annotation.Annotation
 f:com.intellij.openapi.util.InvalidDataException
@@ -886,7 +879,6 @@ c:com.intellij.openapi.util.Key
 - f:hashCode():I
 - isIn(com.intellij.openapi.util.UserDataHolder):Z
 - set(com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
-- toString():java.lang.String
 a:com.intellij.openapi.util.KeyWithDefaultValue
 - com.intellij.openapi.util.Key
 - <init>(java.lang.String):V
@@ -939,7 +931,6 @@ f:com.intellij.openapi.util.MutualMap
 - put(java.lang.Object,java.lang.Object):V
 - remove(java.lang.Object):V
 - size():I
-- toString():java.lang.String
 com.intellij.openapi.util.NamedJDOMExternalizable
 - com.intellij.openapi.util.JDOMExternalizable
 - a:getExternalFileName():java.lang.String
@@ -1248,7 +1239,6 @@ c:com.intellij.openapi.util.Trinity
 - f:getThird():java.lang.Object
 - s:getThird(com.intellij.openapi.util.Trinity):java.lang.Object
 - f:hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.util.UnfairTextRange
 - com.intellij.openapi.util.TextRange
 - <init>(I,I):V
@@ -1258,7 +1248,6 @@ f:com.intellij.openapi.util.UnorderedPair
 - <init>(java.lang.Object,java.lang.Object):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.openapi.util.UnprotectedUserDataHolder
 - com.intellij.openapi.util.UserDataHolder
 - <init>():V
@@ -1352,7 +1341,6 @@ c:com.intellij.openapi.util.Version
 - s:parseVersion(java.lang.String):com.intellij.openapi.util.Version
 - toCompactString():java.lang.String
 - s:toCompactString(I,I,I):java.lang.String
-- toString():java.lang.String
 a:com.intellij.openapi.util.VolatileNullableLazyValue
 - com.intellij.openapi.util.NullableLazyValue
 - getValue():java.lang.Object
@@ -1388,7 +1376,6 @@ f:com.intellij.openapi.util.io.ByteArraySequence
 - subSequence(I,I):com.intellij.openapi.util.io.ByteSequence
 - toBytes():B[]
 - toInputStream():java.io.DataInputStream
-- toString():java.lang.String
 com.intellij.openapi.util.io.ByteSequence
 - a:byteAt(I):B
 - a:length():I
@@ -1415,7 +1402,6 @@ f:com.intellij.openapi.util.io.FileAttributes
 - isSpecial():Z
 - isSymLink():Z
 - isWritable():Z
-- toString():java.lang.String
 - withCaseSensitivity(com.intellij.openapi.util.io.FileAttributes$CaseSensitivity):com.intellij.openapi.util.io.FileAttributes
 - withTimeStamp(J):com.intellij.openapi.util.io.FileAttributes
 e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
@@ -1708,7 +1694,6 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - setValue(java.lang.String,com.intellij.openapi.Disposable):V
 - setValue(Z):V
 - setValue(Z,com.intellij.openapi.Disposable):V
-- toString():java.lang.String
 com.intellij.openapi.util.registry.RegistryValueListener
 - afterValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
 - beforeValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
@@ -1738,7 +1723,6 @@ f:com.intellij.openapi.util.text.HtmlBuilder
 - nbsp():com.intellij.openapi.util.text.HtmlBuilder
 - nbsp(I):com.intellij.openapi.util.text.HtmlBuilder
 - toFragment():com.intellij.openapi.util.text.HtmlChunk
-- toString():java.lang.String
 - wrapWith(com.intellij.openapi.util.text.HtmlChunk$Element):com.intellij.openapi.util.text.HtmlChunk$Element
 - wrapWith(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
 - wrapWithHtmlBody():com.intellij.openapi.util.text.HtmlChunk$Element
@@ -1780,7 +1764,6 @@ a:com.intellij.openapi.util.text.HtmlChunk
 - s:text(java.lang.String):com.intellij.openapi.util.text.HtmlChunk
 - s:toFragment():java.util.stream.Collector
 - s:toFragment(com.intellij.openapi.util.text.HtmlChunk):java.util.stream.Collector
-- toString():java.lang.String
 - s:ul():com.intellij.openapi.util.text.HtmlChunk$Element
 - wrapWith(com.intellij.openapi.util.text.HtmlChunk$Element):com.intellij.openapi.util.text.HtmlChunk$Element
 - wrapWith(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
@@ -1814,7 +1797,6 @@ f:com.intellij.openapi.util.text.LineColumn
 - equals(java.lang.Object):Z
 - hashCode():I
 - s:of(I,I):com.intellij.openapi.util.text.LineColumn
-- toString():java.lang.String
 f:com.intellij.openapi.util.text.PastParticiple
 - <init>():V
 - s:pastParticiple(java.lang.String):java.lang.String
@@ -2131,7 +2113,6 @@ a:com.intellij.openapi.util.text.StringUtil$BombedCharSequence
 - f:defuse():V
 - length():I
 - subSequence(I,I):java.lang.CharSequence
-- toString():java.lang.String
 f:com.intellij.openapi.util.text.TrigramBuilder
 - s:getTrigrams(java.lang.CharSequence):it.unimi.dsi.fastutil.ints.IntSet
 - s:getTrigramsAsMap(java.lang.CharSequence):java.util.Map
@@ -2355,7 +2336,6 @@ f:com.intellij.util.Chunk
 - equals(java.lang.Object):Z
 - getNodes():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.util.CodeWriter
 - java.io.PrintWriter
 - <init>(java.io.PrintWriter):V
@@ -2575,7 +2555,6 @@ f:com.intellij.util.LazyInitializer
 f:com.intellij.util.LazyInitializer$LazyValue
 - <init>(java.util.function.Supplier):V
 - get():java.lang.Object
-- toString():java.lang.String
 e:com.intellij.util.LineSeparator
 - java.lang.Enum
 - sf:CR:com.intellij.util.LineSeparator
@@ -2585,7 +2564,6 @@ e:com.intellij.util.LineSeparator
 - getSeparatorBytes():B[]
 - getSeparatorString():java.lang.String
 - s:getSystemLineSeparator():com.intellij.util.LineSeparator
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.util.LineSeparator
 - s:values():com.intellij.util.LineSeparator[]
 c:com.intellij.util.ListWithSelection
@@ -2632,7 +2610,6 @@ f:com.intellij.util.Matrix
 - multiply(com.intellij.util.Matrix):com.intellij.util.Matrix
 - multiply(com.intellij.util.Vector):com.intellij.util.Vector
 - plus(com.intellij.util.Matrix):com.intellij.util.Matrix
-- toString():java.lang.String
 - transpose():com.intellij.util.Matrix
 f:com.intellij.util.MemoryDumpHelper
 - <init>():V
@@ -2748,7 +2725,6 @@ c:com.intellij.util.PathMappingSettings
 - s:mapToLocal(java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - s:readExternal(org.jdom.Element):com.intellij.util.PathMappingSettings
 - setPathMappings(java.util.List):V
-- toString():java.lang.String
 - s:writeExternal(org.jdom.Element,com.intellij.util.PathMappingSettings):V
 c:com.intellij.util.PathMappingSettings$BestMappingSelector
 - <init>():V
@@ -2770,7 +2746,6 @@ c:com.intellij.util.PathMappingSettings$PathMapping
 - mapToRemote(java.lang.String):java.lang.String
 - setLocalRoot(java.lang.String):V
 - setRemoteRoot(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.util.PatternUtil
 - sf:NOTHING:java.util.regex.Pattern
 - <init>():V
@@ -2799,7 +2774,6 @@ c:com.intellij.util.Range
 - hashCode():I
 - isWithin(java.lang.Comparable):Z
 - isWithin(java.lang.Comparable,Z):Z
-- toString():java.lang.String
 f:com.intellij.util.RecursionTrackerKt
 - sf:findCycle(java.lang.Object,kotlin.jvm.functions.Function1):java.util.List
 c:com.intellij.util.ReflectionAssignabilityCache
@@ -2873,7 +2847,6 @@ f:com.intellij.util.SmartFMap
 - putAll(java.util.Map):V
 - remove(java.lang.Object):java.lang.Object
 - size():I
-- toString():java.lang.String
 - values():java.util.Collection
 f:com.intellij.util.StringBuilderSpinAllocator
 - s:alloc():java.lang.StringBuilder
@@ -2957,7 +2930,6 @@ c:com.intellij.util.Vector
 - multiply(com.intellij.util.Matrix):com.intellij.util.Vector
 - multiply(com.intellij.util.Vector):D
 - plus(com.intellij.util.Vector):com.intellij.util.Vector
-- toString():java.lang.String
 f:com.intellij.util.VersionUtil
 - <init>():V
 - s:parseVersion(java.lang.String,java.util.regex.Pattern[]):com.intellij.openapi.util.Version
@@ -3023,7 +2995,6 @@ f:com.intellij.util.concurrency.BoundedTaskExecutor
 - isTerminated():Z
 - shutdown():V
 - shutdownNow():java.util.List
-- toString():java.lang.String
 a:com.intellij.util.concurrency.CountingThreadFactory
 - java.util.concurrent.ThreadFactory
 - pf:counter:java.util.concurrent.atomic.AtomicInteger
@@ -3063,7 +3034,6 @@ f:com.intellij.util.concurrency.SynchronizedClearableLazy
 - f:getValueIfInitialized():java.lang.Object
 - f:isInitialized():Z
 - f:setValue(java.lang.Object):V
-- toString():java.lang.String
 f:com.intellij.util.concurrency.SynchronizedClearableLazy$Companion
 c:com.intellij.util.containers.ArrayListSet
 - java.util.AbstractSet
@@ -3097,7 +3067,6 @@ f:com.intellij.util.containers.BidirectionalMap
 - remove(java.lang.Object):java.lang.Object
 - removeValue(java.lang.Object):V
 - size():I
-- toString():java.lang.String
 - values():java.util.Collection
 f:com.intellij.util.containers.BidirectionalMultiMap
 - <init>():V
@@ -3124,7 +3093,6 @@ f:com.intellij.util.containers.BooleanStack
 - pop():Z
 - push(Z):V
 - size():I
-- toString():java.lang.String
 f:com.intellij.util.containers.CacheOneStepIterator
 - java.util.Iterator
 - <init>(java.util.Iterator):V
@@ -3183,7 +3151,6 @@ a:com.intellij.util.containers.ConcurrentFactoryMap
 - replace(java.lang.Object,java.lang.Object):java.lang.Object
 - replace(java.lang.Object,java.lang.Object,java.lang.Object):Z
 - size():I
-- toString():java.lang.String
 - values():java.util.Collection
 com.intellij.util.containers.ConcurrentIntObjectMap
 - com.intellij.util.containers.IntObjectMap
@@ -3563,7 +3530,6 @@ a:com.intellij.util.containers.FactoryMap
 - remove(java.lang.Object):java.lang.Object
 - removeValue(java.lang.Object):Z
 - size():I
-- toString():java.lang.String
 - values():java.util.Collection
 a:com.intellij.util.containers.FilteredTraverserBase
 - java.lang.Iterable
@@ -3593,7 +3559,6 @@ a:com.intellij.util.containers.FilteredTraverserBase
 - f:reset():com.intellij.util.containers.FilteredTraverserBase
 - f:toList():java.util.List
 - f:toSet():java.util.Set
-- toString():java.lang.String
 - f:tracingBfsTraversal():com.intellij.util.containers.JBIterable
 - f:traverse():com.intellij.util.containers.JBIterable
 - f:traverse(com.intellij.util.containers.TreeTraversal):com.intellij.util.containers.JBIterable
@@ -3714,7 +3679,6 @@ f:com.intellij.util.containers.IntArrayList
 - toArray():I[]
 - toArray(I,I):I[]
 - toArray(I[]):I[]
-- toString():java.lang.String
 - trimToSize():V
 f:com.intellij.util.containers.IntIntHashMap
 - it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
@@ -3773,7 +3737,6 @@ c:com.intellij.util.containers.IntStack
 - pop():I
 - push(I):V
 - size():I
-- toString():java.lang.String
 com.intellij.util.containers.InternalIterator
 - a:visit(java.lang.Object):Z
 f:com.intellij.util.containers.InternalIterator$Collector
@@ -3845,7 +3808,6 @@ a:com.intellij.util.containers.JBIterable
 - f:toReverseMap(com.intellij.util.containers.Convertor):java.util.Map
 - f:toSet():java.util.Set
 - f:toStream():java.util.stream.Stream
-- toString():java.lang.String
 - f:transform(com.intellij.util.Function):com.intellij.util.containers.JBIterable
 - typedIterator():java.util.Iterator
 - f:unique():com.intellij.util.containers.JBIterable
@@ -3894,7 +3856,6 @@ a:com.intellij.util.containers.JBIterator
 - f:take(I):com.intellij.util.containers.JBIterator
 - f:takeWhile(com.intellij.openapi.util.Condition):com.intellij.util.containers.JBIterator
 - f:toList():java.util.List
-- toString():java.lang.String
 c:com.intellij.util.containers.JBTreeTraverser
 - com.intellij.util.containers.FilteredTraverserBase
 - <init>(com.intellij.util.Function):V
@@ -3947,7 +3908,6 @@ f:com.intellij.util.containers.LongStack
 - peek():J
 - pop():J
 - push(J):V
-- toString():java.lang.String
 c:com.intellij.util.containers.MostlySingularMultiMap
 - java.io.Serializable
 - pf:myMap:java.util.Map
@@ -3970,7 +3930,6 @@ c:com.intellij.util.containers.MostlySingularMultiMap
 - remove(java.lang.Object,java.lang.Object):Z
 - removeAllValues(java.lang.Object):Z
 - f:size():I
-- f:toString():java.lang.String
 - f:valuesForKey(java.lang.Object):I
 pf:com.intellij.util.containers.MostlySingularMultiMap$ValueList
 - java.util.ArrayList
@@ -4022,7 +3981,6 @@ c:com.intellij.util.containers.MultiMap
 - f:removeValue(java.lang.Object,java.lang.Object):V
 - f:size():I
 - f:toHashMap():java.util.Map
-- f:toString():java.lang.String
 - f:values():java.util.Collection
 f:com.intellij.util.containers.NotNullList
 - java.util.ArrayList
@@ -4215,7 +4173,6 @@ a:com.intellij.util.containers.TreeTraversal
 - a:createIterator(java.lang.Iterable,com.intellij.util.Function):com.intellij.util.containers.TreeTraversal$It
 - f:intercept(java.lang.String,com.intellij.util.containers.TreeTraversal$TraversalInterceptor):com.intellij.util.containers.TreeTraversal
 - f:onRange(com.intellij.openapi.util.Condition):com.intellij.util.containers.TreeTraversal
-- f:toString():java.lang.String
 - f:traversal(com.intellij.util.Function):com.intellij.util.Function
 - f:traversal(java.lang.Iterable,com.intellij.util.Function):com.intellij.util.containers.JBIterable
 - f:traversal(java.lang.Object,com.intellij.util.Function):com.intellij.util.containers.JBIterable
@@ -4273,7 +4230,6 @@ f:com.intellij.util.containers.UnmodifiableHashMap
 - putAll(java.util.Map):V
 - remove(java.lang.Object):java.lang.Object
 - size():I
-- toString():java.lang.String
 - values():java.util.Collection
 - with(java.lang.Object,java.lang.Object):com.intellij.util.containers.UnmodifiableHashMap
 - withAll(java.util.Map):com.intellij.util.containers.UnmodifiableHashMap
@@ -4321,7 +4277,6 @@ f:com.intellij.util.containers.UnsignedShortArrayList
 - toArray():I[]
 - toArray(I,I):I[]
 - toArray(I[]):I[]
-- toString():java.lang.String
 - trimToSize():V
 f:com.intellij.util.containers.UtilKt
 - sf:addAllIfNotNull(java.util.List,java.lang.Object[]):V
@@ -4511,7 +4466,6 @@ f:com.intellij.util.graph.ElementOrder
 - s:natural():com.intellij.util.graph.ElementOrder
 - s:sorted(java.util.Comparator):com.intellij.util.graph.ElementOrder
 - s:stable():com.intellij.util.graph.ElementOrder
-- toString():java.lang.String
 - type():com.intellij.util.graph.ElementOrder$Type
 - s:unordered():com.intellij.util.graph.ElementOrder
 e:com.intellij.util.graph.ElementOrder$Type
@@ -4632,7 +4586,6 @@ c:com.intellij.util.indexing.IndexId
 - p:<init>(java.lang.String):V
 - s:create(java.lang.String):com.intellij.util.indexing.IndexId
 - f:getName():java.lang.String
-- toString():java.lang.String
 com.intellij.util.indexing.InvertedIndex
 - a:clear():V
 - a:dispose():V
@@ -4819,7 +4772,6 @@ com.intellij.util.indexing.impl.RemovedKeyProcessor
 f:com.intellij.util.indexing.impl.UpdateData
 - com.intellij.util.indexing.impl.AbstractUpdateData
 - <init>(I,java.util.Map,com.intellij.openapi.util.ThrowableComputable,com.intellij.util.indexing.IndexId,com.intellij.util.ThrowableRunnable):V
-- toString():java.lang.String
 com.intellij.util.indexing.impl.ValueSerializationProblemReporter
 - a:reportProblem(java.lang.Exception):V
 a:com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor
@@ -5429,7 +5381,6 @@ f:com.intellij.util.io.PersistentHashMap
 - processKeysWithExistingMapping(com.intellij.util.Processor):Z
 - put(java.lang.Object,java.lang.Object):V
 - remove(java.lang.Object):V
-- toString():java.lang.String
 com.intellij.util.io.PersistentHashMap$ValueDataAppender
 - com.intellij.util.io.AppendablePersistentMap$ValueDataAppender
 com.intellij.util.io.PersistentMap
@@ -5585,7 +5536,6 @@ f:com.intellij.util.io.StringRef
 - hashCode():I
 - length():I
 - s:stringFromStream(java.io.DataInput,com.intellij.util.io.AbstractStringEnumerator):java.lang.String
-- toString():java.lang.String
 - s:toString(com.intellij.util.io.StringRef):java.lang.String
 - writeTo(java.io.DataOutput,com.intellij.util.io.AbstractStringEnumerator):V
 f:com.intellij.util.io.URLUtil
@@ -5643,7 +5593,6 @@ c:com.intellij.util.io.UnsyncByteArrayInputStream
 - readShortLittleEndian():I
 - reset():V
 - skip(J):J
-- toString():java.lang.String
 c:com.intellij.util.io.UnsyncByteArrayOutputStream
 - java.io.OutputStream
 - com.intellij.util.io.RepresentableAsByteArraySequence
@@ -5660,7 +5609,6 @@ c:com.intellij.util.io.UnsyncByteArrayOutputStream
 - toByteArraySequence():com.intellij.openapi.util.io.ByteArraySequence
 - toInputStream():java.io.InputStream
 - toNewByteArray():B[]
-- toString():java.lang.String
 - write(I):V
 - write(B[],I,I):V
 - writeTo(java.io.OutputStream):V
@@ -5687,7 +5635,6 @@ f:com.intellij.util.io.WalEvent$AppendEvent
 - f:getData():B[]
 - getKey():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.util.io.WalEvent$CorruptionEvent
 - com.intellij.util.io.WalEvent
 - sf:INSTANCE:com.intellij.util.io.WalEvent$CorruptionEvent
@@ -5703,7 +5650,6 @@ f:com.intellij.util.io.WalEvent$PutEvent
 - getKey():java.lang.Object
 - f:getValue():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.util.io.WalEvent$RemoveEvent
 - com.intellij.util.io.WalEvent
 - <init>(java.lang.Object):V
@@ -5713,7 +5659,6 @@ f:com.intellij.util.io.WalEvent$RemoveEvent
 - equals(java.lang.Object):Z
 - getKey():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.util.io.WriteAheadLogKt
 - sf:getDebugWalRecords():Z
 - sf:restoreHashMapFromWal(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer):java.util.Map
@@ -5744,13 +5689,11 @@ f:com.intellij.util.io.blobstorage.SpaceAllocationStrategy$DataLengthPlusFixedPe
 - <init>(I,I,I,I):V
 - capacity(I,I):I
 - defaultCapacity():I
-- toString():java.lang.String
 f:com.intellij.util.io.blobstorage.SpaceAllocationStrategy$WriterDecidesStrategy
 - com.intellij.util.io.blobstorage.SpaceAllocationStrategy
 - <init>(I,I):V
 - capacity(I,I):I
 - defaultCapacity():I
-- toString():java.lang.String
 f:com.intellij.util.io.externalizer.StringCollectionExternalizer
 - com.intellij.util.io.KeyDescriptor
 - sf:STRING_LIST_EXTERNALIZER:com.intellij.util.io.externalizer.StringCollectionExternalizer
@@ -5816,7 +5759,6 @@ e:com.intellij.util.io.storage.HeavyProcessLatch$Type
 - sf:Indexing:com.intellij.util.io.storage.HeavyProcessLatch$Type
 - sf:Processing:com.intellij.util.io.storage.HeavyProcessLatch$Type
 - sf:Syncing:com.intellij.util.io.storage.HeavyProcessLatch$Type
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.util.io.storage.HeavyProcessLatch$Type
 - s:values():com.intellij.util.io.storage.HeavyProcessLatch$Type[]
 com.intellij.util.io.storage.IAppenderStream
@@ -5944,7 +5886,6 @@ c:com.intellij.util.io.zip.JBZipEntry
 - setSize(J):V
 - setTime(J):V
 - setUnixMode(I):V
-- toString():java.lang.String
 - writeDataTo(java.io.OutputStream):V
 com.intellij.util.io.zip.JBZipExtraField
 - a:getCentralDirectoryData():B[]
@@ -5971,7 +5912,6 @@ c:com.intellij.util.io.zip.JBZipFile
 - getEntries():java.util.List
 - getEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
 - getOrCreateEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
-- toString():java.lang.String
 f:com.intellij.util.io.zip.Zip64ExtraField
 - com.intellij.util.io.zip.JBZipExtraField
 - <init>(com.intellij.util.io.zip.ZipUInt64,com.intellij.util.io.zip.ZipUInt64,com.intellij.util.io.zip.ZipUInt64):V
@@ -6025,7 +5965,6 @@ f:com.intellij.util.io.zip.ZipUInt64
 - s:getValue(B[]):java.math.BigInteger
 - s:getValue(B[],I):java.math.BigInteger
 - hashCode():I
-- toString():java.lang.String
 com.intellij.util.keyFMap.KeyFMap
 - sf:EMPTY_MAP:com.intellij.util.keyFMap.KeyFMap
 - a:equalsByReference(com.intellij.util.keyFMap.KeyFMap):Z
@@ -6046,7 +5985,6 @@ f:com.intellij.util.lang.CompoundRuntimeException
 - printStackTrace(java.io.PrintStream):V
 - printStackTrace(java.io.PrintWriter):V
 - s:throwIfNotEmpty(java.util.List):V
-- toString():java.lang.String
 f:com.intellij.util.lang.JavaVersion
 - java.lang.Comparable
 - f:build:I
@@ -6064,7 +6002,6 @@ f:com.intellij.util.lang.JavaVersion
 - s:parse(java.lang.String):com.intellij.util.lang.JavaVersion
 - toFeatureMinorUpdateString():java.lang.String
 - toFeatureString():java.lang.String
-- toString():java.lang.String
 - s:tryParse(java.lang.String):com.intellij.util.lang.JavaVersion
 f:com.intellij.util.ref.GCUtil
 - <init>():V
@@ -6177,7 +6114,6 @@ f:com.intellij.util.text.SingleCharSequence
 - charAt(I):C
 - length():I
 - subSequence(I,I):java.lang.CharSequence
-- toString():java.lang.String
 f:com.intellij.util.text.StringKt
 - sf:allOccurrencesOf(java.lang.String,java.lang.String):kotlin.sequences.Sequence
 - sf:escLBr(java.lang.String):java.lang.String
@@ -6257,7 +6193,6 @@ f:com.intellij.util.text.minimatch.Minimatch
 - bs:match$default(com.intellij.util.text.minimatch.Minimatch,java.lang.Object,com.intellij.util.text.minimatch.PathAdapter,Z,I,java.lang.Object):Z
 - bs:match$default(com.intellij.util.text.minimatch.Minimatch,java.lang.String,Z,I,java.lang.Object):Z
 - bs:match$default(com.intellij.util.text.minimatch.Minimatch,java.util.List,Z,I,java.lang.Object):Z
-- toString():java.lang.String
 f:com.intellij.util.text.minimatch.MinimatchKt
 - sf:globUnescape(java.lang.String):java.lang.String
 - sf:minimatch(java.lang.String,java.lang.String):Z
@@ -6303,7 +6238,6 @@ f:com.intellij.util.text.minimatch.MinimatchOptions
 - f:setNoext(Z):V
 - f:setNoglobstar(Z):V
 - f:setNonegate(Z):V
-- toString():java.lang.String
 com.intellij.util.text.minimatch.PathAdapter
 - a:toArray(java.lang.Object,com.intellij.util.text.minimatch.MinimatchOptions):java.util.List
 f:com.intellij.util.ui.EDT
@@ -6359,7 +6293,6 @@ c:com.intellij.util.xmlb.BeanBinding
 - serializeProperties(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - f:sortBindings(it.unimi.dsi.fastutil.objects.Object2FloatMap):V
 - toJson(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):kotlinx.serialization.json.JsonElement
-- toString():java.lang.String
 com.intellij.util.xmlb.Binding
 - init(java.lang.reflect.Type,com.intellij.util.xmlb.Serializer):V
 - a:serialize(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V

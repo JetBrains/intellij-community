@@ -30,6 +30,7 @@ class ApiIndex {
       .map { it.inputStream() }
       .loadApiFromJvmClasses()
       .map { it.removeSyntheticBridges() }
+      .map { it.removeToString() }
       .map { signature ->
         signature.handleAnnotationsAndVisibility().also {
           /**
@@ -305,6 +306,22 @@ private fun MethodBinarySignature.isSyntheticBridge(): Boolean {
     !flags.isSet(Opcodes.ACC_STATIC)
     && flags.isSet(Opcodes.ACC_BRIDGE)
     && flags.isSet(Opcodes.ACC_SYNTHETIC)
+  }
+}
+
+private fun ClassBinarySignature.removeToString(): ClassBinarySignature {
+  val withoutToString = memberSignatures.filterNot { signature ->
+    signature is MethodBinarySignature
+    && !signature.access.access.isSet(Opcodes.ACC_ABSTRACT)
+    && signature.jvmMember.let { member ->
+      member.name == "toString" && member.desc == "()Ljava/lang/String;"
+    }
+  }
+  if (withoutToString.size == memberSignatures.size) {
+    return this
+  }
+  else {
+    return copy(memberSignatures = withoutToString)
   }
 }
 

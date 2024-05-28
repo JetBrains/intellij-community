@@ -54,7 +54,6 @@ c:com.intellij.structuralsearch.MatchOptions
 - setScope(com.intellij.psi.search.SearchScope):V
 - setSearchInjectedCode(Z):V
 - setSearchPattern(java.lang.String):V
-- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 a:com.intellij.structuralsearch.MatchResult
 - sf:LINE_MATCH:java.lang.String
@@ -200,7 +199,6 @@ f:com.intellij.structuralsearch.PatternContext
 - getDisplayName():java.lang.String
 - getId():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.structuralsearch.PatternContextInfo
 - <init>(com.intellij.structuralsearch.impl.matcher.PatternTreeContext):V
 - <init>(com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.structuralsearch.PatternContext):V
@@ -459,7 +457,6 @@ f:com.intellij.structuralsearch.impl.matcher.MatchResultImpl
 - setStart(I):V
 - setTarget(Z):V
 - size():I
-- toString():java.lang.String
 f:com.intellij.structuralsearch.impl.matcher.MatchUtils
 - <init>():V
 - s:compareWithNoDifferenceToPackage(java.lang.String,java.lang.String):Z

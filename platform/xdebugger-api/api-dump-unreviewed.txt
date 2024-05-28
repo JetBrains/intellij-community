@@ -307,7 +307,6 @@ a:com.intellij.xdebugger.breakpoints.XBreakpointType
 - isAddBreakpointButtonVisible():Z
 - isSuspendThreadSupported():Z
 - shouldShowInBreakpointsDialog(com.intellij.openapi.project.Project):Z
-- toString():java.lang.String
 e:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
 - java.lang.Enum
 - sf:ACTIONS:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
@@ -366,7 +365,6 @@ a:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant
 - f:getType():com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - isMultiVariant():Z
 - shouldUseAsInlineVariant():Z
-- toString():java.lang.String
 c:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLinePsiElementBreakpointVariant
 - com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointAllVariant
 - <init>(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.xdebugger.XSourcePosition,com.intellij.psi.PsiElement):V
@@ -396,7 +394,6 @@ a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 - getIcon(Z):javax.swing.Icon
 - a:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PRIORITY_COMPARATOR:java.util.Comparator
@@ -539,7 +536,6 @@ a:com.intellij.xdebugger.frame.XNamedValue
 - pf:myName:java.lang.String
 - p:<init>(java.lang.String):V
 - f:getName():java.lang.String
-- toString():java.lang.String
 com.intellij.xdebugger.frame.XNavigatable
 - a:setSourcePosition(com.intellij.xdebugger.XSourcePosition):V
 a:com.intellij.xdebugger.frame.XReferrersProvider

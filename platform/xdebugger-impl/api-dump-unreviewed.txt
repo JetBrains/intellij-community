@@ -81,7 +81,6 @@ a:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler
 - <init>(com.intellij.xdebugger.attach.EnvironmentAwareHost,com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType):V
 - s:getAttachOsHandler(com.intellij.xdebugger.attach.EnvironmentAwareHost):com.intellij.xdebugger.attach.osHandlers.AttachOSHandler
 - getOSType():com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
-- toString():java.lang.String
 e:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
 - java.lang.Enum
 - sf:LINUX:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
@@ -485,7 +484,6 @@ a:com.intellij.xdebugger.impl.XSourcePositionImpl
 - s:createByOffset(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.impl.XSourcePositionImpl
 - createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
 - getFile():com.intellij.openapi.vfs.VirtualFile
-- toString():java.lang.String
 c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 - <init>():V
@@ -1073,7 +1071,6 @@ c:com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 - setLogStack(Z):V
 - setSuspendPolicy(com.intellij.xdebugger.breakpoints.SuspendPolicy):V
 - setUserDescription(java.lang.String):V
-- toString():java.lang.String
 - p:updateIcon():V
 pc:com.intellij.xdebugger.impl.breakpoints.XBreakpointBase$BreakpointGutterIconRenderer
 - com.intellij.xdebugger.impl.breakpoints.XBreakpointBase$CommonBreakpointGutterIconRenderer
@@ -1224,7 +1221,6 @@ c:com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - getLanguage():com.intellij.lang.Language
 - getMode():com.intellij.xdebugger.evaluation.EvaluationMode
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.xdebugger.impl.breakpoints.XExpressionState
 - myCustomInfo:java.lang.String
 - myDisabled:Z
@@ -1253,7 +1249,6 @@ f:com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 - isValid():Z
 - setFileUrl(java.lang.String):V
 - setTemporary(Z):V
-- toString():java.lang.String
 - updatePosition():V
 - updateUI():V
 f:com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
@@ -1607,7 +1602,6 @@ c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 - p:evaluateAndShowHint():V
 - hideHint():V
 - p:onHintHidden():V
-- toString():java.lang.String
 a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - pf:myPoint:java.awt.Point
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.openapi.util.TextRange):V
@@ -1669,7 +1663,6 @@ f:com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$Cancell
 - hintPromise():org.jetbrains.concurrency.Promise
 - infoPromise():org.jetbrains.concurrency.Promise
 - s:resolved(com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint):com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
-- f:toString():java.lang.String
 - tryCancel():V
 e:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - java.lang.Enum
@@ -1769,7 +1762,6 @@ f:com.intellij.xdebugger.impl.frame.StackInfo
 - f:getStack():com.intellij.xdebugger.frame.XExecutionStack
 - f:getText():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.xdebugger.impl.frame.StackInfo$Companion
 - f:error(java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo
 - f:from(com.intellij.xdebugger.frame.XExecutionStack):com.intellij.xdebugger.impl.frame.StackInfo
@@ -2206,7 +2198,6 @@ f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
 - hashCode():I
 - f:setMemberName(java.lang.String):V
 - f:setParentTag(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo$Companion
 - f:getKey(java.lang.String,java.lang.String):java.lang.String
 *:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopListener
@@ -2792,7 +2783,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogItemPresentationInfo
 - f:getExecutableTextAttributes():com.intellij.ui.SimpleTextAttributes
 - f:getIndexedString():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogPresentationService
 - <init>():V
 - f:getHostTypeDisplayText(com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType):java.lang.String
@@ -2811,7 +2801,6 @@ c:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 - f:getIndexedString():java.lang.String
 - getMainDebugger(com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState):com.intellij.xdebugger.attach.XAttachDebugger
 - f:getProcessInfo():com.intellij.execution.process.ProcessInfo
-- toString():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem$Companion
 - f:create(com.intellij.execution.process.ProcessInfo,java.util.Map,com.intellij.openapi.util.UserDataHolder):com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogSettings
@@ -2854,7 +2843,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostAndProvider
 - f:getProject():com.intellij.openapi.project.Project
 - f:getProvider():com.intellij.xdebugger.attach.XAttachHostProvider
 - hashCode():I
-- toString():java.lang.String
 com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - a:getHost():com.intellij.xdebugger.attach.XAttachHost
 - a:getIcon():javax.swing.Icon
@@ -2873,7 +2861,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 - f:getProcessItems():java.util.List
 - f:getRecentItems():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo$Companion
 - f:getEMPTY():com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachShowOnlyMyProcessesToggleAction
@@ -3108,7 +3095,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnI
 - f:getColumnKey():java.lang.String
 - f:getDefaultColumnWidth():I
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 - <init>():V
 - a:createCell(I,com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode,com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters,Z):com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
@@ -3153,7 +3139,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNo
 - getProcessItem():com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 - getRenderer(I):javax.swing.table.TableCellRenderer
 - getValueAtColumn(I):java.lang.Object
-- toString():java.lang.String
 - visit(com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters):Z
 com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachSelectionIgnoredNode
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.TableGroupHeaderColumnSeparator
@@ -3535,7 +3520,6 @@ a:com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 - isLeaf():Z
 - p:setIcon(javax.swing.Icon):V
 - setLeaf(Z):V
-- toString():java.lang.String
 a:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase
 - com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback
 - <init>():V
@@ -3577,7 +3561,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueGroupNodeImpl
 - isComputed():Z
 - markChanged():V
 - onExpansion(Z):V
-- toString():java.lang.String
 c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - com.intellij.xdebugger.frame.XCompositeNode
@@ -3606,7 +3589,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
 - setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 - setValueModificationStarted():V
-- toString():java.lang.String
 f:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator
 - <init>():V
 - s:setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V

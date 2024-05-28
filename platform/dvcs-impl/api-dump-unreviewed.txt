@@ -69,7 +69,6 @@ c:com.intellij.dvcs.MultiMessage
 - b:<init>(java.util.Collection,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:append(java.lang.Object,java.lang.String):com.intellij.dvcs.MultiMessage
 - f:asString():java.lang.String
-- toString():java.lang.String
 f:com.intellij.dvcs.MultiRootBranches
 - sf:diverged(java.util.Collection):Z
 - sf:getCommonCurrentBranch(java.util.Collection):java.lang.String
@@ -422,7 +421,6 @@ c:com.intellij.dvcs.push.ui.RepositoryNode
 - setChecked(Z):V
 - startLoading(javax.swing.JTree,java.util.concurrent.Future,Z):V
 - stopLoading():V
-- toString():java.lang.String
 c:com.intellij.dvcs.push.ui.RepositoryWithBranchPanel
 - com.intellij.ui.components.panels.NonOpaquePanel
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.dvcs.push.PushTargetPanel):V
@@ -443,7 +441,6 @@ c:com.intellij.dvcs.push.ui.SingleRepositoryNode
 - isCheckboxVisible():Z
 - render(com.intellij.ui.ColoredTreeCellRenderer):V
 - setChecked(Z):V
-- toString():java.lang.String
 c:com.intellij.dvcs.push.ui.TextWithLinkNode
 - javax.swing.tree.DefaultMutableTreeNode
 - p:myLinkedText:com.intellij.dvcs.push.ui.VcsLinkedTextComponent
@@ -558,7 +555,6 @@ a:com.intellij.dvcs.repo.RepositoryImpl
 - hashCode():I
 - isDisposed():Z
 - isFresh():Z
-- toString():java.lang.String
 a:com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 - com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 - sf:Companion:com.intellij.dvcs.repo.VcsManagedFilesHolderBase$Companion
@@ -591,7 +587,6 @@ f:com.intellij.dvcs.repo.VcsRepositoryManager
 - getRepositoryForRootQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
 - isExternal(com.intellij.dvcs.repo.Repository):Z
 - removeExternalRepository(com.intellij.openapi.vfs.VirtualFile):V
-- toString():java.lang.String
 - waitForAsyncTaskCompletion():V
 com.intellij.dvcs.repo.VcsRepositoryMappingListener
 - a:mappingChanged():V

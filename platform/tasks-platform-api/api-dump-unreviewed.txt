@@ -39,7 +39,6 @@ c:com.intellij.tasks.CustomTaskState
 - setId(java.lang.String):V
 - setPredefined(Z):V
 - setPresentableName(java.lang.String):V
-- toString():java.lang.String
 a:com.intellij.tasks.LocalTask
 - com.intellij.tasks.Task
 - <init>():V
@@ -91,7 +90,6 @@ a:com.intellij.tasks.Task
 - f:hashCode():I
 - a:isClosed():Z
 - a:isIssue():Z
-- f:toString():java.lang.String
 f:com.intellij.tasks.TaskApiBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
@@ -187,7 +185,6 @@ a:com.intellij.tasks.TaskRepository
 - setTaskState(com.intellij.tasks.Task,com.intellij.tasks.TaskState):V
 - setUrl(java.lang.String):V
 - testConnection():V
-- toString():java.lang.String
 - updateTimeSpent(com.intellij.tasks.LocalTask,java.lang.String,java.lang.String):V
 a:com.intellij.tasks.TaskRepository$CancellableConnection
 - java.util.concurrent.Callable

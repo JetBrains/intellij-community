@@ -28,7 +28,6 @@ f:com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandle
 - equals(java.lang.Object):Z
 - f:getHtml():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Redirect
 - com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult
 - <init>(com.intellij.util.Url):V
@@ -38,7 +37,6 @@ f:com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandle
 - equals(java.lang.Object):Z
 - f:getUrl():com.intellij.util.Url
 - hashCode():I
-- toString():java.lang.String
 com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
 - a:acquireCredentials(java.lang.String):com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult
 a:com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult
@@ -89,7 +87,6 @@ pf:com.intellij.collaboration.auth.services.OAuthServiceBase$OAuthRequestWithRes
 - f:getRequest():com.intellij.collaboration.auth.services.OAuthRequest
 - f:getResult():java.util.concurrent.CompletableFuture
 - hashCode():I
-- toString():java.lang.String
 com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 - com.intellij.collaboration.auth.services.OAuthService
 - a:updateAccessToken(com.intellij.collaboration.auth.services.OAuthServiceWithRefresh$RefreshTokenRequest):java.util.concurrent.CompletableFuture

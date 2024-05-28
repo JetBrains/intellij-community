@@ -39,7 +39,6 @@
 - getImportance():com.intellij.platform.runtime.product.ModuleImportance
 - getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - resolve(com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.product.IncludedRuntimeModule
-- toString():java.lang.String
 *f:com.intellij.platform.runtime.product.serialization.RawProductModules
 - f:getBundledPluginMainModules():java.util.List
 - f:getIncludedFrom():java.util.List

@@ -41,7 +41,6 @@ f:com.intellij.history.core.ChangeSetHolder
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - id():I
-- f:toString():java.lang.String
 a:com.intellij.history.core.Content
 - <init>():V
 - equals(java.lang.Object):Z
@@ -50,7 +49,6 @@ a:com.intellij.history.core.Content
 - getString(com.intellij.history.core.tree.Entry,com.intellij.history.integration.IdeaGateway):java.lang.String
 - a:isAvailable():Z
 - a:release():V
-- toString():java.lang.String
 - write(java.io.DataOutput):V
 f:com.intellij.history.core.DataStreamUtil
 - <init>():V
@@ -210,7 +208,6 @@ f:com.intellij.history.core.changes.ChangeSet
 - lock():V
 - setActivityId(com.intellij.history.ActivityId):V
 - setName(java.lang.String):V
-- toString():java.lang.String
 - write(java.io.DataOutput):V
 a:com.intellij.history.core.changes.ChangeVisitor
 - <init>():V
@@ -326,7 +323,6 @@ a:com.intellij.history.core.changes.StructuralChange
 - p:removeEntry(com.intellij.history.core.tree.Entry):V
 - a:revertOn(com.intellij.history.core.tree.RootEntry,Z):V
 - revertPath(java.lang.String):java.lang.String
-- toString():java.lang.String
 - write(java.io.DataOutput):V
 f:com.intellij.history.core.revisions.ChangeRevision
 - com.intellij.history.core.revisions.Revision
@@ -339,7 +335,6 @@ f:com.intellij.history.core.revisions.ChangeRevision
 - getLabelColor():I
 - getRoot():com.intellij.history.core.tree.RootEntry
 - getTimestamp():J
-- toString():java.lang.String
 f:com.intellij.history.core.revisions.CurrentRevision
 - com.intellij.history.core.revisions.Revision
 - <init>(com.intellij.history.core.tree.RootEntry,java.lang.String):V
@@ -428,7 +423,6 @@ a:com.intellij.history.core.tree.Entry
 - p:setParent(com.intellij.history.core.tree.DirectoryEntry):V
 - setReadOnly(Z):V
 - ps:toNameId(java.lang.String):I
-- toString():java.lang.String
 - write(java.io.DataOutput):V
 f:com.intellij.history.core.tree.FileEntry
 - com.intellij.history.core.tree.Entry
@@ -631,7 +625,6 @@ f:com.intellij.history.integration.ui.models.RevisionData
 - f:getCurrentRevision():com.intellij.history.core.revisions.Revision
 - f:getRevisions():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.history.integration.ui.models.RevisionDataKt
 - sf:filterContents(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,Z):java.util.Set
 - sf:filterContents(com.intellij.history.integration.ui.models.SelectionCalculator,java.lang.String):java.util.Set
@@ -797,7 +790,6 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - equals(java.lang.Object):Z
 - f:getItems():java.util.List
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityData$Companion
 - f:getEMPTY():com.intellij.platform.lvcs.impl.ActivityData
 *f:com.intellij.platform.lvcs.impl.ActivityDiffData
@@ -812,7 +804,6 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - f:getPresentableChanges():java.lang.Iterable
 - hashCode():I
 - f:isSingleSelection():Z
-- toString():java.lang.String
 *:com.intellij.platform.lvcs.impl.ActivityFileChange
 - com.intellij.openapi.vcs.changes.ui.PresentableChange
 - a:createProducer(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
@@ -828,7 +819,6 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - f:getIcon():javax.swing.Icon
 - f:getText():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.platform.lvcs.impl.ActivityProvider
 - a:filterActivityList(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivityData,java.lang.String):java.util.Set
 - a:getActivityItemsChanged(com.intellij.platform.lvcs.impl.ActivityScope):kotlinx.coroutines.flow.Flow
@@ -853,7 +843,6 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - equals(java.lang.Object):Z
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.platform.lvcs.impl.ActivityScope$File
 - com.intellij.platform.lvcs.impl.ActivityScope
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
@@ -866,13 +855,11 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - equals(java.lang.Object):Z
 - f:getFiles():java.util.Collection
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Recent
 - com.intellij.platform.lvcs.impl.ActivityScope
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.ActivityScope$Recent
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Selection
 - com.intellij.platform.lvcs.impl.ActivityScope$File
 - <init>(com.intellij.openapi.vfs.VirtualFile,I,I):V
@@ -886,7 +873,6 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - f:getFrom():I
 - f:getTo():I
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityScope$SingleFile
 - com.intellij.platform.lvcs.impl.ActivityScope$File
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
@@ -896,7 +882,6 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - equals(java.lang.Object):Z
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.lvcs.impl.ActivityScopeKt
 - sf:getFilePath(com.intellij.platform.lvcs.impl.ActivityScope$File):com.intellij.openapi.vcs.FilePath
 - sf:getHasMultipleFiles(com.intellij.platform.lvcs.impl.ActivityScope):Z
@@ -911,7 +896,6 @@ f:com.intellij.platform.lvcs.impl.ActivityScopeKt
 - f:getData():com.intellij.platform.lvcs.impl.ActivityData
 - f:getSelectedItems():java.util.List
 - hashCode():I
-- toString():java.lang.String
 *e:com.intellij.platform.lvcs.impl.DirectoryDiffMode
 - java.lang.Enum
 - sf:WithLocal:com.intellij.platform.lvcs.impl.DirectoryDiffMode
@@ -938,13 +922,11 @@ f:com.intellij.platform.lvcs.impl.RevisionId$ChangeSet
 - equals(java.lang.Object):Z
 - f:getId():J
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.lvcs.impl.RevisionId$Current
 - com.intellij.platform.lvcs.impl.RevisionId
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.RevisionId$Current
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 - f:getDIRECTORY_DIFF_MODE():com.intellij.openapi.actionSystem.DataKey

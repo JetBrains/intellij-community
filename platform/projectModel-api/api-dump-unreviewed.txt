@@ -113,7 +113,6 @@ a:com.intellij.openapi.components.BaseState
 - bs:string$default(com.intellij.openapi.components.BaseState,java.lang.String,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
 - pf:stringSet():com.intellij.openapi.components.StoredPropertyBase
 - pf:stringSet(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
-- toString():java.lang.String
 - pf:treeSet():com.intellij.openapi.components.StoredPropertyBase
 f:com.intellij.openapi.components.BaseState$Companion
 e:com.intellij.openapi.components.JsonSchemaType
@@ -626,7 +625,6 @@ e:com.intellij.openapi.roots.DependencyScope
 - isForTestCompile():Z
 - isForTestRuntime():Z
 - s:readExternal(org.jdom.Element):com.intellij.openapi.roots.DependencyScope
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.roots.DependencyScope
 - s:values():com.intellij.openapi.roots.DependencyScope[]
 - writeExternal(org.jdom.Element):V
@@ -882,7 +880,6 @@ c:com.intellij.openapi.roots.OrderRootType
 - f:hashCode():I
 - name():java.lang.String
 - skipWriteIfEmpty():Z
-- toString():java.lang.String
 c:com.intellij.openapi.roots.OrderRootType$DocumentationRootType
 - com.intellij.openapi.roots.OrderRootType
 - <init>():V
@@ -1113,7 +1110,6 @@ c:com.intellij.openapi.roots.libraries.LibraryKind
 - s:create(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
 - s:findById(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
 - f:getKindId():java.lang.String
-- toString():java.lang.String
 c:com.intellij.openapi.roots.libraries.LibraryKindRegistry
 - sf:Companion:com.intellij.openapi.roots.libraries.LibraryKindRegistry$Companion
 - <init>():V

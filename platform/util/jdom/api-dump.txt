@@ -36,7 +36,6 @@ c:org.jdom.Attribute
 - p:setParent(org.jdom.Element):org.jdom.Attribute
 - setSpecified(Z):V
 - setValue(java.lang.String):org.jdom.Attribute
-- toString():java.lang.String
 e:org.jdom.AttributeType
 - java.lang.Enum
 - sf:CDATA:org.jdom.AttributeType
@@ -64,7 +63,6 @@ c:org.jdom.CDATA
 - detach():org.jdom.CDATA
 - p:setParent(org.jdom.Parent):org.jdom.CDATA
 - setText(java.lang.String):org.jdom.CDATA
-- toString():java.lang.String
 f:org.jdom.Comment
 - org.jdom.Content
 - <init>(java.lang.String):V
@@ -73,7 +71,6 @@ f:org.jdom.Comment
 - getText():java.lang.String
 - getValue():java.lang.String
 - setText(java.lang.String):org.jdom.Comment
-- toString():java.lang.String
 a:org.jdom.Content
 - java.io.Serializable
 - java.lang.Cloneable
@@ -156,7 +153,6 @@ f:org.jdom.DocType
 - setInternalSubset(java.lang.String):V
 - setPublicID(java.lang.String):org.jdom.DocType
 - setSystemID(java.lang.String):org.jdom.DocType
-- toString():java.lang.String
 f:org.jdom.Document
 - java.io.Serializable
 - java.lang.Cloneable
@@ -199,7 +195,6 @@ f:org.jdom.Document
 - setDocType(org.jdom.DocType):org.jdom.Document
 - setProperty(java.lang.String,java.lang.Object):V
 - setRootElement(org.jdom.Element):org.jdom.Document
-- toString():java.lang.String
 c:org.jdom.Element
 - org.jdom.Content
 - java.io.Serializable
@@ -291,7 +286,6 @@ c:org.jdom.Element
 - setText(java.lang.String):org.jdom.Element
 - sortAttributes(java.util.Comparator):V
 - sortChildren(java.util.Comparator):V
-- toString():java.lang.String
 f:org.jdom.EntityRef
 - org.jdom.Content
 - <init>(java.lang.String):V
@@ -305,7 +299,6 @@ f:org.jdom.EntityRef
 - setName(java.lang.String):org.jdom.EntityRef
 - setPublicID(java.lang.String):org.jdom.EntityRef
 - setSystemID(java.lang.String):org.jdom.EntityRef
-- toString():java.lang.String
 f:org.jdom.IllegalAddException
 - java.lang.IllegalArgumentException
 - <init>(java.lang.String):V
@@ -373,7 +366,6 @@ f:org.jdom.Namespace
 - getPrefix():java.lang.String
 - getURI():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 org.jdom.Parent
 - java.lang.Cloneable
 - a:addContent(I,java.util.Collection):org.jdom.Parent
@@ -404,7 +396,6 @@ f:org.jdom.ProcessingInstruction
 - getTarget():java.lang.String
 - getValue():java.lang.String
 - setData(java.lang.String):org.jdom.ProcessingInstruction
-- toString():java.lang.String
 c:org.jdom.Text
 - org.jdom.Content
 - p:value:java.lang.String
@@ -423,7 +414,6 @@ c:org.jdom.Text
 - s:normalizeString(java.lang.String):java.lang.String
 - p:setParent(org.jdom.Parent):org.jdom.Text
 - setText(java.lang.String):org.jdom.Text
-- toString():java.lang.String
 f:org.jdom.Verifier
 - s:checkCharacterData(java.lang.String):java.lang.String
 - s:checkElementName(java.lang.String):java.lang.String
@@ -470,7 +460,6 @@ f:org.jdom.filter2.ElementFilter
 - equals(java.lang.Object):Z
 - filter(java.lang.Object):org.jdom.Element
 - hashCode():I
-- toString():java.lang.String
 org.jdom.filter2.Filter
 - a:and(org.jdom.filter2.Filter):org.jdom.filter2.Filter
 - a:filter(java.lang.Object):java.lang.Object
@@ -684,13 +673,11 @@ c:org.jdom.output.XMLOutputter
 - outputString(org.jdom.Text):java.lang.String
 - p:printText(java.io.Writer,org.jdom.Text):V
 - setFormat(org.jdom.output.Format):V
-- toString():java.lang.String
 pf:org.jdom.output.XMLOutputter$NamespaceStack
 - getURI(java.lang.String):java.lang.String
 - pop():java.lang.String
 - push(org.jdom.Namespace):V
 - size():I
-- toString():java.lang.String
 f:org.jdom.util.NamespaceStack
 - java.lang.Iterable
 - <init>():V
@@ -748,7 +735,6 @@ c:org.jdom.xpath.jaxen.JDOMXPath
 - getXPath():java.lang.String
 - selectNodes(java.lang.Object):java.util.List
 - selectSingleNode(java.lang.Object):java.lang.Object
-- toString():java.lang.String
 - valueOf(java.lang.Object):java.lang.String
 f:org.jdom.xpath.jaxen.JaxenXPathFactory
 - org.jdom.xpath.XPathFactory
@@ -772,4 +758,3 @@ a:org.jdom.xpath.util.AbstractXPathCompiled
 - p:getVariables():java.util.Map
 - setVariable(java.lang.String,java.lang.Object):java.lang.Object
 - setVariable(java.lang.String,org.jdom.Namespace,java.lang.Object):java.lang.Object
-- toString():java.lang.String

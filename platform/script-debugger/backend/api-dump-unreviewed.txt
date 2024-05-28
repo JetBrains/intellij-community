@@ -47,7 +47,6 @@ f:org.jetbrains.debugger.BreakpointManager$BreakpointCreated
 - f:getBreakpoint():org.jetbrains.debugger.Breakpoint
 - hashCode():I
 - f:isRegistered():org.jetbrains.concurrency.Promise
-- toString():java.lang.String
 f:org.jetbrains.debugger.BreakpointManager$BreakpointExist
 - org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
 - <init>(org.jetbrains.debugger.Breakpoint):V
@@ -57,7 +56,6 @@ f:org.jetbrains.debugger.BreakpointManager$BreakpointExist
 - equals(java.lang.Object):Z
 - f:getExistingBreakpoint():org.jetbrains.debugger.Breakpoint
 - hashCode():I
-- toString():java.lang.String
 e:org.jetbrains.debugger.BreakpointManager$MUTE_MODE
 - java.lang.Enum
 - sf:ALL:org.jetbrains.debugger.BreakpointManager$MUTE_MODE
@@ -78,7 +76,6 @@ f:org.jetbrains.debugger.BreakpointTarget$ScriptId
 - accept(org.jetbrains.debugger.BreakpointTarget$Visitor):java.lang.Object
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:org.jetbrains.debugger.BreakpointTarget$ScriptName
 - org.jetbrains.debugger.BreakpointTarget
 - <init>(java.lang.String):V
@@ -88,7 +85,6 @@ f:org.jetbrains.debugger.BreakpointTarget$ScriptName
 - getName():java.lang.String
 - getScript():org.jetbrains.debugger.Script
 - hashCode():I
-- toString():java.lang.String
 org.jetbrains.debugger.BreakpointTarget$Visitor
 - a:visitScript(org.jetbrains.debugger.Script):java.lang.Object
 - a:visitScriptName(java.lang.String,org.jetbrains.debugger.Script):java.lang.Object
@@ -180,7 +176,6 @@ f:org.jetbrains.debugger.EvaluateResult
 - f:getValue():org.jetbrains.debugger.values.Value
 - f:getWasThrown():Z
 - hashCode():I
-- toString():java.lang.String
 e:org.jetbrains.debugger.ExceptionCatchMode
 - java.lang.Enum
 - sf:ALL:org.jetbrains.debugger.ExceptionCatchMode
@@ -294,7 +289,6 @@ a:org.jetbrains.debugger.ScriptBase
 - getUrl():com.intellij.util.Url
 - getVm():org.jetbrains.debugger.Vm
 - setSourceMap(org.jetbrains.debugger.sourcemap.SourceMap):V
-- toString():java.lang.String
 f:org.jetbrains.debugger.ScriptDebuggerBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
@@ -344,7 +338,6 @@ f:org.jetbrains.debugger.ScriptRegExpBreakpointTarget
 - accept(org.jetbrains.debugger.BreakpointTarget$Visitor):java.lang.Object
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 org.jetbrains.debugger.ScriptRegExpSupportVisitor
 - org.jetbrains.debugger.BreakpointTarget$Visitor
 - a:visitRegExp(org.jetbrains.debugger.ScriptRegExpBreakpointTarget):java.lang.Object
@@ -454,7 +447,6 @@ c:org.jetbrains.debugger.VariableImpl
 - isMutable():Z
 - isReadable():Z
 - setValue(org.jetbrains.debugger.values.Value):V
-- toString():java.lang.String
 a:org.jetbrains.debugger.VariablesHost
 - f:valueManager:org.jetbrains.debugger.values.ValueManager
 - <init>(org.jetbrains.debugger.values.ValueManager):V
@@ -614,7 +606,6 @@ f:org.jetbrains.debugger.sourcemap.SourceMapDataImpl
 - getSources():java.util.List
 - getSourcesContent():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:org.jetbrains.debugger.sourcemap.SourceMapDecoderKt
 - sf:decodeSourceMap(java.lang.CharSequence,kotlin.jvm.functions.Function1):org.jetbrains.debugger.sourcemap.SourceMap
 - sf:decodeSourceMapFromFile(java.nio.file.Path,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.SourceMap

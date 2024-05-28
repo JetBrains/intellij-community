@@ -79,7 +79,6 @@ c:com.intellij.find.FindModel
 - setStringToReplace(java.lang.String):V
 - setWholeWordsOnly(Z):V
 - setWithSubdirectories(Z):V
-- toString():java.lang.String
 com.intellij.find.FindModel$FindModelObserver
 - a:findModelChanged(com.intellij.find.FindModel):V
 e:com.intellij.find.FindModel$SearchContext
@@ -136,7 +135,6 @@ f:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 - sf:FOREIGN_LANGUAGE:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 - sf:LITERALS:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
 - getName():java.lang.String
-- toString():java.lang.String
 com.intellij.lang.cacheBuilder.WordsScanner
 - a:processWords(java.lang.CharSequence,com.intellij.util.Processor):V
 f:com.intellij.lang.findUsages.DescriptiveNameUtil
@@ -315,7 +313,6 @@ c:com.intellij.psi.search.ProjectAndLibrariesScope
 - isSearchInLibraries():Z
 - isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 - setDisplayName(java.lang.String):V
-- toString():java.lang.String
 com.intellij.psi.search.PsiReferenceProcessor
 - a:execute(com.intellij.psi.PsiReference):Z
 c:com.intellij.psi.search.PsiReferenceProcessor$CollectElements
@@ -370,7 +367,6 @@ c:com.intellij.psi.search.PsiSearchRequest
 - equals(java.lang.Object):Z
 - getSearchSession():com.intellij.psi.search.SearchSession
 - hashCode():I
-- toString():java.lang.String
 com.intellij.psi.search.PsiTodoSearchHelper
 - a:findFilesWithTodoItems():com.intellij.psi.PsiFile[]
 - a:findTodoItems(com.intellij.psi.PsiFile):com.intellij.psi.search.TodoItem[]
@@ -389,7 +385,6 @@ c:com.intellij.psi.search.QuerySearchRequest
 - f:query:com.intellij.util.Query
 - <init>(com.intellij.util.Query,com.intellij.psi.search.SearchRequestCollector,Z,com.intellij.util.PairProcessor):V
 - runQuery():Z
-- toString():java.lang.String
 a:com.intellij.psi.search.RequestResultProcessor
 - p:<init>(java.lang.Object[]):V
 - equals(java.lang.Object):Z
@@ -417,12 +412,10 @@ c:com.intellij.psi.search.SearchRequestCollector
 - takeCustomSearchActions():java.util.List
 - takeQueryRequests():java.util.List
 - takeSearchRequests():java.util.List
-- toString():java.lang.String
 c:com.intellij.psi.search.SearchRequestQuery
 - com.intellij.util.AbstractQuery
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchRequestCollector):V
 - p:processResults(com.intellij.util.Processor):Z
-- toString():java.lang.String
 c:com.intellij.psi.search.SearchSession
 - com.intellij.openapi.util.UserDataHolderBase
 - <init>():V
@@ -432,7 +425,6 @@ f:com.intellij.psi.search.SingleTargetRequestResultProcessor
 - com.intellij.psi.search.RequestResultProcessor
 - <init>(com.intellij.psi.PsiElement):V
 - processTextOccurrence(com.intellij.psi.PsiElement,I,com.intellij.util.Processor):Z
-- toString():java.lang.String
 com.intellij.psi.search.TextOccurenceProcessor
 - a:execute(com.intellij.psi.PsiElement,I):Z
 f:com.intellij.psi.search.TodoAttributes
@@ -867,4 +859,3 @@ c:com.intellij.util.xml.XmlFileHeader
 - getRootTagNamespace():java.lang.String
 - getSystemId():java.lang.String
 - hashCode():I
-- toString():java.lang.String

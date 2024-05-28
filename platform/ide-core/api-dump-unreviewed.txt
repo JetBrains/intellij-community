@@ -105,7 +105,6 @@ c:com.intellij.execution.ui.ConsoleViewContentType
 - s:getRegisteredTypes():java.util.Collection
 - s:registerNewConsoleViewType(com.intellij.openapi.util.Key,com.intellij.execution.ui.ConsoleViewContentType):V
 - s:registerNewConsoleViewType(com.intellij.openapi.util.Key,com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.execution.ui.ConsoleViewContentType
-- toString():java.lang.String
 com.intellij.execution.ui.FragmentedSettings
 - a:getSelectedOptions():java.util.List
 - a:setSelectedOptions(java.util.List):V
@@ -167,7 +166,6 @@ c:com.intellij.facet.ui.libraries.LibraryInfo
 - getName():java.lang.String
 - getRequiredClasses():java.lang.String[]
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.facet.ui.libraries.RemoteRepositoryInfo
 - <init>(java.lang.String,java.lang.String,java.lang.String[]):V
 - equals(java.lang.Object):Z
@@ -298,7 +296,6 @@ f:com.intellij.ide.GeneralSettingsState
 - bs:copy$default(com.intellij.ide.GeneralSettingsState,java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z,I,java.lang.Object):com.intellij.ide.GeneralSettingsState
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.ide.IdeCoreBundle
 - com.intellij.DynamicBundle
 - sf:BUNDLE:java.lang.String
@@ -486,7 +483,6 @@ f:com.intellij.ide.plugins.advertiser.FeaturePluginData
 - bs:copy$default(com.intellij.ide.plugins.advertiser.FeaturePluginData,java.lang.String,com.intellij.ide.plugins.advertiser.PluginData,I,java.lang.Object):com.intellij.ide.plugins.advertiser.FeaturePluginData
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
@@ -519,7 +515,6 @@ f:com.intellij.ide.plugins.advertiser.PluginData
 - f:getPluginId():com.intellij.openapi.extensions.PluginId
 - f:getPluginName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.ide.plugins.advertiser.PluginData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginData$$serializer
@@ -541,7 +536,6 @@ f:com.intellij.ide.plugins.advertiser.PluginDataSet
 - equals(java.lang.Object):Z
 - f:getDataSet():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
@@ -566,7 +560,6 @@ f:com.intellij.ide.plugins.advertiser.PluginFeatureMap
 - equals(java.lang.Object):Z
 - f:get(java.lang.String):java.util.Set
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
@@ -766,7 +759,6 @@ c:com.intellij.notification.Notification
 - setTitle(java.lang.String):com.intellij.notification.Notification
 - setTitle(java.lang.String,java.lang.String):com.intellij.notification.Notification
 - setToolWindowId(java.lang.String):com.intellij.notification.Notification
-- toString():java.lang.String
 - whenExpired(java.lang.Runnable):com.intellij.notification.Notification
 e:com.intellij.notification.Notification$CollapseActionsDirection
 - java.lang.Enum
@@ -1513,7 +1505,6 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - setRoots(com.intellij.openapi.vfs.VirtualFile[]):V
 - setShowFileSystemRoots(Z):V
 - setTitle(java.lang.String):V
-- toString():java.lang.String
 - validateSelectedFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 - withDescription(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withFileFilter(com.intellij.openapi.util.Condition):com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -1551,7 +1542,6 @@ c:com.intellij.openapi.fileChooser.FileElement
 - s:isFileHidden(com.intellij.openapi.vfs.VirtualFile):Z
 - f:isHidden():Z
 - setParent(com.intellij.openapi.fileChooser.FileElement):V
-- f:toString():java.lang.String
 f:com.intellij.openapi.fileEditor.TextEditorLocation
 - com.intellij.openapi.fileEditor.FileEditorLocation
 - <init>(I,com.intellij.openapi.fileEditor.TextEditor):V
@@ -1559,7 +1549,6 @@ f:com.intellij.openapi.fileEditor.TextEditorLocation
 - compareTo(com.intellij.openapi.fileEditor.FileEditorLocation):I
 - getEditor():com.intellij.openapi.fileEditor.FileEditor
 - getPosition():com.intellij.openapi.editor.LogicalPosition
-- toString():java.lang.String
 a:com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 - <init>():V
 - s:getInstance():com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
@@ -1583,7 +1572,6 @@ f:com.intellij.openapi.fileTypes.FileTypeEvent
 - java.util.EventObject
 - getAddedFileType():com.intellij.openapi.fileTypes.FileType
 - getRemovedFileType():com.intellij.openapi.fileTypes.FileType
-- toString():java.lang.String
 a:com.intellij.openapi.fileTypes.FileTypeFactory
 - sf:FILE_TYPE_FACTORY_EP:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -1691,7 +1679,6 @@ a:com.intellij.openapi.fileTypes.UserFileType
 - setIcon(javax.swing.Icon):V
 - setIconPath(java.lang.String):V
 - setName(java.lang.String):V
-- toString():java.lang.String
 com.intellij.openapi.options.CompositeSettingsBuilder
 - a:createCompoundEditor():javax.swing.JComponent
 - a:getEditors():java.util.Collection
@@ -1778,7 +1765,6 @@ c:com.intellij.openapi.options.ConfigurableEP
 - f:instantiateConfigurableProvider():com.intellij.openapi.options.ConfigurableProvider
 - isAvailable():Z
 - f:setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
-- toString():java.lang.String
 pc:com.intellij.openapi.options.ConfigurableEP$ObjectProducer
 - p:<init>():V
 - p:canCreateElement():Z
@@ -1926,7 +1912,6 @@ f:com.intellij.openapi.project.BaseProjectDirectoriesDiff
 - f:getAdded():java.util.Set
 - f:getRemoved():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 com.intellij.openapi.project.BaseProjectDirectoriesListener
 - a:changed(com.intellij.openapi.project.Project,com.intellij.openapi.project.BaseProjectDirectoriesDiff):V
 a:com.intellij.openapi.project.DumbAwareAction
@@ -2120,7 +2105,6 @@ f:com.intellij.openapi.ui.ValidationInfo
 - asWarning():com.intellij.openapi.ui.ValidationInfo
 - equals(java.lang.Object):Z
 - forComponent(javax.swing.JComponent):com.intellij.openapi.ui.ValidationInfo
-- toString():java.lang.String
 - withOKEnabled():com.intellij.openapi.ui.ValidationInfo
 com.intellij.openapi.ui.WindowWrapper
 - com.intellij.openapi.Disposable
@@ -2321,7 +2305,6 @@ c:com.intellij.openapi.vcs.LocalFilePath
 - isDirectory():Z
 - isNonLocal():Z
 - isUnder(com.intellij.openapi.vcs.FilePath,Z):Z
-- toString():java.lang.String
 c:com.intellij.openapi.vcs.UrlFilePath
 - com.intellij.openapi.vcs.LocalFilePath
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
@@ -2348,7 +2331,6 @@ com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem
 f:com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
 - com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 - sf:INSTANCE:com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
-- toString():java.lang.String
 c:com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 - com.intellij.openapi.vfs.VirtualFile
 - <init>():V
@@ -2601,13 +2583,11 @@ f:com.intellij.openapi.wm.ToolWindowAnchor
 - getDisplayName():java.lang.String
 - isHorizontal():Z
 - isSplitVertically():Z
-- toString():java.lang.String
 f:com.intellij.openapi.wm.ToolWindowContentUiType
 - sf:COMBO:com.intellij.openapi.wm.ToolWindowContentUiType
 - sf:TABBED:com.intellij.openapi.wm.ToolWindowContentUiType
 - s:getInstance(java.lang.String):com.intellij.openapi.wm.ToolWindowContentUiType
 - getName():java.lang.String
-- toString():java.lang.String
 com.intellij.openapi.wm.ToolWindowId
 - sf:ANALYZE_DEPENDENCIES:java.lang.String
 - sf:ANT_BUILD:java.lang.String
@@ -3083,7 +3063,6 @@ c:com.intellij.util.io.HttpRequests$HttpStatusException
 - <init>(java.lang.String,I,java.lang.String):V
 - getStatusCode():I
 - getUrl():java.lang.String
-- toString():java.lang.String
 com.intellij.util.io.HttpRequests$Request
 - a:getConnection():java.net.URLConnection
 - a:getInputStream():java.io.InputStream
@@ -3248,7 +3227,6 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 - p:setTrackUiActivity(Z):V
 - showNotify():V
 - suspend():V
-- toString():java.lang.String
 - waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
 c:com.intellij.util.ui.update.UiNotifyConnector
 - com.intellij.openapi.Disposable
@@ -3291,5 +3269,4 @@ a:com.intellij.util.ui.update.Update
 - isRejected():Z
 - setProcessed():V
 - setRejected():V
-- toString():java.lang.String
 - wasProcessed():Z

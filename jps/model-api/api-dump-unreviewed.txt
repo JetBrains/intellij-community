@@ -8,7 +8,6 @@ c:com.intellij.openapi.fileTypes.ExactFileNameMatcher
 - getPresentableString():java.lang.String
 - hashCode():I
 - isIgnoreCase():Z
-- toString():java.lang.String
 c:com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 - com.intellij.openapi.fileTypes.FileNameMatcher
 - <init>(java.lang.String):V
@@ -17,7 +16,6 @@ c:com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 - getExtension():java.lang.String
 - getPresentableString():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.openapi.fileTypes.FileNameMatcher
 - accept(java.lang.String):Z
 - acceptsCharSequence(java.lang.CharSequence):Z
@@ -288,7 +286,6 @@ c:org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 - org.jetbrains.jps.model.JpsElementChildRole
 - p:<init>(java.lang.String):V
 - s:create(java.lang.String):org.jetbrains.jps.model.ex.JpsElementChildRoleBase
-- toString():java.lang.String
 f:org.jetbrains.jps.model.ex.JpsElementCollectionRole
 - org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 - org.jetbrains.jps.model.JpsElementCreator
@@ -327,7 +324,6 @@ c:org.jetbrains.jps.model.ex.JpsFactoryElementChildRoleBase
 - p:<init>(java.lang.String,org.jetbrains.jps.model.JpsElementCreator):V
 - create():org.jetbrains.jps.model.JpsElement
 - s:create(java.lang.String,org.jetbrains.jps.model.JpsElementCreator):org.jetbrains.jps.model.ex.JpsFactoryElementChildRoleBase
-- toString():java.lang.String
 a:org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 - org.jetbrains.jps.model.ex.JpsCompositeElementBase
 - org.jetbrains.jps.model.JpsNamedElement
@@ -413,7 +409,6 @@ f:org.jetbrains.jps.model.java.JdkVersionDetector$JdkVersionInfo
 - <init>(com.intellij.util.lang.JavaVersion,org.jetbrains.jps.model.java.JdkVersionDetector$Variant,com.intellij.util.system.CpuArch,java.lang.String):V
 - displayVersionString():java.lang.String
 - suggestedName():java.lang.String
-- toString():java.lang.String
 e:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - java.lang.Enum
 - sf:AdoptOpenJdk_HS:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
@@ -437,7 +432,6 @@ e:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 f:org.jetbrains.jps.model.java.JpsAnnotationRootType
 - org.jetbrains.jps.model.library.JpsOrderRootType
 - sf:INSTANCE:org.jetbrains.jps.model.java.JpsAnnotationRootType
-- toString():java.lang.String
 e:org.jetbrains.jps.model.java.JpsJavaClasspathKind
 - java.lang.Enum
 - sf:PRODUCTION_COMPILE:org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -559,13 +553,11 @@ c:org.jetbrains.jps.model.java.JpsJavaSdkType
 - s:getJavaVersion(org.jetbrains.jps.model.library.sdk.JpsSdk):I
 - getPresentableName():java.lang.String
 - s:parseVersion(java.lang.String):I
-- toString():java.lang.String
 org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper
 - a:getJavaSdkName(org.jetbrains.jps.model.JpsElement):java.lang.String
 f:org.jetbrains.jps.model.java.JpsNativeLibraryRootType
 - org.jetbrains.jps.model.library.JpsOrderRootType
 - sf:INSTANCE:org.jetbrains.jps.model.java.JpsNativeLibraryRootType
-- toString():java.lang.String
 org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
 org.jetbrains.jps.model.java.JpsProductionModuleSourcePackagingElement
@@ -795,7 +787,6 @@ c:org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 - hashCode():I
 - isIncludeTransitiveDependencies():Z
 - isVerifySha256Checksum():Z
-- toString():java.lang.String
 c:org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor$ArtifactVerification
 - <init>(java.lang.String,java.lang.String):V
 - equals(java.lang.Object):Z

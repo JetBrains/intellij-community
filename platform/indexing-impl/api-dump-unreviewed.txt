@@ -117,7 +117,6 @@ f:com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry
 - <init>(java.lang.String,Z):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.psi.impl.cache.impl.todo.TodoIndexers
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - sf:INSTANCE:com.intellij.psi.impl.cache.impl.todo.TodoIndexers
@@ -383,7 +382,6 @@ f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperati
 - f:lookupFinished():V
 - lookupResultSize(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 - lookupStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupAllKeysTrace
-- toString():java.lang.String
 - totalKeysIndexed(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 - withProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
@@ -397,7 +395,6 @@ f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperati
 - f:lookupFinished():V
 - lookupResultSize(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 - lookupStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
-- toString():java.lang.String
 - totalKeysIndexed(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 - withProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
@@ -410,7 +407,6 @@ f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperati
 - lookupResultSize(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 - lookupStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
 - stubTreesDeserializingStarted():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
-- toString():java.lang.String
 - totalKeysIndexed(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 - withProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
 f:com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter
@@ -444,7 +440,6 @@ f:com.intellij.util.indexing.events.VfsEventsMerger
 - s:tryLog(java.lang.String,com.intellij.util.indexing.IndexedFile,java.util.function.Supplier):V
 - s:tryLog(java.util.function.Supplier):V
 f:com.intellij.util.indexing.events.VfsEventsMerger$ChangeInfo
-- toString():java.lang.String
 com.intellij.util.indexing.events.VfsEventsMerger$VfsEventProcessor
 - endBatch():V
 - a:process(com.intellij.util.indexing.events.VfsEventsMerger$ChangeInfo):Z

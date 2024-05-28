@@ -178,7 +178,6 @@ c:net.n3.nanoxml.XMLException
 - printStackTrace():V
 - printStackTrace(java.io.PrintStream):V
 - printStackTrace(java.io.PrintWriter):V
-- toString():java.lang.String
 f:net.n3.nanoxml.XMLParseException
 - net.n3.nanoxml.XMLException
 - <init>(java.lang.String):V

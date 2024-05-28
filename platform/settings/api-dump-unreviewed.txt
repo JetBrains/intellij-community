@@ -1,15 +1,12 @@
 *f:com.intellij.platform.settings.CacheTag
 - com.intellij.platform.settings.SettingTag
 - sf:INSTANCE:com.intellij.platform.settings.CacheTag
-- toString():java.lang.String
 *f:com.intellij.platform.settings.NonShareableInternalTag
 - com.intellij.platform.settings.SettingTag
 - sf:INSTANCE:com.intellij.platform.settings.NonShareableInternalTag
-- toString():java.lang.String
 *f:com.intellij.platform.settings.NonShareableTag
 - com.intellij.platform.settings.SettingTag
 - sf:INSTANCE:com.intellij.platform.settings.NonShareableTag
-- toString():java.lang.String
 *f:com.intellij.platform.settings.PropertyManagerAdapterTag
 - com.intellij.platform.settings.SettingTag
 - <init>(java.lang.String):V
@@ -28,7 +25,6 @@
 - f:getSerializer():com.intellij.platform.settings.SettingSerializerDescriptor
 - f:getTags():java.util.Collection
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.settings.SettingDescriptor$Builder
 - <init>():V
 - f:build(java.lang.String,com.intellij.openapi.extensions.PluginId,com.intellij.platform.settings.SettingSerializerDescriptor):com.intellij.platform.settings.SettingDescriptor

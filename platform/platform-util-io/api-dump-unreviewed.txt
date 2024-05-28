@@ -23,7 +23,6 @@ c:com.intellij.execution.RunCanceledByUserException
 - getLocalValue():java.lang.String
 - getParts():java.util.List
 - s:targetizeParameters(java.util.List):java.util.Collection
-- toString():java.lang.String
 c:com.intellij.execution.configurations.GeneralCommandLine
 - com.intellij.openapi.util.UserDataHolder
 - <init>():V
@@ -65,7 +64,6 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - p:setupEnvironment(java.util.Map):V
 - p:startProcess(java.util.List):java.lang.Process
 - toProcessBuilder():java.lang.ProcessBuilder
-- toString():java.lang.String
 - withCharset(java.nio.charset.Charset):com.intellij.execution.configurations.GeneralCommandLine
 - withEnvironment(java.lang.String,java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
 - withEnvironment(java.util.Map):com.intellij.execution.configurations.GeneralCommandLine
@@ -93,13 +91,11 @@ e:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 *f:com.intellij.execution.configurations.ParameterTargetValuePart$Const
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - <init>(java.lang.String):V
-- toString():java.lang.String
 *f:com.intellij.execution.configurations.ParameterTargetValuePart$Path
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - <init>(java.io.File):V
 - <init>(java.lang.String):V
 - getPathToUpload():java.lang.String
-- toString():java.lang.String
 *f:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - sf:INSTANCE:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
@@ -159,7 +155,6 @@ f:com.intellij.execution.configurations.ParametersList
 - replaceOrPrepend(java.lang.String,java.lang.String):V
 - set(I,java.lang.String):V
 - s:setTestMacros(java.util.Map):V
-- toString():java.lang.String
 f:com.intellij.execution.configurations.ParamsGroup
 - java.lang.Cloneable
 - <init>(java.lang.String):V
@@ -172,7 +167,6 @@ f:com.intellij.execution.configurations.ParamsGroup
 - getId():java.lang.String
 - getParameters():java.util.List
 - getParametersList():com.intellij.execution.configurations.ParametersList
-- toString():java.lang.String
 f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
 - s:findAllExeFilesInPath(java.lang.String):java.util.List
 - s:findAllExeFilesInPath(java.lang.String,java.io.FileFilter):java.util.List
@@ -297,7 +291,6 @@ f:com.intellij.execution.process.LocalPtyOptions
 - f:getUseCygwinLaunch():Z
 - f:getUseWinConPty():Z
 - sf:shouldUseWinConPty():Z
-- toString():java.lang.String
 f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:build():com.intellij.execution.process.LocalPtyOptions
 - f:consoleMode():Z
@@ -307,7 +300,6 @@ f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:initialRows():I
 - f:initialRows(I):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:set(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.process.LocalPtyOptions$Builder
-- toString():java.lang.String
 - f:useCygwinLaunch():Z
 - f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:useWinConPty():Z
@@ -367,7 +359,6 @@ c:com.intellij.execution.process.ProcessInfo
 - getUser():java.lang.String
 - hashCode():I
 - isOwnedByCurrentUser():com.intellij.util.ThreeState
-- toString():java.lang.String
 c:com.intellij.execution.process.ProcessNotCreatedException
 - com.intellij.execution.ExecutionException
 - <init>(java.lang.String,com.intellij.execution.configurations.GeneralCommandLine):V
@@ -393,7 +384,6 @@ c:com.intellij.execution.process.ProcessOutput
 - setCancelled():V
 - setExitCode(I):V
 - setTimeout():V
-- toString():java.lang.String
 com.intellij.execution.process.ProcessService
 - getCommand(java.lang.Process):java.util.List
 - s:getInstance():com.intellij.execution.process.ProcessService
@@ -511,7 +501,6 @@ f:com.intellij.util.LocalFileUrl
 - resolve(java.lang.String):com.intellij.util.Url
 - toDecodedForm():java.lang.String
 - toExternalForm():java.lang.String
-- toString():java.lang.String
 - trimParameters():com.intellij.util.Url
 com.intellij.util.Url
 - a:addParameters(java.util.Map):com.intellij.util.Url

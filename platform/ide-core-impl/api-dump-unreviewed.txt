@@ -195,7 +195,6 @@ f:com.intellij.ide.impl.OpenProjectTask
 - f:isNewProject():Z
 - f:isProjectCreatedWithWizard():Z
 - f:isRefreshVfsNeeded():Z
-- toString():java.lang.String
 - f:withForceOpenInNewFrame(Z):com.intellij.ide.impl.OpenProjectTask
 - f:withProject(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
 - f:withProjectName(java.lang.String):com.intellij.ide.impl.OpenProjectTask
@@ -329,7 +328,6 @@ f:com.intellij.notification.impl.NotificationGroupEP
 - getDisplayName(com.intellij.openapi.extensions.PluginDescriptor):java.lang.String
 - getDisplayType():com.intellij.notification.NotificationDisplayType
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
-- toString():java.lang.String
 f:com.intellij.notification.impl.NotificationGroupManagerImpl
 - com.intellij.notification.NotificationGroupManager
 - getNotificationGroup(java.lang.String):com.intellij.notification.NotificationGroup
@@ -342,7 +340,6 @@ f:com.intellij.notification.impl.NotificationParentGroupBean
 - title:java.lang.String
 - titlePrefix:java.lang.String
 - <init>():V
-- toString():java.lang.String
 *:com.intellij.openapi.actionSystem.DependentTransientComponent
 - a:getPermanentComponent():java.awt.Component
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -386,7 +383,6 @@ f:com.intellij.openapi.editor.actions.CaretStop
 - hashCode():I
 - f:isAtEnd():Z
 - f:isAtStart():Z
-- toString():java.lang.String
 f:com.intellij.openapi.editor.actions.CaretStop$Companion
 f:com.intellij.openapi.editor.actions.CaretStopBoundary
 - sf:BOTH:com.intellij.openapi.editor.actions.CaretStopBoundary
@@ -407,7 +403,6 @@ f:com.intellij.openapi.editor.actions.CaretStopBoundary
 - f:getBackward():com.intellij.openapi.editor.actions.CaretStop
 - f:getForward():com.intellij.openapi.editor.actions.CaretStop
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.editor.actions.CaretStopBoundary$Companion
 f:com.intellij.openapi.editor.actions.CaretStopOptions
 - <init>():V
@@ -420,7 +415,6 @@ f:com.intellij.openapi.editor.actions.CaretStopOptions
 - f:getBackwardPolicy():com.intellij.openapi.editor.actions.CaretStopPolicy
 - f:getForwardPolicy():com.intellij.openapi.editor.actions.CaretStopPolicy
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
 - sf:Companion:com.intellij.openapi.editor.actions.CaretStopOptionsTransposed$Companion
 - sf:DEFAULT:com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
@@ -437,7 +431,6 @@ f:com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
 - f:getWordBoundary():com.intellij.openapi.editor.actions.CaretStopBoundary
 - hashCode():I
 - f:toCaretStopOptions():com.intellij.openapi.editor.actions.CaretStopOptions
-- toString():java.lang.String
 f:com.intellij.openapi.editor.actions.CaretStopOptionsTransposed$Companion
 - f:fromCaretStopOptions(com.intellij.openapi.editor.actions.CaretStopOptions):com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
 f:com.intellij.openapi.editor.actions.CaretStopPolicy
@@ -457,7 +450,6 @@ f:com.intellij.openapi.editor.actions.CaretStopPolicy
 - f:getLineStop():com.intellij.openapi.editor.actions.CaretStop
 - f:getWordStop():com.intellij.openapi.editor.actions.CaretStop
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.editor.actions.CaretStopPolicy$Companion
 e:com.intellij.openapi.editor.ex.BidiTextDirection
 - java.lang.Enum
@@ -985,7 +977,6 @@ f:com.intellij.openapi.vfs.newvfs.VfsImplUtil$PathFromRoot
 - f:hashCode():I
 - pathFromRoot():java.lang.String
 - root():com.intellij.openapi.vfs.newvfs.NewVirtualFile
-- f:toString():java.lang.String
 com.intellij.openapi.wm.impl.FloatingDecoratorMarker
 f:com.intellij.util.FlushingDaemon
 - sf:INSTANCE:com.intellij.util.FlushingDaemon

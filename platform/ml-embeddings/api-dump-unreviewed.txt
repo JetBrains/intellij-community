@@ -32,7 +32,6 @@ f:com.intellij.platform.ml.embeddings.models.TextEncoderConfig
 - equals(java.lang.Object):Z
 - f:getMaxLen():java.lang.Integer
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.ml.embeddings.models.TextEncoderConfig$Companion
 - f:loadConfig(ai.grazie.utils.mpp.DataLoader,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
@@ -300,7 +299,6 @@ f:com.intellij.platform.ml.embeddings.search.utils.ScoredText
 - f:getSimilarity():D
 - f:getText():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 - <init>():V
 - f:read(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object

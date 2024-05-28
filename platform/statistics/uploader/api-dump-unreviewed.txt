@@ -19,7 +19,6 @@ f:com.intellij.internal.statistic.eventLog.EventLogFile
 - f:getType(com.intellij.internal.statistic.config.eventLog.EventLogBuildType):com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 - bs:getType$default(com.intellij.internal.statistic.eventLog.EventLogFile,com.intellij.internal.statistic.config.eventLog.EventLogBuildType,I,java.lang.Object):com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
 - f:create(java.nio.file.Path,com.intellij.internal.statistic.config.eventLog.EventLogBuildType,java.lang.String):com.intellij.internal.statistic.eventLog.EventLogFile
 com.intellij.internal.statistic.eventLog.EventLogFilesProvider
@@ -90,7 +89,6 @@ f:com.intellij.internal.statistic.eventLog.MachineId
 - f:getId():java.lang.String
 - f:getRevision():I
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.MachineId$Companion
 f:com.intellij.internal.statistic.eventLog.SerializationHelper
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.SerializationHelper

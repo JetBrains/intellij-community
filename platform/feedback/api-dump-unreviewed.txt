@@ -95,7 +95,6 @@
 - f:getRuntimeVersion():java.lang.String
 - hashCode():I
 - serializeToJson(kotlinx.serialization.json.Json):kotlinx.serialization.json.JsonElement
-- toString():java.lang.String
 *f:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData$$serializer
@@ -146,7 +145,6 @@ f:com.intellij.platform.feedback.dialog.components.RatingComponent$Companion
 - f:getProperty():Z
 - hashCode():I
 - f:setProperty(Z):V
-- toString():java.lang.String
 *f:com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
@@ -198,7 +196,6 @@ f:com.intellij.platform.feedback.dialog.components.RatingComponent$Companion
 - f:getJsonElementName():java.lang.String
 - f:getLabel():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
@@ -228,7 +225,6 @@ f:com.intellij.platform.feedback.dialog.components.RatingComponent$Companion
 - f:getJsonElementName():java.lang.String
 - f:getLabel():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider

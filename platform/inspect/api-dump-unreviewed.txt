@@ -253,7 +253,6 @@ f:com.intellij.inspectopedia.extractor.Plugin
 - bs:copy$default(com.intellij.inspectopedia.extractor.Plugin,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.inspectopedia.extractor.Plugin
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.inspectopedia.extractor.Plugins
 - f:ideCode:java.lang.String
 - f:ideName:java.lang.String
@@ -268,7 +267,6 @@ f:com.intellij.inspectopedia.extractor.Plugins
 - bs:copy$default(com.intellij.inspectopedia.extractor.Plugins,java.util.List,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.inspectopedia.extractor.Plugins
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.inspectopedia.extractor.data.Inspection
 - java.lang.Comparable
 - f:briefDescription:java.lang.String
@@ -305,7 +303,6 @@ f:com.intellij.inspectopedia.extractor.data.Inspection
 - bs:copy$default(com.intellij.inspectopedia.extractor.data.Inspection,java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,Z,Z,Z,java.lang.String,java.lang.String,Z,java.util.List,java.util.List,I,java.lang.Object):com.intellij.inspectopedia.extractor.data.Inspection
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
 - children:java.util.List
 - content:java.util.List
@@ -322,7 +319,6 @@ f:com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
 - bs:copy$default(com.intellij.inspectopedia.extractor.data.OptionsPanelInfo,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.inspectopedia.extractor.data.Utils
 - <init>():V
 - s:safeId(java.lang.String):java.lang.String

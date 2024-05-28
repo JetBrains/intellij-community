@@ -25,7 +25,6 @@ c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - getPresentation():com.intellij.navigation.ItemPresentation
 - getValue():java.lang.Object
 - navigate(Z):V
-- toString():java.lang.String
 a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 - com.intellij.ide.structureView.StructureViewTreeElement
 - com.intellij.ide.util.treeView.NodeDescriptorProvidingKey
@@ -46,7 +45,6 @@ a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 - isSearchInLocationString():Z
 - isValid():Z
 - navigate(Z):V
-- toString():java.lang.String
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider

@@ -46,20 +46,17 @@ f:com.intellij.vcs.log.graph.PermanentGraph$Options$Base
 - equals(java.lang.Object):Z
 - f:getSortType():com.intellij.vcs.log.graph.PermanentGraph$SortType
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.graph.PermanentGraph$Options$Companion
 f:com.intellij.vcs.log.graph.PermanentGraph$Options$FirstParent
 - com.intellij.vcs.log.graph.PermanentGraph$Options
 - sf:INSTANCE:com.intellij.vcs.log.graph.PermanentGraph$Options$FirstParent
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.graph.PermanentGraph$Options$LinearBek
 - com.intellij.vcs.log.graph.PermanentGraph$Options
 - sf:INSTANCE:com.intellij.vcs.log.graph.PermanentGraph$Options$LinearBek
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 e:com.intellij.vcs.log.graph.PermanentGraph$SortType
 - java.lang.Enum
 - sf:Bek:com.intellij.vcs.log.graph.PermanentGraph$SortType
@@ -111,7 +108,6 @@ f:com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl
 - getAffectedElement():com.intellij.vcs.log.graph.PrintElement
 - getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
 - hashCode():I
-- toString():java.lang.String
 e:com.intellij.vcs.log.graph.actions.GraphAction$Type
 - java.lang.Enum
 - sf:BUTTON_COLLAPSE:com.intellij.vcs.log.graph.actions.GraphAction$Type

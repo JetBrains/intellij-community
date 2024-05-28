@@ -66,7 +66,6 @@ f:org.jetbrains.jps.incremental.SingleCharSequence
 - charAt(I):C
 - length():I
 - subSequence(I,I):java.lang.CharSequence
-- toString():java.lang.String
 f:org.jetbrains.jps.javac.APIWrappers
 - <init>():V
 - s:getUnwrapCodeSuggestion(java.lang.Class,java.lang.String):java.lang.String
@@ -1574,7 +1573,6 @@ f:org.jetbrains.jps.javac.TransformableJavaFileObject
 - openOutputStream():java.io.OutputStream
 - openReader(Z):java.io.Reader
 - openWriter():java.io.Writer
-- toString():java.lang.String
 - toUri():java.net.URI
 a:org.jetbrains.jps.javac.ValueSupplier
 - <init>():V

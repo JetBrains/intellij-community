@@ -280,7 +280,6 @@ f:org.jetbrains.ide.ToolboxIdeExitHandler$ExitParameters
 - f:getForce():Z
 - f:getRestart():Z
 - hashCode():I
-- toString():java.lang.String
 f:org.jetbrains.ide.ToolboxRestServiceKt
 - sf:getToolboxHandlerEP():com.intellij.openapi.extensions.ExtensionPointName
 f:org.jetbrains.ide.ToolboxSettingsActionRegistry

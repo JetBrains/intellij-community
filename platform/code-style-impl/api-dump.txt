@@ -11,7 +11,6 @@ f:com.intellij.formatting.FormatTextRange
 - isReadOnly(com.intellij.openapi.util.TextRange):Z
 - isWhitespaceReadOnly(com.intellij.openapi.util.TextRange):Z
 - setTextRange(com.intellij.openapi.util.TextRange):V
-- toString():java.lang.String
 f:com.intellij.formatting.FormatTextRanges
 - com.intellij.formatting.FormattingRangesInfo
 - <init>():V
@@ -55,14 +54,12 @@ f:com.intellij.formatting.IndentData
 - getTotalSpaces():I
 - isEmpty():Z
 - s:min(com.intellij.formatting.IndentData,com.intellij.formatting.IndentData):com.intellij.formatting.IndentData
-- toString():java.lang.String
 f:com.intellij.formatting.IndentInfo
 - <init>(I,I,I):V
 - <init>(I,I,I,Z):V
 - generateNewWhiteSpace(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):java.lang.String
 - getIndentSpaces():I
 - getSpaces():I
-- toString():java.lang.String
 f:com.intellij.formatting.VirtualFormattingImplKt
 - sf:isEligibleForVirtualFormatting(com.intellij.psi.PsiElement):Z
 - sf:wrapForVirtualFormatting(com.intellij.psi.PsiElement,com.intellij.formatting.FormattingModelBuilder):com.intellij.formatting.FormattingModelBuilder
@@ -100,7 +97,6 @@ f:com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper
 - isLeaf():Z
 - setParent(com.intellij.formatting.templateLanguages.BlockWithParent):V
 - setRightHandSpacing(com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper,com.intellij.formatting.Spacing):V
-- toString():java.lang.String
 a:com.intellij.formatting.templateLanguages.TemplateLanguageBlock
 - com.intellij.psi.formatter.common.AbstractBlock
 - com.intellij.formatting.templateLanguages.BlockWithParent
@@ -291,7 +287,6 @@ a:com.intellij.psi.formatter.common.AbstractBlock
 - p:isBuildIndentsOnly():Z
 - isIncomplete():Z
 - setBuildIndentsOnly(Z):V
-- toString():java.lang.String
 c:com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
 - com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder
 - <init>(com.intellij.psi.codeStyle.CodeStyleSettings):V
@@ -329,7 +324,6 @@ c:com.intellij.psi.formatter.common.InjectedLanguageBlockWrapper
 - getWrap():com.intellij.formatting.Wrap
 - isIncomplete():Z
 - isLeaf():Z
-- toString():java.lang.String
 com.intellij.psi.formatter.common.SettingsAwareBlock
 - com.intellij.formatting.Block
 - a:getSettings():com.intellij.psi.codeStyle.CodeStyleSettings

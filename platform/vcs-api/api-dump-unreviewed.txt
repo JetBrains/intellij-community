@@ -119,7 +119,6 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - setupEnvironments():V
 - p:shutdown():V
 - p:start():V
-- toString():java.lang.String
 com.intellij.openapi.vcs.AbstractVcs$RootsConvertor
 - a:convertRoots(java.util.List):java.util.List
 a:com.intellij.openapi.vcs.AbstractVcsHelper
@@ -254,7 +253,6 @@ c:com.intellij.openapi.vcs.DefaultRepositoryLocation
 - getLocation():java.lang.String
 - getURL():java.lang.String
 - toPresentableString():java.lang.String
-- toString():java.lang.String
 com.intellij.openapi.vcs.EditFileProvider
 - a:editFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 - a:getRequestText():java.lang.String
@@ -286,7 +284,6 @@ f:com.intellij.openapi.vcs.Ignored
 - f:getIgnoreFile():java.io.File
 - f:getMatchedPattern():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.openapi.vcs.IgnoredCheckResult
 c:com.intellij.openapi.vcs.IssueNavigationConfiguration
 - com.intellij.openapi.util.SimpleModificationTracker
@@ -316,7 +313,6 @@ c:com.intellij.openapi.vcs.IssueNavigationLink
 - hashCode():I
 - setIssueRegexp(java.lang.String):V
 - setLinkRegexp(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.openapi.vcs.LineHandlerHelper
 - <init>():V
 - s:splitText(java.lang.String):java.util.List
@@ -603,7 +599,6 @@ f:com.intellij.openapi.vcs.VcsDirectoryMapping
 - hashCode():I
 - isDefaultMapping():Z
 - isNoneMapping():Z
-- toString():java.lang.String
 a:com.intellij.openapi.vcs.VcsEnvCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -652,7 +647,6 @@ f:com.intellij.openapi.vcs.VcsRoot
 - getPath():com.intellij.openapi.vfs.VirtualFile
 - getVcs():com.intellij.openapi.vcs.AbstractVcs
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.openapi.vcs.VcsRootChecker
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -689,7 +683,6 @@ e:com.intellij.openapi.vcs.VcsShowConfirmationOption$Value
 - sf:DO_NOTHING_SILENTLY:com.intellij.openapi.vcs.VcsShowConfirmationOption$Value
 - sf:SHOW_CONFIRMATION:com.intellij.openapi.vcs.VcsShowConfirmationOption$Value
 - s:fromString(java.lang.String):com.intellij.openapi.vcs.VcsShowConfirmationOption$Value
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.vcs.VcsShowConfirmationOption$Value
 - s:values():com.intellij.openapi.vcs.VcsShowConfirmationOption$Value[]
 com.intellij.openapi.vcs.VcsShowSettingOption
@@ -717,7 +710,6 @@ c:com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo
 - getRepositories():java.util.Collection
 - hashCode():I
 - isRemote():Z
-- toString():java.lang.String
 e:com.intellij.openapi.vcs.VcsType
 - java.lang.Enum
 - sf:centralized:com.intellij.openapi.vcs.VcsType
@@ -1168,7 +1160,6 @@ c:com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision
 - com.intellij.openapi.vcs.changes.BinaryContentRevision
 - <init>(com.intellij.openapi.vcs.FilePath):V
 - getBinaryContent():B[]
-- toString():java.lang.String
 c:com.intellij.openapi.vcs.changes.CurrentContentRevision
 - com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - p:myFile:com.intellij.openapi.vcs.FilePath
@@ -1179,7 +1170,6 @@ c:com.intellij.openapi.vcs.changes.CurrentContentRevision
 - getFile():com.intellij.openapi.vcs.FilePath
 - getRevisionNumber():com.intellij.openapi.vcs.history.VcsRevisionNumber
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
-- toString():java.lang.String
 c:com.intellij.openapi.vcs.changes.EmptyChangelistBuilder
 - com.intellij.openapi.vcs.changes.ChangelistBuilder
 - <init>():V
@@ -1324,7 +1314,6 @@ c:com.intellij.openapi.vcs.changes.LocallyDeletedChange
 - getPath():com.intellij.openapi.vcs.FilePath
 - getPresentableUrl():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.openapi.vcs.changes.LogicalLock
 - <init>(Z,java.lang.String,java.lang.String,java.util.Date,java.util.Date):V
 - getComment():java.lang.String
@@ -1423,7 +1412,6 @@ f:com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterKey
 - bs:copy$default(com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterKey,java.lang.String,com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterPriority,I,java.lang.Object):com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterKey
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 e:com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterPriority
 - java.lang.Enum
 - sf:MERGE:com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterPriority
@@ -1850,7 +1838,6 @@ c:com.intellij.openapi.vcs.impl.VcsDescriptor
 - hashCode():I
 - matchesVcsDirPattern(java.lang.String):Z
 - probablyUnderVcs(com.intellij.openapi.vfs.VirtualFile):Z
-- toString():java.lang.String
 com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI
 - a:getAll():com.intellij.openapi.vcs.impl.VcsDescriptor[]
 - a:getByName(java.lang.String):com.intellij.openapi.vcs.AbstractVcs
@@ -1897,7 +1884,6 @@ f:com.intellij.openapi.vcs.merge.MergeDialogCustomizer$DiffEditorTitleCustomizer
 - f:getLeftTitleCustomizer():com.intellij.diff.DiffEditorTitleCustomizer
 - f:getRightTitleCustomizer():com.intellij.diff.DiffEditorTitleCustomizer
 - hashCode():I
-- toString():java.lang.String
 com.intellij.openapi.vcs.merge.MergeProvider
 - a:conflictResolvedForFile(com.intellij.openapi.vfs.VirtualFile):V
 - createDefaultMergeDialogCustomizer():com.intellij.openapi.vcs.merge.MergeDialogCustomizer
@@ -2050,7 +2036,6 @@ f:com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
 - f:getAttribute():com.intellij.ui.SimpleTextAttributes
 - f:getText():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine$Companion
 - f:greyText(java.lang.String):com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
 f:com.intellij.openapi.vcs.update.FileGroup
@@ -2095,7 +2080,6 @@ f:com.intellij.openapi.vcs.update.FileGroup
 - readExternal(org.jdom.Element):V
 - s:readGroupsFromElement(java.util.List,org.jdom.Element):V
 - remove(java.lang.String):V
-- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 - s:writeGroupsToElement(java.util.List,org.jdom.Element):V
 com.intellij.openapi.vcs.update.SequentialUpdatesContext
@@ -2126,7 +2110,6 @@ f:com.intellij.openapi.vcs.update.UpdatedFiles
 - f:getTopLevelGroups():java.util.List
 - f:isEmpty():Z
 - f:registerGroup(com.intellij.openapi.vcs.update.FileGroup):com.intellij.openapi.vcs.update.FileGroup
-- toString():java.lang.String
 f:com.intellij.openapi.vcs.update.UpdatedFiles$Companion
 - f:create():com.intellij.openapi.vcs.update.UpdatedFiles
 c:com.intellij.openapi.vcs.update.UpdatedFilesReverseSide
@@ -2331,7 +2314,6 @@ com.intellij.vcs.commit.CommitWorkflowHandler
 - hashCode():I
 - f:isAmend():Z
 - f:isSkipCommitChecks():Z
-- toString():java.lang.String
 com.intellij.vcs.commit.CommitWorkflowUi
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.actionSystem.DataProvider

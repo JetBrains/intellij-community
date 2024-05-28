@@ -176,7 +176,6 @@ f:com.intellij.java.workspace.entities.ArtifactId
 - f:getName():java.lang.String
 - getPresentableName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.java.workspace.entities.ArtifactKt
 - sf:getArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder):com.intellij.java.workspace.entities.ArtifactEntity$Builder
 - sf:getArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity):com.intellij.java.workspace.entities.ArtifactEntity
@@ -1364,7 +1363,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - equals(java.lang.Object):Z
 - f:getFile():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.jps.JpsImportedEntitySource
 - com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
@@ -1381,7 +1379,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:getStoredExternally():Z
 - getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-- toString():java.lang.String
 *a:com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - a:getBaseDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:getBaseDirectoryUrlString():java.lang.String
@@ -1399,7 +1396,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:getProjectDir():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - getProjectFilePath():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased
 - com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
@@ -1413,7 +1409,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - f:getIprFileParent():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - getProjectFilePath():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *a:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 - com.intellij.platform.workspace.jps.JpsFileEntitySource
 - a:getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
@@ -1429,7 +1424,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory
 - com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 - *sf:Companion:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
@@ -1444,7 +1438,6 @@ f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
 - getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 - getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
 *f:com.intellij.platform.workspace.jps.MetadataStorageImpl
 - com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
@@ -1786,7 +1779,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.FacetId
 - com.intellij.platform.workspace.storage.SymbolicEntityId
 - <init>(java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.jps.entities.ModuleId):V
@@ -1801,7 +1793,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetId
 - getPresentableName():java.lang.String
 - f:getType():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.FacetKt
 - sf:getChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntity$Builder):java.util.List
 - sf:getChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntity):java.util.List
@@ -1840,7 +1831,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryDependency
 - f:getLibrary():com.intellij.platform.workspace.jps.entities.LibraryId
 - f:getScope():com.intellij.platform.workspace.jps.entities.DependencyScope
 - hashCode():I
-- toString():java.lang.String
 com.intellij.platform.workspace.jps.entities.LibraryEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - sf:Companion:com.intellij.platform.workspace.jps.entities.LibraryEntity$Companion
@@ -1948,7 +1938,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryId
 - getPresentableName():java.lang.String
 - f:getTableId():com.intellij.platform.workspace.jps.entities.LibraryTableId
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntityData
 - com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - <init>():V
@@ -1978,7 +1967,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryRoot
 - f:getType():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 - f:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-- toString():java.lang.String
 e:com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
 - java.lang.Enum
 - sf:ARCHIVES_UNDER_ROOT:com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
@@ -1997,7 +1985,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.LibraryRootTypeId$Companion
 - f:getCOMPILED():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 - f:getSOURCES():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -2013,7 +2000,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryTableId$GlobalLibraryTable
 - equals(java.lang.Object):Z
 - getLevel():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.LibraryTableId$ModuleLibraryTableId
 - com.intellij.platform.workspace.jps.entities.LibraryTableId
 - <init>(com.intellij.platform.workspace.jps.entities.ModuleId):V
@@ -2024,7 +2010,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryTableId$ModuleLibraryTable
 - getLevel():java.lang.String
 - f:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.LibraryTableId$ProjectLibraryTableId
 - com.intellij.platform.workspace.jps.entities.LibraryTableId
 - sf:INSTANCE:com.intellij.platform.workspace.jps.entities.LibraryTableId$ProjectLibraryTableId
@@ -2037,7 +2022,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.Library_extensionsKt
 - sf:modifyEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 f:com.intellij.platform.workspace.jps.entities.MetadataStorageImpl
@@ -2076,7 +2060,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleDependency
 - f:getProductionOnTest():Z
 - f:getScope():com.intellij.platform.workspace.jps.entities.DependencyScope
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 - java.io.Serializable
 com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -2209,7 +2192,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleId
 - f:getName():java.lang.String
 - getPresentableName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 - com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - sf:Companion:com.intellij.platform.workspace.jps.entities.ModuleSettingsBase$Companion
@@ -2241,7 +2223,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.OrdersKt
 - sf:modifyEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.FacetsOrderEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetsOrderEntity
 f:com.intellij.platform.workspace.jps.entities.RootsExtensions
@@ -2261,7 +2242,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkDependency
 - equals(java.lang.Object):Z
 - f:getSdk():com.intellij.platform.workspace.jps.entities.SdkId
 - hashCode():I
-- toString():java.lang.String
 com.intellij.platform.workspace.jps.entities.SdkEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - sf:Companion:com.intellij.platform.workspace.jps.entities.SdkEntity$Companion
@@ -2373,7 +2353,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkId
 - getPresentableName():java.lang.String
 - f:getType():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.SdkKt
 - sf:modifyEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.SdkEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntity
 f:com.intellij.platform.workspace.jps.entities.SdkRoot
@@ -2387,7 +2366,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkRoot
 - f:getType():com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 - f:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 - java.io.Serializable
 - <init>(java.lang.String):V
@@ -2397,7 +2375,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.platform.workspace.jps.entities.SourceRootEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - sf:Companion:com.intellij.platform.workspace.jps.entities.SourceRootEntity$Companion
@@ -2491,7 +2468,6 @@ f:com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntityData
 - com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - com.intellij.platform.workspace.storage.impl.SoftLinkable

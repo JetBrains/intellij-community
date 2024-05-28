@@ -10,7 +10,6 @@ f:com.intellij.filePrediction.features.history.FileHistoryFeatures
 - f:getPosition():java.lang.Integer
 - f:getUniGram():com.intellij.filePrediction.features.history.NextFileProbability
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.filePrediction.features.history.FileHistoryManager
 - <init>(com.intellij.internal.ml.ngram.NGramIncrementalModelRunner):V
 - f:calcNGramFeatures(java.util.List):com.intellij.filePrediction.features.history.FilePredictionNGramFeatures
@@ -51,7 +50,6 @@ f:com.intellij.filePrediction.features.history.NextFileProbability
 - f:getMleToMax():D
 - f:getMleToMin():D
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.ml.models.local.LocalCatBoostModelMetadataReader
 - com.intellij.internal.ml.ModelMetadataReader
 - <init>(java.lang.String,java.lang.String):V
@@ -142,11 +140,9 @@ com.intellij.platform.ml.impl.ngram.model.NGramToken
 f:com.intellij.platform.ml.impl.ngram.model.NGramToken$EndOfSentence
 - com.intellij.platform.ml.impl.ngram.model.NGramToken
 - sf:INSTANCE:com.intellij.platform.ml.impl.ngram.model.NGramToken$EndOfSentence
-- toString():java.lang.String
 f:com.intellij.platform.ml.impl.ngram.model.NGramToken$StartOfSentence
 - com.intellij.platform.ml.impl.ngram.model.NGramToken
 - sf:INSTANCE:com.intellij.platform.ml.impl.ngram.model.NGramToken$StartOfSentence
-- toString():java.lang.String
 f:com.intellij.platform.ml.impl.ngram.model.NGramToken$Word
 - com.intellij.platform.ml.impl.ngram.model.NGramToken
 - bsf:box-impl(java.lang.Object):com.intellij.platform.ml.impl.ngram.model.NGramToken$Word
@@ -157,7 +153,6 @@ f:com.intellij.platform.ml.impl.ngram.model.NGramToken$Word
 - f:getWord():java.lang.Object
 - hashCode():I
 - s:hashCode-impl(java.lang.Object):I
-- toString():java.lang.String
 - s:toString-impl(java.lang.Object):java.lang.String
 - bf:unbox-impl():java.lang.Object
 f:com.intellij.platform.ml.impl.ngram.model.SimpleNGramModel
@@ -180,7 +175,6 @@ f:com.intellij.platform.ml.impl.turboComplete.CompletionKind
 - f:getName():java.lang.Enum
 - f:getVariety():com.intellij.platform.ml.impl.turboComplete.KindVariety
 - hashCode():I
-- toString():java.lang.String
 com.intellij.platform.ml.impl.turboComplete.KindCollector
 - a:collectKinds(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor,com.intellij.codeInsight.completion.CompletionResultSet):V
 - a:getKindVariety():com.intellij.platform.ml.impl.turboComplete.KindVariety
@@ -241,7 +235,6 @@ f:com.intellij.platform.ml.impl.turboComplete.ranking.RankedKind
 - f:getKind():com.intellij.platform.ml.impl.turboComplete.CompletionKind
 - f:getRelevance():java.lang.Double
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.ml.impl.turboComplete.ranking.RankedKind$Companion
 - f:fromWeights(java.lang.Iterable,Z):java.util.List
 e:com.intellij.textMatching.PrefixMatchingType
@@ -286,7 +279,6 @@ f:com.intellij.textMatching.PrefixMatchingUtil$PrefixMatchingScores
 - f:getWordsWithCase():D
 - f:getWordsWithCaseRelative():D
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.textMatching.PrefixMatchingUtil$PrefixMatchingScores$Builder
 - <init>():V
 - f:build(java.lang.String,java.lang.String):com.intellij.textMatching.PrefixMatchingUtil$PrefixMatchingScores

@@ -87,7 +87,6 @@ f:com.intellij.internal.statistic.eventLog.EventLogGroup
 - f:registerVarargEvent(java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 - f:registerVarargEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 - bs:registerVarargEvent$default(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.VarargEventId
-- toString():java.lang.String
 a:com.intellij.internal.statistic.eventLog.EventLogRecorderConfigOptionsListener
 - com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 - p:<init>(java.lang.String):V
@@ -220,7 +219,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.EventDescriptor
 - f:getEvent():java.lang.String
 - f:getFields():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.events.scheme.EventSchemeValidator
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.events.scheme.EventSchemeValidator
 - sf:validateEventScheme(java.util.List):java.util.Map
@@ -236,7 +234,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.EventsScheme
 - f:getCommitHash():java.lang.String
 - f:getScheme():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 - sf:buildEventsScheme(java.lang.String):java.util.List
@@ -255,7 +252,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder$Fea
 - f:getCollector():com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 - f:getPlugin():com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 - hashCode():I
-- toString():java.lang.String
 e:com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType
 - java.lang.Enum
 - sf:ARRAY:com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType
@@ -283,7 +279,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 - f:getShouldBeAnonymized():Z
 - f:getValue():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 - <init>(java.lang.String,java.lang.String,I,java.util.Set,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor,java.lang.String):V
 - b:<init>(java.lang.String,java.lang.String,I,java.util.Set,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -307,7 +302,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 - f:getType():java.lang.String
 - f:getVersion():I
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 - <init>(java.lang.String):V
 - f:component1():java.lang.String
@@ -316,7 +310,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 - equals(java.lang.Object):Z
 - f:getId():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider
 - com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 - <init>():V

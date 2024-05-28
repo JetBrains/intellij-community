@@ -17,7 +17,6 @@ c:com.intellij.usages.impl.GroupNode
 - p:isDataValid():Z
 - navigate(Z):V
 - removeAllChildren():V
-- toString():java.lang.String
 - p:updateCachedPresentation():V
 - p:updateNotify():V
 f:com.intellij.usages.impl.NullUsage
@@ -60,7 +59,6 @@ c:com.intellij.usages.impl.UsageNode
 - p:isDataReadOnly():Z
 - p:isDataValid():Z
 - navigate(Z):V
-- toString():java.lang.String
 - p:updateCachedPresentation():V
 - p:updateNotify():V
 c:com.intellij.usages.impl.UsagePreviewPanel

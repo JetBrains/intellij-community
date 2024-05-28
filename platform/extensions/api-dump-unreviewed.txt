@@ -46,7 +46,6 @@ com.intellij.openapi.extensions.AreaInstance
 a:com.intellij.openapi.extensions.BaseExtensionPointName
 - f:getName():java.lang.String
 - f:getPointImpl(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.impl.ExtensionPointImpl
-- toString():java.lang.String
 f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - com.intellij.openapi.extensions.PluginDescriptor
 - <init>(com.intellij.openapi.extensions.PluginId):V
@@ -74,7 +73,6 @@ f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - isEnabled():Z
 - isLicenseOptional():Z
 - setEnabled(Z):V
-- toString():java.lang.String
 f:com.intellij.openapi.extensions.ExtensionNotApplicableException
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ControlFlowException
@@ -218,7 +216,6 @@ f:com.intellij.openapi.extensions.PluginId
 - getIdString():java.lang.String
 - s:getRegisteredIds():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - com.intellij.openapi.extensions.BaseExtensionPointName
 - <init>(java.lang.String):V
@@ -271,7 +268,6 @@ c:com.intellij.util.messages.Topic
 - getBroadcastDirection():com.intellij.util.messages.Topic$BroadcastDirection
 - getDisplayName():java.lang.String
 - getListenerClass():java.lang.Class
-- toString():java.lang.String
 @:com.intellij.util.messages.Topic$AppLevel
 - java.lang.annotation.Annotation
 e:com.intellij.util.messages.Topic$BroadcastDirection

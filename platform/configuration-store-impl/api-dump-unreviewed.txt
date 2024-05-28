@@ -42,7 +42,6 @@ c:com.intellij.configurationStore.DirectoryBasedStorage
 - getRoamingType():com.intellij.openapi.components.RoamingType
 - getSerializedState(com.intellij.configurationStore.StateMap,java.lang.Object,java.lang.String,Z):org.jdom.Element
 - loadData():com.intellij.configurationStore.StateMap
-- toString():java.lang.String
 f:com.intellij.configurationStore.ExportSettingsActionKt
 - sf:exportSettings(java.util.Set,java.io.OutputStream,java.util.Map,com.intellij.configurationStore.StateStorageManagerImpl):V
 - bs:exportSettings$default(java.util.Set,java.io.OutputStream,java.util.Map,com.intellij.configurationStore.StateStorageManagerImpl,I,java.lang.Object):V
@@ -58,7 +57,6 @@ a:com.intellij.configurationStore.FileBasedStorage
 - p:loadLocalData():org.jdom.Element
 - f:preloadStorageData(Z):V
 - f:setFile(com.intellij.openapi.vfs.VirtualFile,java.nio.file.Path):V
-- toString():java.lang.String
 pc:com.intellij.configurationStore.FileBasedStorage$FileSaveSessionProducer
 - com.intellij.configurationStore.XmlElementStorage$XmlElementStorageSaveSessionProducer
 - <init>(com.intellij.configurationStore.StateMap,com.intellij.configurationStore.FileBasedStorage):V
@@ -121,7 +119,6 @@ f:com.intellij.configurationStore.StateMap
 - f:isEmpty():Z
 - f:keys():java.lang.String[]
 - f:toMutableMap():java.util.Map
-- toString():java.lang.String
 f:com.intellij.configurationStore.StateMap$Companion
 - f:fromMap(java.util.Map):com.intellij.configurationStore.StateMap
 a:com.intellij.configurationStore.StateStorageBase
@@ -222,7 +219,6 @@ f:com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 - removeScheme(java.lang.String):com.intellij.openapi.options.Scheme
 - save():V
 - setSchemes(java.util.List,com.intellij.openapi.options.Scheme,java.util.function.Predicate):V
-- toString():java.lang.String
 c:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
 - <init>(Z):V
 - p:logConfig(kotlin.jvm.functions.Function2,com.intellij.openapi.project.Project,java.util.List,I):V

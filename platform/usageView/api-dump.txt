@@ -151,7 +151,6 @@ f:com.intellij.usages.TextChunk
 - getSimpleAttributesIgnoreBackground():com.intellij.ui.SimpleTextAttributes
 - getText():java.lang.String
 - getType():com.intellij.usages.impl.rules.UsageType
-- toString():java.lang.String
 com.intellij.usages.Usage
 - com.intellij.pom.Navigatable
 - sf:EMPTY_ARRAY:com.intellij.usages.Usage[]
@@ -236,7 +235,6 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - reset():V
 - pf:resetCachedPresentation():V
 - selectInEditor():V
-- toString():java.lang.String
 com.intellij.usages.UsageInfoAdapter
 - com.intellij.usages.Usage
 - com.intellij.usages.rules.MergeableUsage
@@ -521,7 +519,6 @@ f:com.intellij.usages.impl.rules.UsageType
 - sf:WRITE:com.intellij.usages.impl.rules.UsageType
 - <init>(java.lang.String):V
 - <init>(java.util.function.Supplier):V
-- toString():java.lang.String
 com.intellij.usages.rules.GeneratedSourceUsageFilter
 - sf:Companion:com.intellij.usages.rules.GeneratedSourceUsageFilter$Companion
 - a:isAvailable():Z
@@ -600,7 +597,6 @@ c:com.intellij.usages.similarity.bag.Bag
 - getCardinality():I
 - s:intersectionSize(com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.bag.Bag):I
 - isEmpty():Z
-- toString():java.lang.String
 c:com.intellij.usages.similarity.clustering.ClusteringSearchSession
 - <init>():V
 - clusterUsage(com.intellij.usages.similarity.usageAdapter.SimilarUsage):com.intellij.usages.similarity.usageAdapter.SimilarUsage
@@ -624,7 +620,6 @@ c:com.intellij.usages.similarity.clustering.UsageCluster
 - contains(com.intellij.usageView.UsageInfo):Z
 - getOnlySelectedUsages(java.util.Set):java.util.Set
 - getUsages():java.util.Set
-- toString():java.lang.String
 *:com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
 - a:getFeatures(com.intellij.psi.PsiElement):com.intellij.usages.similarity.bag.Bag
 c:com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder

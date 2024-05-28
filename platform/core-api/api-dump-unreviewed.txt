@@ -148,7 +148,6 @@ f:com.intellij.codeWithMe.ClientId
 - sf:isLocal(com.intellij.codeWithMe.ClientId):Z
 - sf:overrideLocalId(com.intellij.codeWithMe.ClientId):V
 - sf:setPropagateAcrossThreads(Z):V
-- toString():java.lang.String
 - sf:withClientId(com.intellij.codeWithMe.ClientId):com.intellij.openapi.application.AccessToken
 - sf:withClientId(com.intellij.codeWithMe.ClientId,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:withClientId(java.lang.String):com.intellij.openapi.application.AccessToken
@@ -530,7 +529,6 @@ a:com.intellij.lang.Language
 - isCaseSensitive():Z
 - f:isKindOf(com.intellij.lang.Language):Z
 - f:isKindOf(java.lang.String):Z
-- toString():java.lang.String
 f:com.intellij.lang.LanguageCommenters
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageCommenters
@@ -735,7 +733,6 @@ c:com.intellij.lang.folding.CompositeFoldingBuilder
 - isCollapsedByDefault(com.intellij.lang.ASTNode):Z
 - isCollapsedByDefault(com.intellij.lang.folding.FoldingDescriptor):Z
 - isDumbAware():Z
-- toString():java.lang.String
 a:com.intellij.lang.folding.CustomFoldingBuilder
 - com.intellij.lang.folding.FoldingBuilderEx
 - com.intellij.openapi.project.PossiblyDumbAware
@@ -808,7 +805,6 @@ c:com.intellij.lang.folding.FoldingDescriptor
 - setCanBeRemovedWhenCollapsed(Z):V
 - setGutterMarkEnabledForSingleLine(Z):V
 - setPlaceholderText(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.lang.folding.LanguageFolding
 - com.intellij.lang.LanguageExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -959,7 +955,6 @@ c:com.intellij.lexer.FlexAdapter
 - getTokenType():com.intellij.psi.tree.IElementType
 - p:locateToken():V
 - start(java.lang.CharSequence,I,I,I):V
-- toString():java.lang.String
 com.intellij.lexer.FlexLexer
 - a:advance():com.intellij.psi.tree.IElementType
 - a:getTokenEnd():I
@@ -1057,7 +1052,6 @@ a:com.intellij.lexer.MergingLexerAdapterBase
 - getTokenType():com.intellij.psi.tree.IElementType
 - restore(com.intellij.lexer.LexerPosition):V
 - start(java.lang.CharSequence,I,I,I):V
-- toString():java.lang.String
 com.intellij.lexer.RestartableLexer
 - a:getStartState():I
 - *a:isRestartableState(I):Z
@@ -1090,7 +1084,6 @@ c:com.intellij.lexer.StringLiteralLexer
 - p:locateUnicodeEscapeSequence(I,I):I
 - p:shouldAllowSlashZero():Z
 - start(java.lang.CharSequence,I,I,I):V
-- toString():java.lang.String
 *:com.intellij.lexer.TokenIterator
 - a:getEndOffset(I):I
 - a:getStartOffset(I):I
@@ -1746,7 +1739,6 @@ f:com.intellij.openapi.components.ComponentConfig
 - f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
 - overrides:Z
 - <init>(java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.ExtensionDescriptor$Os,Z,java.util.Map):V
-- toString():java.lang.String
 com.intellij.openapi.components.ExportableApplicationComponent
 - com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.ExportableComponent
@@ -1799,7 +1791,6 @@ f:com.intellij.openapi.components.ServiceDescriptor
 - f:testServiceImplementation:java.lang.String
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.lang.String,com.intellij.openapi.components.ServiceDescriptor$PreloadMode,com.intellij.openapi.client.ClientKind,com.intellij.openapi.extensions.ExtensionDescriptor$Os):V
 - getImplementation():java.lang.String
-- toString():java.lang.String
 f:com.intellij.openapi.components.ServiceManager
 - s:createLazyKey(java.lang.Class):com.intellij.openapi.util.NotNullLazyKey
 - s:getService(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object
@@ -1857,7 +1848,6 @@ f:com.intellij.openapi.editor.FoldingGroup
 - equals(java.lang.Object):Z
 - hashCode():I
 - s:newGroup(java.lang.String):com.intellij.openapi.editor.FoldingGroup
-- toString():java.lang.String
 com.intellij.openapi.editor.RangeMarker
 - com.intellij.openapi.util.Segment
 - com.intellij.openapi.util.UserDataHolder
@@ -1956,7 +1946,6 @@ f:com.intellij.openapi.editor.colors.ColorKey
 - getExternalName():java.lang.String
 - getFallbackColorKey():com.intellij.openapi.editor.colors.ColorKey
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.editor.colors.TextAttributesKey
 - java.lang.Comparable
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.colors.TextAttributesKey[]
@@ -1974,7 +1963,6 @@ f:com.intellij.openapi.editor.colors.TextAttributesKey
 - hashCode():I
 - s:isTemp(com.intellij.openapi.editor.colors.TextAttributesKey):Z
 - setFallbackAttributeKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
-- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider
 - a:getDefaultAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.openapi.editor.markup.TextAttributes
@@ -2033,7 +2021,6 @@ f:com.intellij.openapi.editor.markup.AttributesFlyweight
 - getForeground():java.awt.Color
 - *:hasEffects():Z
 - hashCode():I
-- toString():java.lang.String
 - *:withAdditionalEffects(java.util.Map):com.intellij.openapi.editor.markup.AttributesFlyweight
 - withBackground(java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
 - withEffectColor(java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
@@ -2086,7 +2073,6 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - setErrorStripeColor(java.awt.Color):V
 - setFontType(I):V
 - setForegroundColor(java.awt.Color):V
-- toString():java.lang.String
 - *:withAdditionalEffect(com.intellij.openapi.editor.markup.EffectType,java.awt.Color):V
 - writeExternal(org.jdom.Element):V
 f:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
@@ -2835,7 +2821,6 @@ c:com.intellij.openapi.util.ActionCallback
 - reject(java.lang.String):com.intellij.openapi.util.ActionCallback
 - setDone():V
 - setRejected():V
-- toString():java.lang.String
 - waitFor(J):Z
 c:com.intellij.openapi.util.ActionCallback$Chunk
 - <init>():V
@@ -2870,7 +2855,6 @@ f:com.intellij.openapi.util.BuildNumber
 - getProductCode():java.lang.String
 - hashCode():I
 - isSnapshot():Z
-- toString():java.lang.String
 - withoutProductCode():com.intellij.openapi.util.BuildNumber
 c:com.intellij.openapi.util.BuildRange
 - <init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):V
@@ -3169,14 +3153,12 @@ a:com.intellij.openapi.vfs.VirtualFile
 - setWritable(Z):V
 - p:storeCharset(java.nio.charset.Charset):V
 - toNioPath():java.nio.file.Path
-- toString():java.lang.String
 @:com.intellij.openapi.vfs.VirtualFile$PropName
 - java.lang.annotation.Annotation
 a:com.intellij.openapi.vfs.VirtualFileAdapter
 - com.intellij.openapi.vfs.VirtualFileListener
 - <init>():V
 *f:com.intellij.openapi.vfs.VirtualFileCachedValue
-- toString():java.lang.String
 a:com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter
 - com.intellij.openapi.vfs.VirtualFileListener
 - <init>():V
@@ -3363,7 +3345,6 @@ c:com.intellij.openapi.vfs.VirtualFileVisitor$Option
 f:com.intellij.openapi.vfs.VirtualFileVisitor$Result
 - f:skipChildren:Z
 - f:skipToParent:com.intellij.openapi.vfs.VirtualFile
-- toString():java.lang.String
 pc:com.intellij.openapi.vfs.VirtualFileVisitor$VisitorException
 - java.lang.RuntimeException
 - <init>(java.lang.Throwable):V
@@ -3418,7 +3399,6 @@ f:com.intellij.openapi.vfs.encoding.EncodingReference
 - equals(java.lang.Object):Z
 - f:getCharset():java.nio.charset.Charset
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.vfs.encoding.EncodingReference$Companion
 a:com.intellij.openapi.vfs.encoding.EncodingRegistry
 - <init>():V
@@ -3509,7 +3489,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 - hashCode():I
 - isLengthAndTimestampDiffProvided():Z
 - isValid():Z
-- toString():java.lang.String
 f:com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - equals(java.lang.Object):Z
@@ -3520,7 +3499,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 - getNewParent():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
 - isValid():Z
-- toString():java.lang.String
 f:com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - <init>(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,com.intellij.openapi.util.io.FileAttributes,java.lang.String,Z,com.intellij.openapi.vfs.newvfs.events.ChildInfo[]):V
@@ -3538,7 +3516,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 - isEmptyDirectory():Z
 - isValid():Z
 - resetCache():V
-- toString():java.lang.String
 f:com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - <init>(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,Z):V
@@ -3547,7 +3524,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 - getFileSystem():com.intellij.openapi.vfs.VirtualFileSystem
 - hashCode():I
 - isValid():Z
-- toString():java.lang.String
 a:com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - <init>(java.lang.Object):V
 - pa:computePath():java.lang.String
@@ -3572,7 +3548,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 - getPath():java.lang.String
 - hashCode():I
 - isValid():Z
-- toString():java.lang.String
 f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - <init>(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.Object,java.lang.Object,Z):V
@@ -3589,7 +3564,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - hashCode():I
 - *:isRename():Z
 - isValid():Z
-- toString():java.lang.String
 com.intellij.openapi.vfs.pointers.VirtualFilePointer
 - sf:EMPTY_ARRAY:com.intellij.openapi.vfs.pointers.VirtualFilePointer[]
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
@@ -3677,7 +3651,6 @@ f:com.intellij.patterns.ElementPatternCondition
 - append(java.lang.StringBuilder,java.lang.String):V
 - getConditions():java.util.List
 - getInitialCondition():com.intellij.patterns.InitialPatternCondition
-- toString():java.lang.String
 c:com.intellij.patterns.IElementTypePattern
 - com.intellij.patterns.ObjectPattern
 - p:<init>():V
@@ -3688,7 +3661,6 @@ a:com.intellij.patterns.InitialPatternCondition
 - accepts(java.lang.Object,com.intellij.util.ProcessingContext):Z
 - append(java.lang.StringBuilder,java.lang.String):V
 - getAcceptedClass():java.lang.Class
-- f:toString():java.lang.String
 a:com.intellij.patterns.InitialPatternConditionPlus
 - com.intellij.patterns.InitialPatternCondition
 - p:<init>(java.lang.Class):V
@@ -3711,7 +3683,6 @@ a:com.intellij.patterns.ObjectPattern
 - oneOf(java.lang.Object[]):com.intellij.patterns.ObjectPattern
 - save(com.intellij.openapi.util.Key):com.intellij.patterns.ObjectPattern
 - save(java.lang.String):com.intellij.patterns.ObjectPattern
-- toString():java.lang.String
 - with(com.intellij.patterns.PatternCondition):com.intellij.patterns.ObjectPattern
 - without(com.intellij.patterns.PatternCondition):com.intellij.patterns.ObjectPattern
 f:com.intellij.patterns.ObjectPattern$Capture
@@ -3725,7 +3696,6 @@ a:com.intellij.patterns.PatternCondition
 - ps:appendArray(java.lang.StringBuilder,java.lang.String,java.lang.Object[]):V
 - getDebugMethodName():java.lang.String
 - processParameters(com.intellij.util.PairProcessor):Z
-- toString():java.lang.String
 a:com.intellij.patterns.PatternConditionPlus
 - com.intellij.patterns.PatternCondition
 - com.intellij.util.PairProcessor
@@ -4418,7 +4388,6 @@ c:com.intellij.psi.PsiElementResolveResult
 - getElement():com.intellij.psi.PsiElement
 - hashCode():I
 - isValidResult():Z
-- toString():java.lang.String
 a:com.intellij.psi.PsiElementVisitor
 - sf:EMPTY_VISITOR:com.intellij.psi.PsiElementVisitor
 - <init>():V
@@ -4652,7 +4621,6 @@ a:com.intellij.psi.PsiReferenceBase
 - isReferenceTo(com.intellij.psi.PsiElement):Z
 - isSoft():Z
 - setRangeInElement(com.intellij.openapi.util.TextRange):V
-- toString():java.lang.String
 c:com.intellij.psi.PsiReferenceBase$Immediate
 - com.intellij.psi.PsiReferenceBase
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.PsiElement):V
@@ -5016,13 +4984,11 @@ c:com.intellij.psi.filters.position.FilterPattern
 - <init>(com.intellij.psi.filters.ElementFilter):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.psi.filters.position.PatternFilter
 - com.intellij.psi.filters.ElementFilter
 - <init>(com.intellij.patterns.ElementPattern):V
 - isAcceptable(java.lang.Object,com.intellij.psi.PsiElement):Z
 - isClassAcceptable(java.lang.Class):Z
-- toString():java.lang.String
 a:com.intellij.psi.impl.source.codeStyle.IndentHelper
 - <init>():V
 - f:getIndent(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,com.intellij.lang.ASTNode,Z):I
@@ -5084,7 +5050,6 @@ c:com.intellij.psi.search.DelegatingGlobalSearchScope
 - isSearchInLibraries():Z
 - isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 - isSearchInModuleContent(com.intellij.openapi.module.Module,Z):Z
-- toString():java.lang.String
 - unwrap():com.intellij.psi.search.GlobalSearchScope
 c:com.intellij.psi.search.EverythingGlobalScope
 - com.intellij.psi.search.GlobalSearchScope
@@ -5154,7 +5119,6 @@ c:com.intellij.psi.search.GlobalSearchScope$FilesScope
 - getFilesIfCollection():java.util.Collection
 - isSearchInLibraries():Z
 - isSearchInModuleContent(com.intellij.openapi.module.Module):Z
-- toString():java.lang.String
 f:com.intellij.psi.search.GlobalSearchScopeUtil
 - <init>():V
 - s:getLocalScopeFiles(com.intellij.psi.search.LocalSearchScope):java.util.Set
@@ -5179,7 +5143,6 @@ c:com.intellij.psi.search.LocalSearchScope
 - intersectWith(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
 - isIgnoreInjectedPsi():Z
 - isInScope(com.intellij.openapi.vfs.VirtualFile):Z
-- toString():java.lang.String
 - union(com.intellij.psi.search.LocalSearchScope):com.intellij.psi.search.SearchScope
 - union(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
 c:com.intellij.psi.search.NonClasspathDirectoriesScope
@@ -5363,7 +5326,6 @@ a:com.intellij.psi.stubs.StubBase
 - getStubType():com.intellij.psi.stubs.IStubElementType
 - printTree():java.lang.String
 - setPsi(com.intellij.psi.PsiElement):V
-- toString():java.lang.String
 com.intellij.psi.stubs.StubElement
 - com.intellij.psi.stubs.Stub
 - a:findChildStubByType(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.stubs.StubElement
@@ -5382,7 +5344,6 @@ f:com.intellij.psi.stubs.StubElementTypeHolderEP
 - externalIdPrefix:java.lang.String
 - holderClass:java.lang.String
 - <init>():V
-- toString():java.lang.String
 f:com.intellij.psi.stubs.StubIndexKey
 - com.intellij.util.indexing.ID
 - s:createIndexKey(java.lang.String):com.intellij.psi.stubs.StubIndexKey
@@ -5462,7 +5423,6 @@ c:com.intellij.psi.tree.IElementType
 - getLanguage():com.intellij.lang.Language
 - hashCode():I
 - isLeftBound():Z
-- toString():java.lang.String
 - s:unregisterElementTypes(com.intellij.lang.Language,com.intellij.openapi.extensions.PluginDescriptor):V
 - s:unregisterElementTypes(java.lang.ClassLoader,com.intellij.openapi.extensions.PluginDescriptor):V
 com.intellij.psi.tree.IElementType$Predicate
@@ -5533,7 +5493,6 @@ f:com.intellij.psi.tree.TokenSet
 - s:forAllMatching(com.intellij.psi.tree.IElementType$Predicate):com.intellij.psi.tree.TokenSet
 - getTypes():com.intellij.psi.tree.IElementType[]
 - s:orSet(com.intellij.psi.tree.TokenSet[]):com.intellij.psi.tree.TokenSet
-- toString():java.lang.String
 com.intellij.psi.util.CachedValue
 - a:getUpToDateOrNull():com.intellij.openapi.util.Getter
 - a:getValue():java.lang.Object
@@ -5839,7 +5798,6 @@ pc:com.intellij.psi.util.PsiUtilCore$NullPsiElement
 - textMatches(com.intellij.psi.PsiElement):Z
 - textMatches(java.lang.CharSequence):Z
 - textToCharArray():C[]
-- toString():java.lang.String
 f:com.intellij.psi.util.QualifiedName
 - java.lang.Comparable
 - append(com.intellij.psi.util.QualifiedName):com.intellij.psi.util.QualifiedName
@@ -5864,7 +5822,6 @@ f:com.intellij.psi.util.QualifiedName
 - removeTail(I):com.intellij.psi.util.QualifiedName
 - s:serialize(com.intellij.psi.util.QualifiedName,com.intellij.psi.stubs.StubOutputStream):V
 - subQualifiedName(I,I):com.intellij.psi.util.QualifiedName
-- toString():java.lang.String
 c:com.intellij.psi.util.UnsupportedNodeElementTypeException
 - com.intellij.util.IncorrectOperationException
 - <init>(com.intellij.lang.ASTNode):V
@@ -5899,7 +5856,6 @@ c:com.intellij.testFramework.BinaryLightVirtualFile
 - getContent():B[]
 - getInputStream():java.io.InputStream
 - getOutputStream(java.lang.Object,J,J):java.io.OutputStream
-- toString():java.lang.String
 c:com.intellij.testFramework.LightVirtualFile
 - com.intellij.testFramework.LightVirtualFileBase
 - <init>():V
@@ -5922,7 +5878,6 @@ c:com.intellij.testFramework.LightVirtualFile
 - shouldSkipEventSystem():Z
 - s:shouldSkipEventSystem(com.intellij.openapi.vfs.VirtualFile):Z
 - p:storeCharset(java.nio.charset.Charset):V
-- toString():java.lang.String
 a:com.intellij.testFramework.LightVirtualFileBase
 - com.intellij.openapi.vfs.VirtualFile
 - <init>(java.lang.String,com.intellij.openapi.fileTypes.FileType,J):V
@@ -6036,7 +5991,6 @@ c:com.intellij.usageView.UsageInfo
 - isValid():Z
 - f:isWritable():Z
 - setDynamicUsage(Z):V
-- toString():java.lang.String
 com.intellij.usageView.UsageInfoFactory
 - a:createUsageInfo(com.intellij.psi.PsiElement,I,I):com.intellij.usageView.UsageInfo
 a:com.intellij.util.AbstractQuery
@@ -6300,7 +6254,6 @@ f:com.intellij.util.RunnableCallable
 - <init>(java.lang.Runnable):V
 - call():java.lang.Void
 - getDelegate():java.lang.Runnable
-- toString():java.lang.String
 f:com.intellij.util.SingletonInstancesCache
 - s:getInstance(java.lang.String,java.lang.ClassLoader):java.lang.Object
 f:com.intellij.util.SlowOperations
@@ -6331,7 +6284,6 @@ f:com.intellij.util.UniqueResultsQuery
 - <init>(com.intellij.util.Query,com.intellij.util.Function):V
 - <init>(com.intellij.util.Query,com.intellij.util.containers.HashingStrategy):V
 - forEachAsync(com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
-- toString():java.lang.String
 f:com.intellij.util.concurrency.ThreadingAssertions
 - s:assertBackgroundThread():V
 - s:assertEventDispatchThread():V

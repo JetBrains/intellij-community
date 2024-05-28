@@ -245,7 +245,6 @@ f:org.jetbrains.debugger.SourceInfo
 - getLine():I
 - getOffset():I
 - f:getUrl():com.intellij.util.Url
-- toString():java.lang.String
 a:org.jetbrains.debugger.SuspendContextView
 - com.intellij.xdebugger.frame.XSuspendContext
 - <init>(org.jetbrains.debugger.MultiVmDebugProcess,org.jetbrains.debugger.ExecutionStackView,org.jetbrains.debugger.Vm):V

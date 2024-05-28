@@ -6,7 +6,6 @@ c:com.intellij.openapi.fileTypes.WildcardFileNameMatcher
 - getPattern():java.lang.String
 - getPresentableString():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.fileTypes.impl.IgnoredPatternSet
 - <init>():V
 - isIgnored(java.lang.CharSequence):Z
@@ -241,7 +240,6 @@ f:org.jetbrains.jps.model.impl.JpsGlobalElementReference
 - <init>():V
 - createCopy():org.jetbrains.jps.model.impl.JpsGlobalElementReference
 - resolve():org.jetbrains.jps.model.JpsGlobal
-- toString():java.lang.String
 f:org.jetbrains.jps.model.impl.JpsGlobalImpl
 - org.jetbrains.jps.model.impl.JpsRootElementBase
 - org.jetbrains.jps.model.JpsGlobal
@@ -284,7 +282,6 @@ f:org.jetbrains.jps.model.impl.JpsProjectElementReference
 - <init>():V
 - createCopy():org.jetbrains.jps.model.impl.JpsProjectElementReference
 - resolve():org.jetbrains.jps.model.JpsProject
-- toString():java.lang.String
 f:org.jetbrains.jps.model.impl.JpsProjectImpl
 - org.jetbrains.jps.model.impl.JpsRootElementBase
 - org.jetbrains.jps.model.JpsProject
@@ -619,7 +616,6 @@ f:org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 - setProcOnly(Z):V
 - setProcessorPath(java.lang.String):V
 - setUseProcessorModulePath(Z):V
-- toString():java.lang.String
 c:org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns
 - <init>(org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration):V
 - isResourceFile(java.io.File,java.io.File):Z
@@ -662,7 +658,6 @@ f:org.jetbrains.jps.model.library.impl.JpsLibraryImpl
 - getRoots(org.jetbrains.jps.model.library.JpsOrderRootType):java.util.List
 - getType():org.jetbrains.jps.model.library.JpsLibraryType
 - removeUrl(java.lang.String,org.jetbrains.jps.model.library.JpsOrderRootType):V
-- toString():java.lang.String
 f:org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 - org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl
 - org.jetbrains.jps.model.library.JpsLibraryReference
@@ -670,7 +665,6 @@ f:org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 - asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.library.JpsLibraryReference
 - createCopy():org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 - getLibraryName():java.lang.String
-- toString():java.lang.String
 f:org.jetbrains.jps.model.library.impl.JpsLibraryRole
 - org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 - sf:LIBRARIES_COLLECTION_ROLE:org.jetbrains.jps.model.ex.JpsElementCollectionRole
@@ -695,7 +689,6 @@ f:org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl
 - <init>(java.lang.String,org.jetbrains.jps.model.library.sdk.JpsSdkType,org.jetbrains.jps.model.JpsElementReference):V
 - createCopy():org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl
 - getSdkName():java.lang.String
-- toString():java.lang.String
 c:org.jetbrains.jps.model.library.impl.sdk.JpsSdkImpl
 - org.jetbrains.jps.model.ex.JpsCompositeElementBase
 - org.jetbrains.jps.model.library.sdk.JpsSdk
@@ -769,7 +762,6 @@ f:org.jetbrains.jps.model.module.impl.JpsLibraryDependencyImpl
 - createCopy():org.jetbrains.jps.model.module.impl.JpsLibraryDependencyImpl
 - getLibrary():org.jetbrains.jps.model.library.JpsLibrary
 - getLibraryReference():org.jetbrains.jps.model.library.JpsLibraryReference
-- toString():java.lang.String
 f:org.jetbrains.jps.model.module.impl.JpsModuleDependencyImpl
 - org.jetbrains.jps.model.module.impl.JpsDependencyElementBase
 - org.jetbrains.jps.model.module.JpsModuleDependency
@@ -778,7 +770,6 @@ f:org.jetbrains.jps.model.module.impl.JpsModuleDependencyImpl
 - createCopy():org.jetbrains.jps.model.module.impl.JpsModuleDependencyImpl
 - getModule():org.jetbrains.jps.model.module.JpsModule
 - getModuleReference():org.jetbrains.jps.model.module.JpsModuleReference
-- toString():java.lang.String
 f:org.jetbrains.jps.model.module.impl.JpsModuleImpl
 - org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 - org.jetbrains.jps.model.module.JpsTypedModule
@@ -809,7 +800,6 @@ f:org.jetbrains.jps.model.module.impl.JpsModuleImpl
 - getType():org.jetbrains.jps.model.JpsElementType
 - removeExcludePattern(java.lang.String,java.lang.String):V
 - removeSourceRoot(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
-- toString():java.lang.String
 f:org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl
 - org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl
 - org.jetbrains.jps.model.module.JpsModuleReference
@@ -817,7 +807,6 @@ f:org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl
 - asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.module.JpsModuleReference
 - createCopy():org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl
 - getModuleName():java.lang.String
-- toString():java.lang.String
 f:org.jetbrains.jps.model.module.impl.JpsModuleRole
 - org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 - sf:MODULE_COLLECTION_ROLE:org.jetbrains.jps.model.ex.JpsElementCollectionRole
@@ -825,7 +814,6 @@ f:org.jetbrains.jps.model.module.impl.JpsModuleSourceDependencyImpl
 - org.jetbrains.jps.model.module.impl.JpsDependencyElementBase
 - org.jetbrains.jps.model.module.JpsModuleSourceDependency
 - createCopy():org.jetbrains.jps.model.module.impl.JpsModuleSourceDependencyImpl
-- toString():java.lang.String
 f:org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl
 - org.jetbrains.jps.model.ex.JpsCompositeElementBase
 - org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
@@ -854,7 +842,6 @@ f:org.jetbrains.jps.model.module.impl.JpsSdkDependencyImpl
 - getSdkType():org.jetbrains.jps.model.library.sdk.JpsSdkType
 - isInherited():Z
 - resolveSdk():org.jetbrains.jps.model.library.JpsLibrary
-- toString():java.lang.String
 f:org.jetbrains.jps.model.module.impl.JpsSdkReferenceRole
 - org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 - <init>(org.jetbrains.jps.model.library.sdk.JpsSdkType):V

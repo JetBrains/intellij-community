@@ -295,7 +295,6 @@ e:com.intellij.ide.ui.AntialiasingType
 - s:getKeyForCurrentScope(Z):java.lang.Object
 - getPresentableName():java.lang.String
 - getTextInfo():java.lang.Object
-- toString():java.lang.String
 - s:updateContext(java.awt.font.FontRenderContext,Z):java.awt.font.FontRenderContext
 - s:valueOf(java.lang.String):com.intellij.ide.ui.AntialiasingType
 - s:values():com.intellij.ide.ui.AntialiasingType[]
@@ -351,7 +350,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.ide.ui.NotRoamableUiSettings
 - com.intellij.openapi.components.SerializablePersistentStateComponent
 - sf:COMPONENT_NAME:java.lang.String
@@ -911,7 +909,6 @@ a:com.intellij.ide.util.treeView.NodeDescriptor
 - setIndex(I):V
 - f:setUpdateCount(J):V
 - setWasDeclaredAlwaysLeaf(Z):V
-- toString():java.lang.String
 - a:update():Z
 a:com.intellij.ide.util.treeView.NodeDescriptor$NodeComparator
 - java.util.Comparator
@@ -1002,7 +999,6 @@ c:com.intellij.ide.util.treeView.TreeUpdatePass
 - setUpdateChildren(Z):com.intellij.ide.util.treeView.TreeUpdatePass
 - setUpdateStamp(J):com.intellij.ide.util.treeView.TreeUpdatePass
 - setUpdateStructure(Z):com.intellij.ide.util.treeView.TreeUpdatePass
-- toString():java.lang.String
 - willUpdate(javax.swing.tree.DefaultMutableTreeNode):Z
 com.intellij.ide.util.treeView.TreeVisitor
 - a:visit(java.lang.Object):Z
@@ -1231,7 +1227,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - setDefaultIcon(Z):V
 - pf:setEnabledInModalContext(Z):V
 - setInjectedContext(Z):V
-- toString():java.lang.String
 - f:unregisterCustomShortcutSet(javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - useSmallerFontForTextInToolbar():Z
@@ -1333,7 +1328,6 @@ f:com.intellij.openapi.actionSystem.KeyboardShortcut
 - hashCode():I
 - isKeyboard():Z
 - startsWith(com.intellij.openapi.actionSystem.Shortcut):Z
-- toString():java.lang.String
 com.intellij.openapi.actionSystem.OverridingAction
 f:com.intellij.openapi.actionSystem.Presentation
 - java.lang.Cloneable
@@ -1415,7 +1409,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - setTextWithMnemonic(java.util.function.Supplier):V
 - setVisible(Z):V
 - setWeight(D):V
-- toString():java.lang.String
 com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 a:com.intellij.openapi.actionSystem.Shortcut
 - sf:EMPTY_ARRAY:com.intellij.openapi.actionSystem.Shortcut[]
@@ -1597,7 +1590,6 @@ c:com.intellij.openapi.editor.CaretState
 - getSelectionEnd():com.intellij.openapi.editor.LogicalPosition
 - getSelectionStart():com.intellij.openapi.editor.LogicalPosition
 - getVisualColumnAdjustment():I
-- toString():java.lang.String
 f:com.intellij.openapi.editor.CaretVisualAttributes
 - sf:DEFAULT:com.intellij.openapi.editor.CaretVisualAttributes
 - <init>(java.awt.Color,com.intellij.openapi.editor.CaretVisualAttributes$Weight):V
@@ -1978,7 +1970,6 @@ f:com.intellij.openapi.editor.IndentGuideDescriptor
 - <init>(I,I,I,I):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 com.intellij.openapi.editor.IndentStrategy
 - a:canIndent(I,I,com.intellij.psi.PsiElement):Z
 com.intellij.openapi.editor.IndentsModel
@@ -2070,7 +2061,6 @@ f:com.intellij.openapi.editor.InlayProperties
 - relatesToPrecedingText(Z):com.intellij.openapi.editor.InlayProperties
 - showAbove(Z):com.intellij.openapi.editor.InlayProperties
 - showWhenFolded(Z):com.intellij.openapi.editor.InlayProperties
-- toString():java.lang.String
 com.intellij.openapi.editor.LineNumberConverter
 - sf:DEFAULT:com.intellij.openapi.editor.LineNumberConverter
 - a:convert(com.intellij.openapi.editor.Editor,I):java.lang.Integer
@@ -2096,7 +2086,6 @@ c:com.intellij.openapi.editor.LogicalPosition
 - getLine():I
 - hashCode():I
 - leanForward(Z):com.intellij.openapi.editor.LogicalPosition
-- toString():java.lang.String
 f:com.intellij.openapi.editor.PlatformEditorBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
@@ -2222,7 +2211,6 @@ f:com.intellij.openapi.editor.VisualPosition
 - getLine():I
 - hashCode():I
 - leanRight(Z):com.intellij.openapi.editor.VisualPosition
-- toString():java.lang.String
 f:com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.openapi.editor.actions.LanguageWordBoundaryFilter
@@ -2559,7 +2547,6 @@ f:com.intellij.openapi.editor.event.EditorMouseEventArea
 - sf:FOLDING_OUTLINE_AREA:com.intellij.openapi.editor.event.EditorMouseEventArea
 - sf:LINE_MARKERS_AREA:com.intellij.openapi.editor.event.EditorMouseEventArea
 - sf:LINE_NUMBERS_AREA:com.intellij.openapi.editor.event.EditorMouseEventArea
-- toString():java.lang.String
 com.intellij.openapi.editor.event.EditorMouseListener
 - java.util.EventListener
 - mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V

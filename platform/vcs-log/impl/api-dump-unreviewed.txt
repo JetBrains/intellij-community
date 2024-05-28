@@ -106,7 +106,6 @@ c:com.intellij.vcs.log.data.DataPack
 - sf:EMPTY:com.intellij.vcs.log.data.DataPack
 - sf:build(java.util.List,java.util.Map,java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,Z):com.intellij.vcs.log.data.DataPack
 - f:getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
-- toString():java.lang.String
 f:com.intellij.vcs.log.data.DataPack$Companion
 - f:build(java.util.List,java.util.Map,java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,Z):com.intellij.vcs.log.data.DataPack
 f:com.intellij.vcs.log.data.DataPack$ErrorDataPack
@@ -386,7 +385,6 @@ f:com.intellij.vcs.log.history.EdgeData
 - bs:copy$default(com.intellij.vcs.log.history.EdgeData,java.lang.Object,java.lang.Object,I,java.lang.Object):com.intellij.vcs.log.history.EdgeData
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.vcs.log.history.FileHistoryData
 - <init>(com.intellij.openapi.vcs.FilePath):V
 - <init>(java.util.Collection):V
@@ -557,7 +555,6 @@ f:com.intellij.vcs.log.impl.HashImpl
 - hashCode():I
 - s:read(java.io.DataInput):com.intellij.vcs.log.Hash
 - toShortString():java.lang.String
-- toString():java.lang.String
 - write(java.io.DataOutput):V
 c:com.intellij.vcs.log.impl.LogDataImpl
 - com.intellij.vcs.log.VcsLogProvider$DetailedLogData
@@ -625,7 +622,6 @@ c:com.intellij.vcs.log.impl.PostponableLogRefresher$VcsLogWindow
 - getRefresher():com.intellij.vcs.log.visible.VisiblePackRefresher
 - getUi():com.intellij.vcs.log.ui.VcsLogUiEx
 - isVisible():Z
-- toString():java.lang.String
 c:com.intellij.vcs.log.impl.RequirementsImpl
 - com.intellij.vcs.log.VcsLogProviderRequirementsEx
 - <init>(I,Z,java.util.Collection):V
@@ -656,7 +652,6 @@ c:com.intellij.vcs.log.impl.SimpleRefType
 - getBackgroundColor():java.awt.Color
 - hashCode():I
 - isBranch():Z
-- toString():java.lang.String
 c:com.intellij.vcs.log.impl.SingletonRefGroup
 - com.intellij.vcs.log.RefGroup
 - <init>(com.intellij.vcs.log.VcsRef):V
@@ -673,7 +668,6 @@ c:com.intellij.vcs.log.impl.TimedVcsCommitImpl
 - f:getParents():java.util.List
 - f:getTimestamp():J
 - f:hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.impl.VcsActivityKey
 - com.intellij.platform.backend.observation.ActivityKey
 - sf:INSTANCE:com.intellij.vcs.log.impl.VcsActivityKey
@@ -744,7 +738,6 @@ f:com.intellij.vcs.log.impl.VcsFileStatusInfo
 - f:getType():com.intellij.openapi.vcs.changes.Change$Type
 - f:getTypeByte():B
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.impl.VcsFileStatusInfoKt
 - sf:isRenamed(com.intellij.vcs.log.impl.VcsFileStatusInfo):Z
 f:com.intellij.vcs.log.impl.VcsFileStatusInfoMerger
@@ -1002,7 +995,6 @@ c:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl
 - com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl$Companion
@@ -1087,7 +1079,6 @@ f:com.intellij.vcs.log.impl.VcsRefImpl
 - getRoot():com.intellij.openapi.vfs.VirtualFile
 - getType():com.intellij.vcs.log.VcsRefType
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.vcs.log.impl.VcsShortCommitDetailsImpl
 - com.intellij.vcs.log.impl.TimedVcsCommitImpl
 - com.intellij.vcs.log.VcsShortCommitDetails
@@ -1098,7 +1089,6 @@ c:com.intellij.vcs.log.impl.VcsShortCommitDetailsImpl
 - getCommitter():com.intellij.vcs.log.VcsUser
 - getRoot():com.intellij.openapi.vfs.VirtualFile
 - f:getSubject():java.lang.String
-- toString():java.lang.String
 a:com.intellij.vcs.log.impl.VcsStatusMerger
 - <init>():V
 - pa:createStatus(com.intellij.openapi.vcs.changes.Change$Type,java.lang.Object,java.lang.Object):java.lang.Object
@@ -1113,7 +1103,6 @@ f:com.intellij.vcs.log.impl.VcsStatusMerger$MergedStatusInfo
 - b:<init>(java.lang.Object,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getMergedStatusInfos():java.util.List
 - f:getStatusInfo():java.lang.Object
-- toString():java.lang.String
 com.intellij.vcs.log.paint.ColorGenerator
 - a:getColor(I):java.awt.Color
 com.intellij.vcs.log.paint.GraphCellPainter
@@ -1491,7 +1480,6 @@ f:com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel$RootColor
 - f:getColor():java.awt.Color
 - f:getRoot():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.ui.details.commit.CommitDetailsPanelKt
 - sf:getCommitDetailsBackground():java.awt.Color
 c:com.intellij.vcs.log.ui.details.commit.ReferencesPanel
@@ -1985,7 +1973,6 @@ c:com.intellij.vcs.log.ui.render.GraphCommitCell
 - getPrintElements():java.util.Collection
 - getRefsToThisCommit():java.util.Collection
 - getText():java.lang.String
-- toString():java.lang.String
 c:com.intellij.vcs.log.ui.render.LabelIcon
 - javax.swing.Icon
 - sf:SIZE:F
@@ -2105,7 +2092,6 @@ f:com.intellij.vcs.log.ui.table.VcsLogCellController$MouseMoveResult
 - f:getContinueProcessing():Z
 - f:getCursor():java.awt.Cursor
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.ui.table.VcsLogCellController$MouseMoveResult$Companion
 - f:fromCursor(I):com.intellij.vcs.log.ui.table.VcsLogCellController$MouseMoveResult
 com.intellij.vcs.log.ui.table.VcsLogCellRenderer
@@ -2245,7 +2231,6 @@ f:com.intellij.vcs.log.ui.table.column.VcsLogColumnProperties
 - f:getVisibility():com.intellij.vcs.log.ui.table.column.TableColumnVisibilityProperty
 - f:getWidth():com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.ui.table.column.VcsLogColumnProperties$Companion
 - f:create(com.intellij.vcs.log.ui.table.column.VcsLogColumn):com.intellij.vcs.log.ui.table.column.VcsLogColumnProperties
 com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
@@ -2415,7 +2400,6 @@ f:com.intellij.vcs.log.visible.CommitCountStage
 - f:isInitial():Z
 - f:last():com.intellij.vcs.log.visible.CommitCountStage
 - f:next():com.intellij.vcs.log.visible.CommitCountStage
-- toString():java.lang.String
 f:com.intellij.vcs.log.visible.CommitCountStage$Companion
 f:com.intellij.vcs.log.visible.CommitCountStageKt
 - sf:isAll(I):Z
@@ -2463,7 +2447,6 @@ c:com.intellij.vcs.log.visible.VisiblePack
 - isEmpty():Z
 - isFull():Z
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
-- toString():java.lang.String
 c:com.intellij.vcs.log.visible.VisiblePack$ErrorVisiblePack
 - com.intellij.vcs.log.visible.VisiblePack
 - <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.VcsLogFilterCollection,java.lang.Throwable):V
@@ -2496,7 +2479,6 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - removeVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - setDataPack(Z,com.intellij.vcs.log.data.DataPack):V
 - setValid(Z,Z):V
-- toString():java.lang.String
 c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl$VisiblePackProgressKey
 - com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
 - <init>(java.lang.String,Z):V

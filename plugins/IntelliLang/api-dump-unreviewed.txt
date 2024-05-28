@@ -209,7 +209,6 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils$InjectionInfo
 - host():com.intellij.psi.PsiLanguageInjectionHost
 - language():org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - range():com.intellij.openapi.util.TextRange
-- f:toString():java.lang.String
 f:org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean
 - myConfigUrl:java.lang.String
 - <init>():V
@@ -305,7 +304,6 @@ c:org.intellij.plugins.intelliLang.inject.config.BaseInjection
 - setValuePattern(java.lang.String):V
 - shouldBeIgnored(com.intellij.psi.PsiElement):Z
 - shouldBeIgnored(java.util.Iterator,java.lang.String):Z
-- toString():java.lang.String
 - p:writeExternalImpl(org.jdom.Element):V
 c:org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 - sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
@@ -317,7 +315,6 @@ c:org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 - getText():java.lang.String
 - hashCode():I
 - isEnabled():Z
-- toString():java.lang.String
 a:org.intellij.plugins.intelliLang.inject.config.JspSupportProxy
 - <init>():V
 - s:getInstance():org.intellij.plugins.intelliLang.inject.config.JspSupportProxy

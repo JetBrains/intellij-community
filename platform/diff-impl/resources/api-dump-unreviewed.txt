@@ -336,7 +336,6 @@ f:com.intellij.diff.actions.impl.MutableDiffRequestChain$Helper
 - f:setContent(com.intellij.diff.contents.DiffContent,com.intellij.diff.util.ThreeSide):V
 - f:setContent(com.intellij.diff.contents.DiffContent,java.lang.String,com.intellij.diff.util.Side):V
 - f:setContent(com.intellij.diff.contents.DiffContent,java.lang.String,com.intellij.diff.util.ThreeSide):V
-- toString():java.lang.String
 a:com.intellij.diff.actions.impl.NextChangeAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -479,7 +478,6 @@ c:com.intellij.diff.contents.DirectoryContentImpl
 - getContentType():com.intellij.openapi.fileTypes.FileType
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - getNavigatable():com.intellij.pom.Navigatable
-- toString():java.lang.String
 a:com.intellij.diff.contents.DocumentContentBase
 - com.intellij.diff.contents.DiffContentBase
 - com.intellij.diff.contents.DocumentContent
@@ -488,7 +486,6 @@ a:com.intellij.diff.contents.DocumentContentBase
 - getNavigatable():com.intellij.pom.Navigatable
 - getNavigatable(com.intellij.diff.util.LineCol):com.intellij.pom.Navigatable
 - getProject():com.intellij.openapi.project.Project
-- toString():java.lang.String
 c:com.intellij.diff.contents.DocumentContentImpl
 - com.intellij.diff.contents.DocumentContentBase
 - <init>(com.intellij.openapi.editor.Document):V
@@ -509,7 +506,6 @@ c:com.intellij.diff.contents.FileContentImpl
 - getFilePath():java.lang.String
 - getNavigatable():com.intellij.pom.Navigatable
 - onAssigned(Z):V
-- toString():java.lang.String
 c:com.intellij.diff.contents.FileDocumentContentImpl
 - com.intellij.diff.contents.DocumentContentBase
 - com.intellij.diff.contents.FileContent
@@ -529,7 +525,6 @@ c:com.intellij.diff.editor.ChainDiffVirtualFile
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - f:getChain():com.intellij.diff.chains.DiffRequestChain
 - getEditorTabName(com.intellij.openapi.project.Project,java.util.List):java.lang.String
-- toString():java.lang.String
 f:com.intellij.diff.editor.DefaultDiffFileEditorCustomizer
 - com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 - <init>():V
@@ -617,7 +612,6 @@ a:com.intellij.diff.editor.DiffVirtualFileBase
 - <init>(java.lang.String):V
 - createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
 - isWritable():Z
-- toString():java.lang.String
 f:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - f:turnOffReopeningWindow(com.intellij.openapi.vfs.VirtualFile):V
 - f:useDiffWindowDimensionKey(com.intellij.openapi.vfs.VirtualFile):V
@@ -636,7 +630,6 @@ f:com.intellij.diff.editor.SimpleDiffVirtualFile
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - getName():java.lang.String
 - f:getRequest():com.intellij.diff.requests.DiffRequest
-- toString():java.lang.String
 c:com.intellij.diff.impl.CacheDiffRequestChainProcessor
 - com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
 - <init>(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain):V
@@ -793,7 +786,6 @@ f:com.intellij.diff.impl.DiffRequestProcessorEditorState
 - f:getEmbeddedEditorStates():java.util.List
 - getOpenMode():com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$OpenMode
 - hashCode():I
-- toString():java.lang.String
 com.intellij.diff.impl.DiffRequestProcessorListener
 - java.util.EventListener
 - a:onViewerChanged():V
@@ -832,7 +824,6 @@ f:com.intellij.diff.impl.DiffSettingsHolder$PlaceSettings
 - hashCode():I
 - f:setDIFF_TOOLS_ORDER(java.util.List):V
 - f:setSYNC_BINARY_EDITOR_SETTINGS(Z):V
-- toString():java.lang.String
 f:com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
 - <init>():V
 - <init>(Z):V
@@ -844,7 +835,6 @@ f:com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
 - f:getGO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE():Z
 - hashCode():I
 - f:setGO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE(Z):V
-- toString():java.lang.String
 f:com.intellij.diff.impl.DiffSettingsHolder$State
 - PLACES_MAP:java.util.TreeMap
 - SHARED_SETTINGS:com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
@@ -1231,7 +1221,6 @@ f:com.intellij.diff.tools.combined.BlockBounds
 - f:getMaxY():I
 - f:getMinY():I
 - hashCode():I
-- toString():java.lang.String
 com.intellij.diff.tools.combined.BlockListener
 - java.util.EventListener
 - a:blocksHidden(java.util.Collection):V
@@ -1327,7 +1316,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffEditorState
 - f:getCurrentBlockIds():java.util.Set
 - getOpenMode():com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$OpenMode
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - sf:getCOMBINED_DIFF_MAIN_UI():com.intellij.openapi.util.Key
 - sf:getCOMBINED_DIFF_SCROLL_TO_BLOCK():com.intellij.openapi.util.Key
@@ -1379,7 +1367,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$Empty
 - sf:INSTANCE:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$Empty
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$SingleTitle
 - com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState
 - <init>(java.lang.String):V
@@ -1389,7 +1376,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$SingleTitle
 - equals(java.lang.Object):Z
 - f:getTitle():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$TwoTitles
 - com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState
 - <init>(java.lang.String,java.lang.String):V
@@ -1401,7 +1387,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$TwoTitles
 - f:getLeftTitle():java.lang.String
 - f:getRightTitle():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.diff.tools.combined.CombinedDiffViewerKt
 - sf:getCurrentEditor(com.intellij.diff.FrameDiffTool$DiffViewer):com.intellij.openapi.editor.Editor
 *a:com.intellij.diff.tools.combined.CombinedDiffVirtualFile
@@ -1436,7 +1421,6 @@ f:com.intellij.diff.tools.combined.CombinedPathBlockId
 - f:getPath():com.intellij.openapi.vcs.FilePath
 - f:getTag():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 com.intellij.diff.tools.combined.CombinedSelectableDiffBlock
 - com.intellij.diff.tools.combined.CombinedDiffBlock
 - a:setSelected(Z):V
@@ -1530,7 +1514,6 @@ f:com.intellij.diff.tools.external.ExternalDiffSettings$ExternalTool
 - f:setMergeTrustExitCode(Z):V
 - f:setName(java.lang.String):V
 - f:setProgramPath(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolConfiguration
 - sf:BUILTIN_TOOL:java.lang.String
 - sf:Companion:com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolConfiguration$Companion
@@ -1551,7 +1534,6 @@ f:com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolConfiguratio
 - f:setDiffToolName(java.lang.String):V
 - f:setFileTypeName(java.lang.String):V
 - f:setMergeToolName(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolConfiguration$Companion
 - f:getBuiltinInstance():com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolConfiguration
 e:com.intellij.diff.tools.external.ExternalDiffSettings$ExternalToolGroup
@@ -2553,7 +2535,6 @@ f:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$PlaceSettings
 - f:setSHOW_LINE_NUMBERS(Z):V
 - f:setSHOW_WHITESPACES(Z):V
 - f:setUSE_SOFT_WRAPS(Z):V
-- toString():java.lang.String
 f:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$SharedSettings
 - <init>():V
 - <init>(I,Z,Z,Z,Z):V
@@ -2578,7 +2559,6 @@ f:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$SharedSettings
 - f:setMERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES(Z):V
 - f:setMERGE_AUTO_RESOLVE_IMPORT_CONFLICTS(Z):V
 - f:setMERGE_LST_GUTTER_MARKERS(Z):V
-- toString():java.lang.String
 f:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$State
 - PLACES_MAP:java.util.TreeMap
 - SHARED_SETTINGS:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$SharedSettings
@@ -3085,12 +3065,10 @@ com.intellij.diff.util.DiffDividerDrawUtil$DividerPaintable$Handler
 c:com.intellij.diff.util.DiffDividerDrawUtil$DividerPolygon
 - <init>(I,I,I,I,java.awt.Color,java.awt.Color,Z):V
 - paint(java.awt.Graphics2D,I,Z):V
-- toString():java.lang.String
 - withAlignedHeight():com.intellij.diff.util.DiffDividerDrawUtil$DividerPolygon
 c:com.intellij.diff.util.DiffDividerDrawUtil$DividerSeparator
 - <init>(I,I,I,I,Z,com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - paint(java.awt.Graphics2D,I):V
-- toString():java.lang.String
 com.intellij.diff.util.DiffDividerDrawUtil$DividerSeparatorPaintable
 - a:process(com.intellij.diff.util.DiffDividerDrawUtil$DividerSeparatorPaintable$Handler):V
 com.intellij.diff.util.DiffDividerDrawUtil$DividerSeparatorPaintable$Handler
@@ -3463,7 +3441,6 @@ c:com.intellij.diff.util.TextDiffTypeFactory$TextDiffTypeImpl
 - getKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - getMarkerColor(com.intellij.openapi.editor.Editor):java.awt.Color
 - getName():java.lang.String
-- toString():java.lang.String
 c:com.intellij.ide.diff.VirtualFileDiffElement
 - com.intellij.ide.diff.DiffElement
 - pf:myDiffRoot:com.intellij.openapi.vfs.VirtualFile
@@ -3577,7 +3554,6 @@ c:com.intellij.openapi.diff.impl.dir.DTree
 - setSource(com.intellij.ide.diff.DiffElement):V
 - setTarget(com.intellij.ide.diff.DiffElement):V
 - setType(com.intellij.ide.diff.DiffType):V
-- toString():java.lang.String
 - update(com.intellij.ide.diff.DirDiffSettings):V
 - updateVisibility(com.intellij.ide.diff.DirDiffSettings):V
 c:com.intellij.openapi.diff.impl.dir.DirDiffDialog
@@ -4063,7 +4039,6 @@ c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer
 - com.intellij.openapi.vcs.ex.LineStatusTrackerMarkerRenderer
 - pf:myTracker:com.intellij.openapi.vcs.ex.LineStatusTrackerI
 - <init>(com.intellij.openapi.vcs.ex.LineStatusTrackerI):V
-- toString():java.lang.String
 f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$CopyLineStatusRangeAction
 - com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$CopyLineStatusRangeAction
 - <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
@@ -4164,7 +4139,6 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 - pf:runBulkRollback(kotlin.jvm.functions.Function1):V
 - p:setBaseRevisionContent(java.lang.CharSequence,kotlin.jvm.functions.Function0):V
 - pa:toRange(com.intellij.openapi.vcs.ex.DocumentTracker$Block):com.intellij.openapi.vcs.ex.Range
-- toString():java.lang.String
 - transferLineFromVcs(I,Z):I
 - transferLineToVcs(I,Z):I
 - pf:updateDocument(com.intellij.diff.util.Side,java.lang.String,kotlin.jvm.functions.Function1):Z
@@ -4254,7 +4228,6 @@ c:com.intellij.openapi.vcs.ex.Range
 - f:getVcsLine2():I
 - f:hasLines():Z
 - f:hasVcsLines():Z
-- toString():java.lang.String
 f:com.intellij.openapi.vcs.ex.Range$Companion
 f:com.intellij.openapi.vcs.ex.Range$InnerRange
 - <init>(I,I,B):V
@@ -4287,7 +4260,6 @@ f:com.intellij.openapi.vcs.ex.RangeExclusionState$Included
 - f:iterateDeletionOffsets(kotlin.jvm.functions.Function3):V
 - f:iterateIncludedAdditionRanges(com.intellij.diff.util.Range,kotlin.jvm.functions.Function1):V
 - f:iterateIncludedDeletionRanges(com.intellij.diff.util.Range,kotlin.jvm.functions.Function1):V
-- toString():java.lang.String
 - f:validate(I,I):V
 f:com.intellij.openapi.vcs.ex.RangesBuilder
 - sf:compareLines(com.intellij.diff.util.Range,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.tools.util.text.LineOffsets):com.intellij.diff.comparison.iterables.FairDiffIterable

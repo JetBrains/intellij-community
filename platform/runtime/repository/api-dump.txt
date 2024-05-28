@@ -14,7 +14,6 @@
 - s:moduleLibrary(java.lang.String,java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleId
 - s:moduleTests(java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleId
 - s:projectLibrary(java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleId
-- toString():java.lang.String
 *:com.intellij.platform.runtime.repository.RuntimeModuleRepository
 - s:create(java.nio.file.Path):com.intellij.platform.runtime.repository.RuntimeModuleRepository
 - a:getBootstrapClasspath(java.lang.String):java.util.List
@@ -32,7 +31,6 @@
 - getId():java.lang.String
 - getResourcePaths():java.util.List
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 - findDescriptor(java.lang.String):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - getAllIds():java.util.Set

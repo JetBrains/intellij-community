@@ -161,7 +161,6 @@ a:com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 - settingsEqual(java.lang.Object,java.util.function.Predicate):Z
 - settingsEqual(java.lang.Object,java.util.function.Predicate,Z):Z
 - settingsEqual(java.lang.Object,java.util.function.Predicate,Z,Z):Z
-- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 - writeScheme():org.jdom.Element
 f:com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions
@@ -287,7 +286,6 @@ c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 - setTemplateFontSize(F):V
 - setTemplateFontSize(I):V
 - setUseLigatures(Z):V
-- toString():java.lang.String
 - useLigatures():Z
 com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme
 com.intellij.openapi.editor.ex.MarkupModelEx
@@ -369,7 +367,6 @@ c:com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter
 - registerLayer(com.intellij.psi.tree.IElementType,com.intellij.openapi.editor.ex.util.LayerDescriptor):V
 - setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - setText(java.lang.CharSequence):V
-- toString():java.lang.String
 - p:unregisterLayer(com.intellij.psi.tree.IElementType):V
 - p:updateLayers():Z
 - p:updateLayers(com.intellij.openapi.editor.event.DocumentEvent):Z
@@ -398,7 +395,6 @@ c:com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 - setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - setEditor(com.intellij.openapi.editor.highlighter.HighlighterClient):V
 - setText(java.lang.CharSequence):V
-- toString():java.lang.String
 c:com.intellij.openapi.editor.ex.util.LexerEditorHighlighter$HighlighterIteratorImpl
 - com.intellij.openapi.editor.highlighter.HighlighterIterator
 - advance():V
@@ -700,7 +696,6 @@ c:com.intellij.openapi.editor.impl.MarkupModelImpl
 - removeHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):V
 - s:roundToLineBoundaries(com.intellij.openapi.editor.Document,I,I):com.intellij.openapi.util.TextRange
 - setRangeHighlighterAttributes(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.editor.markup.TextAttributes):V
-- toString():java.lang.String
 com.intellij.openapi.editor.impl.event.MarkupModelListener
 - java.util.EventListener
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.impl.event.MarkupModelListener[]

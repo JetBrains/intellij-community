@@ -4,7 +4,6 @@ f:com.intellij.psi.codeStyle.AllOccurrencesMatcher
 - getPattern():java.lang.String
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
-- toString():java.lang.String
 c:com.intellij.psi.codeStyle.FixingLayoutMatcher
 - com.intellij.psi.codeStyle.MinusculeMatcher
 - <init>(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):V
@@ -14,7 +13,6 @@ c:com.intellij.psi.codeStyle.FixingLayoutMatcher
 - matchingDegree(java.lang.String,Z):I
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
-- toString():java.lang.String
 a:com.intellij.psi.codeStyle.MinusculeMatcher
 - com.intellij.util.text.Matcher
 - p:<init>():V

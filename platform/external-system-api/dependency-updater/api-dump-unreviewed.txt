@@ -32,7 +32,6 @@ f:com.intellij.buildsystem.model.BuildScriptEntryMetadata
 - f:getStartColumn():I
 - f:getStartLine():I
 - hashCode():I
-- toString():java.lang.String
 com.intellij.buildsystem.model.BuildSystem
 - com.intellij.buildsystem.model.BuildManager
 - a:getName():java.lang.String
@@ -68,7 +67,6 @@ f:com.intellij.buildsystem.model.OperationFailure
 - f:getItem():com.intellij.buildsystem.model.OperationItem
 - f:getOperationType():com.intellij.buildsystem.model.OperationType
 - hashCode():I
-- toString():java.lang.String
 com.intellij.buildsystem.model.OperationFailureException
 com.intellij.buildsystem.model.OperationItem
 e:com.intellij.buildsystem.model.OperationType
@@ -104,7 +102,6 @@ f:com.intellij.buildsystem.model.unified.UnifiedCoordinates
 - f:getGroupId():java.lang.String
 - f:getVersion():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.buildsystem.model.unified.UnifiedDependency
 - com.intellij.buildsystem.model.BuildDependency
 - <init>(com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String):V
@@ -119,7 +116,6 @@ f:com.intellij.buildsystem.model.unified.UnifiedDependency
 - getDisplayName():java.lang.String
 - f:getScope():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.buildsystem.model.unified.UnifiedDependencyConverter
 - a:convert(com.intellij.buildsystem.model.BuildDependency):com.intellij.buildsystem.model.unified.UnifiedDependency
 f:com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
@@ -136,7 +132,6 @@ f:com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 - f:getName():java.lang.String
 - f:getUrl():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.buildsystem.model.unified.UnifiedDependencyRepositoryConverter
 - a:convert(com.intellij.buildsystem.model.BuildDependencyRepository):com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 *f:com.intellij.externalSystem.DependencyModifierService

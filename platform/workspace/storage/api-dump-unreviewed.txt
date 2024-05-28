@@ -20,7 +20,6 @@
 - getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.storage.EntityChange$Removed
 - com.intellij.platform.workspace.storage.EntityChange
 - <init>(com.intellij.platform.workspace.storage.WorkspaceEntity):V
@@ -32,7 +31,6 @@
 - getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.storage.EntityChange$Replaced
 - com.intellij.platform.workspace.storage.EntityChange
 - <init>(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.platform.workspace.storage.WorkspaceEntity):V
@@ -44,7 +42,6 @@
 - getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.platform.workspace.storage.EntityPointer
 - a:isPointerTo(com.intellij.platform.workspace.storage.WorkspaceEntity):Z
 - a:resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -88,7 +85,6 @@
 *f:com.intellij.platform.workspace.storage.ExternalMappingKey
 - *sf:Companion:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
 - <init>(java.lang.String):V
-- toString():java.lang.String
 *f:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
 - f:create(java.lang.String):com.intellij.platform.workspace.storage.ExternalMappingKey
 *@:com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -177,7 +173,6 @@ f:com.intellij.platform.workspace.storage.impl.ConnectionId
 - f:getParentClass():I
 - hashCode():I
 - f:isParentNullable():Z
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.impl.ConnectionId$Companion
 - f:create(java.lang.Class,java.lang.Class,com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType,Z):com.intellij.platform.workspace.storage.impl.ConnectionId
 e:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
@@ -208,7 +203,6 @@ f:com.intellij.platform.workspace.storage.impl.EntityLink
 - f:getConnectionId():com.intellij.platform.workspace.storage.impl.ConnectionId
 - hashCode():I
 - f:isThisFieldChild():Z
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.impl.EntityStorageExtensionsKt
 - sf:extractOneToAbstractManyChildren(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):kotlin.sequences.Sequence
 - sf:extractOneToAbstractManyParent(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -290,7 +284,6 @@ a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 - referrers(java.lang.Class):kotlin.sequences.Sequence
 - f:setId(J):V
 - f:setSnapshot(com.intellij.platform.workspace.storage.EntityStorage):V
-- toString():java.lang.String
 a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - java.lang.Cloneable
 - entitySource:com.intellij.platform.workspace.storage.EntitySource
@@ -313,7 +306,6 @@ a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - f:isEntitySourceInitialized():Z
 - f:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
 - f:setId(I):V
-- toString():java.lang.String
 - a:wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
 - <init>():V
@@ -347,7 +339,6 @@ f:com.intellij.platform.workspace.storage.impl.cache.CachedValue
 - f:getCacheProcessStatus():com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
 - f:getValue():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 - <init>(kotlin.sequences.Sequence):V
 - getSize():I
@@ -468,7 +459,6 @@ c:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 - getUrl():java.lang.String
 - f:getUrlSegments():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt
 - sf:toVirtualFileUrl(java.io.File,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - sf:toVirtualFileUrl(java.nio.file.Path,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -561,7 +551,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 - getSupertypes():java.util.List
 - hashCode():I
 - f:isAbstract():Z
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
 - com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
 - <init>(java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference,Z,Z,Z,java.lang.String):V
@@ -581,7 +570,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
 - hashCode():I
 - isComputable():Z
 - isOpen():Z
-- toString():java.lang.String
 a:com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
 - com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
 - getProperties():java.util.List
@@ -599,7 +587,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
 - getSubclasses():java.util.List
 - getSupertypes():java.util.List
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 - com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
 f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ClassMetadata
@@ -615,7 +602,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$Clas
 - getProperties():java.util.List
 - getSupertypes():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$EnumClassMetadata
 - com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 - <init>(java.lang.String,java.util.List,java.util.List,java.util.List):V
@@ -631,7 +617,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$Enum
 - getSupertypes():java.util.List
 - f:getValues():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$KnownClass
 - com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 - <init>(java.lang.String):V
@@ -643,7 +628,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$Know
 - getProperties():java.util.List
 - getSupertypes():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ObjectMetadata
 - com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 - <init>(java.lang.String,java.util.List,java.util.List):V
@@ -657,7 +641,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$Obje
 - getProperties():java.util.List
 - getSupertypes():java.util.List
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
 - com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
 - <init>(java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata,Z,Z,Z,Z):V
@@ -677,7 +660,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
 - isComputable():Z
 - f:isKey():Z
 - isOpen():Z
-- toString():java.lang.String
 com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
 - com.intellij.platform.workspace.storage.metadata.StorageMetadata
 - a:getName():java.lang.String
@@ -710,7 +692,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$Entit
 - hashCode():I
 - f:isChild():Z
 - isNullable():Z
-- toString():java.lang.String
 com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$NullableType
 - a:isNullable():Z
 f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$ParameterizedType
@@ -724,7 +705,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$Param
 - f:getGenerics():java.util.List
 - f:getPrimitive():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
 - com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 - com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$NullableType
@@ -739,7 +719,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$Simpl
 - f:getTypeMetadata():com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
 - hashCode():I
 - isNullable():Z
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$PrimitiveType
 - com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
 - <init>(java.lang.String,Z):V
@@ -751,7 +730,6 @@ f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$Simpl
 - f:getType():java.lang.String
 - hashCode():I
 - isNullable():Z
-- toString():java.lang.String
 f:com.intellij.platform.workspace.storage.metadata.utils.ConstructorsGeneratorKt
 - bs:main(java.lang.String[]):V
 f:com.intellij.platform.workspace.storage.query.APIKt
