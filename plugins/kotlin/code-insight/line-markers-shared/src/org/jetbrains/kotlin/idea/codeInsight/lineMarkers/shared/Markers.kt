@@ -158,22 +158,13 @@ fun ModuleInfo.nameForTooltip(): String {
 /*
     Supported formats:
 
-    <groupId>:<artifactId>:<variant>:<version>
-    <groupId>:<artifactId>-<variant>:<version>
+    [prefix:] <groupId>:<artifactId>:<variant>:<version>
+    [prefix:] <groupId>:<artifactId>-<variant>:<version>
  */
 private fun Library.extractVariantName(binariesModuleInfo: LibraryInfo?): String? {
     binariesModuleInfo?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
 
-    val split = name.orEmpty().split(":")
-    if (split.size != 3 && split.size != 4) {
-        return null
-    }
-
-    return when (split.size) {
-        3 -> split[1].substringAfterLast('-')
-        4 -> split[2]
-        else -> null
-    }
+    return LibraryInfoVariantsService.extractVariantName(name)
 }
 
 private fun Collection<KtDeclaration>.hasUniqueModuleNames() = distinctBy { it.moduleInfo.nameForTooltip() }.size == size
