@@ -11,7 +11,6 @@ import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.serviceAsync
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,14 +40,10 @@ private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
   ) {
     val grave = project.serviceAsync<DeclarativeHintsGrave>()
     val sourceIdToInlayData = grave.raise(file, document)?.groupBy { it.sourceId } ?: return
-    val psiManager = project.serviceAsync<PsiManager>()
-    val psiFile = readActionBlocking {
-      psiManager.findFile(file)
-    } ?: return
     val editor = editorSupplier()
     withContext(Dispatchers.EDT) {
       sourceIdToInlayData.forEach { (sourceId, inlayDataList) ->
-        DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, inlayDataList, sourceId)
+        DeclarativeInlayHintsPass.applyInlayData(editor, project, inlayDataList, sourceId)
       }
       DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
     }

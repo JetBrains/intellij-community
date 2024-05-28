@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
@@ -36,7 +37,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     private val PSI_MODIFICATION_STAMP: Key<Long> = Key<Long>("declarative.inlays.psi.modification.stamp")
 
     fun updateModificationStamp(editor: Editor, file: PsiFile) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(file))
+      updateModificationStamp(editor, file.project)
     }
 
     fun scheduleRecompute(editor: Editor, project: Project) {
@@ -44,11 +45,17 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
+    internal fun updateModificationStamp(editor: Editor, project: Project) {
+      editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(project))
+    }
+
     internal fun resetModificationStamp(editor: Editor) {
       editor.putUserData(PSI_MODIFICATION_STAMP, null)
     }
 
-    private fun getCurrentModificationCount(file: PsiFile) = file.manager.modificationTracker.modificationCount
+    private fun getCurrentModificationCount(project: Project): Long {
+      return PsiModificationTracker.getInstance(project).modificationCount
+    }
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
@@ -57,7 +64,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     if (!HighlightingLevelManager.getInstance(file.project).shouldHighlight(file)) return null
 
     val stamp = editor.getUserData(PSI_MODIFICATION_STAMP)
-    val current = getCurrentModificationCount(file)
+    val current = getCurrentModificationCount(file.project)
     if (current == stamp) {
       return null
     }

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -56,7 +57,7 @@ class DeclarativeInlayHintsPass(
   )
 
   override fun doApplyInformationToEditor() {
-    applyInlayData(editor, myFile, inlayDatas = sinks.flatMap { it.finish() }, passSourceId)
+    applyInlayData(editor, myFile.project, inlayDatas = sinks.flatMap { it.finish() }, passSourceId)
   }
 
   companion object {
@@ -65,7 +66,7 @@ class DeclarativeInlayHintsPass(
 
     @RequiresEdt
     @ApiStatus.Internal
-    fun applyInlayData(editor: Editor, file: PsiFile, inlayDatas: List<InlayData>, sourceId: String) {
+    fun applyInlayData(editor: Editor, project: Project, inlayDatas: List<InlayData>, sourceId: String) {
       val inlayModel = editor.inlayModel
       val document = editor.document
       val existingInlineElements = inlayModel
@@ -121,7 +122,7 @@ class DeclarativeInlayHintsPass(
       deleteNotPreservedInlays(offsetToExistingInlineElements)
       deleteNotPreservedInlays(offsetToExistingEolElements)
 
-      DeclarativeInlayHintsPassFactory.updateModificationStamp(editor, file)
+      DeclarativeInlayHintsPassFactory.updateModificationStamp(editor, project)
     }
 
     private fun createPayloads(inlayData: InlayData) =
