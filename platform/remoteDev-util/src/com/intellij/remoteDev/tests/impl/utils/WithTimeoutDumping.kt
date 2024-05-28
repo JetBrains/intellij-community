@@ -28,11 +28,11 @@ suspend fun <T> withTimeoutDumping(title: String,
     catch (e: TimeoutCancellationException) {
       val message = "$title: Has not finished in $timeout."
 
-      println(buildString {
-        appendLine(message)
-        // see com.intellij.testFramework.common.TimeoutKt.timeoutRunBlocking
-        appendLine(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump)
-      })
+      //println(buildString {
+      //  appendLine(message)
+      //  // see com.intellij.testFramework.common.TimeoutKt.timeoutRunBlocking
+      //  appendLine(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump)
+      //})
 
       val coroutinesDump = dumpCoroutines(outerScope)
       throw TimeoutException(buildString {
