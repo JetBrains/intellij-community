@@ -3,6 +3,9 @@
 
 package com.intellij.tools.apiDump
 
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.toPersistentHashMap
 import kotlinx.metadata.jvm.JvmFieldSignature
 import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
@@ -15,194 +18,229 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.walk
 
-class ApiIndex {
+val emptyApiIndex: ApiIndex = ApiIndex(
+  persistentHashMapOf(),
+  persistentHashMapOf(),
+)
 
-  /**
-   * @return a list of classes (with members) in [root], which are considered API
-   */
-  fun api(root: Path): API {
-    val classFilePaths: Sequence<Path> = classFilePaths(root)
+class ApiIndex private constructor(
+  private val packages: PersistentMap<String, ApiAnnotations>,
+  internal val classes: PersistentMap<String, ClassBinarySignature>,
+) {
 
-    val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-    discoverPackages(packages)
-
-    val signatures: List<ClassBinarySignature> = classFilePaths
-      .map { it.inputStream() }
-      .loadApiFromJvmClasses()
-      .map { it.removeSyntheticBridges() }
-      .map { it.removeToString() }
-      .map { signature ->
-        signature.handleAnnotationsAndVisibility().also {
-          /**
-           * Class has to be saved to the [classes] map in the same iteration
-           * because the next [handleAnnotationsAndVisibility] call relies on it
-           * to resolve the outer class name.
-           */
-          val className = it.name
-          check(classes[className] == null)
-          classes[className] = it
-        }
-      }
-
-    discoverPrivateClasses(signatures)
-
-    return API(
-      publicApi = publicApi(signatures),
-      privateApi,
+  operator fun plus(other: ApiIndex): ApiIndex {
+    return ApiIndex(
+      this.packages.putAll(other.packages),
+      this.classes.putAll(other.classes),
     )
   }
 
-  private val packages: MutableMap<String, ApiAnnotations> = HashMap()
-  private val classes: MutableMap<String, ClassBinarySignature> = HashMap()
-
-  private fun packageAnnotations(packageName: String): ApiAnnotations {
+  internal fun packageAnnotations(packageName: String): ApiAnnotations {
     return packages[packageName]
            ?: unannotated
   }
 
-  private fun resolveClass(className: String): ClassBinarySignature? {
+  /**
+   * @return
+   * - `null` if [className] is unknown, for example, a library class;
+   * - `false` if known but excluded from the API, for example, `@Internal` class;
+   * - `true` if known and actually a part of the API.
+   */
+  fun isPublicOrUnknown(className: String): Boolean? {
+    return resolveClass(className)?.isEffectivelyPublic
+  }
+
+  internal fun resolveClass(className: String): ClassBinarySignature? {
     return classes[className]
   }
 
-  private fun discoverPackages(packages: Map<String, ApiAnnotations>) {
+  internal fun discoverPackages(packages: Map<String, ApiAnnotations>): ApiIndex {
+    val builder = this.packages.builder()
     for ((packageName, packageAnnotations) in packages) {
       check(this.packages[packageName] == null)
-      this.packages[packageName] = packageAnnotations
+      builder[packageName] = packageAnnotations
     }
-  }
-
-  private fun discoverPrivateClasses(classSignatures: List<ClassBinarySignature>) {
-    for (classSignature in classSignatures) {
-      val apiAnnotations = classSignature.annotations.apiAnnotations()
-      if (apiAnnotations.isInternal || !classSignature.isEffectivelyPublic) {
-        privateApi.add(classSignature.name)
-      }
-    }
-  }
-
-  private val privateApi = HashSet<String>()
-
-  /**
-   * - Pushes [isEffectivelyPublic] from class to inner class.
-   * - Pushes [@Internal][org.jetbrains.annotations.ApiStatus.Internal] and [@Experimental][org.jetbrains.annotations.ApiStatus.Experimental]
-   * from package to class and from class to inner classes.
-   */
-  private fun ClassBinarySignature.handleAnnotationsAndVisibility(): ClassBinarySignature {
-    if (!isEffectivelyPublic) {
-      return this
-    }
-    val outerName = outerName
-    val outerAnnotations = if (outerName != null) {
-      val outerClass = resolveClass(outerName) ?: error("Outer class $outerName is unknown")
-      if (!outerClass.isEffectivelyPublic || access.isProtected && outerClass.access.isFinal) {
-        return copy(isEffectivelyPublic = false)
-      }
-      outerClass.annotations.apiAnnotations()
-    }
-    else {
-      packageAnnotations(name.packageName())
-    }
-    return annotate(outerAnnotations)
-  }
-
-  private fun companionAnnotations(
-    containingClassSignature: ClassBinarySignature,
-    memberSignature: MemberBinarySignature,
-  ): ApiAnnotations? {
-    val access = memberSignature.access
-    if (!access.isStatic || !access.isFinal || memberSignature.name != "Companion") {
-      return null
-    }
-    if (memberSignature.jvmMember !is JvmFieldSignature) {
-      return null
-    }
-    val type = Type.getType(memberSignature.desc)
-    if (type.sort != Type.OBJECT) {
-      return null
-    }
-    val companionSignature = resolveClass(type.internalName)
-    if (companionSignature?.outerName != containingClassSignature.name) {
-      return null
-    }
-    // this is a `static final ContainingClassType Companion` field
-    return ApiAnnotations(
-      isInternal = companionSignature.annotations.isInternal(),
-      isExperimental = companionSignature.annotations.isExperimental(),
+    return ApiIndex(
+      packages = builder.toPersistentHashMap(),
+      classes,
     )
   }
 
-  /**
-   * @see kotlinx.validation.api.filterOutNonPublic
-   */
-  private fun ClassBinarySignature.removePrivateSupertypes(): ClassBinarySignature {
-    val (publicSupertypeNames, privateSupertypes) = expandPrivateSupertypes(::resolveClass)
-    if (privateSupertypes.isEmpty()) {
-      return this
-    }
-    val isFinal = access.isFinal
-    val signatures = memberSignatures.mapTo(HashSet()) { it.jvmMember }
-    val inheritedSignatures = sequence {
-      for (supertype in privateSupertypes) {
-        if (supertype.annotations.isInternal()) {
-          // Members of an `@Internal` class are also effectively `@Internal`.
-          continue
-        }
-        for (member in supertype.memberSignatures) {
-          if (member.name == "<init>") {
-            continue
-          }
-          if (isFinal && member.access.isProtected) {
-            continue
-          }
-          if (!signatures.add(member.jvmMember)) {
-            // don't inherit if already exists
-            continue
-          }
-          yield(member)
-        }
-      }
-    }
-    return this.copy(
-      memberSignatures = memberSignatures + inheritedSignatures,
-      supertypes = publicSupertypeNames,
+  internal fun discoverClass(signature: ClassBinarySignature): ApiIndex {
+    val className = signature.name
+    check(classes[className] == null)
+    return ApiIndex(
+      packages,
+      classes = classes.put(className, signature),
     )
   }
+}
 
-  private fun publicApi(classSignatures: List<ClassBinarySignature>): List<ApiClass> {
-    val publicSignatures: List<ClassBinarySignature> = classSignatures
-      .filter { it.name !in privateApi }
-      .map { it.removePrivateSupertypes() }
+class API internal constructor(
+  val index: ApiIndex,
+  signatures: List<ClassBinarySignature>,
+) {
 
-    val result = ArrayList<ApiClass>()
-    for (signature in publicSignatures) {
-      val className = signature.name
-      val members = signature.memberSignatures
-        .sortedWith(MEMBER_SORT_ORDER)
-        .mapNotNull { memberSignature ->
-          val companionAnnotations = companionAnnotations(signature, memberSignature) ?: unannotated
-          if (memberSignature.annotations.isInternal() || companionAnnotations.isInternal) {
-            return@mapNotNull null
-          }
-          if (memberSignature.isConstructorAccessor()) {
-            return@mapNotNull null
-          }
-          ApiMember(
-            ApiRef(memberSignature.name, memberSignature.desc),
-            ApiFlags(memberSignature.access.access, memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental),
-          )
-        }
-      if (members.isEmpty() && signature.isNotUsedWhenEmpty) {
+  val publicApi: List<ApiClass> by lazy {
+    publicApi(index, signatures)
+  }
+}
+
+/**
+ * @return a list of classes (with members) in [root], which are considered API
+ */
+fun api(index: ApiIndex, root: Path): API {
+  @Suppress("NAME_SHADOWING")
+  var index = index
+  val classFilePaths: Sequence<Path> = classFilePaths(root)
+
+  val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
+  index = index.discoverPackages(packages)
+
+  val signatures: List<ClassBinarySignature> = classFilePaths
+    .map { it.inputStream() }
+    .loadApiFromJvmClasses()
+    .map { it.removeSyntheticBridges() }
+    .map { it.removeToString() }
+    .map { signature ->
+      signature.handleAnnotationsAndVisibility(index).also {
+        /**
+         * Class has to be saved to the [ApiIndex.classes] map in the same iteration
+         * because the next [handleAnnotationsAndVisibility] call relies on it
+         * to resolve the outer class name.
+         */
+        index = index.discoverClass(it)
+      }
+    }
+  return API(index, signatures)
+}
+
+/**
+ * - Pushes [isEffectivelyPublic] from class to inner class.
+ * - Pushes [@Internal][org.jetbrains.annotations.ApiStatus.Internal] and [@Experimental][org.jetbrains.annotations.ApiStatus.Experimental]
+ * from package to class and from class to inner classes.
+ */
+private fun ClassBinarySignature.handleAnnotationsAndVisibility(index: ApiIndex): ClassBinarySignature {
+  if (!isEffectivelyPublic) {
+    return this
+  }
+  var signature = this
+  val outerName = outerName
+  if (outerName != null) {
+    val outerClass = index.resolveClass(outerName) ?: error("Outer class $outerName is unknown")
+    signature = signature.annotate(outerClass.annotations.apiAnnotations())
+    if (!outerClass.isEffectivelyPublic || access.isProtected && outerClass.access.isFinal) {
+      signature = signature.copy(isEffectivelyPublic = false)
+    }
+  }
+  else {
+    val packageAnnotations = index.packageAnnotations(name.packageName())
+    signature = signature.annotate(packageAnnotations)
+  }
+  if (signature.annotations.apiAnnotations().isInternal) {
+    signature = signature.copy(isEffectivelyPublic = false)
+  }
+  return signature
+}
+
+private fun companionAnnotations(
+  index: ApiIndex,
+  containingClassSignature: ClassBinarySignature,
+  memberSignature: MemberBinarySignature,
+): ApiAnnotations? {
+  val access = memberSignature.access
+  if (!access.isStatic || !access.isFinal || memberSignature.name != "Companion") {
+    return null
+  }
+  if (memberSignature.jvmMember !is JvmFieldSignature) {
+    return null
+  }
+  val type = Type.getType(memberSignature.desc)
+  if (type.sort != Type.OBJECT) {
+    return null
+  }
+  val companionSignature = index.resolveClass(type.internalName)
+  if (companionSignature?.outerName != containingClassSignature.name) {
+    return null
+  }
+  // this is a `static final ContainingClassType Companion` field
+  return ApiAnnotations(
+    isInternal = companionSignature.annotations.isInternal(),
+    isExperimental = companionSignature.annotations.isExperimental(),
+  )
+}
+
+/**
+ * @see kotlinx.validation.api.filterOutNonPublic
+ */
+private fun ClassBinarySignature.removePrivateSupertypes(index: ApiIndex): ClassBinarySignature {
+  val (publicSupertypeNames, privateSupertypes) = expandPrivateSupertypes(index::resolveClass)
+  if (privateSupertypes.isEmpty()) {
+    return this
+  }
+  val isFinal = access.isFinal
+  val signatures = memberSignatures.mapTo(HashSet()) { it.jvmMember }
+  val inheritedSignatures = sequence {
+    for (supertype in privateSupertypes) {
+      if (supertype.annotations.isInternal()) {
+        // Members of an `@Internal` class are also effectively `@Internal`.
         continue
       }
-      result += ApiClass(
-        className,
-        flags = ApiFlags(signature.access.access, signature.annotations.isExperimental()),
-        supers = signature.supertypes,
-        members,
-      )
+      for (member in supertype.memberSignatures) {
+        if (member.name == "<init>") {
+          continue
+        }
+        if (isFinal && member.access.isProtected) {
+          continue
+        }
+        if (!signatures.add(member.jvmMember)) {
+          // don't inherit if already exists
+          continue
+        }
+        this.yield(member)
+      }
     }
-    return result
   }
+  return copy(
+    memberSignatures = memberSignatures + inheritedSignatures,
+    supertypes = publicSupertypeNames,
+  )
+}
+
+private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignature>): List<ApiClass> {
+  val publicSignatures: List<ClassBinarySignature> = classSignatures
+    .filter { it.isEffectivelyPublic }
+    .map { it.removePrivateSupertypes(index) }
+
+  val result = ArrayList<ApiClass>()
+  for (signature in publicSignatures) {
+    val className = signature.name
+    val members = signature.memberSignatures
+      .sortedWith(MEMBER_SORT_ORDER)
+      .mapNotNull { memberSignature ->
+        val companionAnnotations = companionAnnotations(index, signature, memberSignature) ?: unannotated
+        if (memberSignature.annotations.isInternal() || companionAnnotations.isInternal) {
+          return@mapNotNull null
+        }
+        if (memberSignature.isConstructorAccessor()) {
+          return@mapNotNull null
+        }
+        ApiMember(
+          ApiRef(memberSignature.name, memberSignature.desc),
+          ApiFlags(memberSignature.access.access, memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental),
+        )
+      }
+    if (members.isEmpty() && signature.isNotUsedWhenEmpty) {
+      continue
+    }
+    result += ApiClass(
+      className,
+      flags = ApiFlags(signature.access.access, signature.annotations.isExperimental()),
+      supers = signature.supertypes,
+      members,
+    )
+  }
+  return result
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -215,7 +253,7 @@ private fun classFilePaths(classRoot: Path): Sequence<Path> {
     }
 }
 
-private data class ApiAnnotations(val isInternal: Boolean, val isExperimental: Boolean) {
+internal data class ApiAnnotations(val isInternal: Boolean, val isExperimental: Boolean) {
 
   operator fun plus(other: ApiAnnotations): ApiAnnotations {
     if (other == unannotated && this == unannotated) {
@@ -363,7 +401,7 @@ private fun ClassBinarySignature.expandPrivateSupertypes(classResolver: ClassRes
       // library type
       supertypeNames.add(className)
     }
-    else if (supertype.isEffectivelyPublic && !supertype.annotations.isInternal()) {
+    else if (supertype.isEffectivelyPublic) {
       // public supertype, included in the dump separately
       supertypeNames.add(className)
     }
