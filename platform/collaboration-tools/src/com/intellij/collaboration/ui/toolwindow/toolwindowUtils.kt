@@ -87,7 +87,7 @@ value class ReviewToolwindowTabsStateHolder<T : ReviewTab, VM : ReviewTabViewMod
         if (currentVm is Disposable) {
           Disposer.dispose(currentVm)
         }
-        current.copy(current.tabs - tab, null)
+        current.copy(current.tabs - tab, current.selectedTab.takeIf { it != tab })
       }
       else {
         current
