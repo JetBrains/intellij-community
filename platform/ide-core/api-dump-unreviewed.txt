@@ -3236,26 +3236,38 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 c:com.intellij.util.ui.update.UiNotifyConnector
 - com.intellij.openapi.Disposable
 - java.awt.event.HierarchyListener
+- sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
 - p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,java.lang.Void):V
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):V
 - p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Void):V
 - dispose():V
-- s:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
-- s:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
-- s:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
-- *s:forceNotifyIsShown(java.awt.Component):V
+- sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
+- sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
+- sf:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
 - p:hideNotify():V
 - p:hideOnDispose():V
 - hierarchyChanged(java.awt.event.HierarchyEvent):V
-- s:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
-- s:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
-- setupListeners():V
+- sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
+- sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
+- pf:setupListeners():V
 - p:showNotify():V
+f:com.intellij.util.ui.update.UiNotifyConnector$Companion
+- f:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
+- f:doWhenFirstShown(java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable):V
+- f:doWhenFirstShown(java.awt.Component,kotlin.jvm.functions.Function0):V
+- f:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
+- bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable,I,java.lang.Object):V
+- *f:forceNotifyIsShown(java.awt.Component):V
+- f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
+- f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
 f:com.intellij.util.ui.update.UiNotifyConnector$Once
 - com.intellij.util.ui.update.UiNotifyConnector
+- sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Once$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
-- s:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector$Once
+- sf:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector$Once
+f:com.intellij.util.ui.update.UiNotifyConnector$Once$Companion
+- f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector$Once
 a:com.intellij.util.ui.update.Update
 - com.intellij.util.ui.update.ComparableObject$Impl
 - java.lang.Runnable

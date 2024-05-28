@@ -863,10 +863,13 @@ object Utils {
   }
 
   @JvmStatic
-  fun showPopupElapsedMillisIfConfigured(startNanos: Long, comp: Component) {
-    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) return
-    UiNotifyConnector.doWhenFirstShown(comp) {
-      UIUtil.getWindow(comp)?.addWindowListener(object : WindowAdapter() {
+  fun showPopupElapsedMillisIfConfigured(startNanos: Long, component: Component) {
+    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) {
+      return
+    }
+
+    UiNotifyConnector.doWhenFirstShown(component) {
+      UIUtil.getWindow(component)?.addWindowListener(object : WindowAdapter() {
         override fun windowOpened(e: WindowEvent) {
           val time = TimeoutUtil.getDurationMillis(startNanos)
 

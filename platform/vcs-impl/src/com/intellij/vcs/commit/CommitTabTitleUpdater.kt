@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
-import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
+import com.intellij.util.ui.update.UiNotifyConnector.Companion.doWhenFirstShown
 import org.jetbrains.annotations.Nls
 
 open class CommitTabTitleUpdater(val tree: ChangesTree,
@@ -26,7 +26,8 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
   val project: Project get() = tree.project
 
   open fun start() {
-    doWhenFirstShown(tree, { updateTab() }, this)  // as UI components could be created before tool window `Content`
+    // as UI components could be created before tool window `Content`
+    doWhenFirstShown(component = tree, runnable = { updateTab() }, parent = this)
 
     branchComponent.addChangeListener(this::updateTab, this)
     Disposer.register(this) { setDefaultTitle() }
@@ -46,10 +47,10 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
     tab.description = null
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+  }
 
-  private fun getTab(): Content? =
-    ChangesViewContentManager.getInstance(project).findContent(tabName)
+  private fun getTab(): Content? = ChangesViewContentManager.getInstance(project).findContent(tabName)
 
   companion object {
     fun getDisplayTabName(project: Project, tabName: String, branch: String?): @NlsContexts.TabTitle String? {
