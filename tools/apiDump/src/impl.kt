@@ -226,15 +226,6 @@ private data class ApiAnnotations(val isInternal: Boolean, val isExperimental: B
       isExperimental || other.isExperimental,
     )
   }
-
-  /**
-   * @return which annotations are missing in [other] but present in this in form of [ApiAnnotations]
-   */
-  fun missingIn(other: ApiAnnotations): ApiAnnotations {
-    val internalMissing = isInternal && !other.isInternal
-    val experimentalMissing = isExperimental && !other.isExperimental
-    return ApiAnnotations(internalMissing, experimentalMissing)
-  }
 }
 
 private val unannotated = ApiAnnotations(false, false)
@@ -327,24 +318,19 @@ private fun ClassBinarySignature.removeToString(): ClassBinarySignature {
 
 private fun ClassBinarySignature.annotate(outerApiAnnotations: ApiAnnotations): ClassBinarySignature {
   val classApiAnnotations = annotations.apiAnnotations()
-  val missingAnnotations = outerApiAnnotations.missingIn(classApiAnnotations)
-  if (missingAnnotations == unannotated) {
+  val internalMissing = outerApiAnnotations.isInternal && !classApiAnnotations.isInternal
+  val experimentalMissing = outerApiAnnotations.isExperimental && !classApiAnnotations.isExperimental
+  if (!internalMissing && !experimentalMissing) {
     return this
   }
-  return copy(annotations = annotations.addMissing(missingAnnotations))
-}
-
-private fun List<AnnotationNode>.addMissing(missingAnnotations: ApiAnnotations): List<AnnotationNode> {
-  check(missingAnnotations != unannotated)
-  val (internalMissing, experimentalMissing) = missingAnnotations
-  val result = ArrayList(this)
+  val result = ArrayList(annotations)
   if (internalMissing) {
     result.add(AnnotationNode(API_STATUS_INTERNAL_DESCRIPTOR))
   }
   if (experimentalMissing) {
     result.add(AnnotationNode(API_STATUS_EXPERIMENTAL_DESCRIPTOR))
   }
-  return result
+  return copy(annotations = result)
 }
 
 private data class ExpandedSupertypes(
