@@ -490,7 +490,9 @@ class J2KNullityInferrer {
                             final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
                             if (idx < parameters.length) { //not vararg
                                 final PsiParameter resolvedToParam = parameters[idx];
-                                if (isNotNull(resolvedToParam) && !resolvedToParam.isVarArgs()) {
+                                boolean isArray = parameter.getType() instanceof PsiArrayType;
+                                if (isNotNull(resolvedToParam) || (isArray && !parameter.isVarArgs() && resolvedToParam.isVarArgs())) {
+                                    // In the case of varargs in Kotlin, the spread operator needs to be applied to a not-null array
                                     registerNotNullAnnotation(parameter);
                                     return true;
                                 }
