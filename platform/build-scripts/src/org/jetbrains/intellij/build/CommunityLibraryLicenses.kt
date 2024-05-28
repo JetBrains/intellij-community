@@ -18,6 +18,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/networknt/json-schema-validator/blob/master/LICENSE"),
     LibraryLicense(name = "aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/")
       .apache("https://github.com/FasterXML/aalto-xml/blob/master/LICENSE"),
+    androidDependency(name = "Android Studio Platform", libraryName = "studio-platform"),
     androidDependency(name = "AAPT Protos", libraryName = "aapt-proto"),
     LibraryLicense(name = "AhoCorasickDoubleArrayTrie", libraryName = "com.hankcs:aho-corasick-double-array-trie",
                    url = "https://github.com/hankcs/AhoCorasickDoubleArrayTrie")
