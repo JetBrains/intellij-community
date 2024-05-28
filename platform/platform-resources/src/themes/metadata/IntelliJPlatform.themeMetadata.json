@@ -2191,6 +2191,11 @@
       "since": "2022.3"
     },
     {
+      "key": "VersionControl.Merge.Status.NoConflicts.foreground",
+      "description": "Color for the status label when all conflicts are resolved",
+      "since": "2024.2"
+    },
+    {
       "key": "WelcomeScreen.background"
     },
     {

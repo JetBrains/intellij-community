@@ -23,6 +23,7 @@ import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
+import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
@@ -68,6 +69,7 @@ import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -75,6 +77,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
@@ -165,6 +168,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     DiffUtil.registerAction(new NavigateToChangeMarkerAction(true), myPanel);
 
     ProxyUndoRedoAction.register(getProject(), getEditor(), myContentPanel);
+  }
+
+  @Override
+  protected @NotNull StatusPanel createStatusPanel() {
+    return new MyMergeStatusPanel();
   }
 
   @Override
@@ -1682,6 +1690,33 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
         return DiffUtil.getLinesContent(side.select(documents), startLine, endLine);
       });
+    }
+  }
+
+  private class MyMergeStatusPanel extends MyStatusPanel {
+    /**
+     * For classic UI.
+     *
+     * @see community/platform/icons/src/general/greenCheckmark.svg
+     */
+    private static final JBColor GREEN_CHECKMARK_DEFAULT_COLOR = new JBColor(0x368746, 0x50A661);
+    private static final JBColor NO_CONFLICTS_FOREGROUND =
+      JBColor.namedColor("VersionControl.Merge.Status.NoConflicts.foreground", GREEN_CHECKMARK_DEFAULT_COLOR);
+
+    @Override
+    protected @Nullable Icon getStatusIcon() {
+      if (getChangesCount() == 0 && getConflictsCount() == 0) {
+        return AllIcons.General.GreenCheckmark;
+      }
+      return null;
+    }
+
+    @Override
+    protected @NotNull Color getStatusForeground() {
+      if (getChangesCount() == 0 && getConflictsCount() == 0) {
+        return NO_CONFLICTS_FOREGROUND;
+      }
+      return UIUtil.getLabelForeground();
     }
   }
 }

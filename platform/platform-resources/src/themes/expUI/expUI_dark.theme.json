@@ -753,7 +753,8 @@
         "otherIconColor": "Gray8",
         "remoteBranchIconColor": "Purple9",
         "tagIconColor": "Gray8"
-      }
+      },
+      "Merge.Status.NoConflicts.foreground": "Green6"
     },
 
     "EditorPane.splitBorder": "Gray3",
