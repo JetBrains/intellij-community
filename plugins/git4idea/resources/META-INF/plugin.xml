@@ -459,6 +459,9 @@
       <add-to-group group-id="Git.MainMenu.LocalChanges" relative-to-action="Vcs.Show.Shelf" anchor="after"/>
     </action>
     <action id="Git.Stash.Refresh" class="git4idea.stash.ui.GitRefreshStashesAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="Git.Stash.Toggle.Split.Preview" class="git4idea.stash.ui.GitStashToggleSplitPreviewAction" icon="AllIcons.Actions.PreviewDetails">
+      <add-to-group group-id="Vcs.SavedPatches.ChangesBrowser.Toolbar"/>
+    </action>
 
     <group id="Git.Stash.Operations.ContextMenu" class="git4idea.stash.ui.GitStashOperationsGroup">
       <reference id="Git.Stash.Pop"/>

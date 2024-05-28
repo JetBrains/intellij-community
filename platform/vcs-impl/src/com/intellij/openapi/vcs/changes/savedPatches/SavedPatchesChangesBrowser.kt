@@ -73,6 +73,10 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
     return super.createPopupMenuActions() + ActionManager.getInstance().getAction("Vcs.SavedPatches.ChangesBrowser.ContextMenu")
   }
 
+  override fun createToolbarActions(): List<AnAction> {
+    return super.createToolbarActions() + ActionManager.getInstance().getAction("Vcs.SavedPatches.ChangesBrowser.Toolbar")
+  }
+
   override val changesTreeModel: AsyncChangesTreeModel = object : SimpleAsyncChangesTreeModel() {
     override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
       val builder = TreeModelBuilder(myProject, grouping)

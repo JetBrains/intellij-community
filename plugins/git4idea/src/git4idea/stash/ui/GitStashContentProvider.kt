@@ -46,6 +46,9 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
 
     val disposable = Disposer.newDisposable("Git Stash Content Provider")
     val savedPatchesUi = GitSavedPatchesUi(GitStashProvider(project, disposable), ShelfProvider(project, disposable), disposable)
+    project.messageBus.connect(disposable).subscribe(GitStashSettingsListener.TOPIC, object : GitStashSettingsListener {
+      override fun onSplitDiffPreviewSettingChanged() = savedPatchesUi.updateLayout()
+    })
     project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout()
     })
@@ -67,7 +70,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
           HelpManager.getInstance().invokeHelp("reference.VersionControl.Git.StashAndShelf")
         }
       project.messageBus.connect(this).subscribe(GitStashSettingsListener.TOPIC, object : GitStashSettingsListener {
-        override fun stashesAndShelvesTabSettingChanged() {
+        override fun onCombineStashAndShelveSettingChanged() {
           updateVisibleProviders()
           updateTabName()
         }
@@ -87,7 +90,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     }
   }
 
-  private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, TAB_NAME)?.anchor?.isHorizontal == false
+  private fun isVertical() = isStashTabVertical(project)
 
   private fun returnFocusToToolWindow(componentToFocus: Component?) {
     val toolWindow = ChangesViewContentManager.getToolWindowFor(project, TAB_NAME) ?: return
@@ -107,7 +110,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
   }
 
   private fun isWithSplitDiffPreview(): Boolean {
-    return true
+    return GitVcsApplicationSettings.getInstance().isSplitDiffPreviewInStashesEnabled
   }
 
   companion object {
@@ -162,7 +165,7 @@ internal class GitStashStartupActivity : ProjectActivity {
       }
     }, gitStashTracker)
     project.messageBus.connect(gitStashTracker).subscribe(GitStashSettingsListener.TOPIC, object : GitStashSettingsListener {
-      override fun stashesAndShelvesTabSettingChanged() {
+      override fun onCombineStashAndShelveSettingChanged() {
         project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
       }
     })
@@ -170,7 +173,8 @@ internal class GitStashStartupActivity : ProjectActivity {
 }
 
 interface GitStashSettingsListener {
-  fun stashesAndShelvesTabSettingChanged()
+  fun onCombineStashAndShelveSettingChanged() = Unit
+  fun onSplitDiffPreviewSettingChanged() = Unit
 
   companion object {
     val TOPIC: Topic<GitStashSettingsListener> = Topic(GitStashSettingsListener::class.java)
@@ -194,7 +198,7 @@ internal fun setStashesAndShelvesTabEnabled(enabled: Boolean) {
 
   applicationSettings.isCombinedStashesAndShelvesTabEnabled = enabled
 
-  ApplicationManager.getApplication().messageBus.syncPublisher(GitStashSettingsListener.TOPIC).stashesAndShelvesTabSettingChanged()
+  ApplicationManager.getApplication().messageBus.syncPublisher(GitStashSettingsListener.TOPIC).onCombineStashAndShelveSettingChanged()
 }
 
 internal fun showStashes(project: Project) {
@@ -203,4 +207,8 @@ internal fun showStashes(project: Project) {
     val provider = savedPatchesUi.providers.filterIsInstance<GitStashProvider>().firstOrNull() ?: return@showToolWindowTab
     savedPatchesUi.expandPatchesByProvider(provider)
   }
+}
+
+internal fun isStashTabVertical(project: Project): Boolean {
+  return ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME)?.anchor?.isHorizontal == false
 }

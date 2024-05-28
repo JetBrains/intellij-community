@@ -300,6 +300,7 @@
       <reference ref="Vcs.ShowDiffWithLocal"/>
       <reference ref="Vcs.Shelf.ChangesBrowser.ContextMenu"/>
     </group>
+    <group id="Vcs.SavedPatches.ChangesBrowser.Toolbar"/>
 
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
