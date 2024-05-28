@@ -113,7 +113,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
                 // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
                 // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
                 if (indexOneFileOfJob(indexingJob)) {
-                  indexingJob.oneMoreFileProcessed()
+                  progressReporter.oneMoreFileProcessed()
                 }
 
                 if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
@@ -331,10 +331,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
     fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {
       return fileIndexingJob.fileSet.statistics
-    }
-
-    fun oneMoreFileProcessed() {
-      progressReporter.oneMoreFileProcessed()
     }
 
     fun areAllFilesProcessed(): Boolean {
