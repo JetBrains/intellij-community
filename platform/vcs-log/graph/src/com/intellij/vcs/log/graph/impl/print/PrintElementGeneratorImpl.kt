@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.print
 
@@ -119,7 +119,10 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return Math.round(average + deviation).toInt()
   }
 
-  private fun collectElements(rowIndex: Int, builder: PrintElementBuilder) {
+  override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
+    val result = mutableListOf<PrintElementWithGraphElement>()
+    val nodes = mutableListOf<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
+
     val visibleElements = getSortedVisibleElementsInRow(rowIndex)
     val upPosition = createEndPositionFunction(rowIndex - 1, true)
     val downPosition = createEndPositionFunction(rowIndex + 1, false)
@@ -128,38 +131,41 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
       when (element) {
         is GraphNode -> {
           val nodeIndex = element.nodeIndex
-          builder.consumeNode(element, position)
+          nodes.add(SimplePrintElementImpl(rowIndex, position, element, presentationManager))
           linearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL).forEach { edge ->
             val arrowType = getArrowType(edge, rowIndex)
             val down = downPosition(edge)
             val up = upPosition(edge)
             if (down != null) {
-              builder.consumeDownEdge(edge, position, down, arrowType === EdgePrintElement.Type.DOWN)
+              result.add(EdgePrintElementImpl(rowIndex, position, down, EdgePrintElement.Type.DOWN, edge, arrowType === EdgePrintElement.Type.DOWN, presentationManager))
             }
             if (up != null) {
-              builder.consumeUpEdge(edge, up, position, arrowType === EdgePrintElement.Type.UP)
+              result.add(EdgePrintElementImpl(rowIndex, position, up, EdgePrintElement.Type.UP, edge, arrowType === EdgePrintElement.Type.UP, presentationManager))
             }
           }
         }
         is GraphEdge -> {
-          val arrowType = getArrowType(element, rowIndex)
           val down = downPosition(element)
           val up = upPosition(element)
+          val arrowType = getArrowType(element, rowIndex)
+
           if (down != null) {
-            builder.consumeDownEdge(element, position, down, arrowType === EdgePrintElement.Type.DOWN)
+            result.add(EdgePrintElementImpl(rowIndex, position, down, EdgePrintElement.Type.DOWN, element, arrowType === EdgePrintElement.Type.DOWN, presentationManager))
           }
           else if (arrowType === EdgePrintElement.Type.DOWN) {
-            builder.consumeArrow(element, position, arrowType)
+            result.add(TerminalEdgePrintElement(rowIndex, position, EdgePrintElement.Type.DOWN, element, presentationManager))
           }
           if (up != null) {
-            builder.consumeUpEdge(element, up, position, arrowType === EdgePrintElement.Type.UP)
+            result.add(EdgePrintElementImpl(rowIndex, position, up, EdgePrintElement.Type.UP, element, arrowType === EdgePrintElement.Type.UP, presentationManager))
           }
           else if (arrowType === EdgePrintElement.Type.UP) {
-            builder.consumeArrow(element, position, arrowType)
+            result.add(TerminalEdgePrintElement(rowIndex, position, EdgePrintElement.Type.UP, element, presentationManager))
           }
         }
       }
     }
+    result.addAll(nodes)
+    return result
   }
 
   private fun createEndPositionFunction(visibleRowIndex: Int, up: Boolean): (GraphEdge) -> Int? {
@@ -257,40 +263,8 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return result
   }
 
-  override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
-    val builder = PrintElementBuilder(rowIndex)
-    collectElements(rowIndex, builder)
-    return builder.build()
-  }
-
   private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
     return min(rowIndex - e1.up, e1.down - rowIndex)
-  }
-
-  private inner class PrintElementBuilder(private val rowIndex: Int) {
-
-    private val result = ArrayList<PrintElementWithGraphElement>()
-    private val nodes = ArrayList<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
-    fun consumeNode(node: GraphNode, position: Int) {
-      nodes.add(SimplePrintElementImpl(rowIndex, position, node, presentationManager))
-    }
-
-    fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-      result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow, presentationManager))
-    }
-
-    fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-      result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow, presentationManager))
-    }
-
-    fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {
-      result.add(TerminalEdgePrintElement(rowIndex, position, arrowType, edge, presentationManager))
-    }
-
-    fun build(): Collection<PrintElementWithGraphElement> {
-      result.addAll(nodes)
-      return result
-    }
   }
 
   companion object {
