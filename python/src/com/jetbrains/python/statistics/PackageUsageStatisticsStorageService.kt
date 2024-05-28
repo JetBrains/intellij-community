@@ -62,4 +62,5 @@ data class PackageUsage(
   var interpreterTypeValue: String? = null,
   var targetTypeValue: String? = null,
   var hasSdk: Boolean? = null,
+  var fileTypeName: String? = null,
 )
