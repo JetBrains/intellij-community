@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.psi.*
@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
@@ -31,9 +30,6 @@ class KotlinMemberInfo @JvmOverloads constructor(
             }
         } else {
             displayName = KotlinMemberInfoSupport.getInstance().renderMemberInfo(member)
-            if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-                displayName = KotlinBundle.message("member.info.abstract.0", displayName)
-            }
             if (isCompanionMember) {
                 displayName = KotlinBundle.message("member.info.companion.0", displayName)
             }
