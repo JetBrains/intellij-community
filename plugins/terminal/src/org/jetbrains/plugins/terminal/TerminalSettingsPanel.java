@@ -34,6 +34,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
@@ -84,6 +85,7 @@ public final class TerminalSettingsPanel {
   private JBLabel myBetaLabel;
   private JPanel myNewUiChildSettingsPanel;
   private JBCheckBox myShellPromptCheckbox;
+  private JLabel myShellPromptDescription;
 
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
@@ -105,6 +107,14 @@ public final class TerminalSettingsPanel {
     // Show child New Terminal settings as disabled if New Terminal is not selected
     updateNewUiPanelState();
     myNewUiCheckbox.addChangeListener(__ -> updateNewUiPanelState());
+
+    myShellPromptDescription.setBorder(JBUI.Borders.emptyLeft(28));
+    myShellPromptDescription.setFont(JBFont.medium());
+    myShellPromptDescription.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
+    myShellPromptDescription.setVisible(myShellPromptCheckbox.isSelected());
+    myShellPromptCheckbox.addChangeListener(__ -> {
+      myShellPromptDescription.setVisible(myShellPromptCheckbox.isSelected());
+    });
 
     myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
     myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
