@@ -2,11 +2,13 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import org.intellij.lang.annotations.Language
+import javax.swing.JList
 
 /** Locates JList element */
-fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JList']",
+fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.byType(JList::class.java),
                                                               JListUiComponent::class.java)
 
 /** Locates JBList element */
