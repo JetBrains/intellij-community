@@ -741,25 +741,6 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/instanceFunctionCall")
-        public static class InstanceFunctionCall extends AbstractK2BindToElementTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("Operator.kt")
-            public void testOperator() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/bindToElement/instanceFunctionCall/Operator.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/operationReference")
         public static class OperationReference extends AbstractK2BindToElementTest {
             @java.lang.Override
@@ -772,6 +753,21 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("Operator.kt")
+            public void testOperator() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/Operator.kt");
+            }
+
+            @TestMetadata("OperatorOverride.kt")
+            public void testOperatorOverride() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/OperatorOverride.kt");
+            }
+
+            @TestMetadata("Override.kt")
+            public void testOverride() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/Override.kt");
+            }
+
             @TestMetadata("RootPkg.kt")
             public void testRootPkg() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/RootPkg.kt");
@@ -780,6 +776,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             @TestMetadata("UnQualified.kt")
             public void testUnQualified() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/UnQualified.kt");
+            }
+
+            @TestMetadata("WithRegularCall.kt")
+            public void testWithRegularCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/WithRegularCall.kt");
             }
         }
 
