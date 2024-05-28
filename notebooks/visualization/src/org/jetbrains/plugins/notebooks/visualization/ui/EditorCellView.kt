@@ -224,7 +224,8 @@ class EditorCellView(
     return controllers.firstOrNull { type.isInstance(it) } as? T
   }
 
-  fun registerCellHighlighter(highlighter: RangeHighlighter) {
+  fun addCellHighlighter(provider: () -> RangeHighlighter) {
+    val highlighter = provider()
     cellHighlighters.add(highlighter)
   }
 
