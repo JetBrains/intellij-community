@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
@@ -42,6 +43,8 @@ class EditorCellView(
     get() {
       return intervalPointer.get() ?: error("Invalid interval")
     }
+
+  private val cellHighlighters = mutableListOf<RangeHighlighter>()
 
   val input: EditorCellInput = EditorCellInput(
     editor,
@@ -221,21 +224,15 @@ class EditorCellView(
     return controllers.firstOrNull { type.isInstance(it) } as? T
   }
 
+  fun registerCellHighlighter(highlighter: RangeHighlighter) {
+    cellHighlighters.add(highlighter)
+  }
+
   private fun removeCellHighlight() {
-    val interval = intervalPointer.get() ?: return
-    val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-    val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-    val overlappingIterator = editor.markupModel.overlappingIterator(startOffset, endOffset)
-    val toRemove = try {
-      overlappingIterator
-        .asSequence()
-        .filter { it.lineMarkerRenderer is NotebookLineMarkerRenderer }
-        .toList()
+    for (highlighter in cellHighlighters) {
+      highlighter.dispose()
     }
-    finally {
-      overlappingIterator.dispose()
-    }
-    toRemove.forEach { editor.markupModel.removeHighlighter(it) }
+    cellHighlighters.clear()
   }
 
   private fun updateCellHighlight() {
@@ -251,6 +248,7 @@ class EditorCellView(
       HighlighterTargetArea.LINES_IN_RANGE
     ).also {
       it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
+      cellHighlighters.add(it)
     }
 
     if (interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
@@ -260,22 +258,28 @@ class EditorCellView(
         endOffset,
         HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
         HighlighterTargetArea.LINES_IN_RANGE
-      )
+      ).also {
+        cellHighlighters.add(it)
+      }
     }
 
     if (interval.type == NotebookCellLines.CellType.CODE) {
       editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
         o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
+      }.also {
+        cellHighlighters.add(it)
       }
     }
     else if (editor.editorKind != EditorKind.DIFF) {
       editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
         o.lineMarkerRenderer = NotebookTextCellBackgroundLineMarkerRenderer(o)
+      }.also {
+        cellHighlighters.add(it)
       }
     }
 
     for (controller: NotebookCellInlayController in controllers) {
-      controller.createGutterRendererLineMarker(editor, interval)
+      controller.createGutterRendererLineMarker(editor, interval, this)
     }
   }
 
