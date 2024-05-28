@@ -570,7 +570,6 @@ c:com.intellij.vcs.log.impl.LogDataImpl
 - getUsers():java.util.Set
 com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - com.intellij.vcs.log.impl.VcsLogUiProperties
-- sf:BEK_SORT_TYPE:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:DIFF_PREVIEW_VERTICAL_SPLIT:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:GRAPH_OPTIONS:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_CHANGES_FROM_PARENTS:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
