@@ -515,7 +515,7 @@ internal class SoftwareBillOfMaterialsImpl(
       downloadUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$libraryName" },
       pomXmlUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$pomXmlName" },
       sha256Checksum = checksums.single().sha256sum,
-      license = libraryLicense,
+      library = libraryLicense,
       entry = libraryEntry,
       pomXmlModel = pomXmlModel
     )
@@ -558,7 +558,7 @@ internal class SoftwareBillOfMaterialsImpl(
     val metaInf = MetaInf(libraryFile)
     return MavenLibrary(
       coordinates = metaInf.coordinates ?: return null,
-      license = libraryLicense,
+      library = libraryLicense,
       entry = libraryEntry,
       sha256Checksum = sha256Hex(libraryFile),
       pomXmlModel = metaInf.pomXmlModel
@@ -592,7 +592,7 @@ internal class SoftwareBillOfMaterialsImpl(
     val repositoryUrl: String? = null,
     val downloadUrl: String? = null,
     val sha256Checksum: String,
-    val license: LibraryLicense,
+    val library: LibraryLicense,
     val entry: LibraryFileEntry,
     val pomXmlUrl: String? = null,
     val pomXmlModel: Model?
@@ -621,30 +621,36 @@ internal class SoftwareBillOfMaterialsImpl(
       ?.takeIf { it.isNotBlank() }
       ?.let { "Person: $it" }
 
-    val supplier: String? = license.supplier ?: organizations ?: developers
+    val supplier: String? = library.supplier ?: organizations ?: developers
 
     val copyrightText: String? by lazy {
-      license.copyrightText ?: when {
+      library.copyrightText ?: when {
         isSupplierJetBrains -> jetBrainsOwnLicense.copyrightText
-        pomXmlModel?.inceptionYear == null || supplier == null -> null
-        else -> "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
+        pomXmlModel?.inceptionYear != null && supplier != null -> "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
           .removePrefix("Organization: ")
           .removePrefix("Person: ")
+        isSupplierApache -> "Copyright (C) ${Suppliers.APACHE}"
+        else -> null
       }
     }
 
     val isSupplierJetBrains: Boolean by lazy {
-      license.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
-        license.url?.startsWith("https://github.com/$it/") == true ||
-        license.licenseUrl?.startsWith("https://github.com/$it/") == true
+      library.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
+        library.url?.startsWith("https://github.com/$it/") == true ||
+        library.licenseUrl?.startsWith("https://github.com/$it/") == true
       }
+    }
+
+    val isSupplierApache: Boolean by lazy {
+      library.url?.startsWith("https://github.com/apache/") == true ||
+      library.licenseUrl?.startsWith("https://github.com/apache/") == true
     }
 
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
-        license.license == LibraryLicense.JETBRAINS_OWN -> document.jetBrainsOwnLicense
-        license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
-        else -> parseLicense(document, checkNotNull(license.spdxIdentifier))
+        library.license == LibraryLicense.JETBRAINS_OWN -> document.jetBrainsOwnLicense
+        library.licenseUrl == null || library.spdxIdentifier == null -> SpdxNoAssertionLicense()
+        else -> parseLicense(document, checkNotNull(library.spdxIdentifier))
       }
     }
   }
@@ -671,7 +677,7 @@ internal class SoftwareBillOfMaterialsImpl(
 
   private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {
     val document = this
-    val upstreamPackage = spdxPackageUpstream(library.license.forkedFrom)
+    val upstreamPackage = spdxPackageUpstream(library.library.forkedFrom)
     val libPackage = spdxPackage(
       this, name = "${library.coordinates.groupId}:${library.coordinates.artifactId}",
       licenseDeclared = library.license(this),
@@ -720,12 +726,9 @@ internal class SoftwareBillOfMaterialsImpl(
     when {
       library.supplier != null -> setSupplier(library.supplier)
       library.isSupplierJetBrains -> setSupplier("Organization: ${Suppliers.JETBRAINS}")
-      library.license.url?.startsWith("https://github.com/apache/") == true ||
-      library.license.licenseUrl?.startsWith("https://github.com/apache/") == true -> {
-        setSupplier("Organization: ${Suppliers.APACHE}")
-      }
-      library.license.url?.startsWith("https://github.com/google/") == true ||
-      library.license.licenseUrl?.startsWith("https://github.com/google/") == true -> {
+      library.isSupplierApache -> setSupplier("Organization: ${Suppliers.APACHE}")
+      library.library.url?.startsWith("https://github.com/google/") == true ||
+      library.library.licenseUrl?.startsWith("https://github.com/google/") == true -> {
         setSupplier("Organization: ${Suppliers.GOOGLE}")
       }
       else -> {
@@ -735,7 +738,7 @@ internal class SoftwareBillOfMaterialsImpl(
         }
       }
     }
-    val upstream = library.license.forkedFrom
+    val upstream = library.library.forkedFrom
     when {
       upstreamPackage != null -> setOriginator(upstreamPackage.supplier.get())
       upstream?.revision != null && upstream.sourceCodeUrl != null -> {
