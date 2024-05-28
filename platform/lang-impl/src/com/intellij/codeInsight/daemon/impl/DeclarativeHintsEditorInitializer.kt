@@ -3,14 +3,12 @@
 
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayActionPayload
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.serviceAsync
@@ -38,14 +36,28 @@ private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
     editorSupplier: suspend () -> EditorEx,
     highlighterReady: suspend () -> Unit,
   ) {
-    val grave = project.serviceAsync<DeclarativeHintsGrave>()
-    val sourceIdToInlayData = grave.raise(file, document)?.groupBy { it.sourceId } ?: return
-    val editor = editorSupplier()
-    withContext(Dispatchers.EDT) {
-      sourceIdToInlayData.forEach { (sourceId, inlayDataList) ->
-        DeclarativeInlayHintsPass.applyInlayData(editor, project, inlayDataList, sourceId)
+    if (isDeclarativeEnabled() && isCacheEnabled()) {
+      val grave = project.serviceAsync<DeclarativeHintsGrave>()
+      val settings = DeclarativeInlayHintsSettings.getInstance()
+      val inlayDataList = grave.raise(file, document)
+      if (inlayDataList.isNullOrEmpty()) {
+        return
       }
-      DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+      val inlayDataMap = readActionBlocking {
+        inlayDataList.filter {
+          settings.isProviderEnabled(it.providerId) ?: true
+        }
+      }.groupBy { it.sourceId }
+      if (inlayDataMap.isEmpty()) {
+        return
+      }
+      val editor = editorSupplier()
+      withContext(Dispatchers.EDT) {
+        inlayDataMap.forEach { (sourceId, inlayDataList) ->
+          DeclarativeInlayHintsPass.applyInlayData(editor, project, inlayDataList, sourceId)
+        }
+        DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+      }
     }
   }
 }
@@ -62,7 +74,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
   }
 
   fun raise(file: VirtualFile, document: Document): List<InlayData>? {
-    if (!isEnabled() || file !is VirtualFileWithId) {
+    if (file !is VirtualFileWithId) {
       return null
     }
     val state = cache.get(file.id)
@@ -77,7 +89,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
 
   private fun bury(editor: Editor) {
     val file = editor.virtualFile
-    if (!isEnabled() || editor.editorKind != EditorKind.MAIN_EDITOR || file !is VirtualFileWithId) {
+    if (editor.editorKind != EditorKind.MAIN_EDITOR || file !is VirtualFileWithId) {
       return
     }
     val declarativeHints = editor.getInlayModel().getInlineElementsInRange(
@@ -98,7 +110,9 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     EditorFactory.getInstance().addEditorFactoryListener(
       object : EditorFactoryListener {
         override fun editorReleased(event: EditorFactoryEvent) {
-          bury(event.editor)
+          if (isDeclarativeEnabled() && isCacheEnabled()) {
+            bury(event.editor)
+          }
         }
       },
       this
@@ -133,10 +147,12 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     return inlayDataList
   }
 
-  private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
-
   private fun isDebugEnabled() = Registry.`is`("cache.markup.debug", false)
 }
+
+private fun isCacheEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
+
+private fun isDeclarativeEnabled() = Registry.`is`("inlays.declarative.hints", true)
 
 internal class ZombieInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
