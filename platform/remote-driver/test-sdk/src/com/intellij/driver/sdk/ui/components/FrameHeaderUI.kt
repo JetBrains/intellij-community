@@ -12,7 +12,7 @@ class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
   val burgerMenuButton: UiComponent get() = x("//div[@tooltiptext='Main Menu']")
   val appIcon: UiComponent get() = x("//div[@accessiblename='Application icon']")
   val projectWidget get() = x(Locators.byVisibleText(driver.singleProject().getName()))
-  val runWidget get() = x("//div[@myicon='run.svg']")
+  val runWidget get() = x(Locators.byJavaClassContains("RedesignedRunConfigurationSelector"))
   val cwmButton get() = x(Locators.byTooltip("Code With Me"))
   val searchEveryWhereButton get() = x(Locators.byAccessibleName("Search Everywhere"))
   val settingsButton get() = x(Locators.byJavaClassContains("SettingsEntryPoint"))
