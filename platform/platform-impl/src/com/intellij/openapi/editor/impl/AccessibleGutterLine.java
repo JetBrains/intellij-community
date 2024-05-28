@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -30,6 +29,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -169,18 +170,18 @@ final class AccessibleGutterLine extends JPanel {
     /* annotations */
     if (myGutter.isAnnotationsShown()) {
       int x = myGutter.getAnnotationsAreaOffset();
-      int width = 0;
-      String tooltipText = null;
+      AtomicInteger width = new AtomicInteger();
+      AtomicReference<String> tooltipText = new AtomicReference<>();
       StringBuilder buf = new StringBuilder();
-      for (int i = 0; i < myGutter.myTextAnnotationGutters.size(); i++) {
-        TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
-        if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLogicalLineNum, editor); // [tav] todo: take first non-null?
-        int annotationSize = myGutter.myTextAnnotationGutterSizes.getInt(i);
+      myGutter.processTextAnnotationGutterProviders((gutterProvider, annotationSize) -> {
+        if (tooltipText.get() == null) {
+          tooltipText.set(gutterProvider.getToolTip(myLogicalLineNum, editor)); // [tav] todo: take first non-null?
+        }
         buf.append(notNull(gutterProvider.getLineText(myLogicalLineNum, editor), ""));
-        width += annotationSize;
-      }
+        width.getAndAdd(annotationSize);
+      });
       if (!buf.isEmpty()) {
-        String tt = tooltipText;
+        String tt = tooltipText.get();
         addNewElement(new MySimpleAccessible() {
           @Override
           public @NotNull String getAccessibleName() {
@@ -191,7 +192,7 @@ final class AccessibleGutterLine extends JPanel {
           public String getAccessibleTooltipText() {
             return tt;
           }
-        }, x, 0, width, lineHeight);
+        }, x, 0, width.get(), lineHeight);
       }
     }
 

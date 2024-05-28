@@ -118,6 +118,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getStandardLineNumberConverter;
 
@@ -184,8 +185,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private @NotNull List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   int myTextAnnotationGuttersSize;
   int myTextAnnotationExtraSize;
-  final IntList myTextAnnotationGutterSizes = new IntArrayList();
-  final List<TextAnnotationGutterProvider> myTextAnnotationGutters = ContainerUtil.createLockFreeCopyOnWriteList();
+  private record TextAnnotationGutterProviderInfo(@NotNull TextAnnotationGutterProvider provider, int size){}
+  private final List<TextAnnotationGutterProviderInfo> myTextAnnotationGutterProviders = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
@@ -558,8 +559,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
       g.setColor(color != null ? color : JBColor.blue);
 
-      for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
-        TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
+      for (int i = 0; i < myTextAnnotationGutterProviders.size(); i++) {
+        TextAnnotationGutterProviderInfo info = myTextAnnotationGutterProviders.get(i);
+        TextAnnotationGutterProvider gutterProvider = info.provider();
 
         int lineHeight = myEditor.getLineHeight();
         int lastLine = myEditor.logicalToVisualPosition(new LogicalPosition(endLineNumber(), 0)).line;
@@ -568,7 +570,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           break;
         }
 
-        int annotationSize = myTextAnnotationGutterSizes.getInt(i);
+        int annotationSize = info.size();
 
         int logicalLine = -1;
         Color bg = null;
@@ -961,7 +963,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       clearLineToGutterRenderersCache();
       calcLineNumberAreaWidth();
       calcLineMarkerAreaWidth(canShrink);
-      calcAnnotationsSize();
+      myTextAnnotationGuttersSize = calcAnnotationsSize();
     }
     calcAnnotationExtraSize();
 
@@ -979,13 +981,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return result;
   }
 
-  private void calcAnnotationsSize() {
-    myTextAnnotationGuttersSize = 0;
+  private int calcAnnotationsSize() {
     myGapAfterAnnotations = false;
     final int lineCount = Math.max(myEditor.getDocument().getLineCount(), 1);
-    final int guttersCount = myTextAnnotationGutters.size();
-    for (int j = 0; j < guttersCount; j++) {
-      TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
+    myTextAnnotationGutterProviders.replaceAll(info -> {
+      TextAnnotationGutterProvider gutterProvider = info.provider();
       int gutterSize = 0;
       for (int i = 0; i < lineCount; i++) {
         String lineText = gutterProvider.getLineText(i, myEditor);
@@ -1006,9 +1006,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           gutterSize += getGapBetweenAnnotations();
         }
       }
-      myTextAnnotationGutterSizes.set(j, gutterSize);
-      myTextAnnotationGuttersSize += gutterSize;
+      return new TextAnnotationGutterProviderInfo(gutterProvider, gutterSize);
+    });
+    // separate loop because the operation in myTextAnnotationGutterProviders.replaceAll() can retry on contention
+    int totalSize = 0;
+    for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
+      totalSize += info.size();
     }
+    return totalSize;
   }
 
   private void calcAnnotationExtraSize() {
@@ -1509,24 +1514,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider) {
-    myTextAnnotationGutters.add(provider);
-    myTextAnnotationGutterSizes.add(0);
+    myTextAnnotationGutterProviders.add(new TextAnnotationGutterProviderInfo(provider, 0));
     fireTextAnnotationGutterProviderAdded(provider);
     updateSize();
   }
 
   @Override
   public void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action) {
-    myTextAnnotationGutters.add(provider);
+    myTextAnnotationGutterProviders.add(new TextAnnotationGutterProviderInfo(provider, 0));
     myProviderToListener.put(provider, action);
-    myTextAnnotationGutterSizes.add(0);
     fireTextAnnotationGutterProviderAdded(provider);
     updateSize();
   }
 
   @Override
   public @NotNull List<TextAnnotationGutterProvider> getTextAnnotations() {
-    return new ArrayList<>(myTextAnnotationGutters);
+    return ContainerUtil.map(myTextAnnotationGutterProviders, i->i.provider());
   }
 
   @Override
@@ -1818,7 +1821,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public boolean isAnnotationsShown() {
-    return !myTextAnnotationGutters.isEmpty();
+    return !myTextAnnotationGutterProviders.isEmpty();
   }
 
   private boolean isFoldingOutlineShown() {
@@ -2259,11 +2262,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private @Nullable TextAnnotationGutterProvider getProviderAtPoint(final Point clickPoint) {
     int current = getAnnotationsAreaOffset();
     if (clickPoint.x < current) return null;
-    for (int i = 0; i < myTextAnnotationGutterSizes.size(); i++) {
-      current += myTextAnnotationGutterSizes.getInt(i);
-      if (clickPoint.x <= current) return myTextAnnotationGutters.get(i);
+    for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
+      current += info.size();
+      if (clickPoint.x <= current) {
+        return info.provider();
+      }
     }
-
     return null;
   }
 
@@ -2441,24 +2445,24 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void closeAllAnnotations() {
-    closeTextAnnotations(myTextAnnotationGutters);
+    closeTextAnnotations(getTextAnnotations());
   }
 
   @Override
   public void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations) {
     if (!myCanCloseAnnotations) return;
 
-    ReferenceOpenHashSet<TextAnnotationGutterProvider> toClose = new ReferenceOpenHashSet<>(annotations);
-    for (int i = myTextAnnotationGutters.size() - 1; i >= 0; i--) {
-      TextAnnotationGutterProvider provider = myTextAnnotationGutters.get(i);
+    Set<TextAnnotationGutterProvider> toClose = new ReferenceOpenHashSet<>(annotations);
+    myTextAnnotationGutterProviders.removeIf(info -> {
+      TextAnnotationGutterProvider provider = info.provider();
       if (toClose.contains(provider)) {
         provider.gutterClosed();
-        myTextAnnotationGutters.remove(i);
-        myTextAnnotationGutterSizes.removeInt(i);
         myProviderToListener.remove(provider);
         fireTextAnnotationGutterProviderRemoved(provider);
+        return true;
       }
-    }
+      return false;
+    });
 
     updateSize();
   }
@@ -2675,8 +2679,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
     //if (line >= myEditor.getDocument().getLineCount()) return;
 
-    for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-      final List<AnAction> list = gutterProvider.getPopupActions(logicalLine, myEditor);
+    for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
+      final List<AnAction> list = info.provider().getPopupActions(logicalLine, myEditor);
       if (list != null) {
         for (AnAction action : list) {
           if (!addActions.contains(action)) {
@@ -2831,8 +2835,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   public void dispose() {
-    for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-      gutterProvider.gutterClosed();
+    for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
+      info.provider().gutterClosed();
     }
     myProviderToListener.clear();
   }
@@ -2975,6 +2979,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           getPrimaryLineNumberConverter().shouldRepaintOnCaretMovement()) {
         repaint();
       }
+    }
+  }
+  void processTextAnnotationGutterProviders(@NotNull BiConsumer<? super TextAnnotationGutterProvider, ? super Integer> consumer) {
+    for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
+      TextAnnotationGutterProvider gutterProvider = info.provider();
+      int size = info.size();
+      consumer.accept(gutterProvider, size);
     }
   }
 }
