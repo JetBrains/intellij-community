@@ -12,11 +12,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ScrollToTheEndToolbarAction extends AnAction implements DumbAware {
   private final Editor myEditor;
 
-  public ScrollToTheEndToolbarAction(final @NotNull Editor editor) {
+  public ScrollToTheEndToolbarAction(final @Nullable Editor editor) {
     super();
     myEditor = editor;
     final String message = ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text");
@@ -32,6 +33,7 @@ public class ScrollToTheEndToolbarAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    if (myEditor == null) return;
     Editor editor  = ClientEditorManager.Companion.getClientEditor(myEditor, ClientId.getCurrentOrNull());
     EditorUtil.scrollToTheEnd(editor);
   }
