@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -937,8 +937,8 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
         </searchConfiguration>
       </inspection_tool>""";
 
-  public void testOldSettingsNotModified() throws Exception {
-    doTest(OLD_SETTINGS);
+  public void testOldSettingsMigrated() throws Exception {
+    assertEquals(NEW_SETTINGS, writeSettings(readSettings(OLD_SETTINGS)));
   }
 
   public void testOldSettingsModified() throws Exception {
@@ -988,10 +988,6 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
     profile.initInspectionTools(getProject());
     profile.profileChanged();
     assertEquals(profileXml, JDOMUtil.write(profile.writeScheme()));
-  }
-
-  private static void doTest(@SuppressWarnings("SameParameterValue") String xml) throws Exception {
-    assertEquals(xml, writeSettings(readSettings(xml)));
   }
 
   private static String writeSettings(SSBasedInspection inspection) {
