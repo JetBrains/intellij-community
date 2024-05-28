@@ -93,9 +93,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
     val graphCellPainter: GraphCellPainter = object : SimpleGraphCellPainter(DefaultColorGenerator()) {
-      override fun getRowHeight(): Int {
-        return table.rowHeight
-      }
+      override val rowHeight: Int get() = table.rowHeight
     }
 
     val commitCellRenderer = GraphCommitCellRenderer(table.logData, graphCellPainter, table)
