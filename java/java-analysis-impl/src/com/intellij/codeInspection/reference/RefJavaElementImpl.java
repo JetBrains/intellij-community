@@ -251,9 +251,6 @@ public sealed abstract class RefJavaElementImpl extends RefElementImpl implement
         ((RefJavaElementImpl)refWhat).markReferenced(this, forWriting, forReading, expression);
       }
     } else {
-      if (psiWhat instanceof PsiMethod) {
-        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression);
-      }
       getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
   }
@@ -308,21 +305,5 @@ public sealed abstract class RefJavaElementImpl extends RefElementImpl implement
       }
     }
     return super.getIcon(expanded);
-  }
-
-  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
-    //TODO support kotlin enums
-    final PsiClass containingClass = psiWhat.getContainingClass();
-    if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {
-      for (PsiField enumConstant : containingClass.getFields()) {
-        if (enumConstant instanceof PsiEnumConstant) {
-          final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
-          if (enumConstantReference != null) {
-            addOutReference(enumConstantReference);
-            enumConstantReference.markReferenced(this, false, true, expression);
-          }
-        }
-      }
-    }
   }
 }
