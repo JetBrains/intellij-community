@@ -168,9 +168,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
         )
 
+        val kotlinReflectLibraryName = "kotlin reflect"
         val kotlinReflectLibrary = moduleLibrary(
             moduleA,
-            libraryName = "kotlin reflect",
+            libraryName = kotlinReflectLibraryName,
             classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
             sourcesRoot = TestKotlinArtifacts.kotlinReflectSources.jarRoot,
         )
@@ -195,12 +196,13 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val reflectionLibSourceFile = getFile("FunctionWithAllInvokes.kt")
         val reflectionLibSourceModule = ktModuleWithAssertion<KtLibrarySourceModule>(reflectionLibSourceFile)
-        assertEquals(libraryModuleWithoutContext.librarySources, libSourceModule)
+        assertEquals(kotlinReflectLibraryName, reflectionLibSourceModule.libraryName)
 
         val libSourceModuleForBinaryFile = ktModuleWithAssertion<KtLibrarySourceModule>(libraryFile, contextualModule = libSourceModule)
         assertEquals(libraryModuleWithoutContext.librarySources, libSourceModuleForBinaryFile)
 
-        ktModuleWithAssertion<KtLibraryModule>(libraryFile, contextualModule = reflectionLibSourceModule)
+        val ktLibraryModule = ktModuleWithAssertion<KtLibraryModule>(libraryFile, contextualModule = reflectionLibSourceModule)
+        assertEquals(libraryName, ktLibraryModule.libraryName)
     }
 
     fun `test module libraries with the same shared content`() {
