@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -37,7 +38,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return parameterVisitor(fun(parameter: KtParameter) {
             // Applicable to val / var parameters of a class / object primary constructors
-            val valOrVarKeyword = parameter.valOrVarKeyword?.text ?: return
+            val valOrVarKeyword = parameter.valOrVarKeyword ?: return
             if (parameter.hasModifier(KtTokens.OVERRIDE_KEYWORD) || parameter.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
             if (parameter.annotationEntries.isNotEmpty()) return
             val constructor = parameter.parents.match(KtParameterList::class, last = KtPrimaryConstructor::class) ?: return
@@ -54,8 +55,9 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
 
             holder.registerProblem(
                 parameter,
+            valOrVarKeyword.textRange.shiftLeft(parameter.startOffset),
                 KotlinBundle.message("constructor.parameter.is.never.used.as.a.property"),
-                RemoveValVarFix(valOrVarKeyword)
+                RemoveValVarFix(valOrVarKeyword.text)
             )
         })
     }

@@ -6462,6 +6462,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/nonUsed.kt");
         }
 
+        @TestMetadata("reportedOnlyOnKeyword.kt")
+        public void testReportedOnlyOnKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/reportedOnlyOnKeyword.kt");
+        }
+
         @TestMetadata("similarPropNameUsedInDelegate.kt")
         public void testSimilarPropNameUsedInDelegate() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/similarPropNameUsedInDelegate.kt");

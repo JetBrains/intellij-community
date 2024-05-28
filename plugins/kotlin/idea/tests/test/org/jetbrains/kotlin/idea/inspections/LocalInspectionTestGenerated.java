@@ -1046,6 +1046,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/canBeParameter/nonUsed.kt");
         }
 
+        @TestMetadata("reportedOnlyOnKeyword.kt")
+        public void testReportedOnlyOnKeyword() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/reportedOnlyOnKeyword.kt");
+        }
+
         @TestMetadata("similarPropNameUsedInDelegate.kt")
         public void testSimilarPropNameUsedInDelegate() throws Exception {
             runTest("testData/inspectionsLocal/canBeParameter/similarPropNameUsedInDelegate.kt");
