@@ -64,18 +64,18 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
   @Throws(IndexingInterruptedException::class)
   fun indexFiles(project: Project,
-                 fileSets: List<FileSet>,
+                 fileSet: FileSet,
                  projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
     val startTime = System.nanoTime()
     try {
-      doIndexFiles(project, fileSets)
+      doIndexFiles(project, fileSet)
     }
     catch (e: RuntimeException) {
       throw IndexingInterruptedException(e)
     }
     finally {
       val visibleProcessingTime = System.nanoTime() - startTime
-      val totalProcessingTimeInAllThreads = fileSets.sumOf { b: FileSet -> b.statistics.processingTimeInAllThreads }
+      val totalProcessingTimeInAllThreads = fileSet.statistics.processingTimeInAllThreads
       projectDumbIndexingHistory.visibleTimeToAllThreadsTimeRatio = if (totalProcessingTimeInAllThreads == 0L
       ) 0.0
       else (visibleProcessingTime.toDouble()) / totalProcessingTimeInAllThreads
@@ -84,8 +84,8 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     }
   }
 
-  private fun doIndexFiles(project: Project, fileSets: List<FileSet>) {
-    if (fileSets.all { b: FileSet -> b.isEmpty() }) {
+  private fun doIndexFiles(project: Project, fileSet: FileSet) {
+    if (fileSet.isEmpty()) {
       return
     }
 
@@ -96,7 +96,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
     val progressReporter = IndexingProgressReporter2(indicator)
-    val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSets)
+    val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSet)
 
     runBlockingCancellable {
       repeat(INDEXING_THREADS_NUMBER) {
@@ -309,22 +309,20 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   private class IndexingJob(val myProject: Project,
                             val progressReporter: IndexingProgressReporter2,
                             val myContentLoader: CachedFileContentLoader,
-                            fileSets: List<FileSet>) {
+                            fileSet: FileSet) {
     val myQueueOfFiles: ArrayBlockingQueue<FileIndexingJob> // the size for Community sources is about 615K entries
 
     init {
-      val maxFilesCount = fileSets.sumOf { fileSet: FileSet -> fileSet.size() }
+      val maxFilesCount = fileSet.size()
       myQueueOfFiles = ArrayBlockingQueue(maxFilesCount)
       // UnindexedFilesIndexer may produce duplicates during merging.
       // E.g., Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
       // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself
       // instead of processing and merging queue snapshots
       val deduplicateFilter = IndexableFilesDeduplicateFilter.create()
-      for (fileSet in fileSets) {
-        for (file in fileSet.files) {
-          if (deduplicateFilter.accept(file.file)) {
-            myQueueOfFiles.add(FileIndexingJob(file, fileSet))
-          }
+      for (file in fileSet.files) {
+        if (deduplicateFilter.accept(file.file)) {
+          myQueueOfFiles.add(FileIndexingJob(file, fileSet))
         }
       }
       // todo: maybe we want to do something with statistics: deduplicateFilter.getNumberOfSkippedFiles();

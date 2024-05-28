@@ -117,7 +117,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     IndexingRequestToken indexingRequest = myProject.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, indexingRequest);
 
-    List<IndexUpdateRunner.FileSet> fileSets = getExplicitlyRequestedFilesSets();
+    IndexUpdateRunner.FileSet fileSets = getExplicitlyRequestedFilesSets();
     if (!fileSets.isEmpty()) {
       doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets);
     }
@@ -130,35 +130,33 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
   }
 
-  private List<IndexUpdateRunner.FileSet> getRefreshedFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
+  private IndexUpdateRunner.FileSet getRefreshedFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
     String filesetName = "Refreshed files";
     Collection<FileIndexingRequest> files =
       new ProjectChangedFilesScanner(myProject).scan(projectDumbIndexingHistory);
-    return Collections.singletonList(new IndexUpdateRunner.FileSet(myProject, filesetName, files));
+    return new IndexUpdateRunner.FileSet(myProject, filesetName, files);
   }
 
   @NotNull
-  private List<IndexUpdateRunner.FileSet> getExplicitlyRequestedFilesSets() {
-    return Collections.singletonList(new IndexUpdateRunner.FileSet(myProject, "<indexing queue>",
-                                                                   // TODO: don't copy. Map iterators instead
-                                                                   ContainerUtil.map(files, FileIndexingRequest::updateRequest)));
+  private IndexUpdateRunner.FileSet getExplicitlyRequestedFilesSets() {
+    return new IndexUpdateRunner.FileSet(myProject, "<indexing queue>",
+                                         // TODO: don't copy. Map iterators instead
+                                         ContainerUtil.map(files, FileIndexingRequest::updateRequest));
   }
 
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
                             IndexUpdateRunner indexUpdateRunner,
-                            List<IndexUpdateRunner.FileSet> fileSets) {
+                            IndexUpdateRunner.FileSet fileSet) {
     IndexUpdateRunner.IndexingInterruptedException exception = null;
     try {
-      indexUpdateRunner.indexFiles(myProject, fileSets, projectDumbIndexingHistory);
+      indexUpdateRunner.indexFiles(myProject, fileSet, projectDumbIndexingHistory);
     }
     catch (IndexUpdateRunner.IndexingInterruptedException e) {
       exception = e;
     }
 
     try {
-      fileSets.forEach(b -> {
-        projectDumbIndexingHistory.addProviderStatistics(b.getStatistics());
-      });
+      projectDumbIndexingHistory.addProviderStatistics(fileSet.getStatistics());
     }
     catch (Exception e) {
       LOG.error("Failed to add indexing statistics", e);
