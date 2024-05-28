@@ -188,6 +188,8 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
     if (e != null && e.getData(DiffDataKeys.MERGE_VIEWER) != null) {
       actions.add(new ResolveConflictsInImportsToggleAction());
+      actions.add(Separator.getInstance());
+      actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
     }
 
     if (e != null && ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {

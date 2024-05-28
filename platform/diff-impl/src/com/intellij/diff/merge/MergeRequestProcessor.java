@@ -252,8 +252,6 @@ public abstract class MergeRequestProcessor implements Disposable {
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, contextActions);
 
-    DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
-
     return group;
   }
 
