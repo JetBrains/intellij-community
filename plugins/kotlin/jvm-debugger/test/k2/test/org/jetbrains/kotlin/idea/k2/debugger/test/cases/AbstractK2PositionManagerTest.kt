@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2PositionManagerTest : AbstractPositionManagerTest() {
 
-    override fun getCompileFiles(files: MutableList<KtFile>?, configuration: CompilerConfiguration?): GenerationState {
+    override fun getCompileFiles(files: List<KtFile>, configuration: CompilerConfiguration): GenerationState {
         return withTestServicesNeededForCodeCompilation(project) {
             super.getCompileFiles(files, configuration)
         }

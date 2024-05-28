@@ -7,11 +7,8 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebugProcess
-import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
-import com.intellij.debugger.engine.PositionManagerImpl
-import com.intellij.debugger.engine.PositionManagerWithMultipleStackFrames
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
@@ -27,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -43,8 +41,11 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.ReferenceTypeImpl
@@ -69,6 +70,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getInlineArgumentSymbol
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
@@ -505,6 +507,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun getPsiFileByLocation(location: Location): PsiFile? {
         val sourceName = location.safeSourceName() ?: return null
+        if (!DebuggerUtils.isKotlinSourceFile(sourceName)) return null
 
         val referenceInternalName = try {
             if (location.declaringType().containsKotlinStrata()) {
@@ -520,8 +523,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val className = JvmClassName.byInternalName(referenceInternalName)
 
         val project = debugProcess.project
-
-        return DebuggerUtils.findSourceFileForClass(project, sourceSearchScopes, className, sourceName, location)
+        val files = findFileCandidatesWithBackgroundProcess(project, className, sourceName, sourceSearchScopes)
+        return DebuggerUtils.chooseApplicableFile(files, location)
     }
 
     private fun defaultInternalName(location: Location): String {
@@ -672,19 +675,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         position: SourcePosition,
         isInsideProjectWithCompose: Boolean,
         file: KtFile
-    ): List<PrepareRequest> {
-        val project = debugProcess.project
-        return withBackgroundProgress(
-            project, KotlinDebuggerCoreBundle.message("progress.title.installing.kotlin.breakpoint"),
-            cancellable = false
-        ) {
-            withProgressText(KotlinDebuggerCoreBundle.message("progress.text.waiting.for.smart.mode")) {
-                waitForSmartMode(project)
-            }
-            smartReadAction(project) {
-                collectPrepareRequests(requestor, position, isInsideProjectWithCompose, file)
-            }
-        }
+    ): List<PrepareRequest> = readAction {
+        collectPrepareRequests(requestor, position, isInsideProjectWithCompose, file)
     }
 
     private fun collectPrepareRequests(
@@ -774,20 +766,43 @@ private fun fallbackHasInlinedLinesTo(referenceType: ReferenceType, line: Int, s
         emptyList()
     }
     return locations.any { location ->
-        val internalName = location.safeSourcePath(KOTLIN_STRATA_NAME)?.let { FileUtil.toSystemIndependentName(it) } ?: return@any false
-        sourceCandidatesInternalName.any { candidate -> internalName.matchesInternalNameWithSubClasses(candidate) }
+        val sourcePath = location.safeSourcePath(KOTLIN_STRATA_NAME) ?: return@any false
+        return sourcePathMatchesCandidates(sourcePath, sourceCandidatesInternalName)
     }
 }
 
 private fun sourcePathMatchesCandidates(sourcePath: String, sourceCandidatesInternalName: List<String>): Boolean {
     val internalName = FileUtil.toSystemIndependentName(sourcePath)
-    return sourceCandidatesInternalName.any { candidate -> internalName.matchesInternalNameWithSubClasses(candidate) }
+    return internalName.isInnerClassOfAny(sourceCandidatesInternalName)
 }
 
-private fun String.matchesInternalNameWithSubClasses(internalName: String): Boolean {
-    if (length < internalName.length) return false
-    if (!startsWith(internalName)) return false
-    return length == internalName.length || this[internalName.length] == '$'
+@RequiresBackgroundThread
+private fun findFileCandidatesWithBackgroundProcess(
+    project: Project,
+    className: JvmClassName,
+    sourceName: String,
+    scopes: List<GlobalSearchScope>,
+): List<KtFile> {
+    return runBlockingCancellable {
+        withBackgroundProgress(
+            project, KotlinDebuggerCoreBundle.message("progress.title.kt.file.search"),
+            cancellable = false
+        ) {
+            val files = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
+                val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+                if (files.isNotEmpty()) return@ThrowableComputable files
+                DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
+            })
+            if (files.isNotEmpty()) return@withBackgroundProgress files
+
+            withProgressText(KotlinDebuggerCoreBundle.message("progress.text.waiting.for.smart.mode")) {
+                waitForSmartMode(project)
+            }
+            smartReadAction(project) {
+                DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+            }
+        }
+    }
 }
 
 private val FUNCTION_TYPES = arrayOf(
