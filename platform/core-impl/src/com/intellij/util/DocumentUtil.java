@@ -47,6 +47,12 @@ public final class DocumentUtil {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   * In case of empty line it returns line start's offset.
+   *
+   * @see #getLineStartIndentedOffset(Document, int)
+   */
   public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
@@ -188,6 +194,9 @@ public final class DocumentUtil {
 
   /**
    * Calculates offset of the first non-whitespace character of the {@code line}
+   * In case of empty line it returns line end's offset.
+   *
+   * @see #getFirstNonSpaceCharOffset(Document, int)
    */
   public static int getLineStartIndentedOffset(@NotNull Document document, int line) {
     int lineStartOffset = document.getLineStartOffset(line);
