@@ -19,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
@@ -139,7 +138,7 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   // guarded by [lock]. Must be in consistent state under write lock (see [lock] comment)
   // Files that will be re-indexed
-  private var filesSoFar: ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>> = ConcurrentHashMap()
+  private var filesSoFar: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
 
   // guarded by [lock]. Must be in consistent state under write lock (see [lock] comment)
   // Ids of scannings from which [filesSoFar] came
@@ -159,9 +158,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   // them directly to [filesSoFar] will likely slow down the process (though this assumption is not properly verified)
   private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) {
     lock.read {
-      filesSoFar.compute(iterator) { _, old ->
-        return@compute if (old == null) ArrayList(files) else old + files
-      }
+      filesSoFar.addAll(files)
       cntFilesSoFar.addAndGet(files.size)
       scanningIds.add(scanningId)
     }
@@ -192,7 +189,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   @VisibleForTesting
-  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
+  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Collection<VirtualFile>> {
     allowFlushing = false
     try {
       val result: T = block()
@@ -203,13 +200,13 @@ class PerProjectIndexingQueue(private val project: Project) {
     }
   }
 
-  private fun getFilesAndClear(): Map<IndexableFilesIterator, Collection<VirtualFile>> {
-    val (files, _) = getAndResetQueuedFiles()
-    return files
+  private fun getFilesAndClear(): Collection<VirtualFile> {
+    val files = getAndResetQueuedFiles()
+    return files.fileSet
   }
 
   private data class QueuedFiles(
-    val fileMap: ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>,
+    val fileSet: Set<VirtualFile>,
     val numberOfFiles: Int,
     val scanningIds: LongSet
   )
@@ -218,7 +215,7 @@ class PerProjectIndexingQueue(private val project: Project) {
     try {
       return lock.write {
         val filesInQueue = filesSoFar
-        filesSoFar = ConcurrentHashMap()
+        filesSoFar = ConcurrentHashMap.newKeySet()
         val totalFiles = cntFilesSoFar.getAndSet(0)
         val idsOfScannings = scanningIds
         scanningIds = createSetForScanningIds()
@@ -265,8 +262,8 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   @TestOnly
   class TestCompanion(private val q: PerProjectIndexingQueue) {
-    fun getAndResetQueuedFiles(): Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> {
-      return q.getAndResetQueuedFiles().let { Pair(it.fileMap, it.numberOfFiles) }
+    fun getAndResetQueuedFiles(): Pair<Set<VirtualFile>, Int> {
+      return q.getAndResetQueuedFiles().let { Pair(it.fileSet, it.numberOfFiles) }
     }
   }
 }

@@ -11,7 +11,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import junit.framework.TestCase
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -42,7 +41,6 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     }
     val (filesInQueue) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
   fun testAddCloseClose() {
@@ -53,7 +51,6 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
   fun testAddCloseTwoSinks() {
@@ -68,8 +65,6 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(2, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
-    TestCase.assertEquals(1, filesInQueue[provider2]?.size)
   }
 
   fun testCancelAllTasksAndWait() {
@@ -191,7 +186,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
       // Don't test latch: it is always `null` because in unit tests [UnindexedFilesScanner.shouldScanInSmartMode()] reports `false`
       //TestCase.assertTrue("Total files: $totalFiles, latch: $currentLatch", (totalFiles < DUMB_MODE_THRESHOLD) == (currentLatch == null))
-      val totalFilesInThisQueue = filesInQueue.values.sumOf(Collection<*>::size)
+      val totalFilesInThisQueue = filesInQueue.size
       TestCase.assertEquals(totalFiles, totalFilesInThisQueue)
       totalFilesSum += totalFilesInThisQueue
       Thread.sleep(50)
@@ -207,7 +202,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
   }
 
   private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue):
-    Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> =
+    Pair<Set<VirtualFile>, Int> =
     PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
 
   private class FakeIterator : IndexableFilesIterator {
