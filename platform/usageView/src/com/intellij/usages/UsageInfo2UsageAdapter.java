@@ -53,21 +53,21 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private final @NotNull UsageInfo myUsageInfo;
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
-  private @Nullable PossiblySmartSegment myMergedNavigationRange;
+  private @Nullable SmartPsiFileRange myMergedNavigationRange;
   private final int myLineNumber;
   private final int myOffset;
   private volatile UsageNodePresentation myCachedPresentation;
   @Nullable private final VirtualFile myVirtualFile;
-  private final @Nullable PossiblySmartSegment myNavigationRange;
+  private final @Nullable SmartPsiFileRange myNavigationRange;
   private volatile UsageType myUsageType;
 
   private static class ComputedData {
     public final int offset;
     public final int lineNumber;
     public final VirtualFile virtualFile;
-    public final @Nullable PossiblySmartSegment navigationRange;
+    public final @Nullable SmartPsiFileRange navigationRange;
 
-    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable PossiblySmartSegment navigationRange) {
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange) {
       this.offset = offset;
       this.lineNumber = lineNumber;
       this.virtualFile = virtualFile;
@@ -75,53 +75,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     }
   }
 
-  private abstract static class PossiblySmartSegment {
-    abstract @Nullable Segment getSegment();
-
-    int getStartOffset() {
-      var segment = getSegment();
-      return segment == null ? -1 : segment.getStartOffset();
-    }
-
-    int getEndOffset() {
-      var segment = getSegment();
-      return segment == null ? -1 : segment.getEndOffset();
-    }
-  }
-
-  private class SmartSegment extends PossiblySmartSegment {
-    private final @NotNull SmartPsiFileRange myRange;
-
-    SmartSegment(@NotNull PsiFile psiFile, @NotNull TextRange range) {
-      myRange = SmartPointerManager.getInstance(getProject()).createSmartPsiFileRangePointer(psiFile, range);
-    }
-
-    @Override
-    @Nullable Segment getSegment() {
-      return myRange.getRange();
-    }
-  }
-
-  private static class DumbSegment extends PossiblySmartSegment {
-    private final Segment mySegment;
-
-    DumbSegment(@NotNull Segment segment) {
-      mySegment = segment;
-    }
-
-    @Override
-    @Nullable Segment getSegment() {
-      return mySegment;
-    }
-  }
-
-  private @Nullable PossiblySmartSegment possiblySmart(@Nullable PsiFile psiFile, @Nullable Segment segment) {
+  private static @Nullable SmartPsiFileRange possiblySmart(@Nullable PsiFile psiFile, @Nullable Segment segment) {
     if (segment == null) return null;
     if (psiFile != null && segment instanceof TextRange range) {
-      return new SmartSegment(psiFile, range);
+      return SmartPointerManager.getInstance(psiFile.getProject()).createSmartPsiFileRangePointer(psiFile, range);
     }
     else {
-      return new DumbSegment(segment);
+      return null;
     }
   }
 
@@ -350,12 +310,21 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public int getNavigationOffset() {
     Document document = getDocument();
     if (document == null) return -1;
-    int offset = myMergedNavigationRange != null ? myMergedNavigationRange.getStartOffset() : -1;
+    int offset = getStartOffset(myMergedNavigationRange);
     if (offset == -1) offset = getUsageInfo().getNavigationOffset();
     if (offset == -1) offset = myOffset;
     if (offset >= document.getTextLength()) {
       int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
       offset = document.getLineStartOffset(line);
+    }
+    return offset;
+  }
+
+  private static int getStartOffset(@Nullable SmartPsiFileRange smartPsiFileRange) {
+    int offset = -1;
+    if (smartPsiFileRange != null) {
+      var range = smartPsiFileRange.getRange();
+      offset = range != null ? range.getStartOffset() : -1;
     }
     return offset;
   }
@@ -366,7 +335,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public Segment getNavigationRange() {
     Document document = getDocument();
     if (document == null) return null;
-    Segment range = myMergedNavigationRange != null ? myMergedNavigationRange.getSegment() : null;
+    Segment range = myMergedNavigationRange != null ? myMergedNavigationRange.getRange() : null;
     if (range == null) range = getUsageInfo().getNavigationRange();
     if (range == null) {
       ProperTextRange rangeInElement = getUsageInfo().getRangeInElement();
@@ -488,21 +457,25 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return true;
   }
 
-  private @Nullable PossiblySmartSegment merge(
-    @Nullable UsageInfo2UsageAdapter.PossiblySmartSegment r1,
-    @Nullable PossiblySmartSegment r2
+  private static @Nullable SmartPsiFileRange merge(
+    @Nullable SmartPsiFileRange sr1,
+    @Nullable SmartPsiFileRange sr2
   ) {
-    if (r1 == null) return r2;
-    if (r2 == null) return r1;
+    if (sr1 == null) return sr2;
+    if (sr2 == null) return sr1;
+    var r1 = sr1.getRange();
+    var r2 = sr2.getRange();
+    if (r1 == null) return sr2;
+    if (r2 == null) return sr1;
     var r1start = r1.getStartOffset();
     var r2start = r2.getStartOffset();
     if (r1start != r2start) {
-      return r1start <= r2start ? r1 : r2;
+      return r1start <= r2start ? sr1 : sr2;
     }
     else {
       var r1end = r1.getEndOffset();
       var r2end = r2.getEndOffset();
-      return r1end <= r2end ? r1 : r2;
+      return r1end <= r2end ? sr1 : sr2;
     }
   }
 
@@ -542,8 +515,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       return byPath;
     }
 
-    int offset = myMergedNavigationRange != null ? myMergedNavigationRange.getStartOffset() : -1;
-    int other = o.myMergedNavigationRange != null ? o.myMergedNavigationRange.getStartOffset() : -1;
+    int offset = getStartOffset(myMergedNavigationRange);
+    int other = getStartOffset(o.myMergedNavigationRange);
 
     return Integer.compare(offset, other);
   }
