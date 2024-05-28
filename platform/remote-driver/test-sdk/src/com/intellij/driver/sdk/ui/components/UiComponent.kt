@@ -37,9 +37,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   private fun findThisComponent(): Component {
     lateinit var result: List<Component>
+    var actual = 0
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
-            errorMessage = "Can't find component with '${data.xpath}' in ${data.parentSearchContext.context.takeIf { it.isNotEmpty() } ?: "whole hierarchy"}") {
+            errorMessage = {"Can't find component with '${data.xpath}' in ${data.parentSearchContext.context.takeIf { it.isNotEmpty() } ?: "whole hierarchy"}, expected 1, but got ${actual}"})  {
       result = data.parentSearchContext.findAll(data.xpath)
+      actual = result.size
       result.size == 1
     }
     return result.first()
