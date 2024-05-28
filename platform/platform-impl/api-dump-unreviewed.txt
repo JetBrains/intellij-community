@@ -13786,6 +13786,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - getSelectedText():java.lang.String
 - getToolTipText(java.awt.event.MouseEvent):java.lang.String
 - getUiInspectorContext(java.awt.event.MouseEvent):com.intellij.internal.inspector.UiInspectorPreciseContextProvider$UiInspectorInfo
+- isEditable():Z
 - paint(java.awt.Graphics):V
 - paintComponent(java.awt.Graphics):V
 - putInfo(java.util.Map):V

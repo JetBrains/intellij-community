@@ -271,8 +271,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int mySavedCaretOffsetForDNDUndoHack;
   private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private MyInputMethodHandler myInputMethodRequestsHandler;
-  private InputMethodRequests myInputMethodRequestsSwingWrapper;
+  private InputMethodRequestsHolder myInputMethodRequestsHolder;
   private final MouseDragSelectionEventHandler mouseDragHandler = new MouseDragSelectionEventHandler(e -> {
     processMouseDragged(e);
     return Unit.INSTANCE;
@@ -2213,14 +2212,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public @Nullable TextRange getComposedTextRange() {
-    return myInputMethodRequestsHandler == null ? null : myInputMethodRequestsHandler.getRange();
+    MyInputMethodHandler handler = getMyInputMethodHandler();
+    return handler != null ? handler.getRange() : null;
   }
 
   private boolean composedTextExists() {
-    return myInputMethodRequestsHandler != null &&
-           (myInputMethodRequestsHandler.composedRangeMarker != null ||
-            myInputMethodRequestsHandler.inlayLeft != null ||
-            myInputMethodRequestsHandler.inlayRight != null);
+    MyInputMethodHandler handler = getMyInputMethodHandler();
+    return handler != null && handler.isComposedTextShown();
+  }
+
+  private @Nullable MyInputMethodHandler getMyInputMethodHandler() {
+    InputMethodRequestsHolder holder = myInputMethodRequestsHolder;
+    return holder != null ? holder.asMyHandler() : null;
   }
 
   @Override
@@ -3709,23 +3712,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void replaceInputMethodText(@NotNull InputMethodEvent e) {
     if (isReleased) return;
-    getInputMethodRequests();
-    myInputMethodRequestsHandler.replaceInputMethodText(e);
+    MyInputMethodHandler handler = getOrInitInputMethodRequestsHolder().asMyHandler();
+    if (handler != null) {
+      handler.replaceInputMethodText(e);
+    }
   }
 
   void inputMethodCaretPositionChanged(@NotNull InputMethodEvent e) {
     if (isReleased) return;
-    getInputMethodRequests();
-    myInputMethodRequestsHandler.setInputMethodCaretPosition(e);
+    MyInputMethodHandler handler = getOrInitInputMethodRequestsHolder().asMyHandler();
+    if (handler != null) {
+      handler.setInputMethodCaretPosition(e);
+    }
   }
 
-  @NotNull
-  InputMethodRequests getInputMethodRequests() {
-    if (myInputMethodRequestsHandler == null) {
-      myInputMethodRequestsHandler = new MyInputMethodHandler();
-      myInputMethodRequestsSwingWrapper = new MyInputMethodHandleSwingThreadWrapper(myInputMethodRequestsHandler);
+  @Nullable InputMethodRequests getInputMethodRequests() {
+    return getOrInitInputMethodRequestsHolder().myInputMethodRequestsSwingWrapper;
+  }
+
+  private @NotNull InputMethodRequestsHolder getOrInitInputMethodRequestsHolder() {
+    if (myInputMethodRequestsHolder == null) {
+      myInputMethodRequestsHolder = new InputMethodRequestsHolder(new MyInputMethodHandler());
     }
-    return myInputMethodRequestsSwingWrapper;
+    return myInputMethodRequestsHolder;
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt(generateAssertion = false)
+  public void setInputMethodRequests(@Nullable InputMethodRequests inputMethodRequests) {
+    myInputMethodRequestsHolder = new InputMethodRequestsHolder(inputMethodRequests);
   }
 
   @Override
@@ -3862,6 +3877,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static final class InputMethodRequestsHolder {
+    private final @Nullable InputMethodRequests myInputMethodRequests;
+    private final @Nullable InputMethodRequests myInputMethodRequestsSwingWrapper;
+
+    private InputMethodRequestsHolder(@Nullable InputMethodRequests imRequests) {
+      myInputMethodRequests = imRequests;
+      myInputMethodRequestsSwingWrapper = imRequests != null ? new MyInputMethodHandleSwingThreadWrapper(imRequests) : null;
+    }
+
+    private @Nullable MyInputMethodHandler asMyHandler() {
+      return myInputMethodRequests instanceof MyInputMethodHandler handler ? handler : null;
+    }
+  }
+
   private final class MyInputMethodHandler implements InputMethodRequests {
     /**
      * Very high inlay priority to keep IME inlays to be always the nearest to the caret.
@@ -3900,6 +3929,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       return null;
+    }
+
+    private boolean isComposedTextShown() {
+      return composedRangeMarker != null || inlayLeft != null || inlayRight != null;
     }
 
     private static @NotNull Point getLocationOnScreen(@NotNull Component component) {

@@ -289,6 +289,7 @@ internal class TerminalOutputController(
       val eventsHandler = BlockTerminalEventsHandler(session, settings, this@TerminalOutputController)
       setupKeyEventDispatcher(editor, eventsHandler, disposable)
       setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
+      TerminalOutputEditorInputMethodSupport(editor, session, caretModel).install(disposable)
       setupContentListener(disposable)
     }
   }

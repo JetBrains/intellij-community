@@ -94,6 +94,12 @@ internal class TerminalCaretModel(
     }
   }
 
+  fun getCaretPosition(): LogicalPosition? {
+    return session.model.withContentLock {
+      calculateCaretPosition(terminalModel.cursorX, terminalModel.cursorY)
+    }
+  }
+
   private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition? {
     // There can be no active block at this moment, because it is not created yet, return null in this case.
     val activeBlock = outputModel.getActiveBlock() ?: return null
