@@ -38,13 +38,18 @@ import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.links.CommitLinksProvider;
+import com.intellij.vcs.log.ui.table.links.NavigateToCommit;
+import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -55,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -95,7 +101,7 @@ public class VcsLogGraphTable extends TableWithProgress
   private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
                                                                                 NamedColorUtil.getListSelectionForeground(false));
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull String myId;
+  private final @NotNull VcsLogUiEx myLogUi;
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
 
@@ -113,14 +119,14 @@ public class VcsLogGraphTable extends TableWithProgress
 
   private boolean myDisposed = false;
 
-  public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
+  public VcsLogGraphTable(@NotNull VcsLogUiEx logUi, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                           @NotNull Runnable requestMore, @NotNull Disposable disposable) {
     super(new GraphTableModel(logData, requestMore, uiProperties));
     Disposer.register(disposable, this);
 
     myLogData = logData;
-    myId = logId;
+    myLogUi = logUi;
     myProperties = uiProperties;
     myColorManager = colorManager;
 
@@ -161,6 +167,31 @@ public class VcsLogGraphTable extends TableWithProgress
 
     putClientProperty(BookmarksManager.ALLOWED, true);
     ScrollingUtil.installActions(this, false);
+    registerResolveLinks();
+  }
+
+  private void registerResolveLinks() {
+    GraphTableModel model = getModel();
+    model.addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        resolveLinks();
+      }
+    });
+  }
+
+  private void resolveLinks() {
+    if (!VcsLinksRenderer.isEnabled()) return;
+
+    VisiblePack visiblePack = getModel().getVisiblePack();
+    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
+    if (visibleGraph.getVisibleCommitCount() == 0) return;
+
+    CommitLinksProvider linksProvider = CommitLinksProvider.getServiceOrNull(getLogData().getProject());
+    if (linksProvider != null) {
+      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
+      linksProvider.resolveLinks(getId(), myLogData, visiblePack, visibleRows.first, visibleRows.second);
+    }
   }
 
   @Override
@@ -170,7 +201,7 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   public @NotNull @NonNls String getId() {
-    return myId;
+    return myLogUi.getId();
   }
 
   @Override
@@ -687,6 +718,9 @@ public class VcsLogGraphTable extends TableWithProgress
           model.fireTableChanged(evt);
         }
       }
+
+      resolveLinks();
+
       mySelectionSnapshot = null;
     });
   }
@@ -904,10 +938,18 @@ public class VcsLogGraphTable extends TableWithProgress
       getExpandableItemsHandler().setEnabled(true);
     }
 
-    private static class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
       @Override
-      public @Nullable Object getTagAt(@NotNull MouseEvent e) {
-        return ObjectUtils.tryCast(super.getTagAt(e), SimpleColoredComponent.BrowserLauncherTag.class);
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        Object tag = getTagAt(e);
+        if ((tag instanceof Runnable)) return super.onClick(e, clickCount);
+
+        if (tag instanceof NavigateToCommit navigateToCommitTag) {
+          VcsLogNavigationUtil.jumpToHash(VcsLogGraphTable.this.myLogUi, navigateToCommitTag.getTarget(), false, true);
+          return true;
+        }
+
+        return false;
       }
     }
   }
@@ -941,7 +983,7 @@ public class VcsLogGraphTable extends TableWithProgress
 
     @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-      if (VcsLogUiUtil.isProgressVisible(keys, myId)) {
+      if (VcsLogUiUtil.isProgressVisible(keys, myLogUi.getId())) {
         getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
       }
       else {

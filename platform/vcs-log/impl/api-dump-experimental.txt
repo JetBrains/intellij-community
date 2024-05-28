@@ -145,6 +145,19 @@
 - a:getValue(com.intellij.vcs.log.ui.table.GraphTableModel,I):java.lang.Object
 - a:isDynamic():Z
 - isResizable():Z
+*:com.intellij.vcs.log.ui.table.links.CommitLinksProvider
+- *sf:Companion:com.intellij.vcs.log.ui.table.links.CommitLinksProvider$Companion
+- a:getLinks(com.intellij.vcs.log.CommitId):java.util.List
+- s:getServiceOrNull(com.intellij.openapi.project.Project):com.intellij.vcs.log.ui.table.links.CommitLinksProvider
+- a:resolveLinks(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.visible.VisiblePack,I,I):V
+*f:com.intellij.vcs.log.ui.table.links.CommitLinksProvider$Companion
+- f:getServiceOrNull(com.intellij.openapi.project.Project):com.intellij.vcs.log.ui.table.links.CommitLinksProvider
+*:com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
+- java.util.EventListener
+- *sf:Companion:com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:onLinksResolved(java.lang.String):V
+*f:com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener$Companion
 f:com.intellij.vcs.log.visible.VcsLogFilterUtilKt
 - *sf:filter(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):it.unimi.dsi.fastutil.ints.IntSet
 - *bs:filter$default(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage,I,java.lang.Object):it.unimi.dsi.fastutil.ints.IntSet

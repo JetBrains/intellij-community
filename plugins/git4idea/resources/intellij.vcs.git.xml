@@ -847,6 +847,8 @@
     <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
 
     <searchScopesProvider implementation="git4idea.search.GitSearchScopeProvider"/>
+    <projectService serviceInterface="com.intellij.vcs.log.ui.table.links.CommitLinksProvider"
+                    serviceImplementation="git4idea.log.GitCommitLinkProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

@@ -1205,7 +1205,7 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.table.JBTable
 - com.intellij.vcs.log.ui.table.VcsLogCommitList
-- <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.vcs.log.ui.VcsLogColorManager,java.lang.Runnable,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.vcs.log.ui.VcsLogColorManager,java.lang.Runnable,com.intellij.openapi.Disposable):V
 - addHighlighter(com.intellij.vcs.log.VcsLogHighlighter):V
 - p:appendActionToEmptyText(java.lang.String,java.lang.Runnable):V
 - applyHighlighters(java.awt.Component,I,I,Z,Z):com.intellij.ui.SimpleTextAttributes

@@ -281,6 +281,7 @@ c:com.intellij.openapi.vcs.IssueNavigationConfiguration
 - s:processTextWithLinks(java.lang.String,java.util.List,java.util.function.Consumer,java.util.function.BiConsumer):V
 - setLinks(java.util.List):V
 c:com.intellij.openapi.vcs.IssueNavigationConfiguration$LinkMatch
+- com.intellij.openapi.vcs.LinkDescriptor
 - java.lang.Comparable
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
 - compareTo(java.lang.Object):I

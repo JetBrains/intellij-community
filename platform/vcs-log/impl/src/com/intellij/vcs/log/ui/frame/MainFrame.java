@@ -40,10 +40,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionIds;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -109,7 +106,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
     myFilterUi = filterUi;
 
-    myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
+    myGraphTable = new MyVcsLogGraphTable(logUi, logData, logUi.getProperties(), colorManager,
                                           () -> logUi.getRefresher().onRefresh(), () -> logUi.requestMore(EmptyRunnable.INSTANCE),
                                           disposable);
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.getProject(), logData.getLogProviders().values());
@@ -405,11 +402,11 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
     private final @NotNull Runnable myRefresh;
 
-    MyVcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
+    MyVcsLogGraphTable(@NotNull VcsLogUiEx logUi, @NotNull VcsLogData logData,
                        @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                        @NotNull Runnable refresh, @NotNull Runnable requestMore,
                        @NotNull Disposable disposable) {
-      super(logId, logData, uiProperties, colorManager, requestMore, disposable);
+      super(logUi, logData, uiProperties, colorManager, requestMore, disposable);
       myRefresh = refresh;
       IndexSpeedSearch speedSearch = new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
         @Override
