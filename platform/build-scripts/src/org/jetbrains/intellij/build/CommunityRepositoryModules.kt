@@ -298,9 +298,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
-      // android-base-common.jar
-      spec.withModuleLibrary("precompiled-common", "android.sdktools.common", "android-base-common.jar")
-
       // android-common.jar
       spec.withModule("intellij.android.common", "android-common.jar")
       spec.withModule("intellij.android.jps.model", "android-common.jar")
@@ -338,7 +335,6 @@ object CommunityRepositoryModules {
 
       // android.jar
       spec.withModule("intellij.android.analytics", "android.jar")
-      spec.withModuleLibrary("precompiled-flags", "android.sdktools.flags", "android.jar")
       spec.withModule("intellij.android.assistant", "android.jar")
       //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
       spec.withModule("intellij.android.adb", "android.jar")
@@ -346,7 +342,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.lint", "android.jar")
       spec.withModule("intellij.android.templates", "android.jar")
       spec.withModule("intellij.android.apkanalyzer", "android.jar")
-      spec.withModuleLibrary("precompiled-profgen", "android.sdktools.profgen", "android.jar")
       spec.withModule("intellij.android.app-inspection.api", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide.gradle", "android.jar")
@@ -424,7 +419,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.native-symbolizer", "android.jar")
       spec.withModule("intellij.android.native-symbolizer.gradle", "android.jar")
       //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
-      spec.withModuleLibrary("precompiled-dynamic-layout-inspector.common", "android.sdktools.dynamic-layout-inspector.common", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.model", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
@@ -432,8 +426,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.codenavigation", "android.jar")
       spec.withModule("intellij.android.execution.common", "android.jar")
       spec.withModule("intellij.android.explainer", "android.jar")
-      spec.withModuleLibrary("precompiled-environment-services", "android.sdktools.environment-services", "android.jar")
-      spec.withModuleLibrary("precompiled-kotlin-multiplatform-models", "android.sdktools.android.kotlin-multiplatform-models", "android.jar")
+
+
       spec.withModule("intellij.android.safemode", "android.jar")
 
       // artwork.jar
@@ -443,23 +437,23 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.buildCommon", "build-common.jar")
 
       // data-binding.jar
-      spec.withModuleLibrary("precompiled-db-baseLibrary", "android.sdktools.db-baseLibrary", "data-binding.jar")
-      spec.withModuleLibrary("precompiled-db-baseLibrarySupport", "android.sdktools.db-baseLibrarySupport", "data-binding.jar")
-      spec.withModuleLibrary("precompiled-db-compiler", "android.sdktools.db-compiler", "data-binding.jar")
-      spec.withModuleLibrary("precompiled-db-compilerCommon", "android.sdktools.db-compilerCommon", "data-binding.jar")
+
+
+
+
 
       // game-tools.jar
       //tools/vendor/google/game-tools/main:android.game-tools.main <= REMOVED
 
       // google-analytics-library.jar
-      spec.withModuleLibrary("precompiled-analytics-shared", "android.sdktools.analytics-shared", "google-analytics-library.jar")
-      spec.withModuleLibrary("precompiled-analytics-tracker", "android.sdktools.analytics-tracker", "google-analytics-library.jar")
+
+
       //tools/analytics-library/publisher:analytics-publisher <= REMOVED
-      spec.withModuleLibrary("precompiled-analytics-crash", "android.sdktools.analytics-crash", "google-analytics-library.jar")
+
 
       // google-login.jar
       // We don't bundle Google Login with IDEA
-      //spec.withModuleLibrary("precompiled-google-login-as", "google-login-as", "google-login.jar")
+
 
 
       // inspectors-common.jar
@@ -468,7 +462,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.inspectors-common.ui", "inspectors-common.jar")
 
       // layoutlib-api.jar
-      spec.withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "layoutlib-api.jar")
+
 
       // layoutlib-loader.jar
       spec.withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
@@ -477,83 +471,75 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.lint.common", "lint-ide.jar")
 
       // manifest-merger.jar
-      spec.withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "manifest-merger.jar")
+
 
       // memory-usage.jar
       spec.withModule("intellij.android.memory-usage", "memory-usage.jar")
 
       // pixelprobe.jar
-      spec.withModuleLibrary("precompiled-chunkio", "android.sdktools.chunkio", "pixelprobe.jar")
-      spec.withModuleLibrary("precompiled-pixelprobe", "android.sdktools.pixelprobe", "pixelprobe.jar")
+
+
 
       // repository.jar
-      spec.withModuleLibrary("precompiled-repository", "android.sdktools.repository", "repository.jar")
+
 
       // sdk-common.jar
-      spec.withModuleLibrary("precompiled-sdk-common", "android.sdktools.sdk-common", "sdk-common.jar")
-      spec.withModuleLibrary("precompiled-sdk-common.gradle", "android.sdktools.sdk-common.gradle.rt", "sdk-common.jar")
+
+
 
       // sdk-tools.jar
-      spec.withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-analyzer", "android.sdktools.analyzer", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-binary-resources", "android.sdktools.binary-resources", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-build-analyzer.common", "android.sdktools.android.build-analyzer.common", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-builder-model", "android.sdktools.builder-model", "sdk-tools.jar")
+
+
+
+
+
       //tools/base/build-system/builder-test-api:studio.android.sdktools.builder-test-api <= API for testing. Nice to have in IDEA.
-      spec.withModuleLibrary("precompiled-adblib", "android.sdktools.adblib", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-adblib.ddmlibcompatibility", "android.sdktools.adblib.ddmlibcompatibility", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-adblib.tools", "android.sdktools.adblib.tools", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-jdwpscache", "android.sdktools.jdwpscache", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-device-provisioner", "android.sdktools.device-provisioner", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-deployer", "android.sdktools.deployer", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-dvlib", "android.sdktools.dvlib", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-draw9patch", "android.sdktools.draw9patch", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-jdwppacket", "android.sdktools.jdwppacket", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-jdwptracer", "android.sdktools.jdwptracer", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-lint-api", "android.sdktools.lint-api", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-lint-checks", "android.sdktools.lint-checks", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-lint-model", "android.sdktools.lint-model", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-manifest-parser", "android.sdktools.manifest-parser", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-mlkit-common", "android.sdktools.mlkit-common", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-ninepatch", "android.sdktools.ninepatch", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-perflib", "android.sdktools.perflib", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-process-monitor", "android.sdktools.process-monitor", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-resource-repository", "android.sdktools.resource-repository", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-threading-agent-callback", "android.sdktools.threading-agent-callback", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-tracer", "android.sdktools.tracer", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-usb-devices", "android.sdktools.usb-devices", "sdk-tools.jar")
-      spec.withModuleLibrary("precompiled-zipflinger", "android.sdktools.zipflinger", "sdk-tools.jar")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       // sdklib.jar
-      spec.withModuleLibrary("precompiled-sdklib", "android.sdktools.sdklib", "sdklib.jar")
+
 
       // utp.jar
       spec.withModule("intellij.android.utp", "utp.jar")
 
       // wizard-template.jar
-      spec.withModuleLibrary("precompiled-wizardTemplate.impl", "android.sdktools.wizardTemplate.impl", "wizard-template.jar")
-      spec.withModuleLibrary("precompiled-wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "wizard-template.jar")
+
+
 
       // libs:
       spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
-      spec.withModuleLibrary("explainer", "android.sdktools.analyzer", "")
-      spec.withModuleLibrary("generator", "android.sdktools.analyzer", "")
-      spec.withModuleLibrary("shared", "android.sdktools.analyzer", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
-      spec.withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("javapoet", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("auto-common", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
+
+
 
       // We do not bundle Google Login API
       //spec.withModuleLibrary("javax-servlet", "google-login-as", "")
       //spec.withModuleLibrary("jsr305-2.0.1", "google-login-as", "")
       //spec.withModuleLibrary("oauth2", "google-login-as", "")
 
-      spec.withModuleLibrary("flatbuffers-java", "android.sdktools.mlkit-common", "")
-      spec.withModuleLibrary("tensorflow-lite-metadata", "android.sdktools.mlkit-common", "")
-      spec.withModuleLibrary("trace-perfetto-library", "intellij.android.profilersAndroid", "")
 
       // Module is disabled intellij.android.adt.ui.compose since no modules use it
       //spec.withModuleLibrary("compose-desktop-animation", "intellij.android.adt.ui.compose", "")
@@ -627,12 +613,8 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("libapp-processes-proto")
       spec.withProjectLibrary("network_inspector_java_proto")
       //spec.withProjectLibrary("oauth2")
-      spec.withProjectLibrary("perfetto-proto")
       spec.withProjectLibrary("sqlite-inspector-proto")
-      spec.withProjectLibrary("studio-analytics-proto")
       spec.withProjectLibrary("studio-grpc")
-      spec.withProjectLibrary("studio-proto")
-      spec.withProjectLibrary("transport-proto")
       spec.withProjectLibrary("utp-core-proto-jarjar")
       spec.withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
       //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
@@ -645,21 +627,10 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
       //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
       //tools/adt/idea/compose-designer:ui-animation-tooling-internal <= not recognized
-      spec.withModuleLibrary("logcat-proto", "intellij.android.logcat", "")
-      spec.withModuleLibrary("traceprocessor-protos", "intellij.android.profilersAndroid", "")
-      spec.withModuleLibrary("traceprocessor-protos", "intellij.android.profilers", "")
       spec.withModuleLibrary("libstudio.android-test-plugin-result-listener-gradle-proto", "intellij.android.utp", "")
-      spec.withModuleLibrary("deploy_java_proto", "android.sdktools.deployer", "")
-      spec.withModuleLibrary("libjava_sites", "android.sdktools.deployer", "")
-      spec.withModuleLibrary("liblint-checks-proto", "android.sdktools.lint-checks", "")
-      spec.withModuleLibrary("aia-proto", "android.sdktools.sdk-common", "")
       spec.withModuleLibrary("libjava_sites", "intellij.android.debuggers", "")
-      spec.withModuleLibrary("libjava_version", "android.sdktools.deployer", "")
       //tools/vendor/google/game-tools/main:game-tools-protos <= not recognized
-      spec.withModuleLibrary("compilerCommon.antlr_runtime.shaded", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("compilerCommon.antlr.shaded", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("build-analysis-results-proto", "intellij.android.build-attribution", "")
-      spec.withModuleLibrary("libversion", "android.sdktools.common", "")
       // :libs
 
 
