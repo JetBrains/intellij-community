@@ -16,7 +16,9 @@ import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 public class ContainerUtilTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
@@ -241,6 +243,13 @@ public class ContainerUtilTest extends TestCase {
     }
     catch (NoSuchElementException ignore) {
     }
+  }
+
+  public void testLockFreeCOWReplaceAll_Stress() {
+    int N = 500 * ForkJoinPool.getCommonPoolParallelism();
+    List<Integer> list = ContainerUtil.createLockFreeCopyOnWriteList(IntStream.range(0, N).mapToObj(__->0).toList());
+    list.stream().parallel().forEach(__->list.replaceAll(i-> i + 1));
+    assertEquals(N*N, list.stream().mapToInt(i -> i).sum());
   }
 
   public void testLockFreeListStreamMustNotCMEOnParallelModifications() throws Exception {
