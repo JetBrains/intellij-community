@@ -697,7 +697,8 @@ a:com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 - a:charDeleted(C,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 a:com.intellij.codeInsight.editorActions.BackspaceModeOverride
 - <init>():V
-- a:getBackspaceMode(com.intellij.codeInsight.editorActions.SmartBackspaceMode):com.intellij.codeInsight.editorActions.SmartBackspaceMode
+- getBackspaceMode(com.intellij.codeInsight.editorActions.SmartBackspaceMode):com.intellij.codeInsight.editorActions.SmartBackspaceMode
+- getBackspaceMode(com.intellij.psi.PsiFile,com.intellij.codeInsight.editorActions.SmartBackspaceMode):com.intellij.codeInsight.editorActions.SmartBackspaceMode
 a:com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
