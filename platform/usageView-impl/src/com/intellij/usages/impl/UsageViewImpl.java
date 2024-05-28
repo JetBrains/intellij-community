@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -101,7 +100,7 @@ public class UsageViewImpl implements UsageViewEx {
   private UsageGroupingRule[] myGroupingRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
   private final Factory<? extends UsageSearcher> myUsageSearcherFactory;
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   private volatile boolean mySearchInProgress = true;
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
@@ -109,8 +108,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (isDisposed()) {
       return;
     }
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
-    documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", this::updateImmediately);
+    updateImmediately();
   }, 300, this);
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
