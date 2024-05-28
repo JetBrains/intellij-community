@@ -15,8 +15,8 @@ sealed interface GHPRToolWindowTab : ReviewTab {
   }
 
   @ApiStatus.Experimental
-  object NewPullRequest : GHPRToolWindowTab {
+  data object NewPullRequest : GHPRToolWindowTab {
     override val id: @NonNls String = "New Pull Request"
-    override val reuseTabOnRequest: Boolean = false
+    override val reuseTabOnRequest: Boolean = true
   }
 }

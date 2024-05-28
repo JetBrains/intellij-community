@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
@@ -23,7 +22,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
@@ -145,13 +143,12 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
       val interactionState = project.service<GHPRPersistentInteractionState>()
 
-      val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
+      val creationService = GHPRCreationServiceImpl(requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
                       securityService, repoDataService, creationService, detailsService, changesService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
-                      filesManager, interactionState,
-                      GHPRDiffRequestModelImpl())
+                      filesManager, interactionState)
     }
   }
 

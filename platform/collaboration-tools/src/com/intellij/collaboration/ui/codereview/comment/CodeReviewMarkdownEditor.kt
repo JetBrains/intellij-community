@@ -29,7 +29,7 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 
 internal object CodeReviewMarkdownEditor {
-  fun create(project: Project): Editor {
+  fun create(project: Project, inline: Boolean = false, oneLine: Boolean = false): Editor {
     // setup markdown only if plugin is enabled
     val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension("md").takeIf { it != FileTypes.UNKNOWN } ?: FileTypes.PLAIN_TEXT
     val psiFile = PsiFileFactory.getInstance(project)
@@ -50,6 +50,7 @@ internal object CodeReviewMarkdownEditor {
       putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
       colorsScheme.lineSpacing = 1f
       isEmbeddedIntoDialogWrapper = true
+      isOneLineMode = oneLine
 
       component.addPropertyChangeListener("font") {
         setEditorFontFromComponent()
@@ -57,7 +58,13 @@ internal object CodeReviewMarkdownEditor {
       setEditorFontFromComponent()
 
       setBorder(null)
-      component.border = EditorFocusBorder()
+      if (!inline) {
+        component.border = EditorFocusBorder()
+      }
+      else {
+        setVerticalScrollbarVisible(true)
+      }
+      contentComponent.setFocusCycleRoot(false)
       component.isOpaque = false
 
       val fieldBackground = JBColor.lazy {

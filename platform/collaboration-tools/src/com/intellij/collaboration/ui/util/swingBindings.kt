@@ -23,6 +23,7 @@ import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.*
@@ -219,10 +220,16 @@ fun Action.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
 }
 
 fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) {
+  bindTextIn(cs, textFlow) {
+    textFlow.value = it
+  }
+}
+
+fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter: (String) -> Unit) {
   cs.launchNow(CoroutineName("Downstream text binding for $this")) {
     val listener = object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        textFlow.value = text
+        setter(text)
       }
     }
     addDocumentListener(listener)

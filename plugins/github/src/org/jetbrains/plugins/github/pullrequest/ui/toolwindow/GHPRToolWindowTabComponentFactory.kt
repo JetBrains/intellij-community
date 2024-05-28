@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.openapi.actionSystem.ActionManager
@@ -15,15 +14,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentHolder
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowTabViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
-import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.BorderLayout
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
@@ -86,14 +83,11 @@ internal class GHPRToolWindowTabComponentFactory(
       }
     }
 
-  override fun createTabComponent(cs: CoroutineScope,
-                                  projectVm: GHPRToolWindowProjectViewModel,
-                                  tabVm: GHPRToolWindowTabViewModel): JComponent {
-    return when (tabVm) {
+  override fun createTabComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel, tabVm: GHPRToolWindowTabViewModel): JComponent =
+    when (tabVm) {
       is GHPRToolWindowTabViewModel.PullRequest -> cs.createPullRequestComponent(tabVm)
-      is GHPRToolWindowTabViewModel.NewPullRequest -> cs.createNewPullRequestComponent(projectVm, tabVm)
+      is GHPRToolWindowTabViewModel.NewPullRequest -> cs.createNewPullRequestComponent(tabVm)
     }
-  }
 
   private fun CoroutineScope.createPullRequestComponent(tabVm: GHPRToolWindowTabViewModel.PullRequest): JComponent =
     GHPRViewComponentFactory(ActionManager.getInstance(), project, tabVm.infoVm).create(this).also { comp ->
@@ -105,13 +99,8 @@ internal class GHPRToolWindowTabComponentFactory(
       }
     }
 
-  private fun CoroutineScope.createNewPullRequestComponent(projectVm: GHPRToolWindowProjectViewModel,
-                                                           tabVm: GHPRToolWindowTabViewModel.NewPullRequest): JComponent {
-    val repositoriesManager = project.service<GHHostedRepositoriesManager>()
-    val settings = GithubPullRequestsProjectUISettings.getInstance(project)
-    return GHPRCreateComponentHolder(this, ActionManager.getInstance(), project, settings, repositoriesManager, projectVm.dataContext,
-                                     projectVm,
-                                     nestedDisposable()).component.also { comp ->
+  private fun CoroutineScope.createNewPullRequestComponent(tabVm: GHPRToolWindowTabViewModel.NewPullRequest): JComponent =
+    GHPRCreateComponentFactory.createIn(this, tabVm.createVm).also { comp ->
       launchNow {
         tabVm.focusRequests.collect {
           yield()
@@ -119,5 +108,4 @@ internal class GHPRToolWindowTabComponentFactory(
         }
       }
     }
-  }
 }

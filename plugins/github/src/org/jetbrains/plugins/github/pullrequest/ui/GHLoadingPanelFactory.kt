@@ -23,6 +23,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.properties.Delegates
 
+@Deprecated("Deprecated with migration to coroutines and view models")
 class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
                                @Nls(capitalization = Nls.Capitalization.Sentence) private val notLoadingText: String? = null,
                                @Nls(capitalization = Nls.Capitalization.Sentence) private val errorPrefix: String =

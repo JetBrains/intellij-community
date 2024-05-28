@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.CompletableFuture
 
+@Deprecated("Deprecated with migration to coroutines and view models")
 class GHIOExecutorLoadingModel<T>(parentDisposable: Disposable)
   : GHSimpleLoadingModel<T>(), Disposable {
 

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.awaitCompleted
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.platform.util.coroutines.childScope
@@ -74,7 +73,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
-  override fun loadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async { loadIssuesAssignees() }
 
   private val labelsRequest: MutableStateFlow<Deferred<List<GHLabel>>> by lazy {
     MutableStateFlow(doLoadLabelsAsync())
@@ -88,7 +86,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadLabels(): List<GHLabel> = labelsRequest.awaitCompleted()
-  override fun loadLabelsAsync(): Deferred<List<GHLabel>> = cs.async { loadLabels() }
 
   private val teamsRequest: MutableStateFlow<Deferred<List<GHTeam>>> by lazy {
     MutableStateFlow(doLoadTeamsAsync())
@@ -121,8 +118,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer> = potentialReviewersRequest.awaitCompleted()
-  override fun loadPotentialReviewersAsync(): Deferred<List<GHPullRequestRequestedReviewer>> =
-    cs.async { loadPotentialReviewers() }
 
   override fun resetData() {
     collaboratorsRequest.restart(doLoadCollaboratorsAsync())
