@@ -240,6 +240,13 @@
       "fontSizeOffset.compact": -1
     },
 
+    "DisclosureButton": {
+      "defaultBackground": "#FFFFFF12",
+      "hoverOverlay": "#FFFFFF0D",
+      "pressedOverlay": "#FFFFFF1A",
+      "successBackground": "#375239"
+    },
+
     "Editor": {
       "background": "#282828",
       "foreground": "#A0A0A0",

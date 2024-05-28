@@ -281,6 +281,13 @@
 
     "DefaultTabs.hoverBackground": "Gray12",
 
+    "DisclosureButton": {
+      "defaultBackground": "#0000000D",
+      "hoverOverlay": "#0000000D",
+      "pressedOverlay": "#00000017",
+      "successBackground": "Green9"
+    },
+
     "EditorTabs": {
       "underlineArc": 4,
       "underlineHeight": 4,
