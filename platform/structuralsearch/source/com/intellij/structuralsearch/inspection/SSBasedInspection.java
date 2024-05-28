@@ -50,9 +50,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -397,6 +395,13 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       }
     }
     return result;
+  }
+
+  @ApiStatus.Internal @TestOnly
+  public void compileAllConfigurations(@NotNull Project project) {
+    for (Configuration configuration : myConfigurations) {
+      buildCompiledConfiguration(configuration, project);
+    }
   }
 
   private static Matcher buildCompiledConfiguration(@NotNull Configuration configuration, @NotNull Project project) {
