@@ -29,6 +29,8 @@ internal class ShellJsonBasedOptionSpec(
   // the icon of option will be specified in the completion logic
   override val icon: Icon? = null
 
+  override val prefixReplacementIndex: Int = 0
+
   override val isRequired: Boolean
     get() = data.isRequired
 

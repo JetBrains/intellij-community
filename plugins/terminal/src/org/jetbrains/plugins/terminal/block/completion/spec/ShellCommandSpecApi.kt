@@ -38,6 +38,7 @@ fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit = {})
  * Allows specifying the order of the items in the completion popup.
  * The greater the number, the closer the item will be to the first place.
  * @param icon used to provide custom icon instead of autodetected from [type]
+ * @param prefixReplacementIndex see [ShellCompletionSuggestion.prefixReplacementIndex].
  */
 @ApiStatus.Experimental
 fun ShellCompletionSuggestion(
@@ -48,6 +49,7 @@ fun ShellCompletionSuggestion(
   insertValue: String? = null,
   priority: Int = 50,
   icon: Icon? = null,
+  prefixReplacementIndex: Int = 0,
 ): ShellCompletionSuggestion {
-  return ShellCompletionSuggestionImpl(name, type, displayName, description, insertValue, priority, icon)
+  return ShellCompletionSuggestionImpl(name, type, displayName, description, insertValue, priority, icon, prefixReplacementIndex)
 }

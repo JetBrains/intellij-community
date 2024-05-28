@@ -32,6 +32,8 @@ internal class ShellCommandSpecImpl(
   // the icon of command will be specified in the completion logic
   override val icon: Icon? = null
 
+  override val prefixReplacementIndex: Int = 0
+
   init {
     if (priority !in 0..100) {
       error("Priority must be between 0 and 100")

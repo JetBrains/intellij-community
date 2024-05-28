@@ -30,6 +30,8 @@ internal class ShellJsonBasedCommandSpec(
   // the icon of command will be specified in the completion logic
   override val icon: Icon? = null
 
+  override val prefixReplacementIndex: Int = 0
+
   override val requiresSubcommand: Boolean
     get() = data.requiresSubcommand
 

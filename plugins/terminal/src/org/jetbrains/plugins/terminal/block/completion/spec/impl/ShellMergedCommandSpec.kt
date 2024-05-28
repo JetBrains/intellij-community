@@ -35,6 +35,8 @@ internal class ShellMergedCommandSpec(
   override val icon: Icon?
     get() = overridingSpecs.firstNotNullOfOrNull { it.icon }
 
+  override val prefixReplacementIndex: Int = 0
+
   override val requiresSubcommand: Boolean
     get() = overridingSpecs.any { it.requiresSubcommand }
 
