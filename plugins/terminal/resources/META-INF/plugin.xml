@@ -152,6 +152,7 @@
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
+    <action id="Terminal.SwitchPromptStyle" class="org.jetbrains.plugins.terminal.exp.prompt.TerminalSwitchPromptStyleAction"/>
 
     <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.CopyBlock"/>
@@ -164,6 +165,7 @@
       <reference ref="EditorCut"/>
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.SwitchPromptStyle"/>
     </group>
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
