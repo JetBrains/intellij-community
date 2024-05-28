@@ -172,7 +172,9 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
         configurationsByFile[virtualFile]
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? =
-        configurationsByFile[file.virtualFile]
+        configurationsByFile[file.alwaysVirtualFile]
+
+    private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
 
     companion object {
         fun getInstance(project: Project): K2ScriptDependenciesProvider =
