@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -21,14 +21,25 @@ import java.util.concurrent.ExecutorService;
 /**
  * {@link FileSystemProvider} facade that silently ignores posix file attributes, so that {@link MultiRoutingFileSystem} can advertise
  * blanket posix support, even when the local file system does not offer it and would otherwise throw exceptions.
+ *
  * @see sun.nio.fs.WindowsSecurityDescriptor#fromAttribute
  * @see java.nio.file.TempFileHelper#create
  * @see java.nio.file.TempFileHelper#isPosix
  * @see MultiRoutingFileSystem#supportedFileAttributeViews
  */
-class CorePosixFilteringFileSystemProvider extends DelegatingFileSystemProvider<CorePosixFilteringFileSystemProvider, CorePosixFilteringFileSystem> {
+class CorePosixFilteringFileSystemProvider
+  extends DelegatingFileSystemProvider<CorePosixFilteringFileSystemProvider, CorePosixFilteringFileSystem>
+  implements RoutingAwareFileSystemProvider {
+
   private final FileSystemProvider myFileSystemProvider;
+
   CorePosixFilteringFileSystemProvider(FileSystemProvider provider) { myFileSystemProvider = provider; }
+
+  @Override
+  public boolean canHandleRouting() {
+    return myFileSystemProvider instanceof RoutingAwareFileSystemProvider &&
+           ((RoutingAwareFileSystemProvider)myFileSystemProvider).canHandleRouting();
+  }
 
   private static FileAttribute<?>[] filterAttrs(FileAttribute<?>... attrs) {
     return Arrays.stream(attrs).filter(attr -> !attr.name().startsWith("posix:")).toArray(FileAttribute<?>[]::new);
