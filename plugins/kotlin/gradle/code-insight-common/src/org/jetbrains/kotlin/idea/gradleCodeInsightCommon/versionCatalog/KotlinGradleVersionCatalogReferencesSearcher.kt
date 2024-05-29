@@ -21,6 +21,7 @@ import org.toml.lang.psi.TomlKeyValue
 class KotlinGradleVersionCatalogReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
     override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
+        if (isTomlPluginDisabled()) return
         val element = queryParameters.elementToSearch
         if (element !is TomlKeySegment) return
         val (tomlKeyValue, name) = runReadAction {

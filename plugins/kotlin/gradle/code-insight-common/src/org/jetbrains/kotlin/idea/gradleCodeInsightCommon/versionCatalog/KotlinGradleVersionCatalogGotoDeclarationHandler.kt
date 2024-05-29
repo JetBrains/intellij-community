@@ -25,6 +25,7 @@ import org.jetbrains.uast.tryResolve
 class KotlinGradleVersionCatalogGotoDeclarationHandler : GotoDeclarationHandler {
 
     override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
+        if (isTomlPluginDisabled()) return null
         if (sourceElement !is LeafPsiElement) return null
         if (!Registry.`is`(CommonGradleProjectResolverExtension.GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
             return null
