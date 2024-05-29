@@ -110,10 +110,22 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/anonymousObjectChanged/");
         }
 
+        // TODO: Unmute to reproduce KT-28233 (1/2)
+        //@TestMetadata("changeTypealiasTypeWithHierarhy")
+        //public void testChangeTypealiasTypeWithHierarhy() throws Exception {
+        //    runTest("pureKotlin/changeTypealiasTypeWithHierarhy/");
+        //}
+
         @TestMetadata("changeTypeImplicitlyWithCircularDependency")
         public void testChangeTypeImplicitlyWithCircularDependency() throws Exception {
             runTest("pureKotlin/changeTypeImplicitlyWithCircularDependency/");
         }
+
+        // TODO: Unmute to reproduce KT-28233 (2/2)
+        //@TestMetadata("changeTypeWithHierarhyDependency")
+        //public void testChangeTypeWithHierarhyDependency() throws Exception {
+        //    //runTest("pureKotlin/changeTypeWithHierarhyDependency/");
+        //}
 
         @TestMetadata("changeWithRemovingUsage")
         public void testChangeWithRemovingUsage() throws Exception {
