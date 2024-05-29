@@ -15,7 +15,6 @@ import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.Ext
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.Set;
 import java.util.function.BiPredicate;
 
 import static com.intellij.platform.util.io.storages.durablemap.DurableMapFactory.MAP_FILE_SUFFIX;
@@ -237,9 +235,6 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
-    //Keys listed via .forEach() are non-unique -- having 2 entries (key, value1), (key, value2) same key be listed twice.
-    Set<K> alreadyProcessed = CollectionFactory.createSmallMemoryFootprintSet();
-    //MAYBE RC: Having alreadyProcessed set is expensive for large maps?
     return keyHashToIdMap.forEach((keyHash, recordId) -> {
       K key = readKey(convertStoredIdToLogId(recordId));
       if (key == null) {
@@ -247,10 +242,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
           "(keyHash: " + keyHash + ", recordId: " + recordId + "): key can't be null, removed records must NOT be in keyHashToIdMap"
         );
       }
-      if (alreadyProcessed.add(key)) {
-        return processor.process(key);
-      }
-      return true;
+      return processor.process(key);
     });
   }
 

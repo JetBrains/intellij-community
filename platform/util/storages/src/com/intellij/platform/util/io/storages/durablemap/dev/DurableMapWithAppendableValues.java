@@ -14,7 +14,6 @@ import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.util.io.Unmappable;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -172,17 +171,10 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
-    Set<K> alreadyProcessed = CollectionFactory.createSmallMemoryFootprintSet();
-    //Keys listed via .forEach() are non-unique -- having 2 entries (key, value1), (key, value2) same key be listed twice.
-    //MAYBE RC: Having alreadyProcessed set is expensive for large maps, better have .forEachKey() method
-    //          in DurableIntToMultiIntMap
     //TODO RC: forEachEntry() reads & deserializes both key and value -- but we don't need values here, only keys are needed.
     //         Specialize method so it reads only keys?
     return forEachEntry((key, value) -> {
-      if (alreadyProcessed.add(key)) {
-        return processor.process(key);
-      }
-      return true;
+      return processor.process(key);
     });
   }
 
