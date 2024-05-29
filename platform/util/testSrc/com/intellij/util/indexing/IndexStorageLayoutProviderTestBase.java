@@ -16,6 +16,7 @@ import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import it.unimi.dsi.fastutil.bytes.K;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -438,9 +440,14 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
   }
 
+
   public static class MocksBuildingBlocks {
     private MocksBuildingBlocks() {
       throw new AssertionError("Not for instantiation, just a namespace");
+    }
+
+    public interface KeysGenerator {
+      @NotNull IntStream keys(int seed);
     }
 
     /** Copied from IdIndex, simplified for testing */
@@ -516,7 +523,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
 
     /** Generates input data with >=1 key per file */
-    public static class ManyKeysPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
+    public static class ManyEntriesPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
       public static final int DEFAULT_MAX_FILE_ID = 2_000_000;
       public static final int DEFAULT_KEYS_PER_FILE = 512;
       public static final int DEFAULT_MIN_FILE_ID = PersistentFSRecordsStorage.MIN_VALID_ID;
@@ -525,6 +532,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       private final int maxFileId;
 
       private final int maxKeysPerFile;
+      private final KeysGenerator keyGenerator;
 
       /**
        * If null, {@link ThreadLocalRandom} is used (default option).
@@ -533,25 +541,27 @@ public abstract class IndexStorageLayoutProviderTestBase {
        */
       private final @Nullable Random rnd;
 
-      public ManyKeysPerFileInputGenerator() {
-        this(null, DEFAULT_MIN_FILE_ID, DEFAULT_MAX_FILE_ID, DEFAULT_KEYS_PER_FILE);
+      public ManyEntriesPerFileInputGenerator() {
+        this(DEFAULT_MIN_FILE_ID, DEFAULT_MAX_FILE_ID, DEFAULT_KEYS_PER_FILE);
       }
 
-      public ManyKeysPerFileInputGenerator(int minFileId,
-                                           int maxFileId,
-                                           int maxKeysPerFile) {
-        this(null, minFileId, maxFileId, maxKeysPerFile);
+      public ManyEntriesPerFileInputGenerator(int minFileId,
+                                              int maxFileId,
+                                              int maxKeysPerFile) {
+        this(null, minFileId, maxFileId, maxKeysPerFile, new RealisticKeysGenerator());
       }
 
 
-      public ManyKeysPerFileInputGenerator(@Nullable Random rnd,
-                                           int minFileId,
-                                           int maxFileId,
-                                           int maxKeysPerFile) {
+      public ManyEntriesPerFileInputGenerator(@Nullable Random rnd,
+                                              int minFileId,
+                                              int maxFileId,
+                                              int maxKeysPerFile,
+                                              @NotNull KeysGenerator keysGenerator) {
         this.rnd = rnd;
         this.minFileId = minFileId;
         this.maxFileId = maxFileId;
         this.maxKeysPerFile = maxKeysPerFile;
+        keyGenerator = keysGenerator;
       }
 
       @Override
@@ -574,48 +584,15 @@ public abstract class IndexStorageLayoutProviderTestBase {
         int inputId = (int)(substrate >> 32);
         int keysCount = (int)(substrate & 0xFFFF);
         Map<Integer, Integer> keyValues = new Int2IntOpenHashMap();
-        KeyGenerator keyGenerator = new KeyGenerator(inputId);
-        for (int i = 0; i < keysCount; i++) {
-          Integer key = keyGenerator.nextKey();
-          keyValues.put(key, key);
-        }
+        keyGenerator.keys(/*seed: */ inputId)
+          .limit(keysCount)
+          .forEach(key -> keyValues.put(key, key));
         return new Input<>(inputId, keyValues);
-      }
-
-
-      private static final class KeyGenerator {
-        private final Random rnd = new Random();
-
-        private KeyGenerator(int seed) { this.rnd.setSeed(seed); }
-
-        Integer nextKey() {
-          int random = rnd.nextInt(0, Integer.MAX_VALUE);
-
-          //Goal is to generate keys with some similarity to real-life keys distribution, to test-cover apt branches in code.
-          //    Real-life keys distribution for many indexes are heavy-tailed, i.e. there are rare keys, and there are very
-          //    frequent keys, with very long inputIds associated with them.
-          //    Ideally, we should sample from something like Zipf-distribution, which seems to be a good candidate, but
-          //    for now I decided to use simplest piecewise approximation:
-          //  0.1%: random keys from [0..9]            => ~1000s  inputIds per key
-          //  0.9%: random keys from [10..999]         => ~100s   inputIds per key
-          //   99%: random keys from [100..1_000_100]  => ~1      inputIds per key
-          //MAYBE implement Zipf-like keys distribution?
-
-          if (random % 1000 == 999) {
-            return (random % 10);
-          }
-          else if (random % 100 == 99) {
-            return (random % 990) + 10;
-          }
-          else {
-            return (random % 1_000_000) + 100;
-          }
-        }
       }
 
       @Override
       public String toString() {
-        return "ManyKeysPerFileInputGenerator[" +
+        return "ManyEntriesPerFileInputGenerator[" +
                "inputIds:[" + minFileId + ".." + maxFileId + "], " +
                "maxKeysPerFile=" + maxKeysPerFile + ", " +
                "rnd=" + rnd +
@@ -624,7 +601,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
 
 
-    public static final class SingleEntryIntegerValueIndexExtension extends SingleEntryFileBasedIndexExtension<Integer> {
+    public static class SingleEntryIntegerValueIndexExtension extends SingleEntryFileBasedIndexExtension<Integer> {
       private static final ID<Integer, Integer> INDEX_ID = ID.create("SingleEntryIntegerValueIndexExtension");
 
       @Override
@@ -664,7 +641,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
 
     /** Generates input data with <=1 key per file */
-    public static class SingleKeyPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
+    public static class SingleEntryPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
       private final int minFileId;
       private final int maxFileId;
 
@@ -676,14 +653,14 @@ public abstract class IndexStorageLayoutProviderTestBase {
       private final @Nullable Random rnd;
       private final int differentValuesToGenerate;
 
-      public SingleKeyPerFileInputGenerator() {
+      public SingleEntryPerFileInputGenerator() {
         this(null, 1, 10_000_000, 1024);
       }
 
-      public SingleKeyPerFileInputGenerator(@Nullable Random rnd,
-                                            int minFileId,
-                                            int maxFileId,
-                                            int differentValuesToGenerate) {
+      public SingleEntryPerFileInputGenerator(@Nullable Random rnd,
+                                              int minFileId,
+                                              int maxFileId,
+                                              int differentValuesToGenerate) {
         this.rnd = rnd;
         this.minFileId = minFileId;
         this.maxFileId = maxFileId;
@@ -721,6 +698,59 @@ public abstract class IndexStorageLayoutProviderTestBase {
                ']';
       }
     }
+
+    /**
+     * Generates keys with some similarity to real-life keys distribution, to test-cover apt branches in code.
+     * Real-life keys distribution for many indexes are heavy-tailed, i.e. there are many rare keys, with only
+     * a few inputIds associated with them, and there are very frequent keys, with very long inputIds associated
+     * with them. Generator tries to emulate this property (not very precisely, though)
+     */
+    public static class RealisticKeysGenerator implements KeysGenerator {
+      @Override
+      public @NotNull IntStream keys(int seed) {
+        Random rnd = new Random(seed);
+        // Ideally, we should sample from something like Zipf-distribution, which seems to be a good approximation
+        // of real-life words/symbols/trigrams distribution, but for now I decided to use simplest piecewise approximation:
+        //MAYBE RC: implement sampling from real Zipf keys distribution?
+
+        return rnd.ints(0, 1000)
+          .map(random -> {
+            if (random < 10) {               //1%,  10 keys,  ~0.1%/key
+              return rnd.nextInt(0, 10);
+            }
+            else if (random < 200) {          //10%, 990 keys, ~0.01%/key
+              return rnd.nextInt(10, 1000);
+            }
+            else {                            //80%, 999_000 keys, ~0.0001%/key
+              return rnd.nextInt(1000, 1_000_000);
+            }
+          })
+          .distinct();
+      }
+    }
+
+    /** Generates keys from U[0..maxKey) -- i.e. all the keys from [0...maxKey) are generated with equal probability */
+    public static class UniformKeysGenerator implements KeysGenerator {
+
+      private final int maxKey;
+
+      public UniformKeysGenerator() {
+        this(Integer.MAX_VALUE);
+      }
+
+      public UniformKeysGenerator(int maxKey) {
+        if (maxKey <= 0) {
+          throw new IllegalArgumentException("maxKey(=" + maxKey + ") must be >0");
+        }
+        this.maxKey = maxKey;
+      }
+
+      @Override
+      public @NotNull IntStream keys(int seed) {
+        Random rnd = new Random(seed);
+        return rnd.ints(0, maxKey).distinct();
+      }
+    }
   }
 
   static final class Setups {
@@ -731,8 +761,8 @@ public abstract class IndexStorageLayoutProviderTestBase {
     /** Provide {@code static Stream<SetupToTest<?, ?>> setupsToTest()} method in a test class, to override and supply own setups */
     private static Stream<SetupToTest<?, ?>> defaultSetupsToTest() {
       return Stream.of(
-        new SetupToTest<>(new ManyKeysIntegerToIntegerIndexExtension(), new ManyKeysPerFileInputGenerator()),
-        new SetupToTest<>(new SingleEntryIntegerValueIndexExtension(), new SingleKeyPerFileInputGenerator())
+        new SetupToTest<>(new ManyKeysIntegerToIntegerIndexExtension(), new ManyEntriesPerFileInputGenerator()),
+        new SetupToTest<>(new SingleEntryIntegerValueIndexExtension(), new SingleEntryPerFileInputGenerator())
       );
     }
 

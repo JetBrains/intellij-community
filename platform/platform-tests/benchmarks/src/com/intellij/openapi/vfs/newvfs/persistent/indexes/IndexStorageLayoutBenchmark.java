@@ -4,14 +4,11 @@ package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator.Input;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyEntriesPerFileInputGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyKeysIntegerToIntegerIndexExtension;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyKeysPerFileInputGenerator;
-import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
@@ -57,7 +54,7 @@ public class IndexStorageLayoutBenchmark {
     //          performance. No-cache numbers is be harder to relate to high-level index subsystem performance, though -- but
     //          we could have both kinds of tests, with and without caching, to see how the caching smoothens the underlying
     //          storage performance.
-    public final InputDataGenerator<Integer, Integer> inputDataGenerator = new ManyKeysPerFileInputGenerator(null, 1, 5_000_000, 1 << 10);
+    public final InputDataGenerator<Integer, Integer> inputDataGenerator = new ManyEntriesPerFileInputGenerator(1, 5_000_000, 1 << 10);
 
     public long[] inputsSubstrate;
 
@@ -144,7 +141,6 @@ public class IndexStorageLayoutBenchmark {
         storageLayout.clearIndexData();
       }
     }
-
   }
 
   @State(Scope.Benchmark)
