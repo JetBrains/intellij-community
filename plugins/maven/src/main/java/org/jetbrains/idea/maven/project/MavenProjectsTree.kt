@@ -45,7 +45,6 @@ import java.util.zip.CRC32
 import kotlin.concurrent.Volatile
 
 class MavenProjectsTree(val project: Project) {
-  private val myStateLock = Any()
   private val myStructureLock = ReentrantReadWriteLock()
   private val myStructureReadLock: Lock = myStructureLock.readLock()
   private val myStructureWriteLock: Lock = myStructureLock.writeLock()
@@ -66,14 +65,14 @@ class MavenProjectsTree(val project: Project) {
   private var myExplicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE
   private val myTemporarilyRemovedExplicitProfiles = MavenExplicitProfiles(HashSet(), HashSet())
 
-  private val myRootProjects: MutableList<MavenProject> = ArrayList()
+  private val myRootProjects: MutableList<MavenProject> = ArrayList() //2
 
   private val myTimestamps: MutableMap<VirtualFile, MavenProjectTimestamp> = HashMap()
   private val myWorkspaceMap = MavenWorkspaceMap()
   private val myMavenIdToProjectMapping: MutableMap<MavenId, MavenProject> = HashMap()
-  private val myVirtualFileToProjectMapping: MutableMap<VirtualFile, MavenProject> = HashMap()
-  private val myAggregatorToModuleMapping: MutableMap<MavenProject, MutableList<MavenProject>> = HashMap()
-  private val myModuleToAggregatorMapping: MutableMap<MavenProject, MavenProject> = HashMap()
+  private val myVirtualFileToProjectMapping: MutableMap<VirtualFile, MavenProject> = HashMap() //2
+  private val myAggregatorToModuleMapping: MutableMap<MavenProject, MutableList<MavenProject>> = HashMap() //2
+  private val myModuleToAggregatorMapping: MutableMap<MavenProject, MavenProject> = HashMap() //2
 
   private val myListeners = DisposableWrapperList<Listener>()
 
@@ -104,17 +103,15 @@ class MavenProjectsTree(val project: Project) {
 
   @Throws(IOException::class)
   fun save(file: Path) {
-    synchronized(myStateLock) {
-      withReadLock {
-        DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
-          out.writeUTF(STORAGE_VERSION)
-          writeCollection(out, myManagedFilesPaths)
-          writeCollection(out, myIgnoredFilesPaths)
-          writeCollection(out, myIgnoredFilesPatterns)
-          writeCollection(out, myExplicitProfiles.enabledProfiles)
-          writeCollection(out, myExplicitProfiles.disabledProfiles)
-          writeProjectsRecursively(out, myRootProjects)
-        }
+    withReadLock {
+      DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
+        out.writeUTF(STORAGE_VERSION)
+        writeCollection(out, myManagedFilesPaths)
+        writeCollection(out, myIgnoredFilesPaths)
+        writeCollection(out, myIgnoredFilesPatterns)
+        writeCollection(out, myExplicitProfiles.enabledProfiles)
+        writeCollection(out, myExplicitProfiles.disabledProfiles)
+        writeProjectsRecursively(out, myRootProjects)
       }
     }
   }
@@ -131,17 +128,15 @@ class MavenProjectsTree(val project: Project) {
   }
 
   val managedFilesPaths: List<String>
-    get() {
-      synchronized(myStateLock) {
-        return ArrayList(myManagedFilesPaths)
-      }
+    get() = withReadLock {
+      ArrayList(myManagedFilesPaths)
     }
 
   fun resetManagedFilesPathsAndProfiles(paths: List<String>, profiles: MavenExplicitProfiles) {
-    synchronized(myStateLock) {
+    withWriteLock {
       myManagedFilesPaths = LinkedHashSet(paths)
+      explicitProfiles = profiles
     }
-    explicitProfiles = profiles
   }
 
   @TestOnly
@@ -150,24 +145,22 @@ class MavenProjectsTree(val project: Project) {
   }
 
   fun addManagedFilesWithProfiles(files: List<VirtualFile?>?, profiles: MavenExplicitProfiles) {
-    var newFiles: MutableList<String>
-    var newProfiles: MavenExplicitProfiles
-    synchronized(myStateLock) {
-      newFiles = ArrayList(myManagedFilesPaths)
+    val (newFiles, newProfiles) = withReadLock {
+      val newFiles = ArrayList(myManagedFilesPaths)
       newFiles.addAll(MavenUtil.collectPaths(files))
 
-      newProfiles = myExplicitProfiles.clone()
+      val newProfiles = myExplicitProfiles.clone()
       newProfiles.enabledProfiles.addAll(profiles.enabledProfiles)
       newProfiles.disabledProfiles.addAll(profiles.disabledProfiles)
+      (newFiles to newProfiles)
     }
 
     resetManagedFilesPathsAndProfiles(newFiles, newProfiles)
   }
 
   fun removeManagedFiles(files: List<VirtualFile>) {
-    synchronized(myStateLock) {
-      myManagedFilesPaths.removeAll(files.map { it.path }.toSet())
-    }
+    val filePaths = files.map { it.path }.toSet()
+    withWriteLock { myManagedFilesPaths.removeAll(filePaths) }
   }
 
   val existingManagedFiles: List<VirtualFile>
@@ -181,10 +174,8 @@ class MavenProjectsTree(val project: Project) {
     }
 
   var ignoredFilesPaths: List<String>
-    get() {
-      synchronized(myStateLock) {
-        return ArrayList(myIgnoredFilesPaths)
-      }
+    get() = withReadLock {
+      ArrayList(myIgnoredFilesPaths)
     }
     set(paths) {
       doChangeIgnoreStatus({ myIgnoredFilesPaths = ArrayList(paths) })
@@ -194,11 +185,11 @@ class MavenProjectsTree(val project: Project) {
     doChangeIgnoreStatus({ myIgnoredFilesPaths.removeAll(paths!!) })
   }
 
-  fun getIgnoredState(project: MavenProject): Boolean {
-    synchronized(myStateLock) {
-      return myIgnoredFilesPaths.contains(project.path)
+  fun getIgnoredState(project: MavenProject): Boolean =
+    withReadLock {
+      myIgnoredFilesPaths.contains(project.path)
     }
-  }
+
 
   fun setIgnoredState(projects: List<MavenProject>, ignored: Boolean) {
     setIgnoredState(projects, ignored, false)
@@ -231,10 +222,8 @@ class MavenProjectsTree(val project: Project) {
   }
 
   var ignoredFilesPatterns: List<String>
-    get() {
-      synchronized(myStateLock) {
-        return ArrayList(myIgnoredFilesPatterns)
-      }
+    get() = withReadLock {
+      ArrayList(myIgnoredFilesPatterns)
     }
     set(patterns) {
       doChangeIgnoreStatus({
@@ -244,13 +233,11 @@ class MavenProjectsTree(val project: Project) {
     }
 
   private fun doChangeIgnoreStatus(runnable: Runnable, fromImport: Boolean = false) {
-    var ignoredBefore: List<MavenProject>
-    var ignoredAfter: List<MavenProject>
-
-    synchronized(myStateLock) {
-      ignoredBefore = ignoredProjects
+    val (ignoredBefore, ignoredAfter) = withWriteLock {
+      val before = ignoredProjects
       runnable.run()
-      ignoredAfter = ignoredProjects
+      val after = ignoredProjects
+      (before to after)
     }
 
     val ignored: MutableList<MavenProject> = ArrayList(ignoredAfter)
@@ -279,38 +266,31 @@ class MavenProjectsTree(val project: Project) {
   }
 
   @ApiStatus.Internal
-  fun isIgnored(projectPath: String): Boolean {
-    synchronized(myStateLock) {
-      return myIgnoredFilesPaths.contains(projectPath) || matchesIgnoredFilesPatterns(projectPath)
-    }
+  fun isIgnored(projectPath: String) = withReadLock {
+    myIgnoredFilesPaths.contains(projectPath) || matchesIgnoredFilesPatterns(projectPath)
   }
 
-  private fun matchesIgnoredFilesPatterns(path: String): Boolean {
-    synchronized(myStateLock) {
-      if (myIgnoredFilesPatternsCache == null) {
-        myIgnoredFilesPatternsCache = Pattern.compile(Strings.translateMasks(myIgnoredFilesPatterns))
-      }
-      return myIgnoredFilesPatternsCache!!.matcher(path).matches()
+  private fun matchesIgnoredFilesPatterns(path: String) = withReadLock {
+    if (myIgnoredFilesPatternsCache == null) {
+      myIgnoredFilesPatternsCache = Pattern.compile(Strings.translateMasks(myIgnoredFilesPatterns))
     }
+    return@withReadLock myIgnoredFilesPatternsCache!!.matcher(path).matches()
   }
+
 
   var explicitProfiles: MavenExplicitProfiles
-    get() {
-      synchronized(myStateLock) {
-        return myExplicitProfiles.clone()
-      }
+    get() = withReadLock {
+      myExplicitProfiles.clone()
     }
     set(explicitProfiles) {
-      synchronized(myStateLock) {
-        myExplicitProfiles = explicitProfiles.clone()
-      }
+      withWriteLock { myExplicitProfiles = explicitProfiles.clone() }
       fireProfilesChanged()
     }
 
   private fun updateExplicitProfiles() {
     val available = availableProfiles
 
-    synchronized(myStateLock) {
+    withWriteLock {
       updateExplicitProfiles(myExplicitProfiles.enabledProfiles, myTemporarilyRemovedExplicitProfiles.enabledProfiles,
                              available)
       updateExplicitProfiles(myExplicitProfiles.disabledProfiles, myTemporarilyRemovedExplicitProfiles.disabledProfiles,
@@ -471,14 +451,13 @@ class MavenProjectsTree(val project: Project) {
     return isManagedFile(moduleFile.path)
   }
 
-  private fun isManagedFile(path: String): Boolean {
-    synchronized(myStateLock) {
-      for (each in myManagedFilesPaths) {
-        if (FileUtil.pathsEqual(each, path)) return true
-      }
-      return false
+  private fun isManagedFile(path: String): Boolean = withReadLock {
+    for (each in myManagedFilesPaths) {
+      if (FileUtil.pathsEqual(each, path)) return@withReadLock true
     }
+    return@withReadLock false
   }
+
 
   fun isPotentialProject(path: String): Boolean {
     if (isManagedFile(path)) return true
@@ -996,10 +975,10 @@ class MavenProjectsTree(val project: Project) {
     }
   }
 
-  private fun withWriteLock(action: () -> Unit) {
+  private fun <T> withWriteLock(action: () -> T): T {
     myStructureWriteLock.lock()
     try {
-      action()
+      return action()
     }
     finally {
       myStructureWriteLock.unlock()
