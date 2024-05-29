@@ -222,7 +222,7 @@ open class EditorsSplitters internal constructor(
     }
 
     removeAll()
-    setCurrentWindowAndComposite(window = null)
+    setCurrentWindow(window = null)
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
   }
@@ -327,7 +327,7 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  internal fun setCurrentWindowAndComposite(window: EditorWindow?) {
+  internal fun setCurrentWindow(window: EditorWindow?) {
     _currentWindowFlow.value = window
   }
 
@@ -605,7 +605,7 @@ open class EditorsSplitters internal constructor(
     val windowsPerFile = findWindows(file)
     if (currentWindow == null) {
       if (!windowsPerFile.isEmpty()) {
-        setCurrentWindow(window = windowsPerFile[0], requestFocus = false)
+        setCurrentWindow(window = windowsPerFile[0])
       }
       else {
         val anyWindow = windows.firstOrNull()
@@ -613,13 +613,13 @@ open class EditorsSplitters internal constructor(
           createCurrentWindow()
         }
         else {
-          setCurrentWindow(window = anyWindow, requestFocus = false)
+          setCurrentWindow(window = anyWindow)
         }
       }
     }
     else if (!windowsPerFile.isEmpty()) {
       if (!windowsPerFile.contains(currentWindow)) {
-        setCurrentWindow(window = windowsPerFile[0], requestFocus = false)
+        setCurrentWindow(window = windowsPerFile[0])
       }
     }
     return currentWindow!!
@@ -641,15 +641,15 @@ open class EditorsSplitters internal constructor(
    */
   internal fun setCurrentWindow(window: EditorWindow?, requestFocus: Boolean) {
     require(window == null || windows.contains(window)) { "$window is not a member of this container" }
-    setCurrentWindowAndComposite(window)
+    setCurrentWindow(window)
     if (window != null && requestFocus) {
-      window.requestFocus(forced = true)
+      window.tabbedPane.requestFocus(forced = true)
     }
   }
 
   internal fun onDisposeComposite(composite: EditorComposite) {
     if (currentCompositeFlow.value == composite) {
-      setCurrentWindowAndComposite(null)
+      setCurrentWindow(null)
     }
   }
 
@@ -723,8 +723,9 @@ open class EditorsSplitters internal constructor(
       }
 
       // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
-      val window = findWindowWith(component) ?: return
-      _currentWindowFlow.value = window
+      findWindowWith(component)?.let {
+        _currentWindowFlow.value = it
+      }
     }
   }
 
@@ -944,8 +945,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val virtualFileManager = VirtualFileManager.getInstance()
-    var focusedFile: VirtualFile? = null
-
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     var isLazy = false
 
@@ -956,7 +955,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         try {
           // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
           // This enables painting the first editor as soon as it's ready (IJPL-687).
-          //todo respect isLazy
           openFile(
             file = file,
             fileEntry = fileEntry,
@@ -968,10 +966,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           )
 
           isLazy = isLazyComposite
-
-          if (fileEntry.currentInTab) {
-            focusedFile = file
-          }
         }
         finally {
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
@@ -979,15 +973,14 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       }
     }
 
-    if (focusedFile != null) {
-      val window = windowDeferred.await()
-      splitters.coroutineScope.launch(Dispatchers.EDT) {
-        // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
-        // so these need to be fired even if the composite is already selected
-        window.setSelectedComposite(file = focusedFile!!, focusEditor = requestFocus)
-        window.updateTabsVisibility()
-        window.owner.validate()
-        splitters.setCurrentWindowAndComposite(window = window)
+    val window = windowDeferred.await()
+    splitters.coroutineScope.launch(Dispatchers.EDT) {
+      window.owner.validate()
+      window.updateTabsVisibility()
+      if (requestFocus) {
+        window.currentCompositeFlow.value?.let {
+          (it.preferredFocusedComponent ?: it.component).requestFocusInWindow()
+        }
       }
     }
   }
@@ -1019,7 +1012,7 @@ private suspend fun openFile(
   isLazy: Boolean,
 ) {
   val options = FileEditorOpenOptions(
-    selectAsCurrent = false,
+    selectAsCurrent = fileEntry.currentInTab,
     pin = fileEntry.pinned,
     index = index,
     usePreviewTab = fileEntry.isPreview,

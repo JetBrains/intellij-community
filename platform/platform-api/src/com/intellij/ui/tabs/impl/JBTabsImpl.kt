@@ -260,7 +260,7 @@ open class JBTabsImpl(
   override var dropSide: Int = -1
   protected var showDropLocation: Boolean = true
   private var oldSelection: TabInfo? = null
-  private var mySelectionChangeHandler: JBTabs.SelectionChangeHandler? = null
+  private var selectionChangeHandler: JBTabs.SelectionChangeHandler? = null
   private var deferredFocusRequest: Runnable? = null
   private var firstTabOffset = 0
 
@@ -1291,22 +1291,23 @@ open class JBTabsImpl(
     return doSetSelected(info = info, requestFocus = requestFocus, requestFocusInWindow = false)
   }
 
-  private fun doSetSelected(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
+  private fun  doSetSelected(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
     if (!isEnabled) {
       return ActionCallback.REJECTED
     }
 
     // temporary state to make selection fully visible (scrolled in view)
     isMouseInsideTabsArea = false
-    if (mySelectionChangeHandler != null) {
-      return mySelectionChangeHandler!!.execute(info, requestFocus, object : ActiveRunnable() {
+    val selectionChangeHandler = selectionChangeHandler
+    if (selectionChangeHandler == null) {
+      return executeSelectionChange(info = info, requestFocus = requestFocus, requestFocusInWindow = requestFocusInWindow)
+    }
+    else {
+      return selectionChangeHandler.execute(info, requestFocus, object : ActiveRunnable() {
         override fun run(): ActionCallback {
           return executeSelectionChange(info, requestFocus, requestFocusInWindow)
         }
       })
-    }
-    else {
-      return executeSelectionChange(info, requestFocus, requestFocusInWindow)
     }
   }
 
@@ -1328,9 +1329,11 @@ open class JBTabsImpl(
         return requestFocusLater(requestFocusInWindow)
       }
     }
+
     if (isRequestFocusOnLastFocusedComponent && selectedInfo != null && isMyChildIsFocusedNow) {
       selectedInfo!!.lastFocusOwner = focusOwnerToStore
     }
+
     val oldInfo = selectedInfo
     setSelectedInfo(info)
     val newInfo = selectedInfo
@@ -1414,8 +1417,12 @@ open class JBTabsImpl(
    * Do not pass [getToFocus] inside, use [requestFocusLater], as its value might change.
    */
   private fun requestFocusLaterOn(toFocus: Component?, inWindow: Boolean): ActionCallback {
-    if (toFocus == null) return ActionCallback.DONE
-    if (!isShowing) return ActionCallback.REJECTED
+    if (toFocus == null) {
+      return ActionCallback.DONE
+    }
+    if (!isShowing) {
+      return ActionCallback.REJECTED
+    }
 
     val result = ActionCallback()
     ApplicationManager.getApplication().invokeLater {
@@ -2548,7 +2555,7 @@ open class JBTabsImpl(
   }
 
   override fun setSelectionChangeHandler(handler: JBTabs.SelectionChangeHandler): JBTabs {
-    mySelectionChangeHandler = handler
+    selectionChangeHandler = handler
     return this
   }
 

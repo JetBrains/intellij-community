@@ -12,10 +12,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -187,6 +184,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   internal fun files(): Sequence<VirtualFile> = composites().map { it.file }
 
   private val _currentCompositeFlow: MutableStateFlow<EditorComposite?> = MutableStateFlow(null)
+
   @JvmField
   internal val currentCompositeFlow: StateFlow<EditorComposite?> = _currentCompositeFlow.asStateFlow()
 
@@ -200,6 +198,17 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         _currentCompositeFlow.value = newSelection?.composite
       }
     })
+
+    coroutineScope.launch {
+      _currentCompositeFlow.collect { composite ->
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          // select a composite in a tabbed pane and then focus on a composite if needed
+          tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
+            tabbedPane.tabs.select(it, false)
+          }
+        }
+      }
+    }
   }
 
   internal enum class RelativePosition(@JvmField val swingConstant: Int) {
@@ -266,7 +275,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
               ReplaceWith("setSelectedComposite(composite, focusEditor)"),
               level = DeprecationLevel.ERROR)
   fun setSelectedEditor(composite: EditorComposite, focusEditor: Boolean) {
-    setSelectedComposite(file = composite.file, focusEditor = focusEditor)
+    setSelectedComposite(composite = composite, focusEditor = focusEditor)
   }
 
   fun setSelectedComposite(file: VirtualFile, focusEditor: Boolean) {
@@ -279,12 +288,27 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
   }
 
+  fun setSelectedComposite(composite: EditorComposite, focusEditor: Boolean) {
+    // select a composite in a tabbed pane and then focus on a composite if needed
+    for (tab in tabbedPane.tabs.tabs) {
+      if (tab.composite === composite) {
+        tabbedPane.tabs.select(tab, focusEditor)
+        break
+      }
+    }
+    assert(currentCompositeFlow.value === composite)
+  }
+
+  fun setSelectedComposite(composite: EditorComposite) {
+    _currentCompositeFlow.value = composite
+  }
+
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #setComposite(EditorComposite, boolean)}",
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
                           "com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions"))
   fun setEditor(@Suppress("DEPRECATION") editor: EditorWithProviderComposite, focusEditor: Boolean) {
-    addComposite(editor, FileEditorOpenOptions(requestFocus = focusEditor))
+    addComposite(composite = editor, options = FileEditorOpenOptions(requestFocus = focusEditor))
   }
 
   @RequiresEdt
@@ -361,16 +385,17 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       setFilePinned(composite = composite, pinned = true)
     }
 
+    if (options.selectAsCurrent) {
+      _currentCompositeFlow.value = composite
+      owner.setCurrentWindow(window = this)
+      (composite.preferredFocusedComponent ?: composite.component).requestFocusInWindow()
+    }
+
     if (!isOpenedInBulk) {
-      if (options.selectAsCurrent) {
-        setSelectedComposite(file = file, focusEditor = options.requestFocus)
-      }
       updateTabsVisibility()
       owner.validate()
     }
   }
-
-  private fun splitAvailable(): Boolean = tabCount >= 1
 
   @JvmOverloads
   fun split(
@@ -381,7 +406,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     fileIsSecondaryComponent: Boolean = true,
   ): EditorWindow? {
     checkConsistency()
-    if (!splitAvailable()) {
+    if (tabCount < 1) {
       return null
     }
 
@@ -393,7 +418,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
             window = target,
             _file = virtualFile,
             entry = null,
-            options = FileEditorOpenOptions(requestFocus = focusNew)).allEditors,
+            options = FileEditorOpenOptions(requestFocus = focusNew),
+          ).allEditors,
         )
       }
       return target
@@ -444,7 +470,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       }
     }
     if (!focusNew) {
-      result.setSelectedComposite(file = selectedComposite!!.file, focusEditor = true)
+      result.setSelectedComposite(composite = selectedComposite!!, focusEditor = true)
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
         selectedComposite.focusComponent?.let {
           IdeFocusManager.getGlobalInstance().requestFocus(it, true)
@@ -819,7 +845,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     parent.revalidate()
 
     if (compositeToSelect != null) {
-      setSelectedComposite(file = compositeToSelect.file, focusEditor = true)
+      setSelectedComposite(composite = compositeToSelect, focusEditor = true)
     }
     if (setCurrent) {
       owner.setCurrentWindow(window = this, requestFocus = false)
@@ -890,7 +916,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   private fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
     val wasPinned = composite.isPinned
     composite.isPinned = pinned
-    if (composite.isPreview && pinned) {
+    if (pinned && composite.isPreview) {
       composite.isPreview = false
       owner.scheduleUpdateFileColor(composite.file)
     }

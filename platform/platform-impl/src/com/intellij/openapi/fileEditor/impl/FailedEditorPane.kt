@@ -115,7 +115,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
             // move focus to the current window
             window.setAsCurrentWindow(true)
             // select editor
-            window.setSelectedComposite(file = composite.file, focusEditor = true)
+            window.setSelectedComposite(composite = composite, focusEditor = true)
             // open tab
             fileEditorManager.setSelectedEditor(composite.file, editorProviderId)
             return true

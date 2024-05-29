@@ -318,7 +318,7 @@ class EditorTabbedContainer internal constructor(
   val tabs: JBTabs
     get() = editorTabs
 
-  fun requestFocus(forced: Boolean) {
+  internal fun requestFocus(forced: Boolean) {
     IdeFocusManager.getGlobalInstance().requestFocus(editorTabs.component, forced)
   }
 
