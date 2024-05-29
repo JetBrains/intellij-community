@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -32,6 +33,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+
+private val LOG = logger<GHPRReviewInEditorController>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
@@ -69,6 +72,9 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
                 Separator.getInstance()
               )
               val editorMarkupModel = editor.markupModel as? EditorMarkupModel
+              if (editorMarkupModel == null) {
+                LOG.warn("Editor markup model is not available")
+              }
               editorMarkupModel?.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
 
               try {
