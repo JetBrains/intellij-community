@@ -24,10 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
+import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
@@ -757,7 +757,7 @@ public class GitImpl extends GitImplBase {
     GitCommandResult result = Git.getInstance().runCommand(handler);
     String output = result.getOutputAsJoinedString();
     if (result.success()) {
-      if (VcsLogUtil.HASH_REGEX.matcher(output).matches()) {
+      if (GitUtil.isHashString(output, false)) {
         return HashImpl.build(output);
       }
       else {

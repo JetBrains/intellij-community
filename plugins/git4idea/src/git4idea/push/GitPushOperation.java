@@ -48,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.vcs.log.util.VcsLogUtil.HASH_REGEX;
 import static com.intellij.vcs.log.util.VcsLogUtil.HEAD;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
@@ -324,12 +323,12 @@ public class GitPushOperation {
 
   private static boolean isBranch(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return sourceRef.startsWith("refs/heads/") || HASH_REGEX.matcher(sourceRef).matches();
+    return sourceRef.startsWith("refs/heads/") || GitUtil.isHashString(sourceRef, false);
   }
 
   private static boolean isHash(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return HASH_REGEX.matcher(sourceRef).matches();
+    return GitUtil.isHashString(sourceRef, false);
   }
 
   private static boolean isHeadRelativeReference(@NotNull GitPushNativeResult result) {
