@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
@@ -25,6 +26,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitObjectType;
+import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -101,17 +103,30 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  public boolean getBaseVersionContent(FilePath filePath, Processor<? super String> processor, String beforeVersionId) throws VcsException {
+  public boolean getBaseVersionContent(@NotNull FilePath filePath,
+                                       @NotNull Processor<? super @NotNull String> processor,
+                                       @NotNull String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
+    if (!GitUtil.isHashString(beforeVersionId, false)) return false;
+
     // apply if base revision id matches revision
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
     if (repository == null) return false;
 
     GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
-    if (!GitObjectType.COMMIT.equals(objectType)) return false;
-
-    final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
-    return !processor.process(content.getContent());
+    if (GitObjectType.COMMIT.equals(objectType)) {
+      ContentRevision contentRevision = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
+      String content = contentRevision.getContent();
+      return content != null && !processor.process(content);
+    }
+    else if (GitObjectType.BLOB.equals(objectType)) {
+      byte[] bytes = GitIndexUtil.read(repository, beforeVersionId);
+      String content = ContentRevisionCache.getAsString(bytes, filePath, null);
+      return !processor.process(content);
+    }
+    else {
+      return false;
+    }
   }
 
   @Override

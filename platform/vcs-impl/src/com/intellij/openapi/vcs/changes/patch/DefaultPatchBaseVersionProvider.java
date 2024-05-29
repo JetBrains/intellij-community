@@ -54,22 +54,22 @@ public final class DefaultPatchBaseVersionProvider {
 
       String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
       Date versionDate = parseVersionAsDate(versionId);
-      if (vcsRevisionString == null && versionDate == null) return;
+
+      if (historyProvider instanceof VcsBaseRevisionAdviser revisionAdviser) {
+        boolean success = revisionAdviser.getBaseVersionContent(pathBeforeRename, processor,
+                                                                vcsRevisionString != null ? vcsRevisionString : versionId);
+        if (success) return;
+      }
 
       VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
       if (revision == null && versionDate == null) return;
 
-      if (revision != null) {
+      if (revision != null && !(historyProvider instanceof VcsBaseRevisionAdviser)) {
         boolean loadedExactRevision = false;
-        if (historyProvider instanceof VcsBaseRevisionAdviser revisionAdviser) {
-          loadedExactRevision = revisionAdviser.getBaseVersionContent(pathBeforeRename, processor, revision.asString());
-        }
-        else {
-          DiffProvider diffProvider = vcs.getDiffProvider();
-          if (diffProvider != null) {
-            ContentRevision fileContent = diffProvider.createFileContent(revision, file);
-            loadedExactRevision = fileContent != null && !processor.process(fileContent.getContent());
-          }
+        DiffProvider diffProvider = vcs.getDiffProvider();
+        if (diffProvider != null) {
+          ContentRevision fileContent = diffProvider.createFileContent(revision, file);
+          loadedExactRevision = fileContent != null && !processor.process(fileContent.getContent());
         }
         if (loadedExactRevision) return;
       }
