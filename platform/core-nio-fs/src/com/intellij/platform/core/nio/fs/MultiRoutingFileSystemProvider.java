@@ -32,8 +32,11 @@ public final class MultiRoutingFileSystemProvider
   /**
    * The fallback provider for requests to roots
    * not registered via {@link #computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)}.
+   * <p>
+   * Used in tests via reflection.
    */
-  final FileSystemProvider myLocalProvider;
+  @VisibleForTesting
+  public final FileSystemProvider myLocalProvider;
 
   private final MultiRoutingFileSystem myFileSystem;
 
