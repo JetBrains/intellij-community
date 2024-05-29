@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
@@ -352,9 +353,11 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
     }
   }
 
-  private fun isCaseEnabled(item: ImmediateConfigurable.Case,
-                            parent: TreeNode,
-                            settings: InlayHintsSettings) = item.value && ((parent as CheckedTreeNode).userObject as InlayProviderSettingsModel).isEnabled && settings.hintsEnabledGlobally()
+  private fun isCaseEnabled(item: ImmediateConfigurable.Case, parent: TreeNode, settings: InlayHintsSettings): Boolean {
+    return item.value &&
+           ((parent as CheckedTreeNode).userObject as InlayProviderSettingsModel).isEnabled &&
+           settings.hintsEnabledGlobally()
+  }
 
   private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
     return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language)) && settings.hintsEnabledGlobally()
@@ -374,10 +377,16 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   fun apply() {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
+    DeclarativeInlayHintsPassFactory.resetModificationStamp()
     InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {
+    if (!hintsEnabledGlobally(node, settings)) {
+      // skip settings applying if hints are disabled globally, and there is no enabled checkbox
+      // it is needed to avoid overriding the settings by global inlay toggle
+      return
+    }
     node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
     when (val item = node.userObject) {
       is InlayGroupSettingProvider -> {
@@ -400,6 +409,27 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
       is Language -> {
         enableHintsForLanguage(item, settings, node)
       }
+    }
+  }
+
+  private fun hintsEnabledGlobally(root: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
+    return settings.hintsEnabledGlobally() || isAnyCheckboxEnabled(root)
+  }
+
+  private fun isAnyCheckboxEnabled(node: CheckedTreeNode): Boolean {
+    val children = node.children().toList()
+    if (children.isEmpty()) {
+      return when (node.userObject) {
+        is InlayGroupSettingProvider,
+        is InlayProviderSettingsModel,
+        is ImmediateConfigurable.Case -> {
+          node.isChecked
+        } else -> {
+          false
+        }
+      }
+    } else {
+      return children.any { isAnyCheckboxEnabled(it as CheckedTreeNode) }
     }
   }
 

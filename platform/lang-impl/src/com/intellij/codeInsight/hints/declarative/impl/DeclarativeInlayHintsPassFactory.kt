@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarI
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -47,6 +48,12 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
 
     internal fun updateModificationStamp(editor: Editor, project: Project) {
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(project))
+    }
+
+    internal fun resetModificationStamp() {
+      for (editor in EditorFactory.getInstance().allEditors) {
+        resetModificationStamp(editor)
+      }
     }
 
     internal fun resetModificationStamp(editor: Editor) {
