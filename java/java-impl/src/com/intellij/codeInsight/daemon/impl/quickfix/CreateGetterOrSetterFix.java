@@ -19,24 +19,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CreateGetterOrSetterFix extends PsiUpdateModCommandAction<PsiField> {
+public sealed class CreateGetterOrSetterFix extends PsiUpdateModCommandAction<PsiField> {
   private final boolean myCreateGetter;
   private final boolean myCreateSetter;
   private final String myPropertyName;
   
-  public static class CreateGetterFix extends CreateGetterOrSetterFix {
+  public static final class CreateGetterFix extends CreateGetterOrSetterFix {
     public CreateGetterFix(@NotNull PsiField field) {
       super(true, false, field);
     }
   }
 
-  public static class CreateSetterFix extends CreateGetterOrSetterFix {
+  public static final class CreateSetterFix extends CreateGetterOrSetterFix {
     public CreateSetterFix(@NotNull PsiField field) {
       super(false, true, field);
     }
   }
 
-  public static class CreateGetterAndSetterFix extends CreateGetterOrSetterFix {
+  public static final class CreateGetterAndSetterFix extends CreateGetterOrSetterFix {
     public CreateGetterAndSetterFix(@NotNull PsiField field) {
       super(true, true, field);
     }

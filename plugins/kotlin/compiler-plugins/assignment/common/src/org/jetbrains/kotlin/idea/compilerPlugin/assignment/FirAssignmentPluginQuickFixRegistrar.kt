@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.assignment
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider.CompilerPluginType
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
@@ -25,7 +25,7 @@ internal class FirAssignmentPluginQuickFixRegistrar : KotlinQuickFixRegistrar() 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(fixes)
 }
 
-private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnresolvedReference ->
+private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
     val element = diagnostic.psi
     val project = element.project
 

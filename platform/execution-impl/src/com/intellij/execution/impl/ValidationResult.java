@@ -9,11 +9,13 @@ public final class ValidationResult {
   private final @Nls String myMessage;
   private final @NlsContexts.DialogTitle String myTitle;
   private final @Nullable Runnable myQuickFix;
+  private final boolean myIsWarning;
 
-  public ValidationResult(@Nls String message, @NlsContexts.DialogTitle String title, @Nullable Runnable quickFix) {
+  public ValidationResult(@Nls String message, @NlsContexts.DialogTitle String title, @Nullable Runnable quickFix, boolean isWarning) {
     myMessage = message;
     myTitle = title;
     myQuickFix = quickFix;
+    myIsWarning = isWarning;
   }
 
   public @Nls String getMessage() {
@@ -26,5 +28,9 @@ public final class ValidationResult {
 
   public @Nullable Runnable getQuickFix() {
     return myQuickFix;
+  }
+
+  public boolean isWarning() {
+    return myIsWarning;
   }
 }

@@ -162,7 +162,9 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     newThreadPostUrl: String,
     callback: (SubmittedReportInfo) -> Unit
   ) {
-    Logger.getInstance(ITNReporter::class.java).info("reporting failed: ${e}")
+    val logger = Logger.getInstance(ITNReporter::class.java)
+    logger.info("reporting failed: ${e}")
+    logger.debug(e)
     withContext(Dispatchers.EDT) {
       if (e is UpdateAvailableException) {
         val message = DiagnosticBundle.message("error.report.new.build.message", e.message)

@@ -123,12 +123,16 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       creationOptions = creationOptions.setHasNoChunks();
     }
     return creationOptions.with(() -> {
-      return new PersistentMapImpl<>(PersistentMapBuilder
-                                       .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
-                                       .withWal(myEnableWal && ENABLE_WAL && !isReadOnly)
-                                       .withWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
-                                       .withReadonly(isReadOnly)
-                                       .withCompactOnClose(compactOnClose));
+      PersistentMapBuilder<Key, UpdatableValueContainer<Value>> builder = PersistentMapBuilder
+        .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
+        .withReadonly(isReadOnly)
+        .withCompactOnClose(compactOnClose);
+      if (myEnableWal && ENABLE_WAL && !isReadOnly) {
+        builder
+          .withWal(true)
+          .withWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"));
+      }
+      return new PersistentMapImpl<>(builder);
     });
   }
 
@@ -319,7 +323,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
 
     // do not pollute the cache with keys unique to indexed file
-    UpdatableValueContainer<Value> valueContainer = new ValueContainerImpl<>();
+    UpdatableValueContainer<Value> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.addValue(inputId, newValue);
     myMap.put(key, valueContainer);
   }
@@ -335,7 +339,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
 
     // do not pollute the cache with keys unique to indexed file
-    UpdatableValueContainer<Value> valueContainer = new ValueContainerImpl<>();
+    UpdatableValueContainer<Value> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.addValue(inputId, value);
     myMap.put(key, valueContainer);
   }

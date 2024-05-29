@@ -26,7 +26,6 @@ f:com.intellij.collaboration.api.data.GraphQLRequestPagination
 - f:getAfterCursor():java.lang.String
 - f:getPageSize():I
 - f:getSince():java.util.Date
-- toString():java.lang.String
 f:com.intellij.collaboration.api.data.GraphQLRequestPagination$Companion
 - f:getDEFAULT():com.intellij.collaboration.api.data.GraphQLRequestPagination
 f:com.intellij.collaboration.api.data.GraphQLRequestPaginationKt
@@ -46,7 +45,6 @@ f:com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 c:com.intellij.collaboration.api.dto.GraphQLErrorDTO
 - <init>(java.lang.String):V
 - f:getMessage():java.lang.String
-- toString():java.lang.String
 @:com.intellij.collaboration.api.dto.GraphQLFragment
 - java.lang.annotation.Annotation
 - a:filePath():java.lang.String
@@ -71,7 +69,6 @@ f:com.intellij.collaboration.api.dto.GraphQLRequestDTO
 - f:getQuery():java.lang.String
 - f:getVariables():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.collaboration.api.dto.GraphQLResponseDTO
 - <init>(java.lang.Object,java.util.List):V
 - f:getData():java.lang.Object
@@ -184,7 +181,6 @@ f:com.intellij.collaboration.api.page.SequentialListLoader$ListBatch
 - f:getData():java.util.List
 - f:getHasMore():Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:Companion:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - sf:HEADER_NAME:java.lang.String
@@ -207,7 +203,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - equals(java.lang.Object):Z
 - f:getValues():java.util.List
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.async.AddedFirst
 - com.intellij.collaboration.async.Change
 - <init>(java.lang.Object):V
@@ -217,7 +212,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - equals(java.lang.Object):Z
 - f:getValue():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.async.AddedLast
 - com.intellij.collaboration.async.Change
 - <init>(java.lang.Object):V
@@ -227,7 +221,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - equals(java.lang.Object):Z
 - f:getValue():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.async.AllDeleted
 - com.intellij.collaboration.async.Deleted
 - <init>():V
@@ -325,7 +318,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:getError():java.lang.Throwable
 - f:getList():java.util.List
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.async.ListLoaderKt
 - sf:getResultOrErrorFlow(com.intellij.collaboration.async.ListLoader):kotlinx.coroutines.flow.Flow
 *f:com.intellij.collaboration.async.MappingScopedItemsContainer
@@ -364,7 +356,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:getInfo():java.lang.Object
 - f:getList():java.util.List
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo
 - a:createNextPageInfo():com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo
 *:com.intellij.collaboration.async.PotentiallyInfiniteListLoader
@@ -386,7 +377,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - equals(java.lang.Object):Z
 - f:getUpdater():kotlin.jvm.functions.Function1
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.collaboration.auth.Account
 - sf:Companion:com.intellij.collaboration.auth.Account$Companion
 - <init>():V
@@ -591,13 +581,11 @@ a:com.intellij.collaboration.auth.ServerAccount
 - sf:INSTANCE:com.intellij.collaboration.auth.ui.login.LoginModel$LoginState$Connecting
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.auth.ui.login.LoginModel$LoginState$Disconnected
 - com.intellij.collaboration.auth.ui.login.LoginModel$LoginState
 - sf:INSTANCE:com.intellij.collaboration.auth.ui.login.LoginModel$LoginState$Disconnected
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.auth.ui.login.LoginModel$LoginState$Failed
 - com.intellij.collaboration.auth.ui.login.LoginModel$LoginState
 - <init>(java.lang.Throwable):V
@@ -759,7 +747,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - equals(java.lang.Object):Z
 - f:getWrappee():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.ComboBoxWithActionsModelKt
 - sf:setItems(com.intellij.ui.MutableCollectionComboBoxModel,java.util.List):V
 *f:com.intellij.collaboration.ui.ComponentListPanelFactory
@@ -820,7 +807,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getName():java.lang.String
 - f:getSecondaryName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.collaboration.ui.SimpleEventListener
 - java.util.EventListener
 - *sf:Companion:com.intellij.collaboration.ui.SimpleEventListener$Companion
@@ -900,7 +886,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getActions():javax.swing.JComponent
 - f:getTitle():javax.swing.JComponent
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.CodeReviewCombinedDiffAdvancedSettingsChangeListener
 - com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 - <init>():V
@@ -1142,7 +1127,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getRequestReviewAction():javax.swing.Action
 - f:getSetMyselfAsReviewerAction():javax.swing.Action
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel):javax.swing.JComponent
@@ -1184,7 +1168,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getDescriptionHtml():java.lang.String
 - f:getTitleHtml():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.details.CommitRenderer
 - javax.swing.ListCellRenderer
 - *sf:Companion:com.intellij.collaboration.ui.codereview.details.CommitRenderer$Companion
@@ -1234,7 +1217,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - hashCode():I
 - f:isSelected():Z
 - f:setSelected(Z):V
-- toString():java.lang.String
 f:com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 - <init>(java.lang.String,com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState,Z,java.lang.String):V
 - f:component1():java.lang.String
@@ -1249,7 +1231,6 @@ f:com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 - f:getStatus():com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 - hashCode():I
 - f:isRequired():Z
-- toString():java.lang.String
 e:com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 - java.lang.Enum
 - sf:FAILED:com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
@@ -1298,7 +1279,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - f:getSource():java.lang.String
 - f:getTarget():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 - a:fetchAndCheckoutRemoteBranch():V
 - fetchAndShowInLog():V
@@ -1317,7 +1297,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - f:getDiscussions():I
 - hashCode():I
 - f:isRead():Z
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 - <init>(java.lang.String,java.util.List):V
 - f:component1():java.lang.String
@@ -1328,7 +1307,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - f:getChanges():java.util.List
 - f:getCommitSha():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$Companion
 - a:getChanges():java.util.List
@@ -1346,7 +1324,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$SelectionRequest$All
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$SelectionRequest$OneChange
 - com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$SelectionRequest
 - <init>(com.intellij.collaboration.util.RefComparisonChange):V
@@ -1356,7 +1333,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - equals(java.lang.Object):Z
 - f:getChange():com.intellij.collaboration.util.RefComparisonChange
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$WithDetails
 - com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 - a:getDetailsByChange():kotlinx.coroutines.flow.StateFlow
@@ -1522,7 +1498,6 @@ a:com.intellij.collaboration.ui.codereview.diff.action.CodeReviewDiscussionsTogg
 - f:getProducers():java.util.List
 - f:getSelectedIdx():I
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - a:sort(java.util.List):java.util.List
 *f:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$Grouping
@@ -1594,7 +1569,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - f:getItems():java.util.List
 - f:getNamePlural():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.NamedCollection$Companion
 - f:create(java.lang.String,java.util.List):com.intellij.collaboration.ui.codereview.list.NamedCollection
 *f:com.intellij.collaboration.ui.codereview.list.ReviewListCellRenderer
@@ -1630,7 +1604,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - f:getCount():I
 - f:getTooltip():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation$Simple
 - com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
 - <init>(java.lang.String,java.lang.String,java.util.Date,com.intellij.collaboration.ui.codereview.list.UserPresentation,com.intellij.collaboration.ui.codereview.list.NamedCollection,com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation$Status,com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation$Status,java.lang.String,com.intellij.collaboration.ui.codereview.list.NamedCollection,com.intellij.collaboration.ui.codereview.list.NamedCollection,com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation$CommentsCounter,java.lang.Boolean):V
@@ -1663,7 +1636,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - getUserGroup1():com.intellij.collaboration.ui.codereview.list.NamedCollection
 - getUserGroup2():com.intellij.collaboration.ui.codereview.list.NamedCollection
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation$Status
 - <init>(javax.swing.Icon,java.lang.String):V
 - f:component1():javax.swing.Icon
@@ -1674,7 +1646,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - f:getIcon():javax.swing.Icon
 - f:getTooltip():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.ReviewListUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.ReviewListUtil
 - f:wrapWithLazyVerticalScroll(kotlinx.coroutines.CoroutineScope,javax.swing.JList,kotlin.jvm.functions.Function0):javax.swing.JScrollPane
@@ -1694,7 +1665,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - getColor():java.awt.Color
 - getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.UnreadDotIcon
 - javax.swing.Icon
 - *sf:Companion:com.intellij.collaboration.ui.codereview.list.UnreadDotIcon$Companion
@@ -1724,7 +1694,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - getFullName():java.lang.String
 - getUsername():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter):javax.swing.JComponent
@@ -1809,7 +1778,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - hashCode():I
 - f:isMovable():Z
 - f:isResizable():Z
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.search.PopupConfig$Companion
 - f:getDEFAULT():com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
@@ -1948,7 +1916,6 @@ f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFact
 - f:getGap():I
 - f:getIcon():javax.swing.Icon
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig$Companion
 - f:of(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,com.intellij.collaboration.ui.icon.IconsProvider,java.lang.Object):com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig
 a:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
@@ -2142,7 +2109,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - f:getSelectedTab():com.intellij.collaboration.ui.toolwindow.ReviewTab
 - f:getTabs():java.util.Map
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsManagerKt
 - *sf:manageReviewToolwindowTabs(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.wm.ToolWindow,com.intellij.collaboration.ui.toolwindow.ReviewToolwindowViewModel,com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory,java.lang.String):V
 *f:com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
@@ -2157,7 +2123,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - hashCode():I
 - s:hashCode-impl(kotlinx.coroutines.flow.MutableStateFlow):I
 - sf:select-impl(kotlinx.coroutines.flow.MutableStateFlow,com.intellij.collaboration.ui.toolwindow.ReviewTab):V
-- toString():java.lang.String
 - s:toString-impl(kotlinx.coroutines.flow.MutableStateFlow):java.lang.String
 - bf:unbox-impl():kotlinx.coroutines.flow.MutableStateFlow
 *:com.intellij.collaboration.ui.toolwindow.ReviewToolwindowViewModel
@@ -2324,7 +2289,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - getShortText():java.lang.String
 - hashCode():I
 - isSelected():Z
-- toString():java.lang.String
 *f:com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 - com.intellij.ui.ColoredListCellRenderer
 - *sf:Companion:com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer$Companion
@@ -2351,7 +2315,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - getChanges():java.util.List
 - getSelectedIdx():I
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.util.ChangesSelection$Precise
 - com.intellij.collaboration.util.ChangesSelection
 - <init>(java.util.List,I,kotlin.Pair):V
@@ -2368,7 +2331,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - f:getLocation():kotlin.Pair
 - getSelectedIdx():I
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.collaboration.util.ChangesSelectionKt
 - *sf:equalChanges(com.intellij.collaboration.util.ChangesSelection,java.lang.Object):Z
 - sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.collaboration.util.RefComparisonChange
@@ -2396,7 +2358,6 @@ f:com.intellij.collaboration.util.ComputedResult
 - s:hashCode-impl(kotlin.Result):I
 - sf:isInProgress-impl(kotlin.Result):Z
 - sf:isSuccess-impl(kotlin.Result):Z
-- toString():java.lang.String
 - s:toString-impl(kotlin.Result):java.lang.String
 - bf:unbox-impl():kotlin.Result
 f:com.intellij.collaboration.util.ComputedResult$Companion
@@ -2432,7 +2393,6 @@ f:com.intellij.collaboration.util.HideableKt
 - f:getKey():com.intellij.openapi.util.Key
 - f:getValue():java.lang.Object
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.collaboration.util.KeyValuePairKt
 - *sf:clearData(com.intellij.openapi.util.UserDataHolder,com.intellij.collaboration.util.KeyValuePair):V
 - *sf:putData(com.intellij.openapi.util.UserDataHolder,com.intellij.collaboration.util.KeyValuePair):V
@@ -2457,7 +2417,6 @@ f:com.intellij.collaboration.util.ProgressIndicatorsProvider
 - f:getRevisionNumberAfter():com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 - f:getRevisionNumberBefore():com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.collaboration.util.RefComparisonChange$Companion
 - f:getKEY():com.intellij.openapi.util.Key
 f:com.intellij.collaboration.util.RefComparisonChangeKt

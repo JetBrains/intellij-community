@@ -14,15 +14,11 @@ internal class IndexingProgressReporter2(private val indicator: ProgressIndicato
   private val totalFiles: AtomicInteger = AtomicInteger(0)
   private var processedFiles: AtomicInteger = AtomicInteger(0)
 
-  fun setLocationBeingIndexed(originProgressName: @NlsContexts.ProgressText String?,
-                              fileProgressName: @NlsContexts.ProgressText String) {
+  fun setLocationBeingIndexed(fileProgressName: @NlsContexts.ProgressText String) {
     if (indicator is SubTaskProgressIndicator) {
-      indicator.setText(fileProgressName)
+      indicator.text = fileProgressName
     }
     else {
-      if (originProgressName != null && originProgressName != indicator.text) {
-        indicator.text = originProgressName
-      }
       indicator.text2 = fileProgressName
     }
   }

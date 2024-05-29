@@ -2,29 +2,29 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.uast.*
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-interface UastApiFixtureTestBase : UastPluginSelection {
+interface UastApiFixtureTestBase {
+
     fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """ 

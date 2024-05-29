@@ -15,7 +15,6 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.convertPathsToSystemIndependent
@@ -63,121 +62,8 @@ val DataNode<out ModuleData>.kotlinGradleProjectDataOrFail: KotlinGradleProjectD
     get() = kotlinGradleProjectDataOrNull
         ?: error("Failed to find KotlinGradleProjectData for $this")
 
-@Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.isResolved: Boolean
-    get() = kotlinGradleProjectDataOrFail.isResolved
-    set(value) {
-        kotlinGradleProjectDataOrFail.isResolved = value
-    }
-
-@Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.hasKotlinPlugin: Boolean
-    get() = kotlinGradleProjectDataOrFail.hasKotlinPlugin
-    set(value) {
-        kotlinGradleProjectDataOrFail.hasKotlinPlugin = value
-    }
-
 var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
         by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
-
-@Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
-    @Suppress("DEPRECATION_ERROR")
-    get() = ExternalSystemApiUtil.findAllRecursively(this, KotlinGradleSourceSetData.KEY)
-        .map { it.data }
-        .filter { it.sourceSetName != null }
-        .associate { it.sourceSetName!! to it.additionalVisibleSourceSets }
-    set(value) {
-        ExternalSystemApiUtil.findAllRecursively(this, KotlinGradleSourceSetData.KEY).filter { it.data.sourceSetName != null }.forEach {
-            if (value.containsKey(it.data.sourceSetName!!))
-                it.data.additionalVisibleSourceSets = value.getValue(it.data.sourceSetName!!)
-        }
-    }
-
-@Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.coroutines: String?
-    get() = kotlinGradleProjectDataOrFail.coroutines
-    set(value) {
-        kotlinGradleProjectDataOrFail.coroutines = value
-    }
-
-@Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
-@set:Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.isHmpp: Boolean
-    get() = kotlinGradleProjectDataOrFail.isHmpp
-    set(value) {
-        kotlinGradleProjectDataOrFail.isHmpp = value
-    }
-
-@Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
-@set:Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.platformPluginId: String?
-    get() = kotlinGradleProjectDataOrFail.platformPluginId
-    set(value) {
-        kotlinGradleProjectDataOrFail.platformPluginId = value
-    }
-
-@Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
-@set:Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.kotlinNativeHome: String
-    get() = kotlinGradleProjectDataOrFail.kotlinNativeHome
-    set(value) {
-        kotlinGradleProjectDataOrFail.kotlinNativeHome = value
-    }
-
-@Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
-@set:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.implementedModuleNames: List<String>
-    @Suppress("DEPRECATION_ERROR")
-    get() = when (data) {
-        is GradleSourceSetData -> ExternalSystemApiUtil.find(this, KotlinGradleSourceSetData.KEY)?.data?.implementedModuleNames
-            ?: error("Failed to find KotlinGradleSourceSetData for $this")
-
-        else -> ExternalSystemApiUtil.find(this@implementedModuleNames, KotlinGradleProjectData.KEY)?.data?.implementedModuleNames
-            ?: error("Failed to find KotlinGradleProjectData for $this")
-    }
-    set(value) = throw UnsupportedOperationException("Changing of implementedModuleNames is available only through KotlinGradleSourceSetData.")
-
-
-@Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
-@get:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
-@set:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
-@get:ApiStatus.ScheduledForRemoval
-@set:ApiStatus.ScheduledForRemoval
-var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
-    get() = kotlinGradleProjectDataOrFail.pureKotlinSourceFolders
-    set(value) = with(kotlinGradleProjectDataOrFail.pureKotlinSourceFolders) {
-        clear()
-        addAll(value)
-    }
 
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {

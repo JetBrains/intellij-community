@@ -136,7 +136,7 @@ fun doPatchPluginXml(
   }
 
   // patch Database plugin for WebStorm, see WEB-48278
-  if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB" && productName == "WebStorm") {
+  if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB") {
     Span.current().addEvent("patch $pluginModuleName for WebStorm")
     val pluginName = rootElement.getChild("name")
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }

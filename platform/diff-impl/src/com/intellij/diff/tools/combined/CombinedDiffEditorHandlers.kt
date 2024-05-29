@@ -7,8 +7,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import org.jetbrains.annotations.ApiStatus
 
-abstract class CombinedDiffBaseEditorForEachCaretHandler(private val original: EditorActionHandler) : EditorActionHandler.ForEachCaret() {
+internal abstract class CombinedDiffBaseEditorForEachCaretHandler(private val original: EditorActionHandler) : EditorActionHandler.ForEachCaret() {
   final override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean =
     original.isEnabled(editor, caret, dataContext)
 
@@ -24,6 +25,7 @@ abstract class CombinedDiffBaseEditorForEachCaretHandler(private val original: E
   abstract fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?)
 }
 
+@ApiStatus.Internal
 abstract class CombinedDiffBaseEditorWithSelectionHandler(private val original: EditorActionHandler) : EditorActionHandler() {
   final override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean =
     original.isEnabled(editor, caret, dataContext)
@@ -41,7 +43,7 @@ abstract class CombinedDiffBaseEditorWithSelectionHandler(private val original: 
 }
 
 
-class CombinedDiffEditorUpHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
+internal class CombinedDiffEditorUpHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
     if (caret.isOnFirstVisibleLine() && combined.canGoPrevBlock()) {
       combined.moveCaretToPrevBlock()
@@ -52,7 +54,7 @@ class CombinedDiffEditorUpHandler(private val original: EditorActionHandler) : C
   }
 }
 
-class CombinedDiffEditorUpWithSelectionHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
+internal class CombinedDiffEditorUpWithSelectionHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret?, dc: DataContext?) {
     val currentCaret = editor.caretModel.currentCaret
     if (currentCaret.isOnFirstVisibleLine() && currentCaret.isOnFirstVisibleColumn() && combined.canGoPrevBlock()) {
@@ -64,7 +66,7 @@ class CombinedDiffEditorUpWithSelectionHandler(private val original: EditorActio
   }
 }
 
-class CombinedDiffEditorDownHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
+internal class CombinedDiffEditorDownHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
     if (caret.isOnLastVisibleLine() && combined.canGoNextBlock()) {
       combined.moveCaretToNextBlock()
@@ -75,7 +77,7 @@ class CombinedDiffEditorDownHandler(private val original: EditorActionHandler) :
   }
 }
 
-class CombinedDiffEditorDownWithSelectionHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
+internal class CombinedDiffEditorDownWithSelectionHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret?, dc: DataContext?) {
     val currentCaret = editor.caretModel.currentCaret
     if (currentCaret.isOnLastVisibleLine() && currentCaret.isOnLastVisibleColumn(editor) && combined.canGoNextBlock()) {
@@ -87,7 +89,7 @@ class CombinedDiffEditorDownWithSelectionHandler(private val original: EditorAct
   }
 }
 
-class CombinedDiffEditorLeftHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
+internal class CombinedDiffEditorLeftHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
     if (caret.isOnFirstVisibleLine() && caret.isOnFirstVisibleColumn() && combined.canGoPrevBlock() ) {
       combined.moveCaretToPrevBlock()
@@ -99,7 +101,7 @@ class CombinedDiffEditorLeftHandler(private val original: EditorActionHandler) :
 
 }
 
-class CombinedDiffEditorRightHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
+internal class CombinedDiffEditorRightHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
     val isOnLastPosition = caret.isOnLastVisibleColumn(editor)
     if (caret.isOnLastVisibleLine() && combined.canGoNextBlock() && isOnLastPosition) {
@@ -126,13 +128,13 @@ private fun Caret.isOnLastVisibleLine(): Boolean {
 private fun Caret.isOnLastVisibleColumn(editor: Editor) =
   EditorUtil.getLastVisualLineColumnNumber(editor, visualPosition.line) == visualPosition.column
 
-class CombinedDiffEditorPageUpHandler(original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
+internal class CombinedDiffEditorPageUpHandler(original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
     combined.moveCaretPageUp()
   }
 }
 
-class CombinedDiffEditorPageDownHandler(original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
+internal class CombinedDiffEditorPageDownHandler(original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
     combined.moveCaretPageDown()
   }

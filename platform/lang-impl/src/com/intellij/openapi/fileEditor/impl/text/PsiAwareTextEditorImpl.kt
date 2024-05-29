@@ -64,11 +64,12 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
   }
 }
 
-internal fun createPsiAwareTextEditorComponent(
+private fun createPsiAwareTextEditorComponent(
   file: VirtualFile,
   editorAndLoader: Pair<EditorImpl, AsyncEditorLoader>,
-): Pair<TextEditorComponent, AsyncEditorLoader> {
-  val editor = editorAndLoader.first
+) = createPsiAwareTextEditorComponent(file = file, editor = editorAndLoader.first) to editorAndLoader.second
+
+internal fun createPsiAwareTextEditorComponent(file: VirtualFile, editor: EditorImpl): TextEditorComponent {
   val component = PsiAwareTextEditorComponent(file = file, editor = editor)
   component.addComponentListener(object : ComponentAdapter() {
     override fun componentShown(e: ComponentEvent?) {
@@ -79,7 +80,7 @@ internal fun createPsiAwareTextEditorComponent(
       editor.component.isVisible = false
     }
   })
-  return component to editorAndLoader.second
+  return component
 }
 
 private class PsiAwareTextEditorComponent(file: VirtualFile, editor: EditorImpl) : TextEditorComponent(file = file, editorImpl = editor) {

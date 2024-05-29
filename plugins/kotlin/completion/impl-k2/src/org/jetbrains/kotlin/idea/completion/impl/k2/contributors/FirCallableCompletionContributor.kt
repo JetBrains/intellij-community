@@ -10,10 +10,10 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtCompletionExtensionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -74,10 +74,10 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     protected open fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
-        applicabilityResult: KtExtensionApplicabilityResult?
+        applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy? = when (applicabilityResult) {
-        is KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
-        is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> CallableInsertionStrategy.AsCall
+        is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
+        is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> CallableInsertionStrategy.AsCall
         else -> null
     }
 
@@ -93,10 +93,10 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun getExtensionOptions(
         signature: KtCallableSignature<*>,
-        applicability: KtExtensionApplicabilityResult?
+        applicability: KaExtensionApplicabilityResult?
     ): CallableInsertionOptions? {
         val insertionStrategy = getInsertionStrategyForExtensionFunction(signature, applicability) ?: return null
-        val isFunctionalVariableCall = applicability is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
+        val isFunctionalVariableCall = applicability is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
         val importStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol, isFunctionalVariableCall)
         return CallableInsertionOptions(importStrategy, insertionStrategy)
     }
@@ -281,7 +281,7 @@ internal open class FirCallableCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val packageScope = packageSymbol.getPackageScope()
-        val packageScopeKind = KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+        val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         return packageScope
             .getCallableSymbols(scopeNameFilter)
@@ -404,7 +404,7 @@ internal open class FirCallableCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val staticScope = symbol.staticScope(withCompanionScope)
-        val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+        val staticScopeKind = KaScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         val nonExtensions = collectNonExtensionsFromScope(
             staticScope,
@@ -481,7 +481,7 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: KtCompletionExtensionCandidateChecker?
     ): ApplicableExtension? {
         val (signature, applicabilityResult) = if (extensionChecker != null) {
-            val result = extensionChecker.computeApplicability(callableSymbol) as? KtExtensionApplicabilityResult.Applicable ?: return null
+            val result = extensionChecker.computeApplicability(callableSymbol) as? KaExtensionApplicabilityResult.Applicable ?: return null
             val signature = callableSymbol.substitute(result.substitutor)
 
             signature to result
@@ -500,7 +500,7 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     protected fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
-        scopeKind: KtScopeKind,
+        scopeKind: KaScopeKind,
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
         explicitReceiverTypeHint: KtType? = null,
@@ -643,10 +643,10 @@ internal class FirCallableReferenceCompletionContributor(
     context(KtAnalysisSession)
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
-        applicabilityResult: KtExtensionApplicabilityResult?
+        applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy? = when (applicabilityResult) {
-        is KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> CallableInsertionStrategy.AsIdentifier
-        is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
+        is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> CallableInsertionStrategy.AsIdentifier
+        is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
         else -> null
     }
 
@@ -717,10 +717,10 @@ internal class FirInfixCallableCompletionContributor(
     context(KtAnalysisSession)
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
-        applicabilityResult: KtExtensionApplicabilityResult?
+        applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy? = when (applicabilityResult) {
-        is KtExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
-        is KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
+        is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
+        is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
         else -> null
     }
 
@@ -751,7 +751,7 @@ internal class FirKDocCallableCompletionContributor(
     context(KtAnalysisSession)
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
-        applicabilityResult: KtExtensionApplicabilityResult?
+        applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy = CallableInsertionStrategy.AsIdentifier
 
     context(KtAnalysisSession)
@@ -768,7 +768,7 @@ internal class FirKDocCallableCompletionContributor(
         val scopesWithKinds = resolvedSymbols.flatMap { parentSymbol ->
             when (parentSymbol) {
                 is KtPackageSymbol -> {
-                    val packageScopeKind = KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                    val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                     listOf(KtScopeWithKind(parentSymbol.getPackageScope(), packageScopeKind, token))
                 }
 
@@ -776,11 +776,11 @@ internal class FirKDocCallableCompletionContributor(
                     val type = parentSymbol.buildSelfClassType()
 
                     type.getTypeScope()?.getDeclarationScope()?.let { typeScope ->
-                        val typeScopeKind = KtScopeKind.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                        val typeScopeKind = KaScopeKind.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                         add(KtScopeWithKind(typeScope, typeScopeKind, token))
                     }
 
-                    val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+                    val staticScopeKind = KaScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                     add(KtScopeWithKind(parentSymbol.staticScope(), staticScopeKind, token))
                 }
 
@@ -819,9 +819,9 @@ private class CachingKtCompletionExtensionCandidateChecker(
      * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
      * the first time while processing the scope context and the second time while processing callables from indexes.
      */
-    private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
+    private val cache: MutableMap<KtCallableSymbol, KaExtensionApplicabilityResult> = mutableMapOf()
 
-    override fun computeApplicability(candidate: KtCallableSymbol): KtExtensionApplicabilityResult {
+    override fun computeApplicability(candidate: KtCallableSymbol): KaExtensionApplicabilityResult {
         return cache.computeIfAbsent(candidate) {
             delegate.computeApplicability(candidate)
         }

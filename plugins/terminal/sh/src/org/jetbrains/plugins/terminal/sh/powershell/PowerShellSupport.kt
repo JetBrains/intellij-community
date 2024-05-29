@@ -4,8 +4,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PlainTextTokenTypes
 import com.intellij.psi.tree.IElementType
+import com.intellij.sh.psi.ShFileElementType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.sh.getShellCommandTokens
 
 internal class PowerShellSupport : TerminalShellSupport {
   override val promptContentElementType: IElementType
-    get() = PlainTextTokenTypes.PLAIN_TEXT_FILE
+    get() = ShFileElementType.INSTANCE
 
   override val lineContinuationChar: Char = '`'
 

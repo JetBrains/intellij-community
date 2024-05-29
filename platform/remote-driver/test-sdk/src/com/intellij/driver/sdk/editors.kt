@@ -16,8 +16,15 @@ interface Editor {
   fun logicalPositionToXY(position: LogicalPosition): Point
   fun getVirtualFile(): VirtualFile
   fun getLineHeight(): Int
-}
+  fun offsetToVisualPosition(offset: Int): VisualPosition
+  fun visualPositionToXY(visible: VisualPosition): Point
 
+}
+@Remote("com.intellij.openapi.editor.VisualPosition")
+interface VisualPosition {
+  fun getLine(): Int
+  fun getColumn(): Int
+}
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
@@ -27,7 +34,7 @@ interface Document {
 @Remote("com.intellij.openapi.editor.CaretModel")
 interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
-
+  fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
 }
 
@@ -58,7 +65,7 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject()) = withContext {
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = withContext {
   val openedFile = if (!isRemoteIdeMode) {
     val fileToOpen = findFile(relativePath = relativePath, project = project)
     if (fileToOpen == null) {
@@ -81,5 +88,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject()) = 
               })!!
     }
   }
-  waitForCodeAnalysis(file = openedFile)
+  if (waitForCodeAnalysis) {
+    waitForCodeAnalysis(file = openedFile)
+  }
 }

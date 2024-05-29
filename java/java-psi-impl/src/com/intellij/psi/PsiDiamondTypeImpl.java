@@ -191,7 +191,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       //http://www.oracle.com/technetwork/java/javase/8-compatibility-guide-2156366.html#A999198 REF 7144506
       if (!PsiUtil.isLanguageLevel8OrHigher(newExpression) && PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
         for (PsiTypeParameter ignored : parameters) {
-          result.addInferredType(PsiType.getJavaLangObject(newExpression.getManager(), GlobalSearchScope.allScope(newExpression.getProject())));
+          result.addInferredType(getJavaLangObject(newExpression.getManager(), GlobalSearchScope.allScope(newExpression.getProject())));
         }
       }
       return result;
@@ -332,7 +332,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   private static @Nullable PsiMethod generateStaticFactory(@Nullable PsiMethod constructor,
                                                            PsiClass containingClass,
-                                                           PsiTypeParameter[] params,
+                                                           PsiTypeParameter[] typeParameters,
                                                            PsiJavaCodeReferenceElement reference) {
     final StringBuilder buf = new StringBuilder();
     final String modifier = VisibilityUtil.getVisibilityModifier(constructor != null ? constructor.getModifierList() : containingClass.getModifierList());
@@ -340,21 +340,19 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       buf.append(modifier);
       buf.append(" ");
     }
-    buf.append("static ");
-    buf.append("<");
+    buf.append("static <");
     //it's possible that constructor type parameters and class type parameters are same named:
     //it's important that class type parameters names are preserved (they are first in the list),
     //though constructor parameters would be renamed in case of conflicts
     final UniqueNameGenerator generator = new UniqueNameGenerator();
-    buf.append(StringUtil.join(params, psiTypeParameter -> {
-      String extendsList = "";
-      if (!psiTypeParameter.getLanguage().isKindOf("Scala")) {
-        final PsiClassType[] extendsListTypes = psiTypeParameter.getExtendsListTypes();
-        if (extendsListTypes.length > 0) {
-          extendsList = " extends " + StringUtil.join(extendsListTypes, PsiType::getCanonicalText, "&");
-        }
+    buf.append(StringUtil.join(typeParameters, typeParameter -> {
+      String result = generator.generateUniqueName(typeParameter.getName());
+      final PsiClassType[] extendsListTypes = typeParameter.getSuperTypes();
+      if (extendsListTypes.length > 0 &&
+          (extendsListTypes.length != 1 || !CommonClassNames.JAVA_LANG_OBJECT.equals(extendsListTypes[0].getCanonicalText()))) {
+        result += " extends " + StringUtil.join(extendsListTypes, PsiType::getCanonicalText, "&");
       }
-      return generator.generateUniqueName(psiTypeParameter.getName()) + extendsList;
+      return result;
     }, ", "));
     buf.append(">");
 

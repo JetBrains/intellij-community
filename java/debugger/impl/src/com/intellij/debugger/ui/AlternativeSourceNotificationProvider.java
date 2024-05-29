@@ -4,39 +4,26 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JavaStackFrame;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.ide.util.ModuleRendererFactory;
+import com.intellij.debugger.ui.AlternativeSourceNotificationPanel.AlternativeSourceElement;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
-import com.intellij.util.TextWithIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -98,9 +85,9 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
     List<PsiClass> otherClasses = ContainerUtil.filter(uniqClasses,
       cls -> !(cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)));
     List<PsiClass> allClasses = ContainerUtil.prepend(otherClasses, baseClass);
-    ComboBoxClassElement[] elems = ContainerUtil.map2Array(allClasses,
-                                                           ComboBoxClassElement.class,
-                                                           psiClass -> new ComboBoxClassElement(psiClass.getNavigationElement()));
+    AlternativeSourceElement[] elems = ContainerUtil.map2Array(allClasses,
+                                                               AlternativeSourceElement.class,
+                                                               psiClass -> new AlternativeSourceElement(psiClass.getNavigationElement()));
 
     String locationDeclName = null;
     XStackFrame frame = session.getCurrentStackFrame();
@@ -121,83 +108,11 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
     );
   }
 
-  private static class ComboBoxClassElement {
-    private final PsiElement myElement;
-    private String myText;
-
-    ComboBoxClassElement(PsiElement element) {
-      myElement = element;
-    }
-
-    @Override
-    public String toString() {
-      if (myText == null) {
-        ModuleRendererFactory factory = ModuleRendererFactory.findInstance(myElement);
-        TextWithIcon moduleTextWithIcon = factory.getModuleTextWithIcon(myElement);
-        myText = moduleTextWithIcon == null ? "" : moduleTextWithIcon.getText();
-      }
-      return myText;
-    }
-  }
-
   public static boolean isFileProcessed(VirtualFile file) {
     return FILE_PROCESSED_KEY.get(file) != null;
   }
 
   public static void setFileProcessed(VirtualFile file, boolean value) {
     FILE_PROCESSED_KEY.set(file, value ? Boolean.TRUE : null);
-  }
-
-  private static class AlternativeSourceNotificationPanel extends EditorNotificationPanel {
-
-    AlternativeSourceNotificationPanel(@NotNull FileEditor fileEditor,
-                                       @NotNull Project project,
-                                       @NotNull @Nls String text,
-                                       @NotNull VirtualFile file,
-                                       ComboBoxClassElement[] alternatives,
-                                       @Nullable String locationDeclName) {
-      super(fileEditor, EditorNotificationPanel.Status.Info);
-
-      setText(text);
-
-      final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
-      switcher.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
-          final DebuggerSession session = context.getDebuggerSession();
-          final PsiElement item = ((ComboBoxClassElement)switcher.getSelectedItem()).myElement;
-          final VirtualFile vFile = item.getContainingFile().getVirtualFile();
-          if (session != null && vFile != null) {
-            session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
-              @Override
-              protected void action() {
-                if (!StringUtil.isEmpty(locationDeclName)) {
-                  DebuggerUtilsEx.setAlternativeSourceUrl(locationDeclName, vFile.getUrl(), project);
-                }
-                DebuggerUIUtil.invokeLater(() -> {
-                  FileEditorManager.getInstance(project).closeFile(file);
-                  session.refresh(true);
-                });
-              }
-            });
-          }
-          else if (item instanceof Navigatable navigatable) {
-            FileEditorManager.getInstance(project).closeFile(file);
-            navigatable.navigate(true);
-          }
-        }
-      });
-      myLinksPanel.add(switcher);
-      createActionLabel(JavaDebuggerBundle.message("action.hide.text"), () -> {
-        DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
-        setFileProcessed(file, false);
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-        FileEditor editor = fileEditorManager.getSelectedEditor(file);
-        if (editor != null) {
-          fileEditorManager.removeTopComponent(editor, this);
-        }
-      });
-    }
   }
 }

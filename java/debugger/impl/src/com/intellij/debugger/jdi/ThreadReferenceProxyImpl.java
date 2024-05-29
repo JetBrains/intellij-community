@@ -45,6 +45,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   private volatile boolean myIsEvaluating = false;
 
+  public int myModelSuspendCount = 0;
+
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
     int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
     if (res == 0) {
@@ -102,12 +104,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public void suspend() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
-      getThreadReference().suspend();
+      suspendImpl();
     }
     catch (ObjectCollectedException ignored) {
     }
     clearCaches();
     myListeners.getMulticaster().threadSuspended();
+  }
+
+  public void suspendImpl() {
+    myModelSuspendCount++;
+    getThreadReference().suspend();
   }
 
   @NonNls
@@ -123,13 +130,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public void resume() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //JDI clears all caches on thread resume !!
-    final ThreadReference threadRef = getThreadReference();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("before resume" + threadRef);
+      LOG.debug("before resume" + getThreadReference());
     }
     getVirtualMachineProxy().clearCaches();
-    DebuggerUtilsAsync.resume(threadRef);
+    resumeImpl();
     myListeners.getMulticaster().threadResumed();
+  }
+
+  public void resumeImpl() {
+    myModelSuspendCount--;
+    DebuggerUtilsAsync.resume(getThreadReference());
   }
 
   @Override
@@ -447,6 +458,18 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       myResumeOnHotSwap = ThreeState.fromBoolean(name().startsWith("YJPAgent-"));
     }
     return myResumeOnHotSwap.toBoolean();
+  }
+
+  public int getWholeSuspendModelNumber() {
+    return myModelSuspendCount + getVirtualMachine().getModelSuspendCount();
+  }
+
+  public void suspendedThreadContext() {
+    myModelSuspendCount++;
+  }
+
+  public void resumedSuspendThreadContext() {
+    myModelSuspendCount--;
   }
 
   public void addListener(ThreadListener listener, Disposable disposable) {

@@ -18,7 +18,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
-import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.getAwtForegroundByIndex
 import org.jetbrains.plugins.terminal.exp.ui.GradientTextureCache
@@ -32,7 +31,7 @@ internal class TerminalBlocksDecorator(
   private val focusModel: TerminalFocusModel,
   private val selectionModel: TerminalSelectionModel,
   private val editor: EditorEx
-) : TerminalOutputListener {
+) : TerminalOutputModelListener {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
   private val gradientCache: GradientTextureCache = GradientTextureCache(
@@ -53,7 +52,7 @@ internal class TerminalBlocksDecorator(
       customRenderer = TerminalRightAreaRenderer()
     }
 
-    outputModel.addListener(object : TerminalOutputListener {
+    outputModel.addListener(object : TerminalOutputModelListener {
       override fun blockFinalized(block: CommandBlock) {
         decorations[block]?.let {
           it.backgroundHighlighter.isGreedyToRight = false
@@ -74,10 +73,8 @@ internal class TerminalBlocksDecorator(
         decorations.remove(block)
 
         // update the top inlay of the top block to add the gap between block and terminal top if it became the first block
-        if (outputModel.getBlocksSize() > 0) {
-          val firstBlock = outputModel.getByIndex(0)
-          decorations[firstBlock]?.topInlay?.update()
-        }
+        val firstBlock = outputModel.blocks.firstOrNull() ?: return
+        decorations[firstBlock]?.topInlay?.update()
       }
 
       // Highlight the blocks with non-zero exit code as an error
@@ -125,7 +122,7 @@ internal class TerminalBlocksDecorator(
 
     // add additional empty space on top of the block, if it is the first block
     val topRenderer = EmptyWidthInlayRenderer {
-      val additionalInset = if (outputModel.getByIndex(0) === block) TerminalUi.blocksGap else 0
+      val additionalInset = if (outputModel.blocks[0] === block) TerminalUi.blocksGap else 0
       TerminalUi.blockTopInset + additionalInset
     }
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!

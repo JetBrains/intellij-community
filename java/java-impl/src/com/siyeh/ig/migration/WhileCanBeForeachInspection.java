@@ -22,12 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -143,8 +141,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
         statementToSkip = declarationStatement;
       }
       else {
-        if (collection instanceof PsiReferenceExpression) {
-          final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)collection;
+        if (collection instanceof PsiReferenceExpression referenceElement) {
           final String collectionName = referenceElement.getReferenceName();
           contentVariableName = ForCanBeForeachInspection.createNewVariableName(whileStatement, iteratorContentType, collectionName);
         }
@@ -167,10 +164,8 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
       newStatement.append(ct.text(collection)).append(')');
 
       ForCanBeForeachInspection.replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, ct, newStatement);
-      final Query<PsiReference> query = ReferencesSearch.search(iterator);
       boolean deleteIterator = true;
-      for (PsiReference usage : query) {
-        final PsiElement element = usage.getElement();
+      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(iterator)) {
         if (PsiTreeUtil.isAncestor(whileStatement, element, true)) {
           continue;
         }

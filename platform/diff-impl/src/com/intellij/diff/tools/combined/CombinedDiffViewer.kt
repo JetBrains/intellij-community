@@ -46,6 +46,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Point
@@ -59,6 +60,7 @@ import javax.swing.event.ChangeListener
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+@ApiStatus.Internal
 class CombinedDiffViewer(
   private val context: DiffContext,
   blockListener: BlockListener,

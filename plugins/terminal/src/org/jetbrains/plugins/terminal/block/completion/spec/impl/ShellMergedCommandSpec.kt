@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.terminal.completion.spec.*
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import javax.swing.Icon
 
@@ -44,18 +45,12 @@ internal class ShellMergedCommandSpec(
 
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = createSubcommandsGenerator()
 
+  override val allOptionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = createAllOptionsGenerator()
+
   override val options: List<ShellOptionSpec> by lazy {
-    val optionsMap = mutableMapOf<String, ShellOptionSpec>()
-    for (option in baseSpec?.options ?: emptyList()) {
-      optionsMap[option.name] = option
-    }
-    // Override the options, the last of the same name will be effective
-    for (spec in overridingSpecs) {
-      for (option in spec.options) {
-        optionsMap[option.name] = option
-      }
-    }
-    optionsMap.values.toList()
+    val baseOptions = baseSpec?.options ?: emptyList()
+    val overridingOptions = overridingSpecs.map { it.options }
+    mergeOptions(baseOptions, overridingOptions)
   }
 
   /**
@@ -67,12 +62,8 @@ internal class ShellMergedCommandSpec(
     get() = overridingSpecs.first().arguments
 
   private fun createSubcommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> {
-    val firstGenerator = overridingSpecs.first().subcommandsGenerator
-    // Use the same caching as in the first found generator
-    return ShellRuntimeDataGenerator(
-      debugName = "$parentNamesWithSelf merged subcommands",
-      getCacheKey = { if (firstGenerator is ShellCacheableDataGenerator) firstGenerator.getCacheKey(it) else null }
-    ) { context ->
+    val cacheKey = createCacheKey(parentNamesWithSelf, "merged subcommands")
+    return ShellRuntimeDataGenerator(cacheKeyAndDebugName = cacheKey) { context ->
       val specInfoMap = MultiMap<String, CommandSpecInfo>()
 
       val baseSubcommands = baseSpec?.subcommandsGenerator?.generate(context) ?: emptyList()
@@ -90,6 +81,29 @@ internal class ShellMergedCommandSpec(
         else ShellMergedCommandSpec(base, overriding, parentNamesWithSelf)
       }
     }
+  }
+
+  private fun createAllOptionsGenerator(): ShellRuntimeDataGenerator<List<ShellOptionSpec>> {
+    val cacheKey = createCacheKey(parentNamesWithSelf, "merged options")
+    return ShellRuntimeDataGenerator(cacheKeyAndDebugName = cacheKey) { context ->
+      val baseOptions = baseSpec?.allOptionsGenerator?.generate(context) ?: emptyList()
+      val overridingOptions = overridingSpecs.map { it.allOptionsGenerator.generate(context) }
+      mergeOptions(baseOptions, overridingOptions)
+    }
+  }
+
+  private fun mergeOptions(baseOptions: List<ShellOptionSpec>, overridingOptions: List<List<ShellOptionSpec>>): List<ShellOptionSpec> {
+    val optionsMap = mutableMapOf<String, ShellOptionSpec>()
+    for (option in baseOptions) {
+      optionsMap[option.name] = option
+    }
+    // Override the options, the last of the same name will be effective
+    for (options in overridingOptions) {
+      for (option in options) {
+        optionsMap[option.name] = option
+      }
+    }
+    return optionsMap.values.toList()
   }
 
   private fun MultiMap<String, CommandSpecInfo>.addSpecs(specs: List<ShellCommandSpec>, strategy: ShellCommandSpecConflictStrategy) {

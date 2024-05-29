@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.SortOrder
 
-enum class RunnerType {
+private enum class RunnerType {
   IJCSampling, IJCTracing, IJCTracingTestTracking, JaCoCo
 }
 
@@ -93,7 +93,7 @@ object CoverageLogger : CounterUsagesCollector() {
                        CAN_HIDE_FULLY_COVERED.with(canFullyCoveredFilter))
 
   @JvmStatic
-  fun logSuiteImport(project: Project?, suitesBundle: CoverageSuitesBundle?, source: ExternalReportImportManager.Source) {
+  internal fun logSuiteImport(project: Project?, suitesBundle: CoverageSuitesBundle?, source: ExternalReportImportManager.Source) {
     if (suitesBundle == null) return
     IMPORT.log(project, suitesBundle.suites.map { it.runner.id }.distinct().sorted(), source)
   }

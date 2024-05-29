@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.injection.KotlinLibInjectionTestBase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
-class K2KotlinLibInjectionTest: KotlinLibInjectionTestBase() {
-    override fun isFirPlugin(): Boolean = true
+class K2KotlinLibInjectionTest : KotlinLibInjectionTestBase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputsStorage
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeLines
 
@@ -47,11 +48,20 @@ class ArchivedCompilationContext(private val delegate: CompilationContext) : Com
     return storage.getArchived(p)
   }
 
+  @Suppress("MemberVisibilityCanBePrivate")
+  fun replaceWithCompressedIfNeeded(f: File): File {
+    return storage.getArchived(f.toPath()).toFile()
+  }
+
   fun replaceWithCompressedIfNeededLS(paths: List<String>): List<String> {
     return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
   }
 
   fun replaceWithCompressedIfNeededLP(paths: List<Path>): List<Path> {
+    return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
+  }
+
+  fun replaceWithCompressedIfNeededLF(paths: List<File>): List<File> {
     return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
   }
 

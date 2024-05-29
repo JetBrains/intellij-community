@@ -64,7 +64,13 @@ public class NameSuggestionsManager {
     if (selectedType == null) return;
     ReadAction.nonBlocking(() -> myTypesToSuggestions.computeIfAbsent(selectedType, myGenerator::getSuggestedNameInfo))
       .expireWhen(myNameField.getProject()::isDisposed)
-      .finishOnUiThread(ModalityState.any(), nameInfo -> myNameField.setSuggestions(nameInfo.names))
+      .finishOnUiThread(ModalityState.any(), nameInfo -> {
+        String name = myNameField.getEnteredName();
+        myNameField.setSuggestions(nameInfo.names);
+        if (name.isEmpty()) {
+          myNameField.select(0, myNameField.getEnteredName().length());
+        }
+      })
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

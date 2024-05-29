@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.fir.copyPaste
 
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
 
-abstract class AbstractFirLiteralKotlinToKotlinCopyPasteTest : AbstractLiteralKotlinToKotlinCopyPasteTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractFirLiteralKotlinToKotlinCopyPasteTest : AbstractLiteralKotlinToKotlinCopyPasteTest()

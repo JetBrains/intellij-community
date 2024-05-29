@@ -3,15 +3,18 @@ package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.injection.KotlinStdlibInjectionTestBase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 
 class K2KotlinStdlibInjectionTest: KotlinStdlibInjectionTestBase() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

@@ -441,19 +441,23 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        AnAction action = extension.createAction(myEditor);
-        if (action != null) {
-          extensionActions.put(extension, action);
-          addInspectionWidgetAction(action, null);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          AnAction action = extension.createAction(myEditor);
+          if (action != null) {
+            extensionActions.put(extension, action);
+            addInspectionWidgetAction(action, null);
+          }
+        });
       }
 
       @Override
       public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        AnAction action = extensionActions.remove(extension);
-        if (action != null) {
-          removeInspectionWidgetAction(action);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          AnAction action = extensionActions.remove(extension);
+          if (action != null) {
+            removeInspectionWidgetAction(action);
+          }
+        });
       }
     }, resourcesDisposable);
   }

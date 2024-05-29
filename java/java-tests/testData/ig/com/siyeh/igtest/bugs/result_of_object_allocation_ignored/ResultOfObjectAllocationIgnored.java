@@ -1,5 +1,7 @@
 package com.siyeh.igtest.bugs.result_of_object_allocation_ignored;
 
+import java.util.function.*;
+
 public class ResultOfObjectAllocationIgnored {
 
     private ResultOfObjectAllocationIgnored() {
@@ -25,4 +27,15 @@ public class ResultOfObjectAllocationIgnored {
             default -> new Throwable();
         };
     }
+    
+    void methodRef() {
+      Runnable simple = <warning descr="Object allocated inside 'Object::new' is discarded">Object::new</warning>;
+      Runnable impliciCtor = <warning descr="Object allocated inside 'Foo::new' is discarded">Foo::new</warning>;
+      Runnable qualified = <warning descr="Object allocated inside 'java.lang.Object::new' is discarded">java.lang.Object::new</warning>;
+      Runnable ignored = java.util.ArrayList::new;
+      IntConsumer primitiveArr = <warning descr="Object allocated inside 'int[]::new' is discarded">int[]::new</warning>;
+      IntConsumer objectArr = <warning descr="Object allocated inside 'Object[]::new' is discarded">Object[]::new</warning>;
+    }
+    
+    class Foo {}
 }

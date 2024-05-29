@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +33,10 @@ public class DurableMapWithAppendableValuesTest
     return Map.entry(key, values);
   };
 
+  public DurableMapWithAppendableValuesTest() {
+    super(SUBSTRATE_DECODER);
+  }
+
   @Override
   protected @NotNull StorageFactory<? extends DurableMapWithAppendableValues<String, Integer>> factory() {
     return storagePath -> {
@@ -41,7 +46,7 @@ public class DurableMapWithAppendableValuesTest
 
       ExtendibleHashMap map = ExtendibleMapFactory
         .mediumSize()
-        .open(storagePath.resolve(storagePath.getFileName().toAbsolutePath() + ".hashToId"));
+        .open(storagePath.resolveSibling(storagePath.getFileName() + ".map"));
 
       return new DurableMapWithAppendableValues<>(
         chunkedLog,
@@ -52,19 +57,28 @@ public class DurableMapWithAppendableValuesTest
     };
   }
 
-  public DurableMapWithAppendableValuesTest() {
-    super(SUBSTRATE_DECODER);
+  @Override
+  protected boolean isAppendOnly() {
+    return false;
   }
 
+
+
   @Override
-  @Disabled("Compaction is not implemented yet for this map")
+  @Disabled("Compaction is not implemented yet for this implementation")
   public void compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(@TempDir Path tempDir) throws Exception {
     super.compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(tempDir);
   }
 
   @Override
-  @Disabled("Compaction is not implemented yet for this map")
+  @Disabled("Compaction is not implemented yet for this implementation")
   public void compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(@TempDir Path tempDir) throws Exception {
     super.compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(tempDir);
+  }
+
+  @Override
+  @Disabled("Recovery is not yet implemented for this implementation")
+  public void mapContent_WithManyMappingsAddedAndRemoved_CouldBeRestored_ifHashToIdMapping_IsLost() throws IOException {
+    super.mapContent_WithManyMappingsAddedAndRemoved_CouldBeRestored_ifHashToIdMapping_IsLost();
   }
 }

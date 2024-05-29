@@ -3,7 +3,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
@@ -17,7 +17,7 @@ import org.jetbrains.uast.kotlin.generate.createUastCommentSaver
 
 
 class IdeaFirKotlinUastCodeGenerationPlugin : FirKotlinUastCodeGenerationPlugin(){
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getElementFactory(project: Project): UastElementFactory {
         return object : KotlinUastElementFactory(project) {
             override fun moveLambdaOutsideParenthesis(methodCall: KtCallExpression) {

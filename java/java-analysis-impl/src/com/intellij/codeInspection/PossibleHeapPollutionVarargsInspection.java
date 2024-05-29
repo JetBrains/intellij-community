@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -146,11 +146,8 @@ public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJa
       if (JavaGenericsUtil.isReifiableType(componentType)) {
         return;
       }
-      for (PsiReference reference : ReferencesSearch.search(psiParameter)) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
-          return;
-        }
+      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(psiParameter)) {
+        if (!PsiUtil.isAccessedForReading(element)) return;
       }
       final PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier != null) {

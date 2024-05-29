@@ -13,13 +13,15 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.time.Duration
 
+@ApiStatus.Internal
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 20)
+  private val GROUP = EventLogGroup(GROUP_ID, 21)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -79,6 +81,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val feedbackSurveyEvent = GROUP.registerEvent("feedback.event.happened",
                                                         EventFields.Enum<TerminalFeedbackEvent>("event_type"),
                                                         EventFields.Enum<TerminalFeedbackMoment>("moment"))
+
+  private val commandGenerationEvent = GROUP.registerEvent("command.generation.event.happened",
+                                                           EventFields.Enum<TerminalCommandGenerationEvent>("event_type"),
+                                                           "Events related to generate command from natural language feature of New Terminal")
 
   @JvmStatic
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
@@ -168,6 +174,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     feedbackSurveyEvent.log(project, event, moment)
   }
 
+  fun triggerCommandGenerationEvent(project: Project, event: TerminalCommandGenerationEvent) {
+    commandGenerationEvent.log(project, event)
+  }
+
   @JvmStatic
   private fun getShellNameForStat(shellName: String?): String {
     if (shellName == null) return "unspecified"
@@ -198,6 +208,11 @@ internal enum class TerminalFeedbackEvent {
 
 internal enum class TerminalFeedbackMoment {
   ON_DISABLING, AFTER_USAGE
+}
+
+@ApiStatus.Internal
+enum class TerminalCommandGenerationEvent {
+  MODE_ENABLED, MODE_DISABLED, GENERATION_FINISHED, GENERATION_INTERRUPTED, GENERATION_FAILED
 }
 
 private const val GROUP_ID = "terminalShell"

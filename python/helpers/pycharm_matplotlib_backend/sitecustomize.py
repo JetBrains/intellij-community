@@ -10,7 +10,7 @@ def debug(message):
         sys.stderr.write("\n")
 
 
-debug("Executing PyCharm's `sitecustomize`")
+debug("Executing PyCharm's Matplotlib `sitecustomize`")
 modules_list = []
 
 try:

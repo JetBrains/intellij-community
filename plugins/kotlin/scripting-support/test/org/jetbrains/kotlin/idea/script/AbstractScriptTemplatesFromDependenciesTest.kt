@@ -20,9 +20,11 @@ import com.intellij.util.io.ZipUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
@@ -33,10 +35,15 @@ import java.util.zip.ZipOutputStream
 import kotlin.io.path.invariantSeparatorsPathString
 
 @RunWith(JUnit3RunnerWithInners::class)
-abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCase() {
+abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCase(),
+                                                             ExpectedPluginModeProvider {
 
     companion object {
         private const val testFileName = "test.kts"
+    }
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     fun doTest(path: String) {

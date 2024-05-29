@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -25,7 +27,9 @@ class GradleKotlinBuildSystemDependencyManager(private val project: Project) : K
     }
 
     override fun isProjectSyncPending(): Boolean {
-        return KotlinProjectConfigurationService.getInstance(project).isGradleSyncPending()
+        val isNotificationVisible =
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
+        return isNotificationVisible.get()
     }
 
     override fun getBuildScriptFile(module: Module): VirtualFile? = module.getBuildScriptPsiFile()?.virtualFile

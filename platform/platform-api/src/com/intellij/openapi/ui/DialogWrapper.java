@@ -397,7 +397,7 @@ public abstract class DialogWrapper {
    *
    * @return {@code null} if everything is OK or validation descriptor
    *
-   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
    */
   protected @Nullable ValidationInfo doValidate() {
     return null;
@@ -413,7 +413,7 @@ public abstract class DialogWrapper {
    * @return {@code List<ValidationInfo>} of invalid fields. List
    * is empty if no errors found.
    *
-   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
    */
   protected @NotNull List<ValidationInfo> doValidateAll() {
     List<ValidationInfo> result = new ArrayList<>();

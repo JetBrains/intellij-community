@@ -6,7 +6,6 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractFunction.KotlinFirExtractFunctionHandler
 import org.jetbrains.kotlin.psi.KtElement
 
 class ExtractK2FunctionToScopeAction : BasePlatformRefactoringAction() {

@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.util.TipUiSettings.imageBorderColor
 import com.intellij.ide.util.TipUiSettings.imageMaxWidth
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -22,7 +23,6 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
 import com.intellij.util.ImageLoader.loadFromUrl
-import com.intellij.util.LocalizationUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.Nls
@@ -186,18 +186,21 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val defaultLoader = tip.pluginDescriptor?.pluginClassLoader ?: TipUtils::class.java.classLoader
 
   val retrievers: MutableList<TipRetriever> = ArrayList()
-  val localizationPluginLoader: ClassLoader? = LocalizationUtil.getPluginClassLoader()
-  if (localizationPluginLoader != null) {
-    var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
-    //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
-    if (ideCode.contains("ic")) ideCode = "iu"
-    //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
-    val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
-    //tips from language plugin
-    listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc").forEach { retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, it)) }
+  val locale = LocalizationUtil.getLocaleOrNullForDefault()
+  if (locale != null) {
+    val localizationPluginLoader: ClassLoader? = LocalizationUtil.getPluginClassLoader()
+    if (localizationPluginLoader != null) {
+      var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
+      //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+      if (ideCode.contains("ic")) ideCode = "iu"
+      //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
+      val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
+      //tips from language plugin
+      listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc").forEach { retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, it)) }
+      retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, ""))
+    }
     //tips from locally placed localization
     retrievers.addAll(getLocalizationTipRetrievers(defaultLoader))
-    retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, ""))
   }
   val defaultRetriever = TipRetriever(defaultLoader, tipDirectory, "")
   retrievers.add(defaultRetriever)

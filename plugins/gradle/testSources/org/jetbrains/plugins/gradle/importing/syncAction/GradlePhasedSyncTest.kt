@@ -28,7 +28,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       }
-      whenModelFetchCompleted(disposable) { resolverContext ->
+      whenModelFetchCompleted(disposable) { resolverContext, _ ->
         modelFetchCompletionAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
             for (projectModel in buildModel.projects) {
@@ -63,7 +63,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         addModelProviders(TestModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
         addModelProviders(TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
       }
-      whenProjectLoaded(disposable) { resolverContext ->
+      whenProjectLoaded(disposable) { resolverContext, _ ->
         projectLoadingAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
             for (projectModel in buildModel.projects) {
@@ -76,7 +76,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      whenModelFetchCompleted(disposable) { resolverContext ->
+      whenModelFetchCompleted(disposable) { resolverContext, _ ->
         modelFetchCompletionAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
             for (projectModel in buildModel.projects) {
@@ -126,7 +126,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(phasedModelProviders)
       }
-      whenPhaseCompleted(disposable) { resolverContext, phase ->
+      whenPhaseCompleted(disposable) { resolverContext, _, phase ->
         modelFetchPhaseCompletionAssertion.trace {
           for (completedPhase in completedPhases) {
             Assertions.assertTrue(completedPhase < phase) {
@@ -155,19 +155,67 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      whenProjectLoaded(disposable) {
+      whenProjectLoaded(disposable) { _, _ ->
         projectLoadingAssertion.trace {
           Assertions.assertEquals(projectLoadedPhases.toList(), completedPhases.toList()) {
             "All project loaded phases should be completed before finishing the project loaded action"
           }
         }
       }
-      whenModelFetchCompleted(disposable) {
+      whenModelFetchCompleted(disposable) { _, _ ->
         modelFetchCompletionAssertion.trace {
           Assertions.assertEquals(allPhases.toList(), completedPhases.toList()) {
             "All model fetch phases should be completed before the model fetch completion"
           }
         }
+      }
+
+      initMultiModuleProject()
+      importProject()
+      assertMultiModuleProjectStructure()
+
+      projectLoadingAssertion.assertListenerFailures()
+      projectLoadingAssertion.assertListenerState(1) {
+        "The project loaded action should be completed"
+      }
+      modelFetchCompletionAssertion.assertListenerFailures()
+      modelFetchCompletionAssertion.assertListenerState(1) {
+        "The model fetch action should be completed"
+      }
+      modelFetchPhaseCompletionAssertion.assertListenerFailures()
+      modelFetchPhaseCompletionAssertion.assertListenerState(allPhases.size) {
+        "All requested model fetch phases should be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+      Assertions.assertEquals(allPhases, completedPhases) {
+        "All requested model fetch phases should be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+    }
+  }
+
+  @Test
+  fun `test multi-phased Gradle sync with non-complete set of model providers`() {
+    Disposer.newDisposable().use { disposable ->
+      val projectLoadingAssertion = ListenerAssertion()
+      val modelFetchCompletionAssertion = ListenerAssertion()
+      val modelFetchPhaseCompletionAssertion = ListenerAssertion()
+
+      val allPhases = GradleModelFetchPhase.entries
+      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+
+      whenPhaseCompleted(disposable) { _, _, phase ->
+        modelFetchPhaseCompletionAssertion.trace {
+          completedPhases.add(phase)
+        }
+      }
+      whenProjectLoaded(disposable) { _, _ ->
+        projectLoadingAssertion.touch()
+      }
+      whenModelFetchCompleted(disposable) { _, _ ->
+        modelFetchCompletionAssertion.touch()
       }
 
       initMultiModuleProject()
@@ -204,7 +252,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val executionStartAssertion = ListenerAssertion()
       val executionFinishAssertion = ListenerAssertion()
 
-      whenModelFetchCompleted(disposable) {
+      whenModelFetchCompleted(disposable) { _, _ ->
         modelFetchCompletionAssertion.touch()
         throw CancellationException()
       }
@@ -257,11 +305,11 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val executionStartAssertion = ListenerAssertion()
       val executionFinishAssertion = ListenerAssertion()
 
-      whenProjectLoaded(disposable) {
+      whenProjectLoaded(disposable) { _, _ ->
         projectLoadingAssertion.touch()
         throw CancellationException()
       }
-      whenModelFetchCompleted(disposable) {
+      whenModelFetchCompleted(disposable) { _, _ ->
         modelFetchCompletionAssertion.touch()
       }
       whenExternalSystemTaskStarted(disposable) { _, _ ->
@@ -335,17 +383,17 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(phasedModelProviders)
       }
-      whenPhaseCompleted(disposable) { _, phase ->
+      whenPhaseCompleted(disposable) { _, _, phase ->
         modelFetchPhaseCompletionAssertion.touch()
         actualCompletedPhases.add(phase)
         if (phase == cancellationPhase) {
           throw CancellationException()
         }
       }
-      whenProjectLoaded(disposable) {
+      whenProjectLoaded(disposable) { _, _ ->
         projectLoadingAssertion.touch()
       }
-      whenModelFetchCompleted(disposable) {
+      whenModelFetchCompleted(disposable) { _, _ ->
         modelFetchCompletionAssertion.touch()
       }
       whenExternalSystemTaskStarted(disposable) { _, _ ->
@@ -436,7 +484,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val executionStartAssertion = ListenerAssertion()
       val executionFinishAssertion = ListenerAssertion()
 
-      whenModelFetchCompleted(disposable) { resolverContext ->
+      whenModelFetchCompleted(disposable) { resolverContext, _ ->
         modelFetchCompletionAssertion.trace {
           resolverContext as DefaultProjectResolverContext
           resolverContext.progressIndicator.cancel()
@@ -500,7 +548,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val executionStartAssertion = ListenerAssertion()
       val executionFinishAssertion = ListenerAssertion()
 
-      whenProjectLoaded(disposable) { resolverContext ->
+      whenProjectLoaded(disposable) { resolverContext, _ ->
         projectLoadingAssertion.trace {
           resolverContext as DefaultProjectResolverContext
           resolverContext.progressIndicator.cancel()
@@ -515,7 +563,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      whenModelFetchCompleted(disposable) {
+      whenModelFetchCompleted(disposable) { _, _ ->
         modelFetchCompletionAssertion.touch()
       }
       whenExternalSystemTaskStarted(disposable) { _, _ ->
@@ -589,7 +637,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(phasedModelProviders)
       }
-      whenPhaseCompleted(disposable) { resolverContext, phase ->
+      whenPhaseCompleted(disposable) { resolverContext, _, phase ->
         modelFetchPhaseCompletionAssertion.trace {
           actualCompletedPhases.add(phase)
           if (phase == cancellationPhase) {
@@ -607,10 +655,10 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
       }
-      whenProjectLoaded(disposable) {
+      whenProjectLoaded(disposable) { _, _ ->
         projectLoadingAssertion.touch()
       }
-      whenModelFetchCompleted(disposable) {
+      whenModelFetchCompleted(disposable) { _, _ ->
         modelFetchCompletionAssertion.touch()
       }
       whenExternalSystemTaskStarted(disposable) { _, _ ->
@@ -692,6 +740,27 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       executionFinishAssertion.assertListenerFailures()
       executionFinishAssertion.assertListenerState(1) {
         "Gradle sync should be finished."
+      }
+    }
+  }
+
+  @Test
+  fun `test project info resolution phases emitting`() {
+    Disposer.newDisposable().use { disposable ->
+
+      val projectInfoResolutionStartAssertion = ListenerAssertion()
+
+      whenResolveProjectInfoStarted(disposable) { _, _ ->
+        projectInfoResolutionStartAssertion.touch()
+      }
+
+      initMultiModuleProject(useBuildSrc = true)
+      importProject()
+      assertMultiModuleProjectStructure(useBuildSrc = true)
+
+      projectInfoResolutionStartAssertion.assertListenerFailures()
+      projectInfoResolutionStartAssertion.assertListenerState(1) {
+        "The project info resolution should be started only once."
       }
     }
   }

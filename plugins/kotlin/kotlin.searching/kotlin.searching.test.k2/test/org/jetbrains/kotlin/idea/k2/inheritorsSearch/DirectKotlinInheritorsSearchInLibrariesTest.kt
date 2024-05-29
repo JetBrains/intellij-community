@@ -6,6 +6,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -17,9 +18,9 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("../testData/inheritorsSearch/libraries")
 class DirectKotlinInheritorsSearchInLibrariesTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

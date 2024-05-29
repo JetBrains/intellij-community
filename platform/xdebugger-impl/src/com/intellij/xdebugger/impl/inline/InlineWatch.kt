@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.inline
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.DocumentUtil
-import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
@@ -20,22 +20,20 @@ class InlineWatch(val expression: XExpression, var position: XSourcePosition) {
 
   fun updatePosition(): Boolean {
     val rangeMarker = myRangeMarker
-    if (rangeMarker?.isValid == true) {
-      val line = rangeMarker.document.getLineNumber(rangeMarker.startOffset)
-      if (line != position.line) {
-        position = XDebuggerUtil.getInstance().createPosition(myFile, line)!!
-      }
-      return true
+    if (rangeMarker == null) return true // marker is not yet created - do nothing
+    if (!rangeMarker.isValid) return false // invalid marker (file was deleted) - remove the watch
+    val line = rangeMarker.document.getLineNumber(rangeMarker.startOffset)
+    if (line != position.line) {
+      position = XDebuggerUtil.getInstance().createPosition(myFile, line)!!
     }
-    return false
+    return true
   }
 
-
-  @RequiresReadLock
-    /**
-     * @return true if marker was added successfully
-     */
+  /**
+   * @return true if marker was added successfully
+   */
   fun setMarker(): Boolean {
+    ThreadingAssertions.assertReadAccess()
     if (myRangeMarker != null) return true
     // try not to decompile files
     var document = FileDocumentManager.getInstance().getCachedDocument(myFile)

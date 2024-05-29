@@ -13,6 +13,15 @@ fun waitFor(
   waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = condition, checker = { it })
 }
 
+fun waitFor(
+  duration: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: () -> String,
+  condition: () -> Boolean
+) {
+  waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = condition, checker = { it })
+}
+
 fun <T> waitNotNull(
   duration: Duration = 5.seconds,
   interval: Duration = 1.seconds,
@@ -29,6 +38,16 @@ fun <T> waitFor(
   getter: () -> T,
   checker: (T) -> Boolean
 ): T {
+  return waitFor(duration = duration, interval = interval, errorMessage = { errorMessage }, getter = getter, checker = checker)
+}
+
+fun <T> waitFor(
+  duration: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: () -> String = { "" },
+  getter: () -> T,
+  checker: (T) -> Boolean
+): T {
   val endTime = System.currentTimeMillis() + duration.inWholeMilliseconds
   var now = System.currentTimeMillis()
   var result = getter()
@@ -38,14 +57,14 @@ fun <T> waitFor(
     now = System.currentTimeMillis()
   }
   if (checker(result).not()) {
-    throw WaitForException(duration, errorMessage + if (result !is Boolean) " Actual: $result" else "")
+    throw WaitForException(duration, errorMessage() + if (result !is Boolean) " Actual: $result" else "")
   }
   else {
     return result
   }
 }
 
-class WaitForException(duration: Duration, errorMessage: String) : IllegalStateException("Timeout($duration): $errorMessage")
+class WaitForException(val duration: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($duration): $errorMessage", cause)
 
 fun <T : UiComponent> T.wait(duration: Duration): T {
   Thread.sleep(duration.inWholeMilliseconds)

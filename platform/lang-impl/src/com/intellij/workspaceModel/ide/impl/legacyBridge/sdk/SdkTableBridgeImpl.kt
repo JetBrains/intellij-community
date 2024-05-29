@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
@@ -115,7 +116,9 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   @Suppress("RAW_RUN_BLOCKING")
   override fun saveOnDisk() {
     runBlocking {
-      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
+      resetThreadContext().use {
+        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
+      }
     }
   }
 }

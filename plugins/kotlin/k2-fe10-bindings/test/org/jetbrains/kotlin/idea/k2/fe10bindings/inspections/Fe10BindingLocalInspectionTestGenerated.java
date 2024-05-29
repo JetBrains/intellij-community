@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/addOperatorModifier")
     public static class AddOperatorModifier extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -64,6 +71,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument")
     public static class BooleanLiteralArgument extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -142,6 +155,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject")
     public static class ConvertSealedSubClassToObject extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -265,6 +284,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/cascadeIf")
     public static class CascadeIf extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -336,6 +361,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
         public static class Termination extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -754,6 +785,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence")
         public static class Uncategorized extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -948,6 +985,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/convertNaNEquality")
     public static class ConvertNaNEquality extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -991,6 +1034,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/convertPairConstructorToToFunction")
     public static class ConvertPairConstructorToToFunction extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1009,6 +1058,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/copyWithoutNamedArguments")
     public static class CopyWithoutNamedArguments extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1032,6 +1087,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject")
     public static class IntroduceWhenSubject extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1125,6 +1186,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/kdocMissingDocumentation")
     public static class KdocMissingDocumentation extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1148,6 +1215,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/forEachParameterNotUsed")
     public static class ForEachParameterNotUsed extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1186,6 +1259,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/covariantEquals")
     public static class CovariantEquals extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1244,6 +1323,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/lateinitVarOverridesLateinitVar")
     public static class LateinitVarOverridesLateinitVar extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1267,6 +1352,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis")
     public static class FoldInitializerAndIfToElvis extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1440,6 +1531,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/mapGetWithNotNullAssertionOperator")
     public static class MapGetWithNotNullAssertionOperator extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1483,6 +1580,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate")
     public static class MemberVisibilityCanBePrivate extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1490,6 +1593,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("annotation.kt")
         public void testAnnotation() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/annotation.kt");
+        }
+
+        @TestMetadata("callableReferences.kt")
+        public void testCallableReferences() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/callableReferences.kt");
         }
 
         @TestMetadata("JvmFieldOnParameter.kt")
@@ -1500,6 +1608,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("JvmFieldOnProperty.kt")
         public void testJvmFieldOnProperty() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/JvmFieldOnProperty.kt");
+        }
+
+        @TestMetadata("sameClassCallableReferences.kt")
+        public void testSameClassCallableReferences() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassCallableReferences.kt");
         }
 
         @TestMetadata("sameClassFunctionCall.kt")
@@ -1526,6 +1639,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck")
     public static class RedundantObjectTypeCheck extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1564,6 +1683,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantExplicitType")
     public static class RedundantExplicitType extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1662,6 +1787,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
     public static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractFe10BindingLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1693,6 +1824,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateBy")
         public static class AssociateBy extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1711,6 +1848,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateByKeyAndValue")
         public static class AssociateByKeyAndValue extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1754,6 +1897,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateByTo")
         public static class AssociateByTo extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1772,6 +1921,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateByToKeyAndValue")
         public static class AssociateByToKeyAndValue extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1805,6 +1960,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWith")
         public static class AssociateWith extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1878,6 +2039,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceAssociateFunction/associateWithTo")
         public static class AssociateWithTo extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1920,6 +2087,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/array")
         public static class Array extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1938,6 +2111,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/collection")
         public static class Collection extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1956,6 +2135,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/intArray")
         public static class IntArray extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1974,6 +2159,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/list")
         public static class List extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1992,6 +2183,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/map")
         public static class Map extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2010,6 +2207,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/set")
         public static class Set extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2028,6 +2231,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str")
         public static class Str extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2056,6 +2265,12 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty")
         public static class Uncategorized extends AbstractFe10BindingLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

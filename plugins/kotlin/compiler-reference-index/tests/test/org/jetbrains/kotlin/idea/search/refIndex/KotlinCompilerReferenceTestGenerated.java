@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.search.refIndex;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -25,6 +26,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestClass extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -38,6 +45,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestCompanion extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -51,6 +64,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestInnerClass extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -64,6 +83,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestInnerClassWithPackage extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -77,6 +102,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestJavaInnerClass extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -90,6 +121,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestJavaInvoke extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -103,6 +140,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestJavaNestedClass extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -116,6 +159,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestJavaNestedInvoke extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -129,6 +178,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestNamedCompanion extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -142,6 +197,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestNestedClass extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -155,6 +216,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestNestedObject extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -168,6 +235,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestObject extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -188,6 +261,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/constructors")
             public static class TestAllWithDefault extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -201,6 +280,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/constructors")
             public static class TestJavaConstructor extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -214,6 +299,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/constructors")
             public static class TestJvmOverloads extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -227,6 +318,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/constructors")
             public static class TestNestedPrimaryConstructor extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -240,6 +337,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/constructors")
             public static class TestPrimaryConstructor extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -253,6 +356,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/constructors")
             public static class TestSecondaryConstructor extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -279,6 +388,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                         @RunWith(JUnit3RunnerWithInners.class)
                         @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject")
                         public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                            @java.lang.Override
+                            @org.jetbrains.annotations.NotNull
+                            public final KotlinPluginMode getPluginMode() {
+                                return KotlinPluginMode.K1;
+                            }
+
                             private void runTest(String testDataFilePath) throws Exception {
                                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                             }
@@ -292,6 +407,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                         @RunWith(JUnit3RunnerWithInners.class)
                         @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject")
                         public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                            @java.lang.Override
+                            @org.jetbrains.annotations.NotNull
+                            public final KotlinPluginMode getPluginMode() {
+                                return KotlinPluginMode.K1;
+                            }
+
                             private void runTest(String testDataFilePath) throws Exception {
                                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                             }
@@ -305,6 +426,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                         @RunWith(JUnit3RunnerWithInners.class)
                         @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject")
                         public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                            @java.lang.Override
+                            @org.jetbrains.annotations.NotNull
+                            public final KotlinPluginMode getPluginMode() {
+                                return KotlinPluginMode.K1;
+                            }
+
                             private void runTest(String testDataFilePath) throws Exception {
                                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                             }
@@ -318,6 +445,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                         @RunWith(JUnit3RunnerWithInners.class)
                         @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject")
                         public static class TestStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                            @java.lang.Override
+                            @org.jetbrains.annotations.NotNull
+                            public final KotlinPluginMode getPluginMode() {
+                                return KotlinPluginMode.K1;
+                            }
+
                             private void runTest(String testDataFilePath) throws Exception {
                                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                             }
@@ -332,6 +465,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named")
                     public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -345,6 +484,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named")
                     public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -358,6 +503,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named")
                     public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -371,6 +522,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named")
                     public static class TestStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -388,6 +545,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject")
                     public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -401,6 +564,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject")
                     public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -414,6 +583,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject")
                     public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -427,6 +602,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject")
                     public static class TestStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -444,6 +625,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestComponent extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -457,6 +644,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestGet extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -470,6 +663,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestHasNext extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -483,6 +682,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestInvoke extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -496,6 +701,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestIterator extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -509,6 +720,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestMinus extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -522,6 +739,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestNext extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -535,6 +758,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestPlus extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -548,6 +777,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
                     public static class TestSet extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -562,6 +797,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -575,6 +816,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestExtensionForObject extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -588,6 +835,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -601,6 +854,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestJavaStaticMethod extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -614,6 +873,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestJavaStaticMethod2 extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -627,6 +892,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestOverloadsExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -640,6 +911,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestOverloadsFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -653,6 +930,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestOverloadsStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -666,6 +949,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestOverloadsStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -679,6 +968,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -692,6 +987,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
                 public static class TestStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -709,6 +1010,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -722,6 +1029,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -735,6 +1048,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestOverloadsExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -748,6 +1067,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestOverloadsFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -761,6 +1086,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestOverloadsStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -774,6 +1105,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestOverloadsStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -787,6 +1124,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -800,6 +1143,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
                 public static class TestStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -814,6 +1163,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromObject")
             public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -827,6 +1182,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromObject")
             public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -840,6 +1201,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromObject")
             public static class TestFunctionWithSeveralParameters extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -853,6 +1220,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromObject")
             public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -866,6 +1239,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromObject")
             public static class TestStaticFunction extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -886,6 +1265,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -899,6 +1284,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestJJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -912,6 +1303,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestJJJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -925,6 +1322,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestJKJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -938,6 +1341,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestKJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -951,6 +1360,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestKJJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -964,6 +1379,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
                 public static class TestKKJ extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -981,6 +1402,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJJJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -994,6 +1421,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1007,6 +1440,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJJKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1020,6 +1459,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1033,6 +1478,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJKJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1046,6 +1497,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1059,6 +1516,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestJKKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1072,6 +1535,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1085,6 +1554,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKJJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1098,6 +1573,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1111,6 +1592,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKJKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1124,6 +1611,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1137,6 +1630,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKKJK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1150,6 +1649,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1163,6 +1668,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
                 public static class TestKKKK extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1177,6 +1688,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/hierarchy")
             public static class TestFromLibrary extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1197,6 +1714,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestComponent extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1210,6 +1733,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestGet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1223,6 +1752,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestHasNext extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1236,6 +1771,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestInvoke extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1249,6 +1790,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestIterator extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1262,6 +1809,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestMinus extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1275,6 +1828,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestNext extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1288,6 +1847,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestPlus extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1301,6 +1866,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
                 public static class TestSet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1318,6 +1889,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/interfaceDefault")
                 public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1331,6 +1908,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/interfaceDefault")
                 public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1344,6 +1927,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/interfaceDefault")
                 public static class TestGet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1357,6 +1946,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/interfaceDefault")
                 public static class TestInvoke extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1374,6 +1969,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestComponent extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1387,6 +1988,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestComponentFromDataClass extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1400,6 +2007,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestGet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1413,6 +2026,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestHasNext extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1426,6 +2045,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestInvoke extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1439,6 +2064,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestIterator extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1452,6 +2083,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestMinus extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1465,6 +2102,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestNext extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1478,6 +2121,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestPlus extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1491,6 +2140,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/members/operators")
                 public static class TestSet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1505,6 +2160,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1518,6 +2179,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1531,6 +2198,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaAnnotation extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1544,6 +2217,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaAnnotationWithCustomName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1557,6 +2236,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaAnnotationWithSeveralParameters extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1570,6 +2255,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaInvoke extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1583,6 +2274,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaMethod extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1596,6 +2293,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaMethodSyntheticGet extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1609,6 +2312,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaMethodSyntheticIs extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1622,6 +2331,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaMethodSyntheticIsSet extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1635,6 +2350,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members")
             public static class TestJavaMethodSyntheticSet extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1655,6 +2376,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestComponent extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1668,6 +2395,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestGet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1681,6 +2414,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestHasNext extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1694,6 +2433,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestInvoke extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1707,6 +2452,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestIterator extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1720,6 +2471,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestMinus extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1733,6 +2490,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestNext extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1746,6 +2509,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestPlus extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1759,6 +2528,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
                 public static class TestSet extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1773,6 +2548,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/topLevel")
             public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1786,6 +2567,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/topLevel")
             public static class TestExtensionWithCustomFileName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1799,6 +2586,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/topLevel")
             public static class TestExtensionWithJvmOverloadsAndJvmName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1812,6 +2605,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/topLevel")
             public static class TestFunction extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1825,6 +2624,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/topLevel")
             public static class TestFunctionWithJvmName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1838,6 +2643,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/topLevel")
             public static class TestFunctionWithJvmOverloads extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1859,6 +2670,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestAnnotation extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1872,6 +2689,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestAnnotationWithCustomParameter extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1885,6 +2708,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestHierarchy extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1898,6 +2727,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestVal extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1911,6 +2746,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestVar extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1924,6 +2765,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestVarWithCustomNames extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1937,6 +2784,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestVarWithJvmField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1950,6 +2803,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameter")
             public static class TestWithoutVal extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1967,6 +2826,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
             public static class TestComponentB extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1980,6 +2845,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
             public static class TestEscapedName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1993,6 +2864,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
             public static class TestVal extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2006,6 +2883,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
             public static class TestVar extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2019,6 +2902,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
             public static class TestVarWithCustomNames extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2032,6 +2921,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/constructorParameterFromDataClass")
             public static class TestVarWithJvmField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2055,6 +2950,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestConstant extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2068,6 +2969,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2081,6 +2988,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2094,6 +3007,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestFieldProperty extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2107,6 +3026,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestFieldVariable extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2120,6 +3045,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2133,6 +3064,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestIsVariable extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2146,6 +3083,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestLateinit extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2159,6 +3102,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2172,6 +3121,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2185,6 +3140,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestStaticExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2198,6 +3159,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestStaticLateinit extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2211,6 +3178,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestStaticProperty extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2224,6 +3197,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestStaticVariable extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2237,6 +3216,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
                     public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2251,6 +3236,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestConstant extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2264,6 +3255,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2277,6 +3274,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2290,6 +3293,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestFieldProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2303,6 +3312,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestFieldVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2316,6 +3331,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2329,6 +3350,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestIsVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2342,6 +3369,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestJavaStaticField extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2355,6 +3388,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestJavaStaticField2 extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2368,6 +3407,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestLateinit extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2381,6 +3426,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2394,6 +3445,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestPropertyWithBackingField extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2407,6 +3464,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestPropertyWithCustomGetterAndSetter extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2420,6 +3483,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2433,6 +3502,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestStaticExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2446,6 +3521,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestStaticLateinit extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2459,6 +3540,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestStaticProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2472,6 +3559,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestStaticVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2485,6 +3578,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
                 public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2502,6 +3601,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestConstant extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2515,6 +3620,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2528,6 +3639,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2541,6 +3658,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestFieldProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2554,6 +3677,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestFieldVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2567,6 +3696,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2580,6 +3715,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestIsVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2593,6 +3734,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestLateinit extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2606,6 +3753,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2619,6 +3772,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2632,6 +3791,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestStaticExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2645,6 +3810,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestStaticLateinit extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2658,6 +3829,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestStaticProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2671,6 +3848,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestStaticVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2684,6 +3867,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
                 public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2698,6 +3887,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestConstant extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2711,6 +3906,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2724,6 +3925,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2737,6 +3944,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestFieldProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2750,6 +3963,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestFieldVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2763,6 +3982,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2776,6 +4001,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestIsVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2789,6 +4020,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestLateinit extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2802,6 +4039,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2815,6 +4058,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestStaticExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2828,6 +4077,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestStaticExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2841,6 +4096,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestStaticLateinit extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2854,6 +4115,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestStaticProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2867,6 +4134,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestStaticVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2880,6 +4153,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject")
             public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2903,6 +4182,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJJJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2916,6 +4201,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2929,6 +4220,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJJKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2942,6 +4239,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2955,6 +4258,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJKJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2968,6 +4277,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2981,6 +4296,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestJKKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -2994,6 +4315,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3007,6 +4334,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKJJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3020,6 +4353,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3033,6 +4372,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKJKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3046,6 +4391,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3059,6 +4410,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKKJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3072,6 +4429,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3085,6 +4448,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/get")
                     public static class TestKKKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3102,6 +4471,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJJJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3115,6 +4490,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3128,6 +4509,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJJKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3141,6 +4528,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3154,6 +4547,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJKJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3167,6 +4566,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3180,6 +4585,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestJKKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3193,6 +4604,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3206,6 +4623,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKJJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3219,6 +4642,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3232,6 +4661,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKJKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3245,6 +4680,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3258,6 +4699,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKKJK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3271,6 +4718,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3284,6 +4737,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compilerIndex/properties/hierarchy/kotlin/set")
                     public static class TestKKKK extends AbstractKotlinCompilerReferenceTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K1;
+                        }
+
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3306,6 +4765,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/members/interfaceDefault")
                 public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3319,6 +4784,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/members/interfaceDefault")
                 public static class TestIsVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3332,6 +4803,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/members/interfaceDefault")
                 public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3345,6 +4822,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compilerIndex/properties/members/interfaceDefault")
                 public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3359,6 +4842,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3372,6 +4861,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestIsVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3385,6 +4880,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestJavaField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3398,6 +4899,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestJavaFieldWithInvoke extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3411,6 +4918,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestLateinit extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3424,6 +4937,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3437,6 +4956,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestPropertyWithBackingField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3450,6 +4975,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestPropertyWithCustomGetterAndSetter extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3463,6 +4994,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestPropertyWithJvmField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3476,6 +5013,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestPropertyWithReceiver extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3489,6 +5032,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3502,6 +5051,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestVariableWithJvmField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3515,6 +5070,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/members")
             public static class TestVariableWithReceiver extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3532,6 +5093,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestConstant extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3545,6 +5112,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestConstantJava extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3558,6 +5131,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestConstantJavaWithCustomFileName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3571,6 +5150,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestConstantWithCustomFileName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3584,6 +5169,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestExtension extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3597,6 +5188,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestExtensionVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3610,6 +5207,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestExtensionVariableWithJvmNameOnProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3623,6 +5226,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestIsProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3636,6 +5245,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestIsVariableWithCustomFileName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3649,6 +5264,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestLateinit extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3662,6 +5283,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3675,6 +5302,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestPropertyWithBackingField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3688,6 +5321,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestPropertyWithCustomGetterAndSetter extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3701,6 +5340,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestPropertyWithJvmField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3714,6 +5359,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestVariable extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3727,6 +5378,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestVariableWithCustomFileName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3740,6 +5397,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestVariableWithCustomGetterAndSetterAndJvmName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3753,6 +5416,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestVariableWithCustomGetterAndSetterAndMixedJvmName extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3766,6 +5435,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestVariableWithJvmField extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3779,6 +5454,12 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/topLevel")
             public static class TestVariableWithJvmNameOnProperty extends AbstractKotlinCompilerReferenceTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }

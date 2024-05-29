@@ -16,12 +16,14 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
+import com.intellij.util.io.Unmappable;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.function.BiPredicate;
@@ -32,7 +34,7 @@ import java.util.function.BiPredicate;
  * chunks, each of chunk itself works as append-only log.
  */
 @ApiStatus.Internal
-public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurableMap<K, VItem> {
+public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurableMap<K, VItem>, Unmappable {
 
   private final ChunkedAppendOnlyLog keyValuesLog;
   private final ExtendibleHashMap keyHashToChunkIdMap;
@@ -184,7 +186,23 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
     });
   }
 
-  public boolean forEachEntry(@NotNull BiPredicate<? super K, Items<? super VItem>> processor) throws IOException {
+  @Override
+  public boolean forEachEntry(@NotNull BiPredicate<? super K, ? super Set<VItem>> processor) throws IOException {
+    return forEach((key, items) -> {
+      try {
+        ObjectOpenHashSet<VItem> values = new ObjectOpenHashSet<>();
+        items.forEach(item -> {
+          values.add(item);
+        });
+        return processor.test(key, values);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+  }
+
+  public boolean forEach(@NotNull BiPredicate<? super K, Items<VItem>> processor) throws IOException {
     return keyHashToChunkIdMap.forEach((keyHash, recordId) -> {
       Pair<K, ItemsImpl> entry = readEntry(convertStoredIdToChunkId(recordId));
       K key = entry.first;
@@ -244,6 +262,25 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
       () -> new IOException("Can't close " + keyValuesLog + "/" + keyHashToChunkIdMap),
       keyValuesLog::close,
       keyHashToChunkIdMap::close
+    );
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class, () -> new IOException("Can't unmap " + keyValuesLog + "/" + keyHashToChunkIdMap),
+
+      () -> {
+        if (keyValuesLog instanceof Unmappable unmappable) {
+          unmappable.closeAndUnsafelyUnmap();
+        }
+        else {
+          keyValuesLog.close();
+        }
+      },
+      () -> {
+        keyHashToChunkIdMap.closeAndUnsafelyUnmap();
+      }
     );
   }
 

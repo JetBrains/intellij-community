@@ -25,7 +25,7 @@ data class InlayData(
   val disabled: Boolean,
   val payloads: List<InlayPayload>?,
   val providerClass: Class<*>, // Just for debugging purposes
-  val passClass: Class<*>,
+  val sourceId: String,
 ) {
 
   class Externalizer : VersionedExternalizer<InlayData> {
@@ -33,7 +33,7 @@ data class InlayData(
 
     companion object {
       // increment on format changed
-      private const val SERDE_VERSION = 1
+      private const val SERDE_VERSION = 3
     }
 
     override fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -46,8 +46,7 @@ data class InlayData(
       writeUTF(output, inlayData.providerId)
       output.writeBoolean(inlayData.disabled)
       writePayloads(output, inlayData.payloads)
-      writeProviderClass(output, inlayData.providerClass)
-      writePassClass(output, inlayData.passClass)
+      writeSourceId(output, inlayData.sourceId)
     }
 
     override fun read(input: DataInput): InlayData {
@@ -58,9 +57,9 @@ data class InlayData(
       val providerId: String            = readUTF(input)
       val disabled: Boolean             = input.readBoolean()
       val payloads: List<InlayPayload>? = readPayloads(input)
-      val providerClass: Class<*>       = readProviderClass(input)
-      val passClass: Class<*>           = readPassClass(input)
-      return InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, passClass)
+      val providerClass: Class<*>       = ZombieInlayHintsProvider::class.java
+      val sourceId: String              = readSourceId(input)
+      return InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, sourceId)
     }
 
     private fun writePosition(output: DataOutput, position: InlayPosition) {
@@ -146,27 +145,12 @@ data class InlayData(
       return InlayPayload(payloadName, inlayActionPayload)
     }
 
-    private fun writeProviderClass(output: DataOutput, providerClass: Class<*>) {
-      writeUTF(output, providerClass.name)
+    private fun writeSourceId(output: DataOutput, sourceId: String) {
+      writeUTF(output, sourceId)
     }
 
-    private fun readProviderClass(input: DataInput): Class<*> {
-      readUTF(input) // TODO: remove when format changed
-      return ZombieInlayHintsProvider::class.java
-    }
-
-    private fun writePassClass(output: DataOutput, passClass: Class<*>) {
-      writeUTF(output, passClass.name)
-    }
-
-    private fun readPassClass(input: DataInput): Class<*> {
-      val className = readUTF(input)
-      try {
-        return Class.forName(className)
-      }
-      catch (e: ClassNotFoundException) {
-        return DeclarativeInlayHintsPass::class.java
-      }
+    private fun readSourceId(input: DataInput): String {
+      return readUTF(input)
     }
   }
 }

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp.completion.ml
 
 import org.junit.Test
 
-class ShMLModelMetadataTest {
+internal class ShMLModelMetadataTest {
   @Test
   fun testModelMetadataConsistent() {
     ShMLRankingProvider().assertModelMetadataConsistent()

@@ -2,12 +2,14 @@
 package com.intellij.formatting.fileSet;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Used to disable formatting for any file programmatically
  */
+@ApiStatus.Internal
 public class AnyFileDescriptor implements FileSetDescriptor {
   public final static String TYPE = "anyFile";
 

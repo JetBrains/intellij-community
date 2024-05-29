@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder;
 import org.jetbrains.kotlin.psi.*;
@@ -34,10 +34,8 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
 
         expression = (KtExpression) expression.replace(stringTemplateExpression);
 
-        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
-
         int offset = expression.getTextRange().getEndOffset();
-        updater.moveCaretTo(offset);
+        updater.select(TextRange.from(offset, 0));
     }
 
     private static String getCodeTemplate(KtExpression expression) {

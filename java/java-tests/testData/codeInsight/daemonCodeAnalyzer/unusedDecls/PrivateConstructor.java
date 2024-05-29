@@ -1,6 +1,6 @@
 import java.lang.Override;
 
-class PrivateConstructor {
+class <warning descr="Class 'PrivateConstructor' is never used">PrivateConstructor</warning> {
   private final int myA;
 
   private PrivateConstructor(int a) {

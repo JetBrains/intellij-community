@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker")
     public static class Checker extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -374,6 +381,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/regression")
     public static class Regression extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -612,6 +625,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/recovery")
     public static class Recovery extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -635,6 +654,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/rendering")
     public static class Rendering extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -648,6 +673,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/scripts")
     public static class Scripts extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -679,6 +710,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/fields")
         public static class Fields extends AbstractKotlinHighlightVisitorTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -692,6 +729,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/functionAndProperty")
         public static class FunctionAndProperty extends AbstractKotlinHighlightVisitorTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -750,6 +793,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/interfaceImpl")
         public static class InterfaceImpl extends AbstractKotlinHighlightVisitorTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -764,6 +813,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/infos")
     public static class Infos extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestWithInfos, this, testDataFilePath);
         }
@@ -852,6 +907,12 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/diagnosticsMessage")
     public static class DiagnosticsMessage extends AbstractKotlinHighlightVisitorTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -104,11 +104,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   public final void resetVersionString() {
-    if (delegate instanceof LegacyProjectJdkDelegate legacyDelegate) {
-      legacyDelegate.resetVersionString();
-    } else {
-      LOG.error("Function is unsupported for the new implementation of SDK");
-    }
+    LOG.error("Function is unsupported for the new implementation of SDK");
   }
 
   @Override
@@ -163,11 +159,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   void copyTo(@NotNull ProjectJdkImpl dest) {
-    if (delegate instanceof LegacyProjectJdkDelegate legacyDelegate && dest.delegate instanceof LegacyProjectJdkDelegate legacyDestDelegate) {
-      legacyDelegate.copyTo(legacyDestDelegate);
-    } else {
-      LOG.error("Function is unsupported for the new implementation of SDK");
-    }
+    LOG.error("Function is unsupported for the new implementation of SDK");
   }
 
   @Override
@@ -183,12 +175,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     if (modificator != null) {
       LOG.error("Forbidden to call `getSdkModificator` on already modifiable version of SDK");
     }
-    if (delegate instanceof SdkBridgeImpl sdkBridge) {
-      return new ProjectJdkImpl(delegate, sdkBridge.getSdkModificator(this));
-    } else {
-      SdkModificator sdkModificator = delegate.getSdkModificator();
-      return new ProjectJdkImpl(delegate, sdkModificator);
-    }
+    var sdkBridge = (SdkBridgeImpl)delegate;
+    return new ProjectJdkImpl(delegate, sdkBridge.getSdkModificator(this));
   }
 
   @Override

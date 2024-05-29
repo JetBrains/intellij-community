@@ -183,10 +183,7 @@ internal abstract class TerminalEventDispatcher(
 }
 
 internal fun setupKeyEventDispatcher(editor: EditorEx,
-                                     settings: JBTerminalSystemSettingsProviderBase,
                                      eventsHandler: TerminalEventsHandler,
-                                     outputModel: TerminalOutputModel,
-                                     selectionModel: TerminalSelectionModel,
                                      disposable: Disposable) {
   // Key events forwarding from the editor to terminal panel
   val eventDispatcher: TerminalEventDispatcher = object : TerminalEventDispatcher(editor, disposable) {

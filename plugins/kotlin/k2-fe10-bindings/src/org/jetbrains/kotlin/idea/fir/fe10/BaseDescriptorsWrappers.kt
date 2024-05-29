@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
-import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.KaConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.annotations.*
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
@@ -117,9 +117,9 @@ private fun KtAnnotationValue.toConstantValue(context: Fe10WrapperContext): Cons
     }
 }
 
-internal fun KtConstantValue.toConstantValue(): ConstantValue<*> =
+internal fun KaConstantValue.toConstantValue(): ConstantValue<*> =
     when (this) {
-        is KtConstantValue.KtErrorConstantValue -> ErrorValue.create(errorMessage)
+        is KaConstantValue.KaErrorConstantValue -> ErrorValue.create(errorMessage)
         else -> when (constantValueKind) {
             ConstantValueKind.Null -> NullValue()
             ConstantValueKind.Boolean -> BooleanValue(value as Boolean)
@@ -722,7 +722,7 @@ class KtSymbolBasedPropertyDescriptor(
     override fun getVisibility(): DescriptorVisibility = ktSymbol.visibility.toDescriptorVisibility()
 
     override fun getCompileTimeInitializer(): ConstantValue<*>? {
-        val constantInitializer = ktSymbol.initializer as? KtConstantInitializerValue ?: return null
+        val constantInitializer = ktSymbol.initializer as? KaConstantInitializerValue ?: return null
         return constantInitializer.constant.toConstantValue()
     }
 

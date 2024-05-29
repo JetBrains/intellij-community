@@ -1039,7 +1039,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             List<UsageInfo> usageInfos = !infos.isEmpty() ? infos : null;
             ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(usageInfos))
               .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
-                myUsagePreviewPanel.updateLayout(usageInfos);
+                myUsagePreviewPanel.updateLayout(myProject, usageInfos);
               })
               .coalesceBy(this)
               .submit(AppExecutorUtil.getAppExecutorService());

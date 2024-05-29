@@ -7,11 +7,11 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -50,7 +50,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
 
     protected abstract val filterByExpectedType: Boolean
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun <T : Any> resolveCandidates(
         context: ExpressionContext,
         mapper: context(KtAnalysisSession) (KtFile, Sequence<KtVariableLikeSymbol>) -> T?
@@ -66,14 +66,14 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
         val contextElement = targetElement.getNonStrictParentOfType<KtElement>() ?: return null
 
         allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(contextElement) {
                     val matcher = with (ExpectedExpressionMatcherProvider) {
                         if (filterByExpectedType) get(contextElement) else null
                     }
 
-                    val scope = file.getScopeContextForPosition(contextElement).getCompositeScope { it !is KtScopeKind.ImportingScope }
+                    val scope = file.getScopeContextForPosition(contextElement).getCompositeScope { it !is KaScopeKind.ImportingScope }
                     val variables = scope.getCallableSymbols()
                       .filterIsInstance<KtVariableLikeSymbol>()
                       .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }

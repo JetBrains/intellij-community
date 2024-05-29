@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight.compiler
 
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacilityMixIn
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
@@ -31,7 +32,7 @@ fun KtCompilerFacilityMixIn.compileToDirectory(
     destination: File
 ): KtCompilationResult {
     val result = compile(file, configuration, target, allowedErrorFilter)
-    if (result is KtCompilationResult.Success) {
+    if (result is KaCompilationResult.Success) {
         for (outputFile in result.output) {
             val target = File(destination, outputFile.path)
             (target.parentFile ?: error("Can't find parent for file $target")).mkdirs()
@@ -50,7 +51,7 @@ fun KtCompilerFacilityMixIn.compileToJar(
     destination: File
 ): KtCompilationResult {
     val result = compile(file, configuration, target, allowedErrorFilter)
-    if (result is KtCompilationResult.Success) {
+    if (result is KaCompilationResult.Success) {
         destination.outputStream().buffered().use { os ->
             ZipOutputStream(os).use { zos ->
                 for (outputFile in result.output) {

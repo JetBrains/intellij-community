@@ -42,7 +42,6 @@ class XMLReportSuite : JavaCoverageSuite {
 
   override fun getCoverageData(coverageDataManager: CoverageDataManager?) = error("Should not be called")
   override fun setCoverageData(projectData: ProjectData?) = error("Should not be called")
-  override fun restoreCoverageData() = Unit
 
   companion object {
     fun getPath(packageName: String, fileName: String) =

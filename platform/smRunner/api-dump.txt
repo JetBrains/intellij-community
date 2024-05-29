@@ -35,7 +35,6 @@ c:com.intellij.execution.testframework.sm.ServiceMessageBuilder
 - s:testSuiteFinished(java.lang.String):com.intellij.execution.testframework.sm.ServiceMessageBuilder
 - s:testSuiteStarted(java.lang.String):com.intellij.execution.testframework.sm.ServiceMessageBuilder
 - s:testsStarted():com.intellij.execution.testframework.sm.ServiceMessageBuilder
-- toString():java.lang.String
 f:com.intellij.execution.testframework.sm.ServiceMessageUtil
 - s:parse(java.lang.String,Z):jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 - s:parse(java.lang.String,Z,Z):jetbrains.buildServer.messages.serviceMessages.ServiceMessage
@@ -391,7 +390,6 @@ c:com.intellij.execution.testframework.sm.runner.SMTestProxy
 - setTreeBuildBeforeStart():V
 - shouldRun():Z
 - shouldSkipRootNodeForExport():Z
-- toString():java.lang.String
 - wasLaunched():Z
 - wasTerminated():Z
 c:com.intellij.execution.testframework.sm.runner.SMTestProxy$SMRootTestProxy
@@ -511,7 +509,6 @@ f:com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent
 e:com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent$NodePropertyKey
 - java.lang.Enum
 - sf:PRESENTABLE_NAME:com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent$NodePropertyKey
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent$NodePropertyKey
 - s:values():com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent$NodePropertyKey[]
 c:com.intellij.execution.testframework.sm.runner.events.TestStartedEvent
@@ -546,7 +543,6 @@ a:com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent
 - getName():java.lang.String
 - s:getNodeId(jetbrains.buildServer.messages.serviceMessages.ServiceMessage):java.lang.String
 - s:getNodeId(jetbrains.buildServer.messages.serviceMessages.ServiceMessage,java.lang.String):java.lang.String
-- f:toString():java.lang.String
 com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension
 - a:createHandler(java.io.Reader,com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor):org.xml.sax.helpers.DefaultHandler
 - s:findHandler(java.util.function.Supplier,com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor):org.xml.sax.helpers.DefaultHandler

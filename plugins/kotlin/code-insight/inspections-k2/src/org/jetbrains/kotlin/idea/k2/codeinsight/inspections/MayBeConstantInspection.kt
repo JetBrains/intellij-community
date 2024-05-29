@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
@@ -50,7 +50,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
                     val constant = initializer.getConstantValue() ?: return Status.NONE
                     val erroneousConstant = initializer.usesNonConstValAsConstant()
 
-                    if (constant is KtConstantValue.KtNullConstantValue || constant is KtConstantValue.KtErrorConstantValue) return Status.NONE
+                    if (constant is KaConstantValue.KaNullConstantValue || constant is KaConstantValue.KaErrorConstantValue) return Status.NONE
                     matchStatus(withJvmField, erroneousConstant)
                 }
             }
@@ -66,14 +66,14 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
     }
 
     context(KtAnalysisSession)
-    private fun KtExpression.getConstantValue(): KtConstantValue? {
+    private fun KtExpression.getConstantValue(): KaConstantValue? {
         return evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
     }
 
     context(KtAnalysisSession)
     private fun KtExpression.usesNonConstValAsConstant(): Boolean {
         val diagnostics = getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        return diagnostics.find { it is KtFirDiagnostic.NonConstValUsedInConstantExpression } != null
+        return diagnostics.find { it is KaFirDiagnostic.NonConstValUsedInConstantExpression } != null
     }
 
     private class AddConstModifierFix(property: KtProperty) : AddModifierFix(property, KtTokens.CONST_KEYWORD), CleanupFix {

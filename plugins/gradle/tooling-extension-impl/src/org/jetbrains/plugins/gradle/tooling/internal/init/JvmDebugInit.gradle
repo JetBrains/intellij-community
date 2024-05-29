@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 //file:noinspection GrPackage
 
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
@@ -6,7 +8,8 @@ import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 String debuggerId = DEBUGGER_ID
 //noinspection GrUnresolvedAccess
 String processParameters = PROCESS_PARAMETERS
-
+//noinspection GrUnresolvedAccess
+List<String> processOptions = PROCESS_OPTIONS
 
 Project getCurrentProject() {
   def currentPath = gradle.startParameter.currentDir.path
@@ -71,6 +74,7 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
       def debugPort = ForkedDebuggerHelper.setupDebugger(debuggerId, task.path, processParameters, moduleDir)
       def jvmArgs = options.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
       jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty + ':' + debugPort
+      jvmArgs.addAll(processOptions)
       options.jvmArgs = jvmArgs
     }
     task.doLast {

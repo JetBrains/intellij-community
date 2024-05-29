@@ -43,11 +43,10 @@ private const val GROUP: Int = 1234
 private const val JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES: String = "com.intellij.ide.FileNotInSourceRootChecker.no.check"
 
 @Service(Service.Level.PROJECT)
-internal class FileNotInSourceRootService(
+private class FileNotInSourceRootService(
   private val project: Project,
   private val coroutineScope: CoroutineScope
 ) : Disposable {
-
   fun init() {
     if (PropertiesComponent.getInstance(project).getBoolean(JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES, false)) return
     val editorFactory = EditorFactory.getInstance()
@@ -56,7 +55,7 @@ internal class FileNotInSourceRootService(
         checkEditor(event.editor)
       }
     }, this)
-    editorFactory.allEditors.forEach { editor -> checkEditor(editor) }
+    editorFactory.editorList.forEach { checkEditor(it) }
   }
 
   private fun checkEditor(editor: Editor) {

@@ -94,11 +94,6 @@ class DocumentTracker(
     handlers.add(newHandler)
   }
 
-  @RequiresEdt
-  fun removeHandler(handler: Handler) {
-    handlers.remove(handler)
-  }
-
   val blocks: List<Block>
     get() = tracker.blocks
 

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.application.runReadAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtFile
  * Performs all-phase analysis of the given [files].
  * Does nothing if all declarations in files are already resolved.
  */
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 fun ensureFilesResolved(vararg files: KtFile) {
     // Unless the session is created for the module, its invalidation won't trigger invalidation of dependents.
     // See 'didSessionExist' in 'LLFirSessionInvalidationService.invalidate()'.

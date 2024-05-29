@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
@@ -47,7 +48,11 @@ abstract class K2AbstractCreateFromUsageTest : LightIntentionActionTestCase() {
     override fun doSingleTest(fileSuffix: String, testDataPath: String) {
         val filePath = "$testDataPath/$relativeBasePath/$fileSuffix"
         val test: LightJavaCodeInsightFixtureTestCase
-        val singleFileTest:AbstractK2QuickFixTest = object : AbstractK2QuickFixTest() {
+        val singleFileTest = object : AbstractK2QuickFixTest() {
+
+            override val pluginMode: KotlinPluginMode
+                get() = KotlinPluginMode.K2
+
             override fun getProjectDescriptor(): LightProjectDescriptor {
                 return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
             }
@@ -74,6 +79,10 @@ abstract class K2AbstractCreateFromUsageTest : LightIntentionActionTestCase() {
         }
         else {
             test = object : AbstractK2MultiFileQuickFixTest() {
+
+                override val pluginMode: KotlinPluginMode
+                    get() = KotlinPluginMode.K2
+
                 override fun getProjectDescriptor(): LightProjectDescriptor {
                     return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
                 }

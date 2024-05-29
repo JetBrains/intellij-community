@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.debugger.DebuggerManagerEx
@@ -33,6 +33,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.Semaphore
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
@@ -43,10 +44,12 @@ trait DebuggerMethods implements CompilerMethods {
 
   abstract Logger getLogger()
 
+  @Nullable
   DebugProcessImpl getDebugProcess() {
     debugSession?.process
   }
 
+  @Nullable
   DebuggerSession getDebugSession() {
     DebuggerManagerEx.getInstanceEx(project).context.debuggerSession
   }
@@ -57,7 +60,7 @@ trait DebuggerMethods implements CompilerMethods {
         if (type == ProcessOutputTypes.STDERR) {
           println evt.text
         }
-      }] as ProcessAdapter
+      }] as ProcessListener
       runConfiguration(DefaultDebugExecutor, listener, configuration, null)
     }
     logger.debug("after start")
@@ -69,9 +72,9 @@ trait DebuggerMethods implements CompilerMethods {
       throw t
     }
     finally {
-      def handler = debugProcess.processHandler
+      def handler = debugProcess?.processHandler
       resume()
-      if (!handler.waitFor(ourTimeout)) {
+      if (handler != null && !handler.waitFor(ourTimeout)) {
         if (handler instanceof OSProcessHandler) {
           OSProcessUtil.killProcessTree((handler as OSProcessHandler).process)
         }

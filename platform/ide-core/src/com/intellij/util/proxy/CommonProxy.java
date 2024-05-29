@@ -2,14 +2,14 @@
 package com.intellij.util.proxy;
 
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,14 +20,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated use {@link com.intellij.util.net.JdkProxyProvider} for the main proxy provider of the application
+ */
+@SuppressWarnings("JavadocReference")
+@Deprecated
 public final class CommonProxy extends ProxySelector {
-  private static final Logger LOG = Logger.getInstance(CommonProxy.class);
+  static final Logger LOG = Logger.getInstance(CommonProxy.class);
 
   private static final CommonProxy ourInstance = new CommonProxy();
-  private final CommonAuthenticator myAuthenticator = new CommonAuthenticator();
 
-  private static final ThreadLocal<Boolean> ourReenterDefence = new ThreadLocal<>();
-
+  /** @deprecated use {@link com.intellij.util.net.ProxyUtils#NO_PROXY_LIST} */
+  @Deprecated
   public static final List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
   private static final long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
   private static final AtomicInteger ourNotificationCount = new AtomicInteger();
@@ -35,15 +39,10 @@ public final class CommonProxy extends ProxySelector {
   private static volatile ProxySelector ourWrong;
   private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();
 
-  static {
-    ProxySelector.setDefault(ourInstance);
-  }
-
   private final Object myLock = new Object();
-  private final Set<Pair<HostInfo, Thread>> myNoProxy = new HashSet<>();
 
-  private final Map<String, ProxySelector> myCustom = new HashMap<>();
-  private final Map<String, NonStaticAuthenticator> myCustomAuth = new HashMap<>();
+  private final Map<String, AccessToken> myCustomRegistrations = new HashMap<>();
+  private final Map<String, AccessToken> myCustomAuthRegistrations = new HashMap<>();
 
   public static CommonProxy getInstance() {
     return ourInstance;
@@ -53,17 +52,21 @@ public final class CommonProxy extends ProxySelector {
     ensureAuthenticator();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault()}
+   */
+  @Deprecated
   public static void isInstalledAssertion() {
     final ProxySelector aDefault = ProxySelector.getDefault();
-    if (ourInstance != aDefault) {
+    if (CommonProxyCompatibility.mainProxySelector != null && CommonProxyCompatibility.mainProxySelector != aDefault) {
       // to report only once
       if (ourWrong != aDefault || itsTime()) {
-        LOG.error("ProxySelector.setDefault() was changed to [" + aDefault.toString() + "] - other than com.intellij.util.proxy.CommonProxy.ourInstance.\n" +
+        LOG.error("ProxySelector.setDefault() was changed to [" + aDefault.toString() + "] - other than com.intellij.util.proxy.CommonProxy.myMainProxySelector.\n" +
                   "This will make some " + ApplicationNamesInfo.getInstance().getProductName() + " network calls fail.\n" +
-                  "Instead, methods of com.intellij.util.proxy.CommonProxy should be used for proxying.");
+                  "Instead, methods of com.intellij.util.net.ProxyService should be used for proxying.");
         ourWrong = aDefault;
       }
-      ProxySelector.setDefault(ourInstance);
+      ProxySelector.setDefault(CommonProxyCompatibility.mainProxySelector);
       ourInstance.ensureAuthenticator();
     }
     assertSystemPropertiesSet();
@@ -96,6 +99,7 @@ public final class CommonProxy extends ProxySelector {
     }
   }
 
+  @ApiStatus.Internal
   public static @Nullable @NlsContexts.DialogMessage String getMessageFromProps(Map<String, String> props) {
     String message = null;
     for (Map.Entry<String, String> entry : props.entrySet()) {
@@ -107,6 +111,7 @@ public final class CommonProxy extends ProxySelector {
     return message;
   }
 
+  @ApiStatus.Internal
   public static Map<String, String> getOldStyleProperties() {
     final Map<String, String> props = new HashMap<>();
     props.put(JavaProxyProperty.HTTP_HOST, System.getProperty(JavaProxyProperty.HTTP_HOST));
@@ -115,64 +120,62 @@ public final class CommonProxy extends ProxySelector {
     return props;
   }
 
+
+  /**
+   * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault())}
+   */
+  @Deprecated
   public void ensureAuthenticator() {
-    Authenticator.setDefault(myAuthenticator);
-  }
-
-  public void noProxy(final @NotNull String protocol, final @NotNull String host, final int port) {
-    synchronized (myLock) {
-      LOG.debug("no proxy added: " + protocol + "://" + host + ":" + port);
-      myNoProxy.add(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
+    if (CommonProxyCompatibility.mainAuthenticator != null) {
+      Authenticator.setDefault(CommonProxyCompatibility.mainAuthenticator);
+    }
+    else {
+      LOG.warn("main authenticator is not yet registered");
     }
   }
 
-  public void removeNoProxy(final @NotNull String protocol, final @NotNull String host, final int port) {
+  /** @deprecated no replacement, existing usages are internal and are no-op since noProxy has no usages */
+  @Deprecated
+  public void removeNoProxy(final @NotNull String protocol, final @NotNull String host, final int port) { }
+
+  /**
+   * @deprecated no replacement, only two internal usages, and the rule is never removed, logic should be implemented by other means,
+   * see {@link com.intellij.util.net.ProxyAuthentication}
+   */
+  @Deprecated
+  public void noAuthentication(final @NotNull String protocol, final @NotNull String host, final int port) { }
+
+  /**
+   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
+   */
+  @Deprecated
+  public void removeCustom(final @NotNull String key) {}
+
+  /**
+   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
+   */
+  @Deprecated
+  public void setCustomAuth(@NotNull String key, @NotNull NonStaticAuthenticator nonStaticAuthenticator) {
     synchronized (myLock) {
-      LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
-      myNoProxy.remove(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
+      var register = CommonProxyCompatibility.registerCustomAuthenticator;
+      if (register != null) {
+        LOG.debug("custom auth set: " + key + ", " + nonStaticAuthenticator);
+        //noinspection resource
+        myCustomRegistrations.put(key, register.invoke(nonStaticAuthenticator.asAuthenticator()));
+      }
     }
   }
 
-  public void noAuthentication(final @NotNull String protocol, final @NotNull String host, final int port) {
-    synchronized (myLock) {
-      LOG.debug("no proxy added: " + protocol + "://" + host + ":" + port);
-      myNoProxy.add(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
-    }
-  }
-
-  @SuppressWarnings("unused")
-  public void removeNoAuthentication(final @NotNull String protocol, final @NotNull String host, final int port) {
-    synchronized (myLock) {
-      LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
-      myNoProxy.remove(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
-    }
-  }
-
-  public void setCustom(final @NotNull String key, final @NotNull ProxySelector proxySelector) {
-    synchronized (myLock) {
-      LOG.debug("custom set: " + key + ", " + proxySelector);
-      myCustom.put(key, proxySelector);
-    }
-  }
-
-  public void setCustomAuth(@NotNull String key, @NotNull NonStaticAuthenticator authenticator) {
-    synchronized (myLock) {
-      LOG.debug("custom auth set: " + key + ", " + authenticator);
-      myCustomAuth.put(key, authenticator);
-    }
-  }
-
+  /**
+   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
+   */
+  @Deprecated
   public void removeCustomAuth(final @NotNull String key) {
     synchronized (myLock) {
       LOG.debug("custom auth removed: " + key);
-      myCustomAuth.remove(key);
-    }
-  }
-
-  public void removeCustom(final @NotNull String key) {
-    synchronized (myLock) {
-      LOG.debug("custom set: " + key);
-      myCustom.remove(key);
+      @SuppressWarnings("resource")
+      var registration = myCustomAuthRegistrations.remove(key);
+      if (registration != null) registration.finish();
     }
   }
 
@@ -180,138 +183,38 @@ public final class CommonProxy extends ProxySelector {
     return select(createUri(url));
   }
 
-  private static boolean isLocalhost(@NotNull String hostName) {
-    return hostName.equalsIgnoreCase("localhost") || hostName.equals("127.0.0.1") || hostName.equals("::1");
-  }
-
   @Override
   public @NotNull List<Proxy> select(@Nullable URI uri) {
+    ProxySelector mainProxySelector = CommonProxyCompatibility.mainProxySelector;
+    if (mainProxySelector == null) {
+      LOG.warn("main proxy selector is not yet installed");
+      return NO_PROXY_LIST;
+    }
     isInstalledAssertion();
     if (uri == null) {
       return NO_PROXY_LIST;
     }
-    LOG.debug("CommonProxy.select called for " + uri);
-
-    if (Boolean.TRUE.equals(ourReenterDefence.get())) {
-      return NO_PROXY_LIST;
-    }
-    try {
-      ourReenterDefence.set(Boolean.TRUE);
-      String host = Strings.notNullize(uri.getHost());
-      if (isLocalhost(host)) {
-        return NO_PROXY_LIST;
-      }
-
-      final HostInfo info = new HostInfo(uri.getScheme(), host, correctPortByProtocol(uri));
-      final Map<String, ProxySelector> copy;
-      synchronized (myLock) {
-        if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
-          LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri);
-          return NO_PROXY_LIST;
-        }
-        copy = Map.copyOf(myCustom);
-      }
-      for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
-        List<Proxy> proxies = entry.getValue().select(uri);
-        if (proxies != null && !proxies.isEmpty()) {
-          LOG.debug("CommonProxy.select returns custom proxy for " + uri + ", " + proxies);
-          return proxies;
-        }
-      }
-      return NO_PROXY_LIST;
-    }
-    finally {
-      ourReenterDefence.remove();
-    }
-  }
-
-  private static int correctPortByProtocol(@NotNull URI uri) {
-    if (uri.getPort() == -1) {
-      if ("http".equals(uri.getScheme())) {
-        return ProtocolDefaultPorts.HTTP;
-      }
-      else if ("https".equals(uri.getScheme())) {
-        return ProtocolDefaultPorts.SSL;
-      }
-    }
-    return uri.getPort();
+    return mainProxySelector.select(uri);
   }
 
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
-    LOG.info("connect failed to " + uri.toString() + ", sa: " + sa.toString(), ioe);
-
-    final Map<String, ProxySelector> copy;
-    synchronized (myLock) {
-      copy = new HashMap<>(myCustom);
-    }
-    for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
-      entry.getValue().connectFailed(uri, sa, ioe);
-    }
+    var mainProxySelector = CommonProxyCompatibility.mainProxySelector;
+    if (mainProxySelector == null) return;
+    mainProxySelector.connectFailed(uri, sa, ioe);
   }
 
+  /** @deprecated use {@link com.intellij.util.net.JdkProxyProvider#getAuthenticator()} */
+  @Deprecated
   public Authenticator getAuthenticator() {
-    return myAuthenticator;
+    return CommonProxyCompatibility.mainAuthenticator != null ? CommonProxyCompatibility.mainAuthenticator : Authenticator.getDefault();
   }
 
-  private final class CommonAuthenticator extends Authenticator {
-    @Override
-    protected PasswordAuthentication getPasswordAuthentication() {
-      String siteStr = getRequestingSite() == null ? null : getRequestingSite().toString();
-      LOG.debug("CommonAuthenticator.getPasswordAuthentication called for " + siteStr);
-      String host = getHostNameReliably(getRequestingHost(), getRequestingSite(), getRequestingURL());
-      int port = getRequestingPort();
-
-      final Map<String, NonStaticAuthenticator> copy;
-      synchronized (myLock) {
-        // for hosts defined as no proxy we will NOT pass authentication to not provoke credentials
-        HostInfo hostInfo = new HostInfo(getRequestingProtocol(), host, port);
-        Pair<HostInfo, Thread> pair = new Pair<>(hostInfo, Thread.currentThread());
-        if (myNoProxy.contains(pair)) {
-          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies set (" + siteStr + ")");
-          return null;
-        }
-        copy = Map.copyOf(myCustomAuth);
-      }
-
-      if (!copy.isEmpty()) {
-        for (Map.Entry<String, NonStaticAuthenticator> entry : copy.entrySet()) {
-          final NonStaticAuthenticator authenticator = entry.getValue();
-          prepareAuthenticator(authenticator);
-          final PasswordAuthentication authentication = authenticator.getPasswordAuthentication();
-          if (authentication != null) {
-            LOG.debug("CommonAuthenticator.getPasswordAuthentication found custom authenticator for " + siteStr + ", " + entry.getKey() +
-                      ", " + authenticator);
-            logAuthentication(authentication);
-            return authentication;
-          }
-        }
-      }
-      return null;
-    }
-
-    private void prepareAuthenticator(NonStaticAuthenticator authenticator) {
-      authenticator.setRequestingHost(getRequestingHost());
-      authenticator.setRequestingSite(getRequestingSite());
-      authenticator.setRequestingPort(getRequestingPort());
-      authenticator.setRequestingProtocol(getRequestingProtocol());//http
-      @NlsSafe String requestingPrompt = getRequestingPrompt();
-      authenticator.setRequestingPrompt(requestingPrompt);
-      authenticator.setRequestingScheme(getRequestingScheme());//ntlm
-      authenticator.setRequestingURL(getRequestingURL());
-      authenticator.setRequestorType(getRequestorType());
-    }
-
-    private static void logAuthentication(PasswordAuthentication authentication) {
-      if (authentication == null) {
-        LOG.debug("CommonAuthenticator.getPasswordAuthentication returned null");
-      }
-      else {
-        LOG.debug("CommonAuthenticator.getPasswordAuthentication returned authentication pair with login: " + authentication.getUserName());
-      }
-    }
-  }
-
+  /**
+   * @apiNote no external usages
+   * @deprecated use {@link com.intellij.util.net.ProxyUtils#getHostNameReliably(String, InetAddress, URL)} (it is nullable now)
+   */
+  @Deprecated
   public static String getHostNameReliably(final String requestingHost, final InetAddress site, final URL requestingUrl) {
     String host = requestingHost;
     if (host == null) {
@@ -330,6 +233,8 @@ public final class CommonProxy extends ProxySelector {
     return VfsUtil.toUri(url.toString());
   }
 
+  /** @deprecated one external usage in the method that is deprecated, remove after migration */
+  @Deprecated
   public static final class HostInfo {
     public final String myProtocol;
     public final String myHost;

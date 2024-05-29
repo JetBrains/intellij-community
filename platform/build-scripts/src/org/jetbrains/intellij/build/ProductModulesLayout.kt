@@ -9,10 +9,8 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import java.util.function.BiConsumer
 
 /**
  * Default bundled plugins for all products.
@@ -84,14 +82,6 @@ class ProductModulesLayout {
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
   internal var platformLayoutSpec = persistentListOf<(PlatformLayout, BuildContext) -> Unit>()
-
-  @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
-  @ApiStatus.ScheduledForRemoval
-  fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    platformLayoutSpec = platformLayoutSpec.add { layout, context ->
-      customizer.accept(layout, context)
-    }
-  }
 
   fun addPlatformSpec(customizer: (PlatformLayout, BuildContext) -> Unit) {
     platformLayoutSpec = platformLayoutSpec.add(customizer)

@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link BlockAlignmentProcessor} implementation for {@link Alignment} that
  * {@link Alignment.Anchor#LEFT anchors to the left block edge}.
  */
+@ApiStatus.Internal
 public final class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 
   @Override

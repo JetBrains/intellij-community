@@ -21,7 +21,6 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   private List<VirtualFile> f2;
 
   private IndexableFilesIterator iter1;
-  private IndexableFilesIterator iterShared;
   private IndexableFilesIterator iter2;
 
   private UnindexedFilesIndexer task1;
@@ -38,19 +37,16 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     f2 = createFiles(root, "b1");
 
     iter1 = new FakeIndexableFilesIterator();
-    iterShared = new FakeIndexableFilesIterator();
     iter2 = new FakeIndexableFilesIterator();
 
-    Map<IndexableFilesIterator, Collection<VirtualFile>> map1 = new HashMap<>();
-    map1.put(iter1, f1);
-    map1.put(iterShared, fShared.subList(0, 2));
+    Set<VirtualFile> set1 = new HashSet<>(f1);
+    set1.addAll(fShared.subList(0, 2));
 
-    Map<IndexableFilesIterator, Collection<VirtualFile>> map2 = new HashMap<>();
-    map2.put(iter2, f2);
-    map2.put(iterShared, fShared.subList(1, 3));
+    Set<VirtualFile> set2 = new HashSet<>(f2);
+    set2.addAll(fShared.subList(1, 3));
 
-    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of());
-    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of());
+    task1 = new UnindexedFilesIndexer(getProject(), set1, "test task1", LongSet.of());
+    task2 = new UnindexedFilesIndexer(getProject(), set2, "test task2", LongSet.of());
   }
 
   public void testTryMergeIndexingTasks() {
@@ -118,21 +114,12 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {
-    Map<IndexableFilesIterator, Collection<VirtualFile>> merged = mergedTask.getProviderToFiles();
+    Set<VirtualFile> merged = mergedTask.getFiles();
 
-    assertEquals(3, merged.keySet().size());
-    assertTrue(merged.containsKey(iter1));
-    assertTrue(merged.containsKey(iter2));
-    assertTrue(merged.containsKey(iterShared));
-
-    assertEquals(merged.get(iter1).toString(), f1.size(), merged.get(iter1).size());
-    assertTrue(merged.get(iter1).containsAll(f1));
-
-    assertEquals(merged.get(iter2).toString(), f2.size(), merged.get(iter2).size());
-    assertTrue(merged.get(iter2).containsAll(f2));
-
-    assertEquals(merged.get(iterShared).toString(), fShared.size(), merged.get(iterShared).size());
-    assertTrue(merged.get(iterShared).containsAll(fShared));
+    assertEquals(merged.toString(), f1.size() + f2.size() + fShared.size(), merged.size());
+    assertTrue(merged.containsAll(f1));
+    assertTrue(merged.containsAll(f2));
+    assertTrue(merged.containsAll(fShared));
   }
 
   private static List<VirtualFile> createFiles(VirtualFile root, String... names) {

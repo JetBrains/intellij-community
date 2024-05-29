@@ -14,9 +14,6 @@ import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 
 abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
 
     protected fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(

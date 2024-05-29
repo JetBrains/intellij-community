@@ -5,7 +5,7 @@
     <line>4</line>
     <module>testMethodWithSuper</module>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Actual method parameter is the same constant</problem_class>
-    <description>Actual value of parameter 'i' is always '10'</description>
+    <description>Value of parameter 'i' is always '10'</description>
   </problem>
 
 </problems>

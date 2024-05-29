@@ -65,12 +65,14 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
+/**
+ * @property focusMode should be cleared explicitly by caller
+ */
 @Ignore
 class CodeMetaInfoTestCase(
     val codeMetaInfoTypes: Collection<AbstractCodeMetaInfoRenderConfiguration>,
     val checkNoDiagnosticError: Boolean = false,
     val dumbMode: Boolean = false,
-    val focusMode: Boolean = false,
     private val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
 ) : DaemonAnalyzerTestCase() {
 
@@ -179,8 +181,6 @@ class CodeMetaInfoTestCase(
                 }
             }
         }
-
-        EditorSettingsExternalizable.getInstance().isFocusMode = focusMode
 
         if (dumbMode) {
             val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")
@@ -310,7 +310,9 @@ abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest()
 }
 
 abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
+
     open val checkNoDiagnosticError: Boolean get() = false
+
     open fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
         DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),

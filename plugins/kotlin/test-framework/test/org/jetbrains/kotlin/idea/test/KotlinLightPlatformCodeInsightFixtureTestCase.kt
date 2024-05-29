@@ -3,16 +3,13 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 
-abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCodeInsightFixtureTestCase(),
+abstract class KotlinLightPlatformCodeInsightFixtureTestCase : BasePlatformTestCase(),
                                                                ExpectedPluginModeProvider {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }

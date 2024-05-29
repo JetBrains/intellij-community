@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import it.unimi.dsi.fastutil.Hash
@@ -47,11 +48,16 @@ fun checkHighlighting(
             allowErrorHighlighting = ALLOW_ERRORS in globalDirectives,
             highlightWarnings = highlightWarnings == true || HIGHLIGHT_WARNINGS in globalDirectives,
         ),
-        dumbMode = DUMB_MODE in globalDirectives,
-        focusMode = expectedHighlightingFile.parentFile.name == "focusMode"
+        dumbMode = DUMB_MODE in globalDirectives
     )
 
-    codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
+    val oldMode = EditorSettingsExternalizable.getInstance().isFocusMode
+    try {
+        EditorSettingsExternalizable.getInstance().isFocusMode = expectedHighlightingFile.parentFile.name == "focusMode"
+        codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
+    } finally {
+        EditorSettingsExternalizable.getInstance().isFocusMode = oldMode
+    }
 }
 
 private fun Directives.highlightSeverity(): HighlightSeverity? {

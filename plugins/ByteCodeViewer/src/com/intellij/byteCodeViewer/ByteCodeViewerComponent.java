@@ -16,6 +16,7 @@
 package com.intellij.byteCodeViewer;
 
 import com.intellij.execution.filters.LineNumbersMapping;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -23,7 +24,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
@@ -50,7 +50,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
     EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();
-    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.JAVA, project, null);
+    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(JavaFileType.INSTANCE, project, null);
     ((EditorEx)myEditor).setHighlighter(editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme()));
     ((EditorEx)myEditor).setCaretVisible(true);
 
@@ -87,8 +87,9 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
             int bytecodeLine = mapping.sourceToBytecode(l);
             if (bytecodeLine != -1) {
               offset = findLineNumber(bytecode, bytecodeLine);
-              assert offset != -1 : "there is bytecode line in mapping but it is missing in bytecode";
-              break;
+              if (offset != -1) {
+                break;
+              }
             }
           }
         }

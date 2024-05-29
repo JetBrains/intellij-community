@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.fir.uast.test.*
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.AbstractK2JsBasicCompletionLegacyStdlibTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
@@ -73,7 +74,7 @@ fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 
-private fun assembleWorkspace(): TWorkspace = workspace {
+private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2CodeInsightTests()
     generateK2Fe10BindingsTests()
     generateK2NavigationTests()

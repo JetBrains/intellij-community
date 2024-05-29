@@ -7,9 +7,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
 internal class GithubShareAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -30,15 +27,5 @@ internal class GithubShareAction : DumbAwareAction() {
     }
 
     GHShareProjectUtil.shareProjectOnGithub(project, file)
-  }
-
-
-  companion object {
-    @Deprecated("Extracted to utility",
-                ReplaceWith("GHShareProjectUtil.shareProjectOnGithub",
-                            "org.jetbrains.plugins.github.GHShareProjectUtil"))
-    @ApiStatus.ScheduledForRemoval
-    @JvmStatic
-    fun shareProjectOnGithub(project: Project, file: VirtualFile?): Unit = GHShareProjectUtil.shareProjectOnGithub(project, file)
   }
 }

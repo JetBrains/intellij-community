@@ -10,15 +10,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.FormattingDocumentModelImpl
+import org.jetbrains.annotations.ApiStatus
 
 
 private val formattingListenerKey = Key.create<VirtualFormattingListener?>("VIRTUAL_FORMATTING_CHANGE_LISTENER")
 
 var PsiElement.virtualFormattingListener: VirtualFormattingListener?
+  @ApiStatus.Internal
   get() = getUserData(formattingListenerKey)
+  @ApiStatus.Internal
   set(value) = putUserData(formattingListenerKey, value)
 
-
+@ApiStatus.Internal
 class VirtualFormattingModelBuilder(private val underlyingBuilder: FormattingModelBuilder,
                                     val file: PsiFile,
                                     val listener: VirtualFormattingListener) : FormattingModelBuilder {

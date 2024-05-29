@@ -10,7 +10,6 @@ f:com.intellij.vcs.log.graph.GraphCommitImpl
 - getTimestamp():J
 - hashCode():I
 - size():I
-- toString():java.lang.String
 e:com.intellij.vcs.log.graph.api.EdgeFilter
 - java.lang.Enum
 - sf:ALL:com.intellij.vcs.log.graph.api.EdgeFilter
@@ -286,7 +285,6 @@ f:com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
 - f:getGraphUpdater():java.lang.Runnable
 - f:getSelectedNodeIds():java.util.Set
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.vcs.log.graph.impl.facade.LinearGraphWrapper
 - com.intellij.vcs.log.graph.api.LinearGraph
 - <init>(com.intellij.vcs.log.graph.api.LinearGraph):V
@@ -341,7 +339,6 @@ f:com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 - getRowInfo(I):com.intellij.vcs.log.graph.RowInfo
 - getVisibleCommitCount():I
 - getVisibleRowIndex(java.lang.Object):java.lang.Integer
-- toString():java.lang.String
 - f:updatePrintElementGenerator():V
 f:com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl$LinearGraphActionImpl
 - com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAction
@@ -354,7 +351,6 @@ f:com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl$LinearGraphActionImpl
 - getAffectedElement():com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 - getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.graph.impl.facade.sort.SortChecker
 - <init>():V
 - s:checkLinearGraph(com.intellij.vcs.log.graph.api.LinearGraph):V
@@ -618,7 +614,6 @@ c:com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 - set(I,Z):V
 - setAll(Z):V
 - size():I
-- toString():java.lang.String
 f:com.intellij.vcs.log.graph.utils.impl.CompressedIntList
 - com.intellij.vcs.log.graph.utils.IntList
 - sf:DEFAULT_BLOCK_SIZE:I

@@ -4,18 +4,15 @@ package com.intellij.util.net;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
-import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
-import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.io.IoService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
-import java.util.Calendar;
 
 public final class NetUtils {
   private static final Logger LOG = Logger.getInstance(NetUtils.class);
@@ -38,12 +34,6 @@ public final class NetUtils {
     else {
       return canConnectToRemoteSocket(host, port);
     }
-  }
-
-  /** @deprecated use {@link InetAddress#getLoopbackAddress()} */
-  @Deprecated(forRemoval = true)
-  public static InetAddress getLoopbackAddress() {
-    return InetAddress.getLoopbackAddress();
   }
 
   public static boolean isLocalhost(@NotNull @NlsSafe String hostName) {

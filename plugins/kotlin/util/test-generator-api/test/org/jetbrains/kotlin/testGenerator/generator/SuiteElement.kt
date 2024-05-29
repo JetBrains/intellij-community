@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.GetTestPlatformMethod
+import org.jetbrains.kotlin.testGenerator.generator.methods.KotlinPluginModeMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
@@ -40,7 +41,15 @@ class SuiteElement private constructor(
             return collect(group, suite, model, model.depth, className, platform, isNested)
         }
 
-        private fun collect(group: TGroup, suite: TSuite, model: TModel, depth: Int, className: String, platform: KMPTestPlatform, isNested: Boolean): SuiteElement {
+        private fun collect(
+            group: TGroup,
+            suite: TSuite,
+            model: TModel,
+            depth: Int,
+            className: String,
+            platform: KMPTestPlatform,
+            isNested: Boolean,
+        ): SuiteElement {
             val rootFile = File(group.testDataRoot, model.path)
 
             val methods = mutableListOf<TestMethod>()
@@ -89,9 +98,27 @@ class SuiteElement private constructor(
                 className: String,
                 isNested: Boolean,
                 testCaseMethods: List<TestMethod>,
-                nestedSuites: List<SuiteElement> = emptyList()
+                nestedSuites: List<SuiteElement> = emptyList(),
             ): SuiteElement {
-                val allMethods = testCaseMethods + getMiscMethods(group, model, testCaseMethods, platform)
+                val allMethods = mutableListOf<TestMethod>()
+                allMethods += testCaseMethods
+
+                if (testCaseMethods.isNotEmpty()) {
+                    allMethods += KotlinPluginModeMethod(group.pluginMode)
+
+                    if (platform.isSpecified) {
+                        allMethods += GetTestPlatformMethod(platform)
+                    }
+
+                    if (model.passTestDataPath) {
+                        allMethods += RunTestMethod(model)
+                    }
+
+                    if (group.isCompilerTestData || model.setUpStatements.isNotEmpty()) {
+                        allMethods += SetUpMethod(createStatements(group, model))
+                    }
+                }
+
                 return SuiteElement(group, suite, model, className, isNested, allMethods, nestedSuites)
             }
 
@@ -120,41 +147,22 @@ class SuiteElement private constructor(
             return createElement(className, isNested, methods, nestedSuites)
         }
 
-        private fun getMiscMethods(group: TGroup, model: TModel, testCaseMethods: List<TestMethod>, platform: KMPTestPlatform): List<TestMethod> {
-            if (testCaseMethods.isEmpty()) {
-                return emptyList()
+        private fun createStatements(
+            group: TGroup,
+            model: TModel,
+        ): List<String> = buildList {
+            if (group.isCompilerTestData) {
+                add(
+                    "${TestKotlinArtifacts::compilerTestData.name}(\"${
+                        File(
+                            group.testDataRoot,
+                            model.path
+                        ).toRelativeStringSystemIndependent(group.moduleRoot)
+                            .substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
+                    }\");"
+                )
             }
-
-            val result = ArrayList<TestMethod>(2)
-
-            if (platform.isSpecified) {
-                result += GetTestPlatformMethod(platform)
-            }
-
-            if (model.passTestDataPath) {
-                result += RunTestMethod(model)
-            }
-
-            if (group.isCompilerTestData || model.setUpStatements.isNotEmpty()) {
-                val statements = buildList {
-                    if (group.isCompilerTestData) {
-                        add(
-                            "${TestKotlinArtifacts::compilerTestData.name}(\"${
-                                File(
-                                    group.testDataRoot,
-                                    model.path
-                                ).toRelativeStringSystemIndependent(group.moduleRoot)
-                                    .substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
-                            }\");"
-                        )
-                    }
-                    addAll(model.setUpStatements)
-                }
-
-                result += SetUpMethod(statements)
-            }
-
-            return result
+            addAll(model.setUpStatements)
         }
 
         private fun flatten(element: SuiteElement): List<TestMethod> {

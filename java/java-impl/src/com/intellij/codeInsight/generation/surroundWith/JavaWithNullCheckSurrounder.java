@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
@@ -58,7 +59,7 @@ public class JavaWithNullCheckSurrounder extends JavaExpressionModCommandSurroun
     block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
     PsiElement replace = block.getStatements()[0].replace(factory.createStatementFromText(oldText, block));
     int offset = replace.getTextRange().getEndOffset();
-    updater.moveCaretTo(offset);
+    updater.select(TextRange.from(offset, 0));
   }
 
   @Override

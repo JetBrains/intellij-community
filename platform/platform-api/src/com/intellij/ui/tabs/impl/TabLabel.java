@@ -566,14 +566,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     tabs.revalidateAndRepaint(false);
   }
 
-  /**
-   * @deprecated specify {@link com.intellij.ui.tabs.UiDecorator.UiDecoration#contentInsetsSupplier} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected int getActionsInset() {
-    return !isTabActionsOnTheRight() || ExperimentalUI.isNewUI() ? 6 : 2;
-  }
-
   protected boolean isShowTabActions() {
     return true;
   }

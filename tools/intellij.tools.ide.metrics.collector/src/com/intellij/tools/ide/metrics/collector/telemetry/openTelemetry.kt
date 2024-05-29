@@ -188,3 +188,7 @@ private fun getAttributes(spanName: String, metric: MetricWithAttributes): Colle
     Metric.newCounter("$spanName#" + attributeMetric.id.name, attributeMetric.value)
   }
 }
+
+fun getOrderedSpans(openTelemetryFile: Path, spanName: String): List<SpanElement> =
+  OpentelemetrySpanJsonParser(SpanFilter.nameEquals(spanName)).getSpanElements(openTelemetryFile)
+    .filter { it.name == spanName }.toList().sortedBy { it.startTimestamp }

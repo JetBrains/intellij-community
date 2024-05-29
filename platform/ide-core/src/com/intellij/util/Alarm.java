@@ -365,9 +365,13 @@ public class Alarm implements Disposable {
         if (!myDisposed && task != null) {
           try (AccessToken ignored = ClientId.withClientId(myClientId)) {
             if (myChildContext != null) {
-              try (AccessToken ignored2 = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-                QueueProcessor.runSafely(() -> myChildContext.runAsCoroutine(task));
-              }
+              QueueProcessor.runSafely(() -> {
+                myChildContext.runAsCoroutine(() -> {
+                  try (AccessToken ignored2 = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
+                    task.run();
+                  }
+                });
+              });
             }
             else {
               QueueProcessor.runSafely(task);

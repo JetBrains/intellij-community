@@ -392,6 +392,8 @@
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.MathExtension$Provider"/>
+
     <!--suppress PluginXmlValidity -->
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
     <!--suppress PluginXmlValidity -->

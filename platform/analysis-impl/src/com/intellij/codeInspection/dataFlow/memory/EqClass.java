@@ -1,92 +1,68 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
-public final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
-  private final DfaValueFactory myFactory;
+/**
+ * Represents an ordered class of equivalent variables inside {@link DfaMemoryState}.
+ * The interface is a read-only view over a mutable structure, so other code may modify it.
+ */
+public sealed interface EqClass extends Iterable<DfaVariableValue> permits EqClassImpl {
+  /**
+   * @param index index of a variable within class (0..size-1)
+   * @return variable at a given index
+   */
+  @NotNull DfaVariableValue getVariable(int index);
 
   /**
-   * A comparator which allows to select a "canonical" variable of several variables (which is minimal of them).
-   * Variables with shorter qualifier chain are preferred to be canonical.
+   * @return a copy of this class in the form of the list
    */
-  public static final Comparator<DfaVariableValue> CANONICAL_VARIABLE_COMPARATOR =
-    Comparator.nullsFirst((v1, v2) -> {
-      int result = EqClass.CANONICAL_VARIABLE_COMPARATOR.compare(v1.getQualifier(), v2.getQualifier());
-      if (result != 0) return result;
-      return Integer.compare(v1.getID(), v2.getID());
-    });
+  @NotNull List<@NotNull DfaVariableValue> asList();
 
-  public EqClass(DfaValueFactory factory) {
-    myFactory = factory;
+  /**
+   * @return number of variables within the class
+   */
+  int size();
+
+  /**
+   * Checks if the class is empty.
+   *
+   * @return true if the class is empty, false otherwise.
+   */
+  default boolean isEmpty() {
+    return size() == 0;
   }
 
-  public EqClass(@NotNull EqClass toCopy) {
-    super(toCopy.toNativeArray());
-    myFactory = toCopy.myFactory;
-  }
+  @Nullable
+  DfaVariableValue getCanonicalVariable();
 
+  /**
+   * @return an iterator over the variables of this class.
+   */
   @Override
-  public String toString() {
-    StringBuilder buf = new StringBuilder();
-    buf.append("(");
-    for (int i = 0; i < size(); i++) {
-      if (i > 0) buf.append(", ");
-      int value = get(i);
-      DfaValue dfaValue = myFactory.getValue(value);
-      buf.append(dfaValue);
-    }
-    buf.append(")");
-    return buf.toString();
-  }
-
-  public DfaVariableValue getVariable(int index) {
-    return (DfaVariableValue)myFactory.getValue(get(index));
-  }
+  @NotNull
+  Iterator<@NotNull DfaVariableValue> iterator();
 
   /**
-   * @return copy of variables from this class as a list. Use this method if you expect
-   * class updates during the iteration.
+   * Checks if the given DfaValue is contained in this class.
+   *
+   * @param value the DfaValue to check
+   * @return true if the class contains the given value, otherwise false
    */
-  public List<DfaVariableValue> asList() {
-    List<DfaVariableValue> vars = new ArrayList<>(size());
-    forValues(id -> vars.add((DfaVariableValue)myFactory.getValue(id)));
-    return vars;
-  }
+  boolean contains(@NotNull DfaValue value);
 
   /**
-   * @return the "canonical" variable for this class (according to {@link #CANONICAL_VARIABLE_COMPARATOR}) or
-   * null if the class does not contain variables.
+   * Checks if the current EqClass contains all elements of the given EqClass.
+   *
+   * @param that the EqClass to check against.
+   * @return true if the current EqClass contains all elements of the given EqClass,
+   *         false otherwise.
    */
-  public @Nullable DfaVariableValue getCanonicalVariable() {
-    if (size() == 1) {
-      return getVariable(0);
-    }
-    return StreamEx.of(iterator()).min(CANONICAL_VARIABLE_COMPARATOR).orElse(null);
-  }
-
-  @Override
-  public @NotNull Iterator<DfaVariableValue> iterator() {
-    return new Iterator<>() {
-      int pos;
-
-      @Override
-      public boolean hasNext() {
-        return pos < size();
-      }
-
-      @Override
-      public DfaVariableValue next() {
-        if (pos >= size()) throw new NoSuchElementException();
-        return (DfaVariableValue)myFactory.getValue(get(pos++));
-      }
-    };
-  }
+  boolean containsAll(@NotNull EqClass that);
 }

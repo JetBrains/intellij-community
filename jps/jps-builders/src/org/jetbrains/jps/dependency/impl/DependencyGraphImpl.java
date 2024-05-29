@@ -9,7 +9,6 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -21,14 +20,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new GeneralJvmDifferentiateStrategy());
   private final Set<String> myRegisteredIndices;
 
-  public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
+  public DependencyGraphImpl(MapletFactory containerFactory) {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
     myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
   }
 
   @Override
-  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
+  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
     Delta delta = isSourceOnly? new SourceOnlyDelta(myRegisteredIndices, compiledSources, deletedSources) : new DeltaImpl(compiledSources, deletedSources);
 
     Set<String> deltaIndices = collect(map(delta.getIndices(), index -> index.getName()), new HashSet<>());

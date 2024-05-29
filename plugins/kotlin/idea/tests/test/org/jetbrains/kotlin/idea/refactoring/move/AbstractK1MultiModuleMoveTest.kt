@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 
 abstract class AbstractK1MultiModuleMoveTest : AbstractMultiModuleMoveTest() {
-    override val isFirPlugin: Boolean = false
 
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         runRefactoringTest(path, config, rootDir, project, MoveAction.valueOf(config.getString("type")))

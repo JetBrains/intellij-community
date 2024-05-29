@@ -93,8 +93,8 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
 
     if (getParameterCount() != otherClassType.getParameterCount()) return false;
 
-    final ClassResolveResult result = resolveGenerics();
-    final ClassResolveResult otherResult = otherClassType.resolveGenerics();
+    ClassResolveResult result = resolveGenerics();
+    ClassResolveResult otherResult = otherClassType.resolveGenerics();
     if (result == otherResult) return true;
 
     final PsiClass aClass = result.getElement();
@@ -102,8 +102,14 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     if (aClass == null || otherClass == null) {
       return aClass == otherClass;
     }
-    return aClass.getManager().areElementsEquivalent(aClass, otherClass) &&
-           PsiUtil.equalOnEquivalentClasses(this, aClass, otherClassType, otherClass);
+    if (!aClass.getManager().areElementsEquivalent(aClass, otherClass)) {
+      return false;
+    }
+    if (PsiCapturedWildcardType.isCapture()) {
+      result = result.resolveWithCapturedTopLevelWildcards();
+      otherResult = otherResult.resolveWithCapturedTopLevelWildcards();
+    }
+    return PsiUtil.equalOnEquivalentClasses(result.getSubstitutor(), aClass, otherResult.getSubstitutor(), otherClass);
   }
 
   /**
@@ -116,8 +122,13 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     PsiClass aClass = resolveResult.getElement();
     if (aClass == null) return false;
     boolean hasParams = false;
+    PsiSubstitutor substitutor = null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
-      if (resolveResult.getSubstitutor().substitute(parameter) == null) return false;
+      if (substitutor == null) {
+        substitutor = resolveResult.getSubstitutor();
+        if (!substitutor.hasRawSubstitution()) return true;
+      }
+      if (substitutor.substitute(parameter) == null) return false;
       hasParams = true;
     }
     return hasParams;
@@ -295,6 +306,10 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
      */
     default @Nullable @NlsContexts.DetailedDescription String getInferenceError() {
       return null;
+    }
+    
+    default ClassResolveResult resolveWithCapturedTopLevelWildcards() {
+      return PsiUtil.captureTopLevelWildcards(this);
     }
 
     ClassResolveResult EMPTY = new ClassResolveResult() {

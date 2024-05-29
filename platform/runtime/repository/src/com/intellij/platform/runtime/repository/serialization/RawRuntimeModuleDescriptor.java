@@ -14,6 +14,10 @@ public final class RawRuntimeModuleDescriptor {
   private final List<String> myResourcePaths;
   private final List<String> myDependencies;
 
+  /**
+   * @deprecated use {@link #create(String, List, List)} instead
+   */
+  @Deprecated(forRemoval = true)
   public RawRuntimeModuleDescriptor(@NotNull String id, @NotNull List<String> resourcePaths, @NotNull List<String> dependencies) {
     myId = id;
     myResourcePaths = resourcePaths;
@@ -61,5 +65,9 @@ public final class RawRuntimeModuleDescriptor {
     result = 31 * result + myResourcePaths.hashCode();
     result = 31 * result + myDependencies.hashCode();
     return result;
+  }
+
+  public static @NotNull RawRuntimeModuleDescriptor create(@NotNull String id, @NotNull List<String> resourcePaths, @NotNull List<String> dependencies) {
+    return new RawRuntimeModuleDescriptor(id, resourcePaths, dependencies);
   }
 }

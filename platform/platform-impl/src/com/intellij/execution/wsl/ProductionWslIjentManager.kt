@@ -3,6 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.bindToScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineName
@@ -44,7 +45,9 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       }
 
       validOldHolder ?: scope.suspendingLazy(CoroutineName("IJent on WSL $wslDistribution")) {
-        deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        val ijent = deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        ijent.bindToScope(scope)
+        ijent
       }
     }!!.getValue()
   }

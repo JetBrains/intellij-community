@@ -18,15 +18,16 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -43,8 +44,9 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
   private final Project myProject;
-  private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new WeakHashMap<>();
+  private final Map<Document, List<Change>> changedElements = new WeakHashMap<>();
   private final FileStatusMap myFileStatusMap;
+  private record Change(@NotNull PsiElement psiElement, boolean whiteSpaceOptimizationAllowed, boolean referenceWasChanged) {}
 
   PsiChangeHandler(@NotNull Project project, @NotNull SimpleMessageBusConnection connection,
                    @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
@@ -98,7 +100,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   private void updateChangesForDocumentInner(@NotNull Document document) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (myProject.isDisposed()) return;
-    List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
+    List<Change> toUpdate = changedElements.get(document);
     if (toUpdate == null) {
       // The document has been changed, but psi hasn't
       // We may still need to rehighlight the file if there were changes inside highlighted ranges.
@@ -108,7 +110,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       PsiElement file = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
       if (file == null) return;
 
-      toUpdate = Collections.singletonList(Pair.create(file, true));
+      toUpdate = Collections.singletonList(new Change(file, true, true));
     }
     Application application = ApplicationManager.getApplication();
     Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
@@ -122,9 +124,12 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
     }
 
-    for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
-      PsiElement element = changedElement.getFirst();
-      Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
+    for (Change change : toUpdate) {
+      PsiElement element = change.psiElement();
+      boolean whiteSpaceOptimizationAllowed = change.whiteSpaceOptimizationAllowed();
+      if (change.referenceWasChanged()) {
+        myFileStatusMap.markAllFilesDirty(change);
+      }
       updateByChange(element, document, whiteSpaceOptimizationAllowed);
     }
     changedElements.remove(document);
@@ -185,11 +190,47 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     }
   }
 
+  private boolean hasReferenceInside(@NotNull PsiElement psiElement) {
+    boolean[] result = new boolean[1];
+    psiElement.accept(new PsiRecursiveElementWalkingVisitor(){
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof PsiReference) { // reference was deleted/appeared, has to rehighlight all
+          result[0] = true;
+          stopWalking();
+        }
+        if (element instanceof PsiNameIdentifierOwner) {  // PsiMember, e.g. PsiClass or PsiMethod, was modified - no need to drill into because we have to rehighlight all anyway
+          result[0] = true;
+          stopWalking();
+        }
+        if (element instanceof LazyParseableElement || element.getNode() instanceof LazyParseableElement) {
+          // do not expand chameleons unnecessarily
+          return;
+        }
+        super.visitElement(element);
+      }
+    });
+    return result[0];
+  }
+  private boolean wasReferenceChanged(@NotNull PsiTreeChangeEvent event) {
+    PsiElement oldChild = event.getOldChild();
+    if (oldChild != null && hasReferenceInside(oldChild)) {
+      return true;
+    }
+    PsiElement newChild = event.getNewChild();
+    if (newChild != null && newChild != oldChild && hasReferenceInside(newChild)) {
+      return true;
+    }
+    PsiElement child = event.getChild();
+    boolean result = child != null && child != oldChild && child != newChild && hasReferenceInside(child);
+    return result;
+  }
+
   private void queueElement(@NotNull PsiElement child, boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    PsiFile file = event.getFile();
-    if (file == null) file = child.getContainingFile();
-    if (file == null) {
+    PsiFile psiFile = event.getFile();
+    if (psiFile == null) psiFile = child.getContainingFile();
+    if (psiFile == null) {
       myFileStatusMap.markAllFilesDirty(child);
       return;
     }
@@ -197,16 +238,21 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (!child.isValid()) return;
 
     PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-    Document document = pdm.getCachedDocument(file);
+    Document document = pdm.getCachedDocument(psiFile);
     if (document != null) {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && ProjectFileIndex.getInstance(myProject).isExcluded(virtualFile)) {
+        // ignore changes in excluded files
+        return;
+      }
       if (pdm.getSynchronizer().getTransaction(document) == null) {
         // content reload, language level change or some other big change
         myFileStatusMap.markAllFilesDirty(child);
         return;
       }
 
-      List<Pair<PsiElement, Boolean>> toUpdate = changedElements.computeIfAbsent(document, __->new SmartList<>());
-      toUpdate.add(Pair.create(child, whitespaceOptimizationAllowed));
+      List<Change> toUpdate = changedElements.computeIfAbsent(document, __->new SmartList<>());
+      toUpdate.add(new Change(child, whitespaceOptimizationAllowed, wasReferenceChanged(event)));
     }
   }
 

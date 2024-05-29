@@ -13,6 +13,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
@@ -127,7 +128,7 @@ object GitLabLoginUtil {
   }
 
   fun isAccountUnique(accounts: Collection<GitLabAccount>, server: GitLabServerPath, username: String): Boolean =
-    accounts.none { it.server == server && it.name == username }
+    accounts.none { it.server.toHttpsNormalizedURI() == server.toHttpsNormalizedURI() && it.name == username }
 }
 
 sealed interface LoginResult {

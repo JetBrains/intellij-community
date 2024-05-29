@@ -16,4 +16,4 @@ source.go;entity.name.type.go: [31, 37], {Logger}
 source.go: [37, 38], { }
 source.go;keyword.operator.assignment.go: [38, 39], {=}
 source.go: [39, 40], { }
-source.go;constant.language.go: [40, 43], {nil}
+source.go;constant.language.null.go: [40, 43], {nil}

@@ -493,6 +493,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       // We need to either change how IntelliJ injects shell integrations to support nested shells
       // or disable running a nested shell by CodeWhisperer. Let's do the latter:
       envs.put("PROCESS_LAUNCHED_BY_CW", "1");
+      // The same story as the above. Amazon Q is a renamed CodeWhisperer. So, they also renamed the env variables.
+      envs.put("PROCESS_LAUNCHED_BY_Q", "1");
     }
 
     CommandBlockIntegration commandIntegration = integration != null ? integration.getCommandBlockIntegration() : null;

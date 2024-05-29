@@ -1,4 +1,3 @@
-com/intellij/DynamicBundle$LanguageBundleEP
 com/intellij/diagnostic/EventWatcher
 com/intellij/openapi/components/ServiceDescriptor$PreloadMode
 com/intellij/openapi/extensions/ExtensionDescriptor$Os

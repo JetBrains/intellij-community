@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection
 
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.annotations.*
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.name.ClassId
@@ -33,7 +33,7 @@ internal object WasExperimentalOptInsNecessityChecker {
         return sinceKotlin.argumentByName(VERSION_ARGUMENT)
             ?.asSafely<KtConstantAnnotationValue>()
             ?.constantValue
-            ?.asSafely<KtConstantValue.KtStringConstantValue>()
+            ?.asSafely<KaConstantValue.KaStringConstantValue>()
             ?.let { ApiVersion.parse(it.value) }
     }
 

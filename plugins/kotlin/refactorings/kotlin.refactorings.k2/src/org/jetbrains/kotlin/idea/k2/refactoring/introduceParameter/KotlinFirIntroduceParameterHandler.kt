@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -197,7 +198,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
 
             val psiFactory = KtPsiFactory(project)
             introduceParameterDescriptor(
-                KtPsiUtil.safeDeparenthesize(expression),
+                expression,
                 targetParent,
                 suggestedNames,
                 physicalExpression,
@@ -307,7 +308,11 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             callable = targetParent,
             callableDescriptor = targetParent,
             newParameterName = suggestedNames.first().quoteIfNeeded(),
-            newParameterTypeText = analyze(physicalExpression) { replacementType.render(position = Variance.IN_VARIANCE) },
+            newParameterTypeText = analyze(physicalExpression) {
+                replacementType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+                    functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+                }, position = Variance.IN_VARIANCE)
+            },
             argumentValue = originalExpression,
             withDefaultValue = false,
             parametersUsages = parametersUsages,
@@ -386,7 +391,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: 
     val methodDescriptor = KotlinMethodDescriptor((targetCallable as? KtClass)?.primaryConstructor ?: targetCallable)
     val changeInfo = KotlinChangeInfo(methodDescriptor)
 
-    val defaultValue = if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue
+    val defaultValue = (if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue)?.let { KtPsiUtil.safeDeparenthesize(it) }
 
     if (!withDefaultValue) {
         val parameters = targetCallable.getValueParameters()

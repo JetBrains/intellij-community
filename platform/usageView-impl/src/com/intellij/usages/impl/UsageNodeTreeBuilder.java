@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class UsageNodeTreeBuilder {
   private final GroupNode myRoot;
@@ -20,6 +21,7 @@ class UsageNodeTreeBuilder {
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
+  private final AtomicInteger myFilteredUsagesCount = new AtomicInteger();
 
   UsageNodeTreeBuilder(UsageTarget @NotNull [] targets,
                        UsageGroupingRule @NotNull [] groupingRules,
@@ -45,10 +47,21 @@ class UsageNodeTreeBuilder {
     return ContainerUtil.and(myFilteringRules, rule -> rule.isVisible(usage, myTargets));
   }
 
+  void reset() {
+    myFilteredUsagesCount.set(0);
+  }
+
+  int getFilteredUsagesCount() {
+    return myFilteredUsagesCount.get();
+  }
+
   UsageNode appendOrGet(@NotNull Usage usage,
                         boolean filterDuplicateLines,
                         @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
-    if (!isVisible(usage)) return null;
+    if (!isVisible(usage)) {
+      myFilteredUsagesCount.incrementAndGet();
+      return null;
+    }
 
     GroupNode groupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {

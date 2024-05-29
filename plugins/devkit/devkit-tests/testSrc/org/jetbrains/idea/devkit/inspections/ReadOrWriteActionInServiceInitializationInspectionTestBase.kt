@@ -9,14 +9,12 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.kotlin.KotlinTester
 import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
-import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.idea.devkit.inspections.quickfix.DevKitInspectionFixTestBase
 
 abstract class ReadOrWriteActionInServiceInitializationInspectionTestBase : DevKitInspectionFixTestBase() {

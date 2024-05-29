@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -684,9 +685,9 @@ public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJava
       if (nextStatement == null) return null;
       PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
       if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
-      if (!ReferencesSearch.search(returnVar).allMatch(reference ->
-                                                         PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
-                                                         PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) {
+      if (!ContainerUtil.and(VariableAccessUtils.getVariableReferences(returnVar), reference ->
+        PsiTreeUtil.isAncestor(statement, reference, false) ||
+        PsiTreeUtil.isAncestor(nextStatement, reference, false))) {
         return null;
       }
       return new Context(lambdaExpr, nextStatement, statement, returnVar, call);

@@ -13,14 +13,19 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.junit.Assume
 
 object KMPProjectDescriptorTestUtilities {
-    fun createKMPProjectDescriptor(platform: KMPTestPlatform): LightProjectDescriptor? = when (platform) {
-        KMPTestPlatform.Jvm -> ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
-        KMPTestPlatform.Js -> KotlinStdJSProjectDescriptor
-        KMPTestPlatform.NativeLinux -> KMPNativeLinuxProjectDescriptor
-        KMPTestPlatform.CommonNativeJvm -> KMPCommonNativeLinuxAndJvmProjectDescriptor
-        KMPTestPlatform.Unspecified -> null
+    fun createKMPProjectDescriptor(platform: KMPTestPlatform): LightProjectDescriptor? {
+        Assume.assumeTrue("Current host doesn't support the platform: $platform", platform.isSupportedOnCurrentHost())
+
+        return when (platform) {
+            KMPTestPlatform.Jvm -> ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
+            KMPTestPlatform.Js -> KotlinStdJSProjectDescriptor
+            KMPTestPlatform.NativeLinux -> KMPNativeLinuxProjectDescriptor
+            KMPTestPlatform.CommonNativeJvm -> KMPCommonNativeLinuxAndJvmProjectDescriptor
+            KMPTestPlatform.Unspecified -> null
+        }
     }
 
     fun validateTest(files: List<PsiFile>, platform: KMPTestPlatform) {

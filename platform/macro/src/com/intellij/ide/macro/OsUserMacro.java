@@ -17,7 +17,7 @@ class OsUserMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeCoreBundle.message("macro.os.name");
+    return IdeCoreBundle.message("macro.os.user");
   }
 
   @Nullable

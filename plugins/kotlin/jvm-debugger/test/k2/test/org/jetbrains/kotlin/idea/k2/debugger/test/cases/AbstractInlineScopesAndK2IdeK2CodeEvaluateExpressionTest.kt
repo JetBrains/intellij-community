@@ -2,15 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.test.*
 import org.jetbrains.kotlin.idea.k2.debugger.test.K2DebuggerTestCompilerFacility
 
 abstract class AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest :
     AbstractK1IdeK2CodeKotlinEvaluateExpressionTest()
 {
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override val useInlineScopes = true
 

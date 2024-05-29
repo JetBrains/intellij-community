@@ -9,6 +9,8 @@
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
     <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.util.SudoCommandProvider"
+                        serviceImplementation="com.intellij.execution.util.LocalSudoCommandProvider"/>
 
     <applicationConfigurable parentId="preferences.general"
                              instance="com.intellij.execution.process.elevation.settings.ElevationSettingsConfigurable"

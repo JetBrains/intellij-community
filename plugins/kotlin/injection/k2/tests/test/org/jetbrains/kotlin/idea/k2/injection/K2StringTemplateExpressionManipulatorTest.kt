@@ -3,12 +3,15 @@ package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.injection.StringTemplateExpressionManipulatorTestBase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 class K2StringTemplateExpressionManipulatorTest: StringTemplateExpressionManipulatorTestBase() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -17,7 +20,7 @@ class K2StringTemplateExpressionManipulatorTest: StringTemplateExpressionManipul
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

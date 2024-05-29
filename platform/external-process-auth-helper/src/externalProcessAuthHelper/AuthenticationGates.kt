@@ -47,7 +47,7 @@ class RestrictingAuthenticationGate : AuthenticationGate {
   }
 }
 
-class PassthroughAuthenticationGate : AuthenticationGate {
+class PassthroughAuthenticationGate private constructor() : AuthenticationGate {
   override fun <T> waitAndCompute(operation: Supplier<T>): T {
     return operation.get()
   }

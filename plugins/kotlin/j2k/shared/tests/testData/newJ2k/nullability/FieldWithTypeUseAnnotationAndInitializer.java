@@ -4,6 +4,10 @@ import java.lang.annotation.*;
 public @interface NonNls {
 }
 
-public interface I {
+interface I {
     @NonNls String str = "hello";
+}
+
+class C {
+    static final @NonNls String BLADE = "Blade";
 }

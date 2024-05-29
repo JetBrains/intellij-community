@@ -26,6 +26,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   override fun setUp() {
     super.setUp()
 
+    Registry.get("vcs.show.externally.added.files.notification").setValue(true, testRootDisposable)
     Registry.get("vcs.process.externally.added.files").setValue(true, testRootDisposable)
     projectRoot.children //ensure that all subsequent VFS events will be fired after new files added to projectRoot
   }

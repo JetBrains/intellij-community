@@ -6,6 +6,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -32,6 +33,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,11 +42,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.utils.module.ModuleAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -66,6 +68,37 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
+
+  private @Nullable Disposable myTestDisposable = null;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
+    var notificationListener = new ExternalSystemTaskNotificationListener() {
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        printOutput(text, stdOut);
+      }
+    };
+    notificationManager.addNotificationListener(notificationListener, getTestDisposable());
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    new RunAll(
+      () -> Disposer.dispose(getTestDisposable()),
+      () -> super.tearDown()
+    ).run();
+  }
+
+  private @NotNull Disposable getTestDisposable() {
+    if (myTestDisposable == null) {
+      myTestDisposable = Disposer.newDisposable();
+    }
+    return myTestDisposable;
+  }
 
   protected void assertModulesContains(String... expectedNames) {
     ModuleAssertions.assertModulesContains(myProject, expectedNames);
@@ -404,21 +437,21 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     ProjectDataManager.getInstance().importData(projectDataNode, myProject);
   }
 
-  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
     createProjectConfig(config);
     importProject(skipIndexing);
   }
 
-  protected void importProject(Boolean skipIndexing) {
+  protected void importProject(@Nullable Boolean skipIndexing) {
     if (skipIndexing != null) {
-      PlatformTestUtil.withSystemProperty("idea.skip.indices.initialization", skipIndexing.toString(), () -> doImportProject());
+      PlatformTestUtil.withSystemProperty("idea.skip.indices.initialization", skipIndexing.toString(), () -> importProject());
     }
     else {
-      doImportProject();
+      importProject();
     }
   }
 
-  private void doImportProject() {
+  protected void importProject() {
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, getExternalSystemId());
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
     projectSettings.setExternalProjectPath(getProjectPath());
@@ -456,20 +489,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       }).build();
     }
 
-    ExternalSystemProgressNotificationManager notificationManager = ExternalSystemProgressNotificationManager.getInstance();
-    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
-      @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        printOutput(text, stdOut);
-      }
-    };
-    notificationManager.addNotificationListener(listener);
-    try {
-      ExternalSystemUtil.refreshProjects(importSpec);
-    }
-    finally {
-      notificationManager.removeNotificationListener(listener);
-    }
+    ExternalSystemUtil.refreshProjects(importSpec);
 
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);

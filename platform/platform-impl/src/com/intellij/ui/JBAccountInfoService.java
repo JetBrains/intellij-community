@@ -15,11 +15,13 @@ public interface JBAccountInfoService {
     public final @NotNull String id;
     @NlsSafe public final @Nullable String loginName;
     @NlsSafe public final @Nullable String email;
+    @NlsSafe public final @Nullable String presentableName;
 
-    public JBAData(@NotNull String userId, @Nullable String loginName, @Nullable String email) {
+    public JBAData(@NotNull String userId, @Nullable String loginName, @Nullable String email, @Nullable String presentableName) {
       this.id = userId;
       this.loginName = loginName;
       this.email = email;
+      this.presentableName = presentableName;
     }
   }
 

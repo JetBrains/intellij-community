@@ -21,7 +21,8 @@ public final class MarkdownBidiRegionsSeparator extends TokenSetBidiRegionsSepar
                                                                     EXCLAMATION_MARK,
                                                                     EMPH,
                                                                     TILDE,
-                                                                    BACKTICK);
+                                                                    BACKTICK,
+                                                                    DOLLAR);
 
   public MarkdownBidiRegionsSeparator() {
     super(PARAGRAPH_CONTENTS);

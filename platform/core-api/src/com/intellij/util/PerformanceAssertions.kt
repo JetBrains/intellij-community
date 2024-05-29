@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.application.ApplicationManager
@@ -13,8 +13,8 @@ abstract class PerformanceAssertions {
   companion object {
 
     /**
-     * Checks if current code is not called from a performance critical path
-     * e.g. code highlighting, [com.intellij.psi.PsiElement.getReference].
+     * Checks if current code is not called from a performance-critical path
+     * e.g., code highlighting, [com.intellij.psi.PsiElement.getReference].
      *
      * It is similar to [SlowOperations.assertSlowOperationsAreAllowed] but imposes more strict restrictions.
      */

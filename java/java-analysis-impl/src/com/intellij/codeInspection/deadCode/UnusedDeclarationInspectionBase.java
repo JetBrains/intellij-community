@@ -499,8 +499,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static initializers
         RefClass methodOwnerClass = method.getOwnerClass();
-        boolean canBeOverridden = !method.isStatic() && !method.isConstructor();
-        if (!canBeOverridden || method.isEntry()) {
+        if (method.isStatic() || method.isConstructor() || method.isEntry()) {
           if (method.isStatic()) {
             RefElementImpl owner = (RefElementImpl)method.getOwner();
             if (owner != null) {
@@ -523,14 +522,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             addDelayedMethod(method, methodOwnerClass);
           }
         }
-        if (canBeOverridden) {
-          for (RefOverridable reference : method.getDerivedReferences()) {
-            if (reference instanceof RefMethod) {
-              visitMethod(((RefMethod)reference));
-            }
-            else if (reference instanceof RefFunctionalExpression) {
-              visitFunctionalExpression(((RefFunctionalExpression)reference));
-            }
+        for (RefOverridable reference : method.getDerivedReferences()) {
+          if (reference instanceof RefMethod) {
+            visitMethod(((RefMethod)reference));
+          }
+          else if (reference instanceof RefFunctionalExpression) {
+            visitFunctionalExpression(((RefFunctionalExpression)reference));
           }
         }
       }

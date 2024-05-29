@@ -19,11 +19,13 @@ import com.intellij.usages.similarity.usageAdapter.SimilarUsage
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.util.stream.Collectors
 import javax.swing.JPanel
 
+@Internal
 class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
                                                private val myUsageView: UsageView,
                                                selectedInfos: List<UsageInfo>,
@@ -80,7 +82,7 @@ class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
                                               override fun actionPerformed(e: AnActionEvent) {
                                                 previewPanel.removeAll()
                                                 Disposer.dispose(similarUsagesComponent)
-                                                previewPanel.updateLayout(infos, myUsageView)
+                                                previewPanel.updateLayout(firstSelectedInfo.project, infos, myUsageView)
                                               }
                                             })), BorderLayout.NORTH)
       previewPanel.add(similarUsagesComponent.createLazyLoadingScrollPane(onlyValidUsages))

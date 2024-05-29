@@ -42,7 +42,7 @@ class RunBlockingCancellableTest : CancellationTest() {
       runBlockingCancellable {
         assertJobIsChildOf(coroutineContext.job, job)
         assertNull(currentThreadContextOrNull())
-        assertNull(Cancellation.currentJob())
+        assertEquals(coroutineContext.job, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
 
@@ -84,7 +84,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
       runBlockingCancellable {
         assertNull(currentThreadContextOrNull())
-        assertNull(Cancellation.currentJob())
+        assertEquals(coroutineContext.job, Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
 

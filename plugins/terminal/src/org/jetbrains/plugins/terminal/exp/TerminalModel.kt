@@ -40,7 +40,8 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
       }
     }
 
-  var cursorShape: CursorShape = CursorShape.BLINK_BLOCK
+  @Volatile
+  var cursorShape: CursorShape? = null
     set(value) {
       if (value != field) {
         field = value
@@ -53,14 +54,6 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
       if (value != field) {
         field = value
         cursorListeners.forEach { it.onVisibilityChanged(value) }
-      }
-    }
-
-  var isCursorBlinking: Boolean = true
-    set(value) {
-      if (value != field) {
-        field = value
-        cursorListeners.forEach { it.onBlinkingChanged(value) }
       }
     }
 
@@ -225,11 +218,9 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   interface CursorListener {
     fun onPositionChanged(cursorX: Int, cursorY: Int) {}
 
-    fun onShapeChanged(shape: CursorShape) {}
+    fun onShapeChanged(shape: CursorShape?) {}
 
     fun onVisibilityChanged(visible: Boolean) {}
-
-    fun onBlinkingChanged(blinking: Boolean) {}
 
     fun onMouseModeChanged(mode: MouseMode) {}
 

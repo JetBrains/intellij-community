@@ -9,33 +9,37 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.messages.MessageBusConnection
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
 
-class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventTest<ModuleStateModificationEventTracker>() {
-    override fun constructTracker(module: KtModule): ModuleStateModificationEventTracker = ModuleStateModificationEventTracker(module)
+class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventTest() {
+    override val expectedEventKind: KotlinModificationEventKind
+        get() = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+
+    override val defaultAllowedEventKinds: Set<KotlinModificationEventKind>
+        get() = setOf(
+            // Module state modification can easily trigger global source out-of-block modification through module roots changes.
+            KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION
+        )
 
     fun `test source module state modification after adding module dependency`() {
         val moduleA = createModuleInTmpDir("a")
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with an added module dependency")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         moduleA.addDependency(moduleB)
 
-        trackerA.assertModifiedOnce("module A with added module dependency")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after adding module dependency with existing dependent`() {
@@ -45,15 +49,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         moduleC.addDependency(moduleA)
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with an added module dependency")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C with a dependency on module A")
 
         moduleA.addDependency(moduleB)
 
-        trackerA.assertModifiedOnce("module A with added module dependency")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C with a dependency on module A")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after removing module dependency`() {
@@ -63,15 +67,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         moduleA.addDependency(moduleB)
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with a removed module dependency")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         moduleA.removeDependency(moduleB)
 
-        trackerA.assertModifiedOnce("module A with removed module dependency")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after adding module roots`() {
@@ -79,15 +83,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with added module roots")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         moduleA.addContentRoot(createTempDirectory().toPath())
 
-        trackerA.assertModifiedOnce("module A with added module roots")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after removing module roots`() {
@@ -97,15 +101,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         val root = moduleA.addContentRoot(createTempDirectory().toPath())
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with removed module roots")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         PsiTestUtil.removeContentEntry(moduleA, root.file!!)
 
-        trackerA.assertModifiedOnce("module A with removed module roots")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after adding library dependency`() {
@@ -113,15 +117,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with an added library dependency")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
 
-        trackerA.assertModifiedOnce("module A with added library dependency")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after removing library dependency`() {
@@ -131,15 +135,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         moduleA.addLibrary(TestKotlinArtifacts.kotlinTestJunit, name = "junit")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "module A with a removed library dependency")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         ConfigLibraryUtil.removeLibrary(moduleA, "junit")
 
-        trackerA.assertModifiedOnce("module A with removed module dependency")
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test source module state modification after removal`() {
@@ -147,15 +151,15 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val moduleB = createModuleInTmpDir("b")
         val moduleC = createModuleInTmpDir("c")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
-        val trackerC = createTracker(moduleC)
+        val trackerA = createTracker(moduleA, "disposed module A")
+        val trackerB = createTracker(moduleB, "module B")
+        val trackerC = createTracker(moduleC, "module C")
 
         ModuleManager.getInstance(myProject).disposeModule(moduleA)
 
-        trackerA.assertModifiedOnce("disposed module A", shouldBeRemoval = true)
-        trackerB.assertNotModified("unchanged module B")
-        trackerC.assertNotModified("unchanged module C")
+        trackerA.assertModifiedOnce(shouldBeRemoval = true)
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
     }
 
     fun `test library module state modification after root replacement`() {
@@ -167,17 +171,17 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         moduleC.addDependency(libraryA)
         moduleC.addDependency(libraryB)
 
-        val trackerA = createTracker(libraryA)
-        val trackerB = createTracker(libraryB)
-        val trackerC = createTracker(moduleC)
-        val trackerD = createTracker(moduleD)
+        val trackerA = createTracker(libraryA, "library A with a replaced root")
+        val trackerB = createTracker(libraryB, "library B")
+        val trackerC = createTracker(moduleC, "module C")
+        val trackerD = createTracker(moduleD, "module D")
 
         libraryA.swapRoot()
 
-        trackerA.assertModifiedOnce("project library A with replaced root")
-        trackerB.assertNotModified("unchanged library B")
-        trackerC.assertNotModified("unchanged module C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
     }
 
     private fun Library.swapRoot() = runWriteAction {
@@ -198,17 +202,17 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         moduleC.addDependency(libraryA)
         moduleC.addDependency(libraryB)
 
-        val trackerA = createTracker(libraryA)
-        val trackerB = createTracker(libraryB)
-        val trackerC = createTracker(moduleC)
-        val trackerD = createTracker(moduleD)
+        val trackerA = createTracker(libraryA, "removed library A")
+        val trackerB = createTracker(libraryB, "library B")
+        val trackerC = createTracker(moduleC, "module C")
+        val trackerD = createTracker(moduleD, "module D")
 
         ConfigLibraryUtil.removeProjectLibrary(myProject, libraryA)
 
-        trackerA.assertModifiedOnce("removed project library A", shouldBeRemoval = true)
-        trackerB.assertNotModified("unchanged library B")
-        trackerC.assertNotModified("unchanged module C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce(shouldBeRemoval = true)
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
     }
 
     fun `test script module state modification after moving the script file to another module`() {
@@ -221,23 +225,23 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val destination = getVirtualFile(createTempDirectory())
         PsiTestUtil.addContentRoot(moduleE, destination)
 
-        val trackerA = createTracker(scriptA)
-        val trackerB = createTracker(scriptB)
-        val trackerC = createTracker(libraryC)
-        val trackerD = createTracker(moduleD)
-        val trackerE = createTracker(moduleE)
+        val trackerA = createTracker(scriptA, "moved script A")
+        val trackerB = createTracker(scriptB, "script B")
+        val trackerC = createTracker(libraryC, "library C")
+        val trackerD = createTracker(moduleD, "module D")
+        val trackerE = createTracker(moduleE, "destination module E")
 
         move(scriptA.virtualFile, destination)
 
-        trackerA.assertModifiedOnce("moved script A")
-        trackerB.assertNotModified("unchanged script B")
-        trackerC.assertNotModified("unchanged library C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
 
         // The file move will cause a global PSI tree change event, and thereby a global out-of-block modification event, but the module
         // state of the destination module E is not affected by a file move, so the tracker should not register any module state
         // modification events.
-        trackerE.assertNotModified("unchanged destination module E")
+        trackerE.assertNotModified()
     }
 
     fun `test script module state modification after moving the script file outside the content root`() {
@@ -248,17 +252,17 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         val destination = getVirtualFile(createTempDirectory())
 
-        val trackerA = createTracker(scriptA)
-        val trackerB = createTracker(scriptB)
-        val trackerC = createTracker(libraryC)
-        val trackerD = createTracker(moduleD)
+        val trackerA = createTracker(scriptA, "moved script A")
+        val trackerB = createTracker(scriptB, "script B")
+        val trackerC = createTracker(libraryC, "library C")
+        val trackerD = createTracker(moduleD, "module D")
 
         move(scriptA.virtualFile, destination)
 
-        trackerA.assertModifiedOnce("moved script A")
-        trackerB.assertNotModified("unchanged script B")
-        trackerC.assertNotModified("unchanged library C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
     }
 
     fun `test script module state modification after deleting the script file`() {
@@ -267,17 +271,17 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val libraryC = createProjectLibrary("c")
         val moduleD = createModuleInTmpDir("d")
 
-        val trackerA = createTracker(scriptA)
-        val trackerB = createTracker(scriptB)
-        val trackerC = createTracker(libraryC)
-        val trackerD = createTracker(moduleD)
+        val trackerA = createTracker(scriptA, "deleted script A")
+        val trackerB = createTracker(scriptB, "script B")
+        val trackerC = createTracker(libraryC, "library C")
+        val trackerD = createTracker(moduleD, "module D")
 
         delete(scriptA.virtualFile)
 
-        trackerA.assertModifiedOnce("deleted script A", shouldBeRemoval = true)
-        trackerB.assertNotModified("unchanged script B")
-        trackerC.assertNotModified("unchanged library C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce(shouldBeRemoval = true)
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
     }
 
     fun `test not-under-content-root module state modification after moving the file to another module`() {
@@ -290,23 +294,23 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val destination = getVirtualFile(createTempDirectory())
         PsiTestUtil.addContentRoot(moduleE, destination)
 
-        val trackerA = createTracker(fileA)
-        val trackerB = createTracker(fileB)
-        val trackerC = createTracker(libraryC)
-        val trackerD = createTracker(moduleD)
-        val trackerE = createTracker(moduleE)
+        val trackerA = createTracker(fileA, "moved not-under-content-root file A")
+        val trackerB = createTracker(fileB, "not-under-content-root file B")
+        val trackerC = createTracker(libraryC, "library C")
+        val trackerD = createTracker(moduleD, "module D")
+        val trackerE = createTracker(moduleE, "destination module E")
 
         move(fileA.virtualFile, destination)
 
-        trackerA.assertModifiedOnce("moved not-under-content-root file A")
-        trackerB.assertNotModified("unchanged not-under-content-root file B")
-        trackerC.assertNotModified("unchanged library C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
 
         // The file move will cause a global PSI tree change event, and thereby a global out-of-block modification event, but the module
         // state of the destination module E is not affected by a file move, so the tracker should not register any module state
         // modification events.
-        trackerE.assertNotModified("unchanged destination module E")
+        trackerE.assertNotModified()
     }
 
     fun `test not-under-content-root module state modification after moving the file outside the content root`() {
@@ -317,17 +321,17 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         val destination = getVirtualFile(createTempDirectory())
 
-        val trackerA = createTracker(fileA)
-        val trackerB = createTracker(fileB)
-        val trackerC = createTracker(libraryC)
-        val trackerD = createTracker(moduleD)
+        val trackerA = createTracker(fileA, "moved not-under-content-root file A")
+        val trackerB = createTracker(fileB, "not-under-content-root file B")
+        val trackerC = createTracker(libraryC, "library C")
+        val trackerD = createTracker(moduleD, "module D")
 
         move(fileA.virtualFile, destination)
 
-        trackerA.assertModifiedOnce("moved not-under-content-root file A")
-        trackerB.assertNotModified("unchanged not-under-content-root file B")
-        trackerC.assertNotModified("unchanged library C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
     }
 
     fun `test not-under-content-root module state modification after deleting the file`() {
@@ -336,57 +340,44 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         val libraryC = createProjectLibrary("c")
         val moduleD = createModuleInTmpDir("d")
 
-        val trackerA = createTracker(fileA)
-        val trackerB = createTracker(fileB)
-        val trackerC = createTracker(libraryC)
-        val trackerD = createTracker(moduleD)
+        val trackerA = createTracker(fileA, "deleted not-under-content-root file A")
+        val trackerB = createTracker(fileB, "not-under-content-root file B")
+        val trackerC = createTracker(libraryC, "library C")
+        val trackerD = createTracker(moduleD, "module D")
 
         delete(fileA.virtualFile)
 
-        trackerA.assertModifiedOnce("deleted not-under-content-root file A", shouldBeRemoval = true)
-        trackerB.assertNotModified("unchanged not-under-content-root file B")
-        trackerC.assertNotModified("unchanged library C")
-        trackerD.assertNotModified("unchanged module D")
+        trackerA.assertModifiedOnce(shouldBeRemoval = true)
+        trackerB.assertNotModified()
+        trackerC.assertNotModified()
+        trackerD.assertNotModified()
     }
 
     fun `test module facet`() {
         val moduleA = createModuleInTmpDir("a")
         val moduleB = createModuleInTmpDir("b")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
+        val trackerA = createTracker(moduleA, "module A with an added facet")
+        val trackerB = createTracker(moduleB, "module B")
 
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         moduleA.getOrCreateFacet(modelsProvider, useProjectSettings = false)
         runWriteAction { modelsProvider.commit() }
 
-        trackerA.assertModifiedOnce("module A with added facet")
-        trackerB.assertNotModified("unchanged module B")
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
     }
 
     fun `test module jvm settings`() {
         val moduleA = createModuleInTmpDir("a")
         val moduleB = createModuleInTmpDir("b")
 
-        val trackerA = createTracker(moduleA)
-        val trackerB = createTracker(moduleB)
+        val trackerA = createTracker(moduleA, "module A with changed language level")
+        val trackerB = createTracker(moduleB, "module B")
 
         IdeaTestUtil.setModuleLanguageLevel(moduleA, LanguageLevel.JDK_1_8)
 
-        trackerA.assertModifiedOnce("module A language level is changed")
-        trackerB.assertNotModified("unchanged module B")
-    }
-
-}
-
-class ModuleStateModificationEventTracker(module: KtModule) : ModuleModificationEventTracker(
-    module,
-    eventKind = "module state modification",
-) {
-    override fun configureSubscriptions(busConnection: MessageBusConnection) {
-        busConnection.subscribe(
-            KotlinTopics.MODULE_STATE_MODIFICATION,
-            KotlinModuleStateModificationListener(::handleEvent),
-        )
+        trackerA.assertModifiedOnce()
+        trackerB.assertNotModified()
     }
 }

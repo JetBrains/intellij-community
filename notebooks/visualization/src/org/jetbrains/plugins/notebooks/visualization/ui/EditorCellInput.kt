@@ -20,9 +20,11 @@ class EditorCellInput(
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
 
   val interval: NotebookCellLines.Interval
-    get() = cell.intervalPointer.get() ?: error("Invalid interval")
+    get() = cell.intervalPointer.get()
+            ?: error("Invalid interval")
 
   private var foldRegion: FoldRegion? = null
+  private val runCellButton = EditorCellRunButton(editor)
 
   val bounds: Rectangle
     get() {
@@ -107,6 +109,7 @@ class EditorCellInput(
 
   fun dispose() {
     folding.dispose()
+    runCellButton.dispose()
     _component.dispose()
   }
 
@@ -138,6 +141,14 @@ class EditorCellInput(
 
   fun showFolding() {
     folding.show()
+  }
+
+  fun showRunButton() {
+    runCellButton.showRunButton(interval)
+  }
+
+  fun hideRunButton() {
+    runCellButton.hideRunButton()
   }
 
   fun addViewComponentListener(listener: EditorCellViewComponentListener) {

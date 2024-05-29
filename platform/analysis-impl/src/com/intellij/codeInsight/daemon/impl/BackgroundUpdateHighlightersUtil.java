@@ -347,7 +347,7 @@ public final class BackgroundUpdateHighlightersUtil {
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("createOrReuseHighlighterFor "+info +(salvagedFromBin == null ? "" : " (recycled)"));
+      LOG.debug("createOrReuseHighlighter " + highlighter + (salvagedFromBin == null ? "" : " (recycled)"));
     }
     if (infoAttributes != null) {
       TextAttributes actualAttributes = highlighter.getTextAttributes(colorsScheme);

@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator")
         public static class ReplaceCallWithUnaryOperator extends AbstractFe10BindingIntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -107,6 +114,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceContains")
         public static class ReplaceContains extends AbstractFe10BindingIntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -220,6 +233,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke")
         public static class ReplaceInvoke extends AbstractFe10BindingIntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -314,6 +333,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary")
     public static class ConvertSecondaryConstructorToPrimary extends AbstractFe10BindingIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -452,6 +477,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/convertToStringTemplate")
     public static class ConvertToStringTemplate extends AbstractFe10BindingIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -740,6 +771,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/convertTryFinallyToUseCall")
     public static class ConvertTryFinallyToUseCall extends AbstractFe10BindingIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -818,6 +855,12 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/removeRedundantCallsOfConversionMethods")
     public static class RemoveRedundantCallsOfConversionMethods extends AbstractFe10BindingIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

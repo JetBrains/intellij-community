@@ -67,7 +67,6 @@ c:com.intellij.facet.Facet
 - f:hashCode():I
 - initFacet():V
 - isDisposed():Z
-- toString():java.lang.String
 com.intellij.facet.FacetConfiguration
 - a:createEditorTabs(com.intellij.facet.ui.FacetEditorContext,com.intellij.facet.ui.FacetValidatorsManager):com.intellij.facet.ui.FacetEditorTab[]
 - readExternal(org.jdom.Element):V
@@ -123,7 +122,6 @@ a:com.intellij.facet.FacetType
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 f:com.intellij.facet.FacetTypeId
 - <init>(java.lang.String):V
-- toString():java.lang.String
 com.intellij.facet.ModifiableFacetModel
 - com.intellij.facet.FacetModel
 - a:addFacet(com.intellij.facet.Facet):V
@@ -201,7 +199,6 @@ c:com.intellij.ide.util.frameworkSupport.FrameworkRole
 - sf:UNKNOWN:com.intellij.ide.util.frameworkSupport.FrameworkRole[]
 - <init>(java.lang.String):V
 - equals(java.lang.Object):Z
-- toString():java.lang.String
 a:com.intellij.ide.util.projectWizard.AbstractModuleBuilder
 - com.intellij.ide.util.projectWizard.ProjectBuilder
 - <init>():V
@@ -303,7 +300,6 @@ a:com.intellij.ide.util.projectWizard.ModuleWizardStep
 - isStepVisible():Z
 - onStepLeaving():V
 - onWizardFinished():V
-- toString():java.lang.String
 - a:updateDataModel():V
 - updateStep():V
 - validate():Z
@@ -459,7 +455,6 @@ a:com.intellij.openapi.module.ModuleType
 - isValidSdk(com.intellij.openapi.module.Module,com.intellij.openapi.projectRoots.Sdk):Z
 - modifyProjectTypeStep(com.intellij.ide.util.projectWizard.SettingsStep,com.intellij.ide.util.projectWizard.ModuleBuilder):com.intellij.ide.util.projectWizard.ModuleWizardStep
 - modifySettingsStep(com.intellij.ide.util.projectWizard.SettingsStep,com.intellij.ide.util.projectWizard.ModuleBuilder):com.intellij.ide.util.projectWizard.ModuleWizardStep
-- toString():java.lang.String
 a:com.intellij.openapi.module.ModuleTypeManager
 - <init>():V
 - a:findByID(java.lang.String):com.intellij.openapi.module.ModuleType
@@ -559,7 +554,6 @@ a:com.intellij.openapi.projectRoots.SdkType
 - suggestHomePaths():java.util.Collection
 - a:suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 - supportsCustomCreateUI():Z
-- toString():java.lang.String
 c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - com.intellij.openapi.projectRoots.SdkType
 - com.intellij.openapi.projectRoots.JavaSdkType

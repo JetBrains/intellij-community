@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
@@ -89,7 +89,7 @@ class KotlinParameterInfo(
      */
     val defaultValueParameterReferences: MutableMap<PsiReference, Int> = mutableMapOf<PsiReference, Int>();
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun collectDefaultValueParameterReferences(callable: KtNamedDeclaration) {
         val expression = defaultValueForCall
         val file = expression?.containingFile as? KtFile ?: return
@@ -117,7 +117,7 @@ class KotlinParameterInfo(
         return inheritedName
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     fun requiresExplicitType(inheritedCallable: KtElement?): Boolean {
         if (inheritedCallable is KtFunctionLiteral) {
             allowAnalysisFromWriteAction {

@@ -4,7 +4,7 @@
     <file>Test.java</file>
     <line>16</line>
     <problem_class>Actual method parameter is the same constant</problem_class>
-    <description>Actual value of parameter 'val' is always '239'</description>
+    <description>Value of parameter 'val' is always '239'</description>
   </problem>
 </problems>
 

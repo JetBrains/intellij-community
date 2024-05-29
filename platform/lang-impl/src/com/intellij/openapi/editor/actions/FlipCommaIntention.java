@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
 
 
-public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> {
+public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
   public FlipCommaIntention() {
     super(PsiElement.class);
   }

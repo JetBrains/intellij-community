@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
@@ -30,7 +30,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
 
     private class SubtypeInfo(val reference: KtReferenceExpression, val kind: KtClassKind, val hasZeroParameterConstructors: Boolean)
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) {
         subtypeInfo = null
 
@@ -43,7 +43,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
         val referenceExpression = identifier.parent as? KtReferenceExpression ?: return
 
         allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(referenceExpression) {
                     subtypeInfo = resolveSubtypeInfo(referenceExpression)

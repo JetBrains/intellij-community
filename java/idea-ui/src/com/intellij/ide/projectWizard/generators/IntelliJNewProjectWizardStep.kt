@@ -43,7 +43,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
@@ -170,8 +169,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   protected open fun setupSettingsUI(builder: Panel) {
     setupJavaSdkUI(builder)
-    @Suppress("DEPRECATION")
-    builder.customOptions()
     setupSampleCodeUI(builder)
   }
 
@@ -179,19 +176,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     setupModuleNameUI(builder)
     setupModuleContentRootUI(builder)
     setupModuleFileLocationUI(builder)
-    @Suppress("DEPRECATION")
-    builder.customAdditionalOptions()
   }
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Implements setupSettingsUI function directly")
-  @ApiStatus.ScheduledForRemoval
-  open fun Panel.customOptions() = Unit
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Implements setupAdvancedSettingsUI function directly")
-  @ApiStatus.ScheduledForRemoval
-  open fun Panel.customAdditionalOptions() = Unit
 
   override fun setupUI(builder: Panel) {
     setupSettingsUI(builder)

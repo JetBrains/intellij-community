@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.util
 import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 
-class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
+internal class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
   private val specs: Map<String, ShellCommandSpec> = specs.associateBy { it.name }
 
   override suspend fun getCommandSpec(commandName: String): ShellCommandSpec? {

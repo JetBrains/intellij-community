@@ -83,13 +83,17 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
   }
 
   private fun processPromptStateUpdatedEvent(event: List<String>) {
-    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(1))
-    val gitBranch = Param.GIT_BRANCH.getDecodedValueOrNull(event.getOrNull(2))?.takeIf { it.isNotEmpty() }
-    val virtualEnv = Param.VIRTUAL_ENV.getDecodedValueOrNull(event.getOrNull(3))?.takeIf { it.isNotEmpty() }
-    val condaEnv = Param.CONDA_ENV.getDecodedValueOrNull(event.getOrNull(4))?.takeIf { it.isNotEmpty() }
-    val originalPrompt = Param.ORIGINAL_PROMPT.getDecodedValueOrNull(event.getOrNull(5))?.takeIf { it.isNotEmpty() }
-    val originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedValueOrNull(event.getOrNull(6))?.takeIf { it.isNotEmpty() }
-    val state = TerminalPromptState(currentDirectory, gitBranch, virtualEnv, condaEnv, originalPrompt, originalRightPrompt)
+    val state = TerminalPromptState(
+      currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(1)),
+      userName = Param.USER_NAME.getDecodedNotEmptyValueOrNull(event.getOrNull(2)),
+      userHome = Param.USER_HOME.getDecodedNotEmptyValueOrNull(event.getOrNull(3)),
+      gitBranch = Param.GIT_BRANCH.getDecodedNotEmptyValueOrNull(event.getOrNull(4)),
+      virtualEnv = Param.VIRTUAL_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(5)),
+      condaEnv = Param.CONDA_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(6)),
+      originalPrompt = Param.ORIGINAL_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(7)),
+      originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(8)),
+      shellName = session.shellIntegration.shellType.toString().lowercase()
+    )
     firePromptStateUpdated(state)
   }
 
@@ -238,6 +242,8 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     REQUEST_ID,
     RESULT,
     CURRENT_DIRECTORY,
+    USER_NAME,
+    USER_HOME,
     GIT_BRANCH,
     VIRTUAL_ENV,
     CONDA_ENV,
@@ -257,6 +263,10 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     }
 
     fun getDecodedValue(nameAndValue: String?): String = getDecodedValueOrNull(nameAndValue) ?: fail()
+
+    fun getDecodedNotEmptyValueOrNull(nameAndValue: String?): String? {
+      return getDecodedValueOrNull(nameAndValue)?.takeIf { it.isNotEmpty() }
+    }
 
     fun getDecodedValueOrNull(nameAndValue: String?): String? {
       val encodedValue = getValueOrNull(nameAndValue) ?: return null

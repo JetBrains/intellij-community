@@ -2555,9 +2555,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    */
   private boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
     Window window = event.getWindow(); // the activated or focused window
-    return window == null ||
-           popup == null ||
-           !SwingUtilities.isDescendingFrom(window, popup) && (myFocusable || !SwingUtilities.isDescendingFrom(popup, window));
+    if (window == null || popup == null) return true;
+
+    if (SwingUtilities.isDescendingFrom(window, popup) || (!myFocusable && SwingUtilities.isDescendingFrom(popup, window))) {
+      return false;
+    }
+
+    // On Wayland focus gets temporarily transferred to popup's owner while the popup is being
+    // interactively moved.
+    // This is not a reason for cancelling the popup.
+    if (StartupUiUtil.isWaylandToolkit()) {
+      Window popupOwner = popup.getOwner();
+      return !Objects.equals(window, popupOwner);
+    }
+
+    return true;
   }
 
   private @Nullable Point getStoredLocation() {

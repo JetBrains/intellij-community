@@ -34,10 +34,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +116,10 @@ public final class ExecutionHelper {
       addMessages(MessageCategory.ERROR, errors, errorTreeView, file, "Unknown Error");
       addMessages(MessageCategory.WARNING, warnings, errorTreeView, file, "Unknown Warning");
 
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+      final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+      if (window != null) {
+       window.activate(null);
+      }
     });
   }
 
@@ -203,7 +203,10 @@ public final class ExecutionHelper {
         .addMessage(MessageCategory.SIMPLE, new String[]{"Process finished with exit code " + output.getExitCode()}, null, -1, -1, null);
 
       if (activateWindow) {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (toolWindow != null) {
+          toolWindow.activate(null);
+        }
       }
     });
   }
@@ -214,11 +217,13 @@ public final class ExecutionHelper {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       final MessageView messageView = MessageView.getInstance(myProject);
-      final Content content = ContentFactory.getInstance().createContent(errorTreeView, tabDisplayName, true);
-      messageView.getContentManager().addContent(content);
-      Disposer.register(content, errorTreeView);
-      messageView.getContentManager().setSelectedContent(content);
-      ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
+      messageView.runWhenInitialized(() -> {
+        final Content content = ContentFactory.getInstance().createContent(errorTreeView, tabDisplayName, true);
+        messageView.getContentManager().addContent(content);
+        Disposer.register(content, errorTreeView);
+        messageView.getContentManager().setSelectedContent(content);
+        ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
+      });
     }, ExecutionBundle.message("open.message.view"), null);
   }
 

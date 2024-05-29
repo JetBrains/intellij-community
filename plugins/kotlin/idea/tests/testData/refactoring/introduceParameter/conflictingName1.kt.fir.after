@@ -1,0 +1,6 @@
+class Foo2(val string: String)
+
+fun bar(string: String = "") {
+    val prop = Foo2::string
+    val qux = string
+}

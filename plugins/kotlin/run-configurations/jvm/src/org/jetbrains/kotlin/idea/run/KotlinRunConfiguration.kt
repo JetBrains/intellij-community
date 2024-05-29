@@ -242,7 +242,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     private fun updateMainClassName(element: PsiElement) {
-        val mainOwner = KotlinMainFunctionDetector.getInstance().findMainOwner(element) ?: return
+        val mainOwner = KotlinMainFunctionDetector.getInstanceDumbAware(element.project).findMainOwner(element) ?: return
         runClass = getMainClassJvmName(mainOwner) ?: return
     }
 
@@ -497,6 +497,6 @@ private fun KtFile.hasMainFun(
         return true
     }
 
-    val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
+    val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(project)
     return mainFunCandidates.any { mainFunctionDetector.isMain(it) }
 }

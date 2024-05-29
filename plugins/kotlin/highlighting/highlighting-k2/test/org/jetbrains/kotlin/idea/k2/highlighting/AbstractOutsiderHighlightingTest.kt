@@ -11,7 +11,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.utils.editor.getVirtualFile
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
@@ -23,9 +22,6 @@ import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
 abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtureTestCase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT
 

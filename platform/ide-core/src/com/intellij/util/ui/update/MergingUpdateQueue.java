@@ -33,6 +33,8 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
  * task execution for e.g., 500ms and if new updates are added during this period, they can be simply ignored.
  * <p>
  * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
+ *
+ * @see com.intellij.util.concurrency.QueueProcessor
  */
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public static final JComponent ANY_COMPONENT = new JComponent() {};

@@ -30,7 +30,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
         if (RootKindMatcher.matches(project, file, RootKindFilter.libraryFiles.copy(includeScriptDependencies = false)))
             return null
 
-        if ((ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles() ?: emptyList()).isEmpty()) return null
+        if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().isEmpty()) return null
 
         if (file !in ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()
             && file !in ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSourcesScope()) {

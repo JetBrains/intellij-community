@@ -8,8 +8,6 @@ interface NavBarItemVm {
 
   val presentation: NavBarItemPresentationData
 
-  val isModuleContentRoot: Boolean
-
   val isFirst: Boolean
 
   val isLast: Boolean

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.dependents
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
@@ -17,9 +16,6 @@ import java.io.File
 abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>(
     ModuleDependentsTestProjectStructureParser,
 ) {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("moduleDependents")

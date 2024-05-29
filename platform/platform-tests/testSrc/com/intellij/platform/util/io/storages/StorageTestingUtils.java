@@ -32,6 +32,18 @@ public final class StorageTestingUtils {
    * app was kill-9-ed. This is just an emulation -- it doesn't replicate all the details of actual kill-9 --
    * but re-opened storage most likely will have 'not closed properly' state, so appropriate actions could be
    * tested
+   * <p>
+   * It is hard to test 'improperly closed' behaviour of storages because the storages APIs are intentionally
+   * _designed_ to prohibit 'improperly closed' scenarios. E.g., in most cases, one can't re-open storage that
+   * wasn't closed -- all the raw storages (MMappedFileStorage, PagedFileStorage, etc) keep track of opened
+   * files, and prohibit re-opening of the file that is already opened and not yet closed.
+   * <p>
+   * The real-life scenario for 'improperly closed' is unexpected app termination -- kill or crash. Such
+   * scenarios could be emulated (see StressTestUtil), but it is quite a heavy-weight testing approach.
+   * <p>
+   * Here is a more light-weight approach to create 'improperly closed' state: we use reflection to
+   * find the ~deepest underlying (wrapped) storages, and close them -- without closing top-level storage.
+   * Now one _can_ re-open the same file, and got storage in 'improperly closed' state
    */
   public static void emulateImproperClose(@NotNull AutoCloseable storage) throws Exception {
     emulateImproperClose(storage, new HashSet<>(), 0);
@@ -40,17 +52,23 @@ public final class StorageTestingUtils {
   private static void emulateImproperClose(@NotNull Object storage,
                                            @NotNull Set<Object> alreadyProcessed,
                                            int depth) throws Exception {
-    //It is hard to test 'improperly closed' behaviour of storages because storages APIs are intentionally
-    // designed to prohibit 'improperly closed' scenarios. E.g., in most cases, one can't re-open storage
-    // that wasn't closed -- all raw storages (MMappedFileStorage, PagedFileStorage, etc) keep track of
-    // opened files, and prohibit re-opening of the file that is already opened and not yet closed.
+    //RC: this method is by design 'hacky': we are trying to do something that storage API was NOT designed to allow,
+    //    and even designed to prohibit. And since we're doing it for memory-mapped storages, this hack is inherently
+    //    JVM-crash-risky.
     //
-    // The real-life scenario for 'improperly closed' is unexpected app termination -- kill or crash. Such
-    // scenarios could be emulated (see StressTestUtil), but it is quite a heavy-weight testing approach.
+    //    Basic logic is simple: we use reflection to walk object graph starting with 'storage', look for the 'raw'
+    //    (low-level) storages, like MMappedFileStorage, or PagedStorage (see the full list below), and close those
+    //    low-level storages, without closing upper-level storages, built on top of those low-level raw storages.
+    //    Managing of 'proper close' is a task of upper-level storage implementation -- as we don't close upper-level
+    //    storages, they have no chance to stamp the 'proper close' flags into the persistent data, hence the persistent
+    //    data state must be as-if app was crashed.
     //
-    // Here is a more light-weight approach to create 'improperly closed' state: we use reflection to
-    // find the ~deepest underlying (wrapped) storages, and close them -- without closing top-level storage.
-    // Now one _can_ re-open the same file, and got storage in 'improperly closed' state
+    //    Even though it is conceptually simple, a lot of tuning and implicit assumptions needed to implement it. Basic
+    //    complications on the way:
+    //    1. Walk as little of object graph as possible, and not the whole heap -- but not miss any storage. For that
+    //       .isUntouchable() method cuts off branches early.
+    //    2. Some objects could rely on the storages we already close -- e.g. even ByteBuffer.hashCode() could crash JVM
+    //       if it is mapped ByteBuffer, and it was already unmapped. Again, .isUntouchable() is the protection
 
     if (alreadyProcessed.contains(storage)) {
       return;
@@ -304,7 +322,7 @@ public final class StorageTestingUtils {
     }
 
     if (value.getClass().getPackageName().startsWith("io.opentelemetry")) {
-      //don't mess with ITel internals
+      //don't mess with OTel internals
       return true;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -26,7 +25,9 @@ import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.toSnapshot
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -34,6 +35,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 interface LibraryBridge : LibraryEx {
   val libraryId: LibraryId
@@ -88,7 +90,7 @@ class LibraryBridgeImpl(
 
   override fun getTable(): LibraryTable? = if (libraryTable is ModuleLibraryTableBridge) null else libraryTable
   override fun getRootProvider(): RootProvider = this
-  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
+  override fun getPresentableName(): String = getPresentableName(this)
 
   override fun toString(): String {
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
@@ -211,6 +213,21 @@ class LibraryBridgeImpl(
       OrderRootType.CLASSES -> LibraryRootTypeId.COMPILED
       OrderRootType.SOURCES -> LibraryRootTypeId.SOURCES
       else -> libraryRootTypes[name()]!!
+    }
+
+    internal fun getPresentableName(library: LibraryEx): @Nls(capitalization = Nls.Capitalization.Title) String {
+      val name = library.name
+      if (name != null) {
+        return name
+      }
+      if (library.isDisposed) {
+        return ProjectModelBundle.message("disposed.library.title")
+      }
+      val urls = library.getUrls(OrderRootType.CLASSES)
+      if (urls.size > 0) {
+        return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]))
+      }
+      return ProjectModelBundle.message("empty.library.title")
     }
   }
 }

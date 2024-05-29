@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui
 
+import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.button
 import com.intellij.driver.sdk.waitFor
@@ -13,7 +14,7 @@ infix fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
 
 // should not
 infix fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
-  return shouldNot(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
+  return should(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = { !condition() })
 }
 
 // should
@@ -63,27 +64,19 @@ fun <T : UiComponent> T.should(message: String,
 fun <T : UiComponent> T.should(message: String = "",
                                timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
                                condition: T.() -> Boolean): T {
-  waitFor(timeout, errorMessage = message) {
-    try {
-      this.condition()
+  var lastException: Throwable? = null
+  try {
+    waitFor(timeout, errorMessage = message) {
+      try {
+        this.condition()
+      }
+      catch (e: Throwable) {
+        lastException = e
+        false
+      }
     }
-    catch (e: Throwable) {
-      false
-    }
-  }
-  return this
-}
-
-fun <T : UiComponent> T.shouldNot(message: String = "",
-                               timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
-                               condition: T.() -> Boolean): T {
-  waitFor(timeout, errorMessage = message) {
-    try {
-      !this.condition()
-    }
-    catch (e: Throwable) {
-      false
-    }
+  } catch (e: WaitForException){
+    throw WaitForException(e.duration, e.errorMessage, lastException)
   }
   return this
 }

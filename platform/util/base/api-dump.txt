@@ -66,7 +66,6 @@ c:com.intellij.openapi.util.TextRange
 - shiftRight(I):com.intellij.openapi.util.TextRange
 - subSequence(java.lang.CharSequence):java.lang.CharSequence
 - substring(java.lang.String):java.lang.String
-- toString():java.lang.String
 - union(com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
 f:com.intellij.openapi.util.text.Formats
 - <init>():V
@@ -211,7 +210,6 @@ f:com.intellij.smRunner.OutputType
 - f:getData():java.lang.Object
 - f:getStreamType():com.intellij.smRunner.OutputStreamType
 - hashCode():I
-- toString():java.lang.String
 com.intellij.util.ArrayFactory
 - a:create(I):java.lang.Object[]
 f:com.intellij.util.ArrayUtil
@@ -343,7 +341,6 @@ f:com.intellij.util.IntPair
 - <init>(I,I):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.util.ObjectUtilsRt
 - <init>():V
 - s:reachabilityFence(java.lang.Object):V
@@ -602,7 +599,6 @@ c:com.intellij.util.text.CharArrayCharSequence
 - f:length():I
 - readCharsTo(I,C[],I,I):I
 - subSequence(I,I):java.lang.CharSequence
-- toString():java.lang.String
 com.intellij.util.text.CharArrayExternalizable
 - java.lang.CharSequence
 - a:getChars(I,I,C[],I):V
@@ -666,7 +662,6 @@ c:com.intellij.util.text.CharSequenceSubSequence
 - hashCode():I
 - f:length():I
 - subSequence(I,I):java.lang.CharSequence
-- toString():java.lang.String
 a:com.intellij.util.text.ImmutableCharSequence
 - java.lang.CharSequence
 - <init>():V
@@ -685,7 +680,6 @@ f:com.intellij.util.text.MergingCharSequence
 - charAt(I):C
 - length():I
 - subSequence(I,I):java.lang.CharSequence
-- toString():java.lang.String
 f:com.intellij.util.text.NameUtilCore
 - <init>():V
 - s:isWordStart(java.lang.String,I):Z
@@ -709,7 +703,6 @@ f:com.intellij.util.text.SemVer
 - isGreaterOrEqualThan(com.intellij.util.text.SemVer):Z
 - isGreaterThan(com.intellij.util.text.SemVer):Z
 - s:parseFromText(java.lang.String):com.intellij.util.text.SemVer
-- toString():java.lang.String
 f:com.intellij.util.text.StringOperation
 - s:applyOperations(java.lang.CharSequence,java.util.Collection):java.lang.CharSequence
 - equals(java.lang.Object):Z
@@ -737,4 +730,3 @@ f:com.intellij.util.text.StringSearcher
 - scan(java.lang.CharSequence):I
 - scan(java.lang.CharSequence,I,I):I
 - scan(java.lang.CharSequence,C[],I,I):I
-- toString():java.lang.String

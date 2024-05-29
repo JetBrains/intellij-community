@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.test.handlers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/annotation")
     public static class Annotation extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -50,6 +57,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/backticked")
     public static class Backticked extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -93,6 +106,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/callableReference")
     public static class CallableReference extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -161,6 +180,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/contextReceivers")
     public static class ContextReceivers extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -189,6 +214,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/defaultImports")
     public static class DefaultImports extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -227,6 +258,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/exclChar")
     public static class ExclChar extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -260,6 +297,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/extensionMethodInObject")
     public static class ExtensionMethodInObject extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -308,6 +351,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/extensionReceiver")
     public static class ExtensionReceiver extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -336,6 +385,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/highOrderFunctions")
     public static class HighOrderFunctions extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -474,6 +529,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/importAliases")
     public static class ImportAliases extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -517,6 +578,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/incompleteCode")
     public static class IncompleteCode extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -565,6 +632,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/kdoc")
     public static class Kdoc extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -603,6 +676,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/override")
     public static class Override extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -630,6 +709,26 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("ExpectClassValOverride.kt")
         public void testExpectClassValOverride() throws Exception {
             runTest("../testData/handlers/basic/override/ExpectClassValOverride.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionMultipleAnnotations.kt")
+        public void testImplementAnnotatedFunctionMultipleAnnotations() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionMultipleAnnotations.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionMultipleAnnotations2.kt")
+        public void testImplementAnnotatedFunctionMultipleAnnotations2() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionMultipleAnnotations2.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionWithExtension.kt")
+        public void testImplementAnnotatedFunctionWithExtension() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionWithExtension.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionWithoutExtension.kt")
+        public void testImplementAnnotatedFunctionWithoutExtension() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionWithoutExtension.kt");
         }
 
         @TestMetadata("ImplementFunction.kt")
@@ -721,6 +820,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/parameterNameAndType")
     public static class ParameterNameAndType extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -799,6 +904,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/staticMemberOfNotImported")
     public static class StaticMemberOfNotImported extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -832,6 +943,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/staticMembers")
     public static class StaticMembers extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -865,6 +982,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/stringTemplate")
     public static class StringTemplate extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -948,6 +1071,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/superEntry")
     public static class SuperEntry extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -981,6 +1110,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/topLevelDeclarations")
     public static class TopLevelDeclarations extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -999,6 +1134,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/typeArgsForCall")
     public static class TypeArgsForCall extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1097,6 +1238,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/typeArgsForGenericFun")
     public static class TypeArgsForGenericFun extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1220,6 +1367,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic")
     public static class Uncategorized extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1633,6 +1786,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/unstableSmartCast")
     public static class UnstableSmartCast extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1661,6 +1820,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/variableNameAndType")
     public static class VariableNameAndType extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1679,6 +1844,12 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/withTab")
     public static class WithTab extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

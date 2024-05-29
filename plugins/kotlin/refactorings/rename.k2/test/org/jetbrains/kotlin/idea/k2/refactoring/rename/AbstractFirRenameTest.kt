@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -19,12 +19,10 @@ import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFirRenameTest : AbstractRenameTest() {
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 
@@ -32,7 +30,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun doTest(path: String) {
         allowAnalysisOnEdt { super.doTest(path) }
     }

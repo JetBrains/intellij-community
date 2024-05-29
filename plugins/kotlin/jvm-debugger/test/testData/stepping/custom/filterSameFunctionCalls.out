@@ -1,0 +1,22 @@
+LineBreakpoint created at filterSameFunctionCalls.kt:17
+LineBreakpoint created at filterSameFunctionCalls.kt:24
+LineBreakpoint created at filterSameFunctionCalls.kt:31
+Run Java
+Connected to the target VM
+filterSameFunctionCalls.kt:17
+filterSameFunctionCalls.kt:2
+filterSameFunctionCalls.kt:3
+filterSameFunctionCalls.kt:17
+filterSameFunctionCalls.kt:24
+filterSameFunctionCalls.kt:2
+filterSameFunctionCalls.kt:4
+filterSameFunctionCalls.kt:5
+filterSameFunctionCalls.kt:24
+filterSameFunctionCalls.kt:31
+filterSameFunctionCalls.kt:2
+filterSameFunctionCalls.kt:4
+filterSameFunctionCalls.kt:7
+filterSameFunctionCalls.kt:31
+Disconnected from the target VM
+
+Process finished with exit code 0

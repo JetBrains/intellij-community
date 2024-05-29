@@ -2,9 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ijent.IjentInfo
-import com.intellij.platform.ijent.IjentPosixInfo
-import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.fs.*
 import kotlinx.coroutines.isActive
 import java.nio.file.FileStore
@@ -16,6 +14,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
 class IjentNioFileSystem internal constructor(
   private val fsProvider: IjentNioFileSystemProvider,
   internal val ijent: FsAndUserApi,
+  private val onClose: () -> Unit,
 ) : FileSystem() {
   /**
    * Just a bunch of parts of [com.intellij.platform.ijent.IjentApi] with proper types. It was introduced to avoid type upcasting.
@@ -26,10 +25,17 @@ class IjentNioFileSystem internal constructor(
 
     data class Posix(override val fs: IjentFileSystemPosixApi, override val userInfo: IjentPosixInfo.User) : FsAndUserApi
     data class Windows(override val fs: IjentFileSystemWindowsApi, override val userInfo: IjentWindowsInfo.User) : FsAndUserApi
+
+    companion object {
+      fun create(ijentApi: IjentApi): FsAndUserApi = when (ijentApi) {
+        is IjentPosixApi -> Posix(ijentApi.fs, ijentApi.info.user)
+        is IjentWindowsApi -> Windows(ijentApi.fs, ijentApi.info.user)
+      }
+    }
   }
 
   override fun close() {
-    // Seems that there should be nothing.
+    onClose()
   }
 
   override fun provider(): IjentNioFileSystemProvider = fsProvider

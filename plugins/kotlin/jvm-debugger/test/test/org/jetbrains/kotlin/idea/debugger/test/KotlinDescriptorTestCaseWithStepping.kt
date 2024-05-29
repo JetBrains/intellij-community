@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
-import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
@@ -370,14 +369,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     protected fun countBreakpointsNumber(file: KotlinBaseTest.TestFile) =
         InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.content, "//Breakpoint!").size
-
-    protected fun SuspendContextImpl.invokeInManagerThread(callback: () -> Unit) {
-        assert(debugProcess.isAttached)
-        debugProcess.managerThread.invokeCommand(object : DebuggerCommand {
-            override fun action() = callback()
-            override fun commandCancelled() = error(message = "Test was cancelled")
-        })
-    }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
         addMavenDependency(compilerFacility, library, module)

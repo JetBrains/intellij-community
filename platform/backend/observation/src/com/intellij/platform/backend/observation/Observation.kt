@@ -70,7 +70,7 @@ object Observation {
   }
 
   private suspend fun collectTrackersFromExtensions(project: Project): List<GenericActivityTracker> {
-    return ActivityTracker.EP_NAME.extensionList.map {
+    return EP_NAME.extensionList.map {
       object : GenericActivityTracker {
         override val name: String = it.presentableName
         override suspend fun isInProgress(): Boolean = it.isInProgress(project)

@@ -17,7 +17,6 @@ import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +35,6 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
   public static final String INNER_CLASS_REGEX = "(\\$.*)*";
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
-
-  @Override
-  public ThreeState calculateExactHits() {
-    return ThreeState.UNSURE;
-  }
 
   @Override
   public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {

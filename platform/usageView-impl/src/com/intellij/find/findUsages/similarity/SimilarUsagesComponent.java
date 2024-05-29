@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,6 +26,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   public static final int SNIPPET_LIMIT = 10;

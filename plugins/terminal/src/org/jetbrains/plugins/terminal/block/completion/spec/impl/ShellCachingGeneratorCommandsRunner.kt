@@ -28,7 +28,7 @@ internal class ShellCachingGeneratorCommandsRunner(private val session: BlockTer
   override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
     cache.getIfPresent(command)?.let { return it }
     val result = session.commandManager.runGeneratorAsync(command).await()
-    if (result.exitCode != 0) {
+    if (result.exitCode == 0) {
       cache.put(command, result)
     }
     return result

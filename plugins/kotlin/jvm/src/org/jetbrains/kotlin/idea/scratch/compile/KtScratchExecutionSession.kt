@@ -20,8 +20,8 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -166,7 +166,7 @@ class KtScratchExecutionSession(
             }
 
             try {
-                val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
                 val allowedErrorFilter: (KtDiagnostic) -> Boolean = { false }
 
                 compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)
@@ -179,11 +179,11 @@ class KtScratchExecutionSession(
         }
 
         when (result) {
-            is KtCompilationResult.Failure -> {
+            is KaCompilationResult.Failure -> {
                 LOG.warn("Errors found on analyzing the scratch file. Compilation aborted")
                 return null
             }
-            is KtCompilationResult.Success -> {
+            is KaCompilationResult.Success -> {
                 return tmpDir
             }
         }

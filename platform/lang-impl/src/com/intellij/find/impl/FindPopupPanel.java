@@ -680,7 +680,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
             myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
             FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-            myUsagePreviewPanel.updateLayout(selectedUsages);
+            myUsagePreviewPanel.updateLayout(myProject, selectedUsages);
             myUsagePreviewTitle.clear();
             if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
               myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);

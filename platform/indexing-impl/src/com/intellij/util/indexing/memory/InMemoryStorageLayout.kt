@@ -12,7 +12,8 @@ import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import org.jetbrains.annotations.ApiStatus.Internal
 
-internal class InMemoryStorageLayoutProvider : FileBasedIndexLayoutProvider {
+@Internal
+class InMemoryStorageLayoutProvider : FileBasedIndexLayoutProvider {
   override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
     return InMemoryStorageLayout(extension)
   }

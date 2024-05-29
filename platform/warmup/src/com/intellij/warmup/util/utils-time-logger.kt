@@ -12,7 +12,7 @@ import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
-class TimeCookie {
+internal class TimeCookie {
   private val now = System.currentTimeMillis()
   fun formatDuration(): String {
     val duration = max(0L, TimeCookie().now - this.now)
@@ -49,7 +49,7 @@ private class TaskAndLogTimeElement : CoroutineContext.Element {
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun <Y> runTaskAndLogTime(
   progressName: String,
-  action: suspend CoroutineScope.(TimeCookie) -> Y
+  action: suspend CoroutineScope.() -> Y
 ): Y = coroutineScope {
   val cookie = TimeCookie()
   WarmupLogger.logInfo("Started waiting for '$progressName'...")
@@ -91,7 +91,7 @@ suspend fun <Y> runTaskAndLogTime(
 
   try {
     withContext(stackElement + CoroutineName(progressName)) {
-      action(cookie)
+      action()
     }
   }
   finally {

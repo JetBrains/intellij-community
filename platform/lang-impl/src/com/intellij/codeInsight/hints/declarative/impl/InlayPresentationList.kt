@@ -34,7 +34,7 @@ class InlayPresentationList(
   var payloads: Map<String, InlayActionPayload>? = null,
   private val providerClass: Class<*>,
   @NlsContexts.HintText private val tooltip: String?,
-  internal val passClass: Class<*>,
+  internal val sourceId: String,
 ) {
   companion object {
     private const val NOT_COMPUTED = -1
@@ -221,7 +221,7 @@ class InlayPresentationList(
       isDisabled,
       payloads?.map { (name, action) -> InlayPayload(name, action) },
       providerClass,
-      passClass,
+      sourceId,
     )
   }
 }

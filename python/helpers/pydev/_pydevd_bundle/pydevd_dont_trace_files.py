@@ -29,7 +29,6 @@ DONT_TRACE = {
     '_pydev_filesystem_encoding.py': PYDEV_FILE,
     '_pydev_getopt.py': PYDEV_FILE,
     '_pydev_imports_tipper.py': PYDEV_FILE,
-    '_pydev_inspect.py': PYDEV_FILE,
     '_pydev_jy_imports_tipper.py': PYDEV_FILE,
     '_pydev_log.py': PYDEV_FILE,
     '_pydev_pkgutil_old.py': PYDEV_FILE,

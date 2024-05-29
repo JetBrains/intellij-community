@@ -11,6 +11,7 @@ import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
     return new DifferenceReverter(myProject, myVcs, myGateway, diffs, getLeftRevision());
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull LocalHistoryCounter.Kind getKind() {
     return LocalHistoryCounter.Kind.Directory;

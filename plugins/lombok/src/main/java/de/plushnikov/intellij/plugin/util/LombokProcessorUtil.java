@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.util;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -84,18 +85,24 @@ public final class LombokProcessorUtil {
   }
 
   public static Collection<String> getOldOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    PsiAnnotationMemberValue onXValue = psiAnnotation.hasAttribute(parameterName) ? psiAnnotation.findAttributeValue(parameterName) : null;
+    PsiAnnotationMemberValue onXValue;
+    if (DumbService.isDumb(psiAnnotation.getProject())) {
+      onXValue = psiAnnotation.findDeclaredAttributeValue(parameterName);
+    }
+    else {
+      onXValue = psiAnnotation.hasAttribute(parameterName) ? psiAnnotation.findAttributeValue(parameterName) : null;
+    }
     if (!(onXValue instanceof PsiAnnotation)) {
       return Collections.emptyList();
     }
-    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation)onXValue, "value", PsiAnnotation.class);
+    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation)onXValue, "value", PsiAnnotation.class, List.of());
     return collectAnnotationStrings(annotations);
   }
 
   public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    if (psiAnnotation.hasAttribute(parameterName)) {
+    if (DumbService.isDumb(psiAnnotation.getProject()) || psiAnnotation.hasAttribute(parameterName)) {
       final Collection<PsiAnnotation> annotations =
-        PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class);
+        PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class, List.of());
       return collectAnnotationStrings(annotations);
     }
     return Collections.emptyList();

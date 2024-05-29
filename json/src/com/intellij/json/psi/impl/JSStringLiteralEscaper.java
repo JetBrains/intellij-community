@@ -126,7 +126,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
           case 'x' -> {
             if (index + 2 <= chars.length()) {
               try {
-                int v = Integer.parseInt(chars.substring(index, index + 2), 16);
+                int v = Integer.parseInt(chars, index, index + 2, 16);
                 outChars.append((char)v);
                 index += 2;
               }
@@ -148,7 +148,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
                 break loop;
               }
               try {
-                int v = Integer.parseInt(chars.substring(index + 1, end), 16);
+                int v = Integer.parseInt(chars, index + 1, end, 16);
                 c = chars.charAt(index + 1);
                 if (c == '+' || c == '-') {
                   result = false;
@@ -164,7 +164,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
             }
             else if (index + 4 <= chars.length()) {
               try {
-                int v = Integer.parseInt(chars.substring(index, index + 4), 16);
+                int v = Integer.parseInt(chars, index, index + 4, 16);
                 c = chars.charAt(index);
                 if (c == '+' || c == '-') {
                   result = false;

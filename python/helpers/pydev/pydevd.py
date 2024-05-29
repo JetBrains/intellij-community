@@ -32,7 +32,7 @@ from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thre
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, \
     IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
     IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE, \
-    USE_LOW_IMPACT_MONITORING
+    USE_LOW_IMPACT_MONITORING, HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -62,7 +62,8 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
 from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep669_monitoring
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
-from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
+from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread, \
+    kill_thread
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
 from pydevd_file_utils import get_fullname, rPath, get_package_dir
@@ -407,7 +408,6 @@ class PyDB(object):
 
     def __init__(self, set_as_global=True):
         if set_as_global:
-            set_global_debugger(self)
             pydevd_tracing.replace_sys_set_trace_func()
 
         self.reader = None
@@ -514,6 +514,14 @@ class PyDB(object):
 
         self.is_pep669_monitoring_enabled = False
 
+        self.value_resolve_thread_list = []
+
+        if set_as_global:
+            # All debugger fields need to be initialized first. If they aren't,
+            # there can be instances in a multithreaded environment where the debugger
+            # is accessible but the attempts to access its fields may fail.
+            set_global_debugger(self)
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -553,6 +561,12 @@ class PyDB(object):
 
     def disable_tracing(self):
         pydevd_tracing.SetTrace(None)
+
+    def maybe_kill_active_value_resolve_threads(self):
+        if HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME:
+            for t in self.value_resolve_thread_list:
+                kill_thread(t)
+            self.value_resolve_thread_list = []
 
     def on_breakpoints_changed(self, removed=False):
         '''

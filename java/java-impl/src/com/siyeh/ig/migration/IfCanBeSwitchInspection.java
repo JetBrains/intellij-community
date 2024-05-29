@@ -317,7 +317,8 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
 
-    if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
+    if (ContainerUtil.or(branches, branch -> branch.hasPattern() && !(switchExpression.getType() instanceof PsiPrimitiveType)) ||
+        SwitchUtils.isExtendedPrimitives(PsiPrimitiveType.getOptionallyUnboxedType(switchExpression.getType()))) {
       final boolean hasDefaultElse = ContainerUtil.exists(branches, (branch) -> branch.isElse());
       if (!hasDefaultElse && !hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
@@ -328,7 +329,14 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
         final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
-        if (defaultBranch != null) defaultBranch.addCaseExpression(condition);
+        if (defaultBranch != null){
+          defaultBranch.addCaseExpression(condition);
+        }
+        else {
+          IfStatementBranch nullBranch = new IfStatementBranch(new PsiEmptyStatementImpl(), !hasUnconditionalPatternCheck(ifStatement, switchExpression));
+          nullBranch.addCaseExpression(condition);
+          branches.add(nullBranch);
+        }
       }
     }
 
@@ -367,6 +375,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       breakTarget.replace(labeledStatement);
     }
   }
+
 
   @SafeVarargs
   public static @Nullable <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
@@ -445,7 +454,10 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       else if (operands.length == 2) {
         final PsiExpression lhs = operands[0];
         final PsiExpression rhs = operands[1];
-        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, rhs)) {
+        if (polyadicExpression.getOperationTokenType() != JavaTokenType.EQEQ) {
+          branch.addCaseExpression(polyadicExpression);
+        }
+        else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, rhs)) {
           branch.addCaseExpression(lhs);
         }
         else {
@@ -676,8 +688,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
           return false;
         }
         Nullability nullability = getNullability(switchExpression);
-        if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
-          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
+        if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchExpression) &&
+            !ClassUtils.isPrimitive(switchExpression.getType())) {
+          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null) {
             nullability = Nullability.NOT_NULL;
           }
         }

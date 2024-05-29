@@ -91,8 +91,8 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
    * @deprecated Get the action from ActionManager directly.
    */
   @Deprecated
-  public static @NotNull GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {
-    return (GroupByFileStructureAction) ActionManager.getInstance().getAction("UsageGrouping.FileStructure");
+  public static @NotNull AnAction createGroupByFileStructureAction(UsageViewImpl impl) {
+    return ActionManager.getInstance().getAction("UsageGrouping.FileStructure");
   }
 
   @ApiStatus.Internal

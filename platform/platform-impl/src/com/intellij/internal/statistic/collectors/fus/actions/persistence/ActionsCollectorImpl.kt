@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
@@ -158,6 +159,10 @@ class ActionsCollectorImpl : ActionsCollector() {
       val isDumb = project
         ?.takeIf { !project.isDisposed }
         ?.let { DumbService.isDumb(project) }
+      val incompleteDependenciesMode = project
+        ?.takeIf { !project.isDisposed }
+        ?.getServiceIfCreated(IncompleteDependenciesService::class.java)
+        ?.getState()
       val isLookupActive = project
         ?.takeIf { !project.isDisposed }
         ?.getServiceIfCreated(LookupManager::class.java)
@@ -178,6 +183,9 @@ class ActionsCollectorImpl : ActionsCollector() {
         }
         if (project != null && isDumb != null) {
           add(ActionsEventLogGroup.DUMB.with(isDumb))
+        }
+        if (project != null && incompleteDependenciesMode != null) {
+          add(ActionsEventLogGroup.INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode))
         }
         customDataProvider(this)
         addActionClass(this, action, info)

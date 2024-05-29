@@ -117,6 +117,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testReadResolve2() { doTest(); }
   public void testDifferentTypesButNullable() { doTest(); }
   public void testInstanceOfWidening() { doTest(); }
+  public void testSwitchPatternInGuard() { doTest(); }
   public void testForEachPattern() {
     myFixture.addClass("""
                          package org.jetbrains.annotations;

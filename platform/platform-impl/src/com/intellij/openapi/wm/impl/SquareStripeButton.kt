@@ -206,9 +206,21 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
   }
 
   override fun paintButtonLook(g: Graphics?) {
+    if (!myShowName) {
+      super.paintButtonLook(g)
+      return
+    }
+
     val look = buttonLook
     look.paintBackground(g, this)
     look.paintIcon(g, this, icon)
+
+    val color = if (popState == ActionButtonComponent.PUSHED) JBUI.CurrentTheme.ActionButton.pressedBorder()
+    else JBUI.CurrentTheme.ActionButton.hoverBorder()
+
+    if (color.alpha == 255) {
+      look.paintBorder(g, this)
+    }
   }
 
   override fun updateUI() {
@@ -259,9 +271,11 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
   }
 
   fun setOrUpdateShowName(value: Boolean) {
-    myShowName = value
-    revalidate()
-    repaint()
+    if (myShowName != value) {
+      myShowName = value
+      revalidate()
+      repaint()
+    }
   }
 
   override fun getPreferredSize(): Dimension {

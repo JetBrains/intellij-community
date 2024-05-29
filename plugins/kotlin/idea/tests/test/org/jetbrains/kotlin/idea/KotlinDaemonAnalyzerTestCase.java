@@ -5,23 +5,26 @@ package org.jetbrains.kotlin.idea;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
-abstract public class KotlinDaemonAnalyzerTestCase extends DaemonAnalyzerTestCase {
+abstract public class KotlinDaemonAnalyzerTestCase extends DaemonAnalyzerTestCase
+        implements ExpectedPluginModeProvider {
+
     private Ref<Disposable> vfsDisposable;
+
     @Override
     protected void setUp() throws Exception {
+        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, super::setUp);
         vfsDisposable = KotlinTestUtils.allowProjectRootAccess(this);
-        super.setUp();
     }
 
     @Override
     protected void tearDown() {
-        runAll(
-                () -> super.tearDown(),
-                () -> KotlinTestUtils.disposeVfsRootAccess(vfsDisposable)
-        );
+        runAll(() -> KotlinTestUtils.disposeVfsRootAccess(vfsDisposable),
+               () -> super.tearDown());
     }
 }

@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.types.typeUtil.closure
 import java.util.concurrent.ConcurrentHashMap
 
 /** null-platform means that we should get all modules */
@@ -352,4 +351,21 @@ private fun mergePlatformModules(
 
     val rest = allModules - platformModules.flatMapTo(mutableSetOf()) { it.containedModules }
     return rest + platformModules
+}
+
+private fun <T> Collection<T>.closure(preserveOrder: Boolean = false, f: (T) -> Collection<T>): Collection<T> {
+    if (isEmpty()) return this
+
+    val result = if (preserveOrder) LinkedHashSet(this) else HashSet(this)
+    var elementsToCheck = result
+    var oldSize = 0
+    while (result.size > oldSize) {
+        oldSize = result.size
+        val toAdd = if (preserveOrder) linkedSetOf() else hashSetOf<T>()
+        elementsToCheck.forEach { toAdd.addAll(f(it)) }
+        result.addAll(toAdd)
+        elementsToCheck = toAdd
+    }
+
+    return result
 }

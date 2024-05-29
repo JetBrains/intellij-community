@@ -3,6 +3,4 @@ package org.jetbrains.kotlin.idea.fir.imports
 
 import org.jetbrains.kotlin.idea.imports.AbstractFilteringAutoImportTestBase
 
-abstract class AbstractK2FilteringAutoImportTest : AbstractFilteringAutoImportTestBase() {
-    override fun isFirPlugin(): Boolean = true
-}
+abstract class AbstractK2FilteringAutoImportTest : AbstractFilteringAutoImportTestBase()

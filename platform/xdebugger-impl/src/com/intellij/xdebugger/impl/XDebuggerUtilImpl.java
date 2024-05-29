@@ -307,7 +307,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
     if (areInlineBreakpointsEnabled(file)) {
       return variantsAsync.then(variantsWithAll -> {
-        var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
+        var variants = variantsWithAll.stream().filter(v -> v.shouldUseAsInlineVariant()).toList();
         if (variants.isEmpty()) {
           LOG.error("Unexpected empty variants");
           return null;

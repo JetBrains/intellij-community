@@ -21,7 +21,7 @@ internal suspend fun createDevModeProductRunner(context: BuildContext, additiona
   val homeDir = context.paths.projectHome
   val runDir = buildProduct(
     request = BuildRequest(
-      isUnpackedDist = true,
+      isUnpackedDist = context.productProperties.platformPrefix != "Gateway",
       writeCoreClasspath = false,
       platformPrefix = context.productProperties.platformPrefix ?: "idea",
       additionalModules = additionalPluginModules,

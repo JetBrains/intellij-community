@@ -12,4 +12,4 @@ fun main() {
 
 }
 
-// EXISTS: next(String), next(String), next(String), next(String)
+// EXISTS: next(String)_0, next(String)_1, next(String)_2, next(String)_3

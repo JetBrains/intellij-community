@@ -8,7 +8,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
@@ -121,39 +120,40 @@ data class BuildOptions(
     const val SCRAMBLING_STEP: String = "scramble"
     const val NON_BUNDLED_PLUGINS_STEP: String = "non_bundled_plugins"
 
-    /** Build Maven artifacts for IDE modules.  */
+    /** Build Maven artifacts for IDE modules. */
     const val MAVEN_ARTIFACTS_STEP: String = "maven_artifacts"
 
-    /** Build macOS artifacts.  */
+    /** Build macOS artifacts. */
     const val MAC_ARTIFACTS_STEP: String = "mac_artifacts"
 
-    /** Build .dmg file for macOS. If skipped, only .sit archive will be produced.  */
+    /** Build .dmg file for macOS. If skipped, only the .sit archive will be produced. */
     const val MAC_DMG_STEP: String = "mac_dmg"
 
     /**
-     * Publish .sit file for macOS. If skipped, only .dmg archive will be produced.
-     * If skipped together with [MAC_DMG_STEP], only .zip archive will be produced.
+     * Publish .sit file for macOS.
+     * If skipped, only the .dmg archive will be produced.
+     * If skipped together with [MAC_DMG_STEP], only the .zip archive will be produced.
      *
      * Note: .sit is required to build patches.
      */
     const val MAC_SIT_PUBLICATION_STEP: String = "mac_sit"
 
-    /** Sign macOS distribution.  */
+    /** Sign macOS distribution. */
     const val MAC_SIGN_STEP: String = "mac_sign"
 
-    /** Notarize macOS distribution.  */
+    /** Notarize macOS distribution. */
     const val MAC_NOTARIZE_STEP: String = "mac_notarize"
 
-    /** Build Linux artifacts.  */
+    /** Build Linux artifacts. */
     const val LINUX_ARTIFACTS_STEP: String = "linux_artifacts"
 
-    /** Build Linux tar.gz artifact without bundled Runtime.  */
+    /** Build Linux tar.gz artifact without bundled Runtime. */
     const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP: String = "linux_tar_gz_without_jre"
 
-    /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced.  */
+    /** Build *.exe installer for Windows distribution. If skipped, only the .zip archive will be produced. */
     const val WINDOWS_EXE_INSTALLER_STEP: String = "windows_exe_installer"
 
-    /** Sign *.exe files in Windows distribution.  */
+    /** Sign *.exe files in Windows distribution. */
     const val WIN_SIGN_STEP: String = "windows_sign"
 
     const val LOCALIZE_STEP: String = "localize"
@@ -170,7 +170,7 @@ data class BuildOptions(
       }
       .toPersistentMap()
 
-    /** Build Frankenstein artifacts.  */
+    /** Build Frankenstein artifacts. */
     const val CROSS_PLATFORM_DISTRIBUTION_STEP: String = "cross_platform_dist"
 
     /** Generate files containing lists of used third-party libraries  */
@@ -189,7 +189,7 @@ data class BuildOptions(
     /**
      * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
      * Comprises many small publication steps.
-     * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
+     * Note: skipping this step won't affect the publication of 'Artifact paths' in TeamCity build settings and vice versa.
      */
     const val TEAMCITY_ARTIFACTS_PUBLICATION_STEP: String = "teamcity_artifacts_publication"
 
@@ -206,7 +206,7 @@ data class BuildOptions(
     const val DOC_AUTHORING_ASSETS_STEP: String = "doc_authoring_assets"
 
     /**
-     * By default, a build cleans up output directory before compilation. Use this property to change the behavior.
+     * By default, a build cleans up the output directory before compilation. Use this property to change the behavior.
      */
     const val CLEAN_OUTPUT_DIRECTORY_PROPERTY: String = "intellij.build.clean.output.root"
 
@@ -305,7 +305,7 @@ data class BuildOptions(
     const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK: String = "intellij.build.compiled.classes.archives.unpack"
 
     /**
-     * By default, calculated based on build number.
+     * By default, calculated based on the build number.
      */
     const val INTELLIJ_BUILD_IS_NIGHTLY: String = "intellij.build.is.nightly"
 
@@ -316,6 +316,27 @@ data class BuildOptions(
 
     @Suppress("SpellCheckingInspection")
     private const val DEFAULT_SNAP_TOOL_IMAGE = "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627"
+
+    private fun parseBooleanValue(text: String): Boolean = when {
+      text.toBoolean() -> true
+      text.equals(false.toString(), ignoreCase = true) -> false
+      else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
+    }
+
+    private fun computeBuildDateInSeconds(): Long {
+      val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
+      val minZipTime = GregorianCalendar(1980, 0, 1)
+      val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
+      val value = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
+      require(value >= minZipTimeInSeconds) {
+        ".zip archive cannot store timestamps older than ${minZipTime.time} " +
+        "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
+        "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
+        "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
+        "diverging from modification times specified in .manifest."
+      }
+      return value
+    }
   }
 
   /**
@@ -474,29 +495,6 @@ data class BuildOptions(
       randomSeedString.toLong()
     }
   }
-}
 
-private fun parseBooleanValue(text: String): Boolean {
-  return when {
-    text.toBoolean() -> true
-    text.equals(false.toString(), ignoreCase = true) -> false
-    else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
-  }
-}
-
-private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
-
-private fun computeBuildDateInSeconds(): Long {
-  val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
-  val minZipTime = GregorianCalendar(1980, 0, 1)
-  val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
-  val value = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
-  require(value >= minZipTimeInSeconds) {
-    ".zip archive cannot store timestamps older than ${minZipTime.time} " +
-    "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
-    "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
-    "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
-    "diverging from modification times specified in .manifest."
-  }
-  return value
+  private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
 }

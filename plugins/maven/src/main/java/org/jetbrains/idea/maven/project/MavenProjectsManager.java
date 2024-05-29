@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -281,20 +282,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     try {
       if (projectsTreeInitialized.getAndSet(true)) return;
 
-      try {
-        Path file = getProjectsTreeFile();
-        if (Files.exists(file)) {
-          var readTree = MavenProjectsTree.read(myProject, file);
-          if (null != readTree) {
-            myProjectsTree = readTree;
-          }
-          else {
-            MavenLog.LOG.warn("Could not load existing tree, read null");
-          }
-        }
-      }
-      catch (IOException e) {
-        MavenLog.LOG.info(e);
+      if (!PlatformProjectOpenProcessor.Companion.isNewProject(myProject)) {
+        loadTree();
       }
 
       if (myProjectsTree == null) {
@@ -306,6 +295,24 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
     finally {
       initLock.unlock();
+    }
+  }
+
+  private void loadTree() {
+    try {
+      Path file = getProjectsTreeFile();
+      if (Files.exists(file)) {
+        var readTree = MavenProjectsTree.read(myProject, file);
+        if (null != readTree) {
+          myProjectsTree = readTree;
+        }
+        else {
+          MavenLog.LOG.warn("Could not load existing tree, read null");
+        }
+      }
+    }
+    catch (IOException e) {
+      MavenLog.LOG.info(e);
     }
   }
 

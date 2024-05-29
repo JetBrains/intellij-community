@@ -237,6 +237,7 @@
 
     "Notification": {
       "background": "#000080",
+      "iconHoverBackground": "#000000",
 
       "errorForeground": "#FFFFFF",
       "errorBackground": "#800002",

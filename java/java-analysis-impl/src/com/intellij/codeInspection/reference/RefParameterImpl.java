@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static com.intellij.psi.util.PsiFormatUtilBase.*;
+
 public final class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0b01_00000000_00000000; // 17th bit
   private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000; // 18th bit
@@ -114,7 +116,6 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
     Object newTemplate = getAccessibleExpressionValue(expression, () -> accessPlace == null ? getContainingFile() : accessPlace);
-    newTemplate = convertUastToPointers(newTemplate);
     if (myActualValueTemplate == VALUE_UNDEFINED) {
       myActualValueTemplate = newTemplate;
     }
@@ -126,12 +127,11 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
   @Nullable
   @Override
   public synchronized Object getActualConstValue() {
-    return convertPointersToUast(myActualValueTemplate);
+    return myActualValueTemplate;
   }
 
   @Override
-  protected void initialize() {
-  }
+  protected void initialize() {}
 
   @Override
   public String getExternalName() {
@@ -171,7 +171,13 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
           }
           UDeclaration containingClass = UDeclarationKt.getContainingDeclaration(uField);
           if (containingClass instanceof UClass && ((UClass)containingClass).getQualifiedName() != null) {
-            return uField;
+            PsiElement javaPsi = uField.getJavaPsi();
+            if (javaPsi != null) {
+              return new ConstValue(
+                PsiFormatUtil.formatVariable((PsiVariable)javaPsi, SHOW_NAME | SHOW_CONTAINING_CLASS | SHOW_FQ_NAME, PsiSubstitutor.EMPTY),
+                PsiFormatUtil.formatVariable((PsiVariable)javaPsi, SHOW_NAME | SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY)
+              );
+            }
           }
         }
       }
@@ -205,37 +211,13 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     else if (value instanceof String string) {
       return "\"" + StringUtil.escapeStringCharacters(string) + "\"";
     }
-    else if (value instanceof Character character) {
-      return "'" + StringUtil.escapeCharCharacters(String.valueOf(character)) + "'";
+    else if (value instanceof Character) {
+      return "'" + StringUtil.escapeCharCharacters(String.valueOf(value)) + "'";
+    }
+    else if (value instanceof PsiType type) {
+      return new ConstValue(type.getCanonicalText() + ".class", type.getPresentableText() + ".class");
     }
     return value;
-  }
-
-  private static Object convertUastToPointers(Object o) {
-    //noinspection rawtypes
-    if (o instanceof List list) {
-      //noinspection unchecked
-      list.replaceAll(RefParameterImpl::convertUastToPointers);
-    }
-    else if (o instanceof UField field) {
-      PsiElement psi = field.getSourcePsi();
-      return psi == null
-             ? VALUE_IS_NOT_CONST
-             : SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi);
-    }
-    return o;
-  }
-
-  private static Object convertPointersToUast(Object o) {
-    //noinspection rawtypes
-    if (o instanceof List list) {
-      //noinspection unchecked
-      list.replaceAll(RefParameterImpl::convertPointersToUast);
-    }
-    else if (o instanceof SmartPsiElementPointer<?> pointer) {
-      return UastContextKt.toUElement(pointer.getElement());
-    }
-    return o;
   }
 
   private static boolean isAccessible(@NotNull UField field, @NotNull PsiElement place) {
@@ -269,5 +251,12 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
       }
     }
     return null;
+  }
+
+  public record ConstValue(String canonicalText, String presentableText) {
+    @Override
+    public String toString() {
+      return presentableText;
+    }
   }
 }

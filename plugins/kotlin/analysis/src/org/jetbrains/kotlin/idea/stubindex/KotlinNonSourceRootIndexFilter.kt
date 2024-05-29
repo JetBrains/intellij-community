@@ -15,6 +15,7 @@ import com.intellij.util.indexing.hints.BaseFileTypeInputFilter
 import com.intellij.util.indexing.hints.BaseGlobalFileTypeInputFilter
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFileSystem
 
 private const val KOTLIN_DOT_FILE_EXTENSION = ".${KotlinFileType.EXTENSION}"
 
@@ -34,7 +35,16 @@ class KotlinNonSourceRootIndexFilter : BaseGlobalFileTypeInputFilter() {
             private fun isExcludedFromIndex(virtualFile: VirtualFile, indexId: IndexId<*, *>, project: Project?): Boolean =
                 project != null &&
                         virtualFile.nameSequence.endsWith(KOTLIN_DOT_FILE_EXTENSION) && // kts is also KotlinFileType, but it should not be excluded
-                        runReadAction { !ProjectFileIndex.getInstance(project).isInSource(virtualFile) }
+                        runReadAction {
+                            !ProjectFileIndex.getInstance(project).isInSource(virtualFile)
+                                    && !isUnderIndexablePath(virtualFile)
+                        }
+
+            private fun isUnderIndexablePath(virtualFile: VirtualFile): Boolean {
+                val storageRoot = KotlinForwardDeclarationsFileSystem.storageRootPath
+                val fileNormalizedPath = virtualFile.fileSystem.getNioPath(virtualFile)?.normalize()
+                return fileNormalizedPath?.startsWith(storageRoot) == true
+            }
         }
     }
 

@@ -3,5 +3,5 @@ abstract class B {
     abstract val i = <caret>0
         get() = field
 }
-/* IGNORE_K2 */
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePartsFromPropertyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RemovePartsFromPropertyFixFactory$RemovePartsFromPropertyFix

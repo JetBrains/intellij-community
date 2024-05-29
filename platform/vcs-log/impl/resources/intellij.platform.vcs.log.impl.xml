@@ -109,7 +109,7 @@
   <projectListeners>
     <listener topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"
               class="com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener"/>
-    <listener class="com.intellij.vcs.log.ui.VcsLogBookmarksListener"
+    <listener class="com.intellij.vcs.log.ui.VcsLogBookmarksManagerListener"
               topic="com.intellij.ide.bookmark.BookmarksListener"/>
   </projectListeners>
 

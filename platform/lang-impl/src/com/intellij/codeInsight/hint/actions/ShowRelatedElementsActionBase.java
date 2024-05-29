@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.ImplementationViewElement;
 import com.intellij.codeInsight.hint.ImplementationViewSession;
 import com.intellij.codeInsight.hint.ImplementationViewSessionFactory;
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -77,6 +78,9 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   protected abstract @NlsContexts.PopupContent String getIndexNotReadyMessage();
 
   private void updateElementImplementations(Object lookupItemObject, ImplementationViewSession session) {
+    if (lookupItemObject instanceof PsiItemWithSimilarity<?> itemWithSimilarity)  {
+      lookupItemObject = itemWithSimilarity.getValue();
+    }
     if (lookupItemObject instanceof PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
       lookupItemObject = ((PSIPresentationBgRendererWrapper.PsiItemWithPresentation)lookupItemObject).getItem();
     }

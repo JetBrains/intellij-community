@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.editor.*
 import com.intellij.diff.impl.DiffEditorViewer
@@ -130,4 +131,11 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
     }
   }
 
+}
+
+fun showExternalToolIfNeeded(project: Project?, diffProducers: ListSelection<out DiffRequestProducer>?): Boolean {
+  if (diffProducers == null || diffProducers.isEmpty) return false
+
+  val producers = diffProducers.explicitSelection
+  return ExternalDiffTool.showIfNeeded(project, producers, DiffDialogHints.DEFAULT)
 }

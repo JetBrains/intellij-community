@@ -25,7 +25,7 @@ import java.nio.file.Path
 abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collection<String> = emptyList()) : HttpRequestHandler() {
 
   companion object {
-    private val allowedTypes = setOf("css", "js", "html", "svg", "woff2", "ttf")
+    private val allowedTypes = setOf("css", "js", "html", "svg", "woff", "woff2", "ttf")
     private const val JUPYTER_HTTP_URI = "jupyter"
     private const val prefix = "/$JUPYTER_HTTP_URI"
 

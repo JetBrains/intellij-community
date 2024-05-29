@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractK2CopyTest: AbstractCopyTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -31,4 +30,4 @@ abstract class AbstractK2CopyTest: AbstractCopyTest() {
         file.name.replace(".k2.kt", ".kt")
 }
 
-abstract class AbstractK2MultiModuleCopyTest: AbstractMultiModuleCopyTest()
+abstract class AbstractK2MultiModuleCopyTest : AbstractMultiModuleCopyTest()

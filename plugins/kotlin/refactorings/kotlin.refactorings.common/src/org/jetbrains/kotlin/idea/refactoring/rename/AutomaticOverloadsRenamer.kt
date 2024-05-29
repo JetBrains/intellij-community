@@ -9,7 +9,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -43,7 +43,7 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
 
 private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     val name = nameAsName ?: return emptyList()
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
         analyze(this) {
             val symbol = getSymbol() as? KtFunctionSymbol  ?: return emptyList()

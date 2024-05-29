@@ -24,13 +24,14 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 
 class K2ElementActionsFactory : JvmElementActionsFactory() {
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-        val kModifierOwner = target.sourceElement?.unwrapped as? KtModifierListOwner  ?: return emptyList()
+        val kModifierOwner = target.sourceElement?.unwrapped as? KtModifierListOwner ?: return emptyList()
 
-        if (request.modifier != JvmModifier.FINAL || request.shouldBePresent()) return emptyList()
-
-        return listOf(
-            AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD)
-        )
+        if (request.modifier == JvmModifier.FINAL && !request.shouldBePresent()) {
+            return listOf(
+                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD)
+            )
+        }
+        return emptyList()
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {

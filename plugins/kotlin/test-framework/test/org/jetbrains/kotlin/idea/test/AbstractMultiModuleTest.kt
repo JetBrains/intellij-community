@@ -50,9 +50,6 @@ import kotlin.io.path.writeText
 abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
                                          ExpectedPluginModeProvider {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-
     private var vfsDisposable: Ref<Disposable>? = null
 
     abstract fun getTestDataDirectory(): File
@@ -67,6 +64,9 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
 
         vfsDisposable = allowProjectRootAccess(this)
     }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     // [TargetSupportException] can be thrown by the multiplatform test setup when a test artifact doesn't exist for the host platform.
     // The test should be ignored in such cases, but since JUnit3 doesn't provide such an option, we make them pass instead.

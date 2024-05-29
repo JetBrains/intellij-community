@@ -188,6 +188,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             KtTokens.LONG_TEMPLATE_ENTRY_START to TemplateEntryOpen,
             KtTokens.LONG_TEMPLATE_ENTRY_END to TemplateEntryClose,
 
+            KtTokens.INTERPOLATION_PREFIX to OpenQuote,
             KtTokens.OPEN_QUOTE to OpenQuote,
             KtTokens.CLOSING_QUOTE to ClosingQuote,
 

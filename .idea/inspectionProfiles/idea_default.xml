@@ -822,6 +822,10 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Block" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="@CoroutinesTimeout is discouraged" description="'@CoroutinesTimeout' results in installation of 'DebugProbes' from kotlinx.coroutines. In IntelliJ Platform, we install 'DebugProbes' ourselves, so the default way should be avoided" problemDescriptor="Consider using 'timeoutRunBlocking' and '@TestApplication'" text="@kotlinx.coroutines.debug.junit5.CoroutinesTimeout($var$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="var" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="@HardwareAgentRequired should be applied only for performance tests" text="@com.intellij.idea.HardwareAgentRequired&#10;class $class$ {&#10;  &#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />

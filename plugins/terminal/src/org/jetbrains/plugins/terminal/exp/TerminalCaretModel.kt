@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jediterm.terminal.CursorShape
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -29,7 +32,23 @@ internal class TerminalCaretModel(
 
   init {
     terminalModel.addTerminalListener(this, parentDisposable)
-    terminalModel.addCursorListener(this, parentDisposable)
+    terminalModel.addCursorListener(object : TerminalModel.CursorListener {
+      override fun onPositionChanged(cursorX: Int, cursorY: Int) {
+        scheduleUpdate()
+      }
+
+      override fun onVisibilityChanged(visible: Boolean) {
+        scheduleUpdate()
+      }
+
+      override fun onShapeChanged(shape: CursorShape?) {
+        scheduleUpdate()
+      }
+    }, parentDisposable)
+    val connection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
+    connection.subscribe(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC, EditorOptionsListener {
+      scheduleUpdate() // update on enabling/disabling "Caret blinking" in "Editor | General | Appearance"
+    })
   }
 
   fun addListener(listener: CaretListener, disposable: Disposable? = null) {
@@ -37,18 +56,6 @@ internal class TerminalCaretModel(
     disposable?.let {
       Disposer.register(it) { listeners.remove(listener) }
     }
-  }
-
-  override fun onPositionChanged(cursorX: Int, cursorY: Int) {
-    scheduleUpdate()
-  }
-
-  override fun onVisibilityChanged(visible: Boolean) {
-    scheduleUpdate()
-  }
-
-  override fun onBlinkingChanged(blinking: Boolean) {
-    scheduleUpdate()
   }
 
   override fun onCommandRunningChanged(isRunning: Boolean) {
@@ -80,7 +87,8 @@ internal class TerminalCaretModel(
         calculateCaretPosition(terminalModel.cursorX, terminalModel.cursorY)
       }
       else null
-      CaretState(position, terminalModel.isCursorBlinking)
+      val cursorShape = terminalModel.cursorShape ?: session.settings.cursorShape
+      CaretState(position, cursorShape.isBlinking)
     }
   }
 

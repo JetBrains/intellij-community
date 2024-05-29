@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/refactoring/moveTopLevel")
 public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -153,6 +160,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
     }
 
+    @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
+    public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
+    }
+
     @TestMetadata("kotlin/internalReferences/internalReferences.test")
     public void testKotlin_internalReferences_InternalReferences() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/internalReferences/internalReferences.test");
@@ -183,6 +195,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test");
     }
 
+    @TestMetadata("kotlin/moveClassToPackageFqnConstructor/moveClassToPackageFqnConstructor.test")
+    public void testKotlin_moveClassToPackageFqnConstructor_MoveClassToPackageFqnConstructor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassToPackageFqnConstructor/moveClassToPackageFqnConstructor.test");
+    }
+
     @TestMetadata("kotlin/moveClassToPackage/moveClassToPackage.test")
     public void testKotlin_moveClassToPackage_MoveClassToPackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassToPackage/moveClassToPackage.test");
@@ -196,6 +213,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
     @TestMetadata("kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test")
     public void testKotlin_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
+    }
+
+    @TestMetadata("kotlin/moveEscapedKeyword/moveEscapedKeyword.test")
+    public void testKotlin_moveEscapedKeyword_MoveEscapedKeyword() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveEscapedKeyword/moveEscapedKeyword.test");
     }
 
     @TestMetadata("kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test")
@@ -273,6 +295,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/movePropertyToPackage/movePropertyToPackage.test");
     }
 
+    @TestMetadata("kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test")
+    public void testKotlin_moveReferenceToImportedJavaStatic_MoveReferenceToImportedJavaStatic() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test");
+    }
+
     @TestMetadata("kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
     public void testKotlin_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
@@ -313,6 +340,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
     }
 
+    @TestMetadata("kotlin/objectMemberImport/objectMemberImport.test")
+    public void testKotlin_objectMemberImport_ObjectMemberImport() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/objectMemberImport/objectMemberImport.test");
+    }
+
     @TestMetadata("kotlin/operationReference/operationReference.test")
     public void testKotlin_operationReference_OperationReference() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/operationReference/operationReference.test");
@@ -336,6 +368,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
     @TestMetadata("kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test")
     public void testKotlin_protectedMemberUsageWithThis_ProtectedMemberUsageWithThis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test");
+    }
+
+    @TestMetadata("kotlin/protectedMembersExternalJavaRefs/protectedMembersExternalJavaRefs.test")
+    public void testKotlin_protectedMembersExternalJavaRefs_ProtectedMembersExternalJavaRefs() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/protectedMembersExternalJavaRefs/protectedMembersExternalJavaRefs.test");
     }
 
     @TestMetadata("kotlin/protectedMembersExternalRefs/protectedMembersExternalRefs.test")

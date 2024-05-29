@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -115,7 +116,8 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
         }
     }
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -124,7 +126,7 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
     override fun tearDown() {
         runAll(
           { project.invalidateCaches() },
-          { super.tearDown() }
+          { super.tearDown() },
         )
     }
 }

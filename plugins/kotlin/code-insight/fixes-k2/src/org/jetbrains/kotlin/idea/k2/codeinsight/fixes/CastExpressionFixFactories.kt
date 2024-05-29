@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -65,33 +65,33 @@ object CastExpressionFixFactories {
         }
     }
 
-    val smartcastImpossible = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.SmartcastImpossible ->
+    val smartcastImpossible = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SmartcastImpossible ->
         val actualType = diagnostic.subject.getKtType()
             ?: return@ModCommandBased emptyList()
         createFixes(diagnostic.isCastToNotNull, actualType, diagnostic.desiredType, diagnostic.psi)
     }
 
-    val typeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.TypeMismatch ->
+    val typeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.TypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val throwableTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ThrowableTypeMismatch ->
+    val throwableTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ThrowableTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, builtinTypes.THROWABLE, diagnostic.psi)
     }
 
-    val argumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val returnTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
+    val returnTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
+    val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         val initializer = (diagnostic.psi as? KtProperty)?.initializer
             ?: return@ModCommandBased emptyList()
 

@@ -33,6 +33,7 @@ import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+@Internal
 class AsyncEditorLoader internal constructor(
   private val project: Project,
   private val provider: TextEditorProvider,
@@ -53,13 +54,13 @@ class AsyncEditorLoader internal constructor(
     val ASYNC_LOADER: Key<AsyncEditorLoader> = Key.create("AsyncEditorLoader.isLoaded")
 
     @JvmField
-    internal val OPENED_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.opened.in.bulk")
+    val OPENED_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.opened.in.bulk")
 
     @Internal
     fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
 
     @JvmField
-    internal val FIRST_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.first.in.bulk")
+    val FIRST_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.first.in.bulk")
 
     internal fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
 

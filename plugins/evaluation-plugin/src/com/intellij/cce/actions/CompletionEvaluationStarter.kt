@@ -18,10 +18,11 @@ import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.bootstrap.commandNameFromExtension
-import com.intellij.warmup.util.importOrOpenProject
+import com.intellij.warmup.util.importOrOpenProjectAsync
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -74,7 +75,9 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       try {
         println("Open and load project $projectPath. Operation may take a few minutes.")
         @Suppress("SSBasedInspection")
-        project = importOrOpenProject(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
+        project = runUnderModalProgressIfIsEdt {
+          importOrOpenProjectAsync(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
+        }
         println("Project loaded!")
 
         try {

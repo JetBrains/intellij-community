@@ -69,6 +69,10 @@
       <action id="NotebookOutputCollapseAllAction"
               class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllAction"/>
     </group>
+
+    <action id="NotebookOutputSelectAllAction"
+            class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
+            use-shortcut-of="$SelectAll"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

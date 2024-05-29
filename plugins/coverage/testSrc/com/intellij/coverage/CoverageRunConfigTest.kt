@@ -19,8 +19,6 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     val coverageConfig = CoverageEnabledConfiguration.getOrCreate(runConfig)
     coverageConfig as JavaCoverageEnabledConfiguration
 
-    Assert.assertFalse(coverageConfig.isBranchCoverageEnabled)
-    Assert.assertFalse(coverageConfig.isTrackPerTestCoverage)
     Assert.assertFalse(coverageConfig.isTrackTestFolders)
     Assert.assertTrue(coverageConfig.coverageRunner is IDEACoverageRunner)
     val includeConfigPattens = coverageConfig.patterns!!

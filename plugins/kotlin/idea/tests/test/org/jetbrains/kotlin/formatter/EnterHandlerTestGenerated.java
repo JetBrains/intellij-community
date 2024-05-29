@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.formatter;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/afterUnmatchedBrace")
         public static class AfterUnmatchedBrace extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -102,6 +109,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/arrayAccess")
         public static class ArrayAccess extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -115,6 +128,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/beforeDot")
         public static class BeforeDot extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -343,6 +362,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/commenter")
         public static class Commenter extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -396,6 +421,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/contextReceivers")
         public static class ContextReceivers extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -444,6 +475,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
         public static class ControlFlowConstructions extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -707,6 +744,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -743,6 +786,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/emptyBraces/trailingComma")
             public static class TrailingComma extends AbstractEnterHandlerTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -796,6 +845,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/emptyBraces")
             public static class Uncategorized extends AbstractEnterHandlerTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -850,6 +905,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1143,6 +1204,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1221,6 +1288,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1322,6 +1395,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
             public static class Spaces extends AbstractEnterHandlerTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1523,6 +1602,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/editor/enterHandler/multilineString/withTabs/tabs2")
                 public static class Tabs2 extends AbstractEnterHandlerTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1586,6 +1671,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/editor/enterHandler/multilineString/withTabs/tabs4")
                 public static class Tabs4 extends AbstractEnterHandlerTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1651,6 +1742,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/script")
         public static class Script extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1689,6 +1786,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/templates")
         public static class Templates extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1812,6 +1915,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler")
         public static class Uncategorized extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -2224,6 +2333,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/beforeDot")
         public static class BeforeDot extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2442,6 +2557,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2475,6 +2596,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2523,6 +2650,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2581,6 +2714,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2679,6 +2818,12 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler")
         public static class Uncategorized extends AbstractEnterHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }

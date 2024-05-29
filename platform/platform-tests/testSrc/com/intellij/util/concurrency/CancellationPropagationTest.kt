@@ -26,18 +26,20 @@ import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
-import java.util.concurrent.CancellationException
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.util.EnumSet
+import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertNotNull
 
@@ -650,7 +652,8 @@ class CancellationPropagationTest {
           }
         }
       }
-    } catch (e : TestLoggerAssertionError) {
+    }
+    catch (e: TestLoggerAssertionError) {
       // TODO: the same as in `blockingContextScope save error`
       assertInstanceOf<MyException>(e.cause)
     }
@@ -749,6 +752,35 @@ class CancellationPropagationTest {
     withRootJob {
       AsyncPromise<Unit>().apply { setError("bad") }.then {}
     }.join()
+  }
+
+  @Test
+  @OptIn(DelicateCoroutinesApi::class)
+  fun `promise onSuccess should not get completion context`() {
+    lateinit var tc: CoroutineContext
+    val cf = CompletableFuture<Unit>()
+    cf.asCancellablePromise().onSuccess {
+      tc = currentThreadContext()
+    }
+    GlobalScope.launch {
+      cf.complete(Unit)
+    }.timeoutJoinBlocking()
+    assertSame(EmptyCoroutineContext, tc)
+  }
+
+  @Test
+  @OptIn(DelicateCoroutinesApi::class)
+  fun `promise onError should not get completion context`() {
+    val throwable = object : Throwable() {}
+    lateinit var tc: CoroutineContext
+    val cf = CompletableFuture<Unit>()
+    cf.asCancellablePromise().onError {
+      tc = currentThreadContext()
+    }
+    GlobalScope.launch {
+      cf.completeExceptionally(throwable)
+    }.timeoutJoinBlocking()
+    assertSame(EmptyCoroutineContext, tc)
   }
 
   @Test

@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public interface IntentionActionDelegate extends ReportingClassSubstitutor {
+public interface IntentionActionDelegate extends ReportingClassSubstitutor, PossiblyDumbAware {
   @NotNull
   IntentionAction getDelegate();
 
@@ -21,5 +23,10 @@ public interface IntentionActionDelegate extends ReportingClassSubstitutor {
   // optimization method: it's not necessary to build extension delegate to know its class
   default @NotNull String getImplementationClassName() {
     return unwrap(getDelegate()).getClass().getName();
+  }
+
+  @Override
+  default boolean isDumbAware() {
+    return DumbService.isDumbAware(getDelegate());
   }
 }

@@ -8,8 +8,11 @@ import com.jediterm.terminal.model.LinesBuffer
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.max
+import kotlin.math.min
 
 internal class ShellCommandOutputScraper(
   private val session: BlockTerminalSession,
@@ -102,7 +105,7 @@ private class OutputBuilder(private val commandEndMarker: String?) {
   private fun addTextChunk(text: String, style: TextStyle) {
     if (text.isNotEmpty()) {
       repeat(pendingNewLines) {
-        output.append("\n")
+        output.append(NEW_LINE)
       }
       pendingNewLines = 0
       val startOffset = output.length
@@ -143,7 +146,7 @@ private class OutputBuilder(private val commandEndMarker: String?) {
     var textInd: Int = text.length
     for (suffixInd in suffix.length - 1 downTo 0) {
       textInd--
-      while (textInd >= 0 && text[textInd] == '\n') {
+      while (textInd >= 0 && text[textInd] == NEW_LINE) {
         textInd--
       }
       if (textInd < 0 || text[textInd] != suffix[suffixInd]) {
@@ -159,4 +162,55 @@ internal data class StyleRange(val startOffset: Int, val endOffset: Int, val sty
 
 internal interface ShellCommandOutputListener {
   fun commandOutputChanged(output: StyledCommandOutput) {}
+}
+
+private const val NEW_LINE: Char = '\n'
+
+/**
+ * Refines command output by dropping the trailing `\n` to avoid showing the last empty line in the command block.
+ * Also, trims tailing whitespaces in case of Zsh: they are added to show '%' character at the end of the
+ * last line without a newline.
+ * Zsh adds the whitespaces after command finish and before calling `precmd` hook, so IDE cannot
+ * identify correctly where command output ends exactly => trim tailing whitespaces as a workaround.
+
+ * See `PROMPT_CR` and `PROMPT_SP` Zsh options, both are enabled by default:
+ * https://zsh.sourceforge.io/Doc/Release/Options.html#Prompting
+ *
+ * Roughly, Zsh prints the following after each command and before prompt:
+ * 1. `PROMPT_EOL_MARK` (by default, '%' for a normal user or a '#' for root)
+ * 2. `$COLUMNS - 1` spaces
+ * 3. \r
+ * 4. A single space
+ * 5. \r
+ * https://github.com/zsh-users/zsh/blob/57248b88830ce56adc243a40c7773fb3825cab34/Src/utils.c#L1533-L1555
+ *
+ * Another workaround here is to add `unsetopt PROMPT_CR PROMPT_SP` to command-block-support.zsh,
+ * but it will remove '%' mark on unterminated lines which can be unexpected for users.
+ */
+internal fun StyledCommandOutput.dropLastBlankLine(shellType: ShellType): StyledCommandOutput {
+  val lastNewLineInd = this.text.lastIndexOf(NEW_LINE)
+  val lastLine = this.text.substring(lastNewLineInd + 1)
+  if (lastNewLineInd >= 0 && lastLine.isEmpty() /* output ends with \n */ ||
+      shellType == ShellType.ZSH && lastLine.isBlank() /* output ends with whitespaces */) {
+    return this.takeFirst(max(0, lastNewLineInd))
+  }
+  return this
+}
+
+private fun StyledCommandOutput.takeFirst(newLength: Int): StyledCommandOutput {
+  if (newLength == this.text.length) return this
+  return StyledCommandOutput(this.text.substring(0, newLength),
+                             this.commandEndMarkerFound,
+                             intersect(this.styleRanges, newLength))
+}
+
+private fun intersect(styleRanges: List<StyleRange>, newLength: Int): List<StyleRange> {
+  return styleRanges.mapNotNull {
+    val newEndOffset = min(it.endOffset, newLength)
+    when {
+      newEndOffset == it.endOffset -> it
+      it.startOffset < newEndOffset -> StyleRange(it.startOffset, newEndOffset, it.style)
+      else -> null
+    }
+  }
 }

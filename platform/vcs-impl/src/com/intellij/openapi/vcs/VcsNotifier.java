@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -39,6 +40,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notify(@NotNull Notification notification) {
+    if (myProject.isDisposed()) Logger.getInstance(VcsNotifier.class).warn("Project is already disposed: " + notification);
     notification.notify(myProject);
     return notification;
   }

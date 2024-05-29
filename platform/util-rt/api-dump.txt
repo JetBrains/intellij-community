@@ -37,7 +37,6 @@ c:com.intellij.execution.rmi.RemoteObject$ForeignException
 - <init>(java.lang.String,java.lang.String):V
 - s:create(java.lang.String,java.lang.Class):com.intellij.execution.rmi.RemoteObject$ForeignException
 - getOriginalClassName():java.lang.String
-- toString():java.lang.String
 c:com.intellij.execution.rmi.RemoteServer
 - sf:SERVER_HOSTNAME:java.lang.String
 - <init>():V
@@ -141,7 +140,6 @@ e:com.intellij.openapi.util.Bitness
 - java.lang.Enum
 - sf:x32:com.intellij.openapi.util.Bitness
 - sf:x64:com.intellij.openapi.util.Bitness
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.util.Bitness
 - s:values():com.intellij.openapi.util.Bitness[]
 f:com.intellij.openapi.util.Comparing
@@ -183,7 +181,6 @@ c:com.intellij.openapi.util.Pair
 - s:getSecond(com.intellij.openapi.util.Pair):java.lang.Object
 - hashCode():I
 - s:pair(java.lang.Object,java.lang.Object):com.intellij.openapi.util.Pair
-- toString():java.lang.String
 c:com.intellij.openapi.util.Pair$NonNull
 - com.intellij.openapi.util.Pair
 - <init>(java.lang.Object,java.lang.Object):V
@@ -197,7 +194,6 @@ c:com.intellij.openapi.util.Ref
 - f:isNull():Z
 - f:set(java.lang.Object):V
 - f:setIfNull(java.lang.Object):Z
-- toString():java.lang.String
 com.intellij.openapi.util.Setter
 - a:set(java.lang.Object):V
 f:com.intellij.openapi.util.SystemInfoRt

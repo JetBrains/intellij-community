@@ -17,6 +17,7 @@ import java.io.File
 @TestMetadata("handlers")
 @RunWith(JUnit38ClassRunner::class)
 class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
+
     private fun checkResult() {
         fixture.checkResultByFile(getTestName(false) + ".kt.after")
     }

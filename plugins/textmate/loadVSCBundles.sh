@@ -52,8 +52,8 @@ cp -r "grammars" "$ROOT/lib/bundles/viml"
 cd ..
 
 # mdx
-git clone https://github.com/silvenon/vscode-mdx.git
-cd vscode-mdx
+git clone https://github.com/mdx-js/mdx-analyzer
+cd mdx-analyzer/packages/vscode-mdx
 
 echo "Adding mdx"
 mkdir -p "$ROOT/lib/bundles/mdx"
@@ -62,7 +62,7 @@ cp -r "language-configuration.json" "$ROOT/lib/bundles/mdx/"
 cp -r "license" "$ROOT/lib/bundles/mdx/"
 cp -r "syntaxes" "$ROOT/lib/bundles/mdx/"
 
-cd ..
+cd ../../..
 
 #twig
 echo "Adding twig"

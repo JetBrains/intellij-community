@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.function.BiPredicate;
 
 /**
  * Analog of {@link com.intellij.util.io.PersistentMap}
@@ -54,6 +55,8 @@ public interface DurableMap<K, V> extends KeyValueStore<K, V>,
    * Note that keys which were removed at some point might be returned as well.
    */
   boolean processKeys(@NotNull Processor<? super K> processor) throws IOException;
+
+  boolean forEachEntry(@NotNull BiPredicate<? super K, ? super V> processor) throws IOException;
 
   @Override
   boolean isDirty();

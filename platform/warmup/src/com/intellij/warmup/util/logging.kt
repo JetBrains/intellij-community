@@ -25,14 +25,13 @@ import java.io.IOException
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
-object WarmupLogger {
+internal object WarmupLogger {
   fun logInfo(message: String) {
     ConsoleLog.info(message)
   }

@@ -1,20 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.psi.typeArguments
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils.isAsKeyword
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils.isOnJvm
@@ -23,12 +20,12 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes3
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ChangeToStarProjectionFixFactory {
-    val uncheckedCastFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UncheckedCast ->
+    val uncheckedCastFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UncheckedCast ->
         val quickFix = getQuickFix(diagnostic.psi) ?: return@ModCommandBased emptyList()
         listOf(quickFix)
     }
 
-    val cannotCheckForErased = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.CannotCheckForErased ->
+    val cannotCheckForErased = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.CannotCheckForErased ->
         val element = diagnostic.psi
 
         // We don't suggest this quick-fix for array instance checks because there is ConvertToIsArrayOfCallFix
@@ -75,25 +72,5 @@ internal object ChangeToStarProjectionFixFactory {
 
         return if (typeElement.typeArgumentsAsTypes.isEmpty()) null
         else ChangeToStarProjectionFix(typeElement)
-    }
-
-    private class ChangeToStarProjectionFix(
-        element: KtTypeElement,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeElement, Unit>(element, Unit) {
-
-        override fun invoke(
-            actionContext: ActionContext,
-            element: KtTypeElement,
-            elementContext: Unit,
-            updater: ModPsiUpdater,
-        ) = StarProjectionUtils.changeToStarProjection(actionContext.project, element)
-
-        override fun getActionName(
-            actionContext: ActionContext,
-            element: KtTypeElement,
-            elementContext: Unit,
-        ): String = StarProjectionUtils.changeToStarProjectionActionName(element)
-
-        override fun getFamilyName(): String = KotlinBundle.message("fix.change.to.star.projection.family")
     }
 }

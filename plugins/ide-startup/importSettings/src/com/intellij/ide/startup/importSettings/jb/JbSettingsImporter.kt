@@ -83,7 +83,7 @@ class JbSettingsImporter(private val configDirPath: Path,
         KeymapManager.getInstance()
         componentStore.reloadState(KeymapManagerImpl::class.java)
       }
-      if (categories.contains(SettingsCategory.UI)) {
+      if (categories.contains(SettingsCategory.UI) && !ExperimentalUI.wasThemeReset) {
         // ensure component is loaded
         LafManager.getInstance()
         EditorColorsManager.getInstance()

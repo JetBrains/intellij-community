@@ -563,12 +563,13 @@ open class EditorsSplitters internal constructor(
     val nextFile = findNextFile(file)
     for (window in windows) {
       val composite = window.getComposite(file) ?: continue
-      window.closeFile(file = file, composite = composite,
+      window.closeFile(file = file,
+                       composite = composite,
                        disposeIfNeeded = FileEditorManagerImpl.isSingletonFileEditor(composite.selectedEditor))
       if (isProjectOpen && window.tabCount == 0 && !window.isDisposed &&
           nextFile != null && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         manager.newEditorComposite(nextFile)?.let {
-          window.setComposite(it, moveFocus)
+          window.addComposite(composite = it, options = FileEditorOpenOptions(requestFocus = moveFocus, usePreviewTab = it.isPreview))
         }
       }
     }
@@ -670,12 +671,6 @@ open class EditorsSplitters internal constructor(
   fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
 
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.getComposites() }
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Use {@link #getAllComposites(VirtualFile)}", level = DeprecationLevel.ERROR)
-  fun findEditorComposites(file: VirtualFile): List<EditorWithProviderComposite> {
-    return windows.asSequence().mapNotNull { it.getComposite(file) }.filterIsInstance<EditorWithProviderComposite>().toList()
-  }
 
   @RequiresEdt
   fun getAllComposites(file: VirtualFile): List<EditorComposite> = getWindowSequence().mapNotNull { it.getComposite(file) }.toList()

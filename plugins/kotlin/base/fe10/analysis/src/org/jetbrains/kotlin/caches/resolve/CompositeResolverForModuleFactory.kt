@@ -220,7 +220,7 @@ class CompositeResolverForModuleFactory(
         configureDefaultCheckers()
 
         // Specific for each PlatformConfigurator
-        for (configurator in analyzerServices.uniquePlatformConfigurators) {
+        for (configurator in analyzerServices.uniquePlatformConfigurators.map { it as PlatformConfiguratorBase}) {
             configurator.configureExtensionsAndCheckers(this)
         }
 

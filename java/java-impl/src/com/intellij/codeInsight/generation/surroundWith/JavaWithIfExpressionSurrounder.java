@@ -69,7 +69,7 @@ public class JavaWithIfExpressionSurrounder extends JavaExpressionModCommandSurr
       block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
       TextRange range = block.getStatements()[0].getTextRange();
       block.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-      updater.moveCaretTo(range.getStartOffset());
+      updater.select(TextRange.from(range.getStartOffset(), 0));
     }
   }
 

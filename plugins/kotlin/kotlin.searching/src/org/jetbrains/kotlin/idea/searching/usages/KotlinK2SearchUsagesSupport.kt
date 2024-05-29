@@ -292,7 +292,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return true
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
         return when (val element = method.unwrapped) {
             is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()

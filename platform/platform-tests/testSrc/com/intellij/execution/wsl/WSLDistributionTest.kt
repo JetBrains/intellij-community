@@ -587,9 +587,10 @@ private class WslTestStrategyExtension
     val disposable = Disposer.newDisposable()
     context.getStore(ExtensionContext.Namespace.GLOBAL).put(this to Disposable::class.java, disposable)
 
+    val oldService = WslIjentAvailabilityService.getInstance()
     ApplicationManager.getApplication().registerOrReplaceServiceInstance(
       WslIjentAvailabilityService::class.java,
-      object : WslIjentAvailabilityService {
+      object : WslIjentAvailabilityService by oldService {
         override fun runWslCommandsViaIjent(): Boolean =
           when (context.getStore(ExtensionContext.Namespace.GLOBAL).get(WslTestStrategy::class.java) as WslTestStrategy?) {
             null -> false

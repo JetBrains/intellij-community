@@ -4,6 +4,7 @@ package com.intellij.usages.rules;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ImportFilteringRule {
 
+  @ApiStatus.Internal
   public static final ExtensionPointName<ImportFilteringRule> EP_NAME = ExtensionPointName.create("com.intellij.importFilteringRule");
 
   /**

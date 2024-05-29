@@ -21,7 +21,6 @@ internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: 
       )
     )
 
-    //todo include jna.boot.library.path, pty4j.preferred.native.folder and related properties? 
     val loaderModule = context.originalModuleRepository.repository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader"))
     val ideClasspath = loaderModule.moduleClasspath.map { it.pathString }
     runApplicationStarter(
@@ -30,7 +29,8 @@ internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: 
       args = args,
       vmProperties = systemProperties + additionalVmProperties,
       vmOptions = VmOptionsGenerator.computeVmOptions(context) +
-                  context.productProperties.additionalIdeJvmArguments +
+                  //we need to unset 'jna.nounpack' (see IJ-CR-125211), otherwise the process will fail to load JNA on macOS (IJPL-150094)
+                  context.productProperties.additionalIdeJvmArguments.filterNot { it == "-Djna.nounpack=true" } +
                   context.productProperties.getAdditionalContextDependentIdeJvmArguments(context),
     )
   }

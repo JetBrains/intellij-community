@@ -12,14 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
-public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
+final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final GroupNode.Root myRootNode;
 
   private final @Nullable TargetsRootNode myTargetsNode;
   private final UsageTarget[] myTargets;
   private UsageTargetNode[] myTargetNodes;
 
-  public UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
+  UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
     super(GroupNode.createRoot());
     myRootNode = (GroupNode.Root)root;
 

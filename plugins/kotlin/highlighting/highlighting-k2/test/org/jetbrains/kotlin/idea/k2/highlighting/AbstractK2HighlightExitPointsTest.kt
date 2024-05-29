@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractCustomHighlightUsageHandler
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 
 abstract class AbstractK2HighlightExitPointsTest: AbstractCustomHighlightUsageHandlerTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun doTest(unused: String) {
         ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)

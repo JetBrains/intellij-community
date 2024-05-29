@@ -1996,4 +1996,18 @@ def foo(param: str | int) -> TypeGuard[str]:
                    foo(<warning descr="Expected type 'str', got 'int' instead">name=1</warning>)
                    """);
   }
+
+  // PY-70528
+  public void testVersionDependentTypeVarTupleInitialization() {
+    doTestByText("""
+                  import sys
+                  
+                  if sys.version_info >= (3, 11):
+                      from typing import TypeVarTuple
+                  else:
+                      from typing_extensions import TypeVarTuple
+                  
+                  PosArgsT = TypeVarTuple("PosArgsT")
+                  """);
+  }
 }

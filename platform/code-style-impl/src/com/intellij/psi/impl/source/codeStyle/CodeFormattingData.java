@@ -11,10 +11,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class CodeFormattingData {
 
   private static final Key<CodeFormattingData> CODE_FORMATTING_DATA_KEY = Key.create("code.formatting.data");

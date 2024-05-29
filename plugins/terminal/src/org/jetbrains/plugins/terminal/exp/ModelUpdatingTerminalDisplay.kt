@@ -18,7 +18,7 @@ internal class ModelUpdatingTerminalDisplay(private val alarmManager: TerminalAl
     model.setCursor(x, y)
   }
 
-  override fun setCursorShape(cursorShape: CursorShape) {
+  override fun setCursorShape(cursorShape: CursorShape?) {
     model.cursorShape = cursorShape
   }
 
@@ -38,10 +38,6 @@ internal class ModelUpdatingTerminalDisplay(private val alarmManager: TerminalAl
 
   override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
     model.useAlternateBuffer = useAlternateScreenBuffer
-  }
-
-  override fun setBlinkingCursor(isCursorBlinking: Boolean) {
-    model.isCursorBlinking = isCursorBlinking
   }
 
   override fun getWindowTitle(): String = model.windowTitle

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
@@ -24,7 +24,7 @@ fun KtFunctionSymbol.getByteCodeMethodName(): String {
         .firstNotNullOfOrNull {
             it.arguments.singleOrNull { a -> a.name.asString() == "name" }
                 ?.expression?.asSafely<KtConstantAnnotationValue>()
-                ?.constantValue?.asSafely<KtConstantValue.KtStringConstantValue>()?.value
+                ?.constantValue?.asSafely<KaConstantValue.KaStringConstantValue>()?.value
         }
     if (jvmName != null) return jvmName
     return name.asString()

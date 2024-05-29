@@ -10,10 +10,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
@@ -31,8 +29,22 @@ class GitLabMergeRequestStatusViewModel(
 
   override val hasConflicts: SharedFlow<Boolean> = mergeRequest.details.map { it.conflicts }.modelFlow(cs, thisLogger())
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override val requiredConversationsResolved: SharedFlow<Boolean> = mergeRequest.details.map {
     it.onlyAllowMergeIfAllDiscussionsAreResolved
+  }.distinctUntilChanged().flatMapLatest { resolveRequired ->
+    if (resolveRequired) {
+      mergeRequest.nonEmptyDiscussionsData.map { result ->
+        result.getOrNull().orEmpty().any { disc ->
+          disc.notes.firstOrNull()?.let {
+            !it.system && it.resolvable && !it.resolved
+          } ?: false
+        }
+      }
+    }
+    else {
+      flowOf(false)
+    }
   }.modelFlow(cs, thisLogger())
 
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {

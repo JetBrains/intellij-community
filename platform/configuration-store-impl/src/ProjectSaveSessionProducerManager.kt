@@ -9,7 +9,7 @@ import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
 
 internal open class ProjectSaveSessionProducerManager(@JvmField protected val project: Project, isUseVfsForWrite: Boolean)
-  : SaveSessionProducerManager(isUseVfsForWrite, collectVfsEvents = true)
+  : SaveSessionProducerManager(isUseVfsForWrite = isUseVfsForWrite, collectVfsEvents = true)
 {
   suspend fun saveAndValidate(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
     saveSessions(saveSessions, saveResult)
@@ -56,8 +56,9 @@ internal open class ProjectSaveSessionProducerManager(@JvmField protected val pr
     }
   }
 
-  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> =
-    serviceIfCreated<NotificationsManager>()?.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project) ?: emptyArray()
+  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> {
+    return serviceIfCreated<NotificationsManager>()?.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project) ?: emptyArray()
+  }
 
   private fun getFileList(readonlyFiles: List<SaveSessionAndFile>): List<VirtualFile> = readonlyFiles.map { it.file }
 }

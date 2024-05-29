@@ -3,6 +3,4 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 
 import org.jetbrains.kotlin.idea.highlighter.AbstractCustomHighlightUsageHandlerTest
 
-abstract class AbstractK2HighlightUsagesTest: AbstractCustomHighlightUsageHandlerTest() {
-    override fun isFirPlugin(): Boolean = true
-}
+abstract class AbstractK2HighlightUsagesTest : AbstractCustomHighlightUsageHandlerTest()

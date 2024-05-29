@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2IntroducePropertyTest : AbstractExtractionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun doIntroducePropertyTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
@@ -32,6 +31,7 @@ abstract class AbstractK2IntroducePropertyTest : AbstractExtractionTest() {
             val extractionTarget = propertyTargets.single {
                 it.targetName == InTextDirectivesUtils.findStringWithPrefixes(file.getText(), "// EXTRACTION_TARGET: ")
             }
+
             val explicitPreviousSibling = file.findElementByCommentPrefix("// SIBLING:")
             val helper = object : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
                 override fun validate(descriptor: ExtractableCodeDescriptor) = descriptor.validate(extractionTarget)
@@ -62,7 +62,7 @@ abstract class AbstractK2IntroducePropertyTest : AbstractExtractionTest() {
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

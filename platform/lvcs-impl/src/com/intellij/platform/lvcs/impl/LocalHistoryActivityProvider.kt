@@ -6,6 +6,7 @@ import com.intellij.history.ActivityPresentationProvider
 import com.intellij.history.core.*
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
+import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -28,16 +29,16 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.onChangeSetFinished(project, gateway, scope)
   }
 
-  override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): ActivityData {
+  override fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData {
     gateway.registerUnsavedDocuments(facade)
 
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      return loadFileActivityList(projectId, scope, scopeFilter)
+      return loadFileActivityList(projectId, scope, fileFilter)
     } else if (scope is ActivityScope.Files) {
-      return loadFilesActivityList(projectId, scope, scopeFilter)
+      return loadFilesActivityList(projectId, scope, fileFilter)
     }
-    return loadRecentActivityList(projectId, scope, scopeFilter)
+    return loadRecentActivityList(projectId, scope, fileFilter)
   }
 
   private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: String?): ActivityData {
@@ -64,30 +65,38 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: String?,
                                      affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>) {
-    var lastLabel: ChangeSet? = null
+    var lastEventLabel: ChangeSet? = null
+    val userLabels = mutableListOf<ChangeSet>()
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
       if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
-        lastLabel = changeSet
+        if (changeSet.activityId == CommonActivity.UserLabel) {
+          userLabels.add(changeSet)
+          lastEventLabel = null
+        } else {
+          lastEventLabel = changeSet
+        }
       }
       else {
-        if (lastLabel != null) {
-          activityItems.add(lastLabel!!.toActivityItem(scope))
-          lastLabel = null
-        }
+        if (userLabels.isNotEmpty()) activityItems.addAll(userLabels.map { it.toActivityItem(scope) })
+        if (lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
+
+        userLabels.clear()
+        lastEventLabel = null
+
         activityItems.add(changeSet.toActivityItem(scope))
       }
     })
   }
 
-  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, scopeFilter: String?): ActivityData {
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: String?): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
-    val pattern = scopeFilter.toPattern()
+    val pattern = fileFilter.toPattern()
     for (changeSet in facade.changes) {
       if (changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
-        if (scopeFilter != null || !changeSet.changes.any { it.affectsProject(projectId) }) continue
+        if (fileFilter != null || !changeSet.changes.any { it.affectsProject(projectId) }) continue
       }
       else {
         if (!changeSet.changes.any { change ->
@@ -99,14 +108,14 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return ActivityData(result).also { it.putUserData(AFFECTED_PATHS, paths) }
   }
 
-  override fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>? {
+  override fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>? {
     val changeSets = data.getChangeSets()
-    if (activityFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
+    if (contentFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
     val filteredIds = mutableSetOf<Long>()
     val processor: (Long, String?) -> Boolean = { changeSetId, content ->
-      if (content?.contains(activityFilter, true) == true) filteredIds.add(changeSetId)
+      if (content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
       true
     }
 
@@ -122,9 +131,9 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
-  override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData? {
+  override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData? {
     val changeSetSelection = selection.toChangeSetSelection() ?: return null
-    return facade.createDiffData(gateway, scope, changeSetSelection, USE_OLD_CONTENT)
+    return facade.createDiffData(gateway, scope, changeSetSelection, diffMode, USE_OLD_CONTENT)
   }
 
   override fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
@@ -132,8 +141,10 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.createSingleFileDiffRequestProducer(project, gateway, scope, changeSetSelection, USE_OLD_CONTENT)
   }
 
-  override fun isScopeFilterSupported(scope: ActivityScope): Boolean = scope.hasMultipleFiles
-  override fun isActivityFilterSupported(scope: ActivityScope): Boolean = !scope.hasMultipleFiles
+  override fun getSupportedFilterKindFor(scope: ActivityScope): FilterKind {
+    if (scope.hasMultipleFiles) return FilterKind.FILE
+    return FilterKind.CONTENT
+  }
 
   override fun getPresentation(item: ActivityItem): ActivityPresentation? {
     if (item !is ChangeSetActivityItem) return null

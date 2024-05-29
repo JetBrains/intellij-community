@@ -20,7 +20,6 @@ open class AlienLocalChangeList(private val myChanges: List<Change>, @Nls privat
   override fun isDefault(): Boolean = false
 
   override fun isReadOnly(): Boolean = false
-  override fun setReadOnly(isReadOnly: Boolean) = throw UnsupportedOperationException()
 
   override fun getData(): Any? = throw UnsupportedOperationException()
 

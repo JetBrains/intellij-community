@@ -42,7 +42,7 @@ internal class SdkPreIndexingService: Disposable {
   private var currentSdk: Sdk? = null
 
   @Volatile
-  private var currentProgressIndicator: BackgroundableProcessIndicator? = null;
+  private var currentProgressIndicator: BackgroundableProcessIndicator? = null
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
@@ -78,21 +78,21 @@ internal class SdkPreIndexingService: Disposable {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, currentProgressIndicator!!)
   }
 
-  private fun geSdkAndAdditionalSetIndexableFileProviders(sdk: Sdk, project: Project): Map<IndexableFilesIterator, Collection<VirtualFile>> {
+  private fun geSdkAndAdditionalSetIndexableFileProviders(sdk: Sdk, project: Project): Set<VirtualFile> {
     val allIterators: MutableList<IndexableFilesIterator> = ArrayList(2)
     allIterators.addAll(createProjectUnAwareIndexableSetContributors())
     allIterators.addAll(createIterators(sdk))
 
-    val providerToFiles = HashMap<IndexableFilesIterator, Collection<VirtualFile>>()
+    val files = HashSet<VirtualFile>()
     for (iterator in allIterators) {
       val files: MutableSet<VirtualFile> = HashSet()
       iterator.iterateFiles(project, ContentIterator { fileOrDir: VirtualFile ->
         files.add(fileOrDir)
         true
       }, VirtualFileFilter.ALL)
-      providerToFiles.put(iterator, files)
+      files.addAll(files)
     }
-    return providerToFiles
+    return files
   }
 
   @Synchronized

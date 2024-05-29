@@ -21,19 +21,23 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
+@Internal
 enum class CodeNavigateSource {
   ShowUsagesPopup,
   FindToolWindow
 }
 
+@Internal
 enum class TooManyUsagesUserAction {
   Shown,
   Aborted,
   Continued
 }
 
+@Internal
 object UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -347,6 +351,7 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   }
 }
 
+@Internal
 class ScopeRuleValidator : CustomValidationRule() {
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (ScopeIdMapper.standardNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED

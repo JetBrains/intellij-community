@@ -5,12 +5,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -20,18 +21,19 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
  * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
@@ -39,7 +41,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
  */
 @Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = allowAnalysisOnEdt {
         return allowAnalysisFromWriteAction {
             when (ktReference) {
@@ -71,7 +73,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private class ReplaceResult(val replacedElement: KtElement, val isUnQualifiable: Boolean)
 
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     @RequiresWriteLock
     override fun bindToFqName(
         simpleNameReference: KtSimpleNameReference,
@@ -89,19 +91,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 if (oldTarget?.kotlinFqName == fqName) return expression
             }
             if (fqName.isRoot) return expression
-            val writableFqn = if (fqName.pathSegments().last().asString() == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()) {
-                fqName.parent()
-            } else {
-                fqName
-            }
             val elementToReplace = expression.getQualifiedElementOrCallableRef()
             val result = modifyPsiWithOptimizedImports(expression.containingKtFile) {
                 when (elementToReplace) {
-                    is KtUserType -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtCallExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtCallableReferenceExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
+                    is KtUserType -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtQualifiedExpression -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtCallExpression -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtCallableReferenceExpression -> elementToReplace.replaceWith(fqName, targetElement)
+                    is KtSimpleNameExpression -> elementToReplace.replaceWith(fqName, targetElement)
                     else -> null
                 }
             } ?: return expression
@@ -173,7 +170,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtCallableReferenceExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         if (targetElement == null) return null
-        val isUnQualifiable = targetElement.isTopLevelKtOrJavaMember()
+        val isUnQualifiable = targetElement.nameDeterminant().isTopLevelKtOrJavaMember()
         val callableReference = if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
             containingKtFile.addImport(fqName)
             KtPsiFactory(project).createCallableReferenceExpression("::${fqName.shortName()}")
@@ -186,7 +183,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtCallExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val psiFactory = KtPsiFactory(project)
-        val newName = psiFactory.createSimpleName(fqName.shortName().asString())
+        val newName = psiFactory.createSimpleName(fqName.quoteIfNeeded().shortName().asString())
         val newCall = calleeExpression?.replaced(newName)?.parent as? KtCallExpression ?: return null
         val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true
         return if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
@@ -196,31 +193,53 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     private fun KtSimpleNameExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
-        val shortNameReplaceResult = replaceShortName(fqName, targetElement)
+        val shortNameReplaceResult = if (this is KtOperationReferenceExpression && targetElement is KtNamedFunction) {
+            replaceWith(fqName, targetElement)
+        } else {
+            replaceShortName(fqName, targetElement)
+        }
         if (shortNameReplaceResult.isUnQualifiable) return shortNameReplaceResult
         val newNameExpr = shortNameReplaceResult.replacedElement as KtExpression
         return ReplaceResult(newNameExpr.replaceWithQualified(fqName, newNameExpr), false)
     }
 
-    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement? ): ReplaceResult {
+    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
-        val shortName = fqName.shortName().asString()
-        val isOperator = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.OPERATOR_KEYWORD)
-        val isInfixFun = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.INFIX_KEYWORD) == true
-        val newNameExpression = if (isInfixFun || isOperator) psiFactory.createOperationName(shortName) else psiFactory.createSimpleName(shortName)
-        val newSimpleName = replaced(newNameExpression)
-        val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true || isOperator || isInfixFun
+        val shortName = fqName.quoteIfNeeded().shortName().asString()
+        val replacedExpr = replaced(psiFactory.createSimpleName(shortName))
+        val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true
         return if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
-            newSimpleName.containingKtFile.addImport(fqName)
-            ReplaceResult(newSimpleName, isUnQualifiable)
-        } else ReplaceResult(newSimpleName, false)
+            replacedExpr.containingKtFile.addImport(fqName)
+            ReplaceResult(replacedExpr, isUnQualifiable)
+        } else ReplaceResult(replacedExpr, false)
+    }
+
+    private fun KtOperationReferenceExpression.replaceWith(fqName: FqName, targetElement: KtNamedFunction): ReplaceResult {
+        val psiFactory = KtPsiFactory(project)
+        val shortName = fqName.quoteIfNeeded().shortName().asString()
+        val isInfix = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaFunctionSymbol)?.isInfix == true }
+        val isOperator = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaFunctionSymbol)?.isOperator == true }
+        val replacedExpr = if (isOperator) {
+            replaced(psiFactory.createOperationName(OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[Name.identifier(shortName)] ?: shortName))
+        } else if (isInfix) {
+            replaced(psiFactory.createOperationName(shortName))
+        } else {
+            // replacing infix or operator function call with regular call
+            val binaryExpression = parentOfType<KtBinaryExpression>() ?: error("Binary expression expected")
+            binaryExpression.replaced(psiFactory.createExpression("${binaryExpression.left?.text}.$shortName(${binaryExpression.right?.text})"))
+        }
+        val isUnQualifiable = targetElement.isCallableAsExtensionFunction() || replacedExpr is KtOperationReferenceExpression
+        return if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
+            replacedExpr.containingKtFile.addImport(fqName)
+            ReplaceResult(replacedExpr, isUnQualifiable)
+        } else ReplaceResult(replacedExpr, false)
     }
 
     override fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(
         expr: KtExpression,
         context: PsiElement
     ): String {
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
             analyze(expr) {
                 return KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL).suggestExpressionNames(expr).first()
@@ -229,10 +248,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             if (ktReference is KtSymbolBasedReference) {
-                @OptIn(KtAllowAnalysisOnEdt::class)
+                @OptIn(KaAllowAnalysisOnEdt::class)
                 allowAnalysisOnEdt {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()

@@ -7,11 +7,9 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.PopupBorder
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.system.OS
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Dimension
@@ -22,8 +20,8 @@ import javax.swing.JPanel
 
 internal class IntentionPreviewComponent(parent: Disposable) :
   JBLoadingPanel(BorderLayout(), { panel -> IntentionPreviewLoadingDecorator(panel, parent) }) {
-  private var NO_PREVIEW_LABEL = setupLabel(CodeInsightBundle.message("intention.preview.no.available.text"))
-  private var LOADING_LABEL = setupLabel(CodeInsightBundle.message("intention.preview.loading.preview"))
+  private var NO_PREVIEW_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.no.available.text")))
+  private var LOADING_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.loading.preview")))
 
   var editors: List<EditorEx> = emptyList()
   var html: IntentionPreviewInfo.Html? = null
@@ -44,6 +42,19 @@ internal class IntentionPreviewComponent(parent: Disposable) :
         }
       }
     }
+
+  }
+
+  init {
+    add(multiPanel)
+    border = PopupBorder.Factory.create(true, true)
+    setLoadingText(CodeInsightBundle.message("intention.preview.loading.preview"))
+  }
+
+  companion object {
+    const val NO_PREVIEW: Int = -1
+    const val LOADING_PREVIEW: Int = -2
+    val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
 
     private fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {
       val targetSize = IntentionPreviewPopupUpdateProcessor.MIN_WIDTH * UIUtil.getLabelFont().size.coerceAtMost(24) / 12
@@ -81,24 +92,6 @@ internal class IntentionPreviewComponent(parent: Disposable) :
         IntentionPreviewInfo.InfoKind.ERROR -> JBUI.CurrentTheme.Notification.Error.BACKGROUND
       }
       return wrapToPanel(editor)
-    }
-  }
-
-  init {
-    add(multiPanel)
-    border = PopupBorder.Factory.create(true, true)
-    setLoadingText(CodeInsightBundle.message("intention.preview.loading.preview"))
-  }
-
-  companion object {
-    const val NO_PREVIEW: Int = -1
-    const val LOADING_PREVIEW: Int = -2
-    val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
-
-    private fun setupLabel(text: @Nls String): JComponent {
-      val label = SimpleColoredComponent()
-      label.append(text)
-      return wrapToPanel(label)
     }
 
     private fun wrapToPanel(component: JComponent): JPanel {

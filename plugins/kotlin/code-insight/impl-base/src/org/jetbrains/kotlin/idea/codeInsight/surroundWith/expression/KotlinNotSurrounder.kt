@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
@@ -19,7 +19,7 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         return CodeInsightBundle.message("surround.with.not.template")
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     public override fun isApplicable(expression: KtExpression): Boolean {
         if (!super.isApplicable(expression)) return false
         allowAnalysisOnEdt {
@@ -41,7 +41,6 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         )
         expressionWithoutParentheses.replace(expression)
         val expr = expression.replace(prefixExpr) as KtExpression
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
-        updater.moveCaretTo(expr.textRange.endOffset)
+        updater.select(TextRange.from(expr.textRange.endOffset, 0))
     }
 }

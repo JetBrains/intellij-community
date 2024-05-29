@@ -3,7 +3,6 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.LangBundle
@@ -14,18 +13,12 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.isNotificationSilentMode
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
@@ -67,8 +60,8 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
-      object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      val component = object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
         override fun iconTextSpace() = JBUI.scale(2)
 
         override fun updateToolTipText() {
@@ -88,6 +81,7 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
 
         override fun getInsets(): Insets = JBUI.insets(2)
+
         override fun getMargins(): Insets = JBInsets.addInsets(
           super.getMargins(),
           if (myPresentation.icon == AllIcons.General.ReaderMode) JBInsets.emptyInsets() else JBUI.insetsRight(5)
@@ -99,38 +93,17 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
             font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
           }
         }
-      }.also {
-        it.foreground = JBColor.lazy {
-          editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor ?: UIUtil.getInactiveTextColor()
-        }
-        if (!SystemInfo.isWindows) {
-          it.font = FontUIResource(it.font.deriveFont(it.font.style, it.font.size - JBUIScale.scale(2).toFloat()))
-        }
-
-        editor.project?.let { p ->
-          if (!ReaderModeSettings.getInstance(p).enabled || isNotificationSilentMode(p)) return@let
-
-          val connection = p.messageBus.connect(p)
-          val gotItTooltip = GotItTooltip("reader.mode.got.it", LangBundle.message("text.reader.mode.got.it.popup"), p)
-            .withHeader(LangBundle.message("title.reader.mode.got.it.popup"))
-
-          if (gotItTooltip.canShow()) {
-            connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-              override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-                fileEditors.find { fe -> (fe is TextEditor) && editor == fe.editor }?.let { _ ->
-                  gotItTooltip.setOnBalloonCreated { balloon ->
-                    balloon.addListener(object : JBPopupListener {
-                      override fun onClosed(event: LightweightWindowEvent) {
-                        connection.disconnect()
-                      }
-                    })
-                  }.show(it, GotItTooltip.BOTTOM_MIDDLE)
-                }
-              }
-            })
-          }
-        }
       }
+
+      component.foreground = JBColor.lazy {
+        editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor ?: UIUtil.getInactiveTextColor()
+      }
+      if (!SystemInfo.isWindows) {
+        component.font = FontUIResource(component.font.deriveFont(component.font.style, component.font.size - JBUIScale.scale(2).toFloat()))
+      }
+
+      return component
+    }
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return true

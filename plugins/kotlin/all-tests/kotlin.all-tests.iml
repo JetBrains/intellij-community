@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
   </component>
 </module>

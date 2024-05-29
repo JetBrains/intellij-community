@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -51,6 +52,7 @@ final class NativeFileChooserDialogImpl implements FileChooserDialog, PathChoose
         hints |= JBRFileDialog.SELECT_FILES_HINT;
       }
       jbrDialog.setHints(hints);
+      jbrDialog.setLocalizationStrings(IdeBundle.message("windows.native.common.dialog.open"), IdeBundle.message("windows.native.common.dialog.select.folder"));
     }
   }
 

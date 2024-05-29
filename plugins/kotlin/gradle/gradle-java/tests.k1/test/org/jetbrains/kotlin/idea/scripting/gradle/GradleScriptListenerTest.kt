@@ -8,13 +8,14 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -23,6 +24,7 @@ import java.io.File
 
 @RunWith(JUnit3RunnerWithInners::class)
 open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
+
     companion object {
         internal const val outsidePlaceholder = "// OUTSIDE_SECTIONS"
         internal const val insidePlaceholder = "// INSIDE_SECTIONS"
@@ -36,6 +38,9 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
         val prop: PsiFile,
         val gradleWrapperProperties: VirtualFile
     )
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun setUpTestProject() {
         val rootDir = IDEA_TEST_DATA_DIR.resolve("script/definition/loading/gradle/")

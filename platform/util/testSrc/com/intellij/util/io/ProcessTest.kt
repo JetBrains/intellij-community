@@ -3,11 +3,11 @@
 
 package com.intellij.util.io
 
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.pollAssertionsAsync
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.debug.junit5.CoroutinesTimeout
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
@@ -24,12 +24,14 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
-@CoroutinesTimeout(3_000)
+// We need test application here to invoke the loading of our own DebugProbes.
+// otherwise, the test fails in configuration phase because coroutines' DebugProbes loads ByteBuddy
+@TestApplication
 class ProcessTest {
   @Nested
   inner class copyToAsync {
     @Test
-    fun `simple copying`(): Unit = runBlocking {
+    fun `simple copying`(): Unit = timeoutRunBlocking(timeout = 3.seconds) {
       val outputStream = ByteArrayOutputStream()
       val expectedBytes = "hello world".toByteArray()
       ByteArrayInputStream(expectedBytes).copyToAsync(outputStream)
@@ -38,7 +40,7 @@ class ProcessTest {
 
     @ParameterizedTest
     @ValueSource(ints = [1 shl 8, 1 shl 10, 7919, 1 shl 20, 1 shl 21])
-    fun `copy 1 MiB`(bufferSize: Int): Unit = runBlocking {
+    fun `copy 1 MiB`(bufferSize: Int): Unit = timeoutRunBlocking(timeout = 3.seconds) {
       val outputStream = ByteArrayOutputStream()
       val expectedBytes = ByteArray(1 shl 20) { it.toByte() }
       ByteArrayInputStream(expectedBytes).copyToAsync(outputStream, bufferSize = bufferSize)
@@ -47,7 +49,7 @@ class ProcessTest {
 
     @ParameterizedTest
     @ValueSource(longs = [0L, 1L, 7919L, 1L shl 20, 1L shl 21])
-    fun `copy 1 MiB with limit`(limit: Long): Unit = runBlocking {
+    fun `copy 1 MiB with limit`(limit: Long): Unit = timeoutRunBlocking(timeout = 3.seconds) {
       val outputStream = ByteArrayOutputStream()
       val expectedBytes = ByteArray(1 shl 20) { it.toByte() }
       ByteArrayInputStream(expectedBytes).copyToAsync(outputStream, limit = limit)
@@ -56,8 +58,7 @@ class ProcessTest {
     }
 
     @Test
-    @CoroutinesTimeout(30_000)
-    fun `cancel by timeout`(): Unit = runBlocking {
+    fun `cancel by timeout`(): Unit = timeoutRunBlocking(timeout = 30.seconds) {
       pollAssertionsAsync(total = 15.seconds, interval = ZERO) {
         val timeout = 500.milliseconds
         val threshold = 100.milliseconds

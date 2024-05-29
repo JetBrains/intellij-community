@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -27,6 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.MessageFormat;
+
+import static com.intellij.history.core.LocalHistoryNotificationIdsHolder.STORAGE_CORRUPTED;
+import static com.intellij.history.core.LocalHistoryNotificationIdsHolderKt.getLocalHistoryNotificationGroup;
 
 public final class ChangeListStorageImpl implements ChangeListStorage {
   private static final int VERSION = 7;
@@ -121,10 +122,12 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       isCompletelyBroken = true;
     }
 
-    new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                     LocalHistoryBundle.message("notification.title.local.history.broken"),
-                     LocalHistoryBundle.message("notification.content.local.history.broken"),
-                     NotificationType.ERROR).notify(null);
+    getLocalHistoryNotificationGroup()
+      .createNotification(LocalHistoryBundle.message("notification.title.local.history.broken"),
+                          LocalHistoryBundle.message("notification.content.local.history.broken"),
+                          NotificationType.ERROR)
+      .setDisplayId(STORAGE_CORRUPTED)
+      .notify(null);
   }
 
   @Override

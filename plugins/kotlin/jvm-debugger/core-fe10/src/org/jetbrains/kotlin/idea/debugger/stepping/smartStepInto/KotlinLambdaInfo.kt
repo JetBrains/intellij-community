@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 data class KotlinLambdaInfo(
     val parameterName: String,
-    val callerMethodOrdinal: Int,
     val parameterIndex: Int,
     val isSuspend: Boolean,
     val isSam: Boolean,
@@ -35,14 +34,13 @@ internal fun KotlinLambdaInfo(
     isSamSuspendMethod: Boolean = false,
 ) = KotlinLambdaInfo(
     parameterName = argumentSymbol.name.asString(),
-    callerMethodOrdinal = callerMethodOrdinal,
     parameterIndex = countParameterIndex(methodSymbol, argumentSymbol),
     isSuspend = argumentSymbol.returnType.isSuspendFunctionType,
     isSam = isSam,
     isNoinline = argumentSymbol.isNoinline,
     isNameMangledInBytecode = isNameMangledInBytecode,
     methodName = methodName,
-    callerMethodInfo = CallableMemberInfo(methodSymbol),
+    callerMethodInfo = CallableMemberInfo(methodSymbol, callerMethodOrdinal),
     isSamSuspendMethod = isSamSuspendMethod,
 )
 

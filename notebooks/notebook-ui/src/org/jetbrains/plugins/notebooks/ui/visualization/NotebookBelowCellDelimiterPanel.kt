@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.UIUtil
@@ -15,7 +16,7 @@ class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
   @Nls private val tooltipText: String?,
   private val executionCount: Int?,
-  statusIcon: Icon,
+  private val statusIcon: Icon,
   private val isExecutable: Boolean
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
@@ -46,7 +47,6 @@ class NotebookBelowCellDelimiterPanel(
     }
   }
 
-
   private fun setBorder() {
     val dimension = when (editor.editorKind.isDiff()) {
       true -> Dimension(preferredSize.width, getJupyterCellSpacing(editor))
@@ -55,7 +55,7 @@ class NotebookBelowCellDelimiterPanel(
     border = BorderFactory.createEmptyBorder(dimension.height, 0, dimension.height, 0)
   }
 
-  private fun getCollapsed(): Boolean = !isExecutionCountDefined() && tooltipText == null
+  private fun getCollapsed(): Boolean = !isExecutionCountDefined() && (tooltipText == null || statusIcon == ExpUiIcons.General.GreenCheckmark)
 
   private fun isExecutionCountDefined(): Boolean = executionCount?.let { it > 0 } ?: false
 

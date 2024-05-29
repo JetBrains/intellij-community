@@ -971,20 +971,6 @@ public final class GitUtil {
   }
 
   /**
-   * @deprecated Prefer using {@link #isGitRoot(Path)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
-    try {
-      return isGitRoot(Paths.get(rootDir));
-    }
-    catch (InvalidPathException e) {
-      LOG.warn(e.getMessage());
-      return false;
-    }
-  }
-
-  /**
    * Check if the directory is a valid git root, by parsing the .git file/directory.
    * <p>
    * Typically, IDE should use its configured VCS directories, via {@link ProjectLevelVcsManager#getVcsFor(FilePath)} or

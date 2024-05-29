@@ -227,7 +227,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     return server.address
   }
 
-  fun serveFile(file: Path) {
+  fun serveFile(file: Path, httpPath: String = file.name) {
     require(file.exists())
     require(file.isRegularFile())
 
@@ -236,7 +236,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
     thisLogger().info("Serving file $file from ${server.address}")
 
-    server.createContext("/${file.name}", HttpHandler { httpExchange ->
+    server.createContext("/$httpPath", HttpHandler { httpExchange ->
       httpExchange.sendResponseHeaders(200, file.fileSize())
       httpExchange.responseBody.use { responseBody ->
         file.inputStream().use {

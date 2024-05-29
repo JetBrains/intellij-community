@@ -7,6 +7,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
+import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import java.util.*
@@ -33,14 +34,17 @@ data class IntroduceParameterDescriptor<Descriptor>(
     }
 
     val originalOccurrence: KotlinPsiRange
-        get() = occurrencesToReplace.first { it.textRange.intersects(originalRange.textRange) }
+        get() = occurrencesToReplace.first { remapRange(it).textRange.intersects(remapRange(originalRange).textRange) }
+
+    private fun remapRange(range: KotlinPsiRange): KotlinPsiRange =
+        if (range is KotlinPsiRange.ListRange) KotlinPsiRange.ListRange(range.elements.map { it.substringContextOrThis }) else range
 
     var valVar: KotlinValVar = if (callable is KtClass) {
         val modifierIsUnnecessary: (PsiElement) -> Boolean = {
             when {
                 it.parent != callable.body -> false
                 it is KtAnonymousInitializer -> true
-              it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) ?: false -> true
+                it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) == true -> true
                 else -> false
             }
         }

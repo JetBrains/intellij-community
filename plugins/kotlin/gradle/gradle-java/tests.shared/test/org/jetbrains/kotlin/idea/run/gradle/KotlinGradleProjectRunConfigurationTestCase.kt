@@ -19,12 +19,9 @@ abstract class KotlinGradleProjectRunConfigurationTestCase : KotlinGradleProject
 
     private lateinit var testRootDisposable: Disposable
 
-    final override fun getTestRootDisposable(): Disposable = testRootDisposable
-
     override fun setUp() {
         testRootDisposable = Disposer.newCheckedDisposable()
-
-        setUpWithKotlinPlugin { super.setUp() }
+        setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     }
 
     override fun tearDown() {

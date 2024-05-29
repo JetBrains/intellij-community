@@ -4,7 +4,6 @@ package com.intellij.platform.ijent.fs
 import java.time.ZonedDateTime
 
 sealed interface IjentFileInfo {
-  val path: IjentPath.Absolute
   val type: Type
   val permissions: Permissions
 
@@ -33,6 +32,12 @@ sealed interface IjentFileInfo {
 interface IjentPosixFileInfo : IjentFileInfo {
   override val type: Type
   override val permissions: Permissions
+
+  /** The device number of the inode. */
+  val inodeDev: Long
+
+  /** The inode number. */
+  val inodeIno: Long
 
   sealed interface Type : IjentFileInfo.Type {
     sealed interface Symlink : Type {

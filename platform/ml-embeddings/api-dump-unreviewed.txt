@@ -32,11 +32,11 @@ f:com.intellij.platform.ml.embeddings.models.TextEncoderConfig
 - equals(java.lang.Object):Z
 - f:getMaxLen():java.lang.Integer
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.ml.embeddings.models.TextEncoderConfig$Companion
 - f:loadConfig(ai.grazie.utils.mpp.DataLoader,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 - com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
+- sf:Companion:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex$Companion
 - <init>(java.nio.file.Path,java.lang.Integer):V
 - b:<init>(java.nio.file.Path,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - addEntries(java.lang.Iterable,Z,kotlin.coroutines.Continuation):java.lang.Object
@@ -63,6 +63,7 @@ f:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSe
 - setLimit(java.lang.Integer,kotlin.coroutines.Continuation):java.lang.Object
 - streamFindClose(ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
 - f:updateEntry(java.lang.String,java.lang.String,ai.grazie.emb.FloatTextEmbedding,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex$Companion
 com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
 - a:addEntries(java.lang.Iterable,Z,kotlin.coroutines.Continuation):java.lang.Object
 - bs:addEntries$default(com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex,java.lang.Iterable,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
@@ -166,7 +167,7 @@ a:com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddings
 - f:getProject():com.intellij.openapi.project.Project
 - f:loadIndex(kotlin.coroutines.Continuation):java.lang.Object
 - f:registerInMemoryManager():V
-- f:scheduleCleanup():V
+- f:saveIndex(kotlin.coroutines.Continuation):java.lang.Object
 - searchNeighbours(java.lang.String,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
 - f:startIndexingSession(kotlin.coroutines.Continuation):java.lang.Object
 - f:streamSearchNeighbours(java.lang.String,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
@@ -298,7 +299,6 @@ f:com.intellij.platform.ml.embeddings.search.utils.ScoredText
 - f:getSimilarity():D
 - f:getText():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 - <init>():V
 - f:read(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object

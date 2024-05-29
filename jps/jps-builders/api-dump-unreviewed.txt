@@ -15,7 +15,6 @@ f:org.jetbrains.jps.ModuleChunk
 - getPresentableShortName():java.lang.String
 - getTargets():java.util.Set
 - representativeTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
-- toString():java.lang.String
 f:org.jetbrains.jps.ProjectPaths
 - s:getAnnotationProcessorGeneratedSourcesOutputDir(org.jetbrains.jps.model.module.JpsModule,Z,org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile):java.io.File
 - s:getCompilationClasspath(org.jetbrains.jps.ModuleChunk,Z):java.util.Collection
@@ -1865,7 +1864,6 @@ a:org.jetbrains.jps.builders.BuildTarget
 - a:getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
 - a:getPresentableName():java.lang.String
 - f:getTargetType():org.jetbrains.jps.builders.BuildTargetType
-- toString():java.lang.String
 - writeConfiguration(org.jetbrains.jps.cmdline.ProjectDescriptor,java.io.PrintWriter):V
 org.jetbrains.jps.builders.BuildTargetIndex
 - org.jetbrains.jps.builders.BuildTargetRegistry
@@ -1987,7 +1985,6 @@ f:org.jetbrains.jps.builders.impl.BuildTargetChunk
 - s:forSingleTarget(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.builders.impl.BuildTargetChunk
 - getPresentableName():java.lang.String
 - getTargets():java.util.Set
-- toString():java.lang.String
 f:org.jetbrains.jps.builders.impl.BuildTargetIndexImpl
 - org.jetbrains.jps.builders.BuildTargetIndex
 - <init>(org.jetbrains.jps.builders.BuildTargetRegistry,org.jetbrains.jps.builders.impl.BuildRootIndexImpl):V
@@ -2105,7 +2102,6 @@ c:org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 - getRootId():java.lang.String
 - getTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
 - isGenerated():Z
-- toString():java.lang.String
 c:org.jetbrains.jps.builders.java.ResourceRootDescriptor
 - org.jetbrains.jps.builders.BuildRootDescriptor
 - pf:myFilterForExcludedPatterns:java.io.FileFilter
@@ -2118,7 +2114,6 @@ c:org.jetbrains.jps.builders.java.ResourceRootDescriptor
 - getRootFile():java.io.File
 - getRootId():java.lang.String
 - getTarget():org.jetbrains.jps.incremental.ResourcesTarget
-- toString():java.lang.String
 f:org.jetbrains.jps.builders.java.ResourcesTargetType
 - org.jetbrains.jps.builders.ModuleBasedBuildTargetType
 - sf:ALL_TYPES:java.util.List
@@ -2757,7 +2752,6 @@ f:org.jetbrains.jps.cmdline.PreloadedData
 - setHasHasWorkToDo(Z):V
 - setProjectDescriptor(org.jetbrains.jps.cmdline.ProjectDescriptor):V
 - setRunner(org.jetbrains.jps.cmdline.BuildRunner):V
-- toString():java.lang.String
 f:org.jetbrains.jps.cmdline.ProjectDescriptor
 - f:dataManager:org.jetbrains.jps.incremental.storage.BuildDataManager
 - f:fsState:org.jetbrains.jps.incremental.fs.BuildFSState
@@ -3069,7 +3063,6 @@ c:org.jetbrains.jps.incremental.CompiledClass
 - isDirty():Z
 - save():V
 - setContent(org.jetbrains.jps.incremental.BinaryContent):V
-- toString():java.lang.String
 f:org.jetbrains.jps.incremental.CompilerEncodingConfiguration
 - <init>(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.builders.BuildRootIndex):V
 - getAllModuleChunkEncodings(org.jetbrains.jps.ModuleChunk):java.util.Set
@@ -3399,7 +3392,6 @@ a:org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor
 - getRootId():java.lang.String
 - getRootIndex():I
 - getTarget():org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget
-- toString():java.lang.String
 - writeConfiguration(java.io.PrintWriter,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 f:org.jetbrains.jps.incremental.artifacts.instructions.CopyToDirectoryInstructionCreator
 - org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreatorBase
@@ -3414,7 +3406,6 @@ a:org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo
 f:org.jetbrains.jps.incremental.artifacts.instructions.ExplodedDestinationInfo
 - org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo
 - <init>(java.lang.String):V
-- toString():java.lang.String
 f:org.jetbrains.jps.incremental.artifacts.instructions.FileBasedArtifactRootDescriptor
 - org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor
 - <init>(java.io.File,org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter,I,org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget,org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo,org.jetbrains.jps.incremental.artifacts.instructions.FileCopyingHandler):V
@@ -3444,7 +3435,6 @@ f:org.jetbrains.jps.incremental.artifacts.instructions.JarDestinationInfo
 - <init>(java.lang.String,org.jetbrains.jps.incremental.artifacts.instructions.JarInfo,org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo):V
 - getJarInfo():org.jetbrains.jps.incremental.artifacts.instructions.JarInfo
 - getPathInJar():java.lang.String
-- toString():java.lang.String
 f:org.jetbrains.jps.incremental.artifacts.instructions.JarInfo
 - <init>(org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo):V
 - addContent(java.lang.String,org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor):V
@@ -3667,7 +3657,6 @@ a:org.jetbrains.jps.incremental.messages.BuildMessage
 - p:<init>(java.lang.String,org.jetbrains.jps.incremental.messages.BuildMessage$Kind):V
 - getKind():org.jetbrains.jps.incremental.messages.BuildMessage$Kind
 - getMessageText():java.lang.String
-- toString():java.lang.String
 e:org.jetbrains.jps.incremental.messages.BuildMessage$Kind
 - java.lang.Enum
 - sf:ERROR:org.jetbrains.jps.incremental.messages.BuildMessage$Kind
@@ -3721,7 +3710,6 @@ c:org.jetbrains.jps.incremental.messages.CompilerMessage
 - getProblemLocationOffset():J
 - getSourcePath():java.lang.String
 - s:getTextFromThrowable(java.lang.Throwable):java.lang.String
-- toString():java.lang.String
 c:org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 - org.jetbrains.jps.incremental.messages.BuildMessage
 - <init>(java.lang.String,java.lang.String,java.lang.String):V

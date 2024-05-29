@@ -1,3 +1,0 @@
-com/intellij/platform/workspace/storage/VersionedEntityStorage
-com/intellij/platform/workspace/storage/impl/cache/TracedSnapshotCache
-com/intellij/platform/workspace/storage/impl/containers/BidirectionalLongMultiMap

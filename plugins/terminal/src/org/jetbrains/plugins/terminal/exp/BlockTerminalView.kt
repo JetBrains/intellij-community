@@ -80,7 +80,7 @@ internal class BlockTerminalView(
     })
     promptView.controller.promptIsVisible = false
 
-    promptView.controller.model.addDocumentListener(object : DocumentListener {
+    promptView.controller.model.editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (promptView.component.preferredHeight != promptView.component.height) {
           component.revalidate()
@@ -273,6 +273,7 @@ internal class BlockTerminalView(
       return when (dataId) {
         TerminalPromptController.KEY.name -> promptView.controller
         TerminalOutputController.KEY.name -> outputView.controller
+        TerminalOutputModel.KEY.name -> outputView.controller.outputModel
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController

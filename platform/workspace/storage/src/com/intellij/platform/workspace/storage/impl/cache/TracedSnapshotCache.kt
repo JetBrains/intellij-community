@@ -78,6 +78,7 @@ public interface TracedSnapshotCache {
   }
 }
 
+@ApiStatus.Internal
 public fun cache(): TracedSnapshotCache {
   return TracedSnapshotCacheImpl()
 }

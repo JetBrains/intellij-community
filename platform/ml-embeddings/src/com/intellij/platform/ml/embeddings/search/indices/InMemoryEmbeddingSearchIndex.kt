@@ -33,7 +33,6 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
   }
 
   override suspend fun contains(id: String): Boolean = lock.read {
-    uncheckedIds.remove(id)
     id in idToEmbedding
   }
 
@@ -45,8 +44,10 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
   }
 
   override suspend fun onIndexingStart() {
-    uncheckedIds.clear()
-    uncheckedIds.addAll(idToEmbedding.keys)
+    lock.write {
+      uncheckedIds.clear()
+      uncheckedIds.addAll(idToEmbedding.keys)
+    }
   }
 
   override suspend fun onIndexingFinish() = lock.write {
@@ -58,6 +59,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
                                   shouldCount: Boolean) = lock.write {
     if (limit != null) {
       val list = values.toList()
+      list.forEach { uncheckedIds.remove(it.first) }
       idToEmbedding.putAll(list.take(minOf(limit!! - idToEmbedding.size, list.size)))
     }
     else {

@@ -153,9 +153,11 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     });
 
     PsiFile containingFile = body.getContainingFile();
+    PsiManager manager = containingFile.getManager();
     return elementsToCheck
       .stream()
       .filter(additionalFilter)
+      .filter(manager::isInProject)
       .filter(m -> m != containingFile)
       .filter(m -> !PsiTreeUtil.isAncestor(psiMember, m, true))
       .filter(m -> !(m instanceof PsiMember member) ||

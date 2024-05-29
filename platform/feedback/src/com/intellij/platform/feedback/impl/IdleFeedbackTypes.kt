@@ -10,13 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.feedback.aqua.bundle.AquaFeedbackBundle
-import com.intellij.platform.feedback.aqua.dialog.AquaNewUserFeedbackDialog
-import com.intellij.platform.feedback.aqua.dialog.AquaOldUserFeedbackDialog
-import com.intellij.platform.feedback.aqua.state.AquaNewUserFeedbackService
-import com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState
-import com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService
-import com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
+import com.intellij.platform.feedback.aqua.*
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -14,24 +14,24 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object TypeMismatchFactories {
 
-    val argumentTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val returnTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
+    val returnTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val assignmentTypeMismatch = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatch = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val initializerTypeMismatch = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
+    val initializerTypeMismatch = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         (diagnostic.psi as? KtProperty)?.initializer?.let { getFixesForTypeMismatch(it, diagnostic.expectedType, diagnostic.actualType) }
             ?: emptyList()
     }
 
-    val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.SmartcastImpossible ->
+    val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.SmartcastImpossible ->
         val psi = diagnostic.psi
         val actualType = psi.getKtType()
             ?: return@IntentionBased emptyList()

@@ -36,6 +36,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import kotlin.ranges.IntRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+@ApiStatus.Internal
 public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Disposable {
   private static final Logger LOG = Logger.getInstance(CoverageEditorAnnotatorImpl.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");

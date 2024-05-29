@@ -4,10 +4,16 @@ package com.intellij.usages.impl;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageNodePresentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
+  public UsageNode(@NotNull Usage usage) {
+    this(null, usage);
+  }
+
+  @ApiStatus.Internal
   public UsageNode(Node parent, @NotNull Usage usage) {
     setUserObject(usage);
     setParent(parent);
@@ -64,6 +70,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return getUsage().getPresentation().getPlainText();
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable UsageNodePresentation getCachedPresentation() {
     return getUsage().getPresentation().getCachedPresentation();

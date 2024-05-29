@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeProjectionRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -226,7 +226,7 @@ object K2CreateFromUsageUtil {
             }
         }
         // Listing variances will cause a syntax error.
-        typeProjectionRenderer = KtTypeProjectionRenderer.WITHOUT_VARIANCE
+        typeProjectionRenderer = KaTypeProjectionRenderer.WITHOUT_VARIANCE
     }
 
     context (KtAnalysisSession)

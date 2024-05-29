@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 class RenameClassByCompanionObjectShortReferenceHandler : AbstractReferenceSubstitutionRenameHandler() {
   override fun getElementToRename(dataContext: DataContext): PsiElement? {
     val refExpr = getReferenceExpression(dataContext) ?: return null
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
       analyze(refExpr) {
         val symbol = refExpr.mainReference.resolveToSymbol() as? KtClassOrObjectSymbol ?: return null

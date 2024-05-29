@@ -110,6 +110,4 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
             myFixture.disableInspections(unclearPrecedenceOfBinaryExpressionInspection)
         }
     }
-
-    override fun isFirPlugin(): Boolean = false
 }

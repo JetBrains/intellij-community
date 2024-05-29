@@ -3,6 +3,4 @@ package org.jetbrains.kotlin.idea.fir.search.refIndex
 
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 
-abstract class AbstractKotlinCompilerReferenceFirTest : AbstractKotlinCompilerReferenceTest() {
-    override val isFir: Boolean get() = true
-}
+abstract class AbstractKotlinCompilerReferenceFirTest : AbstractKotlinCompilerReferenceTest()

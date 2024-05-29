@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit4Framework
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFra
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
@@ -85,7 +86,9 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             }
 
         private fun checkIsJUnit4LikeTestClass(declaration: KtClassOrObject): ThreeState {
-            return if (declaration.safeAs<KtClass>()?.isInner() == true) {
+            return if (declaration.isPrivate()) {
+                NO
+            } else if (declaration.safeAs<KtClass>()?.isInner() == true) {
                 NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitUtil.RUN_WITH)) {
                 YES
@@ -108,7 +111,6 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
                 NO
             }
         }
-
     }
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean =

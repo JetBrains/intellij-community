@@ -378,16 +378,4 @@ public class UsageInfo {
   public boolean isDynamicUsage() {
     return myDynamicUsage;
   }
-
-  // creates new smart pointers
-  public @Nullable("null means could not copy because info is no longer valid") UsageInfo copy() {
-    PsiElement element = mySmartPointer.getElement();
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
-    PsiFile containingFile = myPsiFileRange == null ? null : myPsiFileRange.getContainingFile();
-    Segment segment = containingFile == null ? null : myPsiFileRange.getRange();
-    TextRange range = segment == null ? null : TextRange.create(segment);
-    SmartPsiFileRange psiFileRange = range == null ? null : smartPointerManager.createSmartPsiFileRangePointer(containingFile, range);
-    SmartPsiElementPointer<PsiElement> pointer = element == null || !isValid() ? null : smartPointerManager.createSmartPsiElementPointer(element);
-    return pointer == null ? null : new UsageInfo(pointer, psiFileRange, isDynamicUsage(), isNonCodeUsage(), getReferenceClass());
-  }
 }

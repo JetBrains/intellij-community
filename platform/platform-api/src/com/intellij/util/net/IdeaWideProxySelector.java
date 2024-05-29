@@ -16,6 +16,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated use {@link JdkProxyProvider#getProxySelector()} or {@link IdeProxySelector}
+ */
+@SuppressWarnings("removal")
+@Deprecated
 public final class IdeaWideProxySelector extends ProxySelector {
   private static final Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
   private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
@@ -116,6 +121,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     if (myHttpConfigurable.USE_PROXY_PAC) {
+      // FIXME bug here! scheme is never used in proxy code, uri.getScheme() -> null
       myHttpConfigurable.removeGeneric(new CommonProxy.HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
       LOG.debug("generic proxy credentials (if were saved) removed");
       return;

@@ -8,9 +8,9 @@ import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.terminal.exp.*
 
 internal class BuiltInPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
-  override fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
+  override fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo {
     val content: TextWithHighlightings = getPromptComponents(state).toTextWithHighlightings()
-    return PromptRenderingInfo(content.text, content.highlightings)
+    return TerminalPromptRenderingInfo(content.text, content.highlightings)
   }
 
   private fun getPromptComponents(state: TerminalPromptState): List<TextWithAttributes> {

@@ -15,8 +15,13 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
 public interface ErrorStripeRenderer {
-  @NotNull AnalyzerStatus getStatus();
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @NotNull
+  AnalyzerStatus getStatus();
 }

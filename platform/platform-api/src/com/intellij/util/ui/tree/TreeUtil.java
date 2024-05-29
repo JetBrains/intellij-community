@@ -2203,12 +2203,4 @@ public final class TreeUtil {
     if (path == null) throw new NullPointerException("path is not found at row " + row);
     return path;
   }
-
-  /**
-   * @deprecated Use {@link #hasManyNodes} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean hasManyChildren(@NotNull TreeNode node, int threshold) {
-    return hasManyNodes(node, threshold);
-  }
 }

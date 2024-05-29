@@ -46,8 +46,8 @@ import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import com.intellij.notebooks.tables.TableCommandParameters;
-import com.intellij.notebooks.tables.TableCommandType;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
 
 import java.util.ArrayList;
 import java.util.Collections;

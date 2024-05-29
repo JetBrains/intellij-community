@@ -5,9 +5,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface UsageViewElementsListener {
+  @ApiStatus.Internal
   ExtensionPointName<UsageViewElementsListener> EP_NAME = ExtensionPointName.create("com.intellij.usageViewElementsListener");
 
   /**

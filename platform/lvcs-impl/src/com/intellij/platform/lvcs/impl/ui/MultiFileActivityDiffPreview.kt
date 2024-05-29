@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.platform.lvcs.impl.ActivityDiffObject
+import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.DIFF_PLACE
@@ -40,7 +40,7 @@ internal class MultiFileActivityDiffPreview(private val scope: ActivityScope, tr
   }
 
   override fun getEditorTabName(wrapper: Wrapper?): String {
-    return getDiffTitleFor((wrapper?.userObject as? ActivityDiffObject)?.filePath, scope)
+    return getDiffTitleFor((wrapper?.userObject as? ActivityFileChange)?.filePath, scope)
   }
 
   internal fun addListener(listener: DiffRequestProcessorListener, disposable: Disposable) {
@@ -50,12 +50,12 @@ internal class MultiFileActivityDiffPreview(private val scope: ActivityScope, tr
 
 internal class ActivityDiffPreviewHandler : ChangesTreeDiffPreviewHandlerBase() {
   override fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
-    return treeModelData.iterateUserObjects(ActivityDiffObject::class.java).map { DiffObjectWrapper(it) }
+    return treeModelData.iterateUserObjects(ActivityFileChange::class.java).map { PresentableFileChangeWrapper(it) }
   }
 }
 
-private class DiffObjectWrapper(private val diffObject: ActivityDiffObject) : Wrapper(), PresentableChange by diffObject {
-  override fun getUserObject(): Any = diffObject
-  override fun getPresentableName(): String = diffObject.filePath.name
-  override fun createProducer(project: Project?): DiffRequestProducer = diffObject.createProducer(project)
+private class PresentableFileChangeWrapper(private val fileChange: ActivityFileChange) : Wrapper(), PresentableChange by fileChange {
+  override fun getUserObject(): Any = fileChange
+  override fun getPresentableName(): String = fileChange.filePath.name
+  override fun createProducer(project: Project?): DiffRequestProducer = fileChange.createProducer(project)
 }

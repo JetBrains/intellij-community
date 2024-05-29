@@ -4,13 +4,13 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.Ref
-import com.intellij.driver.sdk.ui.RemDevRobotServiceProvider
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiRobot
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Class
 import com.intellij.driver.sdk.ui.remote.ColorRef
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.RobotProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.ui.remote.SwingHierarchyService
 import org.intellij.lang.annotations.Language
@@ -47,7 +47,7 @@ open class BeControlComponentBase(
         return searchService.findAll(xpath, component, true)
       }
     }
-    return UiRobot(driver, searchService, searchContext, RemDevRobotServiceProvider(driver))
+    return UiRobot(driver, searchService, searchContext, RobotProvider(driver))
   }
 
   private fun getFrontendRef(): Ref = (frontendComponent as RefWrapper).getRef()

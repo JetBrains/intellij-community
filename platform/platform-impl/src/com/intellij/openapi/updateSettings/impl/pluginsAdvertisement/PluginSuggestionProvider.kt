@@ -66,9 +66,11 @@ fun buildSuggestionIfNeeded(project: Project,
                             suggestionDismissKey: String): PluginSuggestion? {
   if (PropertiesComponent.getInstance().isTrueValue(suggestionDismissKey)) return null
 
+  val enabledPlugins = PluginManager.getLoadedPlugins()
   val requiredPluginIds = pluginIds.filter { id ->
     val requiredPluginId = PluginId.getId(id)
-    !PluginManager.isPluginInstalled(requiredPluginId)
+    val isEnabled = enabledPlugins.any { it.pluginId == requiredPluginId }
+    !isEnabled
   }
 
   if (requiredPluginIds.isEmpty()) return null

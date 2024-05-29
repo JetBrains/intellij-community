@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
     public static class StepInto extends AbstractIndyLambdaIrKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -119,6 +126,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
     public static class SmartStepInto extends AbstractIndyLambdaIrKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSmartStepIntoTest, this, testDataFilePath);
         }
@@ -217,6 +230,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepInto")
     public static class StepIntoOnly extends AbstractIndyLambdaIrKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -350,6 +369,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepOut")
     public static class StepOut extends AbstractIndyLambdaIrKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepOutTest, this, testDataFilePath);
         }
@@ -406,6 +431,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver/coroutines")
         public static class Coroutines extends AbstractIndyLambdaIrKotlinSteppingTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -434,6 +465,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver/steppingThroughInlineLambdas")
         public static class SteppingThroughInlineLambdas extends AbstractIndyLambdaIrKotlinSteppingTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -477,6 +514,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver")
         public static class Uncategorized extends AbstractIndyLambdaIrKotlinSteppingTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -1056,6 +1099,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/filters")
     public static class Filters extends AbstractIndyLambdaIrKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -1124,6 +1173,12 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/custom")
     public static class Custom extends AbstractIndyLambdaIrKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
         }
@@ -1326,6 +1381,16 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
         @TestMetadata("filterPropertyAccessCallsFromInlineClass.kt")
         public void testFilterPropertyAccessCallsFromInlineClass() throws Exception {
             runTest("testData/stepping/custom/filterPropertyAccessCallsFromInlineClass.kt");
+        }
+
+        @TestMetadata("filterSameFunctionCalls.kt")
+        public void testFilterSameFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterSameFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterSingleFunctionCall.kt")
+        public void testFilterSingleFunctionCall() throws Exception {
+            runTest("testData/stepping/custom/filterSingleFunctionCall.kt");
         }
 
         @TestMetadata("finallyBlock.kt")
@@ -1563,6 +1628,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/simpleConditionalBreakpoint.kt");
         }
 
+        @TestMetadata("smartStepIntoAsyncLambda.kt")
+        public void testSmartStepIntoAsyncLambda() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoAsyncLambda.kt");
+        }
+
         @TestMetadata("smartStepIntoClassMethodReference.kt")
         public void testSmartStepIntoClassMethodReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoClassMethodReference.kt");
@@ -1678,6 +1748,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/smartStepIntoLambdasOnOneLine.kt");
         }
 
+        @TestMetadata("smartStepIntoLibraryOverridenCall.kt")
+        public void testSmartStepIntoLibraryOverridenCall() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLibraryOverridenCall.kt");
+        }
+
         @TestMetadata("smartStepIntoMethodReference.kt")
         public void testSmartStepIntoMethodReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
@@ -1726,6 +1801,16 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
         @TestMetadata("smartStepIntoSamLambdaFromKotlinFunInterface.kt")
         public void testSmartStepIntoSamLambdaFromKotlinFunInterface() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoSamLambdaFromKotlinFunInterface.kt");
+        }
+
+        @TestMetadata("smartStepIntoSameMethods.kt")
+        public void testSmartStepIntoSameMethods() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSameMethods.kt");
+        }
+
+        @TestMetadata("smartStepIntoSamePropertyAccess.kt")
+        public void testSmartStepIntoSamePropertyAccess() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSamePropertyAccess.kt");
         }
 
         @TestMetadata("smartStepIntoStoredLambda.kt")

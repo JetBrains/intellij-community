@@ -1,14 +1,10 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteAnnotation;
-import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverrideAnnotation;
 import com.intellij.util.JavaPsiConstructorUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -19,6 +15,7 @@ import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -86,8 +83,8 @@ public final class LombokInspection extends LombokJavaInspectionBase {
       if (annotation.hasQualifiedName(LombokClassNames.BUILDER_DEFAULT)) {
         final PsiClass parentOfAnnotation = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
         if (null != parentOfAnnotation) {
-          if (!parentOfAnnotation.hasAnnotation(LombokClassNames.BUILDER) &&
-              !parentOfAnnotation.hasAnnotation(LombokClassNames.SUPER_BUILDER)) {
+          if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentOfAnnotation, LombokClassNames.BUILDER) &&
+              !PsiAnnotationSearchUtil.isAnnotatedWith(parentOfAnnotation, LombokClassNames.SUPER_BUILDER)) {
             final LombokProblemInstance problemInstance = new LombokProblemInstance(
               LombokBundle.message("inspection.message.builder.default.requires.builder.annotation"), ProblemHighlightType.GENERIC_ERROR);
             problemInstance.withLocalQuickFixes(

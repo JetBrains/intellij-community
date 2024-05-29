@@ -10,12 +10,15 @@ import com.intellij.psi.impl.light.LightParameter
 import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastResolveEverythingTestBase : UastPluginSelection, UastFileComparisonTestBase {
+interface UastResolveEverythingTestBase : UastFileComparisonTestBase,
+                                          ExpectedPluginModeProvider {
+
     private fun getResolvedFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "resolved$suffix")
 
     private fun getIdenticalResolvedFile(filePath: String): File = getResolvedFile(filePath, TXT)

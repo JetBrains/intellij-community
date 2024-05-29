@@ -9,9 +9,8 @@ import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestB
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 
 abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTestBase() {
-    override val captureExceptions: Boolean = false
 
-    override fun isFirPlugin(): Boolean = true
+    override val captureExceptions: Boolean = false
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR)
 
@@ -25,7 +24,7 @@ abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTest
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

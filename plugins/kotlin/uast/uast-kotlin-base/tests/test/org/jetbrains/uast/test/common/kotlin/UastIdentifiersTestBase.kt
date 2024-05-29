@@ -2,13 +2,16 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastIdentifiersTestBase : UastPluginSelection, UastFileComparisonTestBase {
+interface UastIdentifiersTestBase : UastFileComparisonTestBase,
+                                    ExpectedPluginModeProvider {
+
     private fun getIdentifiersFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "identifiers$suffix")
     private fun getRefNamesFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "refNames$suffix")
 

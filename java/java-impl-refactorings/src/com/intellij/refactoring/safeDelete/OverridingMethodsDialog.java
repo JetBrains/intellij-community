@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 class OverridingMethodsDialog extends DialogWrapper {
+  private final Project myProject;
   private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;
   private final boolean[] myChecked;
@@ -49,6 +50,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
   OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
+    myProject = project;
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];
     Arrays.fill(myChecked, true);
@@ -167,10 +169,10 @@ class OverridingMethodsDialog extends DialogWrapper {
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
           UsageInfo usageInfo = myOverridingMethods.get(index);
-          myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+          myUsagePreviewPanel.updateLayout(usageInfo.getProject(), Collections.singletonList(usageInfo));
         }
         else {
-          myUsagePreviewPanel.updateLayout(null);
+          myUsagePreviewPanel.updateLayout(myProject, null);
         }
       }
     };
@@ -179,7 +181,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     final Splitter splitter = new Splitter(true, 0.3f);
     splitter.setFirstComponent(panel);
     splitter.setSecondComponent(myUsagePreviewPanel);
-    myUsagePreviewPanel.updateLayout(null);
+    myUsagePreviewPanel.updateLayout(myProject,null);
 
     Disposer.register(myDisposable, new Disposable(){
       @Override

@@ -2,8 +2,8 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameToIgnoredFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -110,17 +110,16 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
         if (block == null) return;
         SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(CatchMayIgnoreExceptionInspection.this, section);
         if (ControlFlowUtils.isEmpty(block, m_ignoreCatchBlocksWithComments, true)) {
-          var renameFix = QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter, false);
+          var renameFix = RenameToIgnoredFix.createRenameToIgnoreFix(parameter, false);
           AddCatchBodyFix addBodyFix = getAddBodyFix(block);
-          holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
-                                 LocalQuickFix.notNullElements(renameFix, addBodyFix, fix));
+          holder.problem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"))
+              .fix(renameFix).maybeFix(addBodyFix).maybeFix(fix).register();
         }
         else if (!VariableAccessUtils.variableIsUsed(parameter, section)) {
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
-            holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   LocalQuickFix.notNullElements(
-                                     QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter, false), fix));
+            holder.problem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"))
+                .fix(RenameToIgnoredFix.createRenameToIgnoreFix(parameter, false)).maybeFix(fix).register();
           }
         }
         else {

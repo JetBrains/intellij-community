@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "version": "2.29.5",
+  "version": "2.30.1",
   "description": "Syntax highlighting and autocompletion for Terraform",
   "license": "MPL-2.0",
   "contributes": {
@@ -412,7 +412,7 @@
       },
       {
         "command": "terraform.cloud.login",
-        "title": "HashiCorp Terraform Cloud: Login",
+        "title": "HCP Terraform: Login",
         "enablement": "terraform.cloud.signed-in === false"
       },
       {
@@ -464,7 +464,7 @@
       },
       {
         "command": "terraform.cloud.organization.picker",
-        "title": "HashiCorp Terraform Cloud: Pick Organization",
+        "title": "HCP Terraform: Pick Organization",
         "icon": "$(account)",
         "enablement": "terraform.cloud.signed-in"
       },
@@ -655,12 +655,12 @@
         {
           "id": "terraform.cloud.workspaces",
           "name": "Workspaces",
-          "contextualTitle": "Terraform Cloud workspaces"
+          "contextualTitle": "HCP Terraform workspaces"
         },
         {
           "id": "terraform.cloud.runs",
           "name": "Runs",
-          "contextualTitle": "Terraform Cloud runs"
+          "contextualTitle": "HCP Terraform runs"
         }
       ],
       "terraform-cloud-panel": [
@@ -685,14 +685,14 @@
         },
         {
           "id": "terraform-cloud",
-          "title": "HashiCorp Terraform Cloud",
+          "title": "HCP Terraform",
           "icon": "assets/icons/vs_code_terraform_cloud.svg"
         }
       ],
       "panel": [
         {
           "id": "terraform-cloud-panel",
-          "title": "Terraform Cloud",
+          "title": "HCP Terraform",
           "icon": "assets/icons/vs_code_terraform_cloud.svg"
         }
       ]
@@ -750,12 +750,12 @@
       },
       {
         "view": "terraform.cloud.workspaces",
-        "contents": "In order to use Terraform Cloud features, you need to be logged in\n[Login to Terraform Cloud](command:terraform.cloud.login)",
+        "contents": "In order to use HCP Terraform features, you need to be logged in\n[Login to HCP Terraform](command:terraform.cloud.login)",
         "when": "terraform.cloud.signed-in === false"
       },
       {
         "view": "terraform.cloud.workspaces",
-        "contents": "No organizations found for this token. Please create a new Terraform Cloud organization to get started\n[Create or select an organization](command:terraform.cloud.organization.picker)",
+        "contents": "No organizations found for this token. Please create a new HCP Terraform organization to get started\n[Create or select an organization](command:terraform.cloud.organization.picker)",
         "when": "terraform.cloud.signed-in && !terraform.cloud.organizationsExist && !terraform.cloud.organizationsChosen"
       },
       {

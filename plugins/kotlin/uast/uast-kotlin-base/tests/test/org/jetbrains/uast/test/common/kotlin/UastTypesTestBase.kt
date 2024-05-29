@@ -2,12 +2,15 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastTypesTestBase : UastPluginSelection, UastFileComparisonTestBase {
+interface UastTypesTestBase : UastFileComparisonTestBase,
+                              ExpectedPluginModeProvider {
+
     private fun getTypesFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "types$suffix")
 
     private fun getIdenticalTypesFile(filePath: String): File = getTypesFile(filePath, TXT)

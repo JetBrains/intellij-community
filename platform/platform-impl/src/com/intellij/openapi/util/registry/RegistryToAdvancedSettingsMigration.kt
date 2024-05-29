@@ -71,8 +71,8 @@ private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, String
 
 private fun migrateNativeChooser(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {
   val enabled = when {
-    SystemInfo.isWindows -> userProperties["ide.win.file.chooser.native"]
-    SystemInfo.isMac -> userProperties["ide.mac.file.chooser.native"] ?: "true"
+    SystemInfo.isWindows -> userProperties["ide.win.file.chooser.native"] ?: System.getProperty("ide.win.file.chooser.native")
+    SystemInfo.isMac -> userProperties["ide.mac.file.chooser.native"] ?: System.getProperty("ide.mac.file.chooser.native") ?: "true"
     else -> null
   } ?: return
   userProperties -= "ide.win.file.chooser.native"

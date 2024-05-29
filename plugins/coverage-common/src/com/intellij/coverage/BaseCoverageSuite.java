@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,14 +39,18 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
 
   private String myName;
   private Project myProject;
+  @ApiStatus.Internal
   protected CoverageRunner myRunner;
   private CoverageFileProvider myCoverageDataFileProvider;
   private long myTimestamp;
 
   private RunConfigurationBase<?> myConfiguration;
 
+  @ApiStatus.Internal
   protected boolean myTrackTestFolders = false;
+  @ApiStatus.Internal
   protected boolean myBranchCoverage = false;
+  @ApiStatus.Internal
   protected boolean myCoverageByTestEnabled = false;
 
 
@@ -105,6 +110,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return myProject;
   }
 
+  @ApiStatus.Internal
   public void setProject(Project project) {
     myProject = project;
   }
@@ -140,6 +146,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return myBranchCoverage;
   }
 
+  @ApiStatus.Internal
   @Override
   public boolean isCoverageByTestEnabled() {
     return myCoverageByTestEnabled;
@@ -177,6 +184,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     myCoverageData = new SoftReference<>(projectData);
   }
 
+  @ApiStatus.Internal
   @Override
   public void restoreCoverageData() {
     setCoverageData(loadProjectInfo());
@@ -265,6 +273,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return myCoverageDataFileProvider.getCoverageDataFilePath().hashCode();
   }
 
+  @ApiStatus.Internal
   public GlobalSearchScope getSearchScope(Project project) {
     RunConfigurationBase<?> configuration = getConfiguration();
     GlobalSearchScope scope = isTrackTestFolders() ? GlobalSearchScope.projectScope(project)
@@ -288,12 +297,12 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
   }
 
   @Nullable
-  public static CoverageRunner readRunnerAttribute(Element element) {
+  static CoverageRunner readRunnerAttribute(@NotNull Element element) {
     final String runner = element.getAttributeValue(COVERAGE_RUNNER);
     return runner == null ? null : CoverageRunner.getInstanceById(runner);
   }
 
-  public static @NotNull CoverageFileProvider readDataFileProviderAttribute(Element element) {
+  private static @NotNull CoverageFileProvider readDataFileProviderAttribute(Element element) {
     String sourceProvider = element.getAttributeValue(SOURCE_PROVIDER);
     if (sourceProvider == null) {
       sourceProvider = DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY;

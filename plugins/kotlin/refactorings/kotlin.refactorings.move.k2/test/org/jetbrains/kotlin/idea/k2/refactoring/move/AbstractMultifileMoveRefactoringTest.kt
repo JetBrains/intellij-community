@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 abstract class AbstractMultifileMoveRefactoringTest : AbstractMultifileRefactoringTest() {
     override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun isEnabled(config: JsonObject): Boolean = config.get("enabledInK2")?.asBoolean == true
 
     override fun fileFilter(file: VirtualFile): Boolean {

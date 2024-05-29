@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
@@ -46,10 +46,6 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
 
         // Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);
-
-        ifExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifExpression);
-        if (ifExpression == null) return;
-
         applyNavigationAndDropCondition(updater, ifExpression);
     }
 
@@ -57,7 +53,7 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
         KtExpression condition = ifExpression.getCondition();
         assert condition != null : "Condition should exists for created if expression: " + ifExpression.getText();
         // Delete condition from created if
-        updater.moveCaretTo(condition.getTextOffset());
+        updater.select(TextRange.from(condition.getTextOffset(), 0));
         condition.delete();
     }
 

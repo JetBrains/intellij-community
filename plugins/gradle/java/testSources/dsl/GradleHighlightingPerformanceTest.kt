@@ -30,8 +30,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
       invokeAndWaitIfNeeded {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos + 1)
-        //IDEA-345202 and perf tests are failing massively due to broken tearDown
-        //fixture.checkHighlighting()
+        fixture.checkHighlighting()
 
         PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
           fixture.psiManager.dropPsiCaches()
@@ -86,15 +85,17 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         addBuildScriptRepository("mavenCentral()")
         addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
         addImport("groovyx.net.http.HttpBuilder")
-        call("tasks.create", "bitbucketJenkinsTest") {
-          call("doLast") {
-            property("bitbucket", call("HttpBuilder.configure") {
-              assign("request.uri", "https://127.0.0.1")
-              call("request.auth.basic", "", "")
-            })
-            call("bitbucket.post") {
-              assign("request.uri.path", "/rest/api/")
-              assign("request.contentType", "a.json")
+        withPostfix {
+          call("tasks.create", "bitbucketJenkinsTest") {
+            call("doLast") {
+              property("bitbucket", call("HttpBuilder.configure") {
+                assign("request.uri", "https://127.0.0.1")
+                call("request.auth.basic", "", "")
+              })
+              call("bitbucket.post") {
+                assign("request.uri.path", "/rest/api/")
+                assign("request.contentType", "a.json")
+              }
             }
           }
         }

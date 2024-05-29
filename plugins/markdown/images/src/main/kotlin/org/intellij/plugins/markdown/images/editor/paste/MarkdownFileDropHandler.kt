@@ -106,7 +106,7 @@ internal class MarkdownFileDropHandler : FileDropHandler {
     }
 
     private fun createUri(url: String): String {
-      return URLEncoder.encode(url, Charset.defaultCharset()).replace("+", "%20")
+      return FileUtil.splitPath(url).joinToString("/") { URLEncoder.encode(it, Charset.defaultCharset()).replace("+", "%20") }
     }
 
     private fun createImageLink(file: Path): String {

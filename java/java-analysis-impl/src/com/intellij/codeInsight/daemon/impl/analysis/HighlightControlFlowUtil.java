@@ -286,9 +286,6 @@ public final class HighlightControlFlowUtil {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     if (isFieldInitializedAfterObjectConstruction(field)) return null;
     if (PsiUtilCore.hasErrorElementChild(field)) return null;
-    if (IncompleteModelUtil.isIncompleteModel(field) && IncompleteModelUtil.canBeAugmented(field.getContainingClass())) {
-      return IncompleteModelUtil.getPendingReferenceHighlightInfo(field);
-    }
     String description = JavaErrorBundle.message("variable.not.initialized", field.getName());
     TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description);

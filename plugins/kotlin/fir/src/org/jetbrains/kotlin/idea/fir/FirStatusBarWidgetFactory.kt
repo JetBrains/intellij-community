@@ -31,7 +31,7 @@ private class FirStatusBarWidgetFactory : StatusBarWidgetFactory {
         const val ID = "kotlin.fir.ide"
 
         @NlsSafe
-        private const val DISPLAY_NAME = "K2 Kotlin Mode"
+        private const val DISPLAY_NAME = "K2 mode"
     }
 }
 
@@ -48,11 +48,11 @@ private class FirStatusBarWidgetListener : RegistryValueListener {
     }
 }
 
-private const val REGISTRY_KEY = "kotlin.k2.show.fir.statusbar.icon"
+private const val REGISTRY_KEY: String = "kotlin.k2.show.fir.statusbar.icon"
 
 private class Widget : StatusBarWidget, StatusBarWidget.IconPresentation {
     override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
     override fun ID(): String = FirStatusBarWidgetFactory.ID
-    override fun getTooltipText(): String = "K2 Kotlin Mode"
+    override fun getTooltipText(): String = "K2 mode"
     override fun getIcon(): Icon = KotlinIcons.FIR
 }

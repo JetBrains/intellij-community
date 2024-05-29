@@ -373,7 +373,7 @@ public final class IOUtil {
   }
 
 
-  private static final byte[] ZEROES = new byte[1024];
+  private static final byte[] ZEROES = new byte[64 * 1024];
 
   /**
    * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,

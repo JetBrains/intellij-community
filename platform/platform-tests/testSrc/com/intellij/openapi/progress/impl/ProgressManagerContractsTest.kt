@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
@@ -126,7 +126,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     }.queue()
 
     flushEdtEvents { taskCompleted.get() < 3 }
-    assertThat(callbackResult).isEqualTo("fromProgress.1.fromProgress.2.fromPool.")
+    assertThat(callbackResult).isEqualTo("fromProgress.1.fromPool.fromProgress.2.")
   }
 
   @TestFor(issues = ["IDEA-241785"])

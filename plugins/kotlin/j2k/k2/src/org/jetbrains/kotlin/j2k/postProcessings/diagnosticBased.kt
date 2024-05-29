@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic.SmartcastImpossible
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic.UselessCast
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SmartcastImpossible
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UselessCast
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory

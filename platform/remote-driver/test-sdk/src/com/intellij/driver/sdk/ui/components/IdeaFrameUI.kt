@@ -32,6 +32,9 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
   val isFullScreen: Boolean
     get() = ideaFrameComponent.isInFullScreen()
 
+  val isMaximized: Boolean
+    get() = ideaFrameComponent.getExtendedState().and(JFrame.MAXIMIZED_BOTH) != 0
+
   val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
 
   val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
@@ -42,6 +45,10 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   fun maximize() = driver.withContext(OnDispatcher.EDT) {
     ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState().or(JFrame.MAXIMIZED_BOTH))
+  }
+
+  fun resize(width: Int, height: Int) = driver.withContext(OnDispatcher.EDT) {
+    ideaFrameComponent.setSize(width, height)
   }
 
   fun openSettingsDialog() = if (SystemInfo.isMac)
@@ -61,4 +68,5 @@ interface IdeFrameImpl {
   fun isInFullScreen(): Boolean
   fun getExtendedState(): Int
   fun setExtendedState(state: Int)
+  fun setSize(width: Int, height: Int)
 }

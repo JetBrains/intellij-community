@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 10);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 11);
   private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
   private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
   private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
@@ -100,6 +100,11 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
 
     for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
       addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), Settings.BREADCRUMBS,
+                       EventFields.LanguageById.with(language));
+    }
+
+    for (String language : es.getOptions().getLanguageStickyLines().keySet()) {
+      addBoolIfDiffers(set, es, esDefault, s -> s.areStickyLinesShownFor(language), Settings.STICKY_LINES_FOR_LANG,
                        EventFields.LanguageById.with(language));
     }
 
@@ -279,6 +284,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     USE_EDITOR_FONT_IN_INLAYS("useEditorFontInInlays"),
     BREADCRUMBS("breadcrumbs"),
     STICKY_LINES("stickyLines"),
+    STICKY_LINES_FOR_LANG("stickyLinesForLang"),
     RICH_COPY("richCopy"),
     PARAMETER_AUTO_POPUP("parameterAutoPopup"),
     JAVADOC_AUTO_POPUP("javadocAutoPopup"),

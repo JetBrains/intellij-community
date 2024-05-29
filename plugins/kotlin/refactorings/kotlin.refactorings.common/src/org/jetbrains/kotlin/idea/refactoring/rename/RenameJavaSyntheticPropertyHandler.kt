@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
@@ -87,7 +87,7 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
 
     override fun getElementToRename(dataContext: DataContext): PsiElement? {
         val refExpr = getReferenceExpression(dataContext) ?: return null
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
             analyze(refExpr) {
               val symbol = refExpr.mainReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol

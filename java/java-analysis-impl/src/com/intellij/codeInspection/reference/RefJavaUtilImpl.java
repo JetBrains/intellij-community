@@ -272,6 +272,9 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                              }
                            }
                          }
+                         else if (refResolved ==  null && psiResolved instanceof PsiMethod method) {
+                           markEnumUsedIfValuesMethod(method, node);
+                         }
 
                          if (psiResolved instanceof PsiMember psiMember) {
                            //TODO support kotlin
@@ -283,6 +286,27 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                        public boolean visitLambdaExpression(@NotNull ULambdaExpression lambda) {
                          processFunctionalExpression(lambda, lambda.getFunctionalInterfaceType());
                          return true;
+                       }
+
+                       private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
+                         //TODO support kotlin enums
+                         final PsiClass containingClass = psiWhat.getContainingClass();
+                         if (containingClass == null || !containingClass.isEnum()) {
+                           return;
+                         }
+                         String methodName = psiWhat.getName();
+                         if (!"values".equals(methodName) && !"valueOf".equals(methodName)) {
+                           return;
+                         }
+                         for (PsiField enumConstant : containingClass.getFields()) {
+                           if (enumConstant instanceof PsiEnumConstant) {
+                             final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)refFrom.getRefManager().getReference(enumConstant);
+                             if (enumConstantReference != null) {
+                               refFrom.addOutReference(enumConstantReference);
+                               enumConstantReference.markReferenced(refFrom, false, true, expression);
+                             }
+                           }
+                         }
                        }
 
                        @Override

@@ -5,6 +5,7 @@ import <info descr="Not resolved until the project is fully loaded">com</info>.<
 
 import java.util.HashMap;
 import java.util.Map;
+<warning descr="Unused import statement">import java.util.TreeMap;</warning>
 
 public class DefaultLoaderFactory implements <info descr="Not resolved until the project is fully loaded">ReportLoaderFactory</info> {
     public static final String GROOVY_DATA_LOADER = "groovy";

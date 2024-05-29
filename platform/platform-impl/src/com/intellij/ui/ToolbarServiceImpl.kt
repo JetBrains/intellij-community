@@ -40,7 +40,8 @@ open class ToolbarServiceImpl : ToolbarService {
     val handler = handlerProvider?.invoke()
     handler?.addListener(window)
 
-    val topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane))
+    // native window title bar doesn't scale
+    @Suppress("UseDPIAwareInsets") val topWindowInset = Insets(UIUtil.getTransparentTitleBarHeight(rootPane), 0, 0, 0)
     val customBorder = object : AbstractBorder() {
       override fun getBorderInsets(c: Component): Insets {
         return if (handler != null && handler.isFullScreen()) JBInsets.emptyInsets() else topWindowInset

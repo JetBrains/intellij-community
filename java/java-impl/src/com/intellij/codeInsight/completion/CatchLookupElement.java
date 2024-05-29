@@ -104,12 +104,14 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     PsiStatement[] statements = block.getStatements();
 
     PsiCatchSection[] sections = tryStatement.getCatchSections();
-    Set<PsiType> existedExceptionTypes = new HashSet<>();
+    Set<@NotNull PsiType> existedExceptionTypes = new HashSet<>();
     List<String> stringExceptions = new ArrayList<>();
 
     for (PsiCatchSection section : sections) {
       PsiType catchType = section.getCatchType();
-      existedExceptionTypes.add(catchType);
+      if(catchType != null) {
+        existedExceptionTypes.add(catchType);
+      }
     }
 
     //if block is big enough, analyze can take a lot of time, let's use hardcoded exception
@@ -164,7 +166,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     return lookupElements;
   }
 
-  private static @NotNull List<String> getHardcodedExceptions(@NotNull Set<PsiType> existedExceptions) {
+  private static @NotNull List<String> getHardcodedExceptions(@NotNull Set<@NotNull PsiType> existedExceptions) {
     ArrayList<String> exceptions = new ArrayList<>();
     for (String defaultException : DEFAULT_EXCEPTIONS) {
       if (ContainerUtil.exists(existedExceptions, t -> defaultException.equals(t.getCanonicalText()))) {

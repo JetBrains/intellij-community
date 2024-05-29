@@ -4,7 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.Project
 
 //class LookupUI(data: ComponentData) : UiComponent(data) {
-//  val list: JBList get() = driver.new(JBList::class, robotService.robot, component)
+//  val list: JBList get() = driver.new(JBList::class, robot, component)
 //}
 
 @Remote("com.intellij.codeInsight.lookup.LookupManager")

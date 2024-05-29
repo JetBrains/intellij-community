@@ -13,6 +13,12 @@ interface WslIjentAvailabilityService {
   /** `true` if IDE should run processes on WSL via IJent, `false` for direct invocations of `wsl.exe` for every process. */
   fun runWslCommandsViaIjent(): Boolean
 
+  /**
+   * `true` if the default [java.nio.file.spi.FileSystemProvider] should be replaced with a special one
+   * that performs operations with `\\wsl*` drives through IJent.
+   */
+  fun useIjentForWslNioFileSystem(): Boolean
+
   companion object {
     @JvmStatic
     fun getInstance(): WslIjentAvailabilityService = ApplicationManager.getApplication().service()

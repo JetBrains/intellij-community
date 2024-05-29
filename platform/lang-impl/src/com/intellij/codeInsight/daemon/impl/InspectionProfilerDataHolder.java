@@ -28,7 +28,7 @@ class InspectionProfilerDataHolder {
                                                                  Math.max(0, context.holder().toolStamps.errorStamp - context.holder().toolStamps.initTimeStamp),
                                                                  Math.max(0, context.holder().toolStamps.warningStamp - context.holder().toolStamps.initTimeStamp),
                                                                  Math.max(0, context.holder().toolStamps.otherStamp - context.holder().toolStamps.initTimeStamp))));
-    HighlightInfoUpdaterImpl.saveLatencies(psiFile, latencies);
+    highlightInfoUpdater.saveLatencies(psiFile, latencies);
   }
 
   /**

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
+import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
@@ -18,7 +19,10 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
         private const val MIN_SUPPORTED_GRADLE_VERSION = "4.6" // CommandLineArgumentProvider is available only since Gradle 4.6
     }
 
-    override fun enhanceTaskProcessing(taskNames: MutableList<String>, initScriptConsumer: Consumer<String>, parameters: Map<String, String>) {
+    override fun enhanceTaskProcessing(project: Project?,
+                                       taskNames: MutableList<String>,
+                                       initScriptConsumer: Consumer<String>,
+                                       parameters: Map<String, String>) {
         try {
             val allowCoroutineAgent = KotlinJvmDebuggerFacade.instance?.isCoroutineAgentAllowedInDebug ?: false
             val gradleVersion = parameters[GradleProjectResolverExtension.GRADLE_VERSION]?.let { GradleVersion.version(it) }

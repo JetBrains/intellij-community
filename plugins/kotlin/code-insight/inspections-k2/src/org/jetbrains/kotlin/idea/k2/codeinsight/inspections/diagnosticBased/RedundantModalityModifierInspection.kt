@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.modalityModifierType
 import kotlin.reflect.KClass
 
 internal class RedundantModalityModifierInspection :
-    RedundantModifierInspectionBase<KtFirDiagnostic.RedundantModalityModifier>(KtTokens.MODALITY_MODIFIERS) {
+    RedundantModifierInspectionBase<KaFirDiagnostic.RedundantModalityModifier>(KtTokens.MODALITY_MODIFIERS) {
 
     override fun createQuickFix(
         element: KtModifierListOwner,
@@ -26,8 +26,8 @@ internal class RedundantModalityModifierInspection :
             KotlinBundle.message("remove.redundant.modality.modifier")
     }
 
-    override val diagnosticType: KClass<KtFirDiagnostic.RedundantModalityModifier>
-        get() = KtFirDiagnostic.RedundantModalityModifier::class
+    override val diagnosticType: KClass<KaFirDiagnostic.RedundantModalityModifier>
+        get() = KaFirDiagnostic.RedundantModalityModifier::class
 
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.modalityModifier(element)
@@ -35,7 +35,7 @@ internal class RedundantModalityModifierInspection :
     context(KtAnalysisSession)
     override fun prepareContextByDiagnostic(
         element: KtModifierListOwner,
-        diagnostic: KtFirDiagnostic.RedundantModalityModifier,
+        diagnostic: KaFirDiagnostic.RedundantModalityModifier,
     ): ModifierContext? = when (element) {
         is KtDeclaration -> element.modalityModifierType()?.let { ModifierContext(it) }
         else -> null

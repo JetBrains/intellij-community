@@ -6,7 +6,7 @@ import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfNotMany
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
 class CombinedDiffManagerImpl(val project: Project) : CombinedDiffManager {
@@ -19,18 +19,10 @@ class CombinedDiffManagerImpl(val project: Project) : CombinedDiffManager {
 }
 
 private class MyGoToChangePopupAction(val model: CombinedDiffModel) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
-
-  val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-  val previewModel get() = model.context.getUserData(COMBINED_DIFF_PREVIEW_MODEL)
+  private val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
   override fun getChanges(): ListSelection<out PresentableChange> {
-    val previewModel = previewModel
-    val changes = if (previewModel != null) {
-      previewModel.iterateAllChanges().toList()
-    }
-    else {
-      model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
-    }
+    val changes = model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
 
     val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
     val selectedIndex = when {
@@ -44,24 +36,39 @@ private class MyGoToChangePopupAction(val model: CombinedDiffModel) : Presentabl
     return ListSelection.createAt(changes, selectedIndex)
   }
 
-  override fun canNavigate(): Boolean {
-    val previewModel = previewModel
-    if (previewModel != null) {
-      val allChanges = toListIfNotMany(previewModel.iterateAllChanges(), true)
-      return allChanges == null || allChanges.size > 1
-    }
-
-    return super.canNavigate()
-  }
-
   override fun onSelected(change: PresentableChange) {
-    val previewModel = previewModel
-    if (previewModel != null && change is Wrapper) {
-      previewModel.selected = change
+    viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
+                            CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
+  }
+}
+
+class CombinedDiffPreviewModel {
+  companion object {
+    @JvmStatic
+    @Deprecated("Use prepareCombinedBlocksFromWrappers", ReplaceWith("prepareCombinedBlocksFromWrappers(project, changes)"))
+    fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
+      return prepareCombinedBlocksFromWrappers(project, changes)
     }
-    else {
-      viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
-                              CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
+
+    @JvmStatic
+    @Deprecated("Use prepareCombinedBlocksFromProducers", ReplaceWith("prepareCombinedBlocksFromProducers(changes)"))
+    fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
+      return prepareCombinedBlocksFromProducers(changes)
     }
+  }
+}
+
+fun prepareCombinedBlocksFromWrappers(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
+  return changes.mapNotNull { wrapper ->
+    val producer = wrapper.createProducer(project) ?: return@mapNotNull null
+    val id = CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag)
+    CombinedBlockProducer(id, producer)
+  }
+}
+
+fun prepareCombinedBlocksFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
+  return changes.map { producer ->
+    val id = CombinedPathBlockId(producer.filePath, producer.fileStatus, null)
+    CombinedBlockProducer(id, producer)
   }
 }

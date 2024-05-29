@@ -13,7 +13,7 @@ import com.intellij.rt.coverage.report.XMLProjectData.LineInfo
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import java.util.*
 
-class XMLReportEditorAnnotator(psiFile: PsiFile?, editor: Editor?) : CoverageEditorAnnotatorImpl(psiFile, editor) {
+internal class XMLReportEditorAnnotator(psiFile: PsiFile?, editor: Editor?) : CoverageEditorAnnotatorImpl(psiFile, editor) {
   override fun collectLinesInFile(suite: CoverageSuitesBundle,
                                   psiFile: PsiFile,
                                   module: Module?,

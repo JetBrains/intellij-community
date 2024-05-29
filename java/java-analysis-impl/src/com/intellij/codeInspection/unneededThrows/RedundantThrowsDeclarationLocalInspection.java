@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -308,7 +309,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       final PsiCodeBlock body = method.getBody();
       if (body == null) return true;
 
-      final Set<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
+      UnhandledExceptions exceptions = UnhandledExceptions.ofMethod(method);
+      if (exceptions.hasUnresolvedCalls()) return true;
+      final Set<PsiClassType> unhandled = exceptions.exceptions();
 
       return ContainerUtil.exists(unhandled, myType::isAssignableFrom);
     }

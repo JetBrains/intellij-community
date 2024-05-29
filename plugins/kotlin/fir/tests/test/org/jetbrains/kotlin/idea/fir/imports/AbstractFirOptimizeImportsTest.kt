@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.fir.imports
 
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
+
     override val runTestInWriteCommand: Boolean = false
-    override fun isFirPlugin(): Boolean = true
 
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(

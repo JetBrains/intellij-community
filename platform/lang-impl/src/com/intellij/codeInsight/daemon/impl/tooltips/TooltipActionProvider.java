@@ -38,14 +38,6 @@ public interface TooltipActionProvider {
       .filter(Objects::nonNull).findFirst().orElse(null);
   }
 
-  /**
-   * @deprecated use {@link #calcTooltipAction(HighlightInfo, Project, Editor)}
-   */
-  @Deprecated(forRemoval = true)
-  static TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor) {
-    return calcTooltipAction(info, editor.getProject(), editor);
-  }
-
   static boolean isShowActions() {
     return PropertiesComponent.getInstance().getBoolean(SHOW_FIXES_KEY, SHOW_FIXES_DEFAULT_VALUE);
   }

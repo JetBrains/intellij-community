@@ -62,7 +62,6 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         }
 
         return Function { fileEditor ->
-            //if (k2ScriptingEnabled() && K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(file) != null) { return@Function null }
             when (scriptUnderRoot.notificationKind) {
                 dontCare -> null
                 legacy -> {

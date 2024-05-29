@@ -10,8 +10,8 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
@@ -30,10 +30,10 @@ internal class TerminalPromptController(
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
 
-  val model: TerminalPromptModel = TerminalPromptModel(editor, TerminalSessionInfoImpl(session))
+  val model: TerminalPromptModel = TerminalPromptModelImpl(editor, TerminalSessionInfoImpl(session))
 
   val commandHistory: List<String>
-    get() = commandHistoryManager.history
+    get() = commandHistoryManager.getHistory()
 
   // should be accessed in EDT
   var promptIsVisible: Boolean by Delegates.observable(true) { _, oldValue, newValue ->
@@ -48,12 +48,12 @@ internal class TerminalPromptController(
     editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
     editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
-    val shellRuntimeContextProvider = IJShellRuntimeContextProvider(project, session)
-    editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
-    val shellGeneratorsExecutor = IJShellGeneratorsExecutor(session)
-    editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)
+    val shellRuntimeContextProvider = ShellRuntimeContextProviderImpl(project, session)
+    editor.putUserData(ShellRuntimeContextProviderImpl.KEY, shellRuntimeContextProvider)
+    val shellGeneratorsExecutor = ShellDataGeneratorsExecutorImpl(session)
+    editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, shellGeneratorsExecutor)
 
-    commandHistoryManager = CommandHistoryManager(session)
+    commandHistoryManager = CommandHistoryManager(session, model)
 
     Disposer.register(session, model)
     session.addCommandListener(object : ShellCommandListener {
@@ -71,6 +71,11 @@ internal class TerminalPromptController(
 
   @RequiresEdt
   fun handleEnterPressed() {
+    val customHandlers = TerminalPromptCustomEnterHandler.EP_NAME.extensionList
+    for (handler in customHandlers) {
+      val consumed = handler.handleEnter(model)
+      if (consumed) return
+    }
     commandExecutor.startCommandExecution(model.commandText)
   }
 

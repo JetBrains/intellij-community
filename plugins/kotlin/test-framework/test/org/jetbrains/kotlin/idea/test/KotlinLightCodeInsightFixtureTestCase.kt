@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -105,7 +106,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         super.setUp()
         enableKotlinOfficialCodeStyle(project)
 
-        if (!isFirPlugin) {
+        if (pluginMode == KotlinPluginMode.K1) {
             // We do it here to avoid possible initialization problems
             // UnusedSymbolInspection() calls IDEA UnusedDeclarationInspection() in static initializer,
             // which in turn registers some extensions provoking "modifications aren't allowed during highlighting"

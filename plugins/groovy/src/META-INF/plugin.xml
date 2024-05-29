@@ -395,7 +395,6 @@
                               implementationClass="org.jetbrains.plugins.groovy.findUsages.GrFileItemPresentationProvider"/>
 
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework" order="first"/>
-    <testFramework.java.dumbMode implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFrameworkInDumbMode" order="first"/>
 
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
@@ -1347,6 +1346,7 @@
     <internal.statistic.libraryUsageImportProcessor language="Groovy"
                                                     implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
     <iconMapper mappingFile="GroovyIconMappings.json"/>
+    <lang.dumb.mode.supported language="Groovy" implementationClass="org.jetbrains.plugins.groovy.GroovyLanguageDumbAware"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

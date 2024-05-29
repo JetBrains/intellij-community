@@ -16,10 +16,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -207,7 +204,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return false;
   }
 
-  public boolean changeLine(@NotNull XLineBreakpoint<P> breakpoint, int newLine, @NotNull Project project) {
+  /**
+   * @return {@code false} if the line breakpoint type should forbid {@code setLine} event processing, {@code true} otherwise
+   */
+  @ApiStatus.Internal
+  public boolean lineShouldBeChanged(@NotNull XLineBreakpoint<P> breakpoint, int newLine, @NotNull Project project) {
     return true;
   }
 
@@ -236,6 +237,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
      */
     public boolean isMultiVariant() {
       return false;
+    }
+
+    public boolean shouldUseAsInlineVariant() {
+      // No need to show "all" variant in case of the inline breakpoints approach,
+      // it's useful only for the popup based one.
+      return !isMultiVariant();
     }
 
     @Nullable

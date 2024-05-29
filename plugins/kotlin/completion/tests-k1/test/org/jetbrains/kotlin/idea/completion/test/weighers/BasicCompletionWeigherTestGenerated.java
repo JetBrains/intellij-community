@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.test.weighers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -25,6 +26,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/weighers/basic/contextualReturn/noReturnType")
         public static class NoReturnType extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -88,6 +95,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/weighers/basic/contextualReturn/withReturnType")
         public static class WithReturnType extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -182,6 +195,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/expectedInfo")
     public static class ExpectedInfo extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -268,6 +287,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/weighers/basic/expectedType/typesWithInstances")
         public static class TypesWithInstances extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -311,6 +336,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/weighers/basic/expectedType")
         public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -360,6 +391,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/parameterNameAndType")
     public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -408,6 +445,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic")
     public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

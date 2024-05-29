@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.starter.bus.shared.server
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
 import com.intellij.tools.ide.starter.bus.shared.dto.SubscriberDto
 import com.intellij.tools.ide.starter.bus.shared.server.services.EventsFlowService
@@ -11,6 +12,7 @@ import java.net.BindException
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletableFuture
 
+private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServer::class.java)
 
 object LocalEventBusServer : EventBusServer {
   override val port: Int = 45654
@@ -21,7 +23,7 @@ object LocalEventBusServer : EventBusServer {
   override fun endServer() {
     if (this::server.isInitialized) {
       server.stop(1)
-      println("Server stopped")
+      LOG.info("Server stopped")
     }
   }
 
@@ -39,10 +41,12 @@ object LocalEventBusServer : EventBusServer {
 
       server.createContext("/postAndWaitProcessing") { exchange ->
         CompletableFuture.runAsync {
+          LOG.debug("Got postAndWait request")
           val json = exchange.requestBody.bufferedReader().use(BufferedReader::readText)
           eventsFlowService.postAndWaitProcessing(objectMapper.readValue(json, SharedEventDto::class.java))
         }
           .thenRun {
+            LOG.debug("Processed postAndWait request")
             val response = "Processed"
             exchange.sendResponseHeaders(200, response.length.toLong())
             exchange.responseBody.bufferedWriter().use { it.write(response) }
@@ -117,11 +121,11 @@ object LocalEventBusServer : EventBusServer {
       }
 
       server.start()
-      println("Server started on port $port")
+      LOG.info("Server started on port $port")
       true
     }
     catch (bind: BindException) {
-      println("Server already running. ${bind.message}")
+      LOG.info("Server already running. ${bind.message}")
       false
     }
   }

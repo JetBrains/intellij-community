@@ -5,7 +5,7 @@ import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 
-object SimpleTextRepeater {
+internal object SimpleTextRepeater {
 
   @JvmStatic
   fun main(arg: Array<String>) {

@@ -24,8 +24,10 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
     CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
     CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
-from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN,
-    NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
+from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
+                                             dict_keys, STATE_RUN,
+                                             NEXT_VALUE_SEPARATOR, IS_WINDOWS,
+                                             get_current_thread_id)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydev_imps._pydev_saved_modules import threading
 import json
@@ -152,6 +154,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     break
 
             elif cmd_id == CMD_THREAD_RUN:
+                py_db.maybe_kill_active_value_resolve_threads()
                 threads = []
                 if text.strip() == '*':
                     threads = pydevd_utils.get_non_pydevd_threads()
@@ -173,6 +176,8 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                     cmd_id == CMD_STEP_INTO_MY_CODE:
                 # we received some command to make a single step
+                py_db.maybe_kill_active_value_resolve_threads()
+
                 t = pydevd_find_thread_by_id(text)
                 if t:
                     thread_id = get_thread_id(t)
@@ -183,6 +188,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     sys.stderr.write("Can't make tasklet step command: %s\n" % (text,))
 
             elif cmd_id in (CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_SMART_STEP_INTO):
+                py_db.maybe_kill_active_value_resolve_threads()
                 if cmd_id == CMD_SMART_STEP_INTO:
                     # we received a smart step into command
                     thread_id, frame_id, line, func_name, call_order, start_line, end_line = text.split('\t', 6)

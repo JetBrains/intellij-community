@@ -5,4 +5,5 @@ public interface SearchEverywhereToggleAction {
   boolean isEverywhere();
   void setEverywhere(boolean everywhere);
   boolean canToggleEverywhere();
+  default void setScopeIsDefaultAndAutoSet(boolean scopeDefaultAndAutoSet) {}
 }

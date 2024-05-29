@@ -6,20 +6,22 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus.Experimental
+import javax.swing.Icon
 
 @Experimental
 interface SubprojectHandler {
   companion object {
     val EP_NAME: ExtensionPointName<SubprojectHandler> = ExtensionPointName.create("com.intellij.workspace.subprojectHandler")
-    fun getAllSubprojects(project: Project): List<Subproject> = EP_NAME.extensionList.flatMap { it.getSubprojects(project) }
   }
 
-  fun getSubprojects(project: Project): List<Subproject>
-  fun canImportFromFile(project: Project, file: VirtualFile): Boolean
-  fun removeSubprojects(subprojects: List<Subproject>)
-  fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
+  fun getSubprojects(workspace: Project): List<Subproject>
+  fun canImportFromFile(file: VirtualFile): Boolean
+  fun removeSubprojects(workspace: Project, subprojects: List<Subproject>)
+  fun importFromProject(project: Project): ImportedProjectSettings?
 
   fun suppressGenericImportFor(module: Module): Boolean = false
+
+  val subprojectIcon: Icon?
 }
 
 interface WorkspaceSettingsImporter {
@@ -27,9 +29,9 @@ interface WorkspaceSettingsImporter {
     val EP_NAME: ExtensionPointName<WorkspaceSettingsImporter> = ExtensionPointName.create("com.intellij.workspace.settingsImporter")
   }
 
-  fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
+  fun importFromProject(project: Project): ImportedProjectSettings?
 }
 
 interface ImportedProjectSettings {
-  suspend fun applyTo(workspace: Project)
+  suspend fun applyTo(workspace: Project): Boolean
 }

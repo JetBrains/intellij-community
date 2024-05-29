@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.Objects;
 
 import static com.intellij.formatting.InitialInfoBuilder.prepareToBuildBlocksSequentially;
 
+@ApiStatus.Internal
 public final class FormatProcessor {
   private static final Logger LOG = Logger.getInstance(FormatProcessor.class);
   

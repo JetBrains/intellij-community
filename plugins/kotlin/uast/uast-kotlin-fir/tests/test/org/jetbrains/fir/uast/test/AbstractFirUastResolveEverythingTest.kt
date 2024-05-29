@@ -6,7 +6,6 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastResolveEverythingTestBase
 
 abstract class AbstractFirUastResolveEverythingTest : AbstractFirUastTest(), UastResolveEverythingTestBase {
-    override val isFirUastPlugin: Boolean = true
 
     override fun check(filePath: String, file: UFile) {
         super.check(filePath, file)

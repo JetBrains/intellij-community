@@ -51,7 +51,7 @@ public class VcsLogManager implements Disposable {
 
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogColorManager myColorManager;
-  private @Nullable VcsLogTabsWatcher myTabsLogRefresher;
+  private @Nullable VcsLogTabsWatcher myTabsWatcher;
   private final @NotNull PostponableLogRefresher myPostponableRefresher;
   private final @NotNull VcsLogStatusBarProgress myStatusBarProgress;
   private boolean myDisposed;
@@ -157,8 +157,8 @@ public class VcsLogManager implements Disposable {
 
   private @NotNull VcsLogTabsWatcher getTabsWatcher() {
     LOG.assertTrue(!myDisposed);
-    if (myTabsLogRefresher == null) myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
-    return myTabsLogRefresher;
+    if (myTabsWatcher == null) myTabsWatcher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
+    return myTabsWatcher;
   }
 
   public @NotNull <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull VcsLogTabLocation location) {
@@ -181,14 +181,17 @@ public class VcsLogManager implements Disposable {
   }
 
   public @NotNull List<? extends VcsLogUi> getLogUis() {
+    if (myTabsWatcher == null) return Collections.emptyList();
     return getTabsWatcher().getTabs();
   }
 
   public @NotNull List<? extends VcsLogUi> getLogUis(@NotNull VcsLogTabLocation location) {
+    if (myTabsWatcher == null) return Collections.emptyList();
     return getTabsWatcher().getTabs(location);
   }
 
   public @NotNull List<? extends VcsLogUi> getVisibleLogUis(@NotNull VcsLogTabLocation location) {
+    if (myTabsWatcher == null) return Collections.emptyList();
     return getTabsWatcher().getVisibleTabs(location);
   }
 
@@ -248,7 +251,7 @@ public class VcsLogManager implements Disposable {
   void disposeUi() {
     myDisposed = true;
     ThreadingAssertions.assertEventDispatchThread();
-    if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
+    if (myTabsWatcher != null) Disposer.dispose(myTabsWatcher);
     Disposer.dispose(myStatusBarProgress);
   }
 

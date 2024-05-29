@@ -20,6 +20,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -107,6 +108,8 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
 
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
+        FileTypeUsageCounterCollector.logCreated(project, virtualFile, template);
+
         if (openFile) {
           if (template.isLiveTemplateEnabled()) {
             CreateFromTemplateActionBase.startLiveTemplate(psiFile, liveTemplateDefaultValues);

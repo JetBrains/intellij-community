@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -84,11 +84,21 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                 @NotNull EvaluationMode mode,
                                 @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {
+    this(project, debuggerEditorsProvider, mode, historyId, sourcePosition, null);
+  }
+
+  XDebuggerEditorBase(final Project project,
+                                @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
+                                @NotNull EvaluationMode mode,
+                                @Nullable @NonNls String historyId,
+                                final @Nullable XSourcePosition sourcePosition,
+                                @Nullable PsiElement psiContext) {
     myProject = project;
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
+    myContext = psiContext;
 
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
@@ -367,7 +377,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
     XDebuggerExpressionEditor expressionEditor =
       new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, myHistoryId, mySourcePosition,
-                                    getExpression(), true, true, false) {
+                                    getExpression(), true, true, false, myContext) {
         @Override
         protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
           return component;

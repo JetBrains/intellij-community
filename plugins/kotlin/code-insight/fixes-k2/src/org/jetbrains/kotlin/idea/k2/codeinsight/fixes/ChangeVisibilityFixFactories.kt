@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -70,12 +70,12 @@ object ChangeVisibilityFixFactories {
     }
 
     val noExplicitVisibilityInApiMode =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiMode ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoExplicitVisibilityInApiMode ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 
     val noExplicitVisibilityInApiModeWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoExplicitVisibilityInApiModeWarning ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 

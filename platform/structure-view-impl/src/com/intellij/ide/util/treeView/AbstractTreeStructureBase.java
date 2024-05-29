@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +88,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   public abstract @Nullable List<TreeStructureProvider> getProviders();
 
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
     List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers.isEmpty()) {

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Plushnikov Michail
@@ -148,7 +149,7 @@ public class AccessorsInfo {
     Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, CHAIN_VALUE);
     Boolean fluentDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, FLUENT_VALUE);
     Boolean makeFinalDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, MAKE_FINAL_VALUE);
-    Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, PREFIX_VALUE, String.class);
+    Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, PREFIX_VALUE, String.class, List.of());
     return new AccessorsValues(chainDeclaredValue, fluentDeclaredValue, makeFinalDeclaredValue, prefixes);
   }
 

@@ -7,14 +7,13 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
 
 abstract class AbstractK2IntroduceVariableTest : AbstractExtractionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getIntroduceVariableHandler(): RefactoringActionHandler = K2IntroduceVariableHandler
 
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

@@ -317,7 +317,7 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    val indexingTask = UnindexedFilesIndexer(project, mapOf(provider to dirtyFiles), "Test", LongSet.of())
+    val indexingTask = UnindexedFilesIndexer(project, HashSet(dirtyFiles), "Test", LongSet.of())
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)
   }
@@ -329,12 +329,7 @@ class UnindexedFilesScannerTest {
   }
 
   private fun scanFiles(filesAndDirs: SingleRootIndexableFilesIterator): Pair<JsonScanningStatistics, Collection<VirtualFile>> {
-    val (history, dirtyFilesPerOrigin) = scanFiles(filesAndDirs as IndexableFilesIterator)
-
-    assertThat(dirtyFilesPerOrigin.size).isLessThanOrEqualTo(1)
-    val dirtyFiles = dirtyFilesPerOrigin[filesAndDirs] ?: emptyList<VirtualFile>().also {
-      assertThat(dirtyFilesPerOrigin).isEmpty()
-    }
+    val (history, dirtyFiles) = scanFiles(filesAndDirs as IndexableFilesIterator)
 
     assertEquals(1, history.scanningStatistics.size)
     val scanningStat = history.scanningStatistics[0]
@@ -342,7 +337,7 @@ class UnindexedFilesScannerTest {
     return Pair(scanningStat, dirtyFiles)
   }
 
-  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
+  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Collection<VirtualFile>> {
     return project.service<PerProjectIndexingQueue>().getFilesSubmittedDuring {
       val scanningTask = UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
       return@getFilesSubmittedDuring scanningTask.queue().get()

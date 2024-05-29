@@ -3,33 +3,16 @@ c:com.intellij.execution.ExecutionException
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.Throwable):V
-- toIOException():java.io.IOException
 a:com.intellij.execution.ExecutionExceptionWithAttachments
 - com.intellij.execution.ExecutionException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
-- sf:Companion:com.intellij.execution.ExecutionExceptionWithAttachments$Companion
-- <init>(java.lang.String,java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable,B[],B[]):V
-- <init>(java.lang.String,B[],B[]):V
-- getAttachments():com.intellij.openapi.diagnostic.Attachment[]
-- f:getStderr():java.lang.String
-- f:getStdout():java.lang.String
-f:com.intellij.execution.ExecutionExceptionWithAttachments$Companion
-c:com.intellij.execution.IllegalEnvVarException
-- com.intellij.execution.ExecutionException
-- <init>(java.lang.String):V
 com.intellij.execution.KillableProcess
 - a:canKillProcess():Z
 - a:killProcess():V
 c:com.intellij.execution.RunCanceledByUserException
 - com.intellij.execution.ExecutionException
 - <init>():V
-f:com.intellij.execution.WorkingDirectoryNotFoundException
-- com.intellij.execution.ExecutionException
-- <init>(java.nio.file.Path):V
-- f:getWorkDirectory():java.nio.file.Path
-c:com.intellij.execution.configurations.CompositeParameterTargetedValue
+*c:com.intellij.execution.configurations.CompositeParameterTargetedValue
 - <init>():V
 - <init>(java.lang.String):V
 - addLocalPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
@@ -40,7 +23,6 @@ c:com.intellij.execution.configurations.CompositeParameterTargetedValue
 - getLocalValue():java.lang.String
 - getParts():java.util.List
 - s:targetizeParameters(java.util.List):java.util.Collection
-- toString():java.lang.String
 c:com.intellij.execution.configurations.GeneralCommandLine
 - com.intellij.openapi.util.UserDataHolder
 - <init>():V
@@ -66,26 +48,22 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - getParentEnvironmentType():com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - getPreparedCommandLine():java.lang.String
 - getPreparedCommandLine(com.intellij.execution.Platform):java.lang.String
-- pf:getProcessCreator():java.util.function.Function
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getWorkDirectory():java.io.File
 - s:inescapableQuote(java.lang.String):java.lang.String
 - isPassParentEnvironment():Z
-- f:isProcessCreatorSet():Z
 - isRedirectErrorStream():Z
 - p:prepareCommandLine(java.lang.String,java.util.List,com.intellij.execution.Platform):java.util.List
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - setCharset(java.nio.charset.Charset):V
 - setExePath(java.lang.String):V
 - setPassParentEnvironment(Z):V
-- f:setProcessCreator(java.util.function.Function):V
 - setRedirectErrorStream(Z):V
 - setWorkDirectory(java.io.File):V
 - setWorkDirectory(java.lang.String):V
 - p:setupEnvironment(java.util.Map):V
 - p:startProcess(java.util.List):java.lang.Process
 - toProcessBuilder():java.lang.ProcessBuilder
-- toString():java.lang.String
 - withCharset(java.nio.charset.Charset):com.intellij.execution.configurations.GeneralCommandLine
 - withEnvironment(java.lang.String,java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
 - withEnvironment(java.util.Map):com.intellij.execution.configurations.GeneralCommandLine
@@ -104,33 +82,31 @@ e:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - sf:SYSTEM:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - s:valueOf(java.lang.String):com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - s:values():com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType[]
-com.intellij.execution.configurations.ParameterTargetValue
+*:com.intellij.execution.configurations.ParameterTargetValue
 - a:getLocalValue():java.lang.String
-a:com.intellij.execution.configurations.ParameterTargetValuePart
+*a:com.intellij.execution.configurations.ParameterTargetValuePart
 - com.intellij.execution.configurations.ParameterTargetValue
 - getLocalValue():java.lang.String
 - getPathToUpload():java.lang.String
-f:com.intellij.execution.configurations.ParameterTargetValuePart$Const
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$Const
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - <init>(java.lang.String):V
-- toString():java.lang.String
-f:com.intellij.execution.configurations.ParameterTargetValuePart$Path
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$Path
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - <init>(java.io.File):V
 - <init>(java.lang.String):V
 - getPathToUpload():java.lang.String
-- toString():java.lang.String
-f:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - sf:INSTANCE:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
-f:com.intellij.execution.configurations.ParameterTargetValuePart$PromiseValue
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$PromiseValue
 - com.intellij.execution.configurations.ParameterTargetValuePart
 - <init>(java.lang.String,org.jetbrains.concurrency.Promise):V
 - f:getTargetValue():org.jetbrains.concurrency.Promise
 f:com.intellij.execution.configurations.ParametersList
 - java.lang.Cloneable
 - <init>():V
-- add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+- *:add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - add(java.lang.String):V
 - add(java.lang.String,java.lang.String):V
 - addAll(java.util.List):V
@@ -164,14 +140,14 @@ f:com.intellij.execution.configurations.ParametersList
 - getProperties():java.util.Map
 - getProperties(java.lang.String):java.util.Map
 - getPropertyValue(java.lang.String):java.lang.String
-- getTargetedList():java.util.List
+- *:getTargetedList():java.util.List
 - hasParameter(java.lang.String):Z
 - hasProperty(java.lang.String):Z
 - s:join(java.util.List):java.lang.String
 - s:join(java.lang.String[]):java.lang.String
 - s:parse(java.lang.String):java.lang.String[]
 - patchMacroWithEnvs(java.util.Map):V
-- prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+- *:prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - prepend(java.lang.String):V
 - prependAll(java.lang.String[]):V
 - removeParamsGroup(I):com.intellij.execution.configurations.ParamsGroup
@@ -179,7 +155,6 @@ f:com.intellij.execution.configurations.ParametersList
 - replaceOrPrepend(java.lang.String,java.lang.String):V
 - set(I,java.lang.String):V
 - s:setTestMacros(java.util.Map):V
-- toString():java.lang.String
 f:com.intellij.execution.configurations.ParamsGroup
 - java.lang.Cloneable
 - <init>(java.lang.String):V
@@ -192,7 +167,6 @@ f:com.intellij.execution.configurations.ParamsGroup
 - getId():java.lang.String
 - getParameters():java.util.List
 - getParametersList():com.intellij.execution.configurations.ParametersList
-- toString():java.lang.String
 f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
 - s:findAllExeFilesInPath(java.lang.String):java.util.List
 - s:findAllExeFilesInPath(java.lang.String,java.io.FileFilter):java.util.List
@@ -211,96 +185,15 @@ c:com.intellij.execution.configurations.PtyCommandLine
 - <init>():V
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
 - <init>(java.util.List):V
-- s:getDefaultPtyOptions():com.intellij.execution.process.LocalPtyOptions
 - getPtyOptions():com.intellij.execution.process.LocalPtyOptions
 - s:isEnabled():Z
 - p:startProcess(java.util.List):java.lang.Process
-- startProcessWithPty(java.util.List):java.lang.Process
 - withConsoleMode(Z):com.intellij.execution.configurations.PtyCommandLine
 - withInitialColumns(I):com.intellij.execution.configurations.PtyCommandLine
 - withInitialRows(I):com.intellij.execution.configurations.PtyCommandLine
 - withOptions(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.configurations.PtyCommandLine
 - withUnixOpenTtyToPreserveOutputAfterTermination(Z):com.intellij.execution.configurations.PtyCommandLine
 - withUseCygwinLaunch(Z):com.intellij.execution.configurations.PtyCommandLine
-f:com.intellij.execution.process.AnsiCommands
-- sf:SGR_COLOR_ENCODING_INDEXED:I
-- sf:SGR_COLOR_ENCODING_RGB:I
-- sf:SGR_COMMAND_BG_COLOR0:I
-- sf:SGR_COMMAND_BG_COLOR1:I
-- sf:SGR_COMMAND_BG_COLOR10:I
-- sf:SGR_COMMAND_BG_COLOR11:I
-- sf:SGR_COMMAND_BG_COLOR12:I
-- sf:SGR_COMMAND_BG_COLOR13:I
-- sf:SGR_COMMAND_BG_COLOR14:I
-- sf:SGR_COMMAND_BG_COLOR15:I
-- sf:SGR_COMMAND_BG_COLOR2:I
-- sf:SGR_COMMAND_BG_COLOR3:I
-- sf:SGR_COMMAND_BG_COLOR4:I
-- sf:SGR_COMMAND_BG_COLOR5:I
-- sf:SGR_COMMAND_BG_COLOR6:I
-- sf:SGR_COMMAND_BG_COLOR7:I
-- sf:SGR_COMMAND_BG_COLOR8:I
-- sf:SGR_COMMAND_BG_COLOR9:I
-- sf:SGR_COMMAND_BG_COLOR_DEFAULT:I
-- sf:SGR_COMMAND_BG_COLOR_ENCODED:I
-- sf:SGR_COMMAND_BLINK_RAPID:I
-- sf:SGR_COMMAND_BLINK_SLOW:I
-- sf:SGR_COMMAND_BOLD:I
-- sf:SGR_COMMAND_CONCEAL:I
-- sf:SGR_COMMAND_CROSS_OUT:I
-- sf:SGR_COMMAND_DOUBLE_UNDERLINE:I
-- sf:SGR_COMMAND_ENCIRCLED:I
-- sf:SGR_COMMAND_FAINT:I
-- sf:SGR_COMMAND_FG_COLOR0:I
-- sf:SGR_COMMAND_FG_COLOR1:I
-- sf:SGR_COMMAND_FG_COLOR10:I
-- sf:SGR_COMMAND_FG_COLOR11:I
-- sf:SGR_COMMAND_FG_COLOR12:I
-- sf:SGR_COMMAND_FG_COLOR13:I
-- sf:SGR_COMMAND_FG_COLOR14:I
-- sf:SGR_COMMAND_FG_COLOR15:I
-- sf:SGR_COMMAND_FG_COLOR2:I
-- sf:SGR_COMMAND_FG_COLOR3:I
-- sf:SGR_COMMAND_FG_COLOR4:I
-- sf:SGR_COMMAND_FG_COLOR5:I
-- sf:SGR_COMMAND_FG_COLOR6:I
-- sf:SGR_COMMAND_FG_COLOR7:I
-- sf:SGR_COMMAND_FG_COLOR8:I
-- sf:SGR_COMMAND_FG_COLOR9:I
-- sf:SGR_COMMAND_FG_COLOR_DEFAULT:I
-- sf:SGR_COMMAND_FG_COLOR_ENCODED:I
-- sf:SGR_COMMAND_FONT1:I
-- sf:SGR_COMMAND_FONT2:I
-- sf:SGR_COMMAND_FONT3:I
-- sf:SGR_COMMAND_FONT4:I
-- sf:SGR_COMMAND_FONT5:I
-- sf:SGR_COMMAND_FONT6:I
-- sf:SGR_COMMAND_FONT7:I
-- sf:SGR_COMMAND_FONT8:I
-- sf:SGR_COMMAND_FONT9:I
-- sf:SGR_COMMAND_FRAKTUR:I
-- sf:SGR_COMMAND_FRAMED:I
-- sf:SGR_COMMAND_IDEOGRAM_OFF:I
-- sf:SGR_COMMAND_IDEOGRAM_OVER_LEFT:I
-- sf:SGR_COMMAND_IDEOGRAM_OVER_LEFT_DOUBLE:I
-- sf:SGR_COMMAND_IDEOGRAM_STRESS:I
-- sf:SGR_COMMAND_IDEOGRAM_UNDER_RIGHT:I
-- sf:SGR_COMMAND_IDEOGRAM_UNDER_RIGHT_DOUBLE:I
-- sf:SGR_COMMAND_INVERSE:I
-- sf:SGR_COMMAND_ITALIC:I
-- sf:SGR_COMMAND_NO_BLINK:I
-- sf:SGR_COMMAND_NO_BOLD_FAINT:I
-- sf:SGR_COMMAND_NO_CROSS_OUT:I
-- sf:SGR_COMMAND_NO_FRAMED_ENCIRCLED:I
-- sf:SGR_COMMAND_NO_INVERSE:I
-- sf:SGR_COMMAND_NO_ITALIC_FRAKTUR:I
-- sf:SGR_COMMAND_NO_OVERLINED:I
-- sf:SGR_COMMAND_NO_UNDERLINE:I
-- sf:SGR_COMMAND_OVERLINED:I
-- sf:SGR_COMMAND_PRIMARY_FONT:I
-- sf:SGR_COMMAND_RESET:I
-- sf:SGR_COMMAND_REVEAL:I
-- sf:SGR_COMMAND_UNDERLINE:I
 c:com.intellij.execution.process.AnsiEscapeDecoder
 - <init>():V
 - escapeText(java.lang.String,com.intellij.openapi.util.Key,com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor):V
@@ -346,11 +239,6 @@ c:com.intellij.execution.process.CapturingProcessRunner
 - runProcess(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator,I):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator,I,Z):com.intellij.execution.process.ProcessOutput
-a:com.intellij.execution.process.ColoredOutputTypeRegistry
-- <init>():V
-- s:getInstance():com.intellij.execution.process.ColoredOutputTypeRegistry
-- a:getOutputType(com.intellij.execution.process.AnsiTerminalEmulator,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
-- a:getOutputType(java.lang.String,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 c:com.intellij.execution.process.ColoredProcessHandler
 - com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
@@ -403,7 +291,6 @@ f:com.intellij.execution.process.LocalPtyOptions
 - f:getUseCygwinLaunch():Z
 - f:getUseWinConPty():Z
 - sf:shouldUseWinConPty():Z
-- toString():java.lang.String
 f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:build():com.intellij.execution.process.LocalPtyOptions
 - f:consoleMode():Z
@@ -413,7 +300,6 @@ f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:initialRows():I
 - f:initialRows(I):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:set(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.process.LocalPtyOptions$Builder
-- toString():java.lang.String
 - f:useCygwinLaunch():Z
 - f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:useWinConPty():Z
@@ -473,7 +359,6 @@ c:com.intellij.execution.process.ProcessInfo
 - getUser():java.lang.String
 - hashCode():I
 - isOwnedByCurrentUser():com.intellij.util.ThreeState
-- toString():java.lang.String
 c:com.intellij.execution.process.ProcessNotCreatedException
 - com.intellij.execution.ExecutionException
 - <init>(java.lang.String,com.intellij.execution.configurations.GeneralCommandLine):V
@@ -499,7 +384,6 @@ c:com.intellij.execution.process.ProcessOutput
 - setCancelled():V
 - setExitCode(I):V
 - setTimeout():V
-- toString():java.lang.String
 com.intellij.execution.process.ProcessService
 - getCommand(java.lang.Process):java.util.List
 - s:getInstance():com.intellij.execution.process.ProcessService
@@ -617,7 +501,6 @@ f:com.intellij.util.LocalFileUrl
 - resolve(java.lang.String):com.intellij.util.Url
 - toDecodedForm():java.lang.String
 - toExternalForm():java.lang.String
-- toString():java.lang.String
 - trimParameters():com.intellij.util.Url
 com.intellij.util.Url
 - a:addParameters(java.util.Map):com.intellij.util.Url
@@ -697,7 +580,6 @@ f:com.intellij.util.net.NetUtils
 - s:findAvailableSocketPort():I
 - s:findAvailableSocketPorts(I):I[]
 - s:getLocalHostString():java.lang.String
-- s:getLoopbackAddress():java.net.InetAddress
 - s:isLocalhost(java.lang.String):Z
 - s:isSniEnabled():Z
 - s:isValidHost(java.lang.String):com.intellij.util.net.NetUtils$ValidHostInfo

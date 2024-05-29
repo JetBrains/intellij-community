@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
@@ -19,6 +19,7 @@ import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -368,6 +369,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+  @ApiStatus.Internal
   protected final @Nullable Function<ProcessBuilder, Process> getProcessCreator() {
     return myProcessCreator;
   }
@@ -379,11 +381,13 @@ public class GeneralCommandLine implements UserDataHolder {
    * must be quoted before passing them into {@code CreateProcess} on Windows, and must not be quoted for {@code exec} on a Unix-like OS.
    * Therefore, when the process creator is not null, various validations and mangling of arguments and environment variables are disabled.
    */
+  @ApiStatus.Internal
   public final void setProcessCreator(@Nullable Function<ProcessBuilder, Process> processCreator) {
     myProcessCreator = processCreator;
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public final boolean isProcessCreatorSet() {
     return myProcessCreator != null;
   }

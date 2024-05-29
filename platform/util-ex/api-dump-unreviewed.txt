@@ -99,7 +99,6 @@ f:com.intellij.util.FileName
 - f:getValue():java.lang.String
 - hashCode():I
 - s:hashCode-impl(java.lang.String):I
-- toString():java.lang.String
 - s:toString-impl(java.lang.String):java.lang.String
 - bf:unbox-impl():java.lang.String
 f:com.intellij.util.JdomKt
@@ -164,7 +163,6 @@ f:com.intellij.util.containers.Queue
 - pullFirst():java.lang.Object
 - removeLast():java.lang.Object
 - size():I
-- toString():java.lang.String
 f:com.intellij.util.containers.hash.HashMap
 - java.util.HashMap
 - <init>():V

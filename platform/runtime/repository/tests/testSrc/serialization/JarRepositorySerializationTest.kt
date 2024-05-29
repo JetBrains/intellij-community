@@ -19,7 +19,7 @@ class JarRepositorySerializationTest {
 
   @Test
   fun `empty module`() {
-    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), emptyList()))) { 
+    check(listOf(RawRuntimeModuleDescriptor.create("ij.platform.util", emptyList(), emptyList()))) { 
       xml("ij.platform.util.xml", """
         <module name="ij.platform.util">
         </module>
@@ -29,7 +29,7 @@ class JarRepositorySerializationTest {
   
   @Test
   fun `single module`() {
-    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
+    check(listOf(RawRuntimeModuleDescriptor.create("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util">
             <resources>
@@ -43,8 +43,8 @@ class JarRepositorySerializationTest {
   @Test
   fun `two modules`() {
     check(listOf(
-      RawRuntimeModuleDescriptor("ij.platform.util.rt", listOf("ij-util-rt.jar"), emptyList()),
-      RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
+      RawRuntimeModuleDescriptor.create("ij.platform.util.rt", listOf("ij-util-rt.jar"), emptyList()),
+      RawRuntimeModuleDescriptor.create("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util">
@@ -66,8 +66,8 @@ class JarRepositorySerializationTest {
   @Test
   fun `bootstrap module classpath`() {
     check(listOf(
-      RawRuntimeModuleDescriptor("foo", listOf("foo.jar"), emptyList()),
-      RawRuntimeModuleDescriptor("bar", listOf("bar.jar"), listOf("foo")),
+      RawRuntimeModuleDescriptor.create("foo", listOf("foo.jar"), emptyList()),
+      RawRuntimeModuleDescriptor.create("bar", listOf("bar.jar"), listOf("foo")),
     ), "bar", "bar.jar foo.jar") {
       xml("foo.xml", """
           <module name="foo">

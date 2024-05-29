@@ -36,7 +36,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -441,7 +440,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   @NotNull
-  public String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
+  protected String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
     return StringUtil.getQualifiedName(packageFQName, FileUtilRt.getNameWithoutExtension(outputFile.getName()));
   }
@@ -758,7 +757,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
+  protected boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
     if (JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, ((LineData)lineData).getMethodSignature())) return true;
     return super.isGeneratedCode(project, qualifiedName, lineData);
   }

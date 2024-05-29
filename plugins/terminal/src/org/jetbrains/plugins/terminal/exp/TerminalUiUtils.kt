@@ -293,6 +293,18 @@ internal fun invokeLater(expired: (() -> Boolean)? = null,
   }
 }
 
+@RequiresBlockingContext
+internal fun invokeLaterIfNeeded(expired: (() -> Boolean)? = null,
+                                 modalityState: ModalityState = ModalityState.defaultModalityState(),
+                                 runnable: Runnable) {
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    runnable.run()
+  }
+  else {
+    invokeLater(expired, modalityState, runnable)
+  }
+}
+
 internal fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }
 
 internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> T): T {

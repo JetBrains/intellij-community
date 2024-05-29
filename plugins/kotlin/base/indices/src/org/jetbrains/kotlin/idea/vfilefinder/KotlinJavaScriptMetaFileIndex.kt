@@ -28,7 +28,7 @@ class KotlinJavaScriptMetaFileIndex : KotlinFileIndexBase() {
 
 internal fun FileContent.fqNameFromJsMetadata(): FqName? {
     return ByteArrayInputStream(content).use { stream ->
-        if (JsMetadataVersion.readFrom(stream).isCompatible()) {
+        if (JsMetadataVersion.readFrom(stream).isCompatibleWithCurrentCompilerVersion()) {
             FqName(JsProtoBuf.Header.parseDelimitedFrom(stream).packageFqName)
         } else null
     }

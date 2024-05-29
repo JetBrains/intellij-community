@@ -83,6 +83,7 @@
               implementationClass="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptFileType"/>
     <lang.fileViewProviderFactory language="Terminal Prompt"
                                   implementationClass="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptFileViewProviderFactory"/>
+    <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptErrorFilter"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
@@ -109,6 +110,10 @@
                     beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.promptCustomEnterHandler" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptCustomEnterHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandHistoryProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.exp.history.TerminalCommandHistoryProvider"/>
   </extensionPoints>
 
   <projectListeners>

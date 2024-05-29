@@ -98,15 +98,7 @@ abstract class RestService : HttpRequestHandler() {
 
     @JvmStatic
     fun sendStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
-      val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
-      HttpUtil.setContentLength(response, 0)
-      response.addCommonHeaders()
-      response.addNoCache()
-      if (keepAlive) {
-        HttpUtil.setKeepAlive(response, true)
-      }
-      response.headers().set("X-Frame-Options", "Deny")
-      response.send(channel, !keepAlive)
+      responseStatus(status, keepAlive, channel)
     }
 
     @JvmStatic
@@ -214,6 +206,14 @@ abstract class RestService : HttpRequestHandler() {
     return method === HttpMethod.GET
   }
 
+  /**
+   * If the requests per minute counter exceeds this value, the exception [HttpResponseStatus.TOO_MANY_REQUESTS] will be sent.
+   * @return The value of "ide.rest.api.requests.per.minute" Registry key or '30', if the key does not exist.
+   */
+  protected open fun getMaxRequestsPerMinute(): Int {
+    return Registry.intValue("ide.rest.api.requests.per.minute", 30)
+  }
+
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     try {
       if (!isHostTrusted(request, urlDecoder)) {
@@ -222,7 +222,7 @@ abstract class RestService : HttpRequestHandler() {
       }
 
       val counter = abuseCounter.get(getRequesterId(urlDecoder, request, context))!!
-      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
+      if (counter.incrementAndGet() > getMaxRequestsPerMinute()) {
         HttpResponseStatus.TOO_MANY_REQUESTS.sendError(context.channel(), request)
         return true
       }

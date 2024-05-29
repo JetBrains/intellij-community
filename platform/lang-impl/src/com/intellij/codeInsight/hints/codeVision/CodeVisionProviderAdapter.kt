@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -31,30 +32,34 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val modificationTracker = PsiModificationTracker.getInstance(editor.project)
-    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return super.shouldRecomputeForEditor(editor, uiData)
-
-    return modificationTracker.modificationCount == cached.modificationStamp
-
+    return runReadAction {
+      val modificationTracker = PsiModificationTracker.getInstance(editor.project)
+      val cached = cacheService.getVisionDataForEditor(editor, id)
+                   ?: return@runReadAction super.shouldRecomputeForEditor(editor, uiData)
+      modificationTracker.modificationCount == cached.modificationStamp
+    }
   }
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return CodeVisionState.NotReady
-    val document = editor.document
-    // ranges may be slightly outdated, so we have to unsure that they fit the document
-    val lenses = cached.codeVisionEntries.map {
-      val range = it.first
-      it.second.showInMorePopup = false
-      if (document.textLength <= range.endOffset) {
-        TextRange(min(document.textLength, range.startOffset), document.textLength) to it.second
+    return runReadAction {
+      val cached = cacheService.getVisionDataForEditor(editor, id)
+                   ?: return@runReadAction CodeVisionState.NotReady
+      val document = editor.document
+      // ranges may be slightly outdated, so we have to unsure that they fit the document
+      val lenses = cached.codeVisionEntries.map {
+        val range = it.first
+        it.second.showInMorePopup = false
+        if (document.textLength <= range.endOffset) {
+          TextRange(min(document.textLength, range.startOffset), document.textLength) to it.second
+        }
+        else {
+          it
+        }
       }
-      else {
-        it
-      }
+      CodeVisionState.Ready(lenses)
     }
-    return CodeVisionState.Ready(lenses)
   }
 
   override fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry) {

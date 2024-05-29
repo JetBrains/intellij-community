@@ -3,6 +3,7 @@
     "actions": {
       "addFile.svg": "actions/addFile.svg",
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
+      "checked.svg": "actions/checked.svg",
       "deploy.svg": "nodes/deploy.svg",
       "diagramDiff.svg": "actions/diagramDiff.svg",
       "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
@@ -36,6 +37,7 @@
       "profileRed.svg": "actions/profileRed.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
+      "selectAll.svg": "actions/selectall.svg",
       "shortcutFilter.svg": "actions/shortcutFilter.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
@@ -49,7 +51,8 @@
       "showImportStatements.svg": "actions/showImportStatements.svg",
       "suggestedRefactoringBulb.svg": "actions/suggestedRefactoringBulb.svg",
       "toggleVisibility.svg": "actions/toggleVisibility.svg",
-      "undeploy.svg": "nodes/undeploy.svg"
+      "undeploy.svg": "nodes/undeploy.svg",
+      "unselectAll.svg": "actions/unselectall.svg"
     },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
@@ -126,6 +129,7 @@
       "cwmScreenInBrowserOn.svg": "codeWithMe/cwmScreenInBrowserOn.svg",
       "cwmScreenOff.svg": "codeWithMe/cwmScreenOff.svg",
       "cwmScreenOn.svg": "codeWithMe/cwmScreenOn.svg",
+      "cwmShare.svg": "codeWithMe/cwmShared.svg",
       "cwmUsers.svg": "codeWithMe/users.svg",
       "cwmVerified.svg": "codeWithMe/cwmVerified.svg"
     },
@@ -192,6 +196,8 @@
       "changedFile.svg": "scope/changedFiles.svg",
       "changedFiles.svg": "scope/changedFilesAll.svg",
       "config.svg": "fileTypes/config.svg",
+      "contexts.svg": "fileTypes/contexts.svg",
+      "contextsModifier.svg": "fileTypes/contextsModifier.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "eclipse.svg": "providers/eclipse.svg",
@@ -409,7 +415,11 @@
       "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "questionMark.svg": "general/contextHelp.svg",
-      "warningDialog.svg": "general/warningDialog.svg"
+      "warningDialog.svg": "general/warningDialog.svg",
+      "vcs.svg": [
+        "vcs/branchNode.svg",
+        "vcs/branch.svg"
+      ]
     },
     "graph": {
       "graphLayout.svg": "graph/layout.svg"
@@ -849,6 +859,7 @@
       "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
       "changelist.svg": "vcs/changelist.svg",
+      "shelve.svg": "vcs/shelveSilent.svg",
       "unshelve.svg": [
         "vcs/Unshelve.svg",
         "vcs/unshelveSilent.svg"

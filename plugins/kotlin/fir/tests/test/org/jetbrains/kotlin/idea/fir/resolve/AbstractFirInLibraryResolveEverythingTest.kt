@@ -16,10 +16,6 @@ abstract class AbstractFirInLibraryResolveEverythingTest : KotlinLightCodeInsigh
     attachSources = false
   )
 
-  override fun isFirPlugin(): Boolean {
-    return true
-  }
-
   override fun getProjectDescriptor(): LightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 

@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -13,13 +17,9 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.tooling.core.Extras
-import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
-import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
-import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
-import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
-import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
+import org.jetbrains.plugins.gradle.service.execution.attachTargetPathMapperInitScript
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
+import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
@@ -91,7 +91,7 @@ fun <T : Any> buildGradleModel(
             )
 
         val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
-        GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings)
+        attachTargetPathMapperInitScript(executionSettings)
         val toolingExtensionClasses = AbstractModelBuilderTest.getToolingExtensionClasses()
         val kotlinToolingExtensionClasses = setOf(
             /* Representative of the `gradle-tooling` module */

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,19 +21,34 @@ public final class TextViewer extends EditorTextField {
   private static final String CONTEXT_MENU_GROUP_ID = "TextViewerEditorPopupMenu";
   private final boolean myEmbeddedIntoDialogWrapper;
 
-  public TextViewer(@NotNull String initialText, @NotNull Project project, boolean viewer) {
-    this(createDocument(initialText, viewer), project, true, viewer);
-  }
-
   public TextViewer(@NotNull String initialText, @NotNull Project project) {
     this(initialText, project, true);
   }
 
+  public TextViewer(@NotNull String initialText, @NotNull Project project, boolean viewer) {
+    this(initialText, project, FileTypes.PLAIN_TEXT, viewer);
+  }
+
+  public TextViewer(@NotNull String initialText, @NotNull Project project, FileType fileType) {
+    this(initialText, project, fileType, true);
+  }
+
+  public TextViewer(@NotNull String initialText, @NotNull Project project, FileType fileType, boolean viewer) {
+    this(createDocument(initialText, viewer), project, true, fileType, viewer);
+  }
+
   public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean viewer) {
-    super(document, project, FileTypes.PLAIN_TEXT, viewer, false);
+    this(document, project, embeddedIntoDialogWrapper, FileTypes.PLAIN_TEXT, viewer);
+  }
+
+  public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, FileType fileType, boolean viewer) {
+    super(document, project, fileType, viewer, false);
 
     myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
     setFontInheritedFromLAF(false);
+
+    // Explicitly scroll to the top.
+    setCaretPosition(0);
   }
 
   private static Document createDocument(@NotNull String initialText, boolean viewer) {

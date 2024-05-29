@@ -5,5 +5,3 @@ sealed class RevisionId {
   data object Current : RevisionId()
   data class ChangeSet(val id: Long) : RevisionId()
 }
-
-val ChangeSetActivityItem?.revisionId: RevisionId get() = if (this != null) RevisionId.ChangeSet(id) else RevisionId.Current

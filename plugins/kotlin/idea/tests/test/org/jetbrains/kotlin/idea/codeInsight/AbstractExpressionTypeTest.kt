@@ -9,10 +9,10 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
@@ -20,8 +20,6 @@ abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtu
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun runInDispatchThread(): Boolean = false
-
-    abstract override fun isFirPlugin(): Boolean
 
     private fun findKotlinExpressionTypeProvider(): KotlinExpressionTypeProvider {
         val providers = LanguageExpressionTypes.INSTANCE
@@ -57,6 +55,4 @@ abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtu
     }
 }
 
-abstract class AbstractK1ExpressionTypeTest : AbstractExpressionTypeTest() {
-    override fun isFirPlugin(): Boolean = false
-}
+abstract class AbstractK1ExpressionTypeTest : AbstractExpressionTypeTest()

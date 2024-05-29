@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.scratch
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.scratch.ui.ModulesComboBoxAction
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -9,6 +10,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class ScratchOptionsTest : AbstractScratchRunActionTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     fun testModuleSelectionPanelIsVisibleForScratchFile() {
         val scratchFile = configureScratchByText("scratch_1.kts", doTestScratchText())

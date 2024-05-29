@@ -264,7 +264,6 @@
 - f:getKind():java.lang.String
 - f:getNamespace():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 - f:withName(java.lang.String):com.intellij.webSymbols.WebSymbolQualifiedName
 *f:com.intellij.webSymbols.WebSymbolQualifiedName
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
@@ -281,7 +280,6 @@
 - hashCode():I
 - f:matches(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
 - f:matches(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.WebSymbolQualifiedKind[]):Z
-- toString():java.lang.String
 *:com.intellij.webSymbols.WebSymbolTypeSupport
 - a:resolve(java.util.List):java.lang.Object
 *:com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference
@@ -498,7 +496,6 @@
 - sf:INSTANCE:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$IdeLibrary
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$PackageManagerDependency
 - com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind
 - f:component1():java.lang.String
@@ -507,13 +504,11 @@
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$ProjectToolExecutable
 - com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind
 - sf:INSTANCE:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$ProjectToolExecutable
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 com.intellij.webSymbols.customElements.CustomElementsSymbol
 - com.intellij.webSymbols.WebSymbol
 - sf:Companion:com.intellij.webSymbols.customElements.CustomElementsSymbol$Companion
@@ -1049,7 +1044,6 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - f:isExclusiveFor(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
 - matchContext(com.intellij.webSymbols.context.WebSymbolsContext):Z
 - pf:setQueryExecutor(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):V
-- toString():java.lang.String
 *:com.intellij.webSymbols.webTypes.WebTypesSymbolFactory
 - a:create():com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 *:com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter

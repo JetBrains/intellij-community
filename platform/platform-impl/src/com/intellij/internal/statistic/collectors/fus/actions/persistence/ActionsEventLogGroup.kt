@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.NonNls
 
@@ -15,7 +16,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 76)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 77)
 
   @JvmField
   val ACTION_ID: PrimitiveEventField<String?> = ActionIdEventField("action_id")
@@ -70,6 +71,10 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   val DUMB: BooleanEventField = EventFields.Boolean("dumb")
 
   @JvmField
+  val INCOMPLETE_DEPENDENCIES_MODE = EventFields.Enum("incomplete_dependencies_mode", DependenciesState::class.java,
+                                                      "COMPLETE or INCOMPLETE (see IncompleteDependenciesService)")
+
+  @JvmField
   val RESULT_TYPE: StringEventField = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
 
   @JvmField
@@ -109,6 +114,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
       TOGGLE_ACTION,
       CONTEXT_MENU,
       DUMB,
+      INCOMPLETE_DEPENDENCIES_MODE,
       ACTION_ID,
       ACTION_CLASS,
       ACTION_PARENT,

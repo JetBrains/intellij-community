@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
@@ -48,17 +47,6 @@ public final class ChangeBufferingList implements Cloneable {
     else {
       changes = new int[length];
     }
-  }
-
-  /** @return both min and max values from an array segment array[0..length), as 2-elements array [min, max] */
-  static int @NotNull [] calcMinMax(int[] array, int length) {
-    int max = Integer.MIN_VALUE;
-    int min = Integer.MAX_VALUE;
-    for (int i = 0; i < length; ++i) {
-      max = Math.max(max, array[i]);
-      min = Math.min(min, array[i]);
-    }
-    return new int[]{min, max};
   }
 
   public synchronized void add(int value) {
@@ -128,9 +116,15 @@ public final class ChangeBufferingList implements Cloneable {
     if (randomAccessContainer == null) {
       int someElementsNumberEstimation = length;
 
-      // todo we can check these lengths instead of only relying upon reaching MAX_FILES
+      //todo we can check these lengths instead of only relying upon reaching MAX_FILES
       //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
       //int lengthOfIntSet = 4 * length;
+      //TODO RC: IdBitSet is very memory-hungry even for small ids count, if the _range_ of ids is big.
+      //         IdBitSet size is ~(max(id)-min(id))/8, e.g. ~1.25Mb for a set of 2 ids: {1, 10_000_000}.
+      //         On the other hand, SortedIdSet becomes CPU-hungry for large N -- which means there are
+      //         scenarios there _neither_ of options is good. E.e. if length > 20k, but ids range is large,
+      //         and we opted to use SortedIdSet because it is less memory-hungry -- but it could still be
+      //         very CPU hungry instead
 
       if (someElementsNumberEstimation < MAX_FILES) {
         if (!hasRemovals) {
@@ -150,7 +144,7 @@ public final class ChangeBufferingList implements Cloneable {
         copyChanges = false;
       }
       else {
-        idSet = new IdBitSet(calcMinMax(changes, length), 0);
+        idSet = new IdBitSet(IdBitSet.calcMinMax(changes, length), 0);
       }
     }
     else {

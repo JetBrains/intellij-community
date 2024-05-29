@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.findParameterWithName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -15,20 +15,20 @@ import org.jetbrains.kotlin.psi.KtParameter
 
 internal object AddInlineModifierFixFactories {
 
-    val usageIsNotInlinableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UsageIsNotInlinable ->
+    val usageIsNotInlinableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UsageIsNotInlinable ->
         val reference = diagnostic.psi as? KtNameReferenceExpression ?: return@ModCommandBased emptyList()
         val parameter = reference.findParameterWithName(reference.getReferencedName()) ?: return@ModCommandBased emptyList()
         listOf(AddInlineModifierFix(parameter, ElementContext(KtTokens.NOINLINE_KEYWORD)))
     }
 
-    val nonLocalReturnNotAllowed = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NonLocalReturnNotAllowed ->
+    val nonLocalReturnNotAllowed = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NonLocalReturnNotAllowed ->
         val reference = diagnostic.psi as? KtNameReferenceExpression ?: return@ModCommandBased emptyList()
         val parameter = reference.findParameterWithName(reference.getReferencedName()) ?: return@ModCommandBased emptyList()
         listOf(AddInlineModifierFix(parameter, ElementContext(KtTokens.CROSSINLINE_KEYWORD)))
     }
 
     val inlineSuspendFunctionTypeUnsupported =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.InlineSuspendFunctionTypeUnsupported ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InlineSuspendFunctionTypeUnsupported ->
             val parameter = diagnostic.psi as? KtParameter ?: return@ModCommandBased listOf()
             listOf(
                 AddInlineModifierFix(parameter, ElementContext(KtTokens.NOINLINE_KEYWORD)),

@@ -38,33 +38,36 @@ fun <T> chooseContainerElementIfNecessary(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, toPsi, onSelect)
+): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, toPsi, onSelect)
 
 fun <T : PsiElement> chooseContainerElementIfNecessary(
     containers: List<T>,
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, null, onSelect)
+): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, null, onSelect)
 
 private fun <T> chooseContainerElementIfNecessaryImpl(
     containers: List<T>,
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     toPsi: ((T) -> PsiElement)?,
     onSelect: (T) -> Unit
 ) {
     when {
         containers.isEmpty() -> return
         containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
-        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
+        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, selection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
-            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, onSelect as (PsiElement) -> Unit)
+            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, selection as PsiElement?, onSelect as (PsiElement) -> Unit)
         }
     }
 }
@@ -74,6 +77,7 @@ private fun <T> chooseContainerElement(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
 ) {
@@ -93,12 +97,14 @@ private fun <T : PsiElement> chooseContainerElement(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     onSelect: (T) -> Unit
 ): Unit = choosePsiContainerElement(
     elements = elements,
     editor = editor,
     title = title,
     highlightSelection = highlightSelection,
+    selection = selection,
     psi2Container = { it },
     onSelect = onSelect,
 )
@@ -108,6 +114,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: E? = null,
     psi2Container: (E) -> T,
     onSelect: (T) -> Unit,
 ) {
@@ -117,6 +124,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
         popupPresentationProvider(),
         title,
         highlightSelection,
+        selection,
     ) { psiElement ->
         @Suppress("UNCHECKED_CAST")
         onSelect(psi2Container(psiElement as E))
@@ -134,12 +142,14 @@ private fun <T : PsiElement> getPsiElementPopup(
     presentationProvider: TargetPresentationProvider<T>,
     @NlsContexts.PopupTitle title: String?,
     highlightSelection: Boolean,
+    selection: T? = null,
     processor: (T) -> Boolean
 ): JBPopup {
     val project = elements.firstOrNull()?.project ?: throw IllegalArgumentException("Can't create popup because no elements are provided")
     val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
     return PsiTargetNavigator(elements)
         .presentationProvider(presentationProvider)
+        .selection(selection)
         .builderConsumer { builder ->
             builder
                 .setItemSelectedCallback { presentation ->

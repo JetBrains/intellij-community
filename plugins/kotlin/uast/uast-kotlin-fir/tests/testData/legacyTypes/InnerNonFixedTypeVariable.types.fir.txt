@@ -14,6 +14,6 @@ UFile (package = ) [public final class InnerNonFixedTypeVariableKt {...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [mutableSetOf()] : <ErrorType>
                             UIdentifier (Identifier (mutableSetOf)) [UIdentifier (Identifier (mutableSetOf))]
                         ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
-                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
     UClass (name = Some) [public final class Some {...}]
         UMethod (name = Some) [public fun Some() = UastEmptyExpression]

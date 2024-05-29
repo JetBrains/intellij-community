@@ -204,6 +204,11 @@ class TestFile internal constructor(val repo: GitRepository, val file: File) {
     return this
   }
 
+  fun assertExists(): TestFile {
+    assertTrue(file.exists())
+    return this
+  }
+
   fun assertNotExists(): TestFile {
     assertFalse(file.exists())
     return this

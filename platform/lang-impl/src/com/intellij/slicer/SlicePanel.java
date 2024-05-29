@@ -269,7 +269,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       if (isDisposed) return;
       List<UsageInfo> infos = getSelectedUsageInfos();
       if (infos != null && myUsagePreviewPanel != null) {
-        myUsagePreviewPanel.updateLayout(infos);
+        myUsagePreviewPanel.updateLayout(myProject, infos);
       }
     });
   }

@@ -8,10 +8,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
-import com.intellij.openapi.vcs.impl.VcsRootIterator
 import com.intellij.openapi.vcs.util.paths.RootDirtySet
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Processor
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcsUtil.VcsUtil
@@ -93,16 +91,6 @@ class GitVcsDirtyScope(private val project: Project) : VcsModifiableDirtyScope()
     val vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(newcomer)
     if (vcsRoot == null || vcsRoot.vcs !== vcs) return
     addDirtyPathFast(vcsRoot.path, newcomer, false)
-  }
-
-  @Deprecated("Deprecated in Java")
-  override fun iterate(iterator: Processor<in FilePath>) {
-    VcsRootIterator.iterate(this, iterator)
-  }
-
-  @Deprecated("Deprecated in Java")
-  override fun iterateExistingInsideScope(iterator: Processor<in VirtualFile>) {
-    VcsRootIterator.iterateExistingInsideScope(this, iterator)
   }
 
   override fun wasEveryThingDirty(): Boolean = wasEverythingDirty

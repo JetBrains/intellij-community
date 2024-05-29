@@ -57,7 +57,7 @@ fun reorderJar(relativePath: String, file: Path) {
     }
 }
 
-internal val excludedLibJars: Set<String> = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
+internal val excludedLibJars: Set<String> = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR)
 
 internal fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
   spanBuilder("generate classpath")

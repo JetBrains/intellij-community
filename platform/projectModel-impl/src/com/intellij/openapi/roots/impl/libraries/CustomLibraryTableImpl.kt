@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries
 
 import com.intellij.openapi.Disposable
@@ -47,20 +47,5 @@ class CustomLibraryTableImpl(level: String, presentation: LibraryTablePresentati
 
   override fun dispose() {
     if (delegate is Disposable) Disposer.dispose(delegate)
-  }
-}
-
-private class LegacyCustomLibraryTable(private val level: String, private val presentation: LibraryTablePresentation)
-  : LibraryTableBase(), CustomLibraryTable {
-  override fun getTableLevel(): String = level
-
-  override fun getPresentation(): LibraryTablePresentation = presentation
-
-  override fun readExternal(element: Element) {
-    super.readExternal(element)
-  }
-
-  override fun writeExternal(element: Element) {
-    super.writeExternal(element)
   }
 }

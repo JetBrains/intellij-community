@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines.configurable
 
+import com.intellij.application.options.colors.ColorAndFontOptions
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.options.colors.pages.GeneralColorsPage
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.builder.*
@@ -13,7 +16,7 @@ import javax.swing.JCheckBox
 internal class StickyLinesConfigurableUI(configurables: List<StickyLinesProviderConfigurable>) {
 
   private lateinit var showCheckbox: JCheckBox
-  var panel: DialogPanel
+  lateinit var panel: DialogPanel
 
   init {
     panel = panel {
@@ -54,11 +57,12 @@ internal class StickyLinesConfigurableUI(configurables: List<StickyLinesProvider
         }
       }.enabledIf(showCheckbox.selected)
 
-      // IJPL-148338 Allow changing background color
-      //row {
-      //  link("Manage colors") {
-      //  }
-      //}.topGap(TopGap.SMALL)
+      row {
+        link(ApplicationBundle.message("configure.sticky.lines.colors")) {
+          val context = DataManager.getInstance().getDataContext(panel)
+          ColorAndFontOptions.selectOrEditColor(context, "Sticky Lines//Background", GeneralColorsPage::class.java)
+        }
+      }.topGap(TopGap.SMALL)
     }
   }
 

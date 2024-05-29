@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -74,7 +74,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
       LOG.debug("Add external files to ${vcs.displayName} silently ", files)
       addChosenFiles(doFilterFiles(files))
     }
-    else {
+    else if (Registry.`is`("vcs.show.externally.added.files.notification", false)) {
       LOG.debug("Process external files and prompt to add if needed to ${vcs.displayName} ", files)
       queue.add(files)
     }

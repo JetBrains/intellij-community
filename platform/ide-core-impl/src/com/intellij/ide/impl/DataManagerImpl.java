@@ -173,8 +173,7 @@ public class DataManagerImpl extends DataManager {
   private static @Nullable GetDataRule getDataRuleInner(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
     String uninjectedId = InjectedDataKeys.uninjectedId(dataId);
     GetDataRule slowRule = ruleType == GetDataRuleType.PROVIDER &&
-                           !PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId) &&
-                           !PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId) ?
+                           !PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId) ?
                            dataProvider -> getSlowData(dataId, dataProvider) : null;
     List<GetDataRule> rules1 = rulesForKey(dataId, ruleType);
     List<GetDataRule> rules2 = uninjectedId == null ? null : rulesForKey(uninjectedId, ruleType);
@@ -225,13 +224,6 @@ public class DataManagerImpl extends DataManager {
     if (bgtProvider != null) {
       Object data = getDataFromProviderInner(dataId, bgtProvider);
       if (data != null) return data;
-    }
-    Iterable<DataProvider> slowProviders = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
-    if (slowProviders != null) {
-      for (DataProvider p : slowProviders) {
-        Object data = getDataFromProviderInner(dataId, p);
-        if (data != null) return data;
-      }
     }
     return null;
   }

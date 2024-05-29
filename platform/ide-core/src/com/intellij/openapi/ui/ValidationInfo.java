@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -14,7 +14,7 @@ import javax.swing.*;
  *
  * @author Konstantin Bulenkov
  * @see DialogWrapper#doValidate()
- * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
  */
 public final class ValidationInfo {
   /**

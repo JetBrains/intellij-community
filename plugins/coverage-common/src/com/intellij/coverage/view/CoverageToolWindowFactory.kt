@@ -14,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 
-class CoverageToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class CoverageToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val manager = toolWindow.contentManager
     manager.addContentManagerListener(object : ContentManagerListener {

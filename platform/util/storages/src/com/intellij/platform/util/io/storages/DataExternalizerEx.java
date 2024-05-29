@@ -94,6 +94,18 @@ public interface DataExternalizerEx<T> {
 
     /** @return size of the record to be written by {@link #write(ByteBuffer)} */
     int recordSize();
+
+    KnownSizeRecordWriter NOTHING = new KnownSizeRecordWriter() {
+      @Override
+      public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+        return data;
+      }
+
+      @Override
+      public int recordSize() {
+        return 0;
+      }
+    };
   }
 
   static KnownSizeRecordWriter fromBytes(byte @NotNull [] bytes) {

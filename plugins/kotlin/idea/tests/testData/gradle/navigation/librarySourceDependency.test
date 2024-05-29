@@ -1,0 +1,28 @@
+// FILE: build.gradle.kts
+
+// Library source has the original copyright marker
+// "EXPECTED-NAVIGATION-SUBSTRING": "Copyright 2018 the original author or authors."
+
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    imple<caret>mentation(project(":module1"))
+}
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: module1/build.gradle.kts
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}

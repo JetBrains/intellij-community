@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeKotlinPreferredLineNumbe
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
-import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.findPosition
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 
@@ -25,11 +25,10 @@ class CreationCoroutineStackFrameItem(
 ) : CoroutineStackFrameItem(location, emptyList()) {
 
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
-        return debugProcess.invokeInManagerThread {
-            val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess)
-            CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
-        }
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+        val frame = debugProcess.findFirstFrame() ?: return null
+        val position = location.findPosition(debugProcess)
+        return CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
     }
 }
 
@@ -39,11 +38,10 @@ class CreationCoroutineStackFrameItem(
 class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<JavaValue>) :
     CoroutineStackFrameItem(location, spilledVariables) {
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
-        return debugProcess.invokeInManagerThread {
-            val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess)
-            CoroutineStackFrame(frame, position, spilledVariables, false, location)
-        }
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+        val frame = debugProcess.findFirstFrame() ?: return null
+        val position = location.findPosition(debugProcess)
+        return CoroutineStackFrame(frame, position, spilledVariables, false, location)
     }
 }
 
@@ -65,10 +63,9 @@ open class RunningCoroutineStackFrameItem(
     spilledVariables: List<JavaValue> = emptyList()
 ) : CoroutineStackFrameItem(location, spilledVariables) {
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
-        return debugProcess.invokeInManagerThread {
-            val position = location.findPosition(debugProcess)
-            CoroutineStackFrame(frame, position)
-        }
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+        val position = location.findPosition(debugProcess)
+        return CoroutineStackFrame(frame, position)
     }
 }
 
@@ -77,11 +74,10 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
     val log by logger
 
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
-        return debugProcess.invokeInManagerThread {
-            val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess)
-            CoroutineStackFrame(frame, position, spilledVariables, false, location)
-        }
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+        val frame = debugProcess.findFirstFrame() ?: return null
+        val position = location.findPosition(debugProcess)
+        return CoroutineStackFrame(frame, position, spilledVariables, false, location)
     }
 
     fun uniqueId() =
@@ -89,5 +85,4 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
                 location.safeLineNumber() + ":" + location.safeKotlinPreferredLineNumber()
 }
 
-fun DebugProcessImpl.findFirstFrame(): StackFrameProxyImpl? =
-    suspendManager.pausedContext.thread?.forceFrames()?.firstOrNull()
+fun DebugProcessImpl.findFirstFrame(): StackFrameProxyImpl? = suspendManager.pausedContext.thread?.frame(0)

@@ -6,7 +6,6 @@ c:com.intellij.ide.UiActivity
 - getEqualityObjects():java.lang.Object[]
 - hashCode():I
 - f:isSameOrGeneralFor(com.intellij.ide.UiActivity):Z
-- toString():java.lang.String
 c:com.intellij.ide.UiActivity$AsyncBgOperation
 - com.intellij.ide.UiActivity
 - <init>(java.lang.String):V
@@ -41,7 +40,6 @@ f:com.intellij.ide.ui.UINumericRange
 - f:min:I
 - <init>(I,I,I):V
 - fit(I):I
-- toString():java.lang.String
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
 - getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
@@ -194,7 +192,6 @@ c:com.intellij.ui.LayeredIcon
 - f:setIcon(javax.swing.Icon,I,I):V
 - f:setIcon(javax.swing.Icon,I,I,I):V
 - f:setLayerEnabled(I,Z):V
-- toString():java.lang.String
 - pf:updateSize(javax.swing.Icon[]):V
 - withIconPreScaled(Z):com.intellij.ui.LayeredIcon
 f:com.intellij.ui.LayeredIcon$Companion
@@ -214,7 +211,6 @@ f:com.intellij.ui.OffsetIcon
 - s:getOriginalIcon(javax.swing.Icon):javax.swing.Icon
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- toString():java.lang.String
 c:com.intellij.ui.OverlaidOffsetIconsIcon
 - javax.swing.Icon
 - <init>(java.util.List,F):V
@@ -242,7 +238,6 @@ f:com.intellij.ui.RightAlignedLabelUI
 - getToolTip(Z):java.lang.String
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- toString():java.lang.String
 c:com.intellij.ui.RowIcon
 - com.intellij.util.ui.JBCachingScalableIcon
 - com.intellij.ui.icons.IconWithToolTip
@@ -266,7 +261,6 @@ c:com.intellij.ui.RowIcon
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.RowIcon
 - setIcon(javax.swing.Icon,I):V
-- toString():java.lang.String
 c:com.intellij.ui.SimpleColoredText
 - com.intellij.ui.ColoredTextContainer
 - <init>():V
@@ -279,7 +273,6 @@ c:com.intellij.ui.SimpleColoredText
 - getTexts():java.util.ArrayList
 - insert(I,java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - toColoredText():com.intellij.ui.ColoredText
-- toString():java.lang.String
 f:com.intellij.ui.SimpleTextAttributes
 - sf:DARK_TEXT:com.intellij.ui.SimpleTextAttributes
 - sf:ERROR_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
@@ -341,7 +334,6 @@ f:com.intellij.ui.SimpleTextAttributes
 - isUnderline():Z
 - isWaved():Z
 - s:merge(com.intellij.ui.SimpleTextAttributes,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
-- toString():java.lang.String
 - toTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - useEffectColor():Z
 @:com.intellij.ui.SimpleTextAttributes$StyleAttributeConstant
@@ -405,7 +397,6 @@ c:com.intellij.ui.icons.IconWrapperWithToolTip
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.icons.IconWrapperWithToolTip
 - retrieveIcon():javax.swing.Icon
-- toString():java.lang.String
 f:com.intellij.ui.icons.ScalingDeferredSquareImageIcon
 - javax.swing.Icon
 - <init>(I,javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):V
@@ -438,7 +429,6 @@ f:com.intellij.util.CropIcon
 - f:getSourceIcon():javax.swing.Icon
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- toString():java.lang.String
 f:com.intellij.util.IconUtil
 - sf:INSTANCE:com.intellij.util.IconUtil
 - sf:addText(javax.swing.Icon,java.lang.String):javax.swing.Icon

@@ -38,6 +38,8 @@
             order="first" />
     <updateAddedFileProcessor implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.KotlinUpdateAddedFileProcessor" order="first"/>
 
+    <registryKey defaultValue="true" description="Show scope chooser for kotlin extract function refactoring"
+                 key="k2.extract.function.scope.chooser"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

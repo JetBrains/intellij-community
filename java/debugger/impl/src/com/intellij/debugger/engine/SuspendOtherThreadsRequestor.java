@@ -37,8 +37,9 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   public static boolean initiateTransferToSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                                      @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
-      Logger.getInstance(SuspendOtherThreadsRequestor.class)
-        .error("Replacing for all-thread mode can be done only from the suspend-thread mode");
+      DebuggerDiagnosticsUtil.logError(suspendContext.getDebugProcess(),
+                                       "Replacing for all-thread mode can be done only from the suspend-thread mode. " +
+                                       "suspendContext = " + suspendContext);
       return false;
     }
     @NotNull DebugProcessImpl process = suspendContext.getDebugProcess();
@@ -87,18 +88,18 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
             process.removeEvaluationListener(this);
           }
           else {
-            process.getVirtualMachineProxy().getVirtualMachine().resume();
+            process.getVirtualMachineProxy().resume();
           }
         }
       });
-      process.getVirtualMachineProxy().getVirtualMachine().resume();
+      process.getVirtualMachineProxy().resume();
     }
   }
 
   private static boolean switchContextWithSuspend(@NotNull DebugProcessImpl process,
                                                   @NotNull SuspendContextImpl suspendContext,
                                                   @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
-    process.getVirtualMachineProxy().getVirtualMachine().suspend();
+    process.getVirtualMachineProxy().suspend();
     if (getNumberOfEvaluations(process) == 0) {
       SuspendManager suspendManager = process.getSuspendManager();
       SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
@@ -152,11 +153,9 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
       return false;
     }
     ParametersForSuspendAllReplacing needToResume;
-    synchronized (process.myEvaluationStateLock) { // here can be any (same object) lock just to synchronize this place
-      needToResume = process.myParametersForSuspendAllReplacing;
-      if (needToResume != null) {
-        process.myParametersForSuspendAllReplacing = null;
-      }
+    needToResume = process.myParametersForSuspendAllReplacing;
+    if (needToResume != null) {
+      process.myParametersForSuspendAllReplacing = null;
     }
     if (needToResume != null) {
       enableRequest(process, needToResume);
@@ -167,9 +166,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
   private static long getNumberOfEvaluations(DebugProcessImpl process) {
     SuspendManager suspendManager = process.getSuspendManager();
-    synchronized (process.myEvaluationStateLock) {
-      return suspendManager.getEventContexts().stream().filter(c -> c.isEvaluating()).count();
-    }
+    return suspendManager.getEventContexts().stream().filter(c -> c.isEvaluating()).count();
   }
 
 
@@ -182,7 +179,8 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
     if (getNumberOfEvaluations(myProcess) != 0) {
       // Should be very rage. It means some evaluation was started after we specified to hold new evaluation (at least, for filtering).
-      Logger.getInstance(getClass()).warn("Fails attempt to switch from suspend-thread context to suspend-all context. Will be rescheduled.");
+      Logger.getInstance(SuspendOtherThreadsRequestor.class)
+        .warn("Fails attempt to switch from suspend-thread context to suspend-all context. Will be rescheduled.");
       // Reschedule the request after some time to finish the evaluation.
       // noinspection SSBasedInspection
       new SingleAlarm(() -> myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {

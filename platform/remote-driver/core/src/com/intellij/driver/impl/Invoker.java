@@ -125,7 +125,10 @@ public class Invoker implements InvokerMBean {
       instance = findInstance(call, callTarget.clazz());
     }
     catch (Exception e) {
-      LOG.error("Unable to get instance for " + call);
+      //we need to ignore caching check and not throw error
+      if (!call.getMethodName().equals("isShowing")) {
+        LOG.error("Unable to get instance for " + call);
+      }
 
       throw new DriverIlligalStateException("Unable to get instance for " + call, e);
     }
@@ -616,7 +619,6 @@ public class Invoker implements InvokerMBean {
       return RefProducer.makeRef(id, rdTarget, value);
     }
   }
-
 }
 
 record CallTarget(@NotNull Class<?> clazz, @NotNull Method targetMethod) {

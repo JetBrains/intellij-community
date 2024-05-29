@@ -122,7 +122,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private boolean isCoveredByIndex(@NotNull VirtualFile file) {
-      return myTextSearchService.isInSearchableScope(file);
+      return myTextSearchService.isInSearchableScope(file, myProject);
     }
 
     private static boolean hasTrigrams(@NotNull String text) {

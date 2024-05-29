@@ -32,7 +32,6 @@ f:org.jetbrains.builtInWebServer.PathQuery
 - f:getUseHtaccess():Z
 - f:getUseVfs():Z
 - hashCode():I
-- toString():java.lang.String
 a:org.jetbrains.builtInWebServer.WebServerRootsProvider
 - sf:Companion:org.jetbrains.builtInWebServer.WebServerRootsProvider$Companion
 - <init>():V

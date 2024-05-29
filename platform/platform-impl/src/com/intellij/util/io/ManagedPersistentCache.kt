@@ -2,6 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.ShutDownTracker
@@ -119,7 +120,7 @@ open class ManagedPersistentCache<K, V>(
     }
   }
 
-  private fun createPersistentMap(closeAppOnShutdown: Boolean): PersistentMapBase<K, V>? {
+  private fun createPersistentMap(closeOnAppShutdown: Boolean): PersistentMapBase<K, V>? {
     var map: PersistentMapBase<K, V>? = null
     var exception: Exception? = null
     for (attempt in 0 until CREATE_ATTEMPT_COUNT) {
@@ -142,6 +143,10 @@ open class ManagedPersistentCache<K, V>(
         exception = e
         break
       }
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        // IJPL-149672 do not delete files in test mode
+        break
+      }
       IOUtil.deleteAllFilesStartingWith(mapBuilder.file)
     }
     if (map == null) {
@@ -149,7 +154,7 @@ open class ManagedPersistentCache<K, V>(
       return null
     }
     logger.info("created persistent map $name with size ${map.keysCount()}")
-    if (closeAppOnShutdown) {
+    if (closeOnAppShutdown) {
       val added = cachesToClose.add(this)
       if (!added) {
         logger.error(

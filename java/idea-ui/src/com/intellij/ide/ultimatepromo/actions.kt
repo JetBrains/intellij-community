@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ultimatepromo
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.PromoAction
-import com.intellij.java.ui.icons.JavaUIIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.PluginId
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon
 
 internal abstract class UltimatePromoAction(private val pluginId: String) : DumbAwareAction(), PromoAction {
-  override fun getPromotedProductIcon(): Icon = JavaUIIcons.IdeaUltimatePromoSmall
+  override fun getPromotedProductIcon(): Icon = AllIcons.Ultimate.IdeaUltimatePromo
   override fun getCallToAction(): String {
     return IdeBundle.message("plugin.advertiser.product.call.to.action",
                              PluginAdvertiserService.ideaUltimate.name,

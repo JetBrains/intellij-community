@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -116,7 +116,7 @@ class Fe10WrapperContextImpl(
 ) : Fe10WrapperContext {
     private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
         return allowAnalysisOnEdt {
             analyze(ktElement, f)

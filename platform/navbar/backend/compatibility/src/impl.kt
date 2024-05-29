@@ -9,16 +9,9 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiManager
 
-internal fun NavBarItem.isModuleContentRoot(): Boolean {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-  if (this is PsiNavBarItem) {
-    val psi = data
-    if (psi is PsiDirectory) {
-      val dir = psi.virtualFile
-      return dir.parent == null || ProjectRootsUtil.isModuleContentRoot(dir, psi.project)
-    }
-  }
-  return false
+internal fun PsiDirectory.isModuleContentRoot(): Boolean {
+  val dir = this.virtualFile
+  return dir.parent == null || ProjectRootsUtil.isModuleContentRoot(dir, project)
 }
 
 internal fun NavBarItem.psiDirectories(): List<PsiDirectory> {

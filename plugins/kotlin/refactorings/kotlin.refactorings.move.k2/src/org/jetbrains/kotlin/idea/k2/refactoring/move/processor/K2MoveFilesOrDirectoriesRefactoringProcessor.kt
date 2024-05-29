@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
@@ -13,13 +14,12 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -38,7 +38,18 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.
     descriptor.searchForText,
     MoveCallback { },
     Runnable { }
-)
+) {
+    override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo?>?>): Boolean {
+        val toContinue = super.preprocessUsages(refUsages)
+        if (!toContinue) return false
+        // after conflict checking, we don't need non-updatable usages anymore
+        val movedElements = myElementsToMove.filterIsInstance<KtNamedDeclaration>().flatMap { it.withChildDeclarations() }
+        unMarkNonUpdatableUsages(movedElements)
+        val usages = refUsages.get()?.filterNotNull() ?: return false
+        refUsages.set(usages.filterUpdatable(movedElements).toTypedArray())
+        return true
+    }
+}
 
 class K2MoveFilesHandler : MoveFileHandler() {
     override fun canProcessElement(element: PsiFile): Boolean {
@@ -72,8 +83,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
             targetPkgFqn,
             usages.filterIsInstance<MoveRenameUsageInfo>()
         ))
-        // after conflict checking, we don't need non-updatable usages anymore
-        unMarkNonUpdatableUsages(elementsToMove.filterIsInstance<KtElement>().toSet())
     }
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
@@ -94,9 +103,9 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     override fun updateMovedFile(file: PsiFile) {}
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
         @Suppress("UNCHECKED_CAST")
-        retargetUsagesAfterMove(usageInfos, oldToNewMap as Map<KtNamedDeclaration, KtNamedDeclaration>)
+        retargetUsagesAfterMove(usageInfos.toList(), oldToNewMap as Map<KtNamedDeclaration, KtNamedDeclaration>)
     }
 }

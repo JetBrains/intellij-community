@@ -2,13 +2,16 @@ package de.plushnikov.intellij.plugin;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -48,6 +51,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   public void doTest(String testName) {
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(),
+                                                 () -> compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName)));
     compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName));
   }
 
@@ -147,11 +152,13 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     assertEquals("Initializers are not equals ", afterInitializerText, beforeInitializerText);
   }
 
-  private static void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
+  private void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
     if (null != beforeType && null != afterType) {
-      final String afterText = stripJavaLang(afterType.getCanonicalText());
-      final String beforeText = stripJavaLang(beforeType.getCanonicalText());
-      assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), afterText, beforeText);
+      DumbService.getInstance(getProject()).runWithAlternativeResolveEnabled(() -> {
+        final String afterText = stripJavaLang(afterType.getCanonicalText());
+        final String beforeText = stripJavaLang(beforeType.getCanonicalText());
+        assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), afterText, beforeText);
+      });
     }
   }
 
@@ -186,13 +193,13 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   private void compareAnnotations(PsiModifierList beforeModifierList, PsiModifierList afterModifierList) {
     if (shouldCompareAnnotations()) {
       Collection<String> beforeAnnotations = Arrays.stream(beforeModifierList.getAnnotations())
-        .map(PsiAnnotation::getQualifiedName)
+        .map(an-> getAnnotationQualifiedName(an))
         .filter(Pattern.compile("lombok.*").asPredicate().negate().or(LombokClassNames.NON_NULL::equals))
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
       Collection<String> afterAnnotations = Arrays.stream(afterModifierList.getAnnotations())
-        .map(PsiAnnotation::getQualifiedName)
+        .map(an-> getAnnotationQualifiedName(an))
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
@@ -204,8 +211,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
       // compare annotations parameter list
       for (PsiAnnotation beforeAnnotation : beforeModifierList.getAnnotations()) {
-        String qualifiedName = beforeAnnotation.getQualifiedName();
-        PsiAnnotation afterAnnotation = afterModifierList.findAnnotation(qualifiedName);
+        String qualifiedName = getAnnotationQualifiedName(beforeAnnotation);
+        PsiAnnotation afterAnnotation = findAnnotation(afterModifierList, qualifiedName);
         if (null != afterAnnotation) {
           Map<String, String> beforeParameter = Stream.of(beforeAnnotation.getParameterList().getAttributes())
             .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p -> p.getValue().getText()));
@@ -215,6 +222,16 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         }
       }
     }
+  }
+
+  private static @Nullable PsiAnnotation findAnnotation(PsiModifierList modifierList, String qualifiedName) {
+    return DumbService.getInstance(modifierList.getProject())
+      .computeWithAlternativeResolveEnabled(() -> modifierList.findAnnotation(qualifiedName));
+  }
+
+  private static @Nullable String getAnnotationQualifiedName(PsiAnnotation annotation) {
+    return DumbService.getInstance(annotation.getProject())
+      .computeWithAlternativeResolveEnabled(() -> annotation.getQualifiedName());
   }
 
   private void compareMethods(PsiClass beforeClass, PsiClass afterClass) {
@@ -287,8 +304,10 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   private static Collection<String> mapToTypeString(PsiParameterList compareMethodParameterList) {
     Collection<String> result = new ArrayList<>();
     final PsiParameter[] compareMethodParameterListParameters = compareMethodParameterList.getParameters();
+    DumbService dumbService = DumbService.getInstance(compareMethodParameterList.getProject());
     for (PsiParameter compareMethodParameterListParameter : compareMethodParameterListParameters) {
-      result.add(stripJavaLang(compareMethodParameterListParameter.getType().getCanonicalText()));
+      PsiType type = compareMethodParameterListParameter.getType();
+      result.add(stripJavaLang(dumbService.computeWithAlternativeResolveEnabled(() -> type.getCanonicalText())));
     }
     return result;
   }
@@ -303,10 +322,12 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     PsiClassType[] afterTypes = afterThrows.getReferencedTypes();
 
     assertEquals("Throws counts are different for Method :" + psiMethod.getName(), beforeTypes.length, afterTypes.length);
+    DumbService dumbService = DumbService.getInstance(psiMethod.getProject());
     for (PsiClassType beforeType : beforeTypes) {
       boolean found = false;
       for (PsiClassType afterType : afterTypes) {
-        if (beforeType.equals(afterType)) {
+        boolean equals = dumbService.computeWithAlternativeResolveEnabled(()->beforeType.equals(afterType));
+        if (equals) {
           found = true;
           break;
         }
@@ -332,7 +353,9 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         ContainerUtil.map(afterConstructor.getParameterList().getParameters(), PsiParameter::getType);
 
       for (PsiMethod beforeConstructor : beforeConstructors) {
-        if (PsiElementUtil.methodMatches(beforeConstructor, null, null, afterConstructor.getName(), afterConstructorParameterTypes)) {
+        boolean methodMatches = DumbService.getInstance(getProject()).computeWithAlternativeResolveEnabled(
+          () -> PsiElementUtil.methodMatches(beforeConstructor, null, null, afterConstructor.getName(), afterConstructorParameterTypes));
+        if (methodMatches) {
           final PsiModifierList intellijConstructorModifierList = beforeConstructor.getModifierList();
           compareModifiers(intellijConstructorModifierList, theirsFieldModifierList);
 

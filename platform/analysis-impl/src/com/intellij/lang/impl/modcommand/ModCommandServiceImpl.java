@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public class ModCommandServiceImpl implements ModCommandService {
   @Override
   public @NotNull IntentionAction wrap(@NotNull ModCommandAction action) {
-    return new ModCommandActionWrapper(action);
+    return new ModCommandActionWrapper(action, null);
   }
 
   @Override

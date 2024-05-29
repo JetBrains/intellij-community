@@ -71,7 +71,4 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
 /**
  * @return module names which are required to run the necessary tools from build scripts
  */
-internal fun getToolModules(): List<String> {
-  return java.util.List.of("intellij.java.rt", "intellij.platform.starter",
-                           /*required to build searchable options index*/ "intellij.platform.updater")
-}
+internal fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter", "intellij.tools.updater")

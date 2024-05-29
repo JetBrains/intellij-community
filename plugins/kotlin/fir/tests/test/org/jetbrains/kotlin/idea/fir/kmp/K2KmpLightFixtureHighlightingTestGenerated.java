@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.kmp;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/kmp/highlighting")
 public class K2KmpLightFixtureHighlightingTestGenerated extends AbstractK2KmpLightFixtureHighlightingTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -31,6 +38,11 @@ public class K2KmpLightFixtureHighlightingTestGenerated extends AbstractK2KmpLig
     @TestMetadata("coroutines.kt")
     public void testCoroutines() throws Exception {
         runTest("testData/kmp/highlighting/coroutines.kt");
+    }
+
+    @TestMetadata("errorsInUnresolvedCode.kt")
+    public void testErrorsInUnresolvedCode() throws Exception {
+        runTest("testData/kmp/highlighting/errorsInUnresolvedCode.kt");
     }
 
     @TestMetadata("expectActualFunctions.kt")

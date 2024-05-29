@@ -194,6 +194,11 @@ class InspectionRunner {
         });
         return true;
       };
+      // start InspectionContexts in `init` parallel to discovering injected fragments and running inspection runner on them too.
+      // note that the parallelism is restricted: first all InspectionContexts(visible=true) from `init` are run in parallel, then
+      // all InspectionContexts(visible=false) from `init` are added to the queue and run in parallel too.
+      // thus, we avoid running the same inspection tool visitor in a reentrant manner (on visible elements parallel to invisible elements),
+      // because some of them are not ready for that.
       if (!JobLauncher.getInstance().procInOrderAsync(new SensitiveProgressWrapper(myProgress), initSize, contextProcessor, addToQueue -> {
         // have to do all this even for empty elements, to perform correct cleanup/inspectionFinished
         if (init.isEmpty()) {
@@ -496,18 +501,22 @@ class InspectionRunner {
   private boolean getInjectedWithHosts(@NotNull List<? extends PsiElement> elements,
                                        @NotNull JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>> addToQueue) {
     Map<PsiFile, PsiElement> injectedToHost = createInjectedFileMap();
-    Project project = myPsiFile.getProject();
-    for (PsiElement element : elements) {
-      InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
-         if (injectedToHost.put(injectedPsi, element) == null) {
-           if (LOG.isTraceEnabled()) {
-             LOG.trace("getInjectedWithHosts: found injected " +injectedPsi+ " at "+places.size()+" places: "+places+"; "+injectedPsi);
+    try {
+      Project project = myPsiFile.getProject();
+      for (PsiElement element : elements) {
+        InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
+           if (injectedToHost.put(injectedPsi, element) == null) {
+             if (LOG.isTraceEnabled()) {
+               LOG.trace("getInjectedWithHosts: found injected " +injectedPsi+ " at "+places.size()+" places: "+places+"; "+injectedPsi);
+             }
+             addToQueue.enqueue(Pair.create(injectedPsi, element));
            }
-           addToQueue.enqueue(Pair.create(injectedPsi, element));
-         }
-      });
+        });
+      }
     }
-    addToQueue.finish(); // no more injections
+    finally {
+      addToQueue.finish(); // no more injections
+    }
     myInjectedFragments.addAll(injectedToHost.keySet());
     return true;
   }

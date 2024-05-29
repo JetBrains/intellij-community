@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.formatter;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/callChain")
         public static class CallChain extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -117,6 +124,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/fileAnnotations")
         public static class FileAnnotations extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -170,6 +183,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/modifierList")
         public static class ModifierList extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -258,6 +277,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/parameterList")
         public static class ParameterList extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -324,6 +349,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
             public static class CollectionLiteralExpression extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -337,6 +368,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
             public static class DestructuringDeclarations extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -355,6 +392,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/enumEntry")
             public static class EnumEntry extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -368,6 +411,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/indices")
             public static class Indices extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -381,6 +430,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
             public static class LambdaParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -394,6 +449,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeArguments")
             public static class TypeArguments extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -407,6 +468,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeParameters")
             public static class TypeParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -420,6 +487,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueArguments")
             public static class ValueArguments extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -453,6 +526,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueParameters")
             public static class ValueParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -491,6 +570,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/whenEntry")
             public static class WhenEntry extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -505,6 +590,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter")
         public static class Uncategorized extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1412,6 +1503,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
         public static class CollectionLiteralExpression extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1425,6 +1522,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/indices")
         public static class Indices extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1438,6 +1541,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
         public static class LambdaParameters extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1451,6 +1560,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeArguments")
         public static class TypeArguments extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1464,6 +1579,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeParameters")
         public static class TypeParameters extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1477,6 +1598,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueArguments")
         public static class ValueArguments extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1490,6 +1617,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueParameters")
         public static class ValueParameters extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCallSite, this, testDataFilePath);
             }
@@ -1507,6 +1640,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/callChain")
         public static class CallChain extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
             }
@@ -1555,6 +1694,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/parameterList")
         public static class ParameterList extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
             }
@@ -1571,6 +1716,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
             public static class CollectionLiteralExpression extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1584,6 +1735,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/destructuringDeclarations")
             public static class DestructuringDeclarations extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1602,6 +1759,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/enumEntry")
             public static class EnumEntry extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1615,6 +1778,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/indices")
             public static class Indices extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1628,6 +1797,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
             public static class LambdaParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1641,6 +1816,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeArguments")
             public static class TypeArguments extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1654,6 +1835,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/typeParameters")
             public static class TypeParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1667,6 +1854,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueArguments")
             public static class ValueArguments extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1700,6 +1893,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/valueParameters")
             public static class ValueParameters extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1738,6 +1937,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter/trailingComma/whenEntry")
             public static class WhenEntry extends AbstractFormatterTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1752,6 +1957,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter")
         public static class Uncategorized extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
             }
@@ -2044,6 +2255,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/collectionLiteralExpression")
         public static class CollectionLiteralExpression extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }
@@ -2057,6 +2274,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/indices")
         public static class Indices extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }
@@ -2070,6 +2293,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/lambdaParameters")
         public static class LambdaParameters extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }
@@ -2083,6 +2312,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeArguments")
         public static class TypeArguments extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }
@@ -2096,6 +2331,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/typeParameters")
         public static class TypeParameters extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }
@@ -2109,6 +2350,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueArguments")
         public static class ValueArguments extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }
@@ -2122,6 +2369,12 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter/trailingComma/valueParameters")
         public static class ValueParameters extends AbstractFormatterTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInvertedCallSite, this, testDataFilePath);
             }

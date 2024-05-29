@@ -190,6 +190,10 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
   public void testEnumValues() {
     doTest();
   }
+  
+  public void testEnumValueOf() {
+    doTest();
+  }
 
   public void testUsagesInAnonymous() {
     doTest();

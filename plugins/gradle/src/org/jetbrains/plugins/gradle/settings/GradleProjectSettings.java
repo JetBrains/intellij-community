@@ -190,16 +190,15 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   public static @NotNull TestRunner getTestRunner(@NotNull Project project, @Nullable String gradleProjectPath) {
-    GradleProjectSettings projectSettings = gradleProjectPath == null
-                                            ? null : GradleSettings.getInstance(project).getLinkedProjectSettings(gradleProjectPath);
-    TestRunner testRunner = projectSettings == null ? TestRunner.PLATFORM : projectSettings.getTestRunner();
-    if (LOG.isDebugEnabled()) {
-      if (testRunner != TestRunner.GRADLE) {
-        String settingsPresentation = projectSettings == null ? String.format("<null: %s>", gradleProjectPath) : gradleProjectPath;
-        LOG.debug(String.format("Get non gradle test runner %s at '%s'", testRunner, settingsPresentation), new Throwable());
-      }
+    if (gradleProjectPath == null) {
+      return TestRunner.PLATFORM;
     }
-    return testRunner;
+    var settings = GradleSettings.getInstance(project);
+    var projectSettings = settings.getLinkedProjectSettings(gradleProjectPath);
+    if (projectSettings == null) {
+      return TestRunner.PLATFORM;
+    }
+    return projectSettings.getTestRunner();
   }
 
   public static @NotNull TestRunner getTestRunner(@NotNull Module module) {

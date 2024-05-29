@@ -1,5 +1,7 @@
 package com.jetbrains.performancePlugin.remotedriver
 
+import org.w3c.dom.Node
+import org.w3c.dom.Text
 import java.time.Duration
 
 fun waitFor(
@@ -23,4 +25,26 @@ internal class LruCache<K, V>(private val maxEntries: Int = 1000) : LinkedHashMa
   override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
     return this.size > maxEntries
   }
+}
+
+fun sanitizeXmlContent(node: Node) {
+  node.attributes?.let { attrs ->
+    (0..attrs.length).mapNotNull { attrs.item(it) }
+      .forEach {
+        it.textContent = sanitizeXmlChars(it.textContent)
+      }
+  }
+  if (node is Text) {
+    node.textContent = sanitizeXmlChars(node.textContent)
+  }
+  (0..node.childNodes.length).mapNotNull { node.childNodes.item(it) }
+    .forEach { sanitizeXmlContent(it) }
+}
+
+fun sanitizeXmlChars(xml: String): String {
+  if (xml.isEmpty()) return ""
+  // ref : http://www.w3.org/TR/REC-xml/#charsets
+  val xmlInvalidChars =
+    "[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\\x{10000}-\\x{10FFFF}]".toRegex()
+  return xmlInvalidChars.replace(xml, "")
 }

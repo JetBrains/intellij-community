@@ -9,7 +9,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -29,6 +31,20 @@ public class SpotlightPainter extends AbstractPainter implements ComponentHighli
   private final GlassPanel myGlassPanel;
   private final JComponent myTarget;
   boolean myVisible;
+
+  private static final Key<Boolean> DO_NOT_SCROLL =Key.create("SpotlightPainter.DO_NOT_SCROLL");
+
+  static void allowScrolling(@NotNull JComponent target) {
+    ClientProperty.remove(target, DO_NOT_SCROLL);
+  }
+
+  private static void disableScrolling(@NotNull JComponent target) {
+    ClientProperty.put(target, DO_NOT_SCROLL, true);
+  }
+
+  private static boolean isScrollingEnabled(@NotNull JComponent target) {
+    return !ClientProperty.isTrue(target, DO_NOT_SCROLL);
+  }
 
   public SpotlightPainter(@NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainterUpdater updater) {
     myQueue = new MergingUpdateQueue("SettingsSpotlight", 200, false, target, parent, target);
@@ -100,7 +116,36 @@ public class SpotlightPainter extends AbstractPainter implements ComponentHighli
     // The painter should only draw spotlights for components in the hierarchy of `myTarget`
     if (UIUtil.isAncestor(myTarget, component)) {
       myGlassPanel.addSpotlight(component);
+      if (isScrollingEnabled(myTarget)) {
+        if (center(component)) {
+          disableScrolling(myTarget);
+        }
+      }
     }
+  }
+
+  private static boolean center(@NotNull JComponent component) {
+    JScrollPane scrollPane = null;
+    for (Component c = component; c != null && !(c instanceof CellRendererPane); c = c.getParent()) {
+      if (c instanceof JScrollPane cScrollPane) scrollPane = cScrollPane;
+      if (c instanceof ConfigurableEditor) break; // We need the topmost scroll pane descendant of the editor.
+    }
+    if (scrollPane == null) return false;
+    var viewport = scrollPane.getViewport();
+    if (viewport == null || viewport.getHeight() <= 0) return false;
+    if (viewport.getView() instanceof JComponent view) {
+      var bounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), view);
+      var extraHeight = viewport.getHeight() - bounds.height;
+      if (extraHeight > 0) {
+        bounds.y -= extraHeight / 2;
+        bounds.height += extraHeight;
+      }
+      bounds.x = 0; // Horizontal scrolling usually does more harm than good.
+      bounds.width = viewport.getWidth();
+      view.scrollRectToVisible(bounds);
+      return true;
+    }
+    return false;
   }
 
   @ApiStatus.Internal

@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.idea.completion.test.AbstractKeywordCompletionTest
 abstract class AbstractFirKeywordCompletionTest : AbstractKeywordCompletionTest() {
     override val captureExceptions: Boolean = false
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR)
 
     override fun executeTest(test: () -> Unit) {

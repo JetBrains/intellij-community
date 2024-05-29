@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.psi.impl
 
+import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation
 
-@Suppress("DEPRECATION")
-class MarkdownCodeBlock(node: ASTNode): MarkdownCodeBlockImpl(node) {
+class MarkdownCodeBlock(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
   override fun getPresentation(): ItemPresentation {
     return object: MarkdownBasePresentation() {
       override fun getPresentableText(): String {

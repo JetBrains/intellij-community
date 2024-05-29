@@ -5,16 +5,26 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
-internal class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemoteBehaviorSpecification.Disabled {
+@ApiStatus.Internal
+class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
-    invokeCompletion(e, CompletionType.BASIC, 1)
+    val editor = e.editor!!
+    if (editor.getUserData(SUPPRESS_COMPLETION) != true) {
+      invokeCompletion(e, CompletionType.BASIC, 1)
+    }
   }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = e.editor?.isPromptEditor == true
+  }
+
+  companion object {
+    val SUPPRESS_COMPLETION: Key<Boolean> = Key.create("SUPPRESS_TERMINAL_COMPLETION")
   }
 }

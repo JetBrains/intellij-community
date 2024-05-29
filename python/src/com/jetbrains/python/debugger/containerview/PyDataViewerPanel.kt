@@ -189,7 +189,9 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
       ApplicationManager.getApplication().invokeLater { debugValue?.let { apply(it, modifier) } }
     }
 
-    PyDataViewerCollector.slicingApplied.log()
+    if (!modifier) {
+      PyDataViewerCollector.slicingApplied.log()
+    }
   }
 
   open fun apply(debugValue: PyDebugValue, modifier: Boolean) {

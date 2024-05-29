@@ -5,37 +5,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class BooleanTableCellEditor extends DefaultCellEditor {
-  private final boolean myStringEditor;
-
-  /**
-   * @deprecated there seems to be no need to change default options, use {@link #BooleanTableCellEditor()} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public BooleanTableCellEditor(boolean isStringEditor) {
-    super(new JCheckBox());
-    myStringEditor = isStringEditor;
-    ((JCheckBox) editorComponent).setHorizontalAlignment(SwingConstants.CENTER);
-  }
 
   public BooleanTableCellEditor() {
-    this(false);
+    super(new JCheckBox());
+    ((JCheckBox) editorComponent).setHorizontalAlignment(SwingConstants.CENTER);
   }
 
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     return super.getTableCellEditorComponent(table, value, true, row, column);
-  }
-
-  @Override
-  public Object getCellEditorValue() {
-    Object value = super.getCellEditorValue();
-    if (myStringEditor && value instanceof Boolean) {
-      //this code is reachable only via deprecated constructors
-      //noinspection HardCodedStringLiteral
-      return value.toString();
-    } else {
-      return value;
-    }
   }
 }

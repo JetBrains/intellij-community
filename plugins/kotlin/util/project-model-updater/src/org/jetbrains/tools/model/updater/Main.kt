@@ -97,11 +97,6 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
     val communityModuleRenames = readModuleRenames(communityModulesXml)
 
     val newCommunityModulesXmlContent = xml("project", "version" to "4") {
-        if (communityModules.isNotEmpty()) {
-            xml("component", "name" to "ModuleRenamingHistory") {
-                communityModuleRenames.forEach { (old, new) -> xml("module", "old-name" to old, "new-name" to new) }
-            }
-        }
         xml("component", "name" to "ProjectModuleManager") {
             xml("modules") {
                 for (module in communityModules.values) {

@@ -73,6 +73,10 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     }).executeSynchronously();
   }
 
+  /**
+   * @deprecated Use {@link #getProjectTypes(Project)} instead.
+   */
+  @Deprecated
   public static void setProjectType(@NotNull Project project, @NotNull ProjectType projectType) {
     getInstance(project).loadState(projectType);
   }

@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
@@ -81,9 +80,6 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
 
         error("Configured module with name $name not found")
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }

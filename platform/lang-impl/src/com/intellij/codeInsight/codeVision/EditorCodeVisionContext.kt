@@ -39,7 +39,7 @@ open class EditorCodeVisionContext(
   val editor: Editor
 ) {
   private val outputLifetimes: SequentialLifetimes = SequentialLifetimes((editor as EditorImpl).disposable.createLifetime())
-  private var frontendResults: List<RangeMarker> = listOf()
+  private var rangeMarkers: List<RangeMarker> = listOf()
 
   private var hasPendingLenses = false
 
@@ -50,8 +50,8 @@ open class EditorCodeVisionContext(
 
   init {
     (editor as EditorImpl).disposable.createLifetime().onTermination {
-      frontendResults.forEach { it.dispose() }
-      codeVisionModel.removeLenses(frontendResults)
+      rangeMarkers.forEach { it.dispose() }
+      codeVisionModel.removeLenses(rangeMarkers)
     }
   }
 
@@ -78,10 +78,10 @@ open class EditorCodeVisionContext(
   @RequiresEdt
   fun setResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
     ThreadingAssertions.assertEventDispatchThread()
-    LOG.trace("Have new frontend lenses ${lenses.size}")
-    frontendResults.forEach { it.dispose() }
-    codeVisionModel.removeLenses(frontendResults)
-    frontendResults = lenses.mapNotNull { (range, entry) ->
+    LOG.trace("Have new lenses ${lenses.size}")
+    rangeMarkers.forEach { it.dispose() }
+    codeVisionModel.removeLenses(rangeMarkers)
+    rangeMarkers = lenses.mapNotNull { (range, entry) ->
       if (!range.isValidFor(editor.document)) return@mapNotNull null
       editor.document.createRangeMarker(range).apply {
         putUserData(codeVisionEntryOnHighlighterKey, entry)
@@ -142,7 +142,7 @@ open class EditorCodeVisionContext(
     setResults(emptyList())
   }
 
-  open fun getValidResult(): Sequence<RangeMarker> = frontendResults.asSequence().filter { it.isValid }
+  open fun getValidResult(): Sequence<RangeMarker> = rangeMarkers.asSequence().filter { it.isValid }
 
   fun getValidPairResult(): Sequence<Pair<TextRange, CodeVisionEntry>> = getValidResult().map {
     Pair(it.textRange, it.codeVisionEntryOrThrow)
@@ -160,7 +160,7 @@ open class EditorCodeVisionContext(
   }
 
   fun hasProviderCodeVision(id: String): Boolean {
-    return frontendResults.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
+    return rangeMarkers.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
   }
 }
 

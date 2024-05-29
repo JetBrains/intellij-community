@@ -7,8 +7,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -46,7 +46,7 @@ class KotlinInlineAnonymousFunctionProcessor(
             }
         }
 
-        @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class) //under potemkin progress
+        @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class) //under potemkin progress
         fun performRefactoring(usage: KtExpression, editor: Editor?) {
             val project = usage.project
             val invokeCallExpression = when (usage) {
@@ -93,7 +93,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                 else -> null
             }
 
-        @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
         private fun convertFunctionToAnonymousFunction(function: KtFunction): KtNamedFunction? {
             return when (function) {
                 is KtNamedFunction -> function

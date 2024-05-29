@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin.analysis
 
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
@@ -16,6 +17,10 @@ import kotlin.test.assertTrue as kAssertTrue
 import kotlin.test.fail as kFail
 
 class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun `test dataflow not null`() = doTest("""
         fun dataFlowNotNull(b: Boolean) {
             val a = if (b) null else "hello"

@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder;
 import org.jetbrains.kotlin.psi.KtExpression;
@@ -30,9 +30,7 @@ public class KotlinParenthesesSurrounder extends KotlinExpressionSurrounder {
 
         expression = (KtExpression) expression.replace(parenthesizedExpression);
 
-        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
-
         int offset = expression.getTextRange().getEndOffset();
-        updater.moveCaretTo(offset);
+        updater.select(TextRange.from(offset, 0));
     }
 }

@@ -8,7 +8,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -53,17 +53,17 @@ object ChangeTypeQuickFixFactories {
             updateType(element, typeInfo, project, editor)
     }
 
-    val changeFunctionReturnTypeOnOverride = changeReturnTypeOnOverride<KtFirDiagnostic.ReturnTypeMismatchOnOverride>(
+    val changeFunctionReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.ReturnTypeMismatchOnOverride>(
         getCallableSymbol = { it.function as KtFunctionSymbol },
         getSuperCallableSymbol = { it.superFunction as KtFunctionSymbol },
     )
 
-    val changePropertyReturnTypeOnOverride = changeReturnTypeOnOverride<KtFirDiagnostic.PropertyTypeMismatchOnOverride>(
+    val changePropertyReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.PropertyTypeMismatchOnOverride>(
         getCallableSymbol = { it.property as KtPropertySymbol },
         getSuperCallableSymbol = { it.superProperty as KtPropertySymbol },
     )
 
-    val changeVariableReturnTypeOnOverride = changeReturnTypeOnOverride<KtFirDiagnostic.VarTypeMismatchOnOverride>(
+    val changeVariableReturnTypeOnOverride = changeReturnTypeOnOverride<KaFirDiagnostic.VarTypeMismatchOnOverride>(
         getCallableSymbol = { it.variable as KtPropertySymbol },
         getSuperCallableSymbol = { it.superVariable as KtPropertySymbol },
     )
@@ -131,7 +131,7 @@ object ChangeTypeQuickFixFactories {
     }
 
     val returnTypeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
             val element = diagnostic.targetFunction.psi as? KtElement
                 ?: return@IntentionBased emptyList()
 
@@ -142,7 +142,7 @@ object ChangeTypeQuickFixFactories {
         }
 
     val returnTypeNullableTypeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NullForNonnullType ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
             val returnExpr = diagnostic.psi.parentOfType<KtReturnExpression>()
                 ?: return@IntentionBased emptyList()
             val declaration = returnExpr.getReturnTargetSymbol()?.psi as? KtCallableDeclaration
@@ -153,7 +153,7 @@ object ChangeTypeQuickFixFactories {
         }
 
     val initializerTypeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@IntentionBased emptyList()
 
@@ -161,7 +161,7 @@ object ChangeTypeQuickFixFactories {
         }
 
     val assignmentTypeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
             val expression = diagnostic.psi
             val assignment = expression.parent as? KtBinaryExpression
                 ?: return@IntentionBased emptyList()
@@ -178,7 +178,7 @@ object ChangeTypeQuickFixFactories {
         }
 
     val typeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.TypeMismatch ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.TypeMismatch ->
             val expr = diagnostic.psi
             val property = expr.parent as? KtProperty
                 ?: return@IntentionBased emptyList()
@@ -200,7 +200,7 @@ object ChangeTypeQuickFixFactories {
     }
 
     val parameterTypeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
             val expression = diagnostic.psi
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
@@ -212,7 +212,7 @@ object ChangeTypeQuickFixFactories {
         }
 
     val componentFunctionReturnTypeMismatch =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ComponentFunctionReturnTypeMismatch ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ComponentFunctionReturnTypeMismatch ->
             val entryWithWrongType =
                 getDestructuringDeclarationEntryThatTypeMismatchComponentFunction(
                     diagnostic.componentFunctionName,

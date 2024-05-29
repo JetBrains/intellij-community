@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
 
@@ -58,10 +58,10 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     projectSessionManager as ProjectWithModulesSaveSessionProducerManager
 
     val writer = JpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
-    JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
+    project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer)
 
-    for (module in ModuleManager.getInstance(project).modules) {
-      val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
+    for (module in project.serviceAsync<ModuleManager>().modules) {
+      val moduleStore = module.serviceAsync<IComponentStore>() as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
       moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
       projectSessionManager.commitComponents(moduleStore = moduleStore, moduleSaveSessionManager = moduleSessionManager)
@@ -74,7 +74,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
-    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
+    return StorageJpsConfigurationReader(project = project, configLocation = getJpsProjectConfigLocation(project)!!)
   }
 }
 
@@ -99,11 +99,7 @@ private class JpsStorageContentWriter(
       val stateStorage = getProjectStateStorage(filePath = filePath, store = store, project = project)
       val producer = session.getProducer(stateStorage)
       if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(
-          fileName = PathUtilRt.getFileName(filePath),
-          componentName = componentName,
-          element = componentTag?.children?.first(),
-        )
+        producer.setFileState(fileName = PathUtilRt.getFileName(filePath), componentName = componentName, element = componentTag?.children?.first())
       }
       else {
         producer?.setState(component = null, componentName = componentName, pluginId = PluginManagerCore.CORE_ID, state = componentTag)
@@ -113,11 +109,11 @@ private class JpsStorageContentWriter(
 
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    return if (FileUtilRt.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
-      ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
+    if (FileUtilRt.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+      return ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
     }
     else {
-      ProjectPathMacroManager.getInstance(project).replacePathMap
+      return ProjectPathMacroManager.getInstance(project).replacePathMap
     }
   }
 }
@@ -163,7 +159,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
     }
 
     val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents[moduleFilePath.invariantSeparatorsPathString]
+    val internalComponents = internalModuleComponents.get(moduleFilePath.invariantSeparatorsPathString)
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
@@ -178,8 +174,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
   }
 }
 
-internal class StorageJpsConfigurationReader(private val project: Project,
-                                             private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
+internal class StorageJpsConfigurationReader(private val project: Project, private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
   @Volatile
   private var fileContentCachingReader: CachingJpsFileContentReader? = null
   private val externalConfigurationDir = lazy { project.getExternalConfigurationDir() }
@@ -266,9 +261,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
   }
 }
 
-fun getProjectStateStorage(filePath: String,
-                           store: IProjectStore,
-                           project: Project): StateStorageBase<StateMap> {
+fun getProjectStateStorage(filePath: String, store: IProjectStore, project: Project): StateStorageBase<StateMap> {
   val storageSpec = getStorageSpec(filePath, project)
   @Suppress("UNCHECKED_CAST")
   return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
@@ -314,7 +307,7 @@ private fun getStorageSpec(filePath: String, project: Project): Storage {
       }
     }
   }
-  return FileStorageAnnotation(collapsedPath, false, splitterClass)
+  return FileStorageAnnotation(/* path = */ collapsedPath, /* deprecated = */ false, /* splitterClass = */ splitterClass)
 }
 
 /**

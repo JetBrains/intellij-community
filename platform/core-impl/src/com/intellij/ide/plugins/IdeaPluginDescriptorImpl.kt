@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.util.Java11Shim
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -241,13 +242,7 @@ class IdeaPluginDescriptorImpl(
 
     if (id == PluginManagerCore.CORE_ID) {
       pluginAliases = pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds()
-      if (!AppMode.isRemoteDevHost()) {
-        // Dependency on this ID may be used to enable some functionality in the local IDE
-        // and in JetBrains Client, but disable it in product running in backend mode.
-        // This is needed because the backend process currently doesn't use module-based loader and therefore cannot
-        // use marker modules from ProductModes.
-        pluginAliases = pluginAliases + PluginId.getId("com.intellij.platform.experimental.frontend")
-      }
+      pluginAliases = pluginAliases + productModeAliasesForCorePlugin()
     }
 
     if (context.isPluginDisabled(id)) {
@@ -276,6 +271,40 @@ class IdeaPluginDescriptorImpl(
       LOG.warn("Resource bundle redefinition for plugin $id. Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
     }
     resourceBundleBaseName = raw.resourceBundleBaseName
+  }
+
+  /**
+   * This method returns plugin aliases, which are added to the core module.
+   * This is done to support running without the module-based loader (from sources and in dev mode),
+   * where all modules are available, but only some of them need to be loaded.
+   *
+   * Module dependencies must be satisfied, module dependencies determine whether a module will be loaded.
+   * If a module declares a special dependency, the dependency might be not satisfied in some produce mode,
+   * and the module will not be loaded in that mode.
+   * This function determines which dependencies are satisfiable by the current product mode.
+   *
+   * There are three product modes:
+   * 1. Split frontend (JetBrains Client)
+   * 2. Monolith, or regular local IDE
+   * 3. Split backend (Remote Dev Host) or CWM plugin installed in monolith
+   *
+   * If a module needs to be loaded in some mode(-s), declare the following dependency(-ies):
+   * - in 1 or 2: `com.intellij.platform.experimental.frontend`
+   * - in 2 or 3: `com.intellij.platform.experimental.backend`
+   * - only in 2: both `com.intellij.platform.experimental.frontend` and `com.intellij.platform.experimental.backend`
+   * - in 1 or 2 or 3: no dependency needed
+   */
+  private fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
+    if (!AppMode.isRemoteDevHost()) {
+      // This alias is available in monolith and frontend.
+      // Modules, which depend on it, will not be loaded in split backend.
+      add(PluginId.getId("com.intellij.platform.experimental.frontend"))
+    }
+    if (!PlatformUtils.isJetBrainsClient()) {
+      // This alias is available in monolith and backend.
+      // Modules, which depend on it, will not be loaded in split frontend.
+      add(PluginId.getId("com.intellij.platform.experimental.backend"))
+    }
   }
 
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,

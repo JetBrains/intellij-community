@@ -3,6 +3,8 @@ package com.intellij.util
 
 import com.intellij.ide.FileIconPatcher
 import com.intellij.ide.FileIconProvider
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.IconFlags
@@ -14,13 +16,15 @@ object FileIconUtil {
   @JvmStatic
   fun getIconFromProviders(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
     for (provider in FileIconProvider.EP_NAME.extensionList) {
-      try {
-        val icon = provider.getIcon(file, flags, project)
-        if (icon != null) {
-          return icon
+      val icon = kotlin.runCatching {
+        provider.getIcon(file, flags, project)
+      }.getOrLogException {
+        if (it !is IndexNotReadyException) {
+          LOG.warn("FileIconProvider $provider threw an exception", it)
         }
       }
-      catch (_: IndexNotReadyException) {
+      if (icon != null) {
+        return icon
       }
     }
     return null
@@ -30,14 +34,16 @@ object FileIconUtil {
   fun patchIconByIconPatchers(icon: Icon, file: VirtualFile, flags: Int, project: Project?): Icon {
     var patched = icon
     for (patcher in FileIconPatcher.EP_NAME.extensionList) {
-      try {
-        patched = patcher.patchIcon(patched, file, flags, project)
-      }
-      catch (_: IndexNotReadyException) {
-      }
+      patched = kotlin.runCatching {
+        patcher.patchIcon(patched, file, flags, project)
+      }.getOrLogException {
+        if (it !is IndexNotReadyException) {
+          LOG.warn("FileIconPatcher $patcher threw an exception", it)
+        }
+      } ?: patched
     }
     return patched
   }
 }
 
-
+private val LOG = logger<FileIconUtil>()

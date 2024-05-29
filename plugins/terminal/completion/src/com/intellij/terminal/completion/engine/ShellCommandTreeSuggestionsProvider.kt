@@ -11,17 +11,18 @@ internal class ShellCommandTreeSuggestionsProvider(
   private val generatorsExecutor: ShellDataGeneratorsExecutor
 ) {
   suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<ShellCompletionSuggestion> {
-    return when (node) {
+    val suggestions = when (node) {
       is ShellCommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
       is ShellOptionNode -> getSuggestionsForOption(node, nextNodeText)
       is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it, nextNodeText) } ?: emptyList()
       else -> emptyList()
     }
+    return suggestions.distinctBy { it.name }
   }
 
   suspend fun getDirectSuggestionsOfNext(option: ShellOptionNode): List<ShellCompletionSuggestion> {
     val availableArgs = getAvailableArguments(option)
-    return availableArgs.flatMap { getArgumentSuggestions(it) }
+    return availableArgs.flatMap { getArgumentSuggestions(it) }.distinctBy { it.name }
   }
 
   fun getAvailableArguments(node: ShellOptionNode): List<ShellArgumentSpec> {
@@ -81,7 +82,7 @@ internal class ShellCommandTreeSuggestionsProvider(
 
   private suspend fun getAllOptions(node: ShellCommandNode): List<ShellOptionSpec> {
     val options = mutableListOf<ShellOptionSpec>()
-    options.addAll(node.spec.options)
+    options.addAll(node.spec.getAllOptions())
 
     /**
      * Checks that [parent] command contain the subcommand with the name of [child].
@@ -97,7 +98,7 @@ internal class ShellCommandTreeSuggestionsProvider(
     // parent commands can define 'persistent' options - they can be used in all subcommands
     // but add persistent options from parent, only if it is a direct subcommand
     while (parent is ShellCommandNode && isSubcommand(parent, child)) {
-      val parentOptions = parent.spec.options
+      val parentOptions = parent.spec.getAllOptions()
       options.addAll(parentOptions.filter { it.isPersistent })
       child = parent
       parent = parent.parent
@@ -135,5 +136,9 @@ internal class ShellCommandTreeSuggestionsProvider(
 
   private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {
     return generatorsExecutor.execute(context, subcommandsGenerator)
+  }
+
+  private suspend fun ShellCommandSpec.getAllOptions(): List<ShellOptionSpec> {
+    return generatorsExecutor.execute(context, allOptionsGenerator)
   }
 }

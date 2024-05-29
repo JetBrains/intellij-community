@@ -246,7 +246,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (nextLineNumber < document.getLineCount()) {
         int lineStartOffset = document.getLineStartOffset(nextLineNumber);
         int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
-        return editor.offsetToXY(contentStartOffset, false, true).x;
+        return editor.offsetToXY(contentStartOffset, true, true).x;
       }
     }
     return editor.getInsets().left;

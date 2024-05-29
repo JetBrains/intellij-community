@@ -46,7 +46,7 @@ class KotlinFindFunctionUsagesDialog(
     }
 
     override fun canSearchForBaseMethod(element: PsiElement): Boolean {
-        return element is KtFunction && element.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+        return element is KtFunction && !element.hasModifier(KtTokens.PRIVATE_KEYWORD)
     }
 
     override fun isIncludeOverloadedMethodsAvailable(): Boolean {

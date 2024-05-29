@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.ide.SaveAndSyncHandler;
@@ -10,14 +10,20 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 
 public abstract class WslDistributionManager implements Disposable {
   static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
@@ -30,6 +36,8 @@ public abstract class WslDistributionManager implements Disposable {
   private volatile CachedDistributions myInstalledDistributions;
   private volatile List<WSLDistribution> myLastInstalledDistributions;
   private final Map<String, WSLDistribution> myMsIdToDistributionCache = CollectionFactory.createConcurrentWeakCaseInsensitiveMap();
+  private final List<@NotNull BiConsumer<@NotNull Set<@NotNull WSLDistribution>, @NotNull Set<@NotNull WSLDistribution>>>
+    myWslDistributionsChangeListeners = new CopyOnWriteArrayList<>();
 
   @Override
   public void dispose() {
@@ -63,6 +71,14 @@ public abstract class WslDistributionManager implements Disposable {
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return cachedDistributions.myInstalledDistributions;
     }
+
+    @NotNull Set<@NotNull WSLDistribution> distributionsBefore =
+      cachedDistributions != null ?
+      new SmartHashSet<>(cachedDistributions.myInstalledDistributions) :
+      Collections.emptySet();
+
+    @NotNull Set<@NotNull WSLDistribution> distributionsAfter;
+
     myInstalledDistributions = null;
     synchronized (LOCK) {
       cachedDistributions = myInstalledDistributions;
@@ -71,8 +87,31 @@ public abstract class WslDistributionManager implements Disposable {
         myInstalledDistributions = cachedDistributions;
         myLastInstalledDistributions = cachedDistributions.myInstalledDistributions;
       }
+      distributionsAfter = new SmartHashSet<>(cachedDistributions.myInstalledDistributions);
+    }
+
+    if (!distributionsBefore.equals(distributionsAfter)) {
+      for (var listener : myWslDistributionsChangeListeners) {
+        listener.accept(distributionsBefore, distributionsAfter);
+      }
     }
     return cachedDistributions.myInstalledDistributions;
+  }
+
+  @ApiStatus.Internal
+  public void addWslDistributionsChangeListener(
+    @NotNull BiConsumer<@NotNull Set<@NotNull WSLDistribution>, @NotNull Set<@NotNull WSLDistribution>> listener
+  ) {
+    myWslDistributionsChangeListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  public void removeWslDistributionsChangeListener(
+    @NotNull BiConsumer<@NotNull Set<@NotNull WSLDistribution>, @NotNull Set<@NotNull WSLDistribution>> listener
+  ) {
+    if (!myWslDistributionsChangeListeners.remove(listener)) {
+      throw new IllegalArgumentException("The listener hasn't been registered: " + listener);
+    }
   }
 
   public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {

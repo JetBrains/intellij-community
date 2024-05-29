@@ -135,4 +135,13 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
   override suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion? {
     return latestVersions[spec]
   }
+
+  override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
+    val normalizedQuery = normalizePackageName(query)
+    return packagesFromRepository(repository).filter { StringUtil.containsIgnoreCase(normalizePackageName(it), normalizedQuery) }
+  }
+
+  override fun searchPackages(query: String): Map<PyPackageRepository, List<String>> {
+    return repositories.associateWith { searchPackages(query, it) }
+  }
 }

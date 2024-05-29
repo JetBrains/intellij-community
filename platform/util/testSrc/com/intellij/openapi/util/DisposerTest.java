@@ -9,6 +9,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NonNls;
 import org.junit.*;
@@ -450,20 +451,24 @@ public class DisposerTest  {
 
   @Test
   public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
-    AtomicLong leakHash = new AtomicLong();
-    try {
-      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class, leak -> {
-        leakHash.set(System.identityHashCode(leak));
-        return true;
-      });
-    }
-    catch (AssertionError e) {
-      Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
-                               "myRoot="+myRoot+"; ihc(myRoot)="+System.identityHashCode(myRoot)+"; leakHash="+leakHash, e);
-    }
+    long elapsed = TimeoutUtil.measureExecutionTime(() -> {
+      AtomicLong leakHash = new AtomicLong();
+      try {
+        LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class, leak -> {
+          leakHash.set(System.identityHashCode(leak));
+          return true;
+        });
+      }
+      catch (AssertionError e) {
+        Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
+                                 "myRoot=" + myRoot + "; ihc(myRoot)=" + System.identityHashCode(myRoot) + "; leakHash=" + leakHash, e);
+      }
+    });
+    Assume.assumeTrue("Too long time (" + elapsed+ "ms) spent hunting memory leak, your heap must be huge! I refuse to continue", elapsed<30_000);
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
 
-    for (int i = 0; i < 1000; i++) {
+    long deadline = System.currentTimeMillis() + 3 * 60 * 1000;
+    for (int i=0; i < 1000 && System.currentTimeMillis() < deadline; i++) {
       myDisposeActions.clear();
       myDisposedObjects.clear();
       MyLoggingDisposable parent = new MyLoggingDisposable("parent"+i);

@@ -10,8 +10,8 @@ import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
@@ -51,7 +51,7 @@ internal class KotlinFunctionCallUsage(
     private val callee: PsiElement
 ) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val indexToExpMap: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {
         allowAnalysisOnEdt {
             analyze(element) {
@@ -100,7 +100,7 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val extensionReceiver: String? =
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
@@ -223,7 +223,7 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)//under potemkin progress
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)//under potemkin progress
     private fun updateArgumentsAndReceiver(
         changeInfo: KotlinChangeInfoBase,
         element: KtCallElement,
@@ -376,7 +376,7 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun substituteReferences(
         expression: KtExpression,
         referenceMap: MutableMap<PsiReference, Int>,
@@ -469,7 +469,7 @@ internal class KotlinFunctionCallUsage(
 
 }
 
-@OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
 internal fun PsiElement.isCaller(u: Array<out UsageInfo>): Boolean {
     val callers = u.mapNotNull { (it as? CallerUsageInfo)?.element }
     val usagesSupport = KotlinSearchUsagesSupport.getInstance(project)

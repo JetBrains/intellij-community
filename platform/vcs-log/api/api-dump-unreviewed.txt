@@ -4,7 +4,6 @@ f:com.intellij.vcs.log.CommitId
 - getHash():com.intellij.vcs.log.Hash
 - getRoot():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
-- toString():java.lang.String
 com.intellij.vcs.log.Hash
 - a:asString():java.lang.String
 - a:toShortString():java.lang.String
@@ -118,7 +117,6 @@ com.intellij.vcs.log.VcsLogDiffHandler
 - f:getHash1():com.intellij.vcs.log.Hash
 - f:getHash2():com.intellij.vcs.log.Hash
 - hashCode():I
-- toString():java.lang.String
 com.intellij.vcs.log.VcsLogFileHistoryProvider
 - a:canShowFileHistory(java.util.Collection,java.lang.String):Z
 - a:showFileHistory(java.util.Collection,java.lang.String):V
@@ -147,7 +145,6 @@ c:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
 - equals(java.lang.Object):Z
 - getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.vcs.log.VcsLogFilterUi
 - a:getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 com.intellij.vcs.log.VcsLogHashFilter
@@ -241,7 +238,6 @@ f:com.intellij.vcs.log.VcsLogRangeFilter$RefRange
 - f:getExclusiveRef():java.lang.String
 - f:getInclusiveRef():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.vcs.log.VcsLogRefManager
 - a:deserialize(java.io.DataInput):com.intellij.vcs.log.VcsRefType
 - a:getBranchLayoutComparator():java.util.Comparator

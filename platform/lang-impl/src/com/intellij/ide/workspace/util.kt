@@ -5,26 +5,30 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal val isWorkspaceSupportEnabled get() = Registry.`is`("ide.enable.project.workspaces", false)
+internal val isWorkspaceSupportEnabled get() = Registry.`is`("ide.enable.project.workspaces", true)
 
 @Service(Service.Level.PROJECT)
 internal class MyCoroutineScopeService(val scope: CoroutineScope)
 
 internal fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
 
-internal fun addToWorkspace(project: Project, projectPaths: List<String>) {
-  getCoroutineScope(project).launch {
+internal fun getHandlers(file: VirtualFile): List<SubprojectHandler> =
+  SubprojectHandler.EP_NAME.extensionList.filter { it.canImportFromFile(file) }
+
+internal fun addToWorkspace(workspace: Project, projectPaths: List<String>) {
+  getCoroutineScope(workspace).launch {
     projectPaths.forEach { s ->
-      linkToWorkspace(project, s)
+      linkToWorkspace(workspace, s)
     }
   }
 }
 
-internal fun removeSubprojects(subprojects: Collection<Subproject>) {
+internal fun removeSubprojects(workspace: Project, subprojects: Collection<Subproject>) {
   subprojects.groupBy { it.handler }.forEach {
-    it.key.removeSubprojects(it.value)
+    it.key.removeSubprojects(workspace, it.value)
   }
 }

@@ -45,7 +45,6 @@ f:com.intellij.openapi.util.SimpleTimer
 - s:getInstance():com.intellij.openapi.util.SimpleTimer
 - s:newInstance(java.lang.String):com.intellij.openapi.util.SimpleTimer
 - setUp(java.lang.Runnable,J):com.intellij.openapi.util.SimpleTimerTask
-- toString():java.lang.String
 com.intellij.openapi.util.SimpleTimerTask
 - a:cancel():V
 - a:isCancelled():Z

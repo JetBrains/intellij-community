@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.resolveKDocLink
@@ -29,9 +30,8 @@ import org.junit.runner.RunWith
 class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

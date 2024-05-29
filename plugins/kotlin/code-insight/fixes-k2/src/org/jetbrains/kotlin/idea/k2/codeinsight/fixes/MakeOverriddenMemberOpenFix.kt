@@ -4,7 +4,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 internal object MakeOverriddenMemberOpenFixFactory {
-    val makeOverriddenMemberOpenFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.OverridingFinalMember ->
+    val makeOverriddenMemberOpenFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OverridingFinalMember ->
         val declaration = diagnostic.psi
         val elementContext = computeElementContext(declaration) ?: return@ModCommandBased emptyList()
         listOf(MakeOverriddenMemberOpenFix(declaration, elementContext))

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationMissingForK2
@@ -112,7 +112,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             }
             infoBuilder.registerFix(quickFixInfo, options, null, null, null)
         }
-        if (diagnostic is KtFirDiagnostic.UnresolvedImport || diagnostic is KtFirDiagnostic.UnresolvedReference) {
+        if (diagnostic is KaFirDiagnostic.UnresolvedImport || diagnostic is KaFirDiagnostic.UnresolvedReference) {
             psiElement.reference?.let {
                 UnresolvedReferenceQuickFixUpdater.getInstance(file.project).registerQuickFixesLater(it, infoBuilder)
             }
@@ -147,17 +147,17 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     context(KtAnalysisSession)
     private fun KtDiagnosticWithPsi<*>.isUnresolvedDiagnostic() = when (this) {
-        is KtFirDiagnostic.UnresolvedReference -> true
-        is KtFirDiagnostic.UnresolvedLabel -> true
-        is KtFirDiagnostic.UnresolvedReferenceWrongReceiver -> true
-        is KtFirDiagnostic.UnresolvedImport -> true
-        is KtFirDiagnostic.MissingStdlibClass -> true
+        is KaFirDiagnostic.UnresolvedReference -> true
+        is KaFirDiagnostic.UnresolvedLabel -> true
+        is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> true
+        is KaFirDiagnostic.UnresolvedImport -> true
+        is KaFirDiagnostic.MissingStdlibClass -> true
         else -> false
     }
 
     context(KtAnalysisSession)
     private fun KtDiagnosticWithPsi<*>.isDeprecatedDiagnostic() = when (this) {
-        is KtFirDiagnostic.Deprecation -> true
+        is KaFirDiagnostic.Deprecation -> true
         else -> false
     }
 

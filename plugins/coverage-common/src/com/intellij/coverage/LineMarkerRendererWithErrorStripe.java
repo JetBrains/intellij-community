@@ -17,10 +17,12 @@ package com.intellij.coverage;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 
 //todo
+@ApiStatus.Internal
 public interface LineMarkerRendererWithErrorStripe extends LineMarkerRendererEx {
   Color getErrorStripeColor(Editor editor);
 }

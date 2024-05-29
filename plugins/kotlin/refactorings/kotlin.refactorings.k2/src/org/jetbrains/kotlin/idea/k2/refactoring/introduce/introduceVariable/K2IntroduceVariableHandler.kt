@@ -14,14 +14,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
@@ -79,9 +79,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         override fun KtLambdaArgument.getLambdaArgumentNameByAnalyze(): Name? = allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(this) {
                     NamedArgumentUtils.getStableNameFor(this@getLambdaArgumentNameByAnalyze)
@@ -92,9 +92,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         private fun analyzeIfExplicitTypeOrArgumentsAreNeeded(property: KtProperty) {
             val initializer = property.initializer ?: return
 
-            @OptIn(KtAllowAnalysisOnEdt::class)
+            @OptIn(KaAllowAnalysisOnEdt::class)
             allowAnalysisOnEdt {
-                @OptIn(KtAllowAnalysisFromWriteAction::class)
+                @OptIn(KaAllowAnalysisFromWriteAction::class)
                 allowAnalysisFromWriteAction {
                     analyze(property) {
                         val propertyRenderedType = property.getReturnKtType().render(position = Variance.INVARIANT)
@@ -109,9 +109,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
 
         override fun convertToBlockBodyAndSpecifyReturnTypeByAnalyze(declaration: KtDeclarationWithBody): KtDeclarationWithBody {
-            @OptIn(KtAllowAnalysisOnEdt::class)
+            @OptIn(KaAllowAnalysisOnEdt::class)
             val convertToBlockBodyContext = allowAnalysisOnEdt {
-                @OptIn(KtAllowAnalysisFromWriteAction::class)
+                @OptIn(KaAllowAnalysisFromWriteAction::class)
                 allowAnalysisFromWriteAction {
                     analyze(declaration) {
                         ConvertToBlockBodyUtils.createContext(
@@ -377,7 +377,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         val diagnostics = analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             callee.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         }
-        return (diagnostics.any { diagnostic -> diagnostic is KtFirDiagnostic.NewInferenceNoInformationForParameter })
+        return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.NewInferenceNoInformationForParameter })
     }
 
     override fun filterContainersWithContainedLambdasByAnalyze(

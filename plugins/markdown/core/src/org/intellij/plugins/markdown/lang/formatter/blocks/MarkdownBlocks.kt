@@ -3,6 +3,8 @@ package org.intellij.plugins.markdown.lang.formatter.blocks
 
 import com.intellij.formatting.Alignment
 import com.intellij.formatting.SpacingBuilder
+import com.intellij.formatting.Wrap
+import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.TokenSet
@@ -41,6 +43,7 @@ internal object MarkdownBlocks {
       in MarkdownTokenTypeSets.LIST_MARKERS, in MarkdownTokenTypeSets.WHITE_SPACES, MarkdownTokenTypes.BLOCK_QUOTE -> {
         MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, align(node), null)
       }
+      MarkdownElementTypes.CODE_SPAN -> MarkdownFormattingBlock(node, settings, spacing, align(node), Wrap.createWrap(WrapType.NORMAL, false))
       in emphasisLikeElements -> EmphasisFormattingBlock(settings, spacing, node, align(node))
       MarkdownElementTypes.PARAGRAPH -> when {
         isInsideBlockquote(node) && !shouldWrapInsideBlockquote(settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node))

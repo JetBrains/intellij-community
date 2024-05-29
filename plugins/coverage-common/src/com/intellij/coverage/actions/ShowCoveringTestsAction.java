@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 

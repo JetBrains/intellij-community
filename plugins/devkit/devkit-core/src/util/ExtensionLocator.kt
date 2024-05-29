@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.openapi.project.Project
@@ -9,6 +9,7 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.PerformanceAssertions
 import com.intellij.util.SmartList
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.Extension
@@ -44,6 +45,8 @@ fun processExtensionDeclarations(name: String,
                                  project: Project,
                                  strictMatch: Boolean = true,
                                  callback: (Extension, XmlTag) -> Boolean) {
+  PerformanceAssertions.assertDoesNotAffectHighlighting()
+
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   val searchWord = name.substringBeforeLast('$')
   if (searchWord.isEmpty()) return

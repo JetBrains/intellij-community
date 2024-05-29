@@ -211,7 +211,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           excludedRootPaths.add(context.getModuleTestsOutputDir(module))
         }
       }
-      val excludedRoots = excludedRootPaths.filter(Files::exists).replaceWithArchivedIfNeededLP().map(Path::toString)
+      val excludedRoots = excludedRootPaths.replaceWithArchivedIfNeededLP().filter(Files::exists).map(Path::toString)
 
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
@@ -344,23 +344,23 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val modulePath: List<String>?
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
-    val toStringConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
+    val toExistingAbsolutePathConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
     if (moduleInfoFile != null) {
       val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
       val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), HashSet(testRoots))
-      modulePath = pair.first.path.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS()
-      testClasspath = pair.second.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS()
+      modulePath = pair.first.path.toList().replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = pair.second.toList().replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter)
     }
     else {
       modulePath = null
-      testClasspath = testRoots.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS()
+      testClasspath = testRoots.replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter)
     }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
       .toMutableList()
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, testRoots.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS().joinToString(separator = "\n"))
+    Files.writeString(classpathFile, testRoots.replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
@@ -409,9 +409,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private fun List<String>.replaceWithArchivedIfNeededLS(): List<String> {
+  private fun List<File>.replaceWithArchivedIfNeededLF(): List<File> {
     if (context is ArchivedCompilationContext) {
-      return context.replaceWithCompressedIfNeededLS(this)
+      return context.replaceWithCompressedIfNeededLF(this)
     }
     return this
   }

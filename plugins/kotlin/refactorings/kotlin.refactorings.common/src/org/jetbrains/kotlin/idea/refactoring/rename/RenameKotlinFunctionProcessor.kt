@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.*
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.*
@@ -24,8 +26,11 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
@@ -180,8 +185,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
-        super.prepareRenaming(element, newName, allRenames, scope)
-
         if (element is KtLightMethod && getJvmName(element) == null) {
             (element.kotlinOrigin as? KtNamedFunction)?.let { allRenames[it] = newName }
         }
@@ -190,8 +193,8 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         }
         val namedFunction = element.unwrapped as? KtNamedFunction
         val originalName = namedFunction?.name ?: return
+        val safeNewName = newName.quoteIfNeeded()
         for (declaration in ((element as? FunctionWithSupersWrapper)?.supers ?: listOf(element))) {
-            allRenames[declaration] = newName
             val baseName = (declaration as? PsiNamedElement)?.name ?: originalName
             val newBaseName = if (renameRefactoringSupport.demangleInternalName(baseName) == originalName) {
                 renameRefactoringSupport.mangleInternalName(
@@ -200,29 +203,47 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 )
             } else newName
 
-            val overriders = runProcessWithProgressSynchronously(
-                KotlinBundle.message("rename.searching.for.all.overrides"),
-                canBeCancelled = true,
-                element.project
-            ) {
-                renameRefactoringSupport.findAllOverridingMethods(declaration, scope)
+            prepareOverrideRenaming(declaration, baseName, newBaseName.quoteIfNeeded(), safeNewName, allRenames)
+        }
+
+        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+    }
+
+    private fun prepareOverrideRenaming(
+        declaration: PsiElement,
+        baseName: @NlsSafe String,
+        newBaseName: String,
+        safeNewName: String,
+        allRenames: MutableMap<PsiElement, String>
+    ) {
+        val project = declaration.project
+        val searchHelper = PsiSearchHelper.getInstance(project)
+        val overriders = ActionUtil.underModalProgress(project, KotlinBundle.message("rename.searching.for.all.overrides")) {
+            val multiplatformDeclarations =
+                if (declaration is KtNamedDeclaration) { withExpectedActuals(declaration) } else listOf(declaration)
+
+            multiplatformDeclarations.forEach {
+                allRenames[it] = safeNewName
             }
 
-            for (originalOverrider in overriders) {
-                // for possible Groovy wrappers
-                val overrider = (originalOverrider as? PsiMirrorElement)?.prototype as? PsiMethod ?: originalOverrider
-
-                if (overrider is SyntheticElement) continue
-
-                val overriderName = (overrider as PsiNamedElement).name
-                val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
-                if (newOverriderName != null) {
-                    RenameUtil.assertNonCompileElement(overrider)
-                    allRenames[overrider] = newOverriderName
-                }
+            multiplatformDeclarations.flatMap { d ->
+                renameRefactoringSupport.findAllOverridingMethods(d, searchHelper.getUseScope(d))
             }
         }
-        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+
+        for (originalOverrider in overriders) {
+            // for possible Groovy wrappers
+            val overrider = (originalOverrider as? PsiMirrorElement)?.prototype as? PsiMethod ?: originalOverrider
+
+            if (overrider is SyntheticElement) continue
+
+            val overriderName = (overrider as PsiNamedElement).name
+            val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
+            if (newOverriderName != null) {
+                RenameUtil.assertNonCompileElement(overrider)
+                allRenames[overrider] = newOverriderName
+            }
+        }
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {

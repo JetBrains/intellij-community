@@ -10,7 +10,7 @@ fun Finder.table(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@
                                                                JTableUiComponent::class.java)
 
 open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy {  driver.new(JTableFixtureRef::class, robotService.robot, component) }
+  private val fixture by lazy { driver.new(JTableFixtureRef::class, robot, component) }
 
   // content()[ROW][COLUMN]
   fun content(): Map<Int, Map<Int, String>> = fixture.collectItems()

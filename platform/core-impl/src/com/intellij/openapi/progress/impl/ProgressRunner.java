@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.*;
@@ -460,11 +459,13 @@ public final class ProgressRunner<R> {
         return;
       }
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
-      Runnable contextRunnable = context.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
+      ContextAwareRunnable contextRunnable = () -> {
         CoroutineContext effectiveContext = context.plus(asContextElement(progressIndicator.getModalityState()));
-        try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
-          childContext.runAsCoroutine(runnable);
-        }
+        childContext.runAsCoroutine(() -> {
+          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
+            runnable.run();
+          }
+        });
       };
       switch (myThreadToUse) {
         case POOLED:

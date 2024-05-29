@@ -11,6 +11,11 @@
     <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
   ]]></description>
 
+  <dependencies>
+    <!--Required for correct compatible products. TODO: remove when https://youtrack.jetbrains.com/issue/MP-6600 is fixed-->
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
   <content>
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.git"/>

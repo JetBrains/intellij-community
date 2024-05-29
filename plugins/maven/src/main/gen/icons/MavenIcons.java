@@ -18,6 +18,7 @@ public final class MavenIcons {
   /** 16x16 */ public static final @NotNull Icon ExecuteMavenGoal = load("images/executeMavenGoal.svg", 1709385426, 2);
   /** 16x16 */ public static final @NotNull Icon MavenIgnored = load("images/mavenIgnored.svg", -1578112873, 2);
   /** 16x16 */ public static final @NotNull Icon MavenLoadChanges = load("images/mavenLoadChanges.svg", 15449020, 2);
+  /** 16x16 */ public static final @NotNull Icon MavenModule = load("images/mavenModule.svg", -1526380836, 2);
   /** 16x16 */ public static final @NotNull Icon MavenPlugin = load("images/mavenPlugin.svg", 660249577, 0);
   /** 16x16 */ public static final @NotNull Icon MavenProject = load("images/mavenProject.svg", -1399986903, 0);
   /** 16x16 */ public static final @NotNull Icon MavenRepoFolder = load("images/mavenRepoFolder.svg", 205206251, 0);

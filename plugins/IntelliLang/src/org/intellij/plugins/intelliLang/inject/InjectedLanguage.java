@@ -17,7 +17,6 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -81,20 +80,6 @@ public final class InjectedLanguage {
         initLanguageCache();
       }
       return ourLanguageCache.get(langID);
-    }
-  }
-
-  /**
-   * @deprecated use {@link #getAvailableLanguages()}
-   */
-  @Deprecated(forRemoval = true)
-  public static String @NotNull [] getAvailableLanguageIDs() {
-    synchronized (InjectedLanguage.class) {
-      if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
-        initLanguageCache();
-      }
-      final Set<String> keys = ourLanguageCache.keySet();
-      return ArrayUtilRt.toStringArray(keys);
     }
   }
 

@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.idea.test.runAll
 abstract class AbstractK2JsBasicCompletionLegacyStdlibTest : AbstractJSBasicCompletionTestBase() {
     override val captureExceptions: Boolean = false
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, k2Extension = IgnoreTests.FileExtension.FIR)
 
     override fun executeTest(test: () -> Unit) {
@@ -26,7 +24,7 @@ abstract class AbstractK2JsBasicCompletionLegacyStdlibTest : AbstractJSBasicComp
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

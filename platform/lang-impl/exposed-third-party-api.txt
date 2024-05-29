@@ -12,7 +12,6 @@ com/jetbrains/rd/util/reactive/IProperty
 com/jetbrains/rd/util/reactive/IPropertyView
 com/jetbrains/rd/util/reactive/IScheduler
 com/jetbrains/rd/util/reactive/ISource
-com/jetbrains/rd/util/reactive/IViewableSet
 com/jetbrains/rd/util/reactive/Property
 com/jetbrains/rd/util/reactive/Signal
 com/jetbrains/rd/util/reactive/ViewableMap

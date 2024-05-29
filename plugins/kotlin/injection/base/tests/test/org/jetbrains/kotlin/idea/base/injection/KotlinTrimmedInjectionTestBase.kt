@@ -11,7 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.injection.Injectable
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -124,7 +124,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         )
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testTempInjection() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -212,7 +212,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
     }
 
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testNewLineInFragmentEditor() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -269,7 +269,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testPutTagOnNewLineInFragmentEditor() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -303,7 +303,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
     }
 
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testRemoveLineBreak() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -349,7 +349,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
     }
 
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testNewLineBetweenBodies() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -378,7 +378,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testOneLineTrimIndent() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -397,7 +397,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
     
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testOneLineTrimIndentAndSpaces() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -418,7 +418,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
     
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun `test pressing tab in fragment-editor with multiline-text`() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -482,7 +482,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testNewLineJSONAuthoComma() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -511,7 +511,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testJsonWrapBrackets() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -553,7 +553,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testJsonDeleteAll() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -582,7 +582,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testJsonDeleteAllAndEmptyLines() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -612,7 +612,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testJsonDuplicateAll() {
         allowAnalysisOnEdt {
             myFixture.configureByText(
@@ -657,7 +657,7 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
     }
 
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testJsonReplaceAll() {
         allowAnalysisOnEdt {
             myFixture.configureByText(

@@ -3,6 +3,7 @@
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase.assertInstanceOf
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -12,6 +13,10 @@ import org.jetbrains.uast.*
 import org.junit.Test
 
 class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     override fun check(testName: String, file: UFile) { }
 
     private fun UFile.findIndexOfElement(elem: String): Int {

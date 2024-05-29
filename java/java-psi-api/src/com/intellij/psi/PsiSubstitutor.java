@@ -51,6 +51,13 @@ public interface PsiSubstitutor {
   @Contract(pure = true, value = "null -> null")
   PsiType substitute(@Nullable PsiType type);
 
+  /**
+   * @return true if this substitutor has at least one raw substitution
+   */
+  default boolean hasRawSubstitution() {
+    return getSubstitutionMap().containsValue(null);
+  }
+
   //Should be used with great care, be sure to prevent infinite recursion that could arise
   // from the use of recursively bounded type parameters
   @Contract(pure = true)

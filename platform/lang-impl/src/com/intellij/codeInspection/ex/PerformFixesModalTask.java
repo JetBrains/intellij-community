@@ -80,7 +80,11 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean iteration(@NotNull ProgressIndicator indicator) {
-    final Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
+    final @Nullable Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
+    if (pair == null) {
+      return isDone();
+    }
+
     CommonProblemDescriptor descriptor = pair.getFirst();
     boolean shouldDoPostponedOperations = pair.getSecond();
 
@@ -157,15 +161,20 @@ public abstract class PerformFixesModalTask implements SequentialTask {
       .joining("\n");
   }
 
-  private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
+  private @Nullable Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
     CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
-    CommonProblemDescriptor descriptor = descriptors[myDescriptorIdx++];
-    boolean shouldDoPostponedOperations = false;
+
+    boolean shouldDoPostponedOperations = myDescriptorIdx == descriptors.length - 1;
+    Pair<CommonProblemDescriptor, Boolean> result =
+      myDescriptorIdx >= descriptors.length
+        ? null
+        : Pair.create(descriptors[myDescriptorIdx++], shouldDoPostponedOperations);
+
     if (myDescriptorIdx == descriptors.length) {
-      shouldDoPostponedOperations = true;
       myPackIdx++;
       myDescriptorIdx = 0;
     }
-    return Pair.create(descriptor, shouldDoPostponedOperations);
+
+    return result;
   }
 }

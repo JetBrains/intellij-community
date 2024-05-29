@@ -17,11 +17,12 @@ import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
 import org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModelImpl
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assume
 import org.junit.Test
@@ -33,7 +34,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 @RunWith(JUnit4::class)
-class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
+internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
   private lateinit var session: BlockTerminalSession
 
   override fun setUp() {
@@ -160,9 +161,9 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
   private fun getCompletionsForCommand(command: String): List<String>? {
     myFixture.configureByText(PlainTextFileType.INSTANCE, command)
     editor.putUserData(BlockTerminalSession.KEY, session)
-    editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModel(editor as EditorEx, TestTerminalSessionInfo()))
-    editor.putUserData(IJShellRuntimeContextProvider.KEY, IJShellRuntimeContextProvider(project, session))
-    editor.putUserData(IJShellGeneratorsExecutor.KEY, IJShellGeneratorsExecutor(session))
+    editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModelImpl(editor as EditorEx, TestTerminalSessionInfo()))
+    editor.putUserData(ShellRuntimeContextProviderImpl.KEY, ShellRuntimeContextProviderImpl(project, session))
+    editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, ShellDataGeneratorsExecutorImpl(session))
 
     myFixture.completeBasic()
     return myFixture.lookupElementStrings
@@ -191,3 +192,4 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
     }
   }
 }
+

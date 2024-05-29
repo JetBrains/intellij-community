@@ -3,16 +3,14 @@ package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractFe10BindingQuickFixTest : AbstractQuickFixTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -27,8 +25,8 @@ abstract class AbstractFe10BindingQuickFixTest : AbstractQuickFixTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { runInEdtAndWait { project.invalidateCaches() } },
-            ThrowableRunnable { super.tearDown() }
+            { runInEdtAndWait { project.invalidateCaches() } },
+            { super.tearDown() },
         )
     }
 

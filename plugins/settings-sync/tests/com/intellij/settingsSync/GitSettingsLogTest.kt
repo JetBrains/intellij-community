@@ -21,7 +21,6 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileAttribute
@@ -395,7 +394,7 @@ internal class GitSettingsLogTest {
     val jbaEmail = "some-jba-email@jba-mail.com"
     val jbaName = "JBA Name"
 
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail, null)
     checkUsernameEmail(jbaName, jbaEmail)
   }
 
@@ -404,14 +403,14 @@ internal class GitSettingsLogTest {
   fun `use empty email if JBA doesn't provide one`() {
     val jbaName = "JBA Name 2"
 
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, null)
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, null, null)
     checkUsernameEmail(jbaName, "")
   }
 
   @Test
   @TestFor(issues = ["EA-844607"])
   fun `use empty name if JBA doesn't provide one`() {
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null, null)
     checkUsernameEmail("", "")
   }
 

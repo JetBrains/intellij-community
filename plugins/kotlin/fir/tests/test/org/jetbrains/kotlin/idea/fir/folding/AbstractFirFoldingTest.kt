@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.fir.folding
 
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 
-abstract class AbstractFirFoldingTest: AbstractKotlinFoldingTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractFirFoldingTest : AbstractKotlinFoldingTest()

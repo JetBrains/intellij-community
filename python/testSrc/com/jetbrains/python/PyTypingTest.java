@@ -3431,6 +3431,21 @@ public class PyTypingTest extends PyTestCase {
              expr = StrBoxWithExtra((42, 'a', 3.3))""");
   }
 
+  // PY-70528
+  public void testTypeVarTupleAndUnpackFromTypingExtensions() {
+    doTest("tuple[int, str]",
+           """
+             from typing_extensions import TypeVarTuple, Unpack
+             
+             Ts = TypeVarTuple("Ts")
+             
+             def f(*args: Unpack[Ts]) -> tuple[Unpack[Ts]]:
+                 ...
+             
+             expr = f(42, "foo")
+             """);
+  }
+
   public void testGenericSelfSpecializationInOverloadedConstructor() {
     doTest("Pair[int, int]",
            """

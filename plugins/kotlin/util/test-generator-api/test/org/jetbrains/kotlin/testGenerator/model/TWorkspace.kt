@@ -1,24 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.model
 
-import kotlin.reflect.KClass
-
-fun importsListOf(vararg classes: KClass<*>): List<String> {
-    return classes.map { it.java.canonicalName }
-}
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 interface TWorkspace {
+
+    val pluginMode: KotlinPluginMode
+
     val groups: List<TGroup>
 }
 
 interface MutableTWorkspace : TWorkspace {
+
     override val groups: MutableList<TGroup>
 }
 
-class TWorkspaceImpl : MutableTWorkspace {
-    override val groups = mutableListOf<TGroup>()
-}
+fun workspace(
+    pluginMode: KotlinPluginMode,
+    block: MutableTWorkspace.() -> Unit,
+): TWorkspace = object : MutableTWorkspace {
 
-fun workspace(block: MutableTWorkspace.() -> Unit): TWorkspace {
-    return TWorkspaceImpl().apply(block)
-}
+    override val pluginMode: KotlinPluginMode
+        get() = pluginMode
+
+    override val groups: MutableList<TGroup> =
+        mutableListOf()
+}.apply(block)

@@ -7,10 +7,11 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface ActivityDiffData {
-  val presentableChanges: Iterable<ActivityDiffObject>
-}
+data class ActivityDiffData(val presentableChanges: Iterable<PresentableChange>,
+                            val diffMode: DirectoryDiffMode,
+                            val isSingleSelection: Boolean)
 
-interface ActivityDiffObject : PresentableChange {
+@ApiStatus.Experimental
+interface ActivityFileChange : PresentableChange {
   fun createProducer(project: Project?): ChangeDiffRequestChain.Producer
 }

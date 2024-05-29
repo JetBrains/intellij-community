@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -34,10 +34,10 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
                     symbol.getStaticMemberScope()
                 }
 
-                KtScopeWithKind(scope, KtScopeKind.StaticMemberScope(scopeIndex), token)
+                KtScopeWithKind(scope, KaScopeKind.StaticMemberScope(scopeIndex), token)
             }
 
-            is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KtScopeKind.PackageMemberScope(scopeIndex), token)
+            is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KaScopeKind.PackageMemberScope(scopeIndex), token)
             else -> null
         }
     }
@@ -45,7 +45,7 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
 
 internal data class KtClassifierSymbolWithContainingScopeKind(
     private val _symbol: KtClassifierSymbol,
-    val scopeKind: KtScopeKind
+    val scopeKind: KaScopeKind
 ) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _symbol.token
@@ -54,7 +54,7 @@ internal data class KtClassifierSymbolWithContainingScopeKind(
 
 internal data class KtCallableSignatureWithContainingScopeKind(
     private val _signature: KtCallableSignature<*>,
-    val scopeKind: KtScopeKind
+    val scopeKind: KaScopeKind
 ) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _signature.token

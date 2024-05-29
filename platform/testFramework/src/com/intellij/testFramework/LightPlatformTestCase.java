@@ -461,14 +461,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
   }
 
-  /**
-   * @deprecated moved to {@link TestApplicationKt#clearEncodingManagerDocumentQueue(Application)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void clearEncodingManagerDocumentQueue() {
-    TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
-  }
-
   public static void clearUncommittedDocuments(@NotNull Project project) {
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
     documentManager.clearUncommittedDocuments();

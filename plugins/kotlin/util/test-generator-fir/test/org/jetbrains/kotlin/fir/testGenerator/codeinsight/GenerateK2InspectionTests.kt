@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2ActualExpectTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionAndGeneralHighlightingTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTe
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 
 
 internal fun MutableTWorkspace.generateK2InspectionTests() {
@@ -98,6 +100,10 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/multiFileLocalInspections/redundantQualifierName", pattern = pattern)
             model("code-insight/inspections-k2/tests/testData/multiFileInspectionsLocal", pattern = pattern)
         }
+
+        testClass<AbstractK2ActualExpectTest> {
+            model("code-insight/inspections-k2/tests/testData/multiplatform/actualExpect/", pattern = DIRECTORY, isRecursive = false)
+        }
     }
     testGroup("code-insight/inspections-k2/tests", category = QUICKFIXES, testDataPath = "../../..") {
         testClass<AbstractK2QuickFixTest> {
@@ -131,7 +137,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("inspections", pattern = pattern)
             model("inspectionsLocal", pattern = pattern)
         }
-
     }
 
     testGroup("code-insight/inspections-shared/tests/k2", category = HIGHLIGHTING, testDataPath = "../testData") {

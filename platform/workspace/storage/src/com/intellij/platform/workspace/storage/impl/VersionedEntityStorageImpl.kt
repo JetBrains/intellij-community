@@ -249,7 +249,7 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
                      beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
-    val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)
+    val change = VersionedStorageChangeImpl(oldCopy.storage, newStorage, changes)
     beforeChanged(change)
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
     afterChanged(change)
@@ -257,11 +257,10 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
 }
 
 private class VersionedStorageChangeImpl(
-  entityStorage: VersionedEntityStorage,
   override val storageBefore: ImmutableEntityStorage,
   override val storageAfter: ImmutableEntityStorage,
   private val changes: Map<Class<*>, List<EntityChange<*>>>
-) : VersionedStorageChange(entityStorage) {
+) : VersionedStorageChange {
   @Suppress("UNCHECKED_CAST")
   override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> {
     return (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()

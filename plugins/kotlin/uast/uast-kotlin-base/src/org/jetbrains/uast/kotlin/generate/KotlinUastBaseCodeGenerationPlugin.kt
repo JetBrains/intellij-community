@@ -3,13 +3,11 @@
 package org.jetbrains.uast.kotlin.generate
 
 import com.intellij.lang.Language
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -175,7 +173,7 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     protected abstract fun moveLambdaOutsideParenthesis(methodCall: KtCallExpression)
 
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
@@ -276,8 +274,14 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     override fun createStringLiteralExpression(text: String, context: PsiElement?): UExpression {
-        val literal = psiFactory(context).createExpression(StringUtil.wrapWithDoubleQuote(text)) as KtStringTemplateExpression
+        val literal = psiFactory(context).createExpression(StringUtil.wrapWithDoubleQuote(text.escape())) as KtStringTemplateExpression
         return KotlinStringTemplateUPolyadicExpression(literal, null)
+    }
+
+    private fun String.escape(): String {
+        val stringBuilder = StringBuilder()
+        StringUtil.escapeStringCharacters(this.length, this, "\"$", stringBuilder)
+        return stringBuilder.toString()
     }
 
     override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
@@ -292,6 +296,10 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory(context).createExpression("null").toUElementOfType()!!
     }
 
+    override fun createComment(text: String, context: PsiElement?): UComment {
+        return psiFactory(context).createComment(text).toUElementOfType()!!
+    }
+
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
         return psiFactory(context).createExpression(value.toString()).toUElementOfType()!!
     }
@@ -303,13 +311,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
             placeholder.replace(statement)
         }
         return blockExpression
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?): UIfExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createIfExpression(condition, thenBranch, elseBranch, null)
     }
 
     override fun createIfExpression(
@@ -334,46 +335,18 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         )
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createParenthesizedExpression(expression, null)
-    }
-
     override fun createParenthesizedExpression(expression: UExpression, context: PsiElement?): UParenthesizedExpression? {
         val source = expression.sourcePsi ?: return null
         val parenthesized = psiFactory(context).createExpression("(${source.text})") as? KtParenthesizedExpression ?: return null
         return KotlinUParenthesizedExpression(parenthesized, null)
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createSimpleReference(name: String): USimpleNameReferenceExpression {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createSimpleReference(name, null)
-    }
-
     override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression {
         return KotlinUSimpleReferenceExpression(psiFactory(context).createSimpleName(name), null)
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createSimpleReference(variable: UVariable): USimpleNameReferenceExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createSimpleReference(variable, null)
-    }
-
     override fun createSimpleReference(variable: UVariable, context: PsiElement?): USimpleNameReferenceExpression? {
         return createSimpleReference(variable.name ?: return null, context)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createReturnExpression(expression, inLambda, null)
     }
 
     override fun createReturnExpression(expression: UExpression?, inLambda: Boolean, context: PsiElement?): UReturnExpression {
@@ -386,17 +359,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
             returnExpression.returnedExpression?.delete()
         }
         return KotlinUReturnExpression(returnExpression, null)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createBinaryExpression(
-        leftOperand: UExpression,
-        rightOperand: UExpression,
-        operator: UastBinaryOperator
-    ): UBinaryExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createBinaryExpression(leftOperand, rightOperand, operator, null)
     }
 
     override fun createBinaryExpression(
@@ -424,17 +386,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return binaryExpression
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createFlatBinaryExpression(
-        leftOperand: UExpression,
-        rightOperand: UExpression,
-        operator: UastBinaryOperator
-    ): UPolyadicExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createFlatBinaryExpression(leftOperand, rightOperand, operator, null)
-    }
-
     override fun createFlatBinaryExpression(
         leftOperand: UExpression,
         rightOperand: UExpression,
@@ -454,13 +405,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory(context).createExpression(binaryExpression.text).toUElementOfType()!!
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createBlockExpression(expressions: List<UExpression>): UBlockExpression {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createBlockExpression(expressions, null)
-    }
-
     override fun createBlockExpression(expressions: List<UExpression>, context: PsiElement?): UBlockExpression {
         val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAndCommentsAware() }
         val block = psiFactory(context).createBlock(
@@ -470,13 +414,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
             placeholder.replace(psiElement)
         }
         return KotlinUBlockExpression(block, null)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createDeclarationExpression(declarations, null)
     }
 
     override fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression {
@@ -518,13 +455,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return ktLambdaExpression.toUElementOfType()!!
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression): ULambdaExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createLambdaExpression(parameters, body, null)
-    }
-
     override fun createLocalVariable(
         suggestedName: String?,
         type: PsiType?,
@@ -547,17 +477,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return newVariable.toUElementOfType<UVariable>() as ULocalVariable
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use version with context parameter")
-    fun createLocalVariable(
-        suggestedName: String?,
-        type: PsiType?,
-        initializer: UExpression,
-        immutable: Boolean
-    ): ULocalVariable {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createLocalVariable(suggestedName, type, initializer, immutable, null)
-    }
 }
 
 private inline fun <reified T : PsiElement> PsiElement.replaced(newElement: T): T {

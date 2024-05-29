@@ -60,7 +60,7 @@ public class JavaWithBlockSurrounder extends JavaStatementsModCommandSurrounder 
     PsiElement firstChild = blockStatement.getFirstChild();
     if (firstChild != null) {
       TextRange range = firstChild.getTextRange();
-      updater.moveCaretTo(range.getEndOffset());
+      updater.select(TextRange.from(range.getEndOffset(), 0));
     }
   }
 }

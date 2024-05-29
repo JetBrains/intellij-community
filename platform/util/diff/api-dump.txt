@@ -154,7 +154,6 @@ c:com.intellij.diff.fragments.DiffFragmentImpl
 - getEndOffset2():I
 - getStartOffset1():I
 - getStartOffset2():I
-- toString():java.lang.String
 com.intellij.diff.fragments.LineFragment
 - com.intellij.diff.fragments.DiffFragment
 - a:getEndLine1():I
@@ -176,7 +175,6 @@ c:com.intellij.diff.fragments.LineFragmentImpl
 - getStartLine2():I
 - getStartOffset1():I
 - getStartOffset2():I
-- toString():java.lang.String
 com.intellij.diff.fragments.MergeLineFragment
 - a:getEndLine(com.intellij.diff.util.ThreeSide):I
 - a:getStartLine(com.intellij.diff.util.ThreeSide):I
@@ -244,7 +242,6 @@ c:com.intellij.diff.util.MergeRange
 - equals(java.lang.Object):Z
 - hashCode():I
 - isEmpty():Z
-- toString():java.lang.String
 f:com.intellij.diff.util.MergeRangeUtil
 - s:compareWordMergeContents(com.intellij.diff.fragments.MergeWordFragment,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide):Z
 - s:getLineLeftToRightThreeSideDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
@@ -261,7 +258,6 @@ f:com.intellij.diff.util.Range
 - equals(java.lang.Object):Z
 - hashCode():I
 - isEmpty():Z
-- toString():java.lang.String
 e:com.intellij.diff.util.Side
 - java.lang.Enum
 - sf:LEFT:com.intellij.diff.util.Side
@@ -328,7 +324,6 @@ c:com.intellij.util.diff.Diff$Change
 - link:com.intellij.util.diff.Diff$Change
 - <init>(I,I,I,I,com.intellij.util.diff.Diff$Change):V
 - toList():java.util.ArrayList
-- toString():java.lang.String
 c:com.intellij.util.diff.Diff$ChangeBuilder
 - <init>(I):V
 - addChange(I,I):V

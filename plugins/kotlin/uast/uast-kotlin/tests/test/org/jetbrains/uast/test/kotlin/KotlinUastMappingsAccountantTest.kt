@@ -2,14 +2,15 @@
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import com.intellij.platform.uast.testFramework.common.PsiClassToString
 import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
 import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTestBase
 import com.intellij.platform.uast.testFramework.common.sourcesFromDirRecursive
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
@@ -30,6 +31,9 @@ class KotlinUastMappingsAccountantTest :
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     private val delegate by lazy(LazyThreadSafetyMode.NONE) {
         UastMappingsAccountantTest(

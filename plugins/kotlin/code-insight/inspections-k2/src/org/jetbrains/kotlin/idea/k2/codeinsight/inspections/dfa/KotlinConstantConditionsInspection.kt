@@ -323,7 +323,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val expression = entry.expression ?: return false
         return analyze(expression) {
             val missingCases = whenExpr.getMissingCases()
-            return@analyze missingCases.isEmpty() && expression.getKtType()?.isNothing == true
+            missingCases.isEmpty() && expression.getKtType()?.isNothing == true
         }
     }
 

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.IntroduceVariableUtil;
@@ -37,7 +38,7 @@ public class JavaWithNotSurrounder extends JavaExpressionModCommandSurrounder {
     ((PsiParenthesizedExpression)prefixExpr.getOperand()).getExpression().replace(expr);
     expr = (PsiExpression)IntroduceVariableUtil.replace(expr, prefixExpr, project);
     int offset = expr.getTextRange().getEndOffset();
-    updater.moveCaretTo(offset);
+    updater.select(TextRange.from(offset, 0));
   }
 
   @Override

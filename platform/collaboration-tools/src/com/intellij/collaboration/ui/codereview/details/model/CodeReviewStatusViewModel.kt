@@ -6,6 +6,13 @@ import kotlinx.coroutines.flow.SharedFlow
 
 interface CodeReviewStatusViewModel {
   val hasConflicts: SharedFlow<Boolean>
+
+  /**
+   * A flow or conversation resolution check
+   *
+   * IMPORTANT: meaning is flipped due to a naming typo
+   * false if every required conversation was resolved, true otherwise
+   */
   val requiredConversationsResolved: SharedFlow<Boolean>
 
   val ciJobs: SharedFlow<List<CodeReviewCIJob>>

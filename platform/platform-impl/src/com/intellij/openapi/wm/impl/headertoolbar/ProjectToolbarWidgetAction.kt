@@ -69,18 +69,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     super.updateCustomComponent(component, presentation)
 
     val widget = component as? ToolbarComboButton ?: return
-
-    widget.text = presentation.text
-    widget.toolTipText = presentation.description
-    widget.leftIcons = emptyList()
     widget.isOpaque = false
-
-    val customizer = ProjectWindowCustomizerService.getInstance()
-    val project = presentation.getClientProperty(projectKey)
-
-    if (project != null && customizer.isAvailable()) {
-      widget.leftIcons = listOf(customizer.getProjectIcon(project))
-    }
   }
 
   override fun update(e: AnActionEvent) {
@@ -89,6 +78,10 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.setText(projectName, false)
     e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
+    val customizer = ProjectWindowCustomizerService.getInstance()
+    if (project != null && customizer.isAvailable()) {
+      e.presentation.putClientProperty(LEFT_ICONS_KEY, listOf(customizer.getProjectIcon(project)))
+    }
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {

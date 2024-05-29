@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -19,7 +19,7 @@ class ResolveToDecompiledByAnalysisApiTest : KotlinLightCodeInsightFixtureTestCa
   )
 
   @TestMetadata("idea/tests/testData/decompiler/navigation/resolveByAnalysisApi/LambdaScope.kt")
-  @OptIn(KtAllowAnalysisOnEdt::class)
+  @OptIn(KaAllowAnalysisOnEdt::class)
   fun testLambdaScope() {
     myFixture.configureByFile(fileName())
     val reference = myFixture.getReferenceAtCaretPosition()!!

@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
   public void testFindingFile() {
@@ -150,7 +147,8 @@ public class IdeaGatewayTest extends IntegrationTestCase {
   public static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {
     List<String> result = new ArrayList<>();
     printAllPaths(rootEntry, result);
-    return StringUtil.join(ContainerUtil.sorted(result), "\n");
+    result.sort(Comparator.naturalOrder());
+    return StringUtil.join(result, "\n");
   }
 
   private static void printAllPaths(@NotNull Entry parentEntry, @NotNull List<String> result) {

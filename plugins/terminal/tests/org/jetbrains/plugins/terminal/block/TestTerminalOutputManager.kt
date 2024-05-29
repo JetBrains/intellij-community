@@ -15,7 +15,7 @@ import org.junit.Assert
 
 internal class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
   private val editor: EditorEx = createEditor(project, parentDisposable)
-  private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  private val outputModel: TerminalOutputModel = TerminalOutputModelImpl(editor)
 
   init {
     editor.highlighter = TerminalTextHighlighter(outputModel)
@@ -28,7 +28,7 @@ internal class TestTerminalOutputManager(project: Project, parentDisposable: Dis
     get() = editor.document
 
   fun createBlock(command: String?, output: TextWithHighlightings): Pair<CommandBlock, TextWithHighlightings> {
-    val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
+    val lastBlockEndOffset = outputModel.blocks.lastOrNull()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
     // Terminal width is important only when there is a right prompt
     val block = outputModel.createBlock(command, null, terminalWidth = 80)

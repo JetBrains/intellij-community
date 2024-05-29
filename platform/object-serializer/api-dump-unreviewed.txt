@@ -63,7 +63,6 @@ f:com.intellij.serialization.ReadConfiguration
 - bs:copy$default(com.intellij.serialization.ReadConfiguration,Z,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.serialization.ReadConfiguration
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 com.intellij.serialization.SerializationFilter
 - getSkipEmptyArray():Z
 - getSkipEmptyCollection():Z
@@ -95,7 +94,6 @@ f:com.intellij.serialization.VersionedFile
 - f:readList(java.lang.Class,com.intellij.serialization.ReadConfiguration):java.util.List
 - f:readList(java.lang.Class,com.intellij.serialization.ReadConfiguration,Z):java.util.List
 - bs:readList$default(com.intellij.serialization.VersionedFile,java.lang.Class,com.intellij.serialization.ReadConfiguration,Z,I,java.lang.Object):java.util.List
-- toString():java.lang.String
 - f:writeList(java.util.Collection,java.lang.Class):V
 - f:writeList(java.util.Collection,java.lang.Class,com.intellij.serialization.WriteConfiguration):V
 - bs:writeList$default(com.intellij.serialization.VersionedFile,java.util.Collection,java.lang.Class,com.intellij.serialization.WriteConfiguration,I,java.lang.Object):V
@@ -115,7 +113,6 @@ f:com.intellij.serialization.WriteConfiguration
 - bs:copy$default(com.intellij.serialization.WriteConfiguration,Z,com.intellij.serialization.SerializationFilter,Z,Z,I,java.lang.Object):com.intellij.serialization.WriteConfiguration
 - equals(java.lang.Object):Z
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.serialization.stateProperties.CollectionStoredProperty
 - com.intellij.openapi.components.StoredPropertyBase
 - <init>(java.util.Collection,java.lang.String):V
@@ -128,7 +125,6 @@ c:com.intellij.serialization.stateProperties.CollectionStoredProperty
 - isEqualToDefault():Z
 - setValue(com.intellij.openapi.components.BaseState,java.util.Collection):V
 - setValue(com.intellij.openapi.components.StoredProperty):Z
-- toString():java.lang.String
 f:com.intellij.serialization.stateProperties.EnumStoredProperty
 - com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
 - com.intellij.openapi.components.ScalarProperty
@@ -151,7 +147,6 @@ f:com.intellij.serialization.stateProperties.MapStoredProperty
 - isEqualToDefault():Z
 - setValue(com.intellij.openapi.components.BaseState,java.util.Map):V
 - setValue(com.intellij.openapi.components.StoredProperty):Z
-- toString():java.lang.String
 a:com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
 - com.intellij.openapi.components.StoredPropertyBase
 - <init>(java.lang.Object):V
@@ -163,4 +158,3 @@ a:com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
 - setValue(com.intellij.openapi.components.BaseState,java.lang.Object):V
 - setValue(com.intellij.openapi.components.StoredProperty):Z
 - pf:setValue(java.lang.Object):V
-- toString():java.lang.String

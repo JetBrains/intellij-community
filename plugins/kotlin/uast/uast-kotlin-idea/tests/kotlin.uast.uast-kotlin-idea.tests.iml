@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
   </component>
 </module>

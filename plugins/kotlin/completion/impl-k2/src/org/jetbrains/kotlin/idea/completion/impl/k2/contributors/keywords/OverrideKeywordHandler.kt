@@ -10,7 +10,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -177,7 +177,7 @@ internal class OverrideKeywordHandler(
         private val renderingOptionsForLookupElementRendering =
             KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
                 annotationRenderer = annotationRenderer.with {
-                    annotationFilter = KtRendererAnnotationsFilter.NONE
+                    annotationFilter = KaRendererAnnotationsFilter.NONE
                 }
                 modifiersRenderer = modifiersRenderer.with {
                     keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS) }

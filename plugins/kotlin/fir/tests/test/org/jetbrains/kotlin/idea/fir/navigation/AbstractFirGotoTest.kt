@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.fir.navigation
 
 
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -10,7 +9,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractFirGotoTest: AbstractKotlinGotoTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getIgnoreDirective(): String = "IGNORE_K2"
 
@@ -20,8 +18,8 @@ abstract class AbstractFirGotoTest: AbstractKotlinGotoTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 }

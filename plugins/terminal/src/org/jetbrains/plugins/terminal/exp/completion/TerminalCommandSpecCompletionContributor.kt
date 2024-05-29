@@ -11,11 +11,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
@@ -26,8 +27,8 @@ import java.io.File
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
-    val runtimeContextProvider = parameters.editor.getUserData(IJShellRuntimeContextProvider.KEY)
-    val generatorsExecutor = parameters.editor.getUserData(IJShellGeneratorsExecutor.KEY)
+    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY)
+    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY)
     val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||
@@ -37,6 +38,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         parameters.completionType != CompletionType.BASIC) {
       return
     }
+    if (parameters.editor.getUserData(TerminalCommandCompletionAction.SUPPRESS_COMPLETION) == true) {
+      result.stopHere()
+      return
+    }
+
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
     val context = TerminalCompletionContext(session, runtimeContextProvider, generatorsExecutor, shellSupport, parameters)
 
@@ -73,7 +79,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     }
 
     val runtimeContext = context.runtimeContextProvider.getContext(expandedTokens.last())
-    val completion = ShellCommandSpecCompletion(IJShellCommandSpecsManager.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
+    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
     val command = expandedTokens.first()
     val arguments = expandedTokens.subList(1, expandedTokens.size)
     if (arguments.isEmpty()) {
@@ -160,8 +166,8 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
   private class TerminalCompletionContext(
     val session: BlockTerminalSession,
-    val runtimeContextProvider: IJShellRuntimeContextProvider,
-    val generatorsExecutor: IJShellGeneratorsExecutor,
+    val runtimeContextProvider: ShellRuntimeContextProviderImpl,
+    val generatorsExecutor: ShellDataGeneratorsExecutorImpl,
     val shellSupport: TerminalShellSupport,
     val parameters: CompletionParameters
   ) {

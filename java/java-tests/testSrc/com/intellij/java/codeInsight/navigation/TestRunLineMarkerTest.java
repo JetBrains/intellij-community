@@ -104,14 +104,78 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testDisabledTestMethodWithGradleConfiguration() {
-    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 0);
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 0, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+      
+      class DisabledMethodTest {
+        @Disabled
+        @Test
+        public void testDisabled<caret>() {}
+      }
+      """);
   }
 
   public void testDisabledTestMethodWithJunitConfiguration() {
-    doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1);
+    doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+     
+      class DisabledMethodTest {
+        @Disabled
+        @Test
+        public void testDisabled<caret>() {}
+      }
+     """);
   }
 
-  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount) {
+  public void testDisabledTestClassWithGradleConfiguration() {
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 0, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+      
+      class Disabled<caret>MethodTest {
+        @Disabled
+        @Test
+        public void testDisabled() {}
+      
+        @Disabled
+        @Test
+        public void testAlsoDisabled() {}
+      }
+      """);
+  }
+
+  public void testDisabledTestClassWithNonDisabledTestGradleConfiguration() {
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+      
+      class Disabled<caret>MethodTest {
+        @Disabled
+        @Test
+        public void testDisabled() {}
+      
+        @Test
+        public void testNotDisabled() {}
+      }
+      """);
+  }
+
+  public void testDisabledTestClassWithJunitConfiguration() {
+    doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+     
+      class Disabled<caret>MethodTest {
+        @Disabled
+        @Test
+        public void testDisabled() {}
+      }
+     """);
+  }
+
+  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
 
@@ -122,15 +186,7 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     myTempSettings.add(runnerAndConfigurationSettings);
     manager.setSelectedConfiguration(runnerAndConfigurationSettings);
 
-    myFixture.configureByText("DisabledMethodTest.java", """
-      import org.junit.jupiter.api.Disabled;
-      import org.junit.jupiter.api.Test;
-      class DisabledMethodTest {
-        @Disabled
-        @Test
-        public void testDisabled<caret>() {}
-      }
-      """);
+    myFixture.configureByText("DisabledMethodTest.java", testClass);
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(marksCount, marks.size());
   }

@@ -89,7 +89,7 @@ private class EnsureInstalledWrapperExecutionTask(
   }
 
   private fun ensureInstalledWrapper(listener: ExternalSystemTaskNotificationListener) {
-    GradleExecutionHelper().ensureInstalledWrapper(
+    GradleWrapperHelper.ensureInstalledWrapper(
       id,
       externalProjectPath,
       createExecutionSettings(),

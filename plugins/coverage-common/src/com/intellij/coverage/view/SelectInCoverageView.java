@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class SelectInCoverageView implements SelectInTarget {
+final class SelectInCoverageView implements SelectInTarget {
   private final Project myProject;
 
   private SelectInCoverageView(@NotNull Project project) {
@@ -42,6 +42,7 @@ public final class SelectInCoverageView implements SelectInTarget {
     for (CoverageSuitesBundle suitesBundle : manager.activeSuites()) {
       final CoverageViewManager coverageViewManager = CoverageViewManager.getInstance(myProject);
       final CoverageView coverageView = coverageViewManager.getView(suitesBundle);
+      if (coverageView == null) return;
       coverageView.select(context.getVirtualFile());
       if (requestFocus) {
         ApplicationManager.getApplication().invokeLater(() -> coverageViewManager.activateToolwindow(coverageView));

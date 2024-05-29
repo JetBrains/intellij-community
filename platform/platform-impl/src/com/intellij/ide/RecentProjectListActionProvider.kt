@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
@@ -115,10 +116,13 @@ open class RecentProjectListActionProvider {
     var branch: String? = null
 
     if (displayName.isNullOrBlank()) {
-      displayName = if(duplicates.contains(projectName)) {
-        branch = recentProjectManager.getCurrentBranchName(path)
+      displayName = if (duplicates.contains(projectName)) {
+        if (Registry.`is`("ide.welcom.screen.branch.name", false)) {
+          branch = recentProjectManager.getCurrentBranchName(path)
+        }
         FileUtil.toSystemDependentName(path)
-      } else projectName
+      }
+      else projectName
     }
 
     // It's better don't to remove non-existent projects. Sometimes projects stored

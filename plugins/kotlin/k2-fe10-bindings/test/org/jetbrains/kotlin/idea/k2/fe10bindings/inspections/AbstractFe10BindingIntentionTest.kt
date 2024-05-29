@@ -3,19 +3,17 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.mock.MockProject
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
 
 abstract class AbstractFe10BindingIntentionTest : AbstractIntentionTestBase() {
-    override fun isFirPlugin() = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

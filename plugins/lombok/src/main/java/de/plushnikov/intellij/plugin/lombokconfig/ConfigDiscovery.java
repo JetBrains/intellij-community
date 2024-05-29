@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.lombokconfig;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -124,6 +125,9 @@ public class ConfigDiscovery {
 
   @Nullable
   private ConfigValue readProperty(@NotNull ConfigKey configKey, @NotNull Project project, @NotNull VirtualFile directory) {
+    if (DumbService.getInstance(project).isAlternativeResolveEnabled()) {
+      return LombokConfigIndex.readPropertyWithAlternativeResolver(configKey, project, directory);
+    }
     GlobalSearchScope directoryScope = GlobalSearchScopes.directoryScope(project, directory, false);
     List<ConfigValue> values = getFileBasedIndex().getValues(LombokConfigIndex.NAME, configKey, directoryScope);
     if (!values.isEmpty()) {

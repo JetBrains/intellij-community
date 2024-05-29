@@ -11,6 +11,8 @@ import com.intellij.psi.*
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -24,7 +26,8 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import kotlin.test.fail as kfail
 
-interface UastApiTestBase : UastPluginSelection {
+interface UastApiTestBase : ExpectedPluginModeProvider {
+
     fun checkCallbackForAnnotationParameters(uFilePath: String, uFile: UFile) {
         val annotation = uFile.findElementByText<UAnnotation>("@IntRange(from = 10, to = 0)")
         TestCase.assertEquals(10L, annotation.findAttributeValue("from")?.evaluate())
@@ -260,7 +263,7 @@ interface UastApiTestBase : UastPluginSelection {
                     ?: throw AssertionError("haven't got annotation from $referenceExpression(${referenceExpression?.javaClass})")
 
                 // NB: descriptor is FE 1.0 thing, not FIR.
-                if (!isFirUastPlugin) {
+                if (pluginMode == KotlinPluginMode.K1) {
                     checkDescriptorsLeak(convertedUAnnotation)
                 }
                 TestCase.assertEquals("Annotation", convertedUAnnotation.qualifiedName)

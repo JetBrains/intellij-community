@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
 
-    private val createFunctionForArgumentTypeMismatch: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ArgumentTypeMismatch> =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    private val createFunctionForArgumentTypeMismatch: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ArgumentTypeMismatch> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
             val psi = diagnostic.psi
             val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
             if (callExpression == null) {
@@ -22,8 +22,8 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
-    private val createFunctionForTooManyArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.TooManyArguments> =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.TooManyArguments ->
+    private val createFunctionForTooManyArguments: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.TooManyArguments> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.TooManyArguments ->
             val psi = diagnostic.psi
             val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
             if (callExpression == null) {
@@ -32,8 +32,8 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
-    private val createFunctionForNoValueForParameter: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NoValueForParameter> =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoValueForParameter ->
+    private val createFunctionForNoValueForParameter: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoValueForParameter> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoValueForParameter ->
             val psi = diagnostic.psi
             val expression = if (psi is KtQualifiedExpression) psi.selectorExpression else psi
             val callExpression = PsiTreeUtil.getParentOfType(expression, KtCallExpression::class.java, false)
@@ -43,17 +43,17 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
-    private val createVariableForExpressionExpectedPackageFound: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ExpressionExpectedPackageFound> =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ExpressionExpectedPackageFound ->
+    private val createVariableForExpressionExpectedPackageFound: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ExpressionExpectedPackageFound> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ExpressionExpectedPackageFound ->
             listOfNotNull(K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(diagnostic.psi)) +
             listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterAction(diagnostic.psi))
         }
-    private val createParameterForNamedParameterNotFound: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NamedParameterNotFound> =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NamedParameterNotFound ->
+    private val createParameterForNamedParameterNotFound: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NamedParameterNotFound> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NamedParameterNotFound ->
             listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterActionForNamedParameterNotFound(diagnostic.psi))
         }
-    private val createParameterForComponentFunctionMissing: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ComponentFunctionMissing> =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ComponentFunctionMissing ->
+    private val createParameterForComponentFunctionMissing: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionMissing> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ComponentFunctionMissing ->
             listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterActionForComponentFunctionMissing(diagnostic.psi, diagnostic.destructingType))
         }
 

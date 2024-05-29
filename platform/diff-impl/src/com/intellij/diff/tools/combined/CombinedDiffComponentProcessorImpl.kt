@@ -28,11 +28,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.JComponent
 
 private val LOG = logger<CombinedDiffComponentProcessor>()
 
+@ApiStatus.Experimental
 interface CombinedDiffManager {
   fun createProcessor(diffPlace: String? = null): CombinedDiffComponentProcessor
 
@@ -42,6 +44,7 @@ interface CombinedDiffManager {
   }
 }
 
+@ApiStatus.Internal
 class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
                                          goToChangeAction: AnAction?) : CombinedDiffComponentProcessor {
 
@@ -262,6 +265,7 @@ data class CombinedDiffEditorState(
   }
 }
 
+@ApiStatus.Experimental
 interface CombinedDiffComponentProcessor : DiffEditorViewer {
   val blocks: List<CombinedBlockProducer>
 

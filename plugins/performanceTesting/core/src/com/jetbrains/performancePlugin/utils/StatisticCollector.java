@@ -9,11 +9,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class StatisticCollector {
   private final Project project;
@@ -22,13 +23,13 @@ public class StatisticCollector {
     this.project = project;
   }
 
-  private static Holder analyzeFiles(VirtualFile file) {
+  private @NotNull Holder analyzeFiles() {
     final Holder holder = new Holder();
-    VfsUtilCore.iterateChildrenRecursively(file, null, virtualFile -> {
-      if (virtualFile.is(VFileProperty.SYMLINK) && !virtualFile.is(VFileProperty.HIDDEN)) {
+    ProjectFileIndex.getInstance(project).iterateContent(fileOrDir -> {
+      if (fileOrDir.is(VFileProperty.SYMLINK) && !fileOrDir.is(VFileProperty.HIDDEN)) {
         holder.setSymlink();
       }
-      if (!virtualFile.isDirectory()) {
+      if (!fileOrDir.isDirectory()) {
         holder.increaseByOne();
       }
       return true;
@@ -42,7 +43,7 @@ public class StatisticCollector {
 
     VirtualFile baseDir = ProjectUtil.guessProjectDir(project);
     if (baseDir != null) {
-      Holder holder = analyzeFiles(baseDir);
+      Holder holder = analyzeFiles();
       output.append("Filesystem Info:\n");
       output.append("File system is case sensitive: ").append(baseDir.getFileSystem().isCaseSensitive()).append('\n');
       output.append("File is case sensitive: ").append(baseDir.isCaseSensitive()).append('\n');

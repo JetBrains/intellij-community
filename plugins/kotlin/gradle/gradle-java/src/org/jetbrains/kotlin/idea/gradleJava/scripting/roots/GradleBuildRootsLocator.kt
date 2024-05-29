@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
+import kotlin.script.experimental.api.valueOrNull
 
 /**
  * Internal logic about finding script root for [GradleBuildRootsManager].
@@ -109,7 +113,13 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             get() = nearest != null && nearest.isImportingInProgress()
 
         private val isImported: Boolean
-            get() = script != null
+            get() {
+                if (KotlinPluginModeProvider.isK2Mode()) {
+                    val virtualFile = StandardFileSystems.local()?.refreshAndFindFileByPath(filePath) ?: return false
+                    return K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
+                }
+                return script != null
+            }
 
         private val wasImportedAndNotEvaluated: Boolean
             get() = nearest is Imported &&

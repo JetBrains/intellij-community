@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.descriptors.Modality
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 
 internal object SuperClassNotInitializedFactories {
 
-    val addParenthesis = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.SupertypeNotInitialized ->
+    val addParenthesis = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SupertypeNotInitialized ->
         val typeReference = diagnostic.psi
         val superTypeEntry = typeReference.parent as? KtSuperTypeEntry
             ?: return@ModCommandBased emptyList()

@@ -389,7 +389,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean underlyingTypeChanged() {
-      return !Objects.equals(past.getUnderlyingType(), now.getUnderlyingType());
+      return !kmTypesEqual(past.getUnderlyingType(), now.getUnderlyingType());
     }
   }
 
@@ -456,11 +456,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !nullabilityChanged() && !visibilityChanged() && !customAccessorAdded();
+      return !typeChanged() && !visibilityChanged() && !customAccessorAdded();
     }
 
-    public boolean nullabilityChanged() {
-      return !Objects.equals(past.getReturnType(), now.getReturnType());
+    public boolean typeChanged() {
+      return !kmTypesEqual(past.getReturnType(), now.getReturnType());
     }
 
     public boolean becameNullable() {

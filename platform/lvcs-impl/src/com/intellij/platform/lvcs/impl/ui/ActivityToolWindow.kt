@@ -18,7 +18,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 
-object ActivityToolWindow {
+internal object ActivityToolWindow {
   private const val TOOLWINDOW_ID: String = "Activity" // NON-NLS
 
   @JvmStatic

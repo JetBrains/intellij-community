@@ -26,7 +26,7 @@ Read the [Troubleshooting Guide](#troubleshooting) for answers to common questio
 - [Code Navigation](#code-navigation) Navigate through your codebase with Go to Definition and Symbol support
 - [Code Formatting](#code-formatting) Format your code with `terraform fmt` automatically
 - [Code Snippets](#code-snippets) Shortcuts for common snippets like `for_each` and `variable`
-- [Terraform Cloud Integration](#terraform-cloud-integration) View Terraform Cloud Workspaces and Run details inside VS Code
+- [HCP Terraform Integration](#hcp-terraform-integration) View HCP Terraform Workspaces and Run details inside VS Code
 - [Terraform Module Explorer](#terraform-module-and-provider-explorer) View all modules and providers referenced in the currently open document.
 - [Terraform commands](#terraform-commands) Directly execute commands like `terraform init` or `terraform plan` from the VS Code Command Palette.
 
@@ -115,13 +115,13 @@ The extension provides several snippets to accelerate adding Terraform code to y
 - `vare` - Empty variable
 - `varm` - Map Variable
 
-### Terraform Cloud Integration
+### HCP Terraform Integration
 
-Every time you have to switch away from your code, you risk losing momentum and the context about your tasks. Previously, Terraform users needed to have at least two windows open – their editor and a web page – to develop Terraform code. The editor contains all of the Terraform code they are working on, and the web page has the Terraform Cloud workspace loaded. Switching back and forth between the Terraform Cloud website and the text editor can be a frustrating and fragmented experience.
+Every time you have to switch away from your code, you risk losing momentum and the context about your tasks. Previously, Terraform users needed to have at least two windows open – their editor and a web page – to develop Terraform code. The editor contains all of the Terraform code they are working on, and the web page has the HCP Terraform workspace loaded. Switching back and forth between the HCP Terraform website and the text editor can be a frustrating and fragmented experience.
 
-The Terraform Cloud Visual Studio Code integration improves user experience by allowing users to view workspaces directly from within Visual Studio Code. Users can view the status of current and past runs and inspect detailed logs – without ever leaving the comfort of their editor.
+The HCP Terraform Visual Studio Code integration improves user experience by allowing users to view workspaces directly from within Visual Studio Code. Users can view the status of current and past runs and inspect detailed logs – without ever leaving the comfort of their editor.
 
-To start using Terraform Cloud with VS Code, open the new Terraform Cloud sidebar and click "Login to Terraform Cloud". You can login using a stored token from the Terraform CLI, an existing token you provide, or open the Terraform Cloud website to generate a new token.
+To start using HCP Terraform with VS Code, open the new HCP Terraform sidebar and click "Login to HCP Terraform". You can login using a stored token from the Terraform CLI, an existing token you provide, or open the HCP Terraform website to generate a new token.
 
 ![](docs/tfc/login_view.gif)
 
@@ -141,7 +141,7 @@ If a Run has been Planned or Applied, you can view the raw log for each by expan
 
 ![](docs/tfc/plan_apply_view.gif)
 
-To sign out or log out of your Terraform Cloud session, click the Accounts icon next to the Settings icon in the Activity Bar and select "Sign Out":
+To sign out or log out of your HCP Terraform session, click the Accounts icon next to the Settings icon in the Activity Bar and select "Sign Out":
 
 ![](docs/tfc/log_out.png)
 
@@ -178,7 +178,7 @@ The Terraform VS Code extension bundles the [Terraform Language Server](https://
 
 The extension does require the following to be installed before use:
 
-- VS Code v1.82 or greater
+- VS Code v1.86 or greater
 - Terraform v0.12 or greater
 
 ## Platform Support

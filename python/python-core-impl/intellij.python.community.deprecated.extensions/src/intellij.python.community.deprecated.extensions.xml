@@ -2,6 +2,7 @@
   <!--This module will be removed soon, do not use it-->
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.python-pro-fleet-not-capable"/>
     <module name="intellij.python.community.impl"/>
   </dependencies>
 </idea-plugin>

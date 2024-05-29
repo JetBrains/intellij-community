@@ -49,6 +49,10 @@ abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
     TestUnknownSdkResolver.unknownSdkFixMode = TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
   }
 
+  override fun installGradleJvmConfigurator() {
+    // The Gradle JVM is configured during the test execution by the [resolveRealTestSdk] function
+  }
+
   suspend fun loadProject() {
     awaitAnyGradleProjectReload {
       linkAndSyncGradleProject(myProject, projectPath)

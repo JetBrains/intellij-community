@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -82,6 +81,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext;
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
@@ -101,7 +101,7 @@ public class UsageViewImpl implements UsageViewEx {
   private UsageGroupingRule[] myGroupingRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
   private final Factory<? extends UsageSearcher> myUsageSearcherFactory;
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   private volatile boolean mySearchInProgress = true;
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
@@ -109,8 +109,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (isDisposed()) {
       return;
     }
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
-    documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", this::updateImmediately);
+    updateImmediately();
   }, 300, this);
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
@@ -131,6 +130,11 @@ public class UsageViewImpl implements UsageViewEx {
     if (c != 0) return c;
     return o1.toString().compareTo(o2.toString());
   };
+
+  @ApiStatus.Internal
+  public int getFilteredOutNodeCount() {
+    return myBuilder.getFilteredUsagesCount();
+  }
 
   private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
     VirtualFile file1 = o1 instanceof UsageInFile ? ((UsageInFile)o1).getFile() : null;
@@ -185,6 +189,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   };
 
+  @ApiStatus.Internal
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
@@ -305,6 +310,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myUniqueIdentifier;
   }
   
+  @ApiStatus.Internal
   public JTree getTree() {
     return myTree;
   }
@@ -389,7 +395,7 @@ public class UsageViewImpl implements UsageViewEx {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (!isDisposed()) {
-          updateOnSelectionChanged();
+          updateOnSelectionChanged(myProject);
           myNeedUpdateButtons = true;
         }
       });
@@ -412,6 +418,7 @@ public class UsageViewImpl implements UsageViewEx {
     });
   }
 
+  @ApiStatus.Internal
   @NotNull
   public UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
@@ -722,7 +729,7 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     myCurrentUsageContextProvider = provider;
     updateUsagesContextPanels();
-    updateOnSelectionChanged();
+    updateOnSelectionChanged(myProject);
   }
 
   private void disposeUsageContextPanels() {
@@ -1270,6 +1277,7 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     myUsageNodes.clear();
     myModel.reset();
+    myBuilder.reset();
     synchronized (modelToSwingNodeChanges) {
       modelToSwingNodeChanges.clear();
     }
@@ -1488,7 +1496,7 @@ public class UsageViewImpl implements UsageViewEx {
     List<Node> toUpdate = new ArrayList<>();
     checkNodeValidity(root, new TreePath(root), toUpdate);
     queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
-    updateOnSelectionChanged();
+    updateOnSelectionChanged(myProject);
   }
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
@@ -1531,14 +1539,25 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
 
-  private void updateOnSelectionChanged() {
+  private void updateOnSelectionChanged(@NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     if (myCurrentUsageContextPanel != null) {
-      try {
-        myCurrentUsageContextPanel.updateLayout(ContainerUtil.notNullize(getSelectedUsageInfos()), this);
-      }
-      catch (IndexNotReadyException ignore) {
-      }
+      var dataContext = createAsyncDataContext(DataManager.getInstance().getDataContext(myRootPanel));
+      ReadAction.nonBlocking(() -> {
+          List<UsageInfo> result;
+          try {
+            result = ContainerUtil.notNullize(USAGE_INFO_LIST_KEY.getData(dataContext));
+          }
+          catch (IndexNotReadyException ignore) {
+            result = Collections.emptyList();
+          }
+          return result;
+        })
+        .expireWith(this)
+        .finishOnUiThread(ModalityState.current(), usageInfos -> {
+          myCurrentUsageContextPanel.updateLayout(project, usageInfos, this);
+        })
+        .submit(updateRequests);
     }
   }
 
@@ -1657,6 +1676,7 @@ public class UsageViewImpl implements UsageViewEx {
     return false;
   }
 
+  @ApiStatus.Internal
   public boolean isDisposed() {
     return isDisposed || myProject.isDisposed();
   }
@@ -1742,6 +1762,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myPresentation;
   }
 
+  @ApiStatus.Internal
   public boolean canPerformReRun() {
     if (myRerunAction != null && myRerunAction.isEnabled()) return allTargetsAreValid();
     try {
@@ -1941,6 +1962,11 @@ public class UsageViewImpl implements UsageViewEx {
     @Override
     public void dispose() {
       mySupport = null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -2210,11 +2236,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private List<UsageInfo> getSelectedUsageInfos() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
-  }
-
   @NotNull Set<@NotNull GroupNode> selectedGroupNodes() {
     return selectedNodes().stream().filter(node -> node instanceof GroupNode).map(node -> (GroupNode)node)
       .collect(Collectors.toCollection(HashSet::new));
@@ -2243,6 +2264,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myPresentation.isMergeDupLinesAvailable() && getUsageViewSettings().isFilterDuplicatedLine();
   }
 
+  @ApiStatus.Internal
   public Usage getNextToSelect(@NotNull Usage toDelete) {
     ThreadingAssertions.assertEventDispatchThread();
     UsageNode usageNode = myUsageNodes.get(toDelete);
@@ -2254,6 +2276,7 @@ public class UsageViewImpl implements UsageViewEx {
     return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
   }
 
+  @ApiStatus.Internal
   public Usage getNextToSelect(@NotNull Collection<? extends Usage> toDelete) {
     ThreadingAssertions.assertEventDispatchThread();
     Usage toSelect = null;

@@ -4,7 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 
 class JChangesListViewUi(data: ComponentData) : JTreeUiComponent(data) {
-  val changesFixture = driver.new(JChangesListViewFixtureRef::class, robotService.robot, component)
+  val changesFixture = driver.new(JChangesListViewFixtureRef::class, robot, component)
   fun addFileName(fileName: String) {
     changesFixture.addFileName(fileName)
   }

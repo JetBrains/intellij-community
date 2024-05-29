@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.modules
 
@@ -8,14 +8,15 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.impl.light.LightJavaModule
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
 import org.jetbrains.kotlin.load.java.structure.JavaAnnotation
 import org.jetbrains.kotlin.load.java.structure.impl.JavaAnnotationImpl
 import org.jetbrains.kotlin.load.java.structure.impl.convert
 import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
-import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -23,7 +24,9 @@ import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 import java.util.concurrent.ConcurrentHashMap
 
 class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
-    private val virtualFileFinder by lazy { VirtualFileFinder.getInstance(project) }
+    private val virtualFileFinder by lazy {
+        IdeVirtualFileFinder(GlobalSearchScope.allScope(project))
+    }
 
     private val modulesAnnotationCache = ConcurrentHashMap<ClassId, List<JavaAnnotation>>()
 

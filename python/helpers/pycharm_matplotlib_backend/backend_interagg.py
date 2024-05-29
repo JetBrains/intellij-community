@@ -1,4 +1,6 @@
 import base64
+import io
+
 import matplotlib
 import os
 import sys
@@ -79,10 +81,11 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
     def show(self):
         FigureCanvasAgg.draw(self)
 
-        if matplotlib.__version__ < '1.2':
-            buffer = self.tostring_rgb(0, 0)
-        else:
-            buffer = self.tostring_rgb()
+        buf = io.BytesIO()
+        self.print_png(buf)
+        buf.seek(0)
+        buffer = buf.read()
+        buf.close()
 
         if len(set(buffer)) <= 1:
             # do not plot empty
@@ -162,7 +165,7 @@ class DisplayDataObject:
             'image_base64': image_bytes_base64,
             'html_string': self.html_string
         }
-        return ('pycharm-plot-image', body)
+        return ('pycharm-matplotlib', body)
 
 
 FigureCanvas = FigureCanvasAgg

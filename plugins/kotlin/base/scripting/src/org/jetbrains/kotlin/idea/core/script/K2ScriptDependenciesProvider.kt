@@ -13,9 +13,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.*
 import java.io.File
 import java.nio.file.Path
@@ -101,6 +103,20 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
 
     private val configurationsByFile = ConcurrentHashMap<VirtualFile, ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>>()
 
+    fun addConfiguration(script: SourceCode): ScriptCompilationConfigurationResult {
+        val definition = findScriptDefinition(project, script)
+        val virtualFile = script.getVirtualFile(definition)
+
+        val previousConfiguration = getConfiguration(virtualFile)
+        val configuration = project.runReadActionInSmartMode {
+            refineScriptCompilationConfiguration(script, definition, project, previousConfiguration?.valueOrNull()?.configuration)
+        }
+
+        configurationsByFile[virtualFile] = configuration
+
+        return configuration
+    }
+
     fun reloadConfigurations(scripts: Set<ScriptModel>, javaHome: String?) {
         val classes = mutableSetOf<VirtualFile>()
         val sources = mutableSetOf<VirtualFile>()
@@ -112,9 +128,7 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
             for (script in scripts) {
 
                 val sourceCode = VirtualFileScriptSource(script.virtualFile)
-                val definition = K2ScriptDefinitionProvider.getInstance(project).let {
-                    it.findDefinition(sourceCode) ?: it.getDefaultDefinition()
-                }
+                val definition = findScriptDefinition(project, sourceCode)
 
                 val configuration = configurationsByFile[script.virtualFile]?.valueOrNull()?.configuration
                     ?: definition.compilationConfiguration.with {
@@ -127,7 +141,7 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                     }.adjustByDefinition(definition)
 
                 val updatedConfiguration =
-                    refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+                    project.runReadActionInSmartMode { refineScriptCompilationConfiguration(sourceCode, definition, project, configuration) }
                 configurationsByFile[script.virtualFile] = updatedConfiguration
 
                 val configurationWrapper = updatedConfiguration.valueOrNull() ?: continue
@@ -158,7 +172,9 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
         configurationsByFile[virtualFile]
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? =
-        configurationsByFile[file.virtualFile]
+        configurationsByFile[file.alwaysVirtualFile]
+
+    private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
 
     companion object {
         fun getInstance(project: Project): K2ScriptDependenciesProvider =

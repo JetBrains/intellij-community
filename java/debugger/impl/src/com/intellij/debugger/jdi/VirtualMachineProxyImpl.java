@@ -5,10 +5,7 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -19,9 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequestManager;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +28,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
   private int myTimeStamp = 0;
-  private int myPausePressedCount = 0;
+  private int myModelSuspendCount = 0;
 
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
@@ -170,6 +165,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return new ArrayList<>(myAllThreads.values());
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull Collection<ThreadReferenceProxyImpl> getEvenDirtyAllThreads() {
+    return myAllThreads.values();
+  }
+
   public CompletableFuture<Collection<ThreadReferenceProxyImpl>> allThreadsAsync() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myAllThreadsDirty) {
@@ -199,7 +200,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return;
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myPausePressedCount++;
+    myModelSuspendCount++;
     myVirtualMachine.suspend();
     clearCaches();
   }
@@ -209,14 +210,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return;
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myPausePressedCount > 0) {
-      myPausePressedCount--;
+    if (myModelSuspendCount <= 0) {
+      DebuggerDiagnosticsUtil.logError(myDebugProcess, "Negative global suspend count number!");
+    }
+    if (myModelSuspendCount > 0) {
+      myModelSuspendCount--;
     }
     clearCaches();
     LOG.debug("before resume VM");
     DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
       if (throwable != null && !(DebuggerUtilsAsync.unwrap(throwable) instanceof RejectedExecutionException)) {
-        LOG.error(throwable);
+        DebuggerDiagnosticsUtil.logError(myDebugProcess, "Error on resume", throwable);
       }
       LOG.debug("VM resumed");
     });
@@ -492,7 +496,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean isPausePressed() {
-    return myPausePressedCount > 0;
+    return myModelSuspendCount > 0;
   }
 
   public boolean isSuspended() {
@@ -507,5 +511,20 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         }
       }
     }
+  }
+
+  public int getModelSuspendCount() {
+    return myModelSuspendCount;
+  }
+
+  public void addedSuspendAllContext() {
+    myModelSuspendCount++;
+  }
+
+  public void resumedSuspendAllContext() {
+    if (myModelSuspendCount <= 0) {
+      DebuggerDiagnosticsUtil.logError(myDebugProcess, "Negative global suspend count number!");
+    }
+    myModelSuspendCount--;
   }
 }

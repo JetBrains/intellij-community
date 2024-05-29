@@ -96,7 +96,6 @@ f:com.intellij.tools.apiDump.testData.JRecord
 - <init>(I,I):V
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
-- f:toString():java.lang.String
 - x():I
 - y():I
 *c:com.intellij.tools.apiDump.testData.KtApiExperimentalClass

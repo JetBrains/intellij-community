@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import kotlin.reflect.KClass
 
 internal class UnusedVariableInspection :
-    KotlinDiagnosticBasedInspectionBase<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, Unit>() {
+    KotlinDiagnosticBasedInspectionBase<KtNamedDeclaration, KaFirDiagnostic.UnusedVariable, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -38,8 +38,8 @@ internal class UnusedVariableInspection :
         context: Unit,
     ): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
 
-    override val diagnosticType: KClass<KtFirDiagnostic.UnusedVariable>
-        get() = KtFirDiagnostic.UnusedVariable::class
+    override val diagnosticType: KClass<KaFirDiagnostic.UnusedVariable>
+        get() = KaFirDiagnostic.UnusedVariable::class
 
     override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRanges.declarationName(element)
@@ -47,7 +47,7 @@ internal class UnusedVariableInspection :
     context(KtAnalysisSession)
     override fun prepareContextByDiagnostic(
         element: KtNamedDeclaration,
-        diagnostic: KtFirDiagnostic.UnusedVariable,
+        diagnostic: KaFirDiagnostic.UnusedVariable,
     ): Unit? {
         val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return null
         val typeReference = ktProperty.typeReference ?: return Unit

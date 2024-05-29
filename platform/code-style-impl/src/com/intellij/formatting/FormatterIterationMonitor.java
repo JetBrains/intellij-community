@@ -8,14 +8,14 @@ import org.jetbrains.annotations.NotNull;
  * Prevents formatter from endlessly doing some iterations for some specific and probably erroneous models, for e.g. with
  * unrestricted block nesting, wrapping, etc.
  */
-public final class FormatterIterationMonitor<T> {
+final class FormatterIterationMonitor<T> {
   private static final Logger LOG = Logger.getInstance(FormatterIterationMonitor.class);
 
   private int myIterations;
   private final int myMaxIterations;
   private final T myFallbackValue;
 
-  public FormatterIterationMonitor(int maxIterations, @NotNull T fallbackValue) {
+  FormatterIterationMonitor(int maxIterations, @NotNull T fallbackValue) {
     myMaxIterations = maxIterations;
     myFallbackValue = fallbackValue;
   }

@@ -51,6 +51,7 @@ public abstract class FormatterEx implements Formatter {
                                          final PsiFile file,
                                          final TextRange textRange);
 
+  @ApiStatus.Internal
   public abstract void setProgressTask(@NotNull FormattingProgressCallback progressIndicator);
 
   /**

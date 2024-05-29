@@ -31,7 +31,6 @@ a:com.intellij.openapi.diff.impl.patch.FilePatch
 - setBeforeName(java.lang.String):V
 - setBeforeVersionId(java.lang.String):V
 - setNewFileMode(I):V
-- toString():java.lang.String
 com.intellij.openapi.diff.impl.patch.PatchEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:consumeContentBeforePatchApplied(com.intellij.openapi.project.Project,java.lang.String,java.lang.CharSequence,com.intellij.openapi.vcs.changes.CommitContext):V
@@ -69,7 +68,6 @@ c:com.intellij.openapi.diff.impl.patch.PatchLine
 - getType():com.intellij.openapi.diff.impl.patch.PatchLine$Type
 - isSuppressNewLine():Z
 - setSuppressNewLine(Z):V
-- toString():java.lang.String
 e:com.intellij.openapi.diff.impl.patch.PatchLine$Type
 - java.lang.Enum
 - sf:ADD:com.intellij.openapi.diff.impl.patch.PatchLine$Type
@@ -120,7 +118,6 @@ f:com.intellij.openapi.vcs.VcsKey
 - equals(java.lang.Object):Z
 - getName():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - com.intellij.openapi.vcs.changes.ContentRevision
 - a:getContentAsBytes():B[]
@@ -153,7 +150,6 @@ c:com.intellij.openapi.vcs.changes.Change
 - isMoved():Z
 - isRenamed():Z
 - setIsReplaced(Z):V
-- toString():java.lang.String
 e:com.intellij.openapi.vcs.changes.Change$Type
 - java.lang.Enum
 - sf:DELETED:com.intellij.openapi.vcs.changes.Change$Type
@@ -187,7 +183,6 @@ c:com.intellij.openapi.vcs.history.VcsRevisionNumber$Int
 - getLongRevisionNumber():J
 - getValue():I
 - hashCode():I
-- toString():java.lang.String
 c:com.intellij.openapi.vcs.history.VcsRevisionNumber$Long
 - com.intellij.openapi.vcs.history.LongRevisionNumber
 - com.intellij.openapi.vcs.history.VcsRevisionNumber
@@ -198,7 +193,6 @@ c:com.intellij.openapi.vcs.history.VcsRevisionNumber$Long
 - getLongRevisionNumber():J
 - getLongValue():J
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.openapi.vcs.impl.VcsPathPresenter
 - <init>():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsPathPresenter

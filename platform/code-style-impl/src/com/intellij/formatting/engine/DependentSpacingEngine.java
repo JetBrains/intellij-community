@@ -5,6 +5,7 @@ import com.intellij.formatting.DependantSpacingImpl;
 import com.intellij.formatting.SpacingImpl;
 import com.intellij.formatting.WhiteSpace;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,7 @@ import java.util.TreeMap;
  * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
  * formatting iteration.
  */
+@ApiStatus.Internal
 final class DependentSpacingEngine {
   private final BlockRangesMap myBlockRangesMap;
   

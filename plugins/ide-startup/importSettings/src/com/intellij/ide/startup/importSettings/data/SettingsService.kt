@@ -159,7 +159,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
 
   init {
     if (useMockDataForStartupWizard) {
-      jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+      jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com", "Alex Ivanovskii"))
     }
   }
 }

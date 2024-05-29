@@ -130,13 +130,6 @@ class PyDataView(private val project: Project) : DumbAware {
     }
 
     restoreSelectedInfo(handler)
-
-    if (contentManager.selectedContent == null) {
-      val accessor = getFrameAccessor(handler)
-      if (accessor != null) {
-        addTab(accessor)
-      }
-    }
   }
 
   private fun restoreSelectedInfo(handler: ProcessHandler) {

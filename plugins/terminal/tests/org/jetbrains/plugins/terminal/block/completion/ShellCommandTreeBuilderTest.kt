@@ -8,8 +8,8 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
+import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
 import org.junit.Test
@@ -18,7 +18,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 
 @RunWith(JUnit4::class)
-class ShellCommandTreeBuilderTest {
+internal class ShellCommandTreeBuilderTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
 
@@ -258,11 +258,9 @@ class ShellCommandTreeBuilderTest {
 
   private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) = runBlocking {
     // Mock fileSuggestionsGenerator result
-    val generatorCommandsRunner = object : ShellGeneratorCommandsRunner {
-      override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
-        val output = filePathSuggestions.joinToString("\n")
-        return ShellCommandResult.create(output, exitCode = 0)
-      }
+    val generatorCommandsRunner = TestGeneratorCommandsRunner {
+      val output = filePathSuggestions.joinToString("\n")
+      ShellCommandResult.create(output, exitCode = 0)
     }
     val fixture = ShellCommandTreeBuilderFixture(
       TestCommandSpecsManager(spec),

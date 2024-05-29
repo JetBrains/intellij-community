@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixture
 import java.io.File
 
 abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     fun getDoc(): String? {
         val target =
@@ -22,7 +21,7 @@ abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCod
     }
 
     fun doTest(path: String) {
-        val virtualFile = configureModuleStructure(path).second
+        val virtualFile = configureModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)

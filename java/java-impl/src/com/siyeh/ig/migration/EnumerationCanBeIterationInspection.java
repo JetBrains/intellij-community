@@ -12,21 +12,19 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class EnumerationCanBeIterationInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -39,7 +37,7 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
   static final @NonNls String VALUES_ITERATOR_TEXT = "values().iterator()";
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new EnumerationCanBeIterationFix();
   }
 
@@ -233,26 +231,15 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
       final Project project = manager.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
-      final Query<PsiReference> query = ReferencesSearch.search(
-        enumerationVariable);
-      final List<PsiElement> referenceElements = new ArrayList<>();
-      for (PsiReference reference : query) {
-        final PsiElement referenceElement = reference.getElement();
-        referenceElements.add(referenceElement);
-      }
+      final List<PsiReferenceExpression> referenceElements = VariableAccessUtils.getVariableReferences(enumerationVariable);
       referenceElements.sort(PsiElementOrderComparator.getInstance());
       int result = KEEP_NOTHING;
-      for (PsiElement referenceElement : referenceElements) {
-        if (!(referenceElement instanceof PsiReferenceExpression referenceExpression)) {
+      for (PsiReferenceExpression referenceExpression : referenceElements) {
+        if (referenceExpression.getTextOffset() <= startOffset) {
           result = KEEP_DECLARATION;
           continue;
         }
-        if (referenceElement.getTextOffset() <= startOffset) {
-          result = KEEP_DECLARATION;
-          continue;
-        }
-        final PsiElement referenceParent =
-          referenceExpression.getParent();
+        final PsiElement referenceParent = referenceExpression.getParent();
         if (!(referenceParent instanceof PsiReferenceExpression)) {
           if (referenceParent instanceof PsiAssignmentExpression) {
             result = KEEP_DECLARATION;

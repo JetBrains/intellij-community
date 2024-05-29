@@ -250,6 +250,9 @@
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4j2Logger"/>
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4jLogger"/>
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokApacheCommonsLogger"/>
+
+    <registryKey key="lombok.dumb.mode.enabled" defaultValue="true" restartRequired="true"
+                 description="Lombok augment works in dumb mode"/>
   </extensions>
 
   <projectListeners>

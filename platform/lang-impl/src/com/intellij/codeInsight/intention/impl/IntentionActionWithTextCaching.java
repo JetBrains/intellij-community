@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
@@ -32,8 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public final class IntentionActionWithTextCaching
-  implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider, IntentionActionDelegate {
+public final class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, ShortcutProvider, IntentionActionDelegate {
   private static final Logger LOG = Logger.getInstance(IntentionActionWithTextCaching.class);
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
@@ -133,11 +130,6 @@ public final class IntentionActionWithTextCaching
   }
 
   @Override
-  public boolean isDumbAware() {
-    return DumbService.isDumbAware(myAction);
-  }
-
-  @Override
   public @Nullable ShortcutSet getShortcut() {
     return getShortcutSet(myAction);
   }
@@ -176,6 +168,14 @@ public final class IntentionActionWithTextCaching
     return true;
   }
 
+  public boolean hasSeparatorAbove() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)action).hasSeparatorAbove();
+    }
+    return false;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -211,7 +211,7 @@ public final class IntentionActionWithTextCaching
 
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
   private final class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
-                                                   ShortcutProvider, PossiblyDumbAware {
+                                                   ShortcutProvider {
     private final IntentionAction myAction;
     private final @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
 
@@ -219,11 +219,6 @@ public final class IntentionActionWithTextCaching
                       @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
       myAction = action;
       myMarkInvoked = markInvoked;
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return DumbService.isDumbAware(myAction);
     }
 
     @Override

@@ -10,7 +10,7 @@ import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
  * on a local or a remote machine. Every instance corresponds to a single machine, i.e. unlike Run Targets, if IJent is launched
  * in a Docker container, every call to execute a process (see [IjentExecApi]) runs a command in the same Docker container.
  *
- * Usually, [IjentSessionProvider] creates instances of [IjentApi].
+ * Usually, [com.intellij.platform.ijent.deploy] creates instances of [IjentApi].
  */
 sealed interface IjentApi : AutoCloseable {
   val id: IjentId

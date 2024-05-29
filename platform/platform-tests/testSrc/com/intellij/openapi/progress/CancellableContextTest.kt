@@ -4,11 +4,14 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.progress.Cancellation.computeInNonCancelableSection
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @TestApplication
+@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class CancellableContextTest {
 
   @Test
@@ -18,7 +21,7 @@ class CancellableContextTest {
 
   @Test
   fun job(): Unit = timeoutRunBlocking {
-    assertFalse(isInCancellableContext())
+    assertTrue(isInCancellableContext())
     blockingContext {
       assertTrue(isInCancellableContext())
       computeInNonCancelableSection<Unit, Exception> {
@@ -26,12 +29,12 @@ class CancellableContextTest {
       }
       assertTrue(isInCancellableContext())
     }
-    assertFalse(isInCancellableContext())
+    assertTrue(isInCancellableContext())
   }
 
   @Test
   fun indicator() = timeoutRunBlocking {
-    assertFalse(isInCancellableContext())
+    assertTrue(isInCancellableContext())
     coroutineToIndicator {
       assertTrue(isInCancellableContext())
       computeInNonCancelableSection<Unit, Exception> {
@@ -39,6 +42,6 @@ class CancellableContextTest {
       }
       assertTrue(isInCancellableContext())
     }
-    assertFalse(isInCancellableContext())
+    assertTrue(isInCancellableContext())
   }
 }

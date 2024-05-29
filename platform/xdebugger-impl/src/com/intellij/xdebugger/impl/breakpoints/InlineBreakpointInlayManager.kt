@@ -283,8 +283,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     val variants =
       if (breakpointTypes.isNotEmpty()) {
         XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
-          // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
-          .filter { !it.isMultiVariant }
+          .filter { it.shouldUseAsInlineVariant() }
       }
       else {
         emptyList()
@@ -294,6 +293,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     // to the offset of that non-whitespace character.
     // Any breakpoint offset from the lines below the current line is normalized to the end of this line to prevent inlay migration (like IDEA-348719).
     val lineRange = DocumentUtil.getLineStartIndentedOffset(document, line)..document.getLineEndOffset(line)
+    assert(!lineRange.isEmpty())
 
     if (!shouldAlwaysShowAllInlays() &&
         breakpoints.size == 1 &&

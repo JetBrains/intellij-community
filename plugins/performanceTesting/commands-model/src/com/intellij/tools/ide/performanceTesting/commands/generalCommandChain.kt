@@ -73,7 +73,7 @@ fun <T : CommandChain> T.openFile(relativePath: String,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
                                   disableCodeAnalysis: Boolean = false): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
+  val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
   }
@@ -355,6 +355,10 @@ fun <T : CommandChain> T.openProjectView(): T = apply {
 
 fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = apply {
   addCommand("${CMD_PREFIX}getLibraryPathByName $name,$path")
+}
+
+fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: Path): T = apply {
+  addCommand("${CMD_PREFIX}convertJavaToKotlin $moduleName $filePath")
 }
 
 fun <T : CommandChain> T.pressKey(key: Keys): T = apply {

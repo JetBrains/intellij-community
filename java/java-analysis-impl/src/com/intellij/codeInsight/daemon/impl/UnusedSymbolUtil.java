@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -123,7 +123,7 @@ public final class UnusedSymbolUtil {
     if (helper.isLocallyUsed(field)) {
       return true;
     }
-    if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(project, containingFile, field, helper)) {
+    if (field instanceof PsiEnumConstant enumConstant && isEnumMethodUsed(project, containingFile, enumConstant, helper)) {
       return true;
     }
     return !weAreSureThereAreNoUsages(project, containingFile, field, helper);
@@ -135,8 +135,17 @@ public final class UnusedSymbolUtil {
                                      @NotNull GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(method)) return true;
 
-    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
+    if ("value".equals(method.getName()) && 
+        method.getReturnType() instanceof PsiArrayType && 
+        containingClass != null && 
+        containingClass.isAnnotationType() &&
+        isClassUsed(project, containingFile, containingClass, helper)) {
+      // conservative @Repeatable container annotation check
+      // consider value() method with array return type used, when the containing @interface is used
+      return true;
+    }
+    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return true;
     if (isPrivate) {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
@@ -306,14 +315,16 @@ public final class UnusedSymbolUtil {
     return ContainerUtil.process(toSearch, m -> JavaFindUsagesHelper.processElementUsages(m, options, usageInfoProcessor));
   }
 
-  private static boolean isEnumValuesMethodUsed(@NotNull Project project,
-                                                @NotNull PsiFile containingFile,
-                                                @NotNull PsiMember member,
-                                                @NotNull GlobalUsageHelper helper) {
-    final PsiClass containingClass = member.getContainingClass();
+  private static boolean isEnumMethodUsed(@NotNull Project project,
+                                          @NotNull PsiFile containingFile,
+                                          @NotNull PsiEnumConstant enumConstant,
+                                          @NotNull GlobalUsageHelper helper) {
+    final PsiClass containingClass = enumConstant.getContainingClass();
     if (!(containingClass instanceof PsiClassImpl)) return true;
     final PsiMethod valuesMethod = ((PsiClassImpl)containingClass).getValuesMethod();
-    return valuesMethod == null || isMethodUsed(project, containingFile, valuesMethod, helper);
+    final PsiMethod valueOfMethod = ((PsiClassImpl)containingClass).getValueOfMethod();
+    return valuesMethod == null || isMethodUsed(project, containingFile, valuesMethod, helper) ||
+           valueOfMethod == null || isMethodUsed(project, containingFile, valueOfMethod, helper);
   }
 
   private static boolean canBeReferencedViaWeirdNames(@NotNull PsiMember member, @NotNull PsiFile containingFile) {

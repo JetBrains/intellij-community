@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -22,35 +24,57 @@ import kotlin.coroutines.cancellation.CancellationException
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
-  fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
-    GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onModelFetchPhaseCompleted(
-        context: ProjectResolverContext,
-        phase: GradleModelFetchPhase
-      ) {
-        action(context, phase)
-      }
-    }, parentDisposable)
+  fun whenResolveProjectInfoStarted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(
+      @Order(Int.MAX_VALUE)
+      object : GradleSyncContributor {
+        override suspend fun onResolveProjectInfoStarted(
+          context: ProjectResolverContext,
+          storage: MutableEntityStorage
+        ) {
+          action(context, storage)
+        }
+      }, parentDisposable)
   }
 
-  fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
-    GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onModelFetchCompleted(
-        context: ProjectResolverContext
-      ) {
-        action(context)
-      }
-    }, parentDisposable)
+  fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage, GradleModelFetchPhase) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(
+      @Order(Int.MAX_VALUE)
+      object : GradleSyncContributor {
+        override suspend fun onModelFetchPhaseCompleted(
+          context: ProjectResolverContext,
+          storage: MutableEntityStorage,
+          phase: GradleModelFetchPhase
+        ) {
+          action(context, storage, phase)
+        }
+      }, parentDisposable)
   }
 
-  fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
-    GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onProjectLoadedActionCompleted(
-        context: ProjectResolverContext
-      ) {
-        action(context)
-      }
-    }, parentDisposable)
+  fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(
+      @Order(Int.MAX_VALUE)
+      object : GradleSyncContributor {
+        override suspend fun onModelFetchCompleted(
+          context: ProjectResolverContext,
+          storage: MutableEntityStorage
+        ) {
+          action(context, storage)
+        }
+      }, parentDisposable)
+  }
+
+  fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
+    GradleSyncContributor.EP_NAME.point.registerExtension(
+      @Order(Int.MAX_VALUE)
+      object : GradleSyncContributor {
+        override suspend fun onProjectLoadedActionCompleted(
+          context: ProjectResolverContext,
+          storage: MutableEntityStorage
+        ) {
+          action(context, storage)
+        }
+      }, parentDisposable)
   }
 
   /**
@@ -86,10 +110,17 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     return projectResolverExtension
   }
 
-  fun initMultiModuleProject() {
-    if (isGradleAtLeast("8.0")) {
-      // For old Gradle versions, Idea sync project with build src in two sequent Gradle calls.
-      // So don't use buildSrc for generic projects with multiple modules.
+  /**
+   * Creates the model multi-module Gradle project for generic Gradle sync testing.
+   *
+   * @param useBuildSrc is false for old Gradle versions.
+   * The IDEA syncs a project with build src in two sequent Gradle calls.
+   * Therefore, by default, we don't use buildSrc for the model project.
+   *
+   * @see assertMultiModuleProjectStructure
+   */
+  fun initMultiModuleProject(useBuildSrc: Boolean = isGradleAtLeast("8.0")) {
+    if (useBuildSrc) {
       createBuildFile("buildSrc") {
         withPlugin("groovy")
         addImplementationDependency(code("gradleApi()"))
@@ -119,7 +150,16 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun assertMultiModuleProjectStructure() {
+  /**
+   * Asserts the model multi-module Gradle project structure for generic Gradle sync testing.
+   *
+   * @param useBuildSrc is false for old Gradle versions.
+   * The IDEA syncs a project with build src in two sequent Gradle calls.
+   * Therefore, by default, we don't use buildSrc for the model project.
+   *
+   * @see initMultiModuleProject
+   */
+  fun assertMultiModuleProjectStructure(useBuildSrc: Boolean = isGradleAtLeast("8.0")) {
     val buildSrcModules = listOf(
       "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
     )
@@ -132,7 +172,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       "includedProject.module", "includedProject.module.main", "includedProject.module.test"
     )
     assertModules(buildList {
-      if (isGradleAtLeast("8.0")) {
+      if (useBuildSrc) {
         addAll(buildSrcModules)
       }
       addAll(projectModules)

@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.*
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -47,9 +47,9 @@ internal fun withCallableSignatureInfo(
 
 
 // FIXME: This is a hack, we should think how we can get rid of it
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <T> withAllowedResolve(action: () -> T): T {
-    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class)
     allowAnalysisFromWriteAction {
         return allowAnalysisOnEdt(action)
     }

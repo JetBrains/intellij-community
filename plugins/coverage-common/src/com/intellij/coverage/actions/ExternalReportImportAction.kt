@@ -4,7 +4,9 @@ package com.intellij.coverage.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ExternalReportImportAction : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun update(e: AnActionEvent) {

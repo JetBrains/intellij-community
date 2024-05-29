@@ -276,7 +276,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
       fun handleError(e: Throwable) {
         processNotStarted(environment, activity, e)
         if (e !is ProcessCanceledException) {
-          ProgramRunnerUtil.handleExecutionError(project, environment, e, environment.runProfile)
+          handleProgramRunnerExecutionError(project, environment, e, environment.runProfile)
           LOG.debug(e)
         }
       }
@@ -427,7 +427,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
             if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
               // we should stop here as before run task cannot be executed at all (possibly it's invalid)
               onCancelRunnable?.run()
-              ExecutionUtil.handleExecutionError(environment, ExecutionException(
+              handleExecutionError(environment, ExecutionException(
                 ExecutionBundle.message("dialog.message.cannot.start.before.run.task", settings)))
               return@executeOnPooledThread
             }
@@ -500,7 +500,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
           startRunnable.run()
         }
         catch (ignored: IndexNotReadyException) {
-          ExecutionUtil.handleExecutionError(environment, ExecutionException(
+          handleExecutionError(environment, ExecutionException(
             ExecutionBundle.message("dialog.message.cannot.start.while.indexing.in.progress")))
         }
       }
@@ -722,7 +722,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
       if (runnerAndConfigurationSettings != null) {
         val targetManager = ExecutionTargetManager.getInstance(project)
         if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
-          ExecutionUtil.handleExecutionError(environment, ExecutionException(
+          handleExecutionError(environment, ExecutionException(
             ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
           processNotStarted(environment, null)
           return
@@ -777,7 +777,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
         if (canRun || runAnyway) {
           val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
           if (runner == null) {
-            ExecutionUtil.handleExecutionError(environment,
+            handleExecutionError(environment,
                                                ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner",
                                                                                           environment.runProfile.name)))
           }
@@ -813,8 +813,18 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
       runner.execute(effectiveEnvironment)
     }
     catch (e: ExecutionException) {
-      ProgramRunnerUtil.handleExecutionError(project, environment, e, runnerAndConfigurationSettings?.configuration)
+      handleProgramRunnerExecutionError(project, environment, e, runnerAndConfigurationSettings?.configuration)
     }
+  }
+
+  @ApiStatus.Internal
+  protected open fun handleProgramRunnerExecutionError(project: Project, environment: ExecutionEnvironment, e: Throwable, profile: RunProfile?) {
+    ProgramRunnerUtil.handleExecutionError(project, environment, e, profile)
+  }
+
+  @ApiStatus.Internal
+  protected open fun handleExecutionError(environment: ExecutionEnvironment, e: ExecutionException) {
+    ExecutionUtil.handleExecutionError(environment, e)
   }
 
   override fun isStarting(executorId: String, runnerId: String): Boolean {

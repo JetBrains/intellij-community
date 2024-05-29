@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -69,7 +70,7 @@ private suspend fun findKnownMatchingServer(url: String): GitLabServerPath? {
 private suspend fun getLoginResult(project: Project, url: String, server: GitLabServerPath, login: String?): LoginResult {
   val accountManager = service<GitLabAccountManager>()
   val accountsWithTokens = accountManager.accountsState.value
-    .filter { it.server == server }
+    .filter { it.server.toHttpsNormalizedURI() == server.toHttpsNormalizedURI() }
     .associateWith { accountManager.findCredentials(it) }
 
   val loginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

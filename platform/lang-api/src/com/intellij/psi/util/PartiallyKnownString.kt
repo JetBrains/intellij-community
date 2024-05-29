@@ -10,6 +10,7 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.SmartList
+import com.intellij.util.asSafely
 import com.intellij.util.containers.headTailOrNull
 import org.jetbrains.annotations.ApiStatus
 
@@ -147,14 +148,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
-                      rangeForSubElement(head, stringParts.first())))
+                                          rangeForSubElement(head, stringParts.first())))
                   }))
                 addAll(stringParts.subList(1, stringParts.size - 1).map {
                   PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(head, it))
                 })
               },
               mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
-                rangeForSubElement(head, stringParts.last()))),
+                                              rangeForSubElement(head, stringParts.last()))),
               tail
             )
           }
@@ -266,6 +267,19 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     return ranges.reduce(TextRange::union)
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PartiallyKnownString
+
+    return segments == other.segments
+  }
+
+  override fun hashCode(): Int {
+    return segments.hashCode()
+  }
+
   companion object {
     val empty: PartiallyKnownString = PartiallyKnownString(emptyList())
   }
@@ -290,6 +304,10 @@ sealed class StringEntry {
 
   class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
     override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
+    override fun equals(other: Any?): Boolean =
+      other.asSafely<Known>()?.let { value == it.value && sourcePsi == it.sourcePsi && range == it.range } ?: false
+
+    override fun hashCode(): Int = value.hashCode().let { 31 * it + (sourcePsi?.hashCode() ?: 0) }.let { 31 * it + range.hashCode() }
   }
 
   class Unknown @JvmOverloads constructor(
@@ -299,6 +317,8 @@ sealed class StringEntry {
     val possibleValues: Iterable<PartiallyKnownString>? = null
   ) : StringEntry() {
     override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
+    override fun equals(other: Any?): Boolean = other.asSafely<Unknown>()?.let { sourcePsi == it.sourcePsi && range == it.range } ?: false
+    override fun hashCode(): Int = (sourcePsi?.hashCode() ?: 0).let { 31 * it + range.hashCode() }
   }
 
   val host: PsiElement?

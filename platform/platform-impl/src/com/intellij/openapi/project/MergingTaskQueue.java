@@ -328,9 +328,11 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
       beforeTask();
       if (AppExecutorUtil.propagateContext() && myChildContext != null) {
-        try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-          myChildContext.runAsCoroutine(() -> task.perform(indicator));
-        }
+        myChildContext.runAsCoroutine(() -> {
+          try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
+            task.perform(indicator);
+          }
+        });
       }
       else {
         task.perform(indicator);

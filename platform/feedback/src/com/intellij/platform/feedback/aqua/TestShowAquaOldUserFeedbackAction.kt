@@ -4,10 +4,9 @@ package com.intellij.platform.feedback.aqua
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.platform.feedback.aqua.bundle.AquaFeedbackBundle
 import com.intellij.platform.feedback.impl.IdleFeedbackTypes
 
-class TestShowAquaOldUserFeedbackAction : AnAction(AquaFeedbackBundle.message("old.user.test.action.name")) {
+internal class TestShowAquaOldUserFeedbackAction : AnAction(AquaFeedbackBundle.message("old.user.test.action.name")) {
   override fun actionPerformed(e: AnActionEvent) {
     IdleFeedbackTypes.AQUA_OLD_USER_FEEDBACK.showNotification(e.project, true)
   }

@@ -37,6 +37,7 @@ internal suspend fun importConfigIfNeeded(isHeadless: Boolean,
   }
 
   if (AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
+    if (!AppMode.isRemoteDevHost()) enableNewUi(logDeferred, false)
     return null
   }
 

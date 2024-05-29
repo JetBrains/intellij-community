@@ -69,6 +69,17 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
   }
 
   @Override
+  public KnownSizeRecordWriter writerForEntryHeader(@NotNull K key) throws IOException {
+    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
+    int keySize = keyWriter.recordSize();
+    if (keySize < 0) {
+      throw new AssertionError("keySize(" + key + ")=" + keySize + ": must be strictly positive");
+    }
+
+    return new NonNullValueEntryWriter( keyWriter, /*valueWriter: */ KnownSizeRecordWriter.NOTHING);
+  }
+
+  @Override
   public @Nullable Entry<K, V> readIfKeyMatch(@NotNull ByteBuffer input,
                                               @NotNull K expectedKey) throws IOException {
     int header = readHeader(input);

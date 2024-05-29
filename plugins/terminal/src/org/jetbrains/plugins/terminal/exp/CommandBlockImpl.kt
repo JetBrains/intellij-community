@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 
 internal data class CommandBlockImpl(
   override val command: String?,
@@ -34,7 +35,8 @@ internal val CommandBlock.withPrompt: Boolean
 internal val CommandBlock.withCommand: Boolean
   get() = !command.isNullOrEmpty()
 
-internal val CommandBlock.withOutput: Boolean
+@get:ApiStatus.Internal
+val CommandBlock.withOutput: Boolean
   get() = outputStartOffset < endOffset
 
 internal val CommandBlock.textRange: TextRange

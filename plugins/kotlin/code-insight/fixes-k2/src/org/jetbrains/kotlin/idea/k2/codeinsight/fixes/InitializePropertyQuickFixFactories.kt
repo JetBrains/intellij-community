@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -44,39 +44,39 @@ object InitializePropertyQuickFixFactories {
     }
 
     // todo refactor
-    val mustBeInitialized = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitialized ->
+    val mustBeInitialized = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitialized ->
         createFixes(diagnostic.psi)
     }
 
-    val mustBeInitializedWarning = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedWarning ->
+    val mustBeInitializedWarning = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedWarning ->
         createFixes(diagnostic.psi)
     }
 
-    val mustBeInitializedOrBeFinal = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeFinal ->
+    val mustBeInitializedOrBeFinal = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrBeFinal ->
         createFixes(diagnostic.psi)
     }
 
     val mustBeInitializedOrBeFinalWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeFinalWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrBeFinalWarning ->
             createFixes(diagnostic.psi)
         }
 
-    val mustBeInitializedOrBeAbstract = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeAbstract ->
+    val mustBeInitializedOrBeAbstract = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrBeAbstract ->
         createFixes(diagnostic.psi)
     }
 
     val mustBeInitializedOrBeAbstractWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrBeAbstractWarning ->
             createFixes(diagnostic.psi)
         }
 
     val mustBeInitializedOrFinalOrAbstract =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrFinalOrAbstract ->
             createFixes(diagnostic.psi)
         }
 
     val mustBeInitializedOrFinalOrAbstractWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning ->
             createFixes(diagnostic.psi)
         }
 

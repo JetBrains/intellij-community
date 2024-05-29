@@ -2,16 +2,19 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.FE10_SUFFIX
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.FIR_SUFFIX
 
-interface UastPluginSelection {
-    // Whether this is FIR UAST plugin or FE 1.0 UAST plugin
-    val isFirUastPlugin: Boolean
+internal val ExpectedPluginModeProvider.pluginSuffix: String
+    get() = pluginMode.pluginSuffix
 
-    val pluginSuffix: String
-        get() = if (isFirUastPlugin) FIR_SUFFIX else FE10_SUFFIX
+internal val ExpectedPluginModeProvider.counterpartSuffix: String
+    get() = pluginMode.other.pluginSuffix
 
-    val counterpartSuffix: String
-        get() = if (isFirUastPlugin) FE10_SUFFIX else FIR_SUFFIX
-}
+private val KotlinPluginMode.pluginSuffix: String
+    get() = when (this) {
+        KotlinPluginMode.K1 -> FE10_SUFFIX
+        KotlinPluginMode.K2 -> FIR_SUFFIX
+    }

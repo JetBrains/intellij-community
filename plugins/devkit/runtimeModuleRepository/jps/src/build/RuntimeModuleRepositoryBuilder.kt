@@ -103,7 +103,7 @@ internal class RuntimeModuleRepositoryBuilder
     for (library in libraries) {
       val moduleId = getLibraryId(library)
       val files = library.getFiles(JpsOrderRootType.COMPILED)
-      descriptors.add(RawRuntimeModuleDescriptor(moduleId.stringId, files.map { relativizer.toRelative(it.absolutePath) }, emptyList()))
+      descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, files.map { relativizer.toRelative(it.absolutePath) }, emptyList()))
     }
     return descriptors
   }
@@ -174,7 +174,7 @@ internal class RuntimeModuleRepositoryBuilder
       { dependencies.add(getLibraryId(it).stringId) }
     )
     val resourcePaths = if (module.hasProductionSources) listOf("production/${module.name}") else emptyList()
-    return RawRuntimeModuleDescriptor(runtimeModuleNameGenerator(module, false), resourcePaths, dependencies.toList())
+    return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, false), resourcePaths, dependencies.toList())
   }
 
   /**
@@ -222,7 +222,7 @@ internal class RuntimeModuleRepositoryBuilder
       { dependencies.add(getLibraryId(it).stringId) }
     )
     val resourcePaths = if (module.hasTestSources) listOf("test/${module.name}") else emptyList()
-    return RawRuntimeModuleDescriptor(runtimeModuleNameGenerator(module, true), resourcePaths, dependencies.toList())
+    return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, true), resourcePaths, dependencies.toList())
   }
 
   private fun addTestDependency(result: MutableCollection<String>,

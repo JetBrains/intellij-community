@@ -11,7 +11,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
@@ -154,9 +153,9 @@ public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
   private static void inline(@NotNull PsiLocalVariable variable, @NotNull CommonJavaInlineUtil inlineUtil) {
     final PsiExpression initializer = variable.getInitializer();
     assert initializer != null;
-    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
-    for (PsiReference reference : references) {
-      inlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+    final Collection<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
+    for (PsiJavaCodeReferenceElement reference : references) {
+      inlineUtil.inlineVariable(variable, initializer, reference, null);
     }
     if (!VariableAccessUtils.variableIsAssigned(variable)) {
       variable.delete();

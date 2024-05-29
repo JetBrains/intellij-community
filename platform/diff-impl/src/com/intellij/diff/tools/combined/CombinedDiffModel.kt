@@ -23,9 +23,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 class CombinedDiffModel(val project: Project) {
   val ourDisposable = Disposer.newCheckedDisposable()
 

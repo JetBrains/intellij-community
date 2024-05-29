@@ -101,6 +101,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
   protected static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
   protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
+  protected static final @NonNls String HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = "HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME";
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
@@ -658,13 +659,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     PyDebugAsyncioCustomizer.Companion.getInstance().enableAsyncioMode(environmentController);
 
-    if (RegistryManager.getInstance().is("python.debug.low.impact.monitoring.api")) {
-      environmentController.putFixedValue(USE_LOW_IMPACT_MONITORING, "True");
-    }
-
-    final AbstractPythonRunConfiguration runConfiguration = runProfile instanceof AbstractPythonRunConfiguration ?
-                                                            (AbstractPythonRunConfiguration)runProfile : null;
-    final Module module = runConfiguration != null ? runConfiguration.getModule() : null;
+    AbstractPythonRunConfiguration<?> runConfiguration = runProfile instanceof AbstractPythonRunConfiguration<?> ?
+                                                               (AbstractPythonRunConfiguration<?>)runProfile : null;
+    Module module = runConfiguration != null ? runConfiguration.getModule() : null;
 
     if (module != null) {
       addProjectRootsToEnv(module, environmentController);
@@ -673,7 +670,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     if (runConfiguration != null) {
       final Sdk sdk = runConfiguration.getSdk();
       if (sdk != null) {
-        final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+        final PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(sdk);
         if (flavor != null) {
           final LanguageLevel langLevel = flavor.getLanguageLevel(sdk);
           // PY-28457 Disable Cython extensions in Python 3.4 and Python 3.5 because of crash in generated C code
@@ -687,12 +684,26 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, runConfiguration.getWorkingDirectorySafe());
     }
 
-    if (!RegistryManager.getInstance().is("python.debug.enable.cython.speedups")) {
+    applyRegistryFlags(environmentController);
+  }
+
+  private static void applyRegistryFlags(@NotNull EnvironmentController environmentController) {
+    var registryManager = RegistryManager.getInstance();
+
+    if (registryManager.is("python.debug.low.impact.monitoring.api")) {
+      environmentController.putFixedValue(USE_LOW_IMPACT_MONITORING, "True");
+    }
+
+    if (!registryManager.is("python.debug.enable.cython.speedups")) {
       environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
     }
 
-    if (RegistryManager.getInstance().is("python.debug.enable.diagnostic.prints")) {
+    if (registryManager.is("python.debug.enable.diagnostic.prints")) {
       environmentController.putFixedValue(PYCHARM_DEBUG, "True");
+    }
+
+    if (registryManager.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
+      environmentController.putFixedValue(HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME, "True");
     }
   }
 

@@ -14,8 +14,8 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -109,9 +109,9 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
 
                     if (psiBasedResolveResult == ImpreciseResolveResult.NO_MATCH) return true
                     if (psiBasedResolveResult == ImpreciseResolveResult.UNSURE) {
-                        @OptIn(KtAllowAnalysisOnEdt::class)
+                        @OptIn(KaAllowAnalysisOnEdt::class)
                         allowAnalysisOnEdt {
-                            @OptIn(KtAllowAnalysisFromWriteAction::class)
+                            @OptIn(KaAllowAnalysisFromWriteAction::class)
                             allowAnalysisFromWriteAction {
                                 analyze(elt) {
                                     val annotationSymbol = elt.resolveCall()?.singleConstructorCallOrNull()?.symbol

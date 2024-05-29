@@ -11,6 +11,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 /**
  * This class is a
@@ -926,5 +927,25 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   public Spliterator<E> spliterator() {
     //noinspection unchecked
     return (Spliterator<E>)Arrays.spliterator(get());
+  }
+
+  @Override
+  public void replaceAll(UnaryOperator<E> operator) {
+    while (true) {
+      Object[] elements = get();
+      Object[] newElements = createArrayMap(elements, operator);
+      if (replaceArray(elements, newElements)) break;
+    }
+  }
+
+  @NotNull
+  private Object[] createArrayMap(Object @NotNull [] elements, @NotNull UnaryOperator<? super E> operator) {
+    Object[] newElements = ArrayUtil.newObjectArray(elements.length);
+    for (int i = 0; i < elements.length; i++) {
+      Object element = elements[i];
+      //noinspection unchecked
+      newElements[i] = operator.apply((E)element);
+    }
+    return newElements;
   }
 }

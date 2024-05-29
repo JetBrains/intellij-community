@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.findUsages
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import de.plushnikov.intellij.plugin.LombokTestUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinLombokFindUsages: KotlinLightCodeInsightFixtureTestCase() {
@@ -11,9 +12,8 @@ class KotlinLombokFindUsages: KotlinLightCodeInsightFixtureTestCase() {
         return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR
     }
 
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun testFindUsagesForSetter() {
         val aClass = myFixture.addClass(

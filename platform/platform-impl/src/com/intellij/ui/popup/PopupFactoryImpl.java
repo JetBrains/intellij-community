@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
@@ -56,8 +55,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.function.Function;
 
 public class PopupFactoryImpl extends JBPopupFactory {
@@ -78,8 +75,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
   public static final Key<Boolean> DISABLE_ICON_IN_LIST = Key.create("popup.disable.icon.in.list");
 
   private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
-
-  private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<>();
 
   @Override
   public @NotNull <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
@@ -642,12 +637,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull BalloonBuilder createBalloonBuilder(@NotNull JComponent content) {
-    return new BalloonPopupBuilderImpl(myStorage, content);
+    return new BalloonPopupBuilderImpl(content);
   }
 
   @Override
   public @NotNull BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @PopupTitle @Nullable String title) {
-    final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(myStorage, content);
+    final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(content);
     return fillDialogBalloonBuilder(builder, title);
   }
 

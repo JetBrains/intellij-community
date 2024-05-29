@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -40,7 +40,7 @@ internal class FirSuperMemberCompletionContributor(
     private data class CallableInfo(
         private val _type: KtType,
         private val _signature: KtCallableSignature<*>,
-        val scopeKind: KtScopeKind
+        val scopeKind: KaScopeKind
     ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token

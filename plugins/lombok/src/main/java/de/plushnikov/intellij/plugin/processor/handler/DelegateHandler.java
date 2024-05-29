@@ -88,7 +88,7 @@ public final class DelegateHandler {
   }
 
   private static Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiType psiType) {
-    Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, TYPES_PARAMETER, PsiType.class);
+    Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, TYPES_PARAMETER, PsiType.class, List.of());
     if (types.isEmpty()) {
       types = Collections.singletonList(psiType);
     }
@@ -129,7 +129,7 @@ public final class DelegateHandler {
   }
 
   private static Collection<PsiType> collectExcludeTypes(PsiAnnotation psiAnnotation) {
-    return PsiAnnotationUtil.getAnnotationValues(psiAnnotation, EXCLUDES_PARAMETER, PsiType.class);
+    return PsiAnnotationUtil.getAnnotationValues(psiAnnotation, EXCLUDES_PARAMETER, PsiType.class, List.of());
   }
 
   public static <T extends PsiMember & PsiNamedElement> void generateElements(@NotNull T psiElement,

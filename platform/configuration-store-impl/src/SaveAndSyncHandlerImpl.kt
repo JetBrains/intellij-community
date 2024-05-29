@@ -4,11 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.IdleTracker
-import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.SaveAndSyncHandlerListener
+import com.intellij.ide.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
@@ -87,33 +83,33 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
     coroutineScope.launch(CoroutineName("save requests flow processing")) {
       // not collectLatest - wait for previous execution
-      saveRequests
-        .collect {
-          val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
-          if (!forceExecuteImmediately) {
-            delay(300.milliseconds)
-          }
+      saveRequests.collect {
+        val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
+        if (!forceExecuteImmediately) {
+          delay(300.milliseconds)
+        }
 
-          if (blockSaveOnFrameDeactivationCount.get() != 0) {
-            return@collect
-          }
+        if (blockSaveOnFrameDeactivationCount.get() != 0) {
+          return@collect
+        }
 
-          val job = currentJob.updateAndGet { oldJob ->
-            oldJob?.cancel()
-            launch(start = CoroutineStart.LAZY) {
-              processTasks(forceExecuteImmediately)
-            }
-          }!!
-          try {
-            if (job.start()) {
-              job.join()
-            }
+        val job = currentJob.updateAndGet { oldJob ->
+          oldJob?.cancel()
+          launch(start = CoroutineStart.LAZY) {
+            processTasks(forceExecuteImmediately)
           }
-          catch (_: CancellationException) { }
-          finally {
-            currentJob.compareAndSet(job, null)
+        }!!
+        try {
+          if (job.start()) {
+            job.join()
           }
         }
+        catch (_: CancellationException) {
+        }
+        finally {
+          currentJob.compareAndSet(job, null)
+        }
+      }
     }
 
     coroutineScope.launch {

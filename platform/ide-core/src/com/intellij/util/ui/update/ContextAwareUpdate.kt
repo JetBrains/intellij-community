@@ -44,8 +44,8 @@ internal class ContextAwareUpdate(
   }
 
   override fun run() {
-    installThreadContext(childContext.context, true).use { _ ->
-      childContext.runAsCoroutine {
+    childContext.runAsCoroutine {
+      installThreadContext(childContext.context, true).use { _ ->
         original.run()
       }
     }

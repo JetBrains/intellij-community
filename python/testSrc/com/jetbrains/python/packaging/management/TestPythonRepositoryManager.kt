@@ -30,6 +30,14 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     TODO("Not yet implemented")
   }
 
+  override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
+    TODO("Not yet implemented")
+  }
+
+  override fun searchPackages(query: String): Map<PyPackageRepository, List<String>> {
+    TODO("Not yet implemented")
+  }
+
   override val repositories: List<PyPackageRepository>
     get() = listOf(PyEmptyPackagePackageRepository)
 

@@ -223,7 +223,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("actions/wordsHovered.svg", 1488302022, 0);
     /** 16x16 */ public static final @NotNull Icon WordsSelected = load("actions/wordsSelected.svg", 128086410, 0);
 
-    /** @deprecated to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+    /** @deprecated to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html) */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
@@ -409,6 +409,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AS = load("fileTypes/as.svg", -1805543846, 0);
     /** 16x16 */ public static final @NotNull Icon Aspectj = load("fileTypes/aspectj.svg", 469536666, 0);
     /** 16x16 */ public static final @NotNull Icon Config = load("fileTypes/config.svg", 416412449, 0);
+    /** 16x16 */ public static final @NotNull Icon Contexts = load("fileTypes/contexts.svg", 589986144, 0);
+    /** 16x16 */ public static final @NotNull Icon ContextsModifier = load("fileTypes/contextsModifier.svg", 11227132, 0);
     /** 16x16 */ public static final @NotNull Icon Css = load("fileTypes/css.svg", -1827987051, 0);
     /** 16x16 */ public static final @NotNull Icon Custom = load("fileTypes/custom.svg", 1692794144, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("fileTypes/diagram.svg", 692669001, 0);
@@ -1082,6 +1084,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", 125110449, 0);
     /** 16x16 */ public static final @NotNull Icon Databricks = load("providers/databricks.svg", 1206450250, 2);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", -700958296, 2);
+    /** 16x16 */ public static final @NotNull Icon Denodo = load("providers/denodo.svg", -1481188209, 2);
     /** 16x16 */ public static final @NotNull Icon DocumentDB = load("providers/documentDB.svg", -1286984491, 2);
     /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", -590062592, 2);
     /** 16x16 */ public static final @NotNull Icon DynamoDB = load("providers/dynamoDB.svg", 820880886, 0);
@@ -1283,9 +1286,11 @@ public class AllIcons {
   }
 
   public static final class Ultimate {
+    /** 16x16 */ public static final @NotNull Icon IdeaUltimatePromo = load("ultimate/ideaUltimatePromo.svg", -1332958664, 0);
     /** 16x16 */ public static final @NotNull Icon Lock = load("ultimate/lock.svg", 2079176291, 2);
     /** 16x16 */ public static final @NotNull Icon LockWhite = load("ultimate/lockWhite.svg", -1891265957, 0);
     /** 16x16 */ public static final @NotNull Icon PycharmLock = load("ultimate/pycharmLock.svg", 1729774235, 2);
+    /** 16x16 */ public static final @NotNull Icon PycharmPromo = load("ultimate/pycharmPromo.svg", 663371893, 0);
   }
 
   public static final class Vcs {

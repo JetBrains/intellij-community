@@ -275,6 +275,11 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
       return ScratchTreeStructureProvider.getVirtualFile(getRootType());
     }
 
+    @Override
+    protected @NotNull String getCacheableFilePath() {
+      return ScratchFileService.getInstance().getRootPath(getRootType());
+    }
+
     @NotNull
     @Override
     public Collection<VirtualFile> getRoots() {

@@ -31,6 +31,8 @@ import java.util.function.BiConsumer;
  * the processor until {@link #start()} is called.</p>
  * This class is thread-safe.
  * @param <T> type of queue elements.
+ *
+ * @see com.intellij.util.ui.update.MergingUpdateQueue
  */
 public final class QueueProcessor<T> {
   private static final Logger LOG = Logger.getInstance(QueueProcessor.class);

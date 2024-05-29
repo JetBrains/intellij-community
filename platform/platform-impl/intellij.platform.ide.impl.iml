@@ -140,5 +140,7 @@
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
+    <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
   </component>
 </module>

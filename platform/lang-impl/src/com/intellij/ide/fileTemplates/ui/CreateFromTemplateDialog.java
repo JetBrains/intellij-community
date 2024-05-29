@@ -10,6 +10,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateParseException;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,9 +20,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.JBInsets;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
@@ -144,6 +147,12 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       }
 
       myCreatedElement = createFile(mainFileName, myTemplate, properties);
+
+      PsiFile psiFile = myCreatedElement.getContainingFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) {
+        FileTypeUsageCounterCollector.logCreated(myProject, virtualFile, myTemplate);
+      }
     }
     catch (Exception e) {
       showErrorDialog(e);

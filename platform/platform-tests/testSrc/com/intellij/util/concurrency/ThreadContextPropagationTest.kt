@@ -35,6 +35,7 @@ import kotlin.test.assertNull
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
+@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class ThreadContextPropagationTest {
 
   class Enabler : InvocationInterceptor {

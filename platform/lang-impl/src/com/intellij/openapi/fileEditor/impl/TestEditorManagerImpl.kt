@@ -505,7 +505,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = null
 
   override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return EditorComposite.retrofit(getComposite(file))
+    return retrofitEditorComposite(getComposite(file))
   }
 
   override fun getComposite(file: VirtualFile): FileEditorComposite? {

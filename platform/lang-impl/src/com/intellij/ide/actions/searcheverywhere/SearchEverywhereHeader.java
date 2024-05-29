@@ -85,6 +85,7 @@ public final class SearchEverywhereHeader {
     myEverywhereAutoSet = false;
     if (mySelectedTab.everywhereAction == null) return;
     if (!mySelectedTab.everywhereAction.canToggleEverywhere()) return;
+    mySelectedTab.everywhereAction.setScopeIsDefaultAndAutoSet(false);
     mySelectedTab.everywhereAction.setEverywhere(
       !mySelectedTab.everywhereAction.isEverywhere());
     myToolbar.updateActionsImmediately();
@@ -257,6 +258,7 @@ public final class SearchEverywhereHeader {
     myEverywhereAutoSet = true;
     if (mySelectedTab.everywhereAction == null) return;
     if (!mySelectedTab.everywhereAction.canToggleEverywhere()) return;
+    mySelectedTab.everywhereAction.setScopeIsDefaultAndAutoSet(!everywhere);
     mySelectedTab.everywhereAction.setEverywhere(everywhere);
     myToolbar.updateActionsImmediately();
   }

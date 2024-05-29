@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.application
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -54,6 +55,7 @@ class ExternalProjectsDataRecoveryAction : RecoveryAction {
       invalidateProjectBuildClasspathCache(recoveryScope)
       invalidateExternalSystemDataStorage(recoveryScope)
       invalidateExternalSystemToolwindow(recoveryScope)
+      WorkspaceModelCacheImpl.invalidateCaches()
 
       val externalSystemCache = ExternalProjectsDataStorage.getProjectConfigurationDir(recoveryScope.project)
 

@@ -2,12 +2,17 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.psi.KtFile
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
 class ScriptConfigurationLoadingTest8 : AbstractScriptConfigurationLoadingTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun testSimple() {
         assertAndLoadInitialConfiguration()
 

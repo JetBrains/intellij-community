@@ -3,6 +3,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.InvalidDataException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +32,12 @@ public final class IndentData {
     return Math.max(mySpaces, 0);
   }
 
+  @ApiStatus.Internal
   public IndentData add(final IndentData childOffset) {
     return new IndentData(myIndentSpaces + childOffset.getIndentSpaces(), mySpaces + childOffset.getSpaces());
   }
 
+  @ApiStatus.Internal
   public IndentData add(final WhiteSpace whiteSpace) {
     return new IndentData(myIndentSpaces + whiteSpace.getIndentOffset(), mySpaces + whiteSpace.getSpaces());
   }

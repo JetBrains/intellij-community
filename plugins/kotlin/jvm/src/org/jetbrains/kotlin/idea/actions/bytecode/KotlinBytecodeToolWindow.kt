@@ -23,18 +23,16 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.descriptors.components.STUB_UNBOUND_IR_SYMBOLS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.base.codeInsight.compiler.ClassFileOrigins
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
-import org.jetbrains.kotlin.idea.base.codeInsight.compiler.OriginTracingClassBuilderFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -302,7 +300,7 @@ class KotlinBytecodeToolWindow(
             val writer = StringWriter()
 
             when (result) {
-                is KtCompilationResult.Success -> {
+                is KaCompilationResult.Success -> {
                     val printWriter = PrintWriter(writer)
 
                     for (outputFile in getRelevantClassFiles(ktFile, result.output, classFileOrigins)) {
@@ -323,7 +321,7 @@ class KotlinBytecodeToolWindow(
                         writer.append("\n\n")
                     }
                 }
-                is KtCompilationResult.Failure -> {
+                is KaCompilationResult.Failure -> {
                     val diagnostics = result.errors
                     if (diagnostics.isNotEmpty()) {
                         writer.append("// Backend Errors: \n")
@@ -375,7 +373,7 @@ class KotlinBytecodeToolWindow(
         fun KtAnalysisSession.compileSingleFile(
             ktFile: KtFile,
             configuration: CompilerConfiguration
-        ): Pair<KtCompilationResult, ClassFileOrigins>? {
+        ): Pair<KaCompilationResult, ClassFileOrigins>? {
             val effectiveConfiguration = configuration
                 .copy()
                 .apply {
@@ -383,7 +381,7 @@ class KotlinBytecodeToolWindow(
                 }
 
             val builderFactory = OriginTracingClassBuilderFactory(ClassBuilderFactories.TEST)
-            val compilerTarget = KtCompilerTarget.Jvm(builderFactory)
+            val compilerTarget = KaCompilerTarget.Jvm(builderFactory)
             val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
             try {

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.engine.LightOrRealThreadInfo
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
@@ -32,7 +32,7 @@ data class CoroutineJobInfo(private val coroutineFilter: CoroutineFilter) : Ligh
             try {
                 return getCoroutineFilter(suspendContext)?.let { CoroutineJobInfo(it) }
             } catch (e: Throwable) {
-                Logger.getInstance(CoroutineJobInfo::class.java).error(e)
+                DebuggerUtilsImpl.logError(e)
                 return null
             }
         }

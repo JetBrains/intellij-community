@@ -208,7 +208,7 @@ class QuickFixRegistrar : QuickFixContributor {
         CONFLICTING_IMPORT.registerFactory(RemovePsiElementSimpleFix.RemoveImportFactory)
 
         SUPERTYPE_NOT_INITIALIZED.registerFactory(SuperClassNotInitialized)
-        FUNCTION_CALL_EXPECTED.registerFactory(ChangeToFunctionInvocationFix)
+        FUNCTION_CALL_EXPECTED.registerFactory(ChangeToFunctionInvocationFixFactory)
         FUNCTION_EXPECTED.registerFactory(ChangeToPropertyAccessFix)
 
         CANNOT_CHANGE_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
@@ -218,8 +218,8 @@ class QuickFixRegistrar : QuickFixContributor {
         INVISIBLE_MEMBER.registerFactory(MakeVisibleFactory)
         INVISIBLE_SETTER.registerFactory(MakeVisibleFactory)
 
-        UNSUPPORTED_WARNING.registerFactory(ConvertCollectionLiteralToIntArrayOfFix)
-        UNSUPPORTED.registerFactory(ConvertCollectionLiteralToIntArrayOfFix)
+        UNSUPPORTED_WARNING.registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory)
+        UNSUPPORTED.registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory)
 
         MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.registerFactory(WrapWithParenthesesFix.ModifierFormForNonBuiltInSuspend)
         MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(WrapWithParenthesesFix.ModifierFormForNonBuiltInSuspend)
@@ -264,7 +264,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNUSED_VARIABLE.registerFactory(RemovePsiElementSimpleFix.RemoveVariableFactory)
         UNUSED_VARIABLE.registerFactory(RenameToUnderscoreFix.Factory)
 
-        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnExpressionFix)
+        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnExpressionFixFactory)
         NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnToLastExpressionInFunctionFix)
         UNUSED_EXPRESSION.registerFactory(AddReturnToUnusedLastExpressionInFunctionFix)
 
@@ -337,8 +337,8 @@ class QuickFixRegistrar : QuickFixContributor {
         LOCAL_VARIABLE_WITH_TYPE_PARAMETERS.registerFactory(RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
         LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING.registerFactory(RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
 
-        UNCHECKED_CAST.registerFactory(ChangeToStarProjectionFix)
-        CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFix)
+        UNCHECKED_CAST.registerFactory(ChangeToStarProjectionFixFactory)
+        CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFixFactory)
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFix)
 
@@ -567,7 +567,7 @@ class QuickFixRegistrar : QuickFixContributor {
         MISSING_VAL_ON_ANNOTATION_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.AnnotationClassConstructorNotValPropertyQuickFixFactory)
         VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.ValueClassConstructorNotValPropertyQuickFixFactory)
 
-        VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION.registerFactory(AddJvmInlineAnnotationFix)
+        VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION.registerFactory(AddJvmInlineAnnotationFixFactory)
 
         NON_LOCAL_RETURN_NOT_ALLOWED.registerFactory(AddInlineModifierFix.CrossInlineFactory)
         USAGE_IS_NOT_INLINABLE.registerFactory(AddInlineModifierFix.NoInlineFactory)
@@ -596,8 +596,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(MakeTypeParameterReifiedAndFunctionInlineFix)
 
-        TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL.registerFactory(TooLongCharLiteralToStringFix)
-        ILLEGAL_ESCAPE.registerFactory(TooLongCharLiteralToStringFix)
+        TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL.registerFactory(TooLongCharLiteralToStringFixFactory)
+        ILLEGAL_ESCAPE.registerFactory(TooLongCharLiteralToStringFixFactory)
 
         UNUSED_VALUE.registerFactory(RemoveUnusedValueFix)
 
@@ -640,7 +640,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNRESOLVED_REFERENCE.registerFactory(CreateLabelFix)
         YIELD_IS_RESERVED.registerFactory(UnsupportedYieldFix)
-        INVALID_TYPE_OF_ANNOTATION_MEMBER.registerFactory(TypeOfAnnotationMemberFix)
+        INVALID_TYPE_OF_ANNOTATION_MEMBER.registerFactory(TypeOfAnnotationMemberFixFactory)
 
         ILLEGAL_INLINE_PARAMETER_MODIFIER.registerFactory(AddInlineToFunctionFix)
 
@@ -650,18 +650,18 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(AddModifierFixFE10.AddLateinitFactory)
 
-        RETURN_NOT_ALLOWED.registerFactory(ChangeToLabeledReturnFix)
-        TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
-        TYPE_MISMATCH_WARNING.registerFactory(ChangeToLabeledReturnFix)
-        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFix)
-        NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFix)
+        RETURN_NOT_ALLOWED.registerFactory(ChangeToLabeledReturnFixFactory)
+        TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFixFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(ChangeToLabeledReturnFixFactory)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFixFactory)
+        NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFixFactory)
 
         WRONG_ANNOTATION_TARGET.registerFactory(AddAnnotationTargetFix, AddAnnotationUseSiteTargetFix)
         WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET.registerFactory(MoveReceiverAnnotationFix, AddAnnotationTargetFix)
 
-        NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFix)
+        NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFixFactory)
         NO_CONSTRUCTOR.registerFactory(AddDefaultConstructorFix)
-        NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFix)
+        NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFixFactory)
 
         ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgument)
 
@@ -740,7 +740,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MUST_BE_INITIALIZED.registerFactory(ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
 
-        TOO_MANY_ARGUMENTS.registerFactory(RemoveArgumentFix)
+        TOO_MANY_ARGUMENTS.registerFactory(RemoveArgumentFixFactory)
 
         AMBIGUOUS_SUPER.registerFactory(SpecifySuperTypeFix)
 

@@ -17,6 +17,8 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -179,7 +181,12 @@ public final class DebuggerUIUtil {
 
   @ApiStatus.Experimental
   public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project) {
-    TextViewer textArea = new TextViewer(initialText, project);
+    return createTextViewer(initialText, project, FileTypes.PLAIN_TEXT);
+  }
+
+  @ApiStatus.Experimental
+  public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project, FileType fileType) {
+    TextViewer textArea = new TextViewer(initialText, project, fileType);
     textArea.setBackground(HintUtil.getInformationColor());
 
     textArea.addSettingsProvider(e -> {

@@ -4,6 +4,7 @@ package org.jetbrains.fir.uast.test
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -13,9 +14,9 @@ import org.jetbrains.uast.*
 import java.nio.file.Path
 
 class FirUastAlternativesTest : AbstractFirUastTest() {
-    override val isFirUastPlugin: Boolean = true
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override val testBasePath: Path = KotlinRoot.PATH.resolve("uast")
 

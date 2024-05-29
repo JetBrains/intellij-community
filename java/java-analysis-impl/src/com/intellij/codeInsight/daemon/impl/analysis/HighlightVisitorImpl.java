@@ -1428,8 +1428,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {
           PsiElement qualifier = expression.getQualifier();
           if (qualifier != null) {
-            String description = JavaErrorBundle.message("cannot.find.class", qualifier.getText());
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description));
+            boolean pending = qualifier instanceof PsiJavaCodeReferenceElement ref &&
+                        IncompleteModelUtil.isIncompleteModel(expression) &&
+                        IncompleteModelUtil.canBePendingReference(ref);
+            if (!pending) {
+              String description = JavaErrorBundle.message("cannot.find.class", qualifier.getText());
+              add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description));
+            }
           }
         }
       }
@@ -1530,6 +1535,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             description = JavaErrorBundle.message("ambiguous.reference", expression.getReferenceName(), t1, t2);
           }
           else {
+            if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.canBePendingReference(expression)) {
+              PsiElement referenceNameElement = expression.getReferenceNameElement();
+              if (referenceNameElement != null) {
+                add(IncompleteModelUtil.getPendingReferenceHighlightInfo(referenceNameElement));
+              }
+              return;
+            }
             description = JavaErrorBundle.message("cannot.resolve.method", expression.getReferenceName());
           }
         }

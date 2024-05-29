@@ -25,7 +25,7 @@ class GradleModelFetchActionListenerAdapter(
     resolverContext.models.addState(state)
 
     if (!modelFetchAction.isUseStreamedValues) {
-      for (phase in modelFetchAction.projectLoadedModelProviders.keys) {
+      for (phase in modelFetchAction.projectLoadedModelFetchPhases) {
         modelFetchActionListener.onModelFetchPhaseCompleted(phase)
       }
     }
@@ -37,7 +37,7 @@ class GradleModelFetchActionListenerAdapter(
     resolverContext.models.addState(state)
 
     if (!modelFetchAction.isUseProjectsLoadedPhase && !modelFetchAction.isUseStreamedValues) {
-      for (phase in modelFetchAction.projectLoadedModelProviders.keys) {
+      for (phase in modelFetchAction.projectLoadedModelFetchPhases) {
         modelFetchActionListener.onModelFetchPhaseCompleted(phase)
       }
     }
@@ -45,7 +45,7 @@ class GradleModelFetchActionListenerAdapter(
       modelFetchActionListener.onProjectLoadedActionCompleted()
     }
     if (!modelFetchAction.isUseStreamedValues) {
-      for (phase in modelFetchAction.buildFinishedModelProviders.keys) {
+      for (phase in modelFetchAction.buildFinishedModelFetchPhases) {
         modelFetchActionListener.onModelFetchPhaseCompleted(phase)
       }
     }

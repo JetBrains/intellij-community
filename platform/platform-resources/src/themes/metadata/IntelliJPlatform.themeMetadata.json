@@ -324,6 +324,26 @@
       "since": "2022.2"
     },
     {
+      "key": "DisclosureButton.defaultBackground",
+      "description": "Background of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.hoverOverlay",
+      "description": "Hover overlay color, which is painted over background for hover state",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.pressedOverlay",
+      "description": "Pressed overlay color, which is painted over background for hover state",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.successBackground",
+      "description": "Success or visited background of disclosure button",
+      "since": "2024.2"
+    },
+    {
       "key": "FindPopup.scopesPanelInsets",
       "description": "Inner insets of the scope selection panel in the Find in Files / Replace in Files popups",
       "since": "2023.1.1"

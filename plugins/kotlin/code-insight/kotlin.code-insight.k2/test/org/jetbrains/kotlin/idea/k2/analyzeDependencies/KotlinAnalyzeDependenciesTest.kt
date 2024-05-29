@@ -3,12 +3,13 @@ package org.jetbrains.kotlin.idea.k2.analyzeDependencies
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.packageDependencies.ForwardDependenciesBuilder
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinAnalyzeDependenciesTest: KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun testXmlReferences() {
         val kotlinClass = myFixture.addFileToProject("myPack/MyClass.kt", "package myPack\nclass MyClass")

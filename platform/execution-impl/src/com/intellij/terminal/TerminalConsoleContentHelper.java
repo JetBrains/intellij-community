@@ -44,7 +44,7 @@ final class TerminalConsoleContentHelper implements Disposable {
     }
   }
 
-  private void flush() {
+  void flush() {
     if (myDisposed) return;
     myRequested.set(false);
     List<Pair<String, ConsoleViewContentType>> textChunks = new ArrayList<>(myTextChunks.size());

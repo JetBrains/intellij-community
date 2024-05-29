@@ -50,15 +50,16 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
-  // replay = 1 is needed to send the very first state when the subscription fo the flow happens.
-  //   otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
-  //   this may cause some unwanted delays for subscribers.
-  // This is used in the [subscribe] method, where we send the first version of the storage
-  //   right after the subscription.
-  // However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
-  //   since the storage is an effective structure, however, if this causes memory problems, we can switch to
-  //   replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
-  //   update of the WorkspaceModel, what is probably also okay.
+  /** replay = 1 is needed to send the very first state when the subscription fo the flow happens.
+       otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
+       this may cause some unwanted delays for subscribers.
+     This is used in the [subscribe] method, where we send the first version of the storage
+       right after the subscription.
+     However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
+       since the storage is an effective structure, however, if this causes memory problems, we can switch to
+       replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
+       update of the WorkspaceModel, what is probably also okay.
+  */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
   private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()

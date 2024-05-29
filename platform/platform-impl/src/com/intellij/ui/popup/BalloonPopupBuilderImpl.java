@@ -18,12 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public final class BalloonPopupBuilderImpl implements BalloonBuilder {
-  private final @Nullable Map<Disposable, List<Balloon>> myStorage;
   private @Nullable Disposable myAnchor;
 
   private final JComponent myContent;
@@ -62,8 +60,15 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
   private int myCornerRadius = -1;
   private boolean myPointerShiftedToStart;
 
+  /**
+   * @deprecated use {@link BalloonPopupBuilderImpl#BalloonPopupBuilderImpl(JComponent)}
+   */
+  @Deprecated
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, final @NotNull JComponent content) {
-    myStorage = storage;
+    this(content);
+  }
+
+  public BalloonPopupBuilderImpl(@NotNull JComponent content) {
     myContent = content;
     if (ClientProperty.isTrue(myContent, BalloonImpl.FORCED_NO_SHADOW)) {
       myShadow = false;
@@ -261,22 +266,8 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
     result.setCornerRadius(myCornerRadius);
     result.setPointerShiftedToStart(myPointerShiftedToStart);
 
-    if (myStorage != null && myAnchor != null) {
-      List<Balloon> balloons = myStorage.get(myAnchor);
-      if (balloons == null) {
-        myStorage.put(myAnchor, balloons = new ArrayList<>());
-        Disposer.register(myAnchor, () -> {
-          List<Balloon> toDispose = myStorage.remove(myAnchor);
-          if (toDispose != null) {
-            for (Balloon balloon : toDispose) {
-              if (!balloon.isDisposed()) {
-                Disposer.dispose(balloon);
-              }
-            }
-          }
-        });
-      }
-      balloons.add(result);
+    if (myAnchor != null) {
+      Disposer.register(myAnchor, result);
       result.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {

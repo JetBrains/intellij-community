@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -792,7 +792,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   }
 
   @Override
-  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
+  public void enhanceTaskProcessing(@Nullable Project project,
+                                    @NotNull List<String> taskNames,
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
     String dispatchPort = parameters.get(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY);
@@ -810,7 +811,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     lines.add("initscript { dependencies { classpath files(mapPath(\"" + esRtJarPath + "\")) } }"); // bring external-system-rt.jar
 
     for (DebuggerBackendExtension extension : DebuggerBackendExtension.EP_NAME.getExtensionList()) {
-      lines.addAll(extension.initializationCode(dispatchPort, debugOptions));
+      lines.addAll(extension.initializationCode(project, dispatchPort, debugOptions));
     }
 
     final String script = join(lines, System.lineSeparator());

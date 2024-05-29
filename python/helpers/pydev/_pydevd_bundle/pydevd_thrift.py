@@ -408,6 +408,10 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     return array_chunk
 
 
+def tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    return array_to_thrift_struct(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+
+
 def array_to_meta_thrift_struct(array, name, format):
     type = array.dtype.kind
     slice = name
@@ -603,6 +607,9 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "ndarray": array_to_thrift_struct,
+    "EagerTensor": tensor_to_thrift_struct,
+    "ResourceVariable": tensor_to_thrift_struct,
+    "Tensor": tensor_to_thrift_struct,
     "DataFrame": dataframe_to_thrift_struct,
     "Series": dataframe_to_thrift_struct,
     "GeoDataFrame": dataframe_to_thrift_struct,

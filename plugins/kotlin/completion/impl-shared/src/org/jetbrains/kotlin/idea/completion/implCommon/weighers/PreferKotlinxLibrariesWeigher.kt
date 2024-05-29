@@ -27,15 +27,23 @@ class PreferKotlinxLibrariesWeigher : ProximityWeigher() {
         "kotlinx.datetime"
     )
 
+    /**
+     * See [preferredPackages], but for FQNs instead of entire packages.
+     */
+    private val preferredClasses = setOf(
+        "kotlinx.coroutines.flow.Flow"
+    )
+
     override fun weigh(element: PsiElement, location: ProximityLocation): Comparable<*>? {
         // Only enable this weigher if we are editing a Kotlin file
         if (location.position?.language != KotlinLanguage.INSTANCE) {
             return null
         }
         val ktElement = element as? KtElement ?: return Weight.OTHER
-        val fqn = ktElement.kotlinFqName ?: return Weight.OTHER
-        val packageFqn = fqn.asString().substringBeforeLast('.')
-        if (packageFqn !in preferredPackages) return Weight.OTHER
-        return Weight.KOTLINX
+        val fqn = ktElement.kotlinFqName?.asString() ?: return Weight.OTHER
+        if (fqn in preferredClasses) return Weight.KOTLINX
+        val packageFqn = fqn.substringBeforeLast('.')
+        if (packageFqn in preferredPackages) return Weight.KOTLINX
+        return Weight.OTHER
     }
 }

@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.remoteDev
 
+import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.components.JTreeFixtureRef
@@ -76,6 +77,10 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
 
   override fun collectExpandedPaths(): TreePathToRowList {
     return fixture.collectExpandedPaths()
+  }
+
+  override fun collectSelectedPaths(): List<TreePath> {
+    return fixture.collectSelectedPaths()
   }
 
   override fun selectRow(row: Int): JTreeFixtureRef? {

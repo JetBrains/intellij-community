@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class CoverageHelper {
@@ -37,12 +38,14 @@ public final class CoverageHelper {
                                                       ModalityState.nonModal());
   }
 
+  @ApiStatus.Internal
   public static void doReadExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
     final CoverageEnabledConfiguration covConf = CoverageEnabledConfiguration.getOrCreate(runConfiguration);
 
     covConf.readExternal(element);
   }
 
+  @ApiStatus.Internal
   public static void doWriteExternal(RunConfigurationBase runConfiguration, Element element) {
     CoverageEnabledConfiguration.getOrCreate(runConfiguration).writeExternal(element);
   }

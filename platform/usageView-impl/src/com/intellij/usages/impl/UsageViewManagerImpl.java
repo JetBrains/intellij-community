@@ -34,6 +34,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   private final Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
+  @ApiStatus.Internal
   public UsageViewManagerImpl(@NotNull Project project) {
     myProject = project;
   }
@@ -255,6 +257,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
+  @ApiStatus.Internal
   public static void showTooManyUsagesWarningLater(@NotNull Project project,
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
@@ -280,16 +283,19 @@ public class UsageViewManagerImpl extends UsageViewManager {
     });
   }
 
+  @ApiStatus.Internal
   public static long getFileLength(@NotNull VirtualFile virtualFile) {
     return ReadAction.compute(() -> virtualFile.isValid() ? virtualFile.getLength() : -1L);
   }
 
+  @ApiStatus.Internal
   @NotNull
   public static String presentableSize(long bytes) {
     long megabytes = bytes / (1024 * 1024);
     return UsageViewBundle.message("find.file.size.megabytes", Long.toString(megabytes));
   }
 
+  @ApiStatus.Internal
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope, @NotNull SearchScope everythingScope) {
     if (searchScope.equals(everythingScope)) return true;
     return ReadAction.compute(() -> {
@@ -320,6 +326,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return searchScope.contains(file);
   }
 
+  @ApiStatus.Internal
   public static @Nls(capitalization = Sentence) @NotNull String outOfScopeMessage(int nUsages, @NotNull SearchScope searchScope) {
     return UsageViewBundle.message("0.usages.are.out.of.scope", nUsages, searchScope.getDisplayName());
   }

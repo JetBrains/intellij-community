@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.google.common.collect.HashMultimap
@@ -14,9 +14,7 @@ import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -221,17 +219,17 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun hasJvmFieldAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+        return hasAnnotation(declaration,  JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
     }
 
     @JvmStatic
     fun hasJvmOverloadsAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JVM_OVERLOADS_FQ_NAME)
+        return hasAnnotation(declaration, JvmStandardClassIds.JVM_OVERLOADS_FQ_NAME)
     }
 
     @JvmStatic
     fun hasJvmStaticAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JVM_STATIC_ANNOTATION_FQ_NAME)
+        return hasAnnotation(declaration, JvmStandardClassIds.JVM_STATIC_FQ_NAME)
     }
 
     private val PUBLISHED_API_FQN = FqName("kotlin.PublishedApi")

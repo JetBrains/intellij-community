@@ -12,7 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
 
-suspend fun configureProjectByActivities(args: OpenProjectArgs) : Project {
+internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Project {
   val projectFile = getProjectFile(args)
 
   callProjectConversion(args)

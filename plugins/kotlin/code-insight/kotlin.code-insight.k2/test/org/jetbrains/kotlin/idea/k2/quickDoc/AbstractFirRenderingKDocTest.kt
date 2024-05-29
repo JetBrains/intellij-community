@@ -9,10 +9,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 
 abstract class AbstractFirRenderingKDocTest: KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected fun doTest(path: String) {

@@ -4,7 +4,6 @@ package com.intellij.openapi.command;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -15,6 +14,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import kotlin.coroutines.Continuation;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
@@ -23,8 +24,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
 
+/**
+ * @see CoroutinesKt#writeCommandAction(Project, String, Function0, Continuation)
+ */
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance(WriteCommandAction.class);
 
   private static final String DEFAULT_GROUP_ID = null;
 

@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
@@ -125,6 +126,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
           val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
           if (semanticMatches.isEmpty()) return@launch
           standardSearchJob.join()
+          if (knownItems.isEmpty() && checkScopeIsDefaultAndAutoSet()) return@launch // allow the scope to change automatically
+
           for (priority in ORDERED_PRIORITIES) {
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
             else cachedMatches.filter { it.findPriority() == priority }.iterator()
@@ -141,7 +144,11 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
                   blockingContext { consumer.process(it) }
-                  foundItemsCount++
+                  val descriptorValue = it.item.value
+                  // Only count available actions
+                  if (descriptorValue is ActionWrapper && descriptorValue.isAvailable) {
+                    foundItemsCount++
+                  }
                 }
                 if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) return@launch
               }
@@ -193,6 +200,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   override fun ScoredText.findPriority(): DescriptorPriority {
     return ORDERED_PRIORITIES.first { similarity > priorityThresholds[it]!! }
   }
+
+  override fun checkScopeIsDefaultAndAutoSet(): Boolean = isScopeDefaultAndAutoSet
 
   override fun syncSearchSettings() {
     throw UnsupportedOperationException()

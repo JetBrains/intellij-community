@@ -46,9 +46,9 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         context.withAnalysisSession { superExpression.getKtType() }?.toKotlinType(context) ?: context.errorHandling()
 
     private fun getCompileTimeValue(key: KtExpression): CompileTimeConstant<*>? {
-        val ktConstantValue = context.withAnalysisSession { key.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) }
+        val kaConstantValue = context.withAnalysisSession { key.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION) }
             ?: return null
-        val constantValue = ktConstantValue.toConstantValue()
+        val constantValue = kaConstantValue.toConstantValue()
         // only usesNonConstValAsConstant seems to be used in IDE code
         val parameters = CompileTimeConstant.Parameters(
             canBeUsedInAnnotation = false,

@@ -455,11 +455,12 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       myFilter = filter;
       myIcon = JBUIScale.scaleIcon(new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, CHECKBOX_ICON_SIZE, CHECKBOX_ICON_SIZE));
       myEmptyIcon = JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE));
+      getTemplatePresentation().setMultiChoice(false);
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return getStructureFilter(myFilterModel.getFilter()) == myFilter;
+      return myFilter.equals(getStructureFilter(myFilterModel.getFilter()));
     }
 
     @Override

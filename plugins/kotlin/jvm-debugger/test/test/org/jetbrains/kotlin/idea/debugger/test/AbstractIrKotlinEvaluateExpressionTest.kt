@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
 import com.intellij.debugger.impl.DebuggerUtilsImpl
@@ -199,7 +200,13 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 val result = FramePrinter(suspendContext).print(stackFrame)
                 print(result, ProcessOutputTypes.SYSTEM)
             }
-            suspendContext.invokeInManagerThread(completion)
+            assert(debugProcess.isAttached)
+            debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+                override fun contextAction(suspendContext: SuspendContextImpl) {
+                    completion()
+                }
+                override fun commandCancelled() = error(message = "Test was cancelled")
+            })
         }
     }
 

@@ -106,7 +106,6 @@ a:com.intellij.remoteServer.agent.util.log.LogPipe
 - p:onStartListening(com.intellij.remoteServer.agent.util.log.LogListener):V
 - open():V
 - pf:setLogDebugEnabled(Z):V
-- toString():java.lang.String
 a:com.intellij.remoteServer.agent.util.log.LogPipeBase
 - <init>():V
 - a:close():V

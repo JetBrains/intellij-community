@@ -3,6 +3,4 @@ package org.jetbrains.kotlin.idea.k2
 
 import org.jetbrains.kotlin.idea.codeInsight.AbstractExpressionTypeTest
 
-abstract class AbstractK2ExpressionTypeTest : AbstractExpressionTypeTest() {
-    override fun isFirPlugin(): Boolean = true
-}
+abstract class AbstractK2ExpressionTypeTest : AbstractExpressionTypeTest()

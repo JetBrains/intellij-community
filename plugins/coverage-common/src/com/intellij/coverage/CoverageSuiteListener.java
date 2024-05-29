@@ -16,6 +16,7 @@
 
 package com.intellij.coverage;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,21 +28,25 @@ public interface CoverageSuiteListener {
    *
    * @param suite the new suite corresponding to this coverage
    */
+  @ApiStatus.Internal
   default void coverageGathered(@NotNull CoverageSuite suite) {}
 
   /**
    * Called <b>each time</b> before a coverage suite is opened, added to existing, selected, closed
    */
+  @ApiStatus.Internal
   default void beforeSuiteChosen() {}
 
   /**
    * Called <b>each time</b> after a coverage suite is opened, added to existing, selected, closed
    */
+  @ApiStatus.Internal
   default void afterSuiteChosen() {}
 
 
   /**
    * Called <b>each time</b> after a coverage suite is completely processed: data is loaded and accumulated
    */
+  @ApiStatus.Internal
   default void coverageDataCalculated(@NotNull CoverageSuitesBundle bundle) {}
 }

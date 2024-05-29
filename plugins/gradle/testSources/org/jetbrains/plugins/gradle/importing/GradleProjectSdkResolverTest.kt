@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class GradleProjectSdkResolverTest : GradleProjectSdkResolverTestCase() {
+
   @Test
   fun `test setup of project sdk for newly opened project`() = runBlocking {
     val jdk = resolveRealTestSdk()

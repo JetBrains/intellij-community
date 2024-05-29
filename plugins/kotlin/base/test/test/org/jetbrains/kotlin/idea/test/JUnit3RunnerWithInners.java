@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test;
 
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -58,7 +59,7 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
 
     protected void initialize() {
         if (delegateRunner != null) return;
-        delegateRunner = new JUnit38ClassRunner(getCollectedTests());
+        delegateRunner = new JUnit38AssumeSupportRunner(getCollectedTests());
     }
 
     private Test getCollectedTests() {

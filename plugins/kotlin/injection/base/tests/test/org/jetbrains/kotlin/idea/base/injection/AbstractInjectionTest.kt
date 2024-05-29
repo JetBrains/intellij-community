@@ -14,7 +14,7 @@ import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -46,7 +46,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
      * Note that this class is a parent class for both of K1 and K2 injection tests. The K2 injection tests need [allowAnalysisOnEdt] as we
      * run it on EDT while the injection uses analysis.
      */
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     protected fun doInjectionPresentTest(
         @Language("kotlin") text: String, @Language("Java") javaText: String? = null,
         languageId: String? = null, unInjectShouldBePresent: Boolean = true,
@@ -115,7 +115,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
      * Note that this class is a parent class for both of K1 and K2 injection tests. The K2 injection tests need [allowAnalysisOnEdt] as we
      * run it on EDT while the injection uses analysis.
      */
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     protected fun doRemoveInjectionTest(@Language("kotlin") before: String, @Language("kotlin") after: String) {
         myFixture.setCaresAboutInjection(false)
 

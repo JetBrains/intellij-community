@@ -11,7 +11,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import junit.framework.TestCase
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,69 +29,42 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     provider = FakeIterator()
   }
 
-  fun testNoAddCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.commit()
-    }
+  fun testNoAddClose() {
+    queue.getSink(provider, DEFAULT_SCANNING_ID).close()
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
   }
 
-  fun testAddCommit() {
+  fun testAddClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
     }
     val (filesInQueue) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
-  fun testAddNoCommit() {
+  fun testAddCloseClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
-    }
-    val (filesInQueue, _) = getAndResetQueuedFiles(queue)
-    TestCase.assertEquals(0, filesInQueue.size)
-  }
-
-  fun testAddClearCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.clear()
-      sink.commit()
-    }
-    val (filesInQueue, _) = getAndResetQueuedFiles(queue)
-    TestCase.assertEquals(0, filesInQueue.size)
-  }
-
-  fun testAddCommitCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
-      sink.commit()
+      sink.close()
+      sink.close()
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
-  fun testAddCommitTwoSinks() {
+  fun testAddCloseTwoSinks() {
     val provider2 = FakeIterator()
 
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
     }
 
     queue.getSink(provider2, DEFAULT_SCANNING_ID).use { sink ->
       sink.addFile(LightVirtualFile("f2"))
-      sink.commit()
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(2, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
-    TestCase.assertEquals(1, filesInQueue[provider2]?.size)
   }
 
   fun testCancelAllTasksAndWait() {
@@ -184,9 +156,8 @@ class PerProviderSinkTest : LightPlatformTestCase() {
           queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
             for (f in 1..batchSize) {
               sink.addFile(LightVirtualFile("$producerName batch $batch file $f"))
+              filesSubmitted.incrementAndGet()
             }
-            sink.commit()
-            filesSubmitted.addAndGet(batchSize)
           }
         }
       }
@@ -215,7 +186,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
       // Don't test latch: it is always `null` because in unit tests [UnindexedFilesScanner.shouldScanInSmartMode()] reports `false`
       //TestCase.assertTrue("Total files: $totalFiles, latch: $currentLatch", (totalFiles < DUMB_MODE_THRESHOLD) == (currentLatch == null))
-      val totalFilesInThisQueue = filesInQueue.values.sumOf(Collection<*>::size)
+      val totalFilesInThisQueue = filesInQueue.size
       TestCase.assertEquals(totalFiles, totalFilesInThisQueue)
       totalFilesSum += totalFilesInThisQueue
       Thread.sleep(50)
@@ -231,7 +202,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
   }
 
   private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue):
-    Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> =
+    Pair<Set<VirtualFile>, Int> =
     PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
 
   private class FakeIterator : IndexableFilesIterator {

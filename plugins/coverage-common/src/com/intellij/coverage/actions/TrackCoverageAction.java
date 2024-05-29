@@ -26,7 +26,7 @@ import javax.swing.event.TreeSelectionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrackCoverageAction extends ToggleModelAction {
+class TrackCoverageAction extends ToggleModelAction {
   private final TestConsoleProperties myProperties;
   private TestFrameworkRunningModel myModel;
   private TreeSelectionListener myTreeSelectionListener;
@@ -37,7 +37,7 @@ public class TrackCoverageAction extends ToggleModelAction {
    */
   private boolean myIsActive;
 
-  public TrackCoverageAction(TestConsoleProperties properties) {
+  TrackCoverageAction(TestConsoleProperties properties) {
     super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"),
           AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);

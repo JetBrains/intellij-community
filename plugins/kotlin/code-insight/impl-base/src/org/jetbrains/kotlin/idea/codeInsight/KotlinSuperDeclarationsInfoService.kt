@@ -7,7 +7,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -39,7 +39,7 @@ sealed class SuperDeclaration {
 object SuperDeclarationProvider {
     @RequiresReadLock
     @ApiStatus.Internal
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun findSuperDeclarations(declaration: KtDeclaration): List<SuperDeclaration> {
         allowAnalysisOnEdt {
             analyze(declaration) {

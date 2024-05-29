@@ -5,7 +5,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PsiIconUtil
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -14,20 +14,20 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
 class FirKotlinIconProviderTest : KotlinLightCodeInsightFixtureTestCase() {
-  override fun isFirPlugin(): Boolean {
-    return true
-  }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
   }
 
-  override fun tearDown() {
-    runAll(
-      ThrowableRunnable { project.invalidateCaches() },
-      ThrowableRunnable { super.tearDown() }
-    )
-  }
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() },
+        )
+    }
 
   fun testJavaBase() {
     val aClass = myFixture.addClass("public class BaseJavaClass {}")

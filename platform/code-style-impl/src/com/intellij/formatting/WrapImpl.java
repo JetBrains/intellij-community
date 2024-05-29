@@ -2,11 +2,13 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class WrapImpl extends Wrap {
   private static final int MAX_IS_CHILD_OF_CALCULATION_ITERATIONS = 50;
 
@@ -33,7 +35,7 @@ public final class WrapImpl extends Wrap {
     return isChildOf(wrap, leaf, new FormatterIterationMonitor<>(MAX_IS_CHILD_OF_CALCULATION_ITERATIONS, false));
   }
 
-  public boolean isChildOf(final @Nullable WrapImpl wrap, LeafBlockWrapper leaf, @NotNull FormatterIterationMonitor<Boolean> iterationMonitor) {
+  boolean isChildOf(final @Nullable WrapImpl wrap, LeafBlockWrapper leaf, @NotNull FormatterIterationMonitor<Boolean> iterationMonitor) {
     if (getIgnoreParentWraps()) return false;
     if (!iterationMonitor.iterate()) return iterationMonitor.getFallbackValue();
     if (leaf != null && myIgnoredWraps != null) {

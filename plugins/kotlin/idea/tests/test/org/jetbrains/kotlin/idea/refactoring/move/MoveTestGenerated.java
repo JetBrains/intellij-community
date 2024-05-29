@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.move;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/changePackage")
     public static class ChangePackage extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -69,6 +76,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/movePackage")
     public static class MovePackage extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -82,6 +95,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveDirectory")
     public static class MoveDirectory extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -100,6 +119,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveFile")
     public static class MoveFile extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -199,6 +224,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveFile/kotlin/moveObject/moveObject.test");
         }
 
+        @TestMetadata("kotlin/moveUnaryOperator/moveUnaryOperator.test")
+        public void testKotlin_moveUnaryOperator_MoveUnaryOperator() throws Exception {
+            runTest("testData/refactoring/moveFile/kotlin/moveUnaryOperator/moveUnaryOperator.test");
+        }
+
         @TestMetadata("kotlin/packageWithQuotation/packageWithQuotation.test")
         public void testKotlin_packageWithQuotation_PackageWithQuotation() throws Exception {
             runTest("testData/refactoring/moveFile/kotlin/packageWithQuotation/packageWithQuotation.test");
@@ -223,6 +253,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveTopLevel")
     public static class MoveTopLevel extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -357,6 +393,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
         }
 
+        @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
+        public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
+        }
+
         @TestMetadata("kotlin/internalReferences/internalReferences.test")
         public void testKotlin_internalReferences_InternalReferences() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/internalReferences/internalReferences.test");
@@ -387,6 +428,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test");
         }
 
+        @TestMetadata("kotlin/moveClassToPackageFqnConstructor/moveClassToPackageFqnConstructor.test")
+        public void testKotlin_moveClassToPackageFqnConstructor_MoveClassToPackageFqnConstructor() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToPackageFqnConstructor/moveClassToPackageFqnConstructor.test");
+        }
+
         @TestMetadata("kotlin/moveClassToPackage/moveClassToPackage.test")
         public void testKotlin_moveClassToPackage_MoveClassToPackage() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToPackage/moveClassToPackage.test");
@@ -400,6 +446,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test")
         public void testKotlin_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
+        }
+
+        @TestMetadata("kotlin/moveEscapedKeyword/moveEscapedKeyword.test")
+        public void testKotlin_moveEscapedKeyword_MoveEscapedKeyword() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveEscapedKeyword/moveEscapedKeyword.test");
         }
 
         @TestMetadata("kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test")
@@ -477,6 +528,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/movePropertyToPackage/movePropertyToPackage.test");
         }
 
+        @TestMetadata("kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test")
+        public void testKotlin_moveReferenceToImportedJavaStatic_MoveReferenceToImportedJavaStatic() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test");
+        }
+
         @TestMetadata("kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
         public void testKotlin_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
@@ -517,6 +573,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
         }
 
+        @TestMetadata("kotlin/objectMemberImport/objectMemberImport.test")
+        public void testKotlin_objectMemberImport_ObjectMemberImport() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/objectMemberImport/objectMemberImport.test");
+        }
+
         @TestMetadata("kotlin/operationReference/operationReference.test")
         public void testKotlin_operationReference_OperationReference() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/operationReference/operationReference.test");
@@ -540,6 +601,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test")
         public void testKotlin_protectedMemberUsageWithThis_ProtectedMemberUsageWithThis() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test");
+        }
+
+        @TestMetadata("kotlin/protectedMembersExternalJavaRefs/protectedMembersExternalJavaRefs.test")
+        public void testKotlin_protectedMembersExternalJavaRefs_ProtectedMembersExternalJavaRefs() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMembersExternalJavaRefs/protectedMembersExternalJavaRefs.test");
         }
 
         @TestMetadata("kotlin/protectedMembersExternalRefs/protectedMembersExternalRefs.test")
@@ -606,6 +672,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveTopLevelToInner")
     public static class MoveTopLevelToInner extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -629,6 +701,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveNested")
     public static class MoveNested extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

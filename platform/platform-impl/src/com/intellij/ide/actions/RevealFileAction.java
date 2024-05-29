@@ -257,8 +257,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       if (toSelect == null) {
         var res = Shell32.INSTANCE.ShellExecute(null, "explore", dir, null, null, WinUser.SW_NORMAL);
         if (res.intValue() <= 32) {
-          var err = Kernel32.INSTANCE.GetLastError();
-          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + ": " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
+          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + " GetLastError=" + Kernel32.INSTANCE.GetLastError());
           openViaExplorerCall(dir, toSelect);
         }
       }
@@ -269,7 +268,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         try {
           var res = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
           if (!WinError.S_OK.equals(res)) {
-            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()) + ": " + Kernel32Util.formatMessage(res));
+            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()));
             openViaExplorerCall(dir, toSelect);
           }
         }

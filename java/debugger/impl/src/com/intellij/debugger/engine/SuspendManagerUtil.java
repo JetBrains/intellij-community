@@ -42,13 +42,16 @@ public final class SuspendManagerUtil {
     SuspendContextImpl currentSuspendContext =
       currentCommand instanceof SuspendContextCommandImpl suspendContextCommand ? suspendContextCommand.getSuspendContext() : null;
     if (currentSuspendContext != null) {
+      if (currentSuspendContext.isResumed()) {
+        DebuggerDiagnosticsUtil.logError(currentSuspendContext.getDebugProcess(),
+                                         "Cannot use context " + currentSuspendContext + " for evaluation");
+        return null;
+      }
       return currentSuspendContext;
     }
+    DebuggerDiagnosticsUtil.logError(((SuspendManagerImpl)suspendManager).getDebugProcess(),
+      "Evaluation should be performed in the SuspendContextCommandImpl, so evaluation context should come from there");
     return suspendManager.getPausedContext();
-  }
-
-  public static void assertSuspendContext(SuspendContextImpl context) {
-    LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
   }
 
   @NotNull
@@ -86,7 +89,7 @@ public final class SuspendManagerUtil {
     ThreadReferenceProxyImpl thread = context.getThread();
 
     Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads != null ? Set.copyOf(context.myResumedThreads) : null;
-    ResumeData resumeData = new ResumeData(suspendManager.isFrozen(thread), resumedThreads);
+    ResumeData resumeData = new ResumeData(thread != null && suspendManager.isFrozen(thread), resumedThreads);
 
     if (resumeData.myIsFrozen) {
       suspendManager.unfreezeThread(thread);

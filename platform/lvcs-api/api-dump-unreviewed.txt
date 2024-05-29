@@ -8,7 +8,6 @@
 - f:getKind():java.lang.String
 - f:getProviderId():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 *:com.intellij.history.ActivityPresentationProvider
 - getIcon(java.lang.String):javax.swing.Icon
 - a:getId():java.lang.String

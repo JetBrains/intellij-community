@@ -10,6 +10,7 @@ be accessed directly from the outside
 """
 import sys
 from functools import partial
+import importlib.util
 
 from pydev_ipython.version import check_version
 
@@ -20,6 +21,12 @@ QT_API_PYQT_DEFAULT = 'pyqtdefault' # don't set SIP explicitly
 QT_API_PYSIDE = 'pyside'
 QT_API_PYQT5 = 'pyqt5'
 QT_API_PYQT6 = 'pyqt6'
+
+
+def find_module(module_name, path=None):
+    spec = importlib.util.find_spec(module_name, path)
+    if spec is None:
+        raise ImportError
 
 
 class ImportDenier(object):
@@ -111,14 +118,13 @@ def has_binding(api):
                    }
     module_name = module_name[api]
 
-    import imp
     try:
         #importing top level PyQt4/PySide module is ok...
         mod = __import__(module_name)
         #...importing submodules is not
-        imp.find_module('QtCore', mod.__path__)
-        imp.find_module('QtGui', mod.__path__)
-        imp.find_module('QtSvg', mod.__path__)
+        find_module('QtCore', mod.__path__)
+        find_module('QtGui', mod.__path__)
+        find_module('QtSvg', mod.__path__)
 
         #we can also safely check PySide version
         if api == QT_API_PYSIDE:

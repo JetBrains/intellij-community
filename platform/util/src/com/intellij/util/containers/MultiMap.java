@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.*;
 import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -290,15 +289,6 @@ public class MultiMap<K, V> implements Serializable {
         return Collections.emptySet();
       }
     };
-  }
-
-  /**
-   * @deprecated Use {@link #MultiMap()}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull <K, V> MultiMap<K, V> createSmart() {
-    return new MultiMap<>();
   }
 
   public static @NotNull <K, V> MultiMap<K, V> createConcurrent() {

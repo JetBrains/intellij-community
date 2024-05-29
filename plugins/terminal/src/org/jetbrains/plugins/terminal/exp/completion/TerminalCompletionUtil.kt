@@ -23,6 +23,8 @@ internal object TerminalCompletionUtil {
   /** Returns required options and all arguments */
   private fun getNextOptionsAndArgumentsString(spec: ShellCommandSpec): String {
     return buildString {
+      // Search required options only from static options.
+      // Searching all the options requires running ShellRuntimeDataGenerator, that can be slow.
       for (option in spec.options.filter { it.isRequired }) {
         append(option.name)
         val arguments = getNextArgumentsString(option.arguments)

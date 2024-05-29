@@ -2,14 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtReferencesTypeHintsProvider
 
 abstract class AbstractKtReferenceTypeHintsProviderTest: AbstractKotlinReferenceTypeHintsProviderTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun inlayHintsProvider(): InlayHintsProvider =
         KtReferencesTypeHintsProvider()

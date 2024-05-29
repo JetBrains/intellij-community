@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDec
 import org.jetbrains.kotlin.analysis.project.structure.KtModuleStructureInternals
 import org.jetbrains.kotlin.analysis.project.structure.analysisExtensionFileContextModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -185,7 +185,7 @@ class ModuleInfoProvider(private val project: Project) {
                     config = config,
                     extensionBlock = { collectByElement(element, containingFile, virtualFile) },
                 ) {
-                    val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
+                    val isLibrarySource = containingKtFile != null && isLibrarySource(containingKtFile, config)
                     collectByFile(virtualFile, isLibrarySource, config)
                 }
             } else {
@@ -375,8 +375,8 @@ class ModuleInfoProvider(private val project: Project) {
         config: Configuration,
     ): IdeaModuleInfo? {
         val sourceContext = config.contextualModuleInfo as? ModuleSourceInfo
-
-        if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
+        val useLibrarySource = isLibrarySource || (config.contextualModuleInfo as? LibrarySourceInfo)?.library == library
+        if (!useLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
             for (libraryInfo in libraryInfoCache[library]) {
                 if (visited.add(libraryInfo)) {
                     if (libraryInfo.isApplicable(sourceContext)) {
@@ -384,7 +384,7 @@ class ModuleInfoProvider(private val project: Project) {
                     }
                 }
             }
-        } else if (isLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
+        } else if (useLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
             for (libraryInfo in libraryInfoCache[library]) {
                 val moduleInfo = libraryInfo.sourcesModuleInfo
                 if (visited.add(moduleInfo)) {

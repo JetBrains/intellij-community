@@ -2,7 +2,6 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import com.intellij.platform.ijent.fs.IjentFsResult
 import com.intellij.platform.ijent.fs.IjentOpenedFile
 import com.intellij.platform.ijent.fs.IjentPath
 import java.nio.ByteBuffer
@@ -17,10 +16,7 @@ internal class IjentNioFileChannel private constructor(
   companion object {
     @JvmStatic
     internal suspend fun createReading(nioFs: IjentNioFileSystem, path: IjentPath.Absolute): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, when (val v = nioFs.ijent.fs.fileReader(path)) {
-        is IjentFileSystemApi.FileReader.Ok -> v.value
-        is IjentFsResult.Error -> v.throwFileSystemException()
-      })
+      IjentNioFileChannel(nioFs, nioFs.ijent.fs.fileReader(path).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createWriting(
@@ -31,10 +27,7 @@ internal class IjentNioFileChannel private constructor(
     ): IjentNioFileChannel =
       IjentNioFileChannel(
         nioFs,
-        when (val v = nioFs.ijent.fs.fileWriter(path, append = append, creationMode = creationMode)) {
-          is IjentFileSystemApi.FileWriter.Ok -> v.value
-          is IjentFsResult.Error -> v.throwFileSystemException()
-        },
+        nioFs.ijent.fs.fileWriter(path, append = append, creationMode = creationMode).getOrThrowFileSystemException(),
       )
   }
 
@@ -43,12 +36,11 @@ internal class IjentNioFileChannel private constructor(
       is IjentOpenedFile.Reader -> Unit
       is IjentOpenedFile.Writer -> throw NonReadableChannelException()
     }
-    return nioFs.fsBlocking {
-      when (val v = ijentOpenedFile.read(dst)) {
-        is IjentOpenedFile.Reader.Read.Ok -> v.value
-        is IjentFsResult.Error -> v.throwFileSystemException()
+    return nioFs
+      .fsBlocking {
+        ijentOpenedFile.read(dst)
       }
-    }
+      .getOrThrowFileSystemException()
   }
 
   override fun read(dsts: Array<out ByteBuffer>, offset: Int, length: Int): Long {
@@ -60,10 +52,7 @@ internal class IjentNioFileChannel private constructor(
     var totalRead = 0L
     nioFs.fsBlocking {
       handleThatSmartMultiBufferApi(dsts, offset, length) { buf ->
-        val read = when (val v = ijentOpenedFile.read(buf)) {
-          is IjentOpenedFile.Reader.Read.Ok -> v.value
-          is IjentFsResult.Error -> v.throwFileSystemException()
-        }
+        val read = ijentOpenedFile.read(buf).getOrThrowFileSystemException()
         if (read < 0) {  // A strict comparison.
           return@fsBlocking
         }
@@ -81,12 +70,11 @@ internal class IjentNioFileChannel private constructor(
       is IjentOpenedFile.Reader -> throw NonWritableChannelException()
     }
 
-    return nioFs.fsBlocking {
-      when (val v = ijentOpenedFile.write(src)) {
-        is IjentOpenedFile.Writer.Write.Ok -> v.value
-        is IjentFsResult.Error -> v.throwFileSystemException()
+    return nioFs
+      .fsBlocking {
+        ijentOpenedFile.write(src)
       }
-    }
+      .getOrThrowFileSystemException()
   }
 
   override fun write(srcs: Array<out ByteBuffer>, offset: Int, length: Int): Long {
@@ -98,10 +86,7 @@ internal class IjentNioFileChannel private constructor(
     var totalWritten = 0L
     nioFs.fsBlocking {
       handleThatSmartMultiBufferApi(srcs, offset, length) { buf ->
-        val written = when (val v = ijentOpenedFile.write(buf)) {
-          is IjentOpenedFile.Writer.Write.Ok -> v.value
-          is IjentFsResult.Error -> v.throwFileSystemException()
-        }
+        val written = ijentOpenedFile.write(buf).getOrThrowFileSystemException()
         if (written <= 0) {  // A non-strict comparison.
           return@fsBlocking
         }

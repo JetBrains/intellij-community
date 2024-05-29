@@ -11,7 +11,6 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellArgument
-import java.util.function.Supplier
 
 /**
  * @param [parentCommandNames] used to build cache key/debug name of the generators
@@ -37,9 +36,9 @@ internal class ShellJsonBasedArgumentSpec(
       if (data.suggestions.isNotEmpty()) {
         add(ShellRuntimeDataGenerator(createCacheKey(parentCommandNames, "suggestions")) {
           data.suggestions.flatMap { s ->
-            val description = s.description?.let { Supplier { it } }
             s.names.map { name ->
-              ShellCompletionSuggestion(name, ShellSuggestionType.ARGUMENT, s.displayName, description, s.insertValue, s.priority)
+              // TODO: there should be a way to localize the json-based descriptions
+              ShellCompletionSuggestion(name, ShellSuggestionType.ARGUMENT, s.displayName, s.description, s.insertValue, s.priority)
             }
           }
         })

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Key
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
 import java.awt.Graphics
 import java.awt.Rectangle
 
@@ -52,7 +53,7 @@ interface NotebookCellInlayController {
    */
   fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) { }
 
-  fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval) {}
+  fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
 
   companion object {
     val gutterActionKey = Key<AnAction>("jupyter.editor.cell.gutter.action")

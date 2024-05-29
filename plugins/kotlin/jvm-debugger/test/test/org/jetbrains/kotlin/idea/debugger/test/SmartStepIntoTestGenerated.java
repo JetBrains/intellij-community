@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/smartStepInto")
 public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -206,6 +213,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("object.kt")
     public void testObject() throws Exception {
         runTest("testData/smartStepInto/object.kt");
+    }
+
+    @TestMetadata("ordinals.kt")
+    public void testOrdinals() throws Exception {
+        runTest("testData/smartStepInto/ordinals.kt");
     }
 
     @TestMetadata("param.kt")

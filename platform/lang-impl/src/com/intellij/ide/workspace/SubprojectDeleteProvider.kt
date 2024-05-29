@@ -7,12 +7,14 @@ import com.intellij.ide.TitledHandler
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 
 internal class SubprojectDeleteProvider(val selected: Collection<Subproject>) : DeleteProvider, TitledHandler {
   override fun deleteElement(dataContext: DataContext) {
+    val project = requireNotNull(CommonDataKeys.PROJECT.getData (dataContext))
     val names: String = StringUtil.join(selected.map { "'${it.name}'" }, ", ")
     val message = LangBundle.message("project.remove.confirmation.prompt", names, selected.size)
     val ret = Messages.showOkCancelDialog(message,
@@ -21,7 +23,7 @@ internal class SubprojectDeleteProvider(val selected: Collection<Subproject>) : 
                                           CommonBundle.getCancelButtonText(),
                                           Messages.getQuestionIcon())
     if (ret == Messages.OK) {
-      removeSubprojects(selected)
+      removeSubprojects(project, selected)
     }
   }
 

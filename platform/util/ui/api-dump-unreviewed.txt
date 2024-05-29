@@ -380,6 +380,8 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Archive:javax.swing.Icon
 - sf:Aspectj:javax.swing.Icon
 - sf:Config:javax.swing.Icon
+- sf:Contexts:javax.swing.Icon
+- sf:ContextsModifier:javax.swing.Icon
 - sf:Css:javax.swing.Icon
 - sf:Custom:javax.swing.Icon
 - sf:Diagram:javax.swing.Icon
@@ -1017,6 +1019,7 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Couchbase:javax.swing.Icon
 - sf:DB2:javax.swing.Icon
 - sf:Databricks:javax.swing.Icon
+- sf:Denodo:javax.swing.Icon
 - sf:DocumentDB:javax.swing.Icon
 - sf:DuckDB:javax.swing.Icon
 - sf:DynamoDB:javax.swing.Icon
@@ -1207,9 +1210,11 @@ f:com.intellij.icons.AllIcons$TransferSettings
 - sf:Xcode:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Ultimate
+- sf:IdeaUltimatePromo:javax.swing.Icon
 - sf:Lock:javax.swing.Icon
 - sf:LockWhite:javax.swing.Icon
 - sf:PycharmLock:javax.swing.Icon
+- sf:PycharmPromo:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Vcs
 - sf:Arrow_left:javax.swing.Icon
@@ -1454,7 +1459,6 @@ c:com.intellij.openapi.ui.VerticalFlowLayout
 - preferredLayoutSize(java.awt.Container):java.awt.Dimension
 - setHorizontalFill(Z):V
 - setVerticalFill(Z):V
-- toString():java.lang.String
 @:com.intellij.openapi.ui.VerticalFlowLayout$VerticalFlowAlignment
 - java.lang.annotation.Annotation
 f:com.intellij.openapi.util.IconLoader
@@ -1513,7 +1517,6 @@ f:com.intellij.openapi.util.text.TextWithMnemonic
 - hashCode():I
 - s:parse(java.lang.String):com.intellij.openapi.util.text.TextWithMnemonic
 - replaceFirst(java.lang.String,java.lang.String):com.intellij.openapi.util.text.TextWithMnemonic
-- toString():java.lang.String
 - withMnemonicIndex(I):com.intellij.openapi.util.text.TextWithMnemonic
 a:com.intellij.openapi.wm.BaseFocusWatcher
 - java.awt.event.ContainerListener
@@ -1557,8 +1560,6 @@ com.intellij.ui.BackgroundSupplier
 c:com.intellij.ui.BooleanTableCellEditor
 - javax.swing.DefaultCellEditor
 - <init>():V
-- <init>(Z):V
-- getCellEditorValue():java.lang.Object
 - getTableCellEditorComponent(javax.swing.JTable,java.lang.Object,Z,I,I):java.awt.Component
 f:com.intellij.ui.CachingPainter
 - <init>():V
@@ -1685,7 +1686,6 @@ c:com.intellij.ui.CollectionListModel
 - setElementAt(java.lang.Object,I):V
 - sort(java.util.Comparator):V
 - toList():java.util.List
-- toString():java.lang.String
 f:com.intellij.ui.ColorUtil
 - s:alphaBlending(java.awt.Color,java.awt.Color):java.awt.Color
 - s:areContrasting(java.awt.Color,java.awt.Color):Z
@@ -1942,7 +1942,6 @@ f:com.intellij.ui.Graphics2DLog
 - setTransform(java.awt.geom.AffineTransform):V
 - setXORMode(java.awt.Color):V
 - shear(D,D):V
-- toString():java.lang.String
 - transform(java.awt.geom.AffineTransform):V
 - translate(D,D):V
 - translate(I,I):V
@@ -2554,7 +2553,6 @@ c:com.intellij.ui.JBColor
 - s:namedColor(java.lang.String,I,I):com.intellij.ui.JBColor
 - s:namedColor(java.lang.String,java.awt.Color):com.intellij.ui.JBColor
 - s:setDark(Z):V
-- toString():java.lang.String
 f:com.intellij.ui.JBGradientPaint
 - java.awt.GradientPaint
 - <init>(javax.swing.JComponent,com.intellij.ui.JBGradientPaint$GradientDirection,java.awt.Color,java.awt.Color):V
@@ -2677,7 +2675,6 @@ c:com.intellij.ui.SeparatorComponent
 f:com.intellij.ui.SeparatorOrientation
 - sf:HORIZONTAL:com.intellij.ui.SeparatorOrientation
 - sf:VERTICAL:com.intellij.ui.SeparatorOrientation
-- toString():java.lang.String
 c:com.intellij.ui.SideBorder
 - javax.swing.border.LineBorder
 - sf:ALL:I
@@ -2809,7 +2806,6 @@ a:com.intellij.ui.UiInterceptors$UiInterceptor
 - p:<init>(java.lang.Class):V
 - pa:doIntercept(java.lang.Object):V
 - f:intercept(java.lang.Object):V
-- toString():java.lang.String
 com.intellij.ui.UserActivityProviderComponent
 - java.util.EventListener
 - a:addChangeListener(javax.swing.event.ChangeListener):V
@@ -2854,7 +2850,6 @@ f:com.intellij.ui.awt.DevicePoint
 - f:getLocationOnScreen(java.awt.GraphicsConfiguration):java.awt.Point
 - f:getPoint():java.awt.Point
 - f:toRelativePoint(java.awt.Component):com.intellij.ui.awt.RelativePoint
-- toString():java.lang.String
 c:com.intellij.ui.awt.RelativePoint
 - <init>(java.awt.Component,java.awt.Point):V
 - <init>(java.awt.Point):V
@@ -2874,7 +2869,6 @@ c:com.intellij.ui.awt.RelativePoint
 - s:getSouthOf(javax.swing.JComponent):com.intellij.ui.awt.RelativePoint
 - s:getSouthWestOf(javax.swing.JComponent):com.intellij.ui.awt.RelativePoint
 - toMouseEvent():java.awt.event.MouseEvent
-- toString():java.lang.String
 f:com.intellij.ui.awt.RelativeRectangle
 - <init>():V
 - <init>(com.intellij.ui.awt.RelativePoint,java.awt.Dimension):V
@@ -3179,7 +3173,6 @@ f:com.intellij.ui.mac.foundation.Selector
 - <init>(java.lang.String,J):V
 - getName():java.lang.String
 - initName(java.lang.String):com.intellij.ui.mac.foundation.Selector
-- toString():java.lang.String
 f:com.intellij.ui.paint.LinePainter2D
 - <init>():V
 - s:align(java.awt.Graphics2D,java.util.EnumSet,D,D,D,Z,com.intellij.ui.paint.LinePainter2D$StrokeType,D):java.awt.geom.Line2D
@@ -3350,7 +3343,6 @@ f:com.intellij.ui.scale.ScaleContext
 - getScale(com.intellij.ui.scale.ScaleType):D
 - hashCode():I
 - setScale(com.intellij.ui.scale.Scale):Z
-- toString():java.lang.String
 - update():Z
 c:com.intellij.ui.scale.ScaleContext$Cache
 - com.intellij.ui.scale.ScaleContextCache
@@ -3422,7 +3414,6 @@ c:com.intellij.ui.scale.UserScaleContext
 - overrideScale(com.intellij.ui.scale.Scale):Z
 - removeUpdateListener(com.intellij.ui.scale.UserScaleContext$UpdateListener):V
 - setScale(com.intellij.ui.scale.Scale):Z
-- toString():java.lang.String
 - update():Z
 - update(com.intellij.ui.scale.UserScaleContext):Z
 - p:updateAll(com.intellij.ui.scale.UserScaleContext):Z
@@ -3726,7 +3717,6 @@ f:com.intellij.util.ui.FontInfo
 - isMonospaced():Z
 - s:isMonospaced(java.awt.Font):Z
 - s:isMonospacedWithStyles(java.awt.Font):Z
-- toString():java.lang.String
 f:com.intellij.util.ui.GeometryUtil
 - javax.swing.SwingConstants
 - <init>():V
@@ -3976,7 +3966,6 @@ f:com.intellij.util.ui.JBHiDpiScalableIcon
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - scale(F):javax.swing.Icon
-- toString():java.lang.String
 c:com.intellij.util.ui.JBHtmlEditorKit
 - javax.swing.text.html.HTMLEditorKit
 - <init>():V
@@ -4040,7 +4029,6 @@ a:com.intellij.util.ui.JBScalableIcon
 - p:scaleVal(D,com.intellij.ui.scale.ScaleType):D
 - p:setAutoUpdateScaleContext(Z):V
 - p:setIconPreScaled(Z):V
-- toString():java.lang.String
 - pf:updateContextFrom(com.intellij.util.ui.JBScalableIcon):V
 - withIconPreScaled(Z):com.intellij.util.ui.JBScalableIcon
 f:com.intellij.util.ui.JBSwingUtilities
@@ -4532,7 +4520,6 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$RunWidget
 - sf:RUNNING_BACKGROUND:java.awt.Color
 - sf:RUNNING_ICON_COLOR:java.awt.Color
 - sf:RUN_ICON_COLOR:java.awt.Color
-- sf:SEPARATOR:java.awt.Color
 - sf:STOP_BACKGROUND:java.awt.Color
 - <init>():V
 - s:actionButtonWidth():I
@@ -4913,7 +4900,6 @@ f:com.intellij.util.ui.RegionPaintIcon
 - getIconWidth():I
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- toString():java.lang.String
 com.intellij.util.ui.RegionPainter
 - a:paint(java.awt.Graphics2D,I,I,I,I,java.lang.Object):V
 a:com.intellij.util.ui.RegionPainter$Alpha
@@ -4997,9 +4983,7 @@ f:com.intellij.util.ui.StartupUiUtil
 - f:isJreHiDPI(com.intellij.ui.scale.ScaleContext):Z
 - sf:isJreHiDPI(java.awt.Component):Z
 - sf:isUnderDarcula():Z
-- sf:isUnderDefaultMacTheme():Z
 - sf:isUnderIntelliJLaF():Z
-- sf:isUnderWin10LookAndFeel():Z
 - sf:isWaylandToolkit():Z
 - sf:isXToolkit():Z
 - f:pump():V
@@ -5578,7 +5562,6 @@ f:com.intellij.util.ui.html.BorderColors
 - f:getRight():java.awt.Color
 - f:getTop():java.awt.Color
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.util.ui.html.CssAttributesEx
 - sf:BORDER_RADIUS:javax.swing.text.html.CSS$Attribute
 - sf:INSTANCE:com.intellij.util.ui.html.CssAttributesEx

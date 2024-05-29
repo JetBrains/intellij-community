@@ -31,7 +31,7 @@ public final class JsonPsiImplUtils {
   static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
 
   public static @NotNull String getName(@NotNull JsonProperty property) {
-    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(property.getNameElement().getText()));
+    return JsonTextLiteralService.getInstance().unquoteAndUnescape(property.getNameElement().getText());
   }
 
   /**
@@ -190,7 +190,7 @@ public final class JsonPsiImplUtils {
   }
 
   public static @NotNull String getValue(@NotNull JsonStringLiteral literal) {
-    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(literal.getText()));
+    return JsonTextLiteralService.getInstance().unquoteAndUnescape(literal.getText());
   }
 
   public static boolean isPropertyName(@NotNull JsonStringLiteral literal) {

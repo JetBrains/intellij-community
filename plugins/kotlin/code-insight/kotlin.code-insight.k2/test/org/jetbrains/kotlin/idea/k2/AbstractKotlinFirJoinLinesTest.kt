@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.k2
 
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
 
-abstract class AbstractKotlinFirJoinLinesTest: AbstractJoinLinesTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractKotlinFirJoinLinesTest : AbstractJoinLinesTest()

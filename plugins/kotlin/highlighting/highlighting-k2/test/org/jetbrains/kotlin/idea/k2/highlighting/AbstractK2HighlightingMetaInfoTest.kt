@@ -17,9 +17,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest(), KMPTest {
-    private val HIGHLIGHTING_FIR_EXTENSION = "highlighting.fir"
 
-    override fun isFirPlugin(): Boolean = true
+    private val HIGHLIGHTING_FIR_EXTENSION = "highlighting.fir"
 
     override fun getDefaultProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 

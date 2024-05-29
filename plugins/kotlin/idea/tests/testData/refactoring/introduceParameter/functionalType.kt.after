@@ -1,0 +1,5 @@
+fun f(i: Int): Int = 42
+
+fun invoke(kFunction1: KFunction1<Int, Int> = ::f) {
+    listOf(1, 2, 3).map(kFunction1)
+}

@@ -22,7 +22,7 @@ internal class BuildProcessSatisfactionSurveyState : BaseState() {
 
 internal fun Project.isKotlinGradleProject(): Boolean {
     return modules.any {
-        it.hasKotlinPluginEnabled() && it.buildSystemType == BuildSystemType.Gradle
+        it.buildSystemType == BuildSystemType.Gradle && it.hasKotlinPluginEnabled()
     }
 }
 

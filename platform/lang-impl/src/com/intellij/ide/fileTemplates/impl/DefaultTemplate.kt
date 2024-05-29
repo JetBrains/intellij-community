@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
-import com.intellij.util.LocalizationUtil
 import java.io.IOException
 import java.lang.ref.Reference
 import java.nio.file.Path
@@ -32,17 +31,7 @@ class DefaultTemplate constructor(
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
     if (text != null) return text
-    val locale = LocalizationUtil.getLocaleFromPlugin()
-    if (locale != null) {
-      val localizedPaths = LocalizationUtil.getLocalizedPaths(templatePath).map { it.invariantSeparatorsPathString }
-      for (path in localizedPaths) {
-        text = textLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
-        if (!text.isNullOrEmpty()) break
-      }
-    }
-    if (text == null) {
-      text = textLoader.apply(templatePath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
-    }
+    text = textLoader.apply(templatePath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
     this.text = java.lang.ref.SoftReference(text)
     if (text == null) {
       logger<DefaultTemplate>().error("Cannot find file template by path: $templatePath")
@@ -62,13 +51,8 @@ class DefaultTemplate constructor(
 
     val fullPath = descriptionPath?.let { Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(it) }
     try {
-      if (LocalizationUtil.getLocaleFromPlugin() != null && fullPath != null) {
-        val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath)
-          val localizedPathStrings = localizedPaths.map { it.invariantSeparatorsPathString }
-          for (path in localizedPathStrings) {
-            text = descriptionLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
-            if (text != null) break
-          }
+      if (fullPath != null) {
+        text = descriptionLoader.apply(fullPath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
       }
 
       if (text == null) {

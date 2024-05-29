@@ -84,6 +84,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String CLASS_VAR = "typing.ClassVar";
   public static final String TYPE_VAR = "typing.TypeVar";
   public static final String TYPE_VAR_TUPLE = "typing.TypeVarTuple";
+  public static final String TYPE_VAR_TUPLE_EXT = "typing_extensions.TypeVarTuple";
   public static final String TYPING_PARAM_SPEC = "typing.ParamSpec";
   public static final String TYPING_EXTENSIONS_PARAM_SPEC = "typing_extensions.ParamSpec";
   private static final String CHAIN_MAP = "typing.ChainMap";
@@ -171,6 +172,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(ANY)
     .add(TYPE_VAR)
     .add(TYPE_VAR_TUPLE)
+    .add(TYPE_VAR_TUPLE_EXT)
     .add(GENERIC)
     .add(TYPING_PARAM_SPEC)
     .add(TYPING_EXTENSIONS_PARAM_SPEC)
@@ -406,7 +408,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
     final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
     if (initializedClass != null && (TYPE_VAR.equals(initializedClass.getQualifiedName()) ||
-                                     TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()))) {
+                                     TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()) ||
+                                     TYPE_VAR_TUPLE_EXT.equals(initializedClass.getQualifiedName()))) {
       // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
       // but the corresponding type is also returned here to suppress type checker on `T = TypeVar("T")` assignment.
       return Ref.create(getTypeParameterTypeFromDeclaration(callSite, context));
@@ -1490,13 +1493,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
         final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_TUPLE)) {
+        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
           final PyExpression[] arguments = assignedCall.getArguments();
           if (arguments.length > 0) {
             final PyExpression firstArgument = arguments[0];
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
-              if (calleeQNames.contains(TYPE_VAR_TUPLE)) {
+              if (calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
                 return new PyTypeVarTupleTypeImpl(name);
               }
               else {
@@ -1616,15 +1619,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   @Nullable
   public static PyVariadicType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    // TODO Add support for Unpacked here
-    if (!(element instanceof PyStarExpression starExpression)) return null;
-    var typeHint = starExpression.getExpression();
-    if (!(typeHint instanceof PyReferenceExpression) && !(typeHint instanceof PySubscriptionExpression)) return null;
-
-    var typeRef = getType(typeHint, context);
-    if (typeRef == null) return null;
+    Ref<@Nullable PyType> typeRef = getTypeFromStarExpression(element, context);
+    if (typeRef == null) {
+      typeRef = getTypeFromUnpackOperator(element, context);
+    }
+    if (typeRef == null) {
+      return null;
+    }
     var expressionType = typeRef.get();
-
     if (expressionType instanceof PyTupleType tupleType) {
       return new PyUnpackedTupleTypeImpl(tupleType.getElementTypes(), tupleType.isHomogeneous());
     }
@@ -1634,15 +1636,21 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  @Nullable
-  private static Ref<@Nullable PyType> getTypeFromUnpackOperator(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    if (!(element instanceof PySubscriptionExpression subscriptionExpr)) return null;
-    if (!resolvesToQualifiedNames(subscriptionExpr.getOperand(), context, UNPACK, UNPACK_EXT)) {
+  private static @Nullable Ref<@Nullable PyType> getTypeFromUnpackOperator(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (!(element instanceof PySubscriptionExpression subscriptionExpr) ||
+        !resolvesToQualifiedNames(subscriptionExpr.getOperand(), context, UNPACK, UNPACK_EXT)) {
       return null;
     }
     PyExpression indexExpression = subscriptionExpr.getIndexExpression();
-    if (indexExpression == null) return null;
+    if (!(indexExpression instanceof PyReferenceExpression || indexExpression instanceof PySubscriptionExpression)) return null;
     return Ref.create(Ref.deref(getType(indexExpression, context)));
+  }
+
+  private static @Nullable Ref<@Nullable PyType> getTypeFromStarExpression(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (!(element instanceof PyStarExpression starExpression)) return null;
+    PyExpression starredExpression = starExpression.getExpression();
+    if (!(starredExpression instanceof PyReferenceExpression || starredExpression instanceof PySubscriptionExpression)) return null;
+    return Ref.create(Ref.deref(getType(starredExpression, context)));
   }
 
   @Nullable

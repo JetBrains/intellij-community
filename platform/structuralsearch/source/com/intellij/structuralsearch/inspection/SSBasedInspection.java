@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -50,9 +50,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,7 +72,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   @NonNls public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myWriteSorted = false;
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
 
@@ -85,22 +82,17 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (myWriteSorted) {
-      // need copy, because lock-free copy-on-write list doesn't support sorting
-      final ArrayList<Configuration> configurations = new ArrayList<>(myConfigurations);
+    // need copy, because lock-free copy-on-write list doesn't support sorting
+    final ArrayList<Configuration> configurations = new ArrayList<>(myConfigurations);
 
-      // ordered like in UI by name and pattern order
-      // (for easier textual diffing between inspection profiles, because the order doesn't change as long as the name doesn't change)
-      Collections.sort(configurations, CONFIGURATION_COMPARATOR);
-      ConfigurationManager.writeConfigurations(node, configurations);
+    // ordered like in UI by name and pattern order
+    // (for easier textual diffing between inspection profiles, because the order doesn't change as long as the name doesn't change)
+    Collections.sort(configurations, CONFIGURATION_COMPARATOR);
+    ConfigurationManager.writeConfigurations(node, configurations);
 
-      // no order attribute written
-      for (Element child : node.getChildren()) {
-        child.removeAttribute("order");
-      }
-    }
-    else {
-      ConfigurationManager.writeConfigurations(node, myConfigurations);
+    // no order attribute written
+    for (Element child : node.getChildren()) {
+      child.removeAttribute("order");
     }
   }
 
@@ -126,7 +118,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         }
         previous = configuration;
       }
-      myWriteSorted = true; // write sorted if already sorted
     }
   }
 
@@ -262,7 +253,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return false;
     }
     myConfigurations.add(configuration);
-    myWriteSorted = true;
     return true;
   }
 
@@ -275,15 +265,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   public boolean removeConfiguration(@NotNull Configuration configuration) {
-    final boolean removed = myConfigurations.remove(configuration);
-    if (removed) myWriteSorted = true;
-    return removed;
+    return myConfigurations.remove(configuration);
   }
 
   public boolean removeConfigurationsWithUuid(@NotNull String uuid) {
-    final boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
-    if (removed) myWriteSorted = true;
-    return removed;
+    return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
   }
 
   public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable Configuration configuration) {
@@ -409,6 +395,13 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       }
     }
     return result;
+  }
+
+  @ApiStatus.Internal @TestOnly
+  public void compileAllConfigurations(@NotNull Project project) {
+    for (Configuration configuration : myConfigurations) {
+      buildCompiledConfiguration(configuration, project);
+    }
   }
 
   private static Matcher buildCompiledConfiguration(@NotNull Configuration configuration, @NotNull Project project) {

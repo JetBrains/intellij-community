@@ -32,6 +32,6 @@ internal fun cdCommandSpec() = ShellCommandSpec("cd") {
 }
 
 private fun additionalSuggestions(): List<ShellCompletionSuggestion> = listOf(
-  ShellCompletionSuggestion("-", description = TerminalBundle.messagePointer("cd.command.arg.dash.description")),
-  ShellCompletionSuggestion("~", description = TerminalBundle.messagePointer("cd.command.arg.tilda.description"))
+  ShellCompletionSuggestion("-", description = TerminalBundle.message("cd.command.arg.dash.description")),
+  ShellCompletionSuggestion("~", description = TerminalBundle.message("cd.command.arg.tilda.description"))
 )

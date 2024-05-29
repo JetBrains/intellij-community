@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
@@ -179,7 +179,7 @@ context(KtAnalysisSession)
 fun getJvmName(symbol: KtAnnotatedSymbol): String? {
     val jvmNameAnnotation = symbol.annotationsByClassId(JvmStandardClassIds.Annotations.JvmName).firstOrNull() ?: return null
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KtConstantAnnotationValue ?: return null
-    val stringValue = annotationValue.constantValue as? KtConstantValue.KtStringConstantValue ?: return null
+    val stringValue = annotationValue.constantValue as? KaConstantValue.KaStringConstantValue ?: return null
     return stringValue.value
 }
 

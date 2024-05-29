@@ -1,0 +1,16 @@
+// BIND_TO AImpl.bar
+interface A {
+    infix fun Int.foo(i: Int)
+
+    infix fun Int.bar(i: Int)
+}
+
+class AImpl : A {
+    override fun Int.foo(i: Int) { }
+
+    override fun Int.bar(i: Int) { }
+
+    fun m() {
+        1 f<caret>oo 2
+    }
+}

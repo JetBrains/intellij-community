@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.ThreadContext;
@@ -496,7 +496,7 @@ public final class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
     while (true) {
-      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      try {
         if (dispatchNextEventIfAny() == null) break;
       }
       catch (InterruptedException e) {
@@ -509,13 +509,15 @@ public final class PlatformTestUtil {
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
-    assertEventQueueDispatchThread();
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    AWTEvent event = eventQueue.peekEvent();
-    if (event == null) return null;
-    AWTEvent event1 = eventQueue.getNextEvent();
-    eventQueue.dispatchEvent(event1);
-    return event1;
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      assertEventQueueDispatchThread();
+      IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+      AWTEvent event = eventQueue.peekEvent();
+      if (event == null) return null;
+      AWTEvent event1 = eventQueue.getNextEvent();
+      eventQueue.dispatchEvent(event1);
+      return event1;
+    }
   }
 
   public static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure,
@@ -641,6 +643,9 @@ public final class PlatformTestUtil {
   /**
    * Init a performance test.<br/>
    * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
+   * If you need to customize published metrics, use
+   * {@code com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil#newPerformanceTest} and
+   * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
    * @see PerformanceTestInfo#start()
    */
   // to warn about not calling .assertTiming() in the end
@@ -666,7 +671,7 @@ public final class PlatformTestUtil {
   public static @NotNull PerformanceTestInfo newPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
                                                                                      int expectedInputSize,
                                                                                      @NotNull ThrowableComputable<Integer, ?> test) {
-    return new PerformanceTestInfo(test, expectedInputSize, launchName);
+    return PerformanceTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -703,7 +708,7 @@ public final class PlatformTestUtil {
     OpenProjectTaskBuilderKt.saveProject(project, isForceSavingAllSettings);
   }
 
-  static void waitForAllBackgroundActivityToCalmDown() {
+  public static void waitForAllBackgroundActivityToCalmDown() {
     for (int i = 0; i < 50; i++) {
       CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
       if (!data.hasAnyActivityBesides(Thread.currentThread())) {

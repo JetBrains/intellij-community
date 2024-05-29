@@ -1,7 +1,9 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.openapi.util.SystemInfo
+import java.awt.Point
 import java.awt.event.KeyEvent
 
 fun UiRobot.pasteText(text: String) {
@@ -12,6 +14,19 @@ fun UiRobot.pasteText(text: String) {
   keyboard {
     val keyEvent = if (SystemInfo.isMac) KeyEvent.VK_META else KeyEvent.VK_CONTROL
     hotKey(keyEvent, KeyEvent.VK_V)
+  }
+}
+
+fun UiRobot.dragAndDrop(start: Point, end: Point) {
+  try {
+    moveMouse(start)
+    Thread.sleep(300)
+    robot.pressMouse(RemoteMouseButton.LEFT)
+    Thread.sleep(500)
+    moveMouse(end)
+    Thread.sleep(500)
+  } finally {
+    robot.releaseMouse(RemoteMouseButton.LEFT)
   }
 }
 

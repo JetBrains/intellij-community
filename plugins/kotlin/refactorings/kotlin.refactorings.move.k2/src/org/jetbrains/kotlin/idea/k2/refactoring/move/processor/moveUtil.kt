@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -16,10 +17,25 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
-internal fun Set<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
-    return associateWith { declaration -> targetFile.add(declaration) as KtNamedDeclaration }
+inline fun <reified T : PsiElement> PsiElement.containsElement(elementsToCheck: List<PsiElement>): Boolean {
+    return collectDescendantsOfType<T>().any { it in elementsToCheck }
 }
+
+internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
+    val oldToNewMap = mutableMapOf<KtNamedDeclaration, KtNamedDeclaration>()
+    forEach { oldMovedDeclaration ->
+        val newMovedDeclaration = targetFile.add(oldMovedDeclaration) as KtNamedDeclaration
+        // we assume that the children are in the same order before and after the move
+        for ((oldChild, newChild) in oldMovedDeclaration.withChildDeclarations().zip(newMovedDeclaration.withChildDeclarations())) {
+            oldToNewMap[oldChild] = newChild
+        }
+    }
+    return oldToNewMap
+}
+
+internal fun KtNamedDeclaration.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList() + this
 
 internal fun K2ChangePackageDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
     return MoveMultipleElementsViewDescriptor(files.toTypedArray(), target.presentablePkgName())

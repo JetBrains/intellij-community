@@ -64,7 +64,7 @@ private class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposabl
         emptyList()
       }
 
-      panel.usagePreviewPanel.updateLayout(usageInfos.ifEmpty { null })
+      panel.usagePreviewPanel.updateLayout(panel.myProject, usageInfos.ifEmpty { null })
     }
   }
 }

@@ -98,7 +98,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         presentation.notificationSuccess = "git.undo.action.successful.notification.message";
         presentation.notificationFailure = "git.undo.action.failed.notification.title";
 
-        Map<GitRepository, Hash> targetCommits = singletonMap(repository, commit.getParents().get(0));
+        Map<GitRepository, String> targetCommits = singletonMap(repository, commit.getParents().get(0).asString());
         new GitResetOperation(project, targetCommits, SOFT, indicator, presentation).execute();
 
         if (targetChangeList != null) {

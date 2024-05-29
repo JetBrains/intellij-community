@@ -2,15 +2,13 @@
 package com.intellij.execution.util
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 interface SudoCommandProvider {
-  companion object {
-    val EXTENSION_POINT_NAME: ExtensionPointName<SudoCommandProvider> = create("com.intellij.sudoCommandProvider")
-  }
+  fun isAvailable(): Boolean
 
   /**
    * Executes the given command with elevated privileges.
@@ -20,5 +18,10 @@ interface SudoCommandProvider {
    * or `null` if no suitable utils for privilege elevation were found.
    * @see com.intellij.execution.util.ExecUtil.sudoCommand
    */
-  fun sudoCommand(wrappedCommand: GeneralCommandLine): GeneralCommandLine?
+  fun sudoCommand(wrappedCommand: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine?
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): SudoCommandProvider = ApplicationManager.getApplication().getService(SudoCommandProvider::class.java)
+  }
 }

@@ -105,8 +105,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             waitForScheduledArtifactDownloads()
         } finally {
             runAll(
-                    ThrowableRunnable { resetCodeStyle(project) },
-                    ThrowableRunnable { super.tearDown() },
+                { resetCodeStyle(project) },
+                { super.tearDown() },
             )
         }
     }

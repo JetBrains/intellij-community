@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.ActivityScope
 
-object LocalHistoryCounter : CounterUsagesCollector() {
+internal object LocalHistoryCounter : CounterUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("local.history.counter", 3)
 
   private val KIND_FIELD = EventFields.Enum<Kind>("kind")

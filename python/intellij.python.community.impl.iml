@@ -148,6 +148,5 @@
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
-    <orderEntry type="module" module-name="intellij.notebooks.tables" />
   </component>
 </module>

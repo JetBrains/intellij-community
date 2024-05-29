@@ -195,7 +195,6 @@ c:com.intellij.execution.testframework.TestSearchScope$Wrapper
 - hashCode():I
 - readExternal(org.jdom.Element):V
 - setScope(com.intellij.execution.testframework.TestSearchScope):V
-- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 a:com.intellij.execution.testframework.TestStatusListener
 - <init>():V

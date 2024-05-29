@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
@@ -18,12 +17,7 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import java.io.File
 
-abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase(),
-                                                   ExpectedPluginModeProvider {
-
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
 
     object SafeDeleteAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
@@ -55,9 +49,6 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase(),
     override fun getTestRoot(): String = "/refactoring/safeDeleteMultiModule/"
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-
     protected open fun getAlternativeConflictsFile(): String? = null
 
     fun doTest(path: String) {
@@ -65,11 +56,7 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase(),
 
         isMultiModule = true
 
-        val pluginMode = when (pluginMode) {
-            KotlinPluginMode.K1 -> "K1"
-            KotlinPluginMode.K2 -> "K2"
-        }
-        val isEnabled = config.get("enabledIn$pluginMode")?.asBoolean != false
+        val isEnabled = config.get("enabledIn${pluginMode.name}")?.asBoolean != false
 
         val results = runCatching {
             doTestCommittingDocuments { rootDir, _ ->

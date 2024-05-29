@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object UIEventLogger : CounterUsagesCollector() {
 
-  private val uiEventGroup = EventLogGroup("ui.event", 20)
+  private val uiEventGroup = EventLogGroup("ui.event", 22)
 
   @JvmField
   val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -159,6 +159,12 @@ object UIEventLogger : CounterUsagesCollector() {
                                                                               IdeZoomEventFields.applied,
                                                                               IdeZoomEventFields.finalZoomScalePercent,
                                                                               IdeZoomEventFields.presentationMode)
+
+  @JvmField
+  val StickyLineNavigate: EventId1<Language?> = uiEventGroup.registerEvent(
+    "StickyLineNavigate",
+    EventFields.Language,
+  )
 
   override fun getGroup(): EventLogGroup = uiEventGroup
 }

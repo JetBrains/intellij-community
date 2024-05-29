@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.test.sequence.exec;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/append")
     public static class Append extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -50,6 +57,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/distinct")
     public static class Distinct extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -93,6 +106,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/filter")
     public static class Filter extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -151,6 +170,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/flatMap")
     public static class FlatMap extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -169,6 +194,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/map")
     public static class Map extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -197,6 +228,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/misc")
     public static class Misc extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -280,6 +317,12 @@ public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/sort")
     public static class Sort extends AbstractIrSequenceTraceTestCase {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

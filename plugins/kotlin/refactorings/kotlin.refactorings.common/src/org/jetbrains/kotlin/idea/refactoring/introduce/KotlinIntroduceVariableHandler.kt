@@ -194,7 +194,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         } else {
             chooseContainerElementIfNecessary(
                 candidateContainers, editor,
-                KotlinBundle.message("text.select.target.code.block"), true, { it.targetContainer },
+                KotlinBundle.message("text.select.target.code.block"), true, null, { it.targetContainer },
                 doRefactoring
             )
         }

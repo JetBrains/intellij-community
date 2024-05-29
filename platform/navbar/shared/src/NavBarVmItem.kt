@@ -2,10 +2,13 @@
 package com.intellij.platform.navbar
 
 import com.intellij.openapi.actionSystem.DataKey
+import org.jetbrains.annotations.ApiStatus.Internal
 
 interface NavBarVmItem {
 
+  @Internal
   companion object {
+    @Internal // IJPL-149893
     @JvmField
     val SELECTED_ITEMS: DataKey<List<NavBarVmItem>> = DataKey.create("nav.bar.selection")
   }
@@ -16,15 +19,11 @@ interface NavBarVmItem {
 
   val presentation: NavBarItemPresentation
 
-  val isModuleContentRoot: Boolean get() = false
-
   suspend fun children(): List<NavBarVmItem>?
 
-  suspend fun expand(): ItemExpandResult? {
+  suspend fun expand(): NavBarItemExpandResult? {
     return children()?.let {
-      ItemExpandResult(children = it, navigateOnClick = false)
+      NavBarItemExpandResult(children = it, navigateOnClick = false)
     }
   }
-
-  data class ItemExpandResult(val children: List<NavBarVmItem>, val navigateOnClick: Boolean)
 }

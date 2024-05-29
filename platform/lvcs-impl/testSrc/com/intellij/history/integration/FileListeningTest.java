@@ -6,7 +6,6 @@ import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.DeleteChange;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -145,12 +144,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
     assertEquals(1, getChangesFor(file).size());
 
-    addFileListenerDuring(l, new RunnableAdapter() {
-      @Override
-      public void doRun() {
-        rename(file, "new.txt");
-      }
-    });
+    addFileListenerDuring(l, () -> rename(file, "new.txt"));
 
     assertEquals(1, log[0]);
     assertEquals(2, getChangesFor(file).size());

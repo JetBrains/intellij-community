@@ -98,7 +98,9 @@ target namespace.
 
 """
 
-import imp
+import importlib.util
+import importlib.machinery
+import os
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
@@ -223,15 +225,29 @@ class Reload:
                 pkg = None
                 path = None  # Make find_module() uses the default search path
             # Find the module; may raise ImportError
-            (stream, filename, (suffix, mode, kind)) = imp.find_module(modname, path)
-            # Turn it into a code object
+            spec = importlib.util.find_spec(modname, path)
+            if spec is None:
+                raise ImportError("No module named '%s' could be found" % modname)
+
+            filename = spec.origin
+            stream = open(filename, 'r') if filename else None
+            _, ext = os.path.splitext(filename)
+            if ext in importlib.machinery.SOURCE_SUFFIXES:
+                kind = importlib.machinery.SOURCE_SUFFIXES
+            elif ext in importlib.machinery.BYTECODE_SUFFIXES:
+                kind = importlib.machinery.BYTECODE_SUFFIXES
+            elif ext in importlib.machinery.EXTENSION_SUFFIXES:
+                kind = importlib.machinery.EXTENSION_SUFFIXES
+            else:
+                kind = 'unknown'
+
             try:
                 # Is it Python source code or byte code read from a file?
-                if kind not in (imp.PY_COMPILED, imp.PY_SOURCE):
+                if kind not in (importlib.machinery.BYTECODE_SUFFIXES, importlib.machinery.SOURCE_SUFFIXES):
                     # Fall back to built-in reload()
                     notify_error('Could not find source to reload (mod: %s)' % (modname,))
                     return
-                if kind == imp.PY_SOURCE:
+                if kind == importlib.machinery.SOURCE_SUFFIXES:
                     source = stream.read()
                     code = compile(source, filename, "exec")
                 else:

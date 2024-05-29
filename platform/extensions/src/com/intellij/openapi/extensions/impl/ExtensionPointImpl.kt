@@ -490,27 +490,24 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
     clearUserCache()
 
-    Disposer.register(parentDisposable, object : Disposable {
-      @TestOnly
-      override fun dispose() {
-        synchronized(this) {
-          POINTS_IN_READONLY_MODE!!.remove(this@ExtensionPointImpl)
-          cachedExtensions = oldList
-          cachedExtensionsAsArray = null
-          adapters = oldAdapters
-          adaptersAreSorted = oldAdaptersAreSorted
+    Disposer.register(parentDisposable) {
+      synchronized(this@ExtensionPointImpl) {
+        POINTS_IN_READONLY_MODE!!.remove(this@ExtensionPointImpl)
+        cachedExtensions = oldList
+        cachedExtensionsAsArray = null
+        adapters = oldAdapters
+        adaptersAreSorted = oldAdaptersAreSorted
 
-          val listeners = listeners
-          if (fireEvents && !listeners.isEmpty()) {
-            doNotifyListeners(isRemoved = true, extensions = newList, listeners = listeners)
-            if (oldList != null) {
-              doNotifyListeners(isRemoved = false, extensions = oldList, listeners = listeners)
-            }
+        val listeners = listeners
+        if (fireEvents && !listeners.isEmpty()) {
+          doNotifyListeners(isRemoved = true, extensions = newList, listeners = listeners)
+          if (oldList != null) {
+            doNotifyListeners(isRemoved = false, extensions = oldList, listeners = listeners)
           }
-          clearUserCache()
         }
+        clearUserCache()
       }
-    })
+    }
   }
 
   @TestOnly

@@ -78,7 +78,6 @@ f:com.jetbrains.builtInHelp.search.HelpSearchResult
 - f:get_highlightResult():com.jetbrains.builtInHelp.search.HelpSearchResult$HighlightedResult
 - f:get_snippetResult():com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult
 - hashCode():I
-- toString():java.lang.String
 f:com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails
 - <init>(java.lang.String,java.lang.String,Z,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,Z,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -94,7 +93,6 @@ f:com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails
 - f:getMatchedWords():java.util.List
 - f:getValue():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.jetbrains.builtInHelp.search.HelpSearchResult$HighlightedResult
 - <init>(com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails,com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails,com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails,com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails,com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails):V
 - f:component1():com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails
@@ -111,7 +109,6 @@ f:com.jetbrains.builtInHelp.search.HelpSearchResult$HighlightedResult
 - f:getPageTitle():com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails
 - f:getUrl():com.jetbrains.builtInHelp.search.HelpSearchResult$HelpSearchResultDetails
 - hashCode():I
-- toString():java.lang.String
 f:com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult
 - <init>(com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult$Content):V
 - f:component1():com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult$Content
@@ -120,7 +117,6 @@ f:com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult
 - equals(java.lang.Object):Z
 - f:getContent():com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult$Content
 - hashCode():I
-- toString():java.lang.String
 f:com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult$Content
 - <init>(java.lang.String,java.lang.String):V
 - f:component1():java.lang.String
@@ -131,7 +127,6 @@ f:com.jetbrains.builtInHelp.search.HelpSearchResult$SnippetResult$Content
 - f:getMatchLevel():java.lang.String
 - f:getValue():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.jetbrains.builtInHelp.search.HelpSearchResults
 - <init>(java.util.List):V
 - f:component1():java.util.List
@@ -141,7 +136,6 @@ f:com.jetbrains.builtInHelp.search.HelpSearchResults
 - f:getHits():java.util.List
 - hashCode():I
 - f:setHits(java.util.List):V
-- toString():java.lang.String
 c:com.jetbrains.builtInHelp.settings.SettingsPage
 - com.intellij.openapi.options.Configurable
 - sf:OPEN_HELP_BASE_URL:com.jetbrains.builtInHelp.settings.SettingsPage$SettingKey

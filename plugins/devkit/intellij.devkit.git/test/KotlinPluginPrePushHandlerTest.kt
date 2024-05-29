@@ -139,6 +139,13 @@ class KotlinPluginPrePushHandlerTest {
           "'IDEA-123'",
           "`IDEA-123`",
           "\"IDEA-123\"",
+          "IJPL-42",
+          "(IJPL-42)",
+          "[IJPL-42]",
+          "{IJPL-42}",
+          "'IJPL-42'",
+          "`IJPL-42`",
+          "\"IJPL-42\"",
 
           "KTIJ-123  ",
           "  KTIJ-123",
@@ -177,6 +184,15 @@ class KotlinPluginPrePushHandlerTest {
           """.trimIndent(),
           """
             Header IDEA-123 header
+            
+            Body-line-1
+            Body-line-N
+
+            ^IDEA-123 fixed
+          """.trimIndent(),
+
+          """
+            Header IJPL-42 header
             
             Body-line-1
             Body-line-N

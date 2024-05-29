@@ -9,7 +9,9 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 object CombinedDiffRegistry {
   internal const val COMBINED_DIFF_SETTING_ID = "enable.combined.diff"
 

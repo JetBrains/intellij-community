@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.workspace.projectView
 
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
@@ -11,7 +12,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectDeleteProvider
-import com.intellij.ide.workspace.SubprojectHandler
+import com.intellij.ide.workspace.getAllSubprojects
 import com.intellij.ide.workspace.isWorkspace
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
+import java.awt.Color
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val WORKSPACE_NODE = DataKey.create<Boolean>("project.view.workspace.node")
@@ -86,25 +88,46 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     private val subprojectMap = HashMap<PsiDirectory, Subproject?>()
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-      val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
+      val subprojects = getAllSubprojects(project).associateBy { it.projectPath }
       subprojectMap.clear()
       val children = projectNode.children.filter { it !is ExternalLibrariesNode }
+      val newChildren = ArrayList<AbstractTreeNode<*>>(children.size)
       for (child in children) {
-        val directoryNode = child as? PsiDirectoryNode ?: continue
+        val directoryNode = child as? PsiDirectoryNode
+        if (directoryNode == null) {
+          newChildren.add(child)
+          continue
+        }
         val path = directoryNode.value.virtualFile.path
-        subprojectMap[directoryNode.value] = subprojects[path]
+        val subproject = subprojects[path]
+        subprojectMap[directoryNode.value] = subproject
+        val node = if (subproject != null) SubprojectNode(directoryNode, subproject) else directoryNode
+        newChildren.add(node)
       }
-      return children
+      return newChildren
     }
 
     override fun update(data: PresentationData) {
       projectNode.update(data)
+      data.setIcon(ExpUiIcons.Nodes.Workspace)
     }
+
+    override fun computeBackgroundColor(): Color? = null
 
     override fun contains(file: VirtualFile): Boolean {
       return projectNode.contains(file)
     }
 
     fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
+  }
+
+  private class SubprojectNode(original: PsiDirectoryNode,
+                               private val subproject: Subproject):
+    PsiDirectoryNode(original) {
+
+    override fun update(data: PresentationData) {
+      super.update(data)
+      data.setIcon(subproject.handler.subprojectIcon)
+    }
   }
 }

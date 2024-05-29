@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix
 import org.jetbrains.kotlin.idea.util.findAnnotation
@@ -17,25 +17,25 @@ import org.jetbrains.kotlin.psi.KtFile
 
 internal object OptInFileLevelFixFactories {
 
-    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInUsage ->
+    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsage ->
         createQuickFix(diagnostic)
     }
 
-    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInUsageError ->
+    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInOverride ->
+    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverride ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInOverrideError ->
+    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverrideError ->
         createQuickFix(diagnostic)
     }
 
     context(KtAnalysisSession)
     private fun createQuickFix(
-        diagnostic: KtFirDiagnostic<PsiElement>,
+        diagnostic: KaFirDiagnostic<PsiElement>,
     ): List<UseOptInFileAnnotationFix> {
         val element = diagnostic.psi.findParentOfType<KtElement>()
             ?: return emptyList()

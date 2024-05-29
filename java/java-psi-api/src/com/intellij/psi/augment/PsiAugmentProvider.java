@@ -267,33 +267,5 @@ public abstract class PsiAugmentProvider implements PossiblyDumbAware {
     }
   }
 
-
-  /**
-   * Checks if the given PsiClass might be augmented.
-   * This method is usually called in incomplete mode.
-   *
-   * @param psiClass the PsiClass to be checked
-   * @return true if the PsiClass might be augmented for incomplete mode, false otherwise
-   */
-  protected boolean mightBeAugmentedForIncompleteMode(@NotNull PsiClass psiClass) {
-    return false;
-  }
-
-  /**
-   * Checks if the given PsiClass might be augmented.
-   * This method is usually called in incomplete mode.
-   *
-   * @param targetClass the PsiClass to be checked
-   * @return true if the PsiClass might be augmented for incomplete mode, false otherwise
-   */
-  public static boolean canBeAugmentedForIncompleteMode(@NotNull PsiClass targetClass) {
-    Ref<Boolean> result = Ref.create();
-
-    forEach(targetClass.getProject(), provider -> {
-      boolean augmentedForIncompleteMode = provider.mightBeAugmentedForIncompleteMode(targetClass);
-      result.set(augmentedForIncompleteMode);
-      return !augmentedForIncompleteMode;
-    });
-    return result.get();
-  }
+  //</editor-fold>
 }

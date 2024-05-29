@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -134,7 +135,10 @@ fun createTextExtendedInfo(): ExtendedInfo {
 }
 
 fun createPsiExtendedInfo(): ExtendedInfo {
-  val psiElement: (Any) -> PsiElement? = { (it as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.item }
+  val psiElement: (Any) -> PsiElement? = {
+    val item = (it as? PsiItemWithSimilarity<*>)?.value ?: it
+    (item as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.item
+  }
 
   return createPsiExtendedInfo(project = null, file = null, psiElement)
 }

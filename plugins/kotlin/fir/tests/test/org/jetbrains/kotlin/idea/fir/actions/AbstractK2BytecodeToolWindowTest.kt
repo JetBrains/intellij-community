@@ -3,6 +3,4 @@ package org.jetbrains.kotlin.idea.fir.actions
 
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
 
-abstract class AbstractK2BytecodeToolWindowTest : AbstractBytecodeToolWindowTest() {
-    override fun isFirPlugin(): Boolean = true
-}
+abstract class AbstractK2BytecodeToolWindowTest : AbstractBytecodeToolWindowTest()

@@ -35,6 +35,10 @@ public interface MarkdownElementTypes {
 
   IElementType CODE_SPAN = platformType(org.intellij.markdown.MarkdownElementTypes.CODE_SPAN);
 
+  IElementType INLINE_MATH = platformType(GFMElementTypes.INLINE_MATH);
+
+  IElementType BLOCK_MATH = platformType(GFMElementTypes.BLOCK_MATH);
+
   IElementType PARAGRAPH = platformType(org.intellij.markdown.MarkdownElementTypes.PARAGRAPH);
 
   IElementType EMPH = platformType(org.intellij.markdown.MarkdownElementTypes.EMPH);

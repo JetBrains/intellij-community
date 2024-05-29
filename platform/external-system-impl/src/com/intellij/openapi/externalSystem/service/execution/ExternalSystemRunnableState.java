@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,6 +81,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   @ApiStatus.Internal
   public static final @NotNull Key<ExternalSystemTaskNotificationListener> TASK_NOTIFICATION_LISTENER_KEY =
     Key.create("TASK_NOTIFICATION_LISTENER");
+
+  private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
+  private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
 
   @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
   @NotNull private final Project myProject;
@@ -196,12 +200,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(task.getId(), listener);
     }
 
-    final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
-                                 ? mySettings.getExecutionName()
-                                 : StringUtil.isNotEmpty(myConfiguration.getName())
-                                   ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
-                                   myProject, externalSystemId, mySettings.getExternalProjectPath(),
-                                   mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
+    final String executionName = getExecutionName(externalSystemId);
 
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
     final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
@@ -260,6 +259,19 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       executionConsole, processHandler, actionGroup.getChildren(ActionManager.getInstance()));
     executionResult.setRestartActions(restartActions);
     return executionResult;
+  }
+
+  private @NotNull String getExecutionName(@NotNull ProjectSystemId externalSystemId) {
+    if (StringUtil.isNotEmpty(mySettings.getExecutionName())) {
+      return mySettings.getExecutionName();
+    }
+    if (StringUtil.isNotEmpty(myConfiguration.getName())) {
+      return myConfiguration.getName();
+    }
+    return AbstractExternalSystemTaskConfigurationType.generateName(myProject, externalSystemId, mySettings.getExternalProjectPath(),
+                                                                    mySettings.getTaskNames(), mySettings.getExecutionName(),
+                                                                    DEFAULT_TASK_PREFIX, DEFAULT_TASK_POSTFIX
+    );
   }
 
   private void executeTask(@NotNull ExternalSystemExecuteTaskTask task,

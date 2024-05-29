@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -23,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -175,12 +162,15 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   /**
    * Allows extension to contribute to init script
-   * @param taskNames gradle task names to be executed
+   *
+   * @param project            project (if available)
+   * @param taskNames          gradle task names to be executed
    * @param initScriptConsumer consumer of init script text. Must be called to add script txt
-   * @param parameters storage for passing optional named parameters
+   * @param parameters         storage for passing optional named parameters
    */
   @ApiStatus.Experimental
-  default void enhanceTaskProcessing(@NotNull List<String> taskNames,
+  default void enhanceTaskProcessing(@Nullable Project project,
+                                     @NotNull List<String> taskNames,
                                      @NotNull Consumer<String> initScriptConsumer,
                                      @NotNull Map<String, String> parameters) {
     String jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);

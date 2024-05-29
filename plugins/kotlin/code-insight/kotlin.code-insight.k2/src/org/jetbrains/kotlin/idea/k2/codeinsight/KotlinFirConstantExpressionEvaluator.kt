@@ -5,10 +5,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiConstantEvaluationHelper.AuxEvaluator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -32,7 +32,7 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
         val analyze = {
             analyze(ktExpression) {
                 ktExpression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
-                    ?.takeUnless { it is KtConstantValue.KtErrorConstantValue }?.value
+                    ?.takeUnless { it is KaConstantValue.KaErrorConstantValue }?.value
             }
         }
 
@@ -40,7 +40,7 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
             return analyze()
         }
 
-        @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
         return allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze()

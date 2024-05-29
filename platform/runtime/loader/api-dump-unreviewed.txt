@@ -1,3 +1,0 @@
-f:com.intellij.platform.runtime.loader.IntellijLoader
-- <init>():V
-- s:main(java.lang.String[]):V

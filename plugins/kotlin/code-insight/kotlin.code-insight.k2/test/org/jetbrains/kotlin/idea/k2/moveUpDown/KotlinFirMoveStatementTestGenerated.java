@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.moveUpDown;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/accessors")
         public static class Accessors extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -52,6 +59,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/class")
         public static class Class extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -215,6 +228,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/classInitializer")
         public static class ClassInitializer extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -283,6 +302,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/enums")
         public static class Enums extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -331,6 +356,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/function")
         public static class Function extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -434,6 +465,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/functionAnchors")
         public static class FunctionAnchors extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -472,6 +509,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/property")
         public static class Property extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -560,6 +603,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations/propertyAnchors")
         public static class PropertyAnchors extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
             }
@@ -587,6 +636,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/closingBraces/for")
         public static class For extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -605,6 +660,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/closingBraces/function")
         public static class Function extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -633,6 +694,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/closingBraces/if")
         public static class If extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -661,6 +728,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/closingBraces/nested")
         public static class Nested extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -679,6 +752,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/closingBraces/when")
         public static class When extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -717,6 +796,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/closingBraces/while")
         public static class While extends AbstractKotlinFirMoveStatementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -746,6 +831,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/expressions")
     public static class Expressions extends AbstractKotlinFirMoveStatementTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
         }
@@ -1284,6 +1375,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/line")
     public static class Line extends AbstractKotlinFirMoveStatementTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestLine, this, testDataFilePath);
         }
@@ -1297,6 +1394,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/parametersAndArguments")
     public static class ParametersAndArguments extends AbstractKotlinFirMoveStatementTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
         }
@@ -1460,6 +1563,12 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/moveUpDown/trailingComma")
     public static class TrailingComma extends AbstractKotlinFirMoveStatementTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestExpressionWithTrailingComma, this, testDataFilePath);
         }

@@ -21,14 +21,16 @@ internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, bro
     browserPipe.subscribe("copy-button/copy", object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
         val content = PreviewEncodingUtil.decodeContent(data)
-        CopyPasteManager.getInstance().setContents(StringSelection(content))
-        val project = panel.project ?: return true
+        val project = panel.project
         invokeLater {
-          val statusBar = WindowManager.getInstance().getStatusBar(project)
-          val text = StringUtil.shortenTextWithEllipsis(content, 32, 0)
-          statusBar?.info = LangBundle.message("status.bar.text.reference.has.been.copied", "'$text'")
+          CopyPasteManager.getInstance().setContents(StringSelection(content))
+          if (project != null) {
+            val statusBar = WindowManager.getInstance().getStatusBar(project)
+            val text = StringUtil.shortenTextWithEllipsis(content, 32, 0)
+            statusBar?.info = LangBundle.message("status.bar.text.reference.has.been.copied", "'$text'")
+          }
         }
-        return false
+        return project == null
       }
     })
   }

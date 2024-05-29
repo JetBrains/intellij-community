@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
+import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.openapi.diagnostic.logger
@@ -31,23 +32,14 @@ class IntellijPerfJsonReportGenerator(
     try {
       val buildInfo = helper.createBuildInfo()
 
-      val perfMetrics = globalMetrics.map {
-        it.toPerfMetric()
-      }.toMutableList()
-        .also { list ->
-          metricPerFile.forEach { file, metrics ->
-            metrics.forEach {
-              it.name
-              list.add(it.toPerfMetric("${file}_"))
-            }
-          }
-        }
+      val perfMetrics = globalMetrics.map { it.toPerfMetric() }
+
 
       val metricsDto = PerformanceMetricsDto
-        .create(projectName = "TODO_projectName",
-                projectURL = "TODO_projectURL",
-                projectDescription = "TODO_projectDescription",
-                methodName = "TODO_methodName",
+        .create(projectName = "#feature#_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
+                projectURL = "",
+                projectDescription = "",
+                methodName = "",
                 buildNumber = BuildNumber.currentVersion(),
                 metrics = perfMetrics,
                 buildInfo = buildInfo)
@@ -67,6 +59,12 @@ class IntellijPerfJsonReportGenerator(
     private const val metricsInfoName = "metrics.performance.json"
     private val LOG = logger<IntellijPerfJsonReportGenerator>()
   }
+
+  private val gson = GsonBuilder().apply {
+    setPrettyPrinting()
+    disableHtmlEscaping()
+    serializeSpecialFloatingPointValues()
+  }.create()
 }
 
 private fun MetricInfo.toPerfMetric(namePrefix: String = "") = PerformanceMetrics.newCounter(
@@ -105,12 +103,12 @@ private class TeamCityReportHelper : ReportHelper {
 
   override fun createBuildInfo(): CIServerBuildInfo {
     return CIServerBuildInfo(
-      buildId = "\$teamcity.build.id\$",
-      typeId = "\$teamcity.buildType.id\$",
-      configName = "\$teamcity.buildConfName\$",
-      buildNumber = "\$teamcity.buildNumber\$",
-      branchName = "\$teamcity.build.branch\$",
-      url = "\$teamcity.buildUrl\$",
+      buildId = "#teamcity.build.id#",
+      typeId = "#teamcity.buildType.id#",
+      configName = "#teamcity.buildConfName#",
+      buildNumber = "#teamcity.buildNumber#",
+      branchName = "#teamcity.build.branch#",
+      url = "#teamcity.buildUrl#",
       isPersonal = false,
       timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     )

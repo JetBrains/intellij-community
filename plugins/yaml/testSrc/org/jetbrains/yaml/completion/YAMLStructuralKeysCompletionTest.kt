@@ -165,4 +165,13 @@ class YAMLStructuralKeysCompletionTest : BasePlatformTestCase() {
       
     """.trimIndent())
   }
+
+  fun testNotCompletingTheKeyUnderTheCaret() {
+    myFixture.configureByText("test.yaml", """
+      someStuff:
+        - foo<caret>: 1
+    """.trimIndent())
+    val lookupElements = myFixture.complete(CompletionType.BASIC).map(::render)
+    UsefulTestCase.assertEmpty(lookupElements)
+  }
 }

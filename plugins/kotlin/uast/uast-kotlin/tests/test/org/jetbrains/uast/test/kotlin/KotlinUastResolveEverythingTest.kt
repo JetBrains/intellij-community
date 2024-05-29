@@ -2,12 +2,16 @@
 
 package org.jetbrains.uast.test.kotlin
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.kotlin.common.ResolveEverythingTestBase
 import org.junit.Test
 
 
 class KotlinUastResolveEverythingTest : AbstractKotlinUastTest(), ResolveEverythingTestBase {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun check(testName: String, file: UFile) {
         super.check(testName, file)

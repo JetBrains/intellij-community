@@ -21,7 +21,7 @@ private const val SUITE: @NonNls String = "SUITE"
  */
 @State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
-class CoverageDataSuitesManager(private val project: Project) : PersistentStateComponent<Element>, Disposable.Default {
+internal class CoverageDataSuitesManager(private val project: Project) : PersistentStateComponent<Element>, Disposable.Default {
   private val suites = ConcurrentCollectionFactory.createConcurrentSet<CoverageSuite>()
 
   init {

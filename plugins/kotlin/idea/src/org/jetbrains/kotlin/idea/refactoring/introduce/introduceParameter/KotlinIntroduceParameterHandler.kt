@@ -71,7 +71,7 @@ fun IntroduceParameterDescriptor<FunctionDescriptor>.performRefactoring(editor: 
                         .forEach { methodDescriptor.removeParameter(it) }
                 }
 
-                val defaultValue = if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue
+                val defaultValue = (if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue)?.let { KtPsiUtil.safeDeparenthesize(it) }
                 val parameterInfo = KotlinParameterInfo(
                     callableDescriptor = callableDescriptor,
                     name = newParameterName,
@@ -203,7 +203,7 @@ open class KotlinIntroduceParameterHandler(
                         && expression.extractableSubstringInfo == null
                         && !expression.mustBeParenthesizedInInitializerPosition()
 
-                val originalExpression = KtPsiUtil.safeDeparenthesize(expression)
+                val originalExpression = expression
                 val psiFactory = KtPsiFactory(project)
                 val introduceParameterDescriptor =
                     helper.configure(

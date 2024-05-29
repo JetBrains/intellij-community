@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -16,7 +16,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
+class KDocFinderTest : BasePlatformTestCase() {
     override fun getTestDataPath() = IDEA_TEST_DATA_DIR.resolve("kdoc/finder").slashedPath
 
     fun testConstructor() {

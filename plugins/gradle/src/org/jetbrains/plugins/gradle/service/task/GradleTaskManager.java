@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.google.gson.GsonBuilder;
@@ -17,9 +17,11 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
-import com.intellij.openapi.externalSystem.service.execution.*;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -30,6 +32,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -46,6 +49,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -109,7 +113,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     try {
       if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
         String rootProjectPath = determineRootProject(projectPath);
-        myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
+        GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
       }
       myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationToken, connection -> {
         executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationToken);
@@ -138,7 +142,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       setupDebuggerDispatchPort(settings);
       setupBuiltInTestEvents(settings, gradleVersion);
 
-      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
+      appendInitScriptArgument(id.findProject(), tasks, jvmParametersSetup, settings, gradleVersion);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
@@ -330,10 +334,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings
   ) {
-    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
+    appendInitScriptArgument(null, taskNames, jvmParametersSetup, effectiveSettings, null);
   }
 
   private static void appendInitScriptArgument(
+    @Nullable Project project,
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings,
@@ -367,7 +372,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
       }
 
-      resolverExtension.enhanceTaskProcessing(taskNames, script -> {
+      resolverExtension.enhanceTaskProcessing(project, taskNames, script -> {
         if (StringUtil.isNotEmpty(script)) {
           addAllNotNull(
             initScripts,
@@ -396,7 +401,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     if (effectiveSettings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
-      GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
+      GradleInitScriptUtil.attachTargetPathMapperInitScript(effectiveSettings);
     }
   }
 

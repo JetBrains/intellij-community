@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -21,7 +20,7 @@ internal class TerminalSelectionModel(outputModel: TerminalOutputModel) {
   private val listeners: MutableList<TerminalSelectionListener> = CopyOnWriteArrayList()
 
   init {
-    outputModel.addListener(object : TerminalOutputListener {
+    outputModel.addListener(object : TerminalOutputModelListener {
       override fun blockRemoved(block: CommandBlock) {
         selectedBlocks -= block
       }

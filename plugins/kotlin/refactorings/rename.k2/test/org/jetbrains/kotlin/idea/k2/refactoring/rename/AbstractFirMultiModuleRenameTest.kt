@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractMultiModuleRenameTest
 
-abstract class AbstractFirMultiModuleRenameTest: AbstractMultiModuleRenameTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractFirMultiModuleRenameTest : AbstractMultiModuleRenameTest()

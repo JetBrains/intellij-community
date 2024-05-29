@@ -328,6 +328,7 @@ public final class Presentation implements Cloneable {
     Icon oldIcon = this.icon == null ? null : this.icon.get();
     this.icon = icon;
     Icon newIcon = icon == null ? null : icon.get();
+    if (Objects.equals(oldIcon, newIcon)) return;
     fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
   }
 

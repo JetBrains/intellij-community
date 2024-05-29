@@ -9,8 +9,8 @@ import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
+import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
 import org.junit.Test
@@ -19,7 +19,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 
 @RunWith(JUnit4::class)
-class ShellCommandSpecSuggestionsTest {
+internal class ShellCommandSpecSuggestionsTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
 
@@ -178,13 +178,40 @@ class ShellCommandSpecSuggestionsTest {
           suggestions(fileSuggestionsGenerator(onlyDirectories = true))
         }
       }
+
+      subcommand("withTwoOptArgs") {
+        option("--opt") {
+          argument {
+            suggestions("3", "4", "5")
+            isOptional = true
+          }
+        }
+
+        argument {
+          suggestions("1", "2", "3")
+          isOptional = true
+        }
+        argument {
+          suggestions("2", "3", "4")
+          isOptional = true
+        }
+      }
+
+      subcommand("withDynamicOptions") {
+        dynamicOptions {
+          option("-a")
+          option("-b")
+        }
+        option("-b")
+        option("-c")
+      }
     }
   }
 
   @Test
   fun `main command`() {
     doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cdWithSuggestions", "cd",
-                             "-a", "--asd", "--bcde", "--argum", "abc"))
+                             "withTwoOptArgs", "withDynamicOptions", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -301,13 +328,27 @@ class ShellCommandSpecSuggestionsTest {
     doTest("cd", typedPrefix = "\"someDir$separator", expected = listOf("dir$separator", "folder$separator"))
   }
 
+  @Test
+  fun `do not duplicate suggestions for command arguments`() {
+    doTest("withTwoOptArgs", expected = listOf("1", "2", "3", "4", "--opt", "--bcde"))
+  }
+
+  @Test
+  fun `do not duplicate suggestions for option arguments and command arguments`() {
+    doTest("withTwoOptArgs", "--opt", expected = listOf("1", "2", "3", "4", "5", "--bcde"))
+  }
+
+  /** It also tests that if any option is declared as static and dynamic, it won't be suggested twice */
+  @Test
+  fun `suggest both static and dynamic options`() {
+    doTest("withDynamicOptions", expected = listOf("-a", "-b", "-c", "--bcde"))
+  }
+
   private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
     // Mock fileSuggestionsGenerator result
-    val generatorCommandsRunner = object : ShellGeneratorCommandsRunner {
-      override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
-        val output = filePathSuggestions.joinToString("\n")
-        return ShellCommandResult.create(output, exitCode = 0)
-      }
+    val generatorCommandsRunner = TestGeneratorCommandsRunner {
+      val output = filePathSuggestions.joinToString("\n")
+      ShellCommandResult.create(output, exitCode = 0)
     }
     val completion = ShellCommandSpecCompletion(
       TestCommandSpecsManager(spec),

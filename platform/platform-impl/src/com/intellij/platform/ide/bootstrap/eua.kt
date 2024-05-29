@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.ide.SystemLanguage
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
@@ -37,8 +36,7 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
 
 internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
                                                 appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                                asyncScope: CoroutineScope,
-                                                args: List<String>): (suspend () -> Boolean)? {
+                                                asyncScope: CoroutineScope): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
   }
@@ -48,7 +46,6 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       updateCached.join()
       withContext(RawSwingDispatcher) {
         task()
-        SystemLanguage.getInstance().doChooseLanguage(args)
       }
     }
   }
@@ -72,9 +69,5 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       false
     }
   }
-  return {
-    prepareAndExecuteInEdt {
-    }
-    false
-  }
+  return null
 }

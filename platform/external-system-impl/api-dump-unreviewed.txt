@@ -249,7 +249,6 @@ f:com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSetting
 - f:getAutoReloadType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings$AutoReloadType
 - hashCode():I
 - f:setAutoReloadType(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings$AutoReloadType):V
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.HideProjectRefreshAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -263,21 +262,6 @@ a:com.intellij.openapi.externalSystem.autoimport.ProjectBatchFileChangeListener
 - f:batchChangeCompleted(com.intellij.openapi.project.Project):V
 - f:batchChangeStarted(com.intellij.openapi.project.Project,java.lang.String):V
 - batchChangeStarted(java.lang.String):V
-f:com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
-- sf:Companion:com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
-- f:getProjectsWithNotification():java.util.Set
-- getSystemIds():java.util.Set
-- isNotificationVisible():Z
-- notificationExpire():V
-- notificationExpire(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId):V
-- notificationNotify(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware):V
-f:com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
 f:com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 - com.intellij.openapi.project.DumbAwareAction
 - sf:Companion:com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction$Companion
@@ -320,7 +304,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Brea
 - equals(java.lang.Object):Z
 - getStamp():J
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Companion
 - f:externalInvalidate(J):com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Invalidate
 - f:externalModify(J):com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Modify
@@ -335,7 +318,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Inva
 - getStamp():J
 - f:getType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Modify
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent
 - <init>(J,com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType):V
@@ -347,7 +329,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Modi
 - getStamp():J
 - f:getType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Revert
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent
 - <init>(J):V
@@ -357,7 +338,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Reve
 - equals(java.lang.Object):Z
 - getStamp():J
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Synchronize
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent
 - <init>(J):V
@@ -367,7 +347,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectEvent$Sync
 - equals(java.lang.Object):Z
 - getStamp():J
 - hashCode():I
-- toString():java.lang.String
 a:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState
 - a:getStamp():J
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Broken
@@ -379,7 +358,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Brok
 - equals(java.lang.Object):Z
 - getStamp():J
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Dirty
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState
 - <init>(J,com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType):V
@@ -391,7 +369,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Dirt
 - getStamp():J
 - f:getType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Modified
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState
 - <init>(J,com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType):V
@@ -403,7 +380,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Modi
 - getStamp():J
 - f:getType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Reverted
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState
 - <init>(J):V
@@ -413,7 +389,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Reve
 - equals(java.lang.Object):Z
 - getStamp():J
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Synchronized
 - com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState
 - <init>(J):V
@@ -423,7 +398,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ProjectStatus$ProjectState$Sync
 - equals(java.lang.Object):Z
 - getStamp():J
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener
 - com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 - sf:Companion:com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener$Companion
@@ -694,7 +668,6 @@ f:com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 - getProjectSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - setLastImportTimestamp(J):V
 - setLastSuccessfulImportTimestamp(J):V
-- toString():java.lang.String
 e:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
 - java.lang.Enum
 - sf:DEDUCED:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
@@ -1130,7 +1103,6 @@ a:com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTas
 - hashCode():I
 - refreshState():V
 - p:setState(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState):V
-- toString():java.lang.String
 - p:wrapProgressText(java.lang.String):java.lang.String
 - ps:wrapWithListener(com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl):com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 c:com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask
@@ -1220,7 +1192,6 @@ f:com.intellij.openapi.externalSystem.service.notification.MessageCounter
 - getCount(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.service.notification.NotificationCategory,com.intellij.openapi.externalSystem.model.ProjectSystemId):I
 - increment(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.service.notification.NotificationCategory,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - remove(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
-- toString():java.lang.String
 e:com.intellij.openapi.externalSystem.service.notification.NotificationCategory
 - java.lang.Enum
 - sf:ERROR:com.intellij.openapi.externalSystem.service.notification.NotificationCategory
@@ -1626,7 +1597,6 @@ e:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskA
 - sf:BEFORE_SYNC:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator$Phase
 - f:myMessageKey:java.lang.String
 - isSyncPhase():Z
-- toString():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator$Phase
 - s:values():com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator$Phase[]
 c:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator$TaskActivationEntry
@@ -1710,7 +1680,6 @@ f:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
 - equals(java.lang.Object):Z
 - f:getSourceFolders():java.util.Collection
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderModelState
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
@@ -1733,7 +1702,6 @@ f:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderModelSt
 - f:setPackagePrefix(java.lang.String):V
 - f:setType(java.lang.String):V
 - f:setUrl(java.lang.String):V
-- toString():java.lang.String
 c:com.intellij.openapi.externalSystem.service.project.manage.TaskActivationState
 - afterCompileTasks:java.util.List
 - afterRebuildTask:java.util.List
@@ -2201,9 +2169,8 @@ f:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboB
 a:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 - com.intellij.ui.components.fields.ExtendableTextField
 - <init>(com.intellij.openapi.project.Project):V
-- p:getCompletionCollector():com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
+- pa:getCompletionCollector():com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 - f:getCompletionType():com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField$CompletionType
-- p:getCompletionVariants():java.util.List
 - f:getRenderer():com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer
 - f:getTextToComplete():java.lang.String
 - f:setCompletionType(com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField$CompletionType):V
@@ -2241,7 +2208,6 @@ f:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 - f:getIcon():javax.swing.Icon
 - f:getText():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
 - com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer
 - <init>():V
@@ -2279,7 +2245,6 @@ f:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRender
 - f:getList():javax.swing.JList
 - hashCode():I
 - f:isSelected():Z
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer$Companion
 - f:append(com.intellij.ui.SimpleColoredComponent,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - f:append(com.intellij.ui.SimpleColoredComponent,java.lang.String,java.lang.String):V
@@ -2306,7 +2271,6 @@ f:com.intellij.openapi.externalSystem.service.ui.project.path.ExternalProject
 - f:getName():java.lang.String
 - f:getPath():java.lang.String
 - hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWorkingDirectoryInfo
 - com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
@@ -2382,7 +2346,6 @@ f:com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable$Prop
 - hashCode():I
 - f:setName(java.lang.String):V
 - f:setValue(java.lang.String):V
-- toString():java.lang.String
 f:com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension
 - com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - sf:Companion:com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension$Companion
@@ -2896,20 +2859,17 @@ c:com.intellij.openapi.externalSystem.view.TasksNode
 - p:update(com.intellij.ide.projectView.PresentationData):V
 *f:com.intellij.platform.externalSystem.impl.workspace.ExternalSubproject
 - com.intellij.ide.workspace.Subproject
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ExternalProjectInfo,com.intellij.ide.workspace.SubprojectHandler):V
-- equals(java.lang.Object):Z
+- <init>(com.intellij.openapi.externalSystem.model.ExternalProjectInfo,com.intellij.ide.workspace.SubprojectHandler):V
 - getHandler():com.intellij.ide.workspace.SubprojectHandler
 - getName():java.lang.String
 - f:getProjectInfo():com.intellij.openapi.externalSystem.model.ExternalProjectInfo
 - getProjectPath():java.lang.String
-- getWorkspace():com.intellij.openapi.project.Project
-- hashCode():I
 *a:com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
 - com.intellij.ide.workspace.SubprojectHandler
 - <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - getSubprojects(com.intellij.openapi.project.Project):java.util.List
 - f:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
-- removeSubprojects(java.util.List):V
+- removeSubprojects(com.intellij.openapi.project.Project,java.util.List):V
 f:icons.ExternalSystemIcons
 - sf:Task:javax.swing.Icon
 - <init>():V

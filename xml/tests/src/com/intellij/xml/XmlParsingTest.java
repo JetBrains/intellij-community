@@ -203,7 +203,7 @@ public class XmlParsingTest extends ParsingTestCase {
     });
 
     perfTest.setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .startAsSubtest(this.getClass().getSimpleName() + " "  + perfTest.launchName);
+      .startAsSubtest(this.getClass().getSimpleName() + " "  + perfTest.getLaunchName());
 
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
     int count = 0;

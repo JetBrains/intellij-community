@@ -10,10 +10,10 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContext
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
-import org.jetbrains.plugins.terminal.block.util.DummyGeneratorCommandsRunner
-import org.jetbrains.plugins.terminal.exp.completion.IJShellCommandSpecsManager
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
+import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
+import org.jetbrains.plugins.terminal.exp.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.exp.util.TestCommandSpecsProvider
 import org.jetbrains.plugins.terminal.exp.util.TestJsonCommandSpecsProvider
 import org.junit.Test
@@ -21,11 +21,11 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class ShellCommandSpecManagerTest : BasePlatformTestCase() {
+internal class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   private val commandName: String = "main"
 
-  private val commandSpecsManager: IJShellCommandSpecsManager
-    get() = IJShellCommandSpecsManager.getInstance()
+  private val commandSpecsManager: ShellCommandSpecsManagerImpl
+    get() = ShellCommandSpecsManagerImpl.getInstance()
 
   /** In this test, real context is not required */
   private val runtimeContext: ShellRuntimeContext = createDummyRuntimeContext()
@@ -52,10 +52,12 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
     assertTrue("Subcommands are empty: $spec", subcommands.isNotEmpty())
 
     val subcommand = subcommands.first()
-    assertEmpty("Subcommand options are not empty in a light spec: $subcommand", subcommand.options)
+    assertEmpty("Subcommand options are not empty in a light spec: $subcommand",
+                subcommand.allOptionsGenerator.generate(runtimeContext))
 
     val loadedSubcommand = commandSpecsManager.getFullCommandSpec(subcommand)
-    assertTrue("The subcommand is not fully loaded: $loadedSubcommand", loadedSubcommand.options.isNotEmpty())
+    assertTrue("The subcommand is not fully loaded: $loadedSubcommand",
+               loadedSubcommand.allOptionsGenerator.generate(runtimeContext).isNotEmpty())
   }
 
   @Test
@@ -78,7 +80,9 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
         subcommand("secondCmd") { description(defaultDesc) }
       }
       option("--firstOpt") { description(defaultDesc) }
-      option("--secondOpt") { description(defaultDesc) }
+      dynamicOptions {
+        option("--secondOpt") { description(defaultDesc) }
+      }
     }
     val overrideSpec = ShellCommandSpec(commandName) {
       subcommands {
@@ -92,7 +96,9 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
         subcommand("thirdCmd")
       }
       option("--secondOpt") { description(overriddenDesc) }
-      option("--thirdOpt")
+      dynamicOptions {
+        option("--thirdOpt")
+      }
       argument()
     }
 
@@ -112,14 +118,16 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
     assertTrue("Second command is not overridden: $subcommands", secondCommand.description == overriddenDesc)
     assertTrue("No single subcommand in the second command: $secondCommand",
                secondCommand.subcommandsGenerator.generate(runtimeContext).size == 1)
-    assertTrue("No single option in the second command: $secondCommand", secondCommand.options.size == 1)
+    assertTrue("No single option in the second command: $secondCommand",
+               secondCommand.allOptionsGenerator.generate(runtimeContext).size == 1)
     assertTrue("Third command is not added: $subcommands", subcommands.any { it.name == "thirdCmd" })
 
-    val firstOption = spec.options.find { it.name == "--firstOpt" } ?: error("Failed to find the first option: $spec")
+    val options = spec.allOptionsGenerator.generate(runtimeContext)
+    val firstOption = options.find { it.name == "--firstOpt" } ?: error("Failed to find the first option: $spec")
     assertTrue("First option is not from default spec: $spec", firstOption.description == defaultDesc)
-    val secondOption = spec.options.find { it.name == "--secondOpt" } ?: error("Failed to find the second option: $spec")
+    val secondOption = options.find { it.name == "--secondOpt" } ?: error("Failed to find the second option: $spec")
     assertTrue("Second option is not overridden: $spec", secondOption.description == overriddenDesc)
-    assertTrue("Third option is not added: $spec", spec.options.any { it.name == "--thirdOpt" })
+    assertTrue("Third option is not added: $spec", options.any { it.name == "--thirdOpt" })
 
     assertTrue("No single argument: $spec", spec.arguments.size == 1)
   }
@@ -142,9 +150,10 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
 
     val sub = subcommands.find { it.name == "sub" } ?: error("Failed to find the subcommand: $subcommands")
     val fullSub = commandSpecsManager.getFullCommandSpec(sub)
+    val options = fullSub.allOptionsGenerator.generate(runtimeContext)
     // if there is no option - then the base spec is not fully loaded
-    assertTrue("No option from the base spec: $fullSub", fullSub.options.any { it.name == "--someOpt" })
-    assertTrue("No option from the override spec: $fullSub", fullSub.options.any { it.name == "--newOpt" })
+    assertTrue("No option from the base spec: $fullSub", options.any { it.name == "--someOpt" })
+    assertTrue("No option from the override spec: $fullSub", options.any { it.name == "--newOpt" })
   }
 
   @Test
@@ -162,6 +171,6 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   }
 
   private fun createDummyRuntimeContext(): ShellRuntimeContext {
-    return IJShellRuntimeContext("", "", ShellName("dummy"), DummyGeneratorCommandsRunner())
+    return ShellRuntimeContextImpl("", "", ShellName("dummy"), TestGeneratorCommandsRunner.DUMMY)
   }
 }

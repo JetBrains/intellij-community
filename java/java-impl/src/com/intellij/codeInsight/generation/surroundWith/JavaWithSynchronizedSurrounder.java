@@ -63,6 +63,6 @@ public class JavaWithSynchronizedSurrounder extends JavaStatementsModCommandSurr
     if (lockExpression == null) return;
     TextRange range = lockExpression.getTextRange();
     lockExpression.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    updater.moveCaretTo(range.getStartOffset());
+    updater.select(TextRange.from(range.getStartOffset(), 0));
   }
 }

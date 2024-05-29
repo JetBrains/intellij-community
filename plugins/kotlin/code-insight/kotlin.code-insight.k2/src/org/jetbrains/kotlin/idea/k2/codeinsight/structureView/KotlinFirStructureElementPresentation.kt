@@ -13,16 +13,16 @@ import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtFunctionSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtNamedClassOrObjectSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KtSuperTypesFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeParametersRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaFunctionSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassOrObjectSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -45,27 +45,27 @@ internal class KotlinFirStructureElementPresentation(
     companion object {
         private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter.NONE
+                annotationFilter = KaRendererAnnotationsFilter.NONE
             }
 
             modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.NONE }
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
             }
 
-            superTypesFilter = KtSuperTypesFilter.NONE
-            typeParametersRenderer = KtTypeParametersRenderer.NO_TYPE_PARAMETERS
+            superTypesFilter = KaSuperTypesFilter.NONE
+            typeParametersRenderer = KaTypeParametersRenderer.NO_TYPE_PARAMETERS
             keywordsRenderer = KtKeywordsRenderer.AS_WORD.with {
-                keywordFilter = KtRendererKeywordFilter.onlyWith(
+                keywordFilter = KaRendererKeywordFilter.onlyWith(
                     KtTokens.CONSTRUCTOR_KEYWORD,
                     KtTokens.OBJECT_KEYWORD,
                     KtTokens.COMPANION_KEYWORD
                 )
             }
-            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
-            classOrObjectRenderer = KtNamedClassOrObjectSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
-            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.NO_DEFAULT_VALUE
-            constructorRenderer = KtConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            functionSymbolRenderer = KtFunctionSymbolRenderer.AS_RAW_SIGNATURE
+            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+            classOrObjectRenderer = KaNamedClassOrObjectSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
+            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
+            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
+            functionSymbolRenderer = KaFunctionSymbolRenderer.AS_RAW_SIGNATURE
         }
     }
 

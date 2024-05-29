@@ -7,11 +7,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
@@ -260,7 +262,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             }
         }
 
-        @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
         fun makeCall(
             extractableDescriptor: IExtractableCodeDescriptor<KotlinType>,
             declaration: KtNamedDeclaration,
@@ -497,7 +499,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             ShortenReferencesFacility.getInstance().shorten(declaration)
         }
 
-        val duplicateReplacers = HashMap<KotlinPsiRange, () -> Unit>().apply {
+        val duplicateReplacers = LinkedHashMap<KotlinPsiRange, () -> Unit>().apply {
             if (generatorOptions.delayInitialOccurrenceReplacement) {
                 put(descriptor.extractionData.originalRange, replaceInitialOccurrence)
             }
@@ -645,7 +647,9 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
 
             val returnType = descriptor.returnType
             val presentation = typeDescriptor.renderType(returnType, isReceiver = false, Variance.OUT_VARIANCE)
-            if (typeDescriptor.unitType == returnType || with(typeDescriptor) { returnType.isError() } || extractionTarget == ExtractionTarget.PROPERTY_WITH_INITIALIZER) {
+            if (typeDescriptor.unitType == returnType ||
+                with(typeDescriptor) { returnType.isError() } ||
+                extractionTarget == ExtractionTarget.PROPERTY_WITH_INITIALIZER && returnType !is KtFunctionalType) {
                 noReturnType()
             } else {
                 returnType(presentation)

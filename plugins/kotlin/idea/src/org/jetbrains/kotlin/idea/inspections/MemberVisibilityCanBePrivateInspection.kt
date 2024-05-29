@@ -120,6 +120,13 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
                     return@Processor false
                 }
             }
+            // Do not privatize functions referenced by callable references
+            if (usage.getStrictParentOfType<KtCallableReferenceExpression>() != null) {
+                // Consider the reference is used outside of the class,
+                // as KFunction#call would fail even on references inside that same class
+                otherUsageFound = true
+                return@Processor false
+            }
             val function = usage.getParentOfTypesAndPredicate<KtDeclarationWithBody>(
                 true, KtNamedFunction::class.java, KtPropertyAccessor::class.java
             ) { true }

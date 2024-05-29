@@ -31,7 +31,6 @@ import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
-import java.util.function.Consumer
 import java.util.function.Supplier
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
@@ -43,6 +42,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
+    val isLazy = file.getUserData(AsyncEditorLoader.OPENED_IN_BULK) == true && file.getUserData(AsyncEditorLoader.FIRST_IN_BULK) != true
+
     val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file)
 
     val effectiveDocument = if (document == null) {
@@ -60,7 +61,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
       }
 
-      val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
+      val highlighterDeferred = async(CoroutineName("editor highlighter creating"),
+                                      start = if (isLazy) CoroutineStart.LAZY else CoroutineStart.DEFAULT) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
         val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
         readActionBlocking {
@@ -119,12 +121,12 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       object : AsyncFileEditorProvider.Builder() {
         override fun build(): FileEditor {
-          val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter, Consumer {
+          val editor = factory.createMainEditor(document = effectiveDocument, project = project, file = file, highlighter = highlighter, afterCreation = {
             it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
           })
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           editorDeferred.complete(editor)
-          val component = createPsiAwareTextEditorComponent(file, editor to asyncLoader).first
+          val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
           val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
           asyncLoader.start(textEditor = textEditor, task = task)
           return textEditor

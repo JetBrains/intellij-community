@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -101,7 +102,16 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public PsiField @NotNull [] getFields() {
     if (null == myFields) {
-      Collection<PsiField> generatedFields = fieldSupplier.apply(this);
+      Collection<PsiField> generatedFields;
+      DumbService dumbService = DumbService.getInstance(getProject());
+      if (dumbService.isDumb() && !dumbService.isAlternativeResolveEnabled()) {
+        generatedFields = dumbService.computeWithAlternativeResolveEnabled(
+          () -> fieldSupplier.apply(this)
+        );
+      }
+      else {
+        generatedFields = fieldSupplier.apply(this);
+      }
       myFields = generatedFields.toArray(PsiField.EMPTY_ARRAY);
       fieldSupplier = c -> Collections.emptyList();
     }
@@ -111,7 +121,16 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public PsiMethod @NotNull [] getMethods() {
     if (null == myMethods) {
-      Collection<PsiMethod> generatedMethods = methodSupplier.apply(this);
+      Collection<PsiMethod> generatedMethods;
+      DumbService dumbService = DumbService.getInstance(getProject());
+      if (dumbService.isDumb() && !dumbService.isAlternativeResolveEnabled()) {
+        generatedMethods = dumbService.computeWithAlternativeResolveEnabled(
+          () -> methodSupplier.apply(this)
+        );
+      }
+      else {
+        generatedMethods = methodSupplier.apply(this);
+      }
       myMethods = generatedMethods.toArray(PsiMethod.EMPTY_ARRAY);
       methodSupplier = c -> Collections.emptyList();
     }

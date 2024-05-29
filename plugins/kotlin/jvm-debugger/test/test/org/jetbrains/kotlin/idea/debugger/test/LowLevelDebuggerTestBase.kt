@@ -18,8 +18,10 @@ import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addRoot
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.incremental.isClassFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -28,7 +30,9 @@ import java.io.IOException
 import java.net.Socket
 import kotlin.properties.Delegates
 
-abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
+abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
+                                          ExpectedPluginModeProvider {
+
     private companion object {
         private const val CLASSES_DIRECTORY_NAME = "classes"
         private const val DEBUG_ADDRESS = "127.0.0.1"
@@ -56,6 +60,10 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         scriptSourcesOutputDirectory = File(testAppDirectory, SCRIPT_SOURCES_DIR).apply { mkdirs() }
         libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
         super.runBare(testRunnable)
+    }
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     override fun setUpModule() {

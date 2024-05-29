@@ -24,10 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class JavaFormatterUtil {
   /**
@@ -37,6 +34,11 @@ public final class JavaFormatterUtil {
     .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
 
   private static final int CALL_EXPRESSION_DEPTH = 500;
+
+  private static final Set<String> KNOWN_TYPE_ANNOTATIONS = Set.of(
+    "org.jetbrains.annotations.NotNull",
+    "org.jetbrains.annotations.Nullable"
+  );
 
   private JavaFormatterUtil() { }
 
@@ -292,7 +294,8 @@ public final class JavaFormatterUtil {
           if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER &&
               isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
-              isAnnotationAfterKeyword(last)
+              isAnnotationAfterKeyword(last) ||
+              isTypeAnnotationsBeforeTypeInMethodWithoutModifiers(last)
           ) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
@@ -311,7 +314,7 @@ public final class JavaFormatterUtil {
         if (prev instanceof PsiKeyword) {
           return null;
         }
-        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent)) {
+        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent) || isTypeAnnotationsBeforeTypeInMethodWithoutModifiers(child)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
 
@@ -513,6 +516,25 @@ public final class JavaFormatterUtil {
     return CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 
+  private static boolean isTypeAnnotationsBeforeTypeInMethodWithoutModifiers(@NotNull ASTNode node) {
+    ASTNode parent = node.getTreeParent();
+    if (parent == null || parent.getElementType() != JavaElementType.MODIFIER_LIST) return false;
+
+    ASTNode grandParent = parent.getTreeParent();
+    if (grandParent == null || grandParent.getElementType() != JavaElementType.METHOD) return false;
+
+    ASTNode rightParentSibling = FormatterUtil.getNextNonWhitespaceSibling(parent);
+    if (rightParentSibling == null || (rightParentSibling.getElementType() != JavaElementType.TYPE_PARAMETER_LIST && rightParentSibling.getElementType() != JavaElementType.TYPE)) return false;
+
+    for (ASTNode currentChild = parent.getFirstChildNode(); currentChild != null; currentChild = FormatterUtil.getNextNonWhitespaceSibling(currentChild)) {
+      if (currentChild.getElementType() != JavaElementType.ANNOTATION) return false;
+      PsiElement psiElement = currentChild.getPsi();
+      if (!(psiElement instanceof PsiAnnotation psiAnnotation) || !KNOWN_TYPE_ANNOTATIONS.contains(psiAnnotation.getQualifiedName())) return false;
+    }
+
+    return true;
+  }
+
   private static boolean isAnnoInsideModifierListWithAtLeastOneKeyword(@NotNull ASTNode current, @NotNull ASTNode parent) {
     if (current.getElementType() != JavaElementType.ANNOTATION || parent.getElementType() != JavaElementType.MODIFIER_LIST) return false;
     while (true) {
@@ -525,7 +547,6 @@ public final class JavaFormatterUtil {
     }
     return false;
   }
-
 
   /**
    * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list.
@@ -573,7 +594,7 @@ public final class JavaFormatterUtil {
    * @param indent               the number of spaces used for indentation
    * @return a list of {@code TextRange} objects representing the extracted text ranges
    */
-  public static @NotNull List<TextRange> extractTextRangesFromLiteralText(@NotNull String text, int indent) {
+  static @NotNull List<TextRange> extractTextRangesFromLiteralText(@NotNull String text, int indent) {
     List<TextRange> linesRanges = new ArrayList<>();
     boolean isLastLine = false;
     int start = StringUtil.indexOf(text, '\n', 3);
@@ -588,11 +609,10 @@ public final class JavaFormatterUtil {
       }
       if (start + indent <= end) {
         int quoteStartIndex = end - 3;
-        if (!isLastLine && allEmpty(start + indent, end, text)) {
-          // todo here we can delete and the last \s\s\s"""
+        if (!isLastLine && containsOnlyWhitespaces(start + indent, end, text)) {
           start = end;
         }
-        else if (isLastLine && allEmpty(start + indent, quoteStartIndex, text) && isEndsWithTripleQuote(quoteStartIndex, end, text)) {
+        else if (isLastLine && containsOnlyWhitespaces(start + indent, quoteStartIndex, text) && text.endsWith("\"\"\"")) {
           start = quoteStartIndex;
         }
         else {
@@ -609,15 +629,9 @@ public final class JavaFormatterUtil {
     return linesRanges;
   }
 
-  private static boolean isEndsWithTripleQuote(int start, int end, @NotNull String text) {
-    if (end - start != 3 || start < 0) return false;
-    String tripleQuote = text.substring(start, end);
-    return tripleQuote.equals("\"\"\"");
-  }
-
-  private static boolean allEmpty(int i, int end, @NotNull String text) {
-    for (int j = i; j < end; j++) {
-      if(!Character.isWhitespace(text.charAt(j))) return false;
+  private static boolean containsOnlyWhitespaces(int start, int end, @NotNull String text) {
+    for (int i = start; i < end; i++) {
+      if (!Character.isWhitespace(text.charAt(i))) return false;
     }
     return true;
   }

@@ -37,11 +37,24 @@ public final class TextBlockJoinLinesHandler implements JoinRawLinesHandlerDeleg
                           && lineNumber == doc.getLineNumber(tokenRange.getStartOffset());
     boolean atEmptyStartLine = atStartLine && TEXT_BLOCK_START.matcher(token.getText()).find();
     boolean singleSlash = false;
-    if (text.charAt(start) == '\\') {
+    int numSpaces = 0;
+    char charAtStart = text.charAt(start);
+    if (charAtStart == '\\') {
       int startOffset = Math.max(tokenRange.getStartOffset(), doc.getLineStartOffset(lineNumber));
       String substring = doc.getText(TextRange.create(startOffset, start)) + "\\\n";
       CharSequence parsed = CodeInsightUtilCore.parseStringCharacters(substring, null);
       singleSlash = parsed != null && parsed.charAt(parsed.length() - 1) != '\n';
+    }
+    else if (charAtStart == 's' && text.charAt(start - 1) == '\\') {
+      int startOffset = Math.max(tokenRange.getStartOffset(), doc.getLineStartOffset(lineNumber));
+      String substring = doc.getText(TextRange.create(startOffset, start + 1));
+      CharSequence parsed = CodeInsightUtilCore.parseStringCharacters(substring, null);
+      if (parsed != null) {
+        while (text.charAt(start - numSpaces * 2) == 's' && text.charAt(start - numSpaces * 2 - 1) == '\\' &&
+               parsed.charAt(parsed.length() - 1 - numSpaces) == ' ') {
+          numSpaces++;
+        }
+      }
     }
     if (!singleSlash) {
       start++;
@@ -61,7 +74,8 @@ public final class TextBlockJoinLinesHandler implements JoinRawLinesHandlerDeleg
       doc.deleteString(start, end);
       endOffset += start - end;
     } else {
-      doc.replaceString(start, end, "\\n");
+      doc.replaceString(start - numSpaces * 2, end, " ".repeat(numSpaces) + "\\n");
+      start -= numSpaces;
       endOffset += start - end + 2;
     }
     if (fromStartTillEnd) {

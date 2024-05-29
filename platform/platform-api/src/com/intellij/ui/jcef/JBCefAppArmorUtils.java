@@ -44,10 +44,11 @@ final class JBCefAppArmorUtils {
         return true;
       }
 
-      LOG.warn("Unprivileged user name spaces check failed: " + output.getStderr());
+      LOG.warn("Unprivileged user namespaces check failed: " + output.getStderr());
       return false;
     }
     catch (ExecutionException e) {
+      LOG.warn("Failed to check unprivileged user namespaces restrictions(considered as restricted): " + e.getMessage());
       return false;
     }
   }

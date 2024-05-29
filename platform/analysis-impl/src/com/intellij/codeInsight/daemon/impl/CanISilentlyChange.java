@@ -51,7 +51,9 @@ final class CanISilentlyChange {
   }
 
   enum Result {
-    UH_HUH, UH_UH, ONLY_WHEN_IN_CONTENT;
+    UH_HUH, // yes
+    UH_UH,  // no
+    ONLY_WHEN_IN_CONTENT;
     // can call from any thread
     boolean canIReally(boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
       return switch (this) {

@@ -16,10 +16,9 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.nio.file.Paths
 
 abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     fun doTestKotlinClass(path: String) {
-        val virtualFile = configureModuleStructure(path).second
+        val virtualFile = configureModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)
@@ -40,7 +39,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
 
 
     fun doTestCallable(path: String) {
-        val virtualFile = configureModuleStructure(path).second
+        val virtualFile = configureModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)

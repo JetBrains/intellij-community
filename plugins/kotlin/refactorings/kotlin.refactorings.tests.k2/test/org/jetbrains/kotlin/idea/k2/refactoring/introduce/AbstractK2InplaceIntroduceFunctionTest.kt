@@ -3,14 +3,13 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractFunction.KotlinFirExtractFunctionHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.KotlinFirExtractFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractInplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractK2InplaceIntroduceFunctionTest : AbstractInplaceIntroduceFunctionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getExtractFunctionHandler(allContainersEnabled: Boolean): AbstractExtractKotlinFunctionHandler =
         KotlinFirExtractFunctionHandler(allContainersEnabled)
@@ -18,7 +17,7 @@ abstract class AbstractK2InplaceIntroduceFunctionTest : AbstractInplaceIntroduce
     override fun tearDown() {
         runAll(
           { myFixture.project.invalidateCaches() },
-          { super.tearDown() }
+          { super.tearDown() },
         )
     }
 

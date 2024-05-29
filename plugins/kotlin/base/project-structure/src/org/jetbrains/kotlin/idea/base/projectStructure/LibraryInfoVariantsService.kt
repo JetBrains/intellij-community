@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibr
  * Only Kotlin Multiplatform libraries imported through Gradle are supported
  */
 @Service(Service.Level.PROJECT)
-class LibraryInfoVariantsService(project: Project): Disposable {
+class LibraryInfoVariantsService(project: Project) : Disposable {
 
     private val storage = mutableMapOf<MavenGroupArtifactId, MutableSet<LibraryInfo>>()
 
@@ -83,34 +83,32 @@ class LibraryInfoVariantsService(project: Project): Disposable {
             return null
         }
 
-        val match = GRADLE_LIBRARY_NAME_REGEX.matchEntire(library.name.orEmpty()) ?: return null
-        val variant = match.groups[VARIANT]
-        val groupId = match.groups[GROUP]?.value ?: return null
-        val artifactId = match.groups[ARTIFACT_ID]?.value ?: return null
-
-        val artifactIdWithoutVariant = if (variant != null) artifactId else artifactId.substringBeforeLast('-')
-        return "$groupId:$artifactIdWithoutVariant"
+        return extractArtifactIdWithoutVariant(library.name)
     }
 
     companion object {
         fun getInstance(project: Project): LibraryInfoVariantsService = project.service()
 
         enum class BundledLibraryVariant(val displayName: String, val wellKnownCoordinates: Set<String>) {
-            Jvm("jvm", setOf(
-                "org.jetbrains.kotlin:kotlin-test",
-                "org.jetbrains.kotlin:kotlin-test-junit",
-                "org.jetbrains.kotlin:kotlin-test-junit5",
-                "org.jetbrains.kotlin:kotlin-test-testng",
-            )),
+            Jvm(
+                "jvm", setOf(
+                    "org.jetbrains.kotlin:kotlin-test",
+                    "org.jetbrains.kotlin:kotlin-test-junit",
+                    "org.jetbrains.kotlin:kotlin-test-junit5",
+                    "org.jetbrains.kotlin:kotlin-test-testng",
+                )
+            ),
             Js("js", setOf("org.jetbrains.kotlin:kotlin-test-js")),
             Native("native", emptySet()),
-            Common("common", setOf(
-                "org.jetbrains.kotlin:kotlin-test-common",
-                "org.jetbrains.kotlin:kotlin-test-annotations-common",
-                "org.jetbrains.kotlin:kotlin-test:annotationsCommonMain",
-                "org.jetbrains.kotlin:kotlin-test:assertionsCommonMain",
-                "org.jetbrains.kotlin:kotlin-stdlib:commonMain",
-            ))
+            Common(
+                "common", setOf(
+                    "org.jetbrains.kotlin:kotlin-test-common",
+                    "org.jetbrains.kotlin:kotlin-test-annotations-common",
+                    "org.jetbrains.kotlin:kotlin-test:annotationsCommonMain",
+                    "org.jetbrains.kotlin:kotlin-test:assertionsCommonMain",
+                    "org.jetbrains.kotlin:kotlin-stdlib:commonMain",
+                )
+            )
         }
 
         /**
@@ -131,11 +129,30 @@ class LibraryInfoVariantsService(project: Project): Disposable {
         }
 
         private val GRADLE_LIBRARY_NAME_REGEX: Regex =
-            Regex("^(?<prefix>\\S+: )?(?<group>\\S+?):(?<artifactId>\\S+?):(?<variant>\\S+?:)?(?<version>\\S+)$")
+            Regex("^(?<prefix>\\S+: )?(?<group>\\S+?):(?<artifactId>\\S+?):((?<variant>\\S+?):)?(?<version>\\S+)$")
+
         // group name constants are not used in the pattern because of the regex checker complains
         private const val GROUP = "group"
         private const val ARTIFACT_ID = "artifactId"
         private const val VARIANT = "variant"
+
+        fun extractArtifactIdWithoutVariant(library: String?): String? {
+            val match = GRADLE_LIBRARY_NAME_REGEX.matchEntire(library.orEmpty()) ?: return null
+            val variant = match.groups[VARIANT]
+            val groupId = match.groups[GROUP]?.value ?: return null
+            val artifactId = match.groups[ARTIFACT_ID]?.value ?: return null
+
+            val artifactIdWithoutVariant = if (variant != null) artifactId else artifactId.substringBeforeLast('-')
+            return "$groupId:$artifactIdWithoutVariant"
+        }
+
+        fun extractVariantName(library: String?): String? {
+            val match = GRADLE_LIBRARY_NAME_REGEX.matchEntire(library.orEmpty()) ?: return null
+            val variant = match.groups[VARIANT]
+            val artifactId = match.groups[ARTIFACT_ID]?.value ?: return null
+
+            return variant?.value ?:  artifactId.substringAfterLast('-')
+        }
     }
 }
 

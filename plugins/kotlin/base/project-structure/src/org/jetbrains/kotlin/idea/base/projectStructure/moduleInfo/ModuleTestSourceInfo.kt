@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.module.Module
@@ -13,14 +13,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructur
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.idea.caches.resolve.ModuleTestSourceInfo as OldModuleTestSourceInfo
+import org.jetbrains.kotlin.utils.closure
 
 //TODO: (module refactoring) do not create ModuleTestSourceInfo when there are no test roots for module
 data class ModuleTestSourceInfo internal constructor(
     override val module: Module
-) : ModuleSourceInfoWithExpectedBy(forProduction = false), IdeaModuleInfo, OldModuleTestSourceInfo {
+) : ModuleSourceInfoWithExpectedBy(forProduction = false), IdeaModuleInfo {
     override val name = Name.special("<test sources for module ${module.name}>")
 
     override val displayedName

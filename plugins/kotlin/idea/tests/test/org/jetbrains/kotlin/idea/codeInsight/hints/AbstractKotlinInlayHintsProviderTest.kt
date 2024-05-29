@@ -21,9 +21,6 @@ import java.io.File
 abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase(),
                                                       ExpectedPluginModeProvider {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
 

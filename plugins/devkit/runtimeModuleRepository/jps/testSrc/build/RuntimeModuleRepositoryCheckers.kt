@@ -37,7 +37,7 @@ class RawDescriptorListBuilder {
   }
 
   fun descriptor(id: String, resources: List<String>, dependencies: List<String>) {
-    descriptors.add(RawRuntimeModuleDescriptor(id, resources, dependencies))
+    descriptors.add(RawRuntimeModuleDescriptor.create(id, resources, dependencies))
   }
 }
 

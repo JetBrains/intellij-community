@@ -4,12 +4,15 @@ package com.intellij.ide.impl;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.SelectInProjectViewImplKt;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,38 +86,54 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
         " using context " + context
       );
     }
-    VirtualFile file = context.getVirtualFile();
-    Object selector = context.getSelectorInFile();
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("File is " + file + ", selector is " + selector);
-    }
-    if (selector == null) {
-      selector = PsiUtilCore.findFileSystemItem(myProject, file);
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Falling back to selector " + selector);
-      }
-    }
-
-    if (selector instanceof PsiElement) {
-      PsiUtilCore.ensureValid((PsiElement)selector);
-      PsiElement original = ((PsiElement)selector).getOriginalElement();
-      if (original != null && !original.isValid()) {
-        throw new PsiInvalidElementAccessException(original, "Returned by " + selector + " of " + selector.getClass());
-      }
-      try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+    ReadAction.nonBlocking(() -> {
+        VirtualFile file = context.getVirtualFile();
+        Object selector = context.getSelectorInFile();
         if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug("Selecting " + original);
+          SelectInProjectViewImplKt.getLOG().debug("File is " + file + ", selector is " + selector);
         }
-        select(original, requestFocus);
-      }
-    }
-    else {
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Selecting non-PSI selector " + selector + " in file " + file);
-      }
-      select(selector, file, requestFocus);
-    }
+        if (selector == null) {
+          selector = PsiUtilCore.findFileSystemItem(myProject, file);
+          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+            SelectInProjectViewImplKt.getLOG().debug("Falling back to selector " + selector);
+          }
+        }
+        if (selector instanceof PsiElement) {
+          PsiUtilCore.ensureValid((PsiElement)selector);
+          PsiElement original = ((PsiElement)selector).getOriginalElement();
+          if (original != null && !original.isValid()) {
+            throw new PsiInvalidElementAccessException(original, "Returned by " + selector + " of " + selector.getClass());
+          }
+          return new ComputedContext(file, selector, original);
+        }
+        else {
+          return new ComputedContext(file, selector, null);
+        }
+      })
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.current(), computed -> {
+        var file = computed.file;
+        var selector = computed.selector;
+        var original = computed.original;
+        if (selector instanceof PsiElement) {
+          try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+            if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+              SelectInProjectViewImplKt.getLOG().debug("Selecting " + original);
+            }
+            select(original, requestFocus);
+          }
+        }
+        else {
+          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+            SelectInProjectViewImplKt.getLOG().debug("Selecting non-PSI selector " + selector + " in file " + file);
+          }
+          select(selector, file, requestFocus);
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
+
+  private record ComputedContext(@Nullable VirtualFile file, @Nullable Object selector, @Nullable  PsiElement original) { }
 
   protected abstract void select(Object selector, VirtualFile virtualFile, boolean requestFocus);
 

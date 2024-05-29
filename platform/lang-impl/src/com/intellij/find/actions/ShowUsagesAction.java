@@ -18,7 +18,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
-import com.intellij.idea.LoggerFactory;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -288,17 +287,24 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandlerBase handler;
+    FindUsagesOptions options;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
+      if (handler == null) return null;
+      //noinspection deprecation
+      DataContext dataContext = DataManager.getInstance().getDataContext();
+      options = handler.getFindUsagesOptions(dataContext);
+      if (options instanceof PersistentFindUsagesOptions) {
+        ((PersistentFindUsagesOptions)options).setDefaults(project);
+      }
+      if (scope != null) {
+        options.searchScope = scope;
+      }
+      else {
+        options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+      }
     }
-    if (handler == null) return null;
-    //noinspection deprecation
-    FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
-    if (options instanceof PersistentFindUsagesOptions) {
-      ((PersistentFindUsagesOptions)options).setDefaults(project);
-    }
-    if (scope != null) options.searchScope = scope;
-    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), 
+    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition),
                                        createActionHandler(handler, options, title));
   }
 
@@ -524,7 +530,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
     ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
 
-    addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
+    addUsageNodes(usageView.getRoot(), new ArrayList<>());
 
     List<Usage> usages = new ArrayList<>();
     Set<Usage> visibleUsages = new LinkedHashSet<>();
@@ -599,7 +605,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         if (!popup.isVisible() && (usages.isEmpty() || !showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef))) {
           return;
         }
-        addUsageNodes(usageView.getRoot(), usageView, nodes);
+        addUsageNodes(usageView.getRoot(), nodes);
         copy = new ArrayList<>(usages);
       }
 
@@ -612,7 +618,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         nodes.add(USAGES_OUTSIDE_SCOPE_NODE);
       }
       List<UsageNode> data = new ArrayList<>(nodes);
-      int filteredOutCount = getFilteredOutNodeCount(copy, usageView);
+      int filteredOutCount = usageView.getFilteredOutNodeCount();
       if (filteredOutCount != 0) {
         DefaultActionGroup filteringActions = popup.getUserData(DefaultActionGroup.class);
         if (filteringActions == null) return;
@@ -646,11 +652,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       rebuildTable(project, originUsageCheck, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
       preselectedRow.set(getSelectedUsageNode(table));
     };
-    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, () -> {
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346641, EA-830956")) {
-        runnable.run();
-      }
-    });
+    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, runnable);
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged(usageView, pingEDT, popup));
@@ -1105,7 +1107,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         UsageAdaptersKt.getUsageInfo(adapters, project).thenAccept(selectedUsages -> {
           ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
               .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
-                usagePreviewPanel.updateLayout(selectedUsages);
+                usagePreviewPanel.updateLayout(project, selectedUsages);
                 previewTitle.clear();
 
                 if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
@@ -1257,10 +1259,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   static @Nullable KeyboardShortcut getShowUsagesShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut(ID);
-  }
-
-  private static int getFilteredOutNodeCount(@NotNull List<? extends Usage> usages, @NotNull UsageViewImpl usageView) {
-    return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
   private static @Nullable UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {
@@ -1467,17 +1465,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return bounds;
   }
 
-  private static void addUsageNodes(@NotNull GroupNode root, @NotNull UsageViewImpl usageView, @NotNull List<? super UsageNode> outNodes) {
+  private static void addUsageNodes(@NotNull GroupNode root, @NotNull List<? super UsageNode> outNodes) {
     for (UsageNode node : root.getUsageNodes()) {
-      Usage usage = node.getUsage();
-      if (usageView.isVisible(usage)) {
-        node.setParent(root);
-        outNodes.add(node);
-      }
+      node.setParent(root);
+      outNodes.add(node);
     }
     for (GroupNode groupNode : root.getSubGroups()) {
       groupNode.setParent(root);
-      addUsageNodes(groupNode, usageView, outNodes);
+      addUsageNodes(groupNode, outNodes);
     }
   }
 
@@ -1641,7 +1636,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static void showUsagesInMaximalScope(@NotNull ShowUsagesParameters parameters,
                                                @NotNull ShowUsagesActionHandler actionHandler,
                                                @Nullable ShowUsagesPopupData showUsagesPopupData) {
-    cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
+    if (showUsagesPopupData != null) {
+      cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
+    }
     ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
     if (handler != null) {
       showElementUsages(parameters, handler);

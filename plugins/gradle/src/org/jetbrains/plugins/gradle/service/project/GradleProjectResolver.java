@@ -65,9 +65,11 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
-import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
+import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncActionResultHandler;
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionResultHandler;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleProjectResolverResultHandler;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -144,6 +146,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
       syncTaskId, projectPath, settings, listener, gradleResolverPolicy, projectResolverIndicator
     );
+    GradleProjectResolverResultHandler resolverResultHandler = new GradleProjectResolverResultHandler(resolverContext);
 
     return computeCancellable(resolverContext, () -> {
       // Create project preview model w/o request to gradle, there are two main reasons for the it:
@@ -153,6 +156,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         return GradlePreviewCustomizer.Companion.getCustomizer(resolverContext)
           .resolvePreviewProjectInfo(resolverContext);
       }
+
+      resolverResultHandler.onResolveProjectInfoStarted();
+
       return resolveProjectInfo(resolverContext);
     });
   }
@@ -170,7 +176,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
       if (resolverContext.getSettings() != null) {
-        myHelper.ensureInstalledWrapper(
+        GradleWrapperHelper.ensureInstalledWrapper(
           resolverContext.getExternalSystemTaskId(),
           resolverContext.getProjectPath(),
           resolverContext.getSettings(),
@@ -296,12 +302,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
-    GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
+    GradleInitScriptUtil.attachTargetPathMapperInitScript(executionSettings);
     var initScript = GradleInitScriptUtil.createMainInitScript(isBuildSrcProject, toolingExtensionClasses);
     executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
 
     if (!executionSettings.isDownloadSources()) {
-      GradleExecutionHelper.attachIdeaPluginConfigurator(executionSettings);
+      Path initScriptPath = GradleInitScriptUtil.createIdeaPluginConfiguratorInitScript();
+      executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
     }
 
     var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(executionSettings);
@@ -309,7 +316,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var models = new GradleIdeaModelHolder(useCustomSerialization, pathMapper, buildEnvironment);
     resolverContext.setModels(models);
 
-    var syncResultHandler = new GradleSyncActionResultHandler(resolverContext);
 
     ProgressManager.checkCanceled();
 
@@ -329,7 +335,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      GradleModelFetchActionRunner.runBuildAction(resolverContext, executionSettings, buildAction, syncResultHandler);
+      var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
+      GradleModelFetchActionRunner.runBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
 
       var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {

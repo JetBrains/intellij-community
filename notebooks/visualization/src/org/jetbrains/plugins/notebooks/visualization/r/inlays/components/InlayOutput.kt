@@ -8,7 +8,10 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -19,6 +22,7 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -30,7 +34,6 @@ import com.intellij.util.ui.JBUI
 import org.cef.browser.CefBrowser
 import org.cef.handler.CefLoadHandlerAdapter
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ClipboardUtils
@@ -42,13 +45,8 @@ import org.jetbrains.plugins.notebooks.visualization.r.ui.ToolbarUtil
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.event.ActionEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
 import java.io.File
-import javax.swing.AbstractAction
 import javax.swing.JComponent
-import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
@@ -323,6 +321,26 @@ object EmptySoftWrapPainter : SoftWrapPainter {
   override fun reinit() {}
 }
 
+internal class NotebookOutputSelectAllAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    // for some reason, EDITOR and HOST_EDITOR are always null for console output components. this is a workaround.
+    val editor = e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE)
+
+    e.presentation.isEnabled = editor?.contentComponent?.hasFocus() == true && editor.getUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY) == true
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val editor = e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE) ?: return
+    editor.selectionModel.setSelection(0, editor.document.text.length)
+  }
+}
+
+private val NOTEBOOKS_CONSOLE_OUTPUT_KEY = Key.create<Boolean>("NOTEBOOKS_CONSOLE_OUTPUT")
+
 fun initOutputTextConsole(editor: Editor,
                           consoleEditor: EditorEx,
                           scrollPaneTopBorderHeight: Int) {
@@ -331,18 +349,8 @@ fun initOutputTextConsole(editor: Editor,
     isRendererMode = true
     scrollPane.border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(scrollPaneTopBorderHeight))
     contentComponent.putClientProperty("AuxEditorComponent", true)
+    putUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY, true)
   }
-
-  @NonNls
-  val actionNameSelect = VisualizationBundle.message("action.name.output.select.all")
-  val actionSelect = object : AbstractAction(actionNameSelect) {
-    override fun actionPerformed(e: ActionEvent) {
-      consoleEditor.selectionModel.setSelection(0, consoleEditor.document.text.length)
-    }
-  }
-  consoleEditor.contentComponent.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK),
-                                              actionNameSelect)
-  consoleEditor.contentComponent.actionMap.put(actionNameSelect, actionSelect)
 
   consoleEditor.settings.isUseSoftWraps = true
 }

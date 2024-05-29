@@ -8,10 +8,15 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.search.assertWithExpectedScope
 
 @SkipSlowTestLocally
 open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     override fun setUp() {
         super.setUp()
         myFixture.addFileToProject(

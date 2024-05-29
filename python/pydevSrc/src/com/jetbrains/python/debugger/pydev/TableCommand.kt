@@ -3,8 +3,8 @@ package com.jetbrains.python.debugger.pydev
 
 import com.intellij.util.asSafely
 import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters
-import com.intellij.notebooks.tables.TableCommandParameters
-import com.intellij.notebooks.tables.TableCommandType
+import com.jetbrains.python.tables.TableCommandParameters
+import com.jetbrains.python.tables.TableCommandType
 
 class TableCommand(debugger: RemoteDebugger?,
                    threadId: String?,

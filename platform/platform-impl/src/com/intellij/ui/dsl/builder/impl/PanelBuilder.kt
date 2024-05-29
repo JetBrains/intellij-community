@@ -137,7 +137,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   }
 
   /**
-   * According to https://jetbrains.design/intellij/principles/layout/#checkboxes-and-radio-buttons
+   * According to https://plugins.jetbrains.com/docs/intellij/layout.html#checkboxes-and-radio-buttons
    * space between label and CheckBox/RadioButton should be increased
    */
   private fun isLabelGap(cellAfterLabel: CellBaseImpl<*>?): Boolean {

@@ -395,10 +395,10 @@ object ProjectUtil {
    * `-1` (when a user cancels the dialog)
    */
   @JvmOverloads
-  fun confirmOpenOrAttachProject(project: Project? = null): Int {
+  fun confirmOpenOrAttachProject(project: Project? = null, path: Path? = null): Int {
     var mode = GeneralSettings.getInstance().confirmOpenNewProject
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
-      val processor = ProjectAttachProcessor.getProcessor(project)
+      val processor = ProjectAttachProcessor.getProcessor(project, path)
       val exitCode = Messages.showDialog(
         project?.let { processor?.getDescription(it) } ?: IdeBundle.message("prompt.open.project.or.attach"),
         IdeBundle.message("prompt.open.project.or.attach.title"), arrayOf(

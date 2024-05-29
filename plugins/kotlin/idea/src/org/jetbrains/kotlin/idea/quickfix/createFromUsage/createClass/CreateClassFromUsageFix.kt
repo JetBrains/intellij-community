@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
@@ -53,7 +52,7 @@ enum class ClassKind(@NonNls val keyword: String, @Nls val description: String) 
     DEFAULT("", "") // Used as a placeholder and must be replaced with one of the kinds above
 }
 
-fun ClassKind.toIdeaClassKind() = IdeaClassKind { this@toIdeaClassKind.description.capitalize() }
+fun ClassKind.toIdeaClassKind(): com.intellij.codeInsight.daemon.impl.quickfix.ClassKind = IdeaClassKind { this@toIdeaClassKind.description.capitalize() }
 
 val ClassKind.actionPriority: IntentionActionPriority
     get() = if (this == ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL
@@ -69,7 +68,7 @@ data class ClassInfo(
     val parameterInfos: List<ParameterInfo> = Collections.emptyList(),
     val primaryConstructorVisibility: DescriptorVisibility? = null
 ) {
-    val applicableParents by lazy {
+    val applicableParents: List<PsiElement> by lazy {
         targetParents.filter {
             if (kind == OBJECT && it is KtClass && (it.isInner() || it.isLocal)) return@filter false
             true
@@ -81,7 +80,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
     element: E,
     private val classInfo: ClassInfo
 ) : CreateFromUsageFixBase<E>(element) {
-    override fun getText() = KotlinBundle.message("create.0.1", classInfo.kind.description, classInfo.name)
+    override fun getText(): String = KotlinBundle.message("create.0.1", classInfo.kind.description, classInfo.name)
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         with(classInfo) {
@@ -98,7 +97,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
         return true
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         if (editor == null) return
@@ -138,7 +137,6 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
 
     private fun createFileByPackage(
         psiPackage: PsiPackage,
-        editor: Editor,
         originalFile: KtFile
     ): KtFile? {
         val directories = psiPackage.directories.filter { it.canRefactor() }
@@ -157,16 +155,6 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
 
         val fileName = "${classInfo.name}.${KotlinFileType.INSTANCE.defaultExtension}"
         val targetFile = getOrCreateKotlinFile(fileName, targetDirectory)
-        if (targetFile == null) {
-            val filePath = "${targetDirectory.virtualFile.path}/$fileName"
-            KotlinSurrounderUtils.showErrorHint(
-                targetDirectory.project,
-                editor,
-                KotlinBundle.message("file.0.already.exists.but.does.not.correspond.to.kotlin.file", filePath),
-                KotlinBundle.message("create.file"),
-                null
-            )
-        }
         return targetFile
     }
 
@@ -200,58 +188,54 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
 
             file.project.executeWriteCommand(text) {
                 val targetFile = getOrCreateKotlinFile(fileName, targetDirectory, (packageFqName ?: defaultPackageFqName).asString())
-                if (targetFile != null) {
-                    doInvoke(targetFile, editor, file, false)
-                }
+                doInvoke(targetFile, editor, file, false)
             }
             return
         }
 
         val element = element ?: return
 
-        runWriteAction<Unit> {
-            with(classInfo) {
-                val targetParent =
-                    when (selectedParent) {
-                        is KtElement, is PsiClass -> selectedParent
-                        is PsiPackage -> createFileByPackage(selectedParent, editor, file)
-                        else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
-                            .withPsiAttachment("selectedParent", selectedParent)
-                    } ?: return@runWriteAction
-                val constructorInfo = ClassWithPrimaryConstructorInfo(
-                    classInfo,
-                    // Need for #KT-22137
-                    if (expectedTypeInfo.isUnit) TypeInfo.Empty else expectedTypeInfo,
-                    primaryConstructorVisibility = classInfo.primaryConstructorVisibility
-                )
-                val builder = CallableBuilderConfiguration(
-                    Collections.singletonList(constructorInfo),
-                    element,
-                    file,
-                    editor,
-                    false,
-                    kind == PLAIN_CLASS || kind == INTERFACE
-                ).createBuilder()
-                builder.placement = CallablePlacement.NoReceiver(targetParent)
+        runWriteAction {
+            val targetParent =
+                when (selectedParent) {
+                    is KtElement, is PsiClass -> selectedParent
+                    is PsiPackage -> createFileByPackage(selectedParent, file)
+                    else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
+                        .withPsiAttachment("selectedParent", selectedParent)
+                } ?: return@runWriteAction
+            val constructorInfo = ClassWithPrimaryConstructorInfo(
+                classInfo,
+                // Need for #KT-22137
+                if (classInfo.expectedTypeInfo.isUnit) TypeInfo.Empty else classInfo.expectedTypeInfo,
+                primaryConstructorVisibility = classInfo.primaryConstructorVisibility
+            )
+            val builder = CallableBuilderConfiguration(
+                Collections.singletonList(constructorInfo),
+                element,
+                file,
+                editor,
+                false,
+                classInfo.kind == PLAIN_CLASS || classInfo.kind == INTERFACE
+            ).createBuilder()
+            builder.placement = CallablePlacement.NoReceiver(targetParent)
 
-                fun buildClass() {
-                    builder.build {
-                        if (targetParent !is KtFile || targetParent == file) return@build
-                        val targetPackageFqName = targetParent.packageFqName
-                        if (targetPackageFqName == file.packageFqName) return@build
-                        val reference = (element.getQualifiedElementSelector() as? KtSimpleNameExpression)?.mainReference ?: return@build
-                        reference.bindToFqName(
-                            targetPackageFqName.child(Name.identifier(className)),
-                            KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                        )
-                    }
+            fun buildClass() {
+                builder.build {
+                    if (targetParent !is KtFile || targetParent == file) return@build
+                    val targetPackageFqName = targetParent.packageFqName
+                    if (targetPackageFqName == file.packageFqName) return@build
+                    val reference = (element.getQualifiedElementSelector() as? KtSimpleNameExpression)?.mainReference ?: return@build
+                    reference.bindToFqName(
+                        targetPackageFqName.child(Name.identifier(className)),
+                        KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                    )
                 }
+            }
 
-                if (startCommand) {
-                    file.project.executeCommand(text, command = ::buildClass)
-                } else {
-                    buildClass()
-                }
+            if (startCommand) {
+                file.project.executeCommand(text, command = ::buildClass)
+            } else {
+                buildClass()
             }
         }
     }

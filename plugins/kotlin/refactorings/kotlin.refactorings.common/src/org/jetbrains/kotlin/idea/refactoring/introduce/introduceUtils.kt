@@ -127,7 +127,8 @@ fun selectElementsWithTargetSibling(
     elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
-    continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit
+    continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit,
+    selection: ((elements: List<PsiElement>, commonParent: PsiElement) -> PsiElement?)? = null
 ) {
     fun onSelectionComplete(elements: List<PsiElement>, targetContainer: PsiElement) {
         val physicalElements = elements.map { it.substringContextOrThis }
@@ -148,7 +149,7 @@ fun selectElementsWithTargetSibling(
         continuation(elements, outermostParent)
     }
 
-    selectElementsWithTargetParent(operationName, editor, file, title, elementKinds, elementValidator, getContainers, ::onSelectionComplete)
+    selectElementsWithTargetParent(operationName, editor, file, title, elementKinds, elementValidator, getContainers, ::onSelectionComplete, selection)
 }
 
 fun selectElementsWithTargetParent(
@@ -158,8 +159,9 @@ fun selectElementsWithTargetParent(
     @NlsContexts.DialogTitle title: String,
     elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> @NlsContexts.DialogMessage String?,
-    getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
-    continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
+    getContainers: (List<PsiElement>, PsiElement) -> List<PsiElement>,
+    continuation: (List<PsiElement>, PsiElement) -> Unit,
+    selection: ((List<PsiElement>, PsiElement) -> PsiElement?)? = null
 ) {
     fun showErrorHintByKey(key: String) {
         showErrorHintByKey(file.project, editor, key, operationName)
@@ -185,7 +187,8 @@ fun selectElementsWithTargetParent(
             containers,
             editor,
             title,
-            true
+            true,
+            selection?.invoke(physicalElements, parent)
         ) {
             continuation(elements, it)
         }

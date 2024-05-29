@@ -14,12 +14,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class CoverageRowSorter extends RowSorter<TableModel> {
+class CoverageRowSorter extends RowSorter<TableModel> {
   private final JBTreeTable myTreeTable;
   private final CoverageTableModel myModel;
   private RowSorter.SortKey mySortKey;
 
-  public CoverageRowSorter(JBTreeTable table, CoverageTableModel model) {
+  CoverageRowSorter(JBTreeTable table, CoverageTableModel model) {
     myTreeTable = table;
     myModel = model;
   }

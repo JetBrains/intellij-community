@@ -5,7 +5,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -63,19 +62,16 @@ public class ActionsTest extends IntegrationTestCase {
     // see testActionInsideCommand comment
     final VirtualFile f = createFile("f.txt");
 
-    CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
-      @Override
-      public void doRun() {
-        setContent(f, "file");
-        setDocumentTextFor(f, "doc1");
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      setContent(f, "file");
+      setDocumentTextFor(f, "doc1");
 
-        LocalHistoryAction a = LocalHistory.getInstance().startAction("action");
-        setDocumentTextFor(f, "doc2");
-        a.finish();
+      LocalHistoryAction a = LocalHistory.getInstance().startAction("action");
+      setDocumentTextFor(f, "doc2");
+      a.finish();
 
-        saveDocument(f);
-        setContent(f, "doc3");
-      }
+      saveDocument(f);
+      setContent(f, "doc3");
     }, "command", null);
 
     List<ChangeSet> changes = getChangesFor(f);

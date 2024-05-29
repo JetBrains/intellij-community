@@ -1,6 +1,12 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
+            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.definitions.scriptDefinitionProvider"
             interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
             area="IDEA_PROJECT"/>
@@ -93,5 +99,16 @@
 
     <idea.base.projectStructure.moduleInfoProviderExtension
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
+
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptDefinitionSourceK2"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource"/>
   </extensions>
+
+  <actions resource-bundle="messages.KotlinBaseScriptingBundle">
+      <action id="LoadMainKtsConfiguration"
+              class="org.jetbrains.kotlin.idea.script.RefreshMainKtsScriptAction"
+              icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
+        <add-to-group group-id="EditorContextBarMenu"/>
+      </action>
+  </actions>
 </idea-plugin>

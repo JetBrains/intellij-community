@@ -95,7 +95,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
               myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
               callOnUpdate.run();
             }
-          });
+          }, getProject().getDisposed());
           return;
         }
         document = FileDocumentManager.getInstance().getDocument(file);
@@ -369,7 +369,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void setLine(final int line, boolean visualLineMightBeChanged) {
     if (getLine() != line) {
-      if (visualLineMightBeChanged && !myType.changeLine(this, line, getProject())) {
+      if (visualLineMightBeChanged && !myType.lineShouldBeChanged(this, line, getProject())) {
         return;
       }
       var oldLine = getLine();

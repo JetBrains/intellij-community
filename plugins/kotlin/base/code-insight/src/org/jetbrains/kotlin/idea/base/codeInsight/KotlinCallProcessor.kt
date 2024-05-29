@@ -175,7 +175,7 @@ object KotlinCallProcessor {
                             is KtVariableLikeSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = KtPartiallyAppliedVariableSymbol(signature, null, null)
-                                val call = KtSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KtSimpleVariableAccess.Read)
+                                val call = KaSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KaSimpleVariableAccess.Read)
                                 processCallTarget(VariableCallTarget(element, call, partiallyAppliedSymbol))
                             }
 
@@ -210,7 +210,7 @@ object KotlinCallProcessor {
                             processCallTarget(FunctionCallTarget(element, call, call.compoundAccess.operationPartiallyAppliedSymbol))
                         }
 
-                        is KtSimpleVariableAccessCall -> {
+                        is KaSimpleVariableAccessCall -> {
                             processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
                         }
 

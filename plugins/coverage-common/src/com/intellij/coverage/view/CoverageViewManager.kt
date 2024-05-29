@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 @State(name = "CoverageViewManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -128,12 +129,15 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     @JvmField
     var myAutoScrollFromSource: Boolean = false
 
+    @ApiStatus.Internal
     @JvmField
     var myColumnSize: List<Int>? = null
 
+    @ApiStatus.Internal
     @JvmField
     var myAscendingOrder: Boolean = true
 
+    @ApiStatus.Internal
     @JvmField
     var mySortingColumn: Int = 0
 
@@ -154,7 +158,9 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
       }
 
     var isHideFullyCovered: Boolean
+      @ApiStatus.Internal
       get() = myHideFullyCovered
+      @ApiStatus.Internal
       set(hideFullyCovered) {
         if (myHideFullyCovered != hideFullyCovered) {
           myHideFullyCovered = hideFullyCovered
@@ -164,7 +170,9 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
       }
 
     var isShowOnlyModified: Boolean
+      @ApiStatus.Internal
       get() = myShowOnlyModified
+      @ApiStatus.Internal
       set(showOnlyModified) {
         if (myShowOnlyModified != showOnlyModified) {
           myShowOnlyModified = showOnlyModified
@@ -173,6 +181,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
         }
       }
 
+    @ApiStatus.Internal
     fun addListener(disposable: Disposable, listener: CoverageViewSettingsListener) {
       myListeners.add(listener, disposable)
     }
@@ -185,6 +194,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     }
   }
 
+  @ApiStatus.Internal
   fun interface CoverageViewSettingsListener {
     fun onSettingsChanged(stateBean: StateBean?)
   }
@@ -198,7 +208,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     @JvmStatic
     fun getInstanceIfCreated(project: Project): CoverageViewManager? = project.serviceIfCreated()
 
-    fun getDisplayName(suitesBundle: CoverageSuitesBundle): @NlsSafe String? {
+    private fun getDisplayName(suitesBundle: CoverageSuitesBundle): @NlsSafe String? {
       val configuration = suitesBundle.runConfiguration
       return configuration?.name ?: suitesBundle.presentableName
     }

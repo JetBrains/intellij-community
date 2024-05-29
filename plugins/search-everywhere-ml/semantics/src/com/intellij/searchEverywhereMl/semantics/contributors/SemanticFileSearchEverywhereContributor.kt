@@ -44,6 +44,8 @@ open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
     super.fetchWeightedElements(pattern, progressIndicator, consumer)
   }
 
+  override fun checkScopeIsDefaultAndAutoSet(): Boolean = isScopeDefaultAndAutoSet
+
   override fun syncSearchSettings() {
     itemsProvider.model = createModel(project)
   }

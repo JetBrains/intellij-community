@@ -27,9 +27,8 @@ data class TModel(
     val ignored: Boolean,
     val runWithClass: Class<*>,
     val methodAnnotations: List<TAnnotation>,
-    val setUpStatements: List<String>
-) {
-}
+    val setUpStatements: List<String>,
+)
 
 fun ModelMatcher.withPrecondition(precondition: (String) -> Boolean): ModelMatcher {
     return { name -> if (precondition(name)) this(name) else null }
@@ -100,8 +99,8 @@ fun MutableTSuite.model(
         bucketSize = if (!splitToBuckets) null else bucketSize,
         ignored = isIgnored,
         runWithClass = runWithClass,
-        methodAnnotations,
-        setUpStatements
+        methodAnnotations = methodAnnotations,
+        setUpStatements = setUpStatements,
     )
 }
 

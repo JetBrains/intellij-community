@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
 import com.intellij.openapi.application.runReadAction
@@ -10,8 +11,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
@@ -25,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesW
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
@@ -71,8 +76,20 @@ object DebuggerUtils {
         fileName: String,
         location: Location?
     ): KtFile? {
-        if (!isKotlinSourceFile(fileName)) return null
-        if (DumbService.getInstance(project).isDumb) return null
+        val files = findSourceFilesForClass(project, scopes, className, fileName, hasLocation = location != null)
+        return chooseApplicableFile(files, location)
+    }
+
+    internal fun findSourceFilesForClass(
+        project: Project,
+        scopes: List<GlobalSearchScope>,
+        className: JvmClassName,
+        fileName: String,
+        hasLocation: Boolean = true,
+    ): List<KtFile> {
+        if (!isKotlinSourceFile(fileName)) return emptyList()
+        if (DumbService.isDumb(project)
+            && FileBasedIndex.getInstance().currentDumbModeAccessType != DumbModeAccessType.RELIABLE_DATA_ONLY) return emptyList()
 
         val partFqName = className.fqNameForClassNameWithoutDollars
 
@@ -84,8 +101,8 @@ object DebuggerUtils {
                 continue
             }
 
-            if (files.size == 1 && !forceRanking || location == null) {
-                return files.first()
+            if (!hasLocation || files.size == 1 && !forceRanking) {
+                return listOf(files.first())
             }
 
             val singleFile = runReadAction {
@@ -94,16 +111,18 @@ object DebuggerUtils {
             }
 
             if (singleFile != null) {
-                return singleFile
+                return listOf(singleFile)
             }
 
-            return chooseApplicableFile(files, location)
+            return files
         }
 
-        return null
+        return emptyList()
     }
 
-    private fun chooseApplicableFile(files: List<KtFile>, location: Location): KtFile {
+    internal fun chooseApplicableFile(files: List<KtFile>, location: Location?): KtFile? {
+        if (files.isEmpty()) return null
+        if (location == null || files.size == 1 && !forceRanking) return files.first()
         return if (Registry.`is`("kotlin.debugger.analysis.api.file.applicability.checker")) {
             FileApplicabilityChecker.chooseMostApplicableFile(files, location)
         } else {
@@ -120,6 +139,36 @@ object DebuggerUtils {
     ): List<KtFile> {
         val files = findFilesWithExactPackage(className.packageFqName, searchScope, project).filter { it.name == fileName }
         return files.sortedWith(JavaElementFinder.byClasspathComparator(searchScope))
+    }
+
+    internal fun tryFindFileByClassNameAndFileName(
+        project: Project,
+        className: JvmClassName,
+        sourceName: String,
+        scopes: List<GlobalSearchScope>,
+    ): List<KtFile> {
+        val fqn = className.fqNameForClassNameWithoutDollars.asString()
+        for (scope in scopes) {
+            val psiClass = PositionManagerImpl.findClass(project, fqn, scope, false) ?: continue
+            val file = psiClass.containingFile as? KtFile ?: continue
+            if (file.name == sourceName) {
+                return listOf(file)
+            }
+        }
+        for (scope in scopes) {
+            val files = FilenameIndex.getFilesByName(project, sourceName, scope)
+            if (files.isEmpty()) continue
+            val collectedFiles = mutableListOf<KtFile>()
+            for (file in files) {
+                if (file !is KtFile) continue
+                val classNames = ClassNameCalculator.getClassNames(file).values.map { it.fqnToInternalName() }
+                if (className.internalName.isInnerClassOfAny(classNames)) {
+                    collectedFiles.add(file)
+                }
+            }
+            if (collectedFiles.isNotEmpty()) return collectedFiles
+        }
+        return emptyList()
     }
 
     fun isKotlinSourceFile(fileName: String): Boolean {
@@ -222,4 +271,16 @@ object DebuggerUtils {
         return mappingIntervals.asSequence().filter { rangeMapping -> rangeMapping.hasMappingForSource(inlineLineNumber) }
             .map { rangeMapping -> rangeMapping.mapSourceToDest(inlineLineNumber) }.filter { line -> line != -1 }.toList()
     }
+}
+
+internal fun String.isInnerClassOfAny(candidateContainingInternalNames: List<String>) =
+    candidateContainingInternalNames.any { containingClass -> isInnerClassOf(containingClass) }
+
+private fun String.isInnerClassOf(containingClassInternalName: String): Boolean {
+    if (length < containingClassInternalName.length) return false
+    if (!startsWith(containingClassInternalName)) return false
+    val isSameClass = length == containingClassInternalName.length
+    if (isSameClass) return true
+    val isInnerClass = this[containingClassInternalName.length] == '$'
+    return isInnerClass
 }

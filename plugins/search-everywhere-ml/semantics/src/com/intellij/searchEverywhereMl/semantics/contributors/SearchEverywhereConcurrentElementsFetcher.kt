@@ -35,6 +35,8 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
 
   fun ScoredText.findPriority(): DescriptorPriority
 
+  fun checkScopeIsDefaultAndAutoSet(): Boolean = true
+
   @RequiresBackgroundThread
   fun fetchElementsConcurrently(pattern: String,
                                 progressIndicator: ProgressIndicator,
@@ -62,6 +64,8 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
         if (semanticMatches.isEmpty()) return@launch
         standardSearchJob.join()
+        // Allow the scope to change automatically:
+        if (knownItems.isEmpty() && checkScopeIsDefaultAndAutoSet()) return@launch
 
         suspend fun iterate() {
           for (priority in ORDERED_PRIORITIES) {

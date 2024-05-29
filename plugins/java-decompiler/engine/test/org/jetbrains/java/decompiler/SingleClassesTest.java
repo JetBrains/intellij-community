@@ -251,6 +251,8 @@ public class SingleClassesTest {
 
   @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
 
+  @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
+
   private void doTest(String testFile, String... companionFiles) {
     var decompiler = fixture.getDecompiler();
 

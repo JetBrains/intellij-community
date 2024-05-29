@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.*;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -358,7 +360,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myScrollingToCaret;
 
   private boolean myIsStickyLinePainting;
-  private boolean myIsStickyLineHovered;
 
   EditorImpl(@NotNull Document document,
              boolean viewer,
@@ -5815,16 +5816,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public void setStickyLinePainting(boolean stickyLinePainting) {
     myIsStickyLinePainting = stickyLinePainting;
-  }
-
-  @ApiStatus.Internal
-  public boolean isStickyLineHovered() {
-    return myIsStickyLineHovered;
-  }
-
-  @ApiStatus.Internal
-  public void setStickyLineHovered(boolean stickyLineHovered) {
-    myIsStickyLineHovered = stickyLineHovered;
   }
 
   @ApiStatus.Internal
