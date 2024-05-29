@@ -78,6 +78,9 @@ private object ProjectDescriptorWithStdlibSourcesAndExtraLibraries : ProjectDesc
 
         // annotations for parcelize plugin
         "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.20",
+
+        // annotations for Compose compiler plugin
+        "org.jetbrains.compose.runtime:runtime-desktop:1.5.0",
     )
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
