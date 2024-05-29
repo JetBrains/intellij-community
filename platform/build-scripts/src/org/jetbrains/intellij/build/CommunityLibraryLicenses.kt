@@ -1193,6 +1193,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.parcelize-compiler-plugin"),
     jetbrainsLibrary("kotlinc.sam-with-receiver-compiler-plugin"),
     jetbrainsLibrary("kotlinc.scripting-compiler-plugin"),
+    jetbrainsLibrary("kotlinc.compose-compiler-plugin"),
     jetbrainsLibrary("kotlinc.symbol-light-classes"),
     jetbrainsLibrary("kotlinx-collections-immutable"),
     jetbrainsLibrary("kotlinx-coroutines-debug"),
