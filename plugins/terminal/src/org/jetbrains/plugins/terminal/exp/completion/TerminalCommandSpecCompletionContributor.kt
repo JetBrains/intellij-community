@@ -87,7 +87,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     if (arguments.isEmpty()) {
       val commands = context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator())
       val files = context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator())
-      return commands + files
+      return commands + files.filter { !it.isHidden }
     }
     else {
       val commandVariants = if (command.endsWith(".exe")) listOf(command.removeSuffix(".exe"), command) else listOf(command)
@@ -97,7 +97,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         // Suggest file names if there is nothing to suggest, and completion is invoked manually.
         // But not for PowerShell, here it would be better to fall back to shell-based completion
         !context.parameters.isAutoPopup && context.session.shellIntegration.shellType != ShellType.POWERSHELL -> {
-          context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator())
+          context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator()).filter { !it.isHidden }
         }
         else -> emptyList()
       }

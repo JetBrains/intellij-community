@@ -37,10 +37,33 @@ object ShellDataGenerators {
       val path = getParentPath(context.typedPrefix)
       val files: List<String> = context.getChildFiles(path, onlyDirectories)
       val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
-      files.map {
+      val suggestions = files.flatMap {
         val type = if (it.endsWith(File.separatorChar)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
-        ShellCompletionSuggestion(name = it, type = type, prefixReplacementIndex = prefixReplacementIndex)
+        val suggestion = ShellCompletionSuggestion(name = it, type = type, prefixReplacementIndex = prefixReplacementIndex)
+        if (type == ShellSuggestionType.FILE) {
+          listOf(suggestion)
+        }
+        else {
+          // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
+          // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
+          val hiddenSuggestion = ShellCompletionSuggestion(
+            name = it.removeSuffix(File.separator),
+            type = ShellSuggestionType.FOLDER,
+            prefixReplacementIndex = prefixReplacementIndex,
+            isHidden = true
+          )
+          listOf(suggestion, hiddenSuggestion)
+        }
       }
+      val adjustedPrefix = context.typedPrefix.removePrefix("\"").removeSuffix("'")
+      // If the base path is the same as the typed prefix, then add an empty suggestion.
+      // Because the current typed prefix is already a valid value of the file argument.
+      // It is needed for the parser to consider current typed prefix as a valid file suggestion.
+      if (path.isNotEmpty() && path == adjustedPrefix) {
+        val emptySuggestion = ShellCompletionSuggestion(name = "", prefixReplacementIndex = prefixReplacementIndex, isHidden = true)
+        suggestions + emptySuggestion
+      }
+      else suggestions
     }
   }
 
@@ -97,6 +120,7 @@ object ShellDataGenerators {
   fun getParentPath(typedPrefix: String): String {
     val separator = File.separatorChar
     // Remove possible quotes before and after
+    // TODO: quotes should not be handled there, typed prefix should already contain no quotes.
     val adjustedPrefix = typedPrefix.removePrefix("\"").removeSuffix("'")
     return if (adjustedPrefix.contains(separator)) {
       adjustedPrefix.substringBeforeLast(separator) + separator

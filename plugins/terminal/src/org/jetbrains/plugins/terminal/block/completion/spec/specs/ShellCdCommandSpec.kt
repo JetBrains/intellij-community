@@ -9,6 +9,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSugge
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.getParentPath
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.getChildFiles
+import java.io.File
 
 internal fun cdCommandSpec() = ShellCommandSpec("cd") {
   description(TerminalBundle.messagePointer("cd.command.description"))
@@ -22,12 +23,25 @@ internal fun cdCommandSpec() = ShellCommandSpec("cd") {
       val path = getParentPath(context.typedPrefix)
       val directories = context.getChildFiles(path, onlyDirectories = true)
       val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
-      val suggestions = directories.map {
-        ShellCompletionSuggestion(name = it, type = ShellSuggestionType.FOLDER, prefixReplacementIndex = prefixReplacementIndex)
+      val suggestions = directories.flatMap {
+        val suggestion = ShellCompletionSuggestion(name = it, type = ShellSuggestionType.FOLDER, prefixReplacementIndex = prefixReplacementIndex)
+        val hiddenSuggestion = ShellCompletionSuggestion(
+          name = it.removeSuffix(File.separator),
+          type = ShellSuggestionType.FOLDER,
+          prefixReplacementIndex = prefixReplacementIndex,
+          isHidden = true
+        )
+        listOf(suggestion, hiddenSuggestion)
       }
-      // Do not add additional suggestions if we are completing the nested path.
-      // For example, if typedPrefix is like this: 'src/incompletePath'
-      if (path.isEmpty()) {
+      val adjustedPrefix = context.typedPrefix.removePrefix("\"").removeSuffix("'")
+      if (path.isNotEmpty() && path == adjustedPrefix) {
+        val emptySuggestion = ShellCompletionSuggestion(name = "", prefixReplacementIndex = prefixReplacementIndex, isHidden = true)
+        suggestions + emptySuggestion
+      }
+      else if (path.isEmpty()) {
+        // Add additional suggestions only if we are not completing the nested directory.
+        // For example, if typedPrefix is like this: 'somePath'.
+        // But not like this: 'src/somePath'.
         suggestions + additionalSuggestions()
       }
       else suggestions

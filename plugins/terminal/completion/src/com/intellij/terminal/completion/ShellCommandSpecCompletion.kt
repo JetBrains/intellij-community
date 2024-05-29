@@ -46,6 +46,6 @@ class ShellCommandSpecCompletion(
   ): List<ShellCompletionSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as ShellCommandTreeNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return suggestionsProvider.getSuggestionsOfNext(lastNode).filter { it.name.isNotEmpty() }
+    return suggestionsProvider.getSuggestionsOfNext(lastNode).filter { !it.isHidden }
   }
 }

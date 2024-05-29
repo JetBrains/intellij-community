@@ -20,7 +20,7 @@ import java.io.File
 @RunWith(JUnit4::class)
 internal class ShellCommandTreeBuilderTest {
   private val commandName = "command"
-  private var filePathSuggestions: List<String> = emptyList()
+  private var filePathSuggestions: Map<String, List<String>> = emptyMap()
 
   private val spec = ShellCommandSpec(commandName) {
     option("-a", "--asd")
@@ -96,6 +96,15 @@ internal class ShellCommandTreeBuilderTest {
           argument {
             suggestions(fileSuggestionsGenerator())
           }
+        }
+        argument {
+          suggestions(fileSuggestionsGenerator(onlyDirectories = true))
+        }
+      }
+
+      subcommand("withTwoDirArgs") {
+        argument {
+          suggestions(fileSuggestionsGenerator(onlyDirectories = true))
         }
         argument {
           suggestions(fileSuggestionsGenerator(onlyDirectories = true))
@@ -218,7 +227,7 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `option with file argument`() {
-    mockFilePathsSuggestions("file.txt", "folder/", "file")
+    mockFilePathsSuggestions("." to listOf("file.txt", "folder${File.separatorChar}", "file"))
     doTest("withFiles", "-o", "file.txt") {
       assertSubcommandOf("withFiles", commandName)
       assertOptionOf("-o", "withFiles")
@@ -228,39 +237,62 @@ internal class ShellCommandTreeBuilderTest {
 
   @Test
   fun `option with file argument prefixed with directory name`() {
-    mockFilePathsSuggestions("file.txt", "folder/", "file")
-    doTest("withFiles", "-o", "someDir/file") {
+    val dir = "someDir${File.separatorChar}"
+    mockFilePathsSuggestions(dir to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    doTest("withFiles", "-o", "${dir}file") {
       assertSubcommandOf("withFiles", commandName)
       assertOptionOf("-o", "withFiles")
-      assertArgumentOfOption("someDir/file", "-o")
+      assertArgumentOfOption("${dir}file", "-o")
     }
   }
 
   @Test
   fun `subcommand with directory argument`() {
-    val separator = File.separatorChar
-    mockFilePathsSuggestions("file.txt", "folder$separator", "dir$separator")
-    doTest("withFiles", "dir$separator") {
+    val dirSuggestion = "dir${File.separatorChar}"
+    mockFilePathsSuggestions(dirSuggestion to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    doTest("withFiles", dirSuggestion) {
       assertSubcommandOf("withFiles", commandName)
-      assertArgumentOfSubcommand("dir$separator", "withFiles")
+      assertArgumentOfSubcommand(dirSuggestion, "withFiles")
     }
   }
 
   @Test
   fun `subcommand with directory without ending slash`() {
-    val separator = File.separatorChar
-    mockFilePathsSuggestions("file.txt", "folder$separator", "dir$separator")
-    doTest("withFiles", "someDir${separator}folder") {
+    val dir = "someDir${File.separatorChar}"
+    mockFilePathsSuggestions(dir to listOf("file.txt", "folder${File.separatorChar}", "file"))
+    doTest("withFiles", "${dir}folder") {
       assertSubcommandOf("withFiles", commandName)
-      assertArgumentOfSubcommand("someDir${separator}folder", "withFiles")
+      assertArgumentOfSubcommand("${dir}folder", "withFiles")
+    }
+  }
+
+  @Test
+  fun `subcommand with two directory arguments`() {
+    val separator = File.separatorChar
+    val someDir = "someDir$separator"
+    val otherDir = "otherDir$separator"
+    val nestedDir = "nestedDir$separator"
+    mockFilePathsSuggestions("." to listOf(someDir, otherDir),
+                             someDir to listOf("file.txt", "file", nestedDir))
+    doTest("withTwoDirArgs", "${someDir}$nestedDir", otherDir) {
+      assertSubcommandOf("withTwoDirArgs", commandName)
+      assertArgumentOfSubcommand("${someDir}$nestedDir", "withTwoDirArgs")
+      assertArgumentOfSubcommand(otherDir, "withTwoDirArgs")
     }
   }
 
   private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) = runBlocking {
     // Mock fileSuggestionsGenerator result
-    val generatorCommandsRunner = TestGeneratorCommandsRunner {
-      val output = filePathSuggestions.joinToString("\n")
-      ShellCommandResult.create(output, exitCode = 0)
+    val generatorCommandsRunner = TestGeneratorCommandsRunner { command ->
+      if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
+        val path = command.removePrefix("__jetbrains_intellij_get_directory_files").trim()
+        val files = filePathSuggestions[path]
+        if (files != null) {
+          ShellCommandResult.create(files.joinToString("\n"), exitCode = 0)
+        }
+        else ShellCommandResult.create("", exitCode = 0)
+      }
+      else ShellCommandResult.create("", exitCode = 1)
     }
     val fixture = ShellCommandTreeBuilderFixture(
       TestCommandSpecsManager(spec),
@@ -270,7 +302,7 @@ internal class ShellCommandTreeBuilderTest {
     fixture.buildCommandTreeAndTest(spec, arguments.toList(), assertions)
   }
 
-  private fun mockFilePathsSuggestions(vararg files: String) {
-    filePathSuggestions = files.asList()
+  private fun mockFilePathsSuggestions(vararg pathToFiles: Pair<String, List<String>>) {
+    filePathSuggestions = pathToFiles.toMap()
   }
 }
