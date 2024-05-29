@@ -65,10 +65,14 @@ final class AnnotatorRunner {
     PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, resultSink));
     boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
-      for (Annotator annotator : supportedLanguages.keySet()) {
-        addToQueue.enqueue(annotator);
+      try {
+        for (Annotator annotator : supportedLanguages.keySet()) {
+          addToQueue.enqueue(annotator);
+        }
       }
-      addToQueue.finish();
+      finally {
+        addToQueue.finish();
+      }
       return runnable.getAsBoolean();
     });
     myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myAnnotationSession, myPsiFile);
