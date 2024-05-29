@@ -17,8 +17,9 @@ public interface JBAccountInfoServiceEx extends JBAccountInfoService{
     public RDClientData() {
     }
 
-    public RDClientData(@Nullable String userId, @Nullable String loginName, @Nullable String email, @Nullable String idToken) {
-      this(userId != null? new JBAData(userId, loginName, email) : null, idToken);
+    public RDClientData(@Nullable String userId, @Nullable String loginName, @Nullable String email, @Nullable String presentableName,
+                        @Nullable String idToken) {
+      this(userId != null? new JBAData(userId, loginName, email, presentableName) : null, idToken);
     }
 
     public RDClientData(@Nullable JBAData userData, @Nullable String idToken) {

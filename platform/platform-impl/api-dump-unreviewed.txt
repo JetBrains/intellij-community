@@ -25415,7 +25415,8 @@ f:com.intellij.ui.JBAccountInfoService$JBAData
 - f:email:java.lang.String
 - f:id:java.lang.String
 - f:loginName:java.lang.String
-- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:presentableName:java.lang.String
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 c:com.intellij.ui.JBProgressBar
 - javax.swing.JProgressBar
 - <init>():V

@@ -13,8 +13,9 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     val id = System.getenv("SETTINGS_SYNC_TEST_ID")
     val loginName = "testLogin"
     val email = "testEmail@example.com"
+    val presentableName = "presentableName"
     return if (id != null)
-      JBAccountInfoService.JBAData(id, loginName, email)
+      JBAccountInfoService.JBAData(id, loginName, email, presentableName)
     else null
   }
 

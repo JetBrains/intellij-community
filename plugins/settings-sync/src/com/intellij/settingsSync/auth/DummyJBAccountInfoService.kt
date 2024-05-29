@@ -6,7 +6,7 @@ import java.util.function.Consumer
 
 object DummyJBAccountInfoService : JBAccountInfoService {
 
-  private val dummyUserData = JBAccountInfoService.JBAData("integrationTest", "testLogin", "testEmail@example.com")
+  private val dummyUserData = JBAccountInfoService.JBAData("integrationTest", "testLogin", "testEmail@example.com", "testPresentableName")
   private var _idToken: String? = "DUMMYTOKEN"
 
   override fun getUserData(): JBAccountInfoService.JBAData = dummyUserData
