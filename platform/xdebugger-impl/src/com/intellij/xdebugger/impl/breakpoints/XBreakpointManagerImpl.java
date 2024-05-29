@@ -447,7 +447,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   @NotNull
   public BreakpointManagerState saveState(@NotNull BreakpointManagerState state) {
     // create default breakpoints map without locking
-    var defaultBreakpointsMap = StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, Function.identity());
+    Map<XBreakpointType, XBreakpointBase> defaultBreakpointsMap = StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, Function.identity());
 
     return withLockMaybeCancellable(myLock, () -> {
       myDependentBreakpointManager.saveState();
@@ -570,8 +570,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     });
   }
 
-  private List<XBreakpointBase> createDefaultBreakpoints() {
-    //noinspection unchecked
+  private List<? extends XBreakpointBase> createDefaultBreakpoints() {
     return XBreakpointUtil.breakpointTypes().map(this::createDefaultBreakpoint).nonNull().toList();
   }
 

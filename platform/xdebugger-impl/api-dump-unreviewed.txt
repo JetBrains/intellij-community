@@ -1170,18 +1170,24 @@ c:com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider
 com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 - a:getDocumentForHighlighting(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-- s:collectPanelProviders():java.util.List
-- s:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
-- s:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
-- s:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor):java.util.List
-- s:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor):java.util.List
-- s:getDebuggerSupport(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem):com.intellij.xdebugger.impl.DebuggerSupport
-- s:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
-- s:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
-- s:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
-- s:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
-- s:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
-- s:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
+- sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+- sf:collectPanelProviders():java.util.List
+- sf:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
+- sf:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
+- sf:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor):java.util.List
+- sf:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor):java.util.List
+- sf:getDebuggerSupport(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem):com.intellij.xdebugger.impl.DebuggerSupport
+- sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
+- sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
+- sf:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
+f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtilKt
+- sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
+- sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 - com.intellij.openapi.components.BaseState
 - <init>():V
