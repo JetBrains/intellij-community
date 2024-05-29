@@ -10,8 +10,6 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBUI
-import javax.swing.Box
 
 class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.inline.completion"),
@@ -33,9 +31,7 @@ class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigura
       configurables.forEachIndexed { index, configurable ->
         appendDslConfigurable(configurable)
         if (index != configurables.lastIndex) {
-          row {
-            cell(Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)))
-          }
+          separator()
         }
       }
     }
