@@ -13,7 +13,8 @@ internal class ShellCompletionSuggestionImpl(
   override val insertValue: String?,
   override val priority: Int,
   override val icon: Icon?,
-  override val prefixReplacementIndex: Int
+  override val prefixReplacementIndex: Int,
+  override val isHidden: Boolean
 ) : ShellCompletionSuggestion {
   init {
     if (priority !in 0..100) {

@@ -31,6 +31,8 @@ internal class ShellJsonBasedOptionSpec(
 
   override val prefixReplacementIndex: Int = 0
 
+  override val isHidden: Boolean = false
+
   override val isRequired: Boolean
     get() = data.isRequired
 

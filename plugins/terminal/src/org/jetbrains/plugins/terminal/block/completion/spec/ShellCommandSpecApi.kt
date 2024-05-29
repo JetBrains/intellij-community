@@ -39,6 +39,7 @@ fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit = {})
  * The greater the number, the closer the item will be to the first place.
  * @param icon used to provide custom icon instead of autodetected from [type]
  * @param prefixReplacementIndex see [ShellCompletionSuggestion.prefixReplacementIndex].
+ * @param isHidden see [ShellCompletionSuggestion.isHidden]
  */
 @ApiStatus.Experimental
 fun ShellCompletionSuggestion(
@@ -50,6 +51,7 @@ fun ShellCompletionSuggestion(
   priority: Int = 50,
   icon: Icon? = null,
   prefixReplacementIndex: Int = 0,
+  isHidden: Boolean = false,
 ): ShellCompletionSuggestion {
-  return ShellCompletionSuggestionImpl(name, type, displayName, description, insertValue, priority, icon, prefixReplacementIndex)
+  return ShellCompletionSuggestionImpl(name, type, displayName, description, insertValue, priority, icon, prefixReplacementIndex, isHidden)
 }

@@ -32,6 +32,8 @@ internal class ShellJsonBasedCommandSpec(
 
   override val prefixReplacementIndex: Int = 0
 
+  override val isHidden: Boolean = false
+
   override val requiresSubcommand: Boolean
     get() = data.requiresSubcommand
 

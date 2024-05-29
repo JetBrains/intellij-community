@@ -37,6 +37,8 @@ internal class ShellMergedCommandSpec(
 
   override val prefixReplacementIndex: Int = 0
 
+  override val isHidden: Boolean = false
+
   override val requiresSubcommand: Boolean
     get() = overridingSpecs.any { it.requiresSubcommand }
 

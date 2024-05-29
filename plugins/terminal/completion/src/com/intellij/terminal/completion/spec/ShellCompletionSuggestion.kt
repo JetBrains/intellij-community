@@ -59,4 +59,14 @@ interface ShellCompletionSuggestion {
    * then the replacement index should be `4`.
    */
   val prefixReplacementIndex: Int
+
+  /**
+   * If true, then this suggestion won't be shown in the completion popup.
+   * It may be needed to specify that this suggestion is also a valid value for the argument.
+   * So parser will be able to distinguish it and not mark it as something unknown.
+   *
+   * For example, if there is a directory suggestion, then it may have a trailing file separator or may not.
+   * Both options are acceptable, but only one of them should be shown in the completion popup.
+   */
+  val isHidden: Boolean
 }

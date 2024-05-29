@@ -34,6 +34,8 @@ internal class ShellCommandSpecImpl(
 
   override val prefixReplacementIndex: Int = 0
 
+  override val isHidden: Boolean = false
+
   init {
     if (priority !in 0..100) {
       error("Priority must be between 0 and 100")
