@@ -249,3 +249,17 @@ c:com.intellij.execution.process.ColoredProcessHandler
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
 - coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
 - f:notifyTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
+c:com.intellij.execution.process.KillableColoredProcessHandler
+- com.intellij.execution.process.ColoredProcessHandler
+- com.intellij.execution.KillableProcess
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(com.intellij.execution.configurations.GeneralCommandLine,Z):V
+- p:<init>(java.lang.Process,com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.lang.Process,java.lang.String):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
+c:com.intellij.execution.process.KillableColoredProcessHandler$Silent
+- com.intellij.execution.process.KillableColoredProcessHandler
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
+- p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
