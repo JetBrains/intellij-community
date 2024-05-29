@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
@@ -15,10 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 /**
@@ -220,7 +216,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException | ExecutionException e) {
-        if (!(e.getCause() instanceof ProcessCanceledException)) {
+        if (!(e.getCause() instanceof CancellationException)) {
           LOG.debug(e);
         }
       }
