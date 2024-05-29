@@ -4,9 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
-import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
@@ -17,17 +15,17 @@ val ShellRuntimeContext.project: Project
 internal val PROJECT_KEY: Key<Project> = Key.create("Project")
 
 /**
- * Returns the list of file suggestions based on child files of [path].
+ * Returns the list of [path] child file names.
  * [path] can be either an absolute path or relative path.
  * In case of relative path, it is related to [ShellRuntimeContext.currentDirectory].
  *
  * Use [ShellDataGenerators.getParentPath] utility to get the right [path] from the user typed prefix.
  */
 @ApiStatus.Experimental
-suspend fun ShellRuntimeContext.getFileSuggestions(
+suspend fun ShellRuntimeContext.getChildFiles(
   path: String,
   onlyDirectories: Boolean = false
-): List<ShellCompletionSuggestion> {
+): List<String> {
   val adjustedPath = path.ifEmpty { "." }
   val result = runShellCommand("__jetbrains_intellij_get_directory_files $adjustedPath")
   if (result.exitCode != 0) {
@@ -39,9 +37,5 @@ suspend fun ShellRuntimeContext.getFileSuggestions(
     .filter { !onlyDirectories || it.endsWith(separator) }
     // do not suggest './' and '../' directories if the user already typed some path
     .filter { path.isEmpty() || (it != ".$separator" && it != "..$separator") }
-    .map {
-      val type = if (it.endsWith(separator)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
-      ShellCompletionSuggestion(it, type)
-    }
     .toList()
 }

@@ -8,7 +8,6 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellOptionSpec
-import java.io.File
 
 internal class ShellCommandTreeBuilder private constructor(
   private val contextProvider: ShellRuntimeContextProvider,
@@ -38,13 +37,8 @@ internal class ShellCommandTreeBuilder private constructor(
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
       val suggestionsProvider = createSuggestionsProvider(name)
-      val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
-      var suggestion = suggestions.find { it.name == name }
-      if (suggestion == null && name.contains(File.separatorChar)) {
-        // most probably it is a file path
-        val fileName = name.substringAfterLast(File.separatorChar)
-        suggestion = suggestions.find { it.name == fileName || it.name == "$fileName${File.separatorChar}" }
-      }
+      val suggestions = suggestionsProvider.getSuggestionsOfNext(root)
+      val suggestion = findMatchingSuggestion(suggestions, name)
       if (suggestion == null
           && !root.getMergedParserOptions().flagsArePosixNonCompliant
           && name.startsWith("-") && !name.startsWith("--") && name.length > 2) {
@@ -73,7 +67,7 @@ internal class ShellCommandTreeBuilder private constructor(
       val name = arguments[curIndex]
       val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
-      val suggestion = suggestions.find { it.name == name }
+      val suggestion = findMatchingSuggestion(suggestions, name)
       val node = if (suggestion == null) {
         // option requires an argument, then probably provided name is this argument
         suggestionsProvider.getAvailableArguments(root).find { !it.isOptional }?.let {
@@ -89,6 +83,14 @@ internal class ShellCommandTreeBuilder private constructor(
       }
       else return
     }
+  }
+
+  private fun findMatchingSuggestion(suggestions: List<ShellCompletionSuggestion>, name: String): ShellCompletionSuggestion? {
+    if (suggestions.isEmpty()) return null
+    // It is assumed that all suggestions are with the same prefixReplacementIndex
+    val prefixReplacementIndex = suggestions.first().prefixReplacementIndex
+    val prefixToMatch = name.substring(prefixReplacementIndex)
+    return suggestions.find { it.name == prefixToMatch }
   }
 
   /** [options] is a posix chained options string, for example -abcde */

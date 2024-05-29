@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.specs
 
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.getParentPath
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.getFileSuggestions
+import org.jetbrains.plugins.terminal.block.completion.spec.getChildFiles
 
 internal fun cdCommandSpec() = ShellCommandSpec("cd") {
   description(TerminalBundle.messagePointer("cd.command.description"))
@@ -19,13 +20,17 @@ internal fun cdCommandSpec() = ShellCommandSpec("cd") {
       getCacheKey = { "cd suggestions:${getParentPath(it.typedPrefix)}" }
     ) { context ->
       val path = getParentPath(context.typedPrefix)
-      val directorySuggestions = context.getFileSuggestions(path, onlyDirectories = true)
+      val directories = context.getChildFiles(path, onlyDirectories = true)
+      val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
+      val suggestions = directories.map {
+        ShellCompletionSuggestion(name = it, type = ShellSuggestionType.FOLDER, prefixReplacementIndex = prefixReplacementIndex)
+      }
       // Do not add additional suggestions if we are completing the nested path.
       // For example, if typedPrefix is like this: 'src/incompletePath'
       if (path.isEmpty()) {
-        directorySuggestions + additionalSuggestions()
+        suggestions + additionalSuggestions()
       }
-      else directorySuggestions
+      else suggestions
     }
     suggestions(generator)
   }

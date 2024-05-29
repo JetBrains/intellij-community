@@ -4,25 +4,25 @@ package com.intellij.terminal.completion.engine
 import com.intellij.terminal.completion.ShellArgumentSuggestion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.*
-import java.io.File
 
 internal class ShellCommandTreeSuggestionsProvider(
   private val context: ShellRuntimeContext,
   private val generatorsExecutor: ShellDataGeneratorsExecutor
 ) {
-  suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<ShellCompletionSuggestion> {
+  suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>): List<ShellCompletionSuggestion> {
     val suggestions = when (node) {
-      is ShellCommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
-      is ShellOptionNode -> getSuggestionsForOption(node, nextNodeText)
-      is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it, nextNodeText) } ?: emptyList()
+      is ShellCommandNode -> getSuggestionsForSubcommand(node)
+      is ShellOptionNode -> getSuggestionsForOption(node)
+      is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
       else -> emptyList()
     }
-    return suggestions.distinctBy { it.name }
+    return filterSuggestionsByPrefix(suggestions.distinctBy { it.name })
   }
 
   suspend fun getDirectSuggestionsOfNext(option: ShellOptionNode): List<ShellCompletionSuggestion> {
     val availableArgs = getAvailableArguments(option)
-    return availableArgs.flatMap { getArgumentSuggestions(it) }.distinctBy { it.name }
+    val argumentSuggestions = availableArgs.flatMap { getArgumentSuggestions(it) }.distinctBy { it.name }
+    return filterSuggestionsByPrefix(argumentSuggestions)
   }
 
   fun getAvailableArguments(node: ShellOptionNode): List<ShellArgumentSpec> {
@@ -44,26 +44,23 @@ internal class ShellCommandTreeSuggestionsProvider(
     return allArgs.subList(lastExistingArgIndex + if (includeLast) 0 else 1, firstRequiredArgIndex + 1)
   }
 
-  private suspend fun getSuggestionsForSubcommand(node: ShellCommandNode, nextNodeText: String): List<ShellCompletionSuggestion> {
+  private suspend fun getSuggestionsForSubcommand(node: ShellCommandNode): List<ShellCompletionSuggestion> {
     val suggestions = mutableListOf<ShellCompletionSuggestion>()
 
-    // suggest subcommands and options only if the provided value is not a file path
-    if (!nextNodeText.contains(File.separatorChar)) {
-      val spec = node.spec
-      if (node.children.isEmpty()) {
-        suggestions.addAll(spec.getSubcommands())
-      }
+    val spec = node.spec
+    if (node.children.isEmpty()) {
+      suggestions.addAll(spec.getSubcommands())
+    }
 
-      if (spec.requiresSubcommand) {
-        return suggestions
-      }
+    if (spec.requiresSubcommand) {
+      return suggestions
+    }
 
-      val lastArg = (node.children.lastOrNull() as? ShellArgumentNode)?.spec
-      if ((!node.getMergedParserOptions().optionsMustPrecedeArguments || node.children.filterIsInstance<ShellArgumentNode>().isEmpty())
-          && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
-        val options = getAvailableOptions(node)
-        suggestions.addAll(options)
-      }
+    val lastArg = (node.children.lastOrNull() as? ShellArgumentNode)?.spec
+    if ((!node.getMergedParserOptions().optionsMustPrecedeArguments || node.children.filterIsInstance<ShellArgumentNode>().isEmpty())
+        && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
+      val options = getAvailableOptions(node)
+      suggestions.addAll(options)
     }
 
     val availableArgs = getAvailableArguments(node)
@@ -106,7 +103,7 @@ internal class ShellCommandTreeSuggestionsProvider(
     return options
   }
 
-  private suspend fun getSuggestionsForOption(node: ShellOptionNode, nextNodeText: String): List<ShellCompletionSuggestion> {
+  private suspend fun getSuggestionsForOption(node: ShellOptionNode): List<ShellCompletionSuggestion> {
     val suggestions = mutableListOf<ShellCompletionSuggestion>()
 
     val directSuggestions = getDirectSuggestionsOfNext(node)
@@ -117,7 +114,7 @@ internal class ShellCommandTreeSuggestionsProvider(
     // suggest parent options and args if there is no required args or last arg is required, but variadic
     val args = if (lastArg?.isVariadic == true && lastArg.optionsCanBreakVariadicArg) availableArgs - lastArg else availableArgs
     if (node.parent is ShellCommandNode && args.all { it.isOptional }) {
-      val parentSuggestions = getSuggestionsForSubcommand(node.parent, nextNodeText)
+      val parentSuggestions = getSuggestionsForSubcommand(node.parent)
       suggestions.addAll(parentSuggestions)
     }
     return suggestions
@@ -132,6 +129,21 @@ internal class ShellCommandTreeSuggestionsProvider(
       suggestions.addAll(adjustedSuggestions)
     }
     return suggestions
+  }
+
+  /**
+   * Filter out less specific suggestions if there is a suggestion for prefix shorter than [ShellRuntimeContext.typedPrefix] in [context].
+   */
+  private fun filterSuggestionsByPrefix(suggestions: List<ShellCompletionSuggestion>): List<ShellCompletionSuggestion> {
+    if (suggestions.isEmpty()) {
+      return emptyList()
+    }
+    // Bigger the prefix replacement index, more specific the suggestion
+    val prefixReplacementIndex = suggestions.maxOf { it.prefixReplacementIndex }
+    return if (prefixReplacementIndex == 0) {
+      suggestions
+    }
+    else suggestions.filter { it.prefixReplacementIndex == prefixReplacementIndex }
   }
 
   private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {

@@ -37,14 +37,15 @@ class ShellCommandSpecCompletion(
                                                                    command, commandSpec, completeArguments)
     val context = contextProvider.getContext(lastArgument)
     val suggestionsProvider = ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
-    return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
+    return computeSuggestions(suggestionsProvider, rootNode)
   }
 
-  private suspend fun computeSuggestions(suggestionsProvider: ShellCommandTreeSuggestionsProvider,
-                                         root: ShellCommandNode,
-                                         lastArgument: String): List<ShellCompletionSuggestion> {
+  private suspend fun computeSuggestions(
+    suggestionsProvider: ShellCommandTreeSuggestionsProvider,
+    root: ShellCommandNode
+  ): List<ShellCompletionSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as ShellCommandTreeNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filter { it.name.isNotEmpty() }
+    return suggestionsProvider.getSuggestionsOfNext(lastNode).filter { it.name.isNotEmpty() }
   }
 }

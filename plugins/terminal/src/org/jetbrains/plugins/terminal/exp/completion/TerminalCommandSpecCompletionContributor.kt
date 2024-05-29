@@ -46,9 +46,6 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
     val context = TerminalCompletionContext(session, runtimeContextProvider, generatorsExecutor, shellSupport, parameters)
 
-    val prefix = result.prefixMatcher.prefix.substringAfterLast(File.separatorChar) // take last part if it is a file path
-    val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
-
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
     val command = document.getText(TextRange.create(promptModel.commandStartOffset, caretOffset))
@@ -61,6 +58,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val suggestions = runBlockingCancellable {
       computeSuggestions(allTokens, context)
     }
+
+    val prefixReplacementIndex = suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
+    val prefix = result.prefixMatcher.prefix.substring(prefixReplacementIndex)
+    val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
+
     val elements = suggestions.map { it.toLookupElement() }
     resultSet.addAllElements(elements)
 

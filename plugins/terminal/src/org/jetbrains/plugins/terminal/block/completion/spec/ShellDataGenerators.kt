@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
@@ -34,7 +35,12 @@ object ShellDataGenerators {
       getCacheKey = { "$key:${getParentPath(it.typedPrefix)}" }
     ) { context ->
       val path = getParentPath(context.typedPrefix)
-      context.getFileSuggestions(path, onlyDirectories)
+      val files: List<String> = context.getChildFiles(path, onlyDirectories)
+      val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
+      files.map {
+        val type = if (it.endsWith(File.separatorChar)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
+        ShellCompletionSuggestion(name = it, type = type, prefixReplacementIndex = prefixReplacementIndex)
+      }
     }
   }
 
