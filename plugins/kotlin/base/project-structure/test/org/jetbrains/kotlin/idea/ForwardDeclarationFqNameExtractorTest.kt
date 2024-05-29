@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea
 
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFqNameExtractor
+import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFqNameExtractor
 import org.jetbrains.kotlin.name.FqName
 
 class ForwardDeclarationFqNameExtractorTest : TestCase() {

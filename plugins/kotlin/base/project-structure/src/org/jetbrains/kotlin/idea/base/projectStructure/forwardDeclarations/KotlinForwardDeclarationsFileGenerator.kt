@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration
+package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
@@ -35,7 +35,7 @@ object KotlinForwardDeclarationsFileGenerator {
     fun generateForwardDeclarationFiles(libraryInfo: NativeKlibLibraryInfo): Path? {
         if (!Registry.`is`("kotlin.k2.kmp.enabled")) return null
 
-        val groupedClasses = KotlinForwardDeclarationsFqNameExtractor.getGroupedFwdDeclarations(libraryInfo).ifEmpty { return null }
+        val groupedClasses = KotlinForwardDeclarationsFqNameExtractor.getGroupedForwardDeclarations(libraryInfo).ifEmpty { return null }
         return generateForwardDeclarationsForFqNames(groupedClasses, libraryInfo.libraryRoot)
     }
 

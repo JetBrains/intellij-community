@@ -16,13 +16,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModule
  * FIR IDE declaration provider factory implementation for Kotlin/Native forward declarations.
  * Delegates to the regular factory, but uses a narrow [GlobalSearchScope] that contains only generated declarations of the [KtModule].
  *
- * @see [org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFileGenerator]
+ * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory() {
     override fun createDeclarationProvider(ktModule: KtModule): KotlinDeclarationProvider? {
         if (ktModule !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
-        return ktModule.project.createDeclarationProvider(ktModule.fwdDeclarationsScope, ktModule)
+        return ktModule.project.createDeclarationProvider(ktModule.forwardDeclarationsScope, ktModule)
     }
 }
 
@@ -30,12 +30,12 @@ class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProvider
  * FIR IDE package provider factory for Kotlin/Native forward declarations.
  * Delegates to the regular factory, but uses a narrow [GlobalSearchScope] that contains only generated declarations of the [KtModule].
  *
- * @see [org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFileGenerator]
+ * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory() {
     override fun createPackageProvider(ktModule: KtModule): KotlinPackageProvider? {
         if (ktModule !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
-        return ktModule.project.createPackageProvider(ktModule.fwdDeclarationsScope)
+        return ktModule.project.createPackageProvider(ktModule.forwardDeclarationsScope)
     }
 }

@@ -15,7 +15,7 @@ import com.intellij.util.indexing.hints.BaseFileTypeInputFilter
 import com.intellij.util.indexing.hints.BaseGlobalFileTypeInputFilter
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFileSystem
+import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystem
 
 private const val KOTLIN_DOT_FILE_EXTENSION = ".${KotlinFileType.EXTENSION}"
 
