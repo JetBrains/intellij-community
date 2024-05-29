@@ -54,13 +54,16 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
     }
     else tokens
+    if (allTokens.isEmpty()) {
+      return
+    }
 
     val suggestions = runBlockingCancellable {
       computeSuggestions(allTokens, context)
     }
 
     val prefixReplacementIndex = suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
-    val prefix = result.prefixMatcher.prefix.substring(prefixReplacementIndex)
+    val prefix = allTokens.last().substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
     val elements = suggestions.map { it.toLookupElement() }
