@@ -14,6 +14,8 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemoveReviewerAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
@@ -51,6 +53,16 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       isOpaque = false
       horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
       viewport.isOpaque = false
+    }.also {
+      statuses.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent?) {
+          it.parent?.revalidate()
+        }
+
+        override fun componentMoved(e: ComponentEvent?) {
+          it.parent?.revalidate()
+        }
+      })
     }
   }
 }
