@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import java.io.File
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
-class MainKtsScriptDefinitionProvider : ScriptDefinitionsProvider {
+class MainKtsScriptDefinitionSource : ScriptDefinitionsProvider {
     override val id: String = ".main.kts script"
 
     override fun getDefinitionClasses(): Iterable<String> = emptyList()

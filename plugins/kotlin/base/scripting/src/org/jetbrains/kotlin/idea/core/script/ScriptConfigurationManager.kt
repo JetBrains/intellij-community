@@ -62,6 +62,8 @@ internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenc
  * of opened files when configuration will be loaded or updated.
  */
 interface ScriptConfigurationManager : ScriptDependencyAware {
+    fun loadPlugins()
+
     /**
      * Get cached configuration for [file] or load it.
      * May return null even configuration was loaded but was not yet applied.

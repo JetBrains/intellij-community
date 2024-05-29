@@ -161,7 +161,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     private fun KtFile.calculateScopeForStandaloneScript(file: VirtualFile, project: Project): KotlinScriptSearchScope {
         val vFile = virtualFile ?: viewProvider.virtualFile
         val dependenciesScope =
-            ScriptDependencyAware.getInstance(project).getScriptDependenciesClassFilesScope(vFile)
+            ScriptDependencyAware.getInstance(project).getScriptDependenciesClassFilesScope(vFile) ?: GlobalSearchScope.EMPTY_SCOPE
         debugLog { "=> standalone" }
         return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file).uniteWith(dependenciesScope))
     }

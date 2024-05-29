@@ -68,6 +68,10 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
         }
     }
 
+    override fun loadPlugins() {
+        plugins
+    }
+
     fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
         notifier.updateScriptDependenciesIfNeeded(file)
     }

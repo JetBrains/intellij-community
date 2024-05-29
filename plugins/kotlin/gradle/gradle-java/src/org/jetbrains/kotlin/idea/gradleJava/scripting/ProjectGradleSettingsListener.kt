@@ -7,13 +7,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptModel
 import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -39,9 +37,6 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
 
                 if (newRoot is Imported && KotlinPluginModeProvider.isK2Mode()) {
                     val definitions = loadGradleDefinitions(it.externalProjectPath, newRoot.data.gradleHome, newRoot.data.javaHome, project)
-                    SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
-                        .filterIsInstance<GradleScriptDefinitionsSource>().firstOrNull()
-                        .safeAs<GradleScriptDefinitionsSource>()?.updateDefinitions(definitions)
 
                     val scripts = newRoot.data.models.mapNotNull {
                         val path = Paths.get(it.file)
@@ -55,7 +50,7 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
                         }
                     }.toSet()
 
-                    configureGradleScriptsK2(newRoot.data.javaHome, project, scripts)
+                    configureGradleScriptsK2(newRoot.data.javaHome, project, scripts, definitions)
                 }
             }
         }
