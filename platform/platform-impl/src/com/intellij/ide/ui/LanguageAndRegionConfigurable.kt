@@ -5,6 +5,7 @@ import com.intellij.help.impl.HelpManagerImpl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
+import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.Disposable
@@ -47,13 +48,19 @@ class LanguageAndRegionUi {
           val property = propertyGraph.lazyProperty { Locale.forLanguageTag(localizationService.getSelectedLocale()) }
 
           property.afterChange(parentDisposable) {
-            if (it.toLanguageTag() != localizationService.getSelectedLocale()) {
-              localizationService.setSelectedLocale(it.toLanguageTag())
+            if (it.toLanguageTag() == localizationService.getSelectedLocale()) {
+              return@afterChange
+            }
+
+            localizationService.setSelectedLocale(it.toLanguageTag())
+
+            ApplicationManager.getApplication().invokeLater {
+              RestartDialog.showRestartRequired()
             }
           }
           languageBox.bindItem(property)
 
-          connection.subscribe(LocalizationStateService.UPDATE_TOPIC, Runnable {
+          connection.subscribe(LocalizationListener.UPDATE_TOPIC, Runnable {
             model.selectedItem = Locale.forLanguageTag(localizationService.getSelectedLocale())
           })
         }
@@ -112,9 +119,11 @@ class LanguageAndRegionUi {
 
 internal class LanguageAndRegionConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "preferences.language.and.region") {
+  private lateinit var initSelectionLanguage: String
   private lateinit var initSelectionRegion: Region
 
   override fun createPanel(): DialogPanel {
+    initSelectionLanguage = LocalizationStateService.getInstance()!!.getSelectedLocale()
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
@@ -124,7 +133,8 @@ internal class LanguageAndRegionConfigurable :
 
   override fun apply() {
     super.apply()
-    if (initSelectionRegion != RegionSettings.getRegion()) {
+    if (initSelectionLanguage != LocalizationStateService.getInstance()!!.getSelectedLocale() ||
+        initSelectionRegion != RegionSettings.getRegion()) {
       ApplicationManager.getApplication().invokeLater {
         RestartDialog.showRestartRequired()
       }

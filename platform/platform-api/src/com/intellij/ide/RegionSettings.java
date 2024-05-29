@@ -16,6 +16,7 @@ public final class RegionSettings {
    */
   private static final String REGION_CODE_KEY = "JetBrains.region.code";
 
+  @ApiStatus.Internal
   @Topic.AppLevel
   public static final Topic<Runnable> UPDATE_TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.NONE, true);
 

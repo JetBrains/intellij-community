@@ -3,7 +3,6 @@ package com.intellij.l10n
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -15,9 +14,6 @@ interface LocalizationStateService {
       }
       return ApplicationManager.getApplication().getService(LocalizationStateService::class.java)
     }
-
-    @Topic.AppLevel
-    val UPDATE_TOPIC: Topic<Runnable> = Topic(Runnable::class.java, Topic.BroadcastDirection.NONE, true)
   }
 
   fun getSelectedLocale(): String
