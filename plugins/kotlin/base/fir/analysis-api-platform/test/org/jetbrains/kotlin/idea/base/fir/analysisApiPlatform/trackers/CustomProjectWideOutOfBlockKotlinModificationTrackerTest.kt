@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertNotEquals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase

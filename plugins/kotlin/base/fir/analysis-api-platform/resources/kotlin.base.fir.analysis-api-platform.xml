@@ -2,19 +2,19 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinGlobalModificationService"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDirectInheritorsProvider"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinDirectInheritorsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinDirectInheritorsProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinForwardDeclarationProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinForwardDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeForwardDeclarationProviderFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinForwardDeclarationsPackageProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinForwardDeclarationsPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeForwardDeclarationPackageProviderFactory"/>
 
     <psi.treeChangePreprocessor

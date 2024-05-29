@@ -11,7 +11,7 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService;
+import org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService;
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinIDEModificationTrackerService;
 
 public class ClearSourceCaches extends AbstractCommand {

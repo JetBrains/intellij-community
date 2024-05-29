@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
-import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
+import org.jetbrains.kotlin.analysis.api.platform.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies

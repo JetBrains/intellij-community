@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
-import org.jetbrains.kotlin.analysis.providers.topics.isGlobalLevel
-import org.jetbrains.kotlin.analysis.providers.topics.isModuleLevel
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.topics.isGlobalLevel
+import org.jetbrains.kotlin.analysis.api.platform.topics.isModuleLevel
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.psi.KtFile

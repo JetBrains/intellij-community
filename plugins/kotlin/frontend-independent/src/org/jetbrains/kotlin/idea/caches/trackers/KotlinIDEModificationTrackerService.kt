@@ -8,7 +8,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.api.platform.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.psi.KtFile
 

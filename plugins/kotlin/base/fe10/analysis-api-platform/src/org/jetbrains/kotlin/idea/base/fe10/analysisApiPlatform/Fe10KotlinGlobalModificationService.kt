@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.providers.impl.KotlinGlobalModificationServiceBase
+import org.jetbrains.kotlin.analysis.api.platform.impl.KotlinGlobalModificationServiceBase
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 

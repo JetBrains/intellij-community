@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 import com.intellij.openapi.components.service
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolver
-import org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolverFactory
+import org.jetbrains.kotlin.analysis.api.platform.KotlinAnnotationsResolver
+import org.jetbrains.kotlin.analysis.api.platform.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtAnnotated

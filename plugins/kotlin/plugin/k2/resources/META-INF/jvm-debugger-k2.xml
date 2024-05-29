@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.ForeignValueProviderService"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.ForeignValueProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.IdeForeignValueProviderService"/>
 
     <applicationService

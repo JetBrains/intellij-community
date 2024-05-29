@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionServic
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService
 import org.jetbrains.kotlin.psi.KtElement
 
 fun Project.invalidateCaches() {

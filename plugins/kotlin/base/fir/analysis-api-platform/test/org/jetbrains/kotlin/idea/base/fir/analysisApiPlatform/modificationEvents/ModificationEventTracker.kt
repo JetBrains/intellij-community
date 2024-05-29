@@ -5,17 +5,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinCodeFragmentContextModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinGlobalModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinGlobalSourceModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinGlobalSourceOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
-import org.jetbrains.kotlin.analysis.providers.topics.isModuleLevel
+import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinCodeFragmentContextModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalSourceModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalSourceOutOfBlockModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleOutOfBlockModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.api.platform.topics.isModuleLevel
 import org.junit.Assert
 
 /**

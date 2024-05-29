@@ -1,34 +1,34 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform">
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.permissions.KotlinAnalysisPermissionOptions"
-            serviceImplementation="org.jetbrains.kotlin.analysis.providers.permissions.KotlinDefaultAnalysisPermissionOptions"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinDefaultAnalysisPermissionOptions"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.lifetime.KtLifetimeTokenProvider"
-            serviceImplementation="org.jetbrains.kotlin.analysis.providers.lifetime.KtReadActionConfinementLifetimeTokenProvider"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.lifetime.KtLifetimeTokenProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.lifetime.KtReadActionConfinementLifetimeTokenProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinDeclarationProviderFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderMerger"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinDeclarationProviderMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinDeclarationProviderMerger"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolverFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinAnnotationsResolverFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnnotationsResolverFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnchorModuleProvider"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinAnchorModuleProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderMerger"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinPackageProviderMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderMerger"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.PackagePartProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.PackagePartProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.PackagePartProviderFactoryIdeImpl"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinResolutionScopeProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinByModulesResolutionScopeProvider"/>
   </extensions>
 </idea-plugin>

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.analysis.providers.ForeignValueProviderService
+import org.jetbrains.kotlin.analysis.api.platform.ForeignValueProviderService
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
 internal class IdeForeignValueProviderService : ForeignValueProviderService {

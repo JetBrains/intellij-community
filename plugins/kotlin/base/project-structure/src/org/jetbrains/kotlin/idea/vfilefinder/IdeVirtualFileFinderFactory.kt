@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
+import org.jetbrains.kotlin.analysis.api.platform.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo

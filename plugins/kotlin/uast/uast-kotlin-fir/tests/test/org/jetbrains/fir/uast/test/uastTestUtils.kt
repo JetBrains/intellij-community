@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
-import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService
 
 @OptIn(KtAnalysisApiInternals::class, LLFirInternals::class)
 internal fun Project.invalidateAllCachesForUastTests() {

@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
-import org.jetbrains.kotlin.analysis.providers.lifetime.KtLifetimeTokenProvider
+import org.jetbrains.kotlin.analysis.api.platform.lifetime.KtLifetimeTokenProvider
 import org.jetbrains.kotlin.idea.fir.fe10.KtLifetimeTokenForKtSymbolBasedWrappers
 import org.jetbrains.kotlin.idea.fir.fe10.KtLifetimeTokenForKtSymbolBasedWrappersFactory
 

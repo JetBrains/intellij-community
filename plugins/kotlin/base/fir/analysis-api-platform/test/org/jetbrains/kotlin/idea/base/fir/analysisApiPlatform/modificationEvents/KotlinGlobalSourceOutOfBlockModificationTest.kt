@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModificationEventKind
 import org.jetbrains.kotlin.idea.util.sourceRoots
 
 class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModificationEventTest() {

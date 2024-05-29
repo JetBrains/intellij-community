@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.providers.PackagePartProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.PackagePartProviderFactory
 import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 
