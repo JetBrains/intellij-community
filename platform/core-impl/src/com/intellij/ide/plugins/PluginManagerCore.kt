@@ -275,6 +275,27 @@ object PluginManagerCore {
     }
   }
 
+  private fun isVendorItemTrusted(vendorItem: String): Boolean {
+    if (vendorItem.isEmpty()) {
+      return false
+    }
+    return isVendorJetBrains(vendorItem) ||
+           vendorItem == ApplicationInfoImpl.getShadowInstance().companyName ||
+           vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+  }
+
+  @JvmStatic
+  fun isVendorTrusted(vendor: String): Boolean {
+    return vendor.splitToSequence(',').any { isVendorItemTrusted(it.trim()) }
+  }
+
+  @JvmStatic
+  fun isVendorTrusted(plugin: PluginDescriptor): Boolean {
+    return isDevelopedByJetBrains(plugin) ||
+           isVendorTrusted(plugin.vendor ?: "") ||
+           isVendorTrusted(plugin.organization ?: "")
+  }
+
   @JvmStatic
   fun isDevelopedByJetBrains(plugin: PluginDescriptor): Boolean {
     return CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
@@ -664,6 +685,10 @@ object PluginManagerCore {
     return PluginManagerState(pluginSet = pluginSet, pluginIdsToDisable = pluginsToDisable.keys, pluginIdsToEnable = pluginsToEnable.keys)
   }
 
+  /**
+   * processes postponed consent check from the previous run (e.g., when the previous run was headless)
+   * see usages of [write3rdPartyPlugins]
+    */
   private fun check3rdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
 

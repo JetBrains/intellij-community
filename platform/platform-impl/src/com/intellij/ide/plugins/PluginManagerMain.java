@@ -347,9 +347,7 @@ public final class PluginManagerMain {
   }
 
   public static boolean checkThirdPartyPluginsAllowed(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    @SuppressWarnings("SSBasedInspection") var aliens = descriptors.stream()
-      .filter(descriptor -> !(descriptor.isBundled() || PluginManagerCore.isDevelopedByJetBrains(descriptor)))
-      .collect(Collectors.toList());
+    var aliens = ContainerUtil.filter(descriptors, descriptor -> !(descriptor.isBundled() || PluginManagerCore.isVendorTrusted(descriptor)));
     if (aliens.isEmpty()) return true;
 
     var updateSettings = UpdateSettings.getInstance();
