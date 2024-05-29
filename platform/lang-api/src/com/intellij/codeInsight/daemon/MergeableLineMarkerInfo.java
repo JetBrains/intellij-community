@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,7 +156,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     private final List<ActionGroup> myGroups;
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, int passId) {
-      this(markers, markers.get(0), passId);
+      this(markers, getTemplate(markers), passId);
     }
 
     /**
@@ -219,6 +220,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           return getCommonActionGroup();
         }
       };
+    }
+
+    private static MergeableLineMarkerInfo<?> getTemplate(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+      List<WeighedItem> items = ContainerUtil.filterIsInstance(markers, WeighedItem.class);
+      if (items.isEmpty()) {
+        return markers.get(0);
+      }
+      return (MergeableLineMarkerInfo<?>)Collections.max(items, Comparator.comparingInt(item -> item.getWeight()));
     }
   }
 
