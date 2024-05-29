@@ -48,9 +48,7 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
 
 class XLineBreakpointManager(private val myProject: Project) {
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointImpl<*>>()
@@ -88,19 +86,27 @@ class XLineBreakpointManager(private val myProject: Project) {
       return
     }
 
+    breakpoints.forEach { it.updatePosition() }
+
+    // Check if two or more breakpoints occurred at the same position and remove duplicates.
+    val (valid, invalid) = breakpoints.partition { it.isValid }
+    removeBreakpoints(invalid)
     val areInlineBreakpoints = XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))
-
-    val positions = IntOpenHashSet()
-    val toRemove = mutableListOf<XLineBreakpoint<*>>()
-    for (breakpoint in breakpoints) {
-      breakpoint.updatePosition()
-      val position = if (areInlineBreakpoints) breakpoint.offset else breakpoint.line
-      if (!breakpoint.isValid || !positions.add(position)) {
-        toRemove.add(breakpoint)
+    val duplicates = valid
+      .groupBy { b ->
+        if (areInlineBreakpoints) {
+          // We cannot show multiple breakpoints of the same type at the same position.
+          val offset = b.highlightRange?.startOffset ?: -1
+          Pair(offset, b.type)
+        } else {
+          // We cannot show multiple breakpoints of any type at the same line.
+          b.line
+        }
       }
-    }
-
-    removeBreakpoints(toRemove)
+      .values
+      .filter { it.size > 1 }
+      .flatMap { it.drop(1) }
+    removeBreakpoints(duplicates)
   }
 
   private fun removeBreakpoints(toRemove: Collection<XLineBreakpoint<*>>?) {

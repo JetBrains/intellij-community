@@ -339,14 +339,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return false;
   }
 
-  int getOffset() {
-    return myHighlighter != null && myHighlighter.isValid() ? myHighlighter.getStartOffset() : -1;
-  }
-
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
+      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
     }
   }
 
