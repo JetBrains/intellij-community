@@ -33,7 +33,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" name="kotlinc.symbol-light-classes" level="project" />
     <orderEntry type="module" module-name="intellij.platform.uast.testFramework" scope="TEST" />
   </component>

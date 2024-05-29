@@ -1273,7 +1273,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlin-tooling-core"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
-    jetbrainsLibrary("kotlinc.analysis-api-providers"),
+    jetbrainsLibrary("kotlinc.analysis-api-platform-interface"),
     jetbrainsLibrary("kotlinc.analysis-project-structure"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.assignment-compiler-plugin"),

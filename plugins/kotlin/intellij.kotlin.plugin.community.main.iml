@@ -177,7 +177,7 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.analysis-project-structure" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api-impl-base" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api-fe10" level="project" />

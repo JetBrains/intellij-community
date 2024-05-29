@@ -49,7 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" scope="TEST" />

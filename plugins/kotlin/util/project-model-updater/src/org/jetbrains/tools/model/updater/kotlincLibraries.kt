@@ -40,7 +40,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base-tests", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-providers", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincCoordinates)
