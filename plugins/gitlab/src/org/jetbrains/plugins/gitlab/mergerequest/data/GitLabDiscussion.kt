@@ -128,6 +128,9 @@ class LoadedGitLabDiscussion(
           api.graphQL.changeMergeRequestDiscussionResolve(id.gid, !resolved).getResultOrThrow()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
+        if (mr.details.value.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved) {
+          mr.refreshData()
+        }
       }
     }
   }
