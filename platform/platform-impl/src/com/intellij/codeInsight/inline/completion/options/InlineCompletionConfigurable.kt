@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.panel
 
 class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.inline.completion"),
-  null // TODO
+  "reference.settingsdialog.IDE.editor.inline.completion"
 ), EditorOptionsProvider, WithEpDependencies {
 
   override fun getId(): String = ID
