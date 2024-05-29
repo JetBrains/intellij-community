@@ -16,14 +16,18 @@ import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.FileSystems
 
 /**
  * This service, along with listeners inside it, enables and disables access to WSL drives through IJent.
  */
+@Internal
 @Service
-internal class IjentWslNioFsToggler(internal val coroutineScope: CoroutineScope) {
+@VisibleForTesting
+class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope) { // TODO Try to hide coroutineScope
   companion object {
     suspend fun instanceAsync(): IjentWslNioFsToggler = serviceAsync()
     fun instance(): IjentWslNioFsToggler = service()
