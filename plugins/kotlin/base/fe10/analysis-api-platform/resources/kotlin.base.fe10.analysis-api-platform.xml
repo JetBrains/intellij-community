@@ -1,12 +1,12 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders">
+<idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform">
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders.Fe10KotlinModificationTrackerFactory"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.Fe10KotlinModificationTrackerFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders.Fe10KotlinGlobalModificationService"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.Fe10KotlinGlobalModificationService"/>
   </extensions>
 
 
