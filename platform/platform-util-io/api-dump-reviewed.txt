@@ -302,3 +302,26 @@ f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:useCygwinLaunch():Z
 - f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
 f:com.intellij.execution.process.LocalPtyOptions$Companion
+c:com.intellij.execution.process.OSProcessHandler
+- com.intellij.execution.process.BaseOSProcessHandler
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.lang.Process,java.lang.String):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
+- p:doDestroyProcess():V
+- s:getDefaultModality():com.intellij.openapi.application.ModalityState
+- hasPty():Z
+- p:killProcessTree(java.lang.Process):V
+- p:onOSProcessTerminated(I):V
+- s:processCanBeKilledByOS(java.lang.Process):Z
+- p:processHasSeparateErrorStream():Z
+- p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
+- setHasPty(Z):V
+- setShouldDestroyProcessRecursively(Z):V
+- p:shouldDestroyProcessRecursively():Z
+- waitFor():Z
+- waitFor(J):Z
+c:com.intellij.execution.process.OSProcessHandler$Silent
+- com.intellij.execution.process.OSProcessHandler
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- p:readerOptions():com.intellij.util.io.BaseOutputReader$Options

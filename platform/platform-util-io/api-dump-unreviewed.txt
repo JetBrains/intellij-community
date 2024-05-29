@@ -308,8 +308,6 @@ c:com.intellij.execution.process.OSProcessHandler
 - <init>(java.lang.Process,java.lang.String):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
-- s:checkEdtAndReadAction(com.intellij.execution.process.ProcessHandler):V
-- s:deleteFileOnTermination(com.intellij.execution.configurations.GeneralCommandLine,java.io.File):V
 - p:doDestroyProcess():V
 - s:getDefaultModality():com.intellij.openapi.application.ModalityState
 - hasPty():Z

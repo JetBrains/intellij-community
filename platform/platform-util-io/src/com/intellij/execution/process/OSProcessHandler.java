@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
@@ -18,6 +18,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,6 +148,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    *
    * @apiNote works only in the internal non-headless mode. Reports once per running session per stacktrace per cause.
    */
+  @ApiStatus.Internal
   public static void checkEdtAndReadAction(@NotNull ProcessHandler processHandler) {
     Application application = ApplicationManager.getApplication();
     if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
@@ -266,6 +268,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * Registers a file to delete after the given command line finishes.
    * In order to have an effect, the command line has to be executed with {@link #OSProcessHandler(GeneralCommandLine)}.
    */
+  @ApiStatus.Internal
   public static void deleteFileOnTermination(@NotNull GeneralCommandLine commandLine, @NotNull File fileToDelete) {
     Set<File> set = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     if (set == null) {
