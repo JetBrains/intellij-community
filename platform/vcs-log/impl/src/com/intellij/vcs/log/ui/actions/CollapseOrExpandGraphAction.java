@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -45,7 +45,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
     MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
-    if (ui == null) return;
+    if (ui == null || !ui.getDataPack().getVisibleGraph().getActionController().isActionSupported(getGraphAction())) return;
     executeAction(ui);
   }
 
