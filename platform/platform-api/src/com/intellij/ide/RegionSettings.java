@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +16,9 @@ public final class RegionSettings {
    */
   private static final String REGION_CODE_KEY = "JetBrains.region.code";
 
+  @Topic.AppLevel
+  public static final Topic<Runnable> UPDATE_TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.NONE, true);
+
   private RegionSettings() {
   }
 
@@ -24,6 +29,7 @@ public final class RegionSettings {
     }
     else {
       Prefs.put(REGION_CODE_KEY, region.name());
+      fireEvent();
     }
   }
 
@@ -43,5 +49,10 @@ public final class RegionSettings {
   @ApiStatus.Internal
   public static void resetCode() {
     Prefs.remove(REGION_CODE_KEY);
+    fireEvent();
+  }
+
+  private static void fireEvent() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(UPDATE_TOPIC).run();
   }
 }
