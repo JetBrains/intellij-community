@@ -55,7 +55,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
 
             holder.registerProblem(
                 parameter,
-            valOrVarKeyword.textRange.shiftLeft(parameter.startOffset),
+                valOrVarKeyword.textRange.shiftLeft(parameter.startOffset),
                 KotlinBundle.message("constructor.parameter.is.never.used.as.a.property"),
                 RemoveValVarFix(valOrVarKeyword.text)
             )
