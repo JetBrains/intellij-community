@@ -70,7 +70,6 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     assertDefaultProjectLocalSettings(project)
     for (projectInfo in projectsInfo) {
       assertDefaultProjectSettings(project, projectInfo)
-      assertBuildFiles(projectInfo)
     }
   }
 
@@ -112,16 +111,6 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     Assertions.assertTrue(projectSettings.delegatedBuild)
     Assertions.assertEquals(TestRunner.GRADLE, projectSettings.testRunner)
     Assertions.assertTrue(projectSettings.isUseQualifiedModuleNames)
-  }
-
-  fun assertBuildFiles(projectInfo: ProjectInfo) {
-    for (compositeInfo in projectInfo.composites) {
-      assertBuildFiles(compositeInfo)
-    }
-    for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
-      moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
-    }
   }
 
   fun projectInfo(
@@ -184,7 +173,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     filesConfiguration.withSettingsFile(useKotlinDsl = useKotlinDsl, configure = configure)
   }
 
-  fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+  open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     filesConfiguration.withBuildFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
   }
 }

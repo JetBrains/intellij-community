@@ -82,7 +82,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         setProjectName("GradleHighlightingPerformanceTest")
       }
       withBuildFile(gradleVersion) {
-        addBuildScriptRepository("mavenCentral()")
+        withBuildScriptMavenCentral()
         addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
         addImport("groovyx.net.http.HttpBuilder")
         withPostfix {
