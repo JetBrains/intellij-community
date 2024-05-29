@@ -16,4 +16,8 @@ class FirUastReferenceTest : UastReferenceTestBase, KotlinLightCodeInsightFixtur
     fun `test original getter is visible when reference is under renaming`() {
         `check original getter is visible when reference is under renaming`(myFixture)
     }
+
+    fun testConstructorCallPattern() {
+        checkConstructorCallPattern(myFixture)
+    }
 }

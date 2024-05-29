@@ -20,4 +20,9 @@ class KotlinUastReferencesTest : UastReferenceTestBase, KotlinLightCodeInsightFi
     fun `test original getter is visible when reference is under renaming`() {
         `check original getter is visible when reference is under renaming`(myFixture)
     }
+
+    @Test
+    fun testConstructorCallPattern() {
+        checkConstructorCallPattern(myFixture)
+    }
 }
