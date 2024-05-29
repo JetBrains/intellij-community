@@ -1123,14 +1123,6 @@ f:com.intellij.vcs.log.paint.PositionUtil
 - s:overDownEdge(I,I,I,I,I,I,F):Z
 - s:overNode(I,I,I,I,I,I):Z
 - s:overUpEdge(I,I,I,I,I,I,F):Z
-c:com.intellij.vcs.log.paint.SimpleGraphCellPainter
-- com.intellij.vcs.log.paint.GraphCellPainter
-- sf:Companion:com.intellij.vcs.log.paint.SimpleGraphCellPainter$Companion
-- <init>(com.intellij.vcs.log.paint.ColorGenerator):V
-- draw(java.awt.Graphics2D,java.util.Collection):V
-- getElementUnderCursor(java.util.Collection,I,I):com.intellij.vcs.log.graph.PrintElement
-- p:getRowHeight():I
-f:com.intellij.vcs.log.paint.SimpleGraphCellPainter$Companion
 f:com.intellij.vcs.log.statistics.NullableRoundedLongEventField
 - <init>(java.lang.String):V
 - addData(com.intellij.internal.statistic.eventLog.FeatureUsageData,java.lang.Long):V
