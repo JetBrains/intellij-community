@@ -27,7 +27,7 @@ internal class GitStashDialog(private val project: Project, roots: List<VirtualF
     it.toolTipText = GitBundle.message("stash.message.tooltip")
     Disposer.register(disposable, it)
   }
-  private val keepIndexCheckBox = JBCheckBox(GitBundle.message("stash.keep.index"))
+  private val keepIndexCheckBox = JBCheckBox(GitBundle.message("stash.keep.index")).also { it.toolTipText = GitBundle.message("stash.keep.index.tooltip") }
 
   val selectedRoot: VirtualFile get() = rootComboBox.item
   val message: String get() = stashMessageEditor.text
