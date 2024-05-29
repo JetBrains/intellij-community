@@ -54,11 +54,12 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
-        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
+        val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
+
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog(module)) {
             return null
         }
 
-        val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
         if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
             return null
         }

@@ -5,13 +5,11 @@ import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,28 +34,16 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     @Volatile
     private var notificationCooldownEnd: Long? = null
 
-    fun shouldShowNotConfiguredDialog(): Boolean {
-        if (isSyncPending()) return false
+    fun shouldShowNotConfiguredDialog(module: Module): Boolean {
+        if (isSyncPending(module)) return false
         if (checkingAndPerformingAutoConfig) return false
         // If notificationCooldownEnd wasn't set, then the autoconfiguration didn't take place
         val cooldownEnd = notificationCooldownEnd ?: return true
         return System.currentTimeMillis() >= cooldownEnd
     }
 
-    fun isSyncPending(): Boolean {
-        return isGradleSyncPending() || isMavenSyncPending()
-    }
-
-    fun isGradleSyncPending(): Boolean {
-        val isNotificationVisible =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
-        return isNotificationVisible.get()
-    }
-
-    fun isMavenSyncPending(): Boolean {
-        val isNotificationVisible =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("MAVEN")).get()
-        return isNotificationVisible
+    fun isSyncPending(module: Module): Boolean {
+        return KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.isProjectSyncPending() == true
     }
 
     fun refreshEditorNotifications() {

@@ -152,8 +152,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return result.configuredModules
     }
 
-    private fun Project.isGradleSyncPending(): Boolean {
-        return KotlinProjectConfigurationService.getInstance(this).isGradleSyncPending()
+    private fun Project.isGradleSyncPending(module: Module): Boolean {
+        return KotlinProjectConfigurationService.getInstance(this).isSyncPending(module)
     }
 
     private fun Project.isGradleSyncInProgress(): Boolean {
@@ -168,7 +168,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         // So do not allow auto-configuration of any such projects.
         if (module.project.modules.any { it.name.contains("buildSrc") }) return null
         if (!isAutoConfigurationEnabled() || !isApplicable(baseModule)) return null
-        if (project.isGradleSyncPending() || project.isGradleSyncInProgress()) return null
+        if (project.isGradleSyncPending(module) || project.isGradleSyncInProgress()) return null
 
         if (module.hasKotlinPluginEnabled() || baseModule.getBuildScriptPsiFile() == null) return null
 
