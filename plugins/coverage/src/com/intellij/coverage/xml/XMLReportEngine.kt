@@ -2,7 +2,6 @@
 package com.intellij.coverage.xml
 
 import com.intellij.coverage.*
-import com.intellij.coverage.view.CoverageViewManager
 import com.intellij.coverage.view.JavaCoverageViewExtension
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
@@ -51,9 +50,8 @@ class XMLReportEngine : CoverageEngine() {
   }
 
   override fun createCoverageViewExtension(project: Project,
-                                           suiteBundle: CoverageSuitesBundle?,
-                                           stateBean: CoverageViewManager.StateBean?) =
-    object : JavaCoverageViewExtension(getCoverageAnnotator(project), project, suiteBundle, stateBean) {
+                                           suiteBundle: CoverageSuitesBundle?) =
+    object : JavaCoverageViewExtension(getCoverageAnnotator(project), project, suiteBundle) {
       override fun isBranchInfoAvailable(coverageRunner: CoverageRunner?, branchCoverage: Boolean) = true
     }
 

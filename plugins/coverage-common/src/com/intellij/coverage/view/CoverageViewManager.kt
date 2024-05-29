@@ -64,7 +64,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     var coverageView = myViews[suitesBundle]
     val manager = getContentManager() ?: return
     val content = if (coverageView == null) {
-      coverageView = CoverageView(myProject, suitesBundle, stateBean)
+      coverageView = CoverageView(myProject, suitesBundle)
       myViews[suitesBundle] = coverageView
       manager.factory.createContent(coverageView, getDisplayName(suitesBundle), false)
         .also { manager.addContent(it) }
@@ -193,14 +193,14 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
 
     private fun fireChanged() {
       for (listener in myListeners) {
-        listener.onSettingsChanged(this)
+        listener.onSettingsChanged()
       }
     }
   }
 
   @ApiStatus.Internal
   fun interface CoverageViewSettingsListener {
-    fun onSettingsChanged(stateBean: StateBean?)
+    fun onSettingsChanged()
   }
 
   companion object {

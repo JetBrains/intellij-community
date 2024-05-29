@@ -76,8 +76,7 @@ class CoverageTreeTest : CoverageIntegrationBaseTest() {
     openSuiteAndWait(suite)
 
 
-    val stateBean = CoverageViewManager.getInstance(myProject).stateBean
-    val treeStructure = CoverageViewTreeStructure(project, suite, stateBean)
+    val treeStructure = CoverageViewTreeStructure(project, suite)
     val disposable = Disposer.newDisposable()
     val model = StructureTreeModel(treeStructure, null, Invoker.forEventDispatchThread(disposable), disposable)
 

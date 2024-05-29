@@ -79,15 +79,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private boolean myHasVCSFilter = false;
   private boolean myHasFullyCoveredFilter = false;
 
-
-  public CoverageView(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
+  public CoverageView(Project project, CoverageSuitesBundle bundle) {
     myProject = project;
-    myStateBean = stateBean;
+    myStateBean = CoverageViewManager.getInstance(project).getStateBean();
     mySuitesBundle = bundle;
-    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle, myStateBean);
-    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle, stateBean);
+    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle);
+    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle);
 
-    myModel = new CoverageTableModel(mySuitesBundle, stateBean, project, myTreeStructure);
+    myModel = new CoverageTableModel(mySuitesBundle, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
     TreeUtil.expand(myTable.getTree(), 2);
@@ -130,11 +129,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
-    if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
-      stateBean.myAscendingOrder = true;
-      stateBean.mySortingColumn = 0;
+    if (myStateBean.mySortingColumn < 0 || myStateBean.mySortingColumn >= myModel.getColumnCount()) {
+      myStateBean.myAscendingOrder = true;
+      myStateBean.mySortingColumn = 0;
     }
-    final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+    var sortKey = new RowSorter.SortKey(myStateBean.mySortingColumn, myStateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
     addToCenter(myTable);
 

@@ -86,6 +86,7 @@ a:com.intellij.coverage.CoverageEngine
 - a:createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z,com.intellij.openapi.project.Project):com.intellij.coverage.CoverageSuite
 - createCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
 - f:createCoverageSuite(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):com.intellij.coverage.CoverageSuite
+- createCoverageViewExtension(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):com.intellij.coverage.view.CoverageViewExtension
 - createCoverageViewExtension(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):com.intellij.coverage.view.CoverageViewExtension
 - a:createEmptyCoverageSuite(com.intellij.coverage.CoverageRunner):com.intellij.coverage.CoverageSuite
 - generateReport(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.coverage.CoverageSuitesBundle):V
@@ -230,7 +231,7 @@ f:com.intellij.coverage.lcov.LcovSerializationUtils
 c:com.intellij.coverage.view.CoverageListNode
 - com.intellij.ide.util.treeView.AbstractTreeNode
 - pf:myBundle:com.intellij.coverage.CoverageSuitesBundle
-- pf:myStateBean:com.intellij.coverage.view.CoverageViewManager$StateBean
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean,Z):V
 - canNavigate():Z
@@ -244,12 +245,13 @@ c:com.intellij.coverage.view.CoverageListNode
 - p:update(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.coverage.view.CoverageListRootNode
 - com.intellij.coverage.view.CoverageListNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 c:com.intellij.coverage.view.CoverageView
 - com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.actionSystem.DataProvider
-- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):V
 - dispose():V
 - getData(java.lang.String):java.lang.Object
 a:com.intellij.coverage.view.CoverageViewExtension
@@ -257,6 +259,7 @@ a:com.intellij.coverage.view.CoverageViewExtension
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myStateBean:com.intellij.coverage.view.CoverageViewManager$StateBean
 - pf:mySuitesBundle:com.intellij.coverage.CoverageSuitesBundle
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - canSelectInCoverageView(java.lang.Object):Z
 - a:createColumnInfos():com.intellij.util.ui.ColumnInfo[]
@@ -298,6 +301,7 @@ f:com.intellij.coverage.view.CoverageViewManager$StateBean
 c:com.intellij.coverage.view.DirectoryCoverageViewExtension
 - com.intellij.coverage.view.CoverageViewExtension
 - pf:myAnnotator:com.intellij.coverage.CoverageAnnotator
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageAnnotator,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageAnnotator,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - createColumnInfos():com.intellij.util.ui.ColumnInfo[]
 - createRootNode():com.intellij.ide.util.treeView.AbstractTreeNode
@@ -312,6 +316,7 @@ f:com.intellij.coverage.view.ElementColumnInfo
 - valueOf(com.intellij.ide.util.treeView.NodeDescriptor):java.lang.String
 f:com.intellij.coverage.view.PercentageCoverageColumnInfo
 - com.intellij.util.ui.ColumnInfo
+- <init>(I,java.lang.String,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(I,java.lang.String,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - getComparator():java.util.Comparator
 - valueOf(com.intellij.ide.util.treeView.NodeDescriptor):java.lang.String

@@ -16,14 +16,11 @@ class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private final AtomicReference<Object> myRootNode = new AtomicReference<>(null);
   final CoverageSuitesBundle myData;
-  final CoverageViewManager.StateBean myStateBean;
 
-  CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
+  CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle) {
     myProject = project;
     myData = bundle;
-    myStateBean = stateBean;
   }
-
 
   @NotNull
   @Override
@@ -31,7 +28,7 @@ class CoverageViewTreeStructure extends AbstractTreeStructure {
     while (true) {
       Object root = myRootNode.get();
       if (root != null) return root;
-      Object newRoot = myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
+      Object newRoot = myData.getCoverageEngine().createCoverageViewExtension(myProject, myData).createRootNode();
       if (myRootNode.compareAndSet(null, newRoot)) {
         if (myData.getCoverageEngine().getCoverageAnnotator(myProject) instanceof BaseCoverageAnnotator annotator) {
           annotator.setVcsFilteredChildren(false);

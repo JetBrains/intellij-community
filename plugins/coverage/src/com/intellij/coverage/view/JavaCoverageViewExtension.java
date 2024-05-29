@@ -23,9 +23,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   public JavaCoverageViewExtension(JavaCoverageAnnotator annotator,
                                    Project project,
-                                   CoverageSuitesBundle suitesBundle,
-                                   CoverageViewManager.StateBean stateBean) {
-    super(project, suitesBundle, stateBean);
+                                   CoverageSuitesBundle suitesBundle) {
+    super(project, suitesBundle);
     myAnnotator = annotator;
   }
 
@@ -103,7 +102,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public AbstractTreeNode<?> createRootNode() {
     final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
-    return new JavaCoverageRootNode(myProject, Objects.requireNonNull(aPackage), mySuitesBundle, myStateBean);
+    return new JavaCoverageRootNode(myProject, Objects.requireNonNull(aPackage), mySuitesBundle);
   }
 
   @Override
@@ -120,7 +119,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (structure == null) return children;
     List<CoverageNodeInfo> infos = structure.getChildrenInfo(getNodeId(node));
     for (CoverageNodeInfo info : infos) {
-      children.add(new JavaCoverageNode(myProject, info.getValue(), mySuitesBundle, myStateBean, info.getName()));
+      children.add(new JavaCoverageNode(myProject, info.getValue(), mySuitesBundle, info.getName()));
     }
     return children;
   }
@@ -143,9 +142,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public ColumnInfo[] createColumnInfos() {
     ArrayList<ColumnInfo> infos = new ArrayList<>();
     infos.add(new ElementColumnInfo());
-    infos.add(new PercentageCoverageColumnInfo(1, JavaCoverageBundle.message("coverage.view.column.class"), mySuitesBundle, myStateBean));
-    infos.add(new PercentageCoverageColumnInfo(2, JavaCoverageBundle.message("coverage.view.column.method"), mySuitesBundle, myStateBean));
-    infos.add(new PercentageCoverageColumnInfo(3, JavaCoverageBundle.message("coverage.view.column.line"), mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(1, JavaCoverageBundle.message("coverage.view.column.class"), mySuitesBundle));
+    infos.add(new PercentageCoverageColumnInfo(2, JavaCoverageBundle.message("coverage.view.column.method"), mySuitesBundle));
+    infos.add(new PercentageCoverageColumnInfo(3, JavaCoverageBundle.message("coverage.view.column.line"), mySuitesBundle));
     for (CoverageSuite suite : mySuitesBundle.getSuites()) {
       if (tryAddBranches(infos, suite.getRunner(), suite.isBranchCoverage())) {
         break;
@@ -158,7 +157,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     // cannot determine per-test branch coverage as test tracking works with line granularity only
     if (CoverageDataManager.getInstance(myProject).isSubCoverageActive()) return false;
     if (isBranchInfoAvailable(coverageRunner, branchCoverage)) {
-      infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
+      infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle));
       return true;
     }
     return false;

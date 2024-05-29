@@ -27,11 +27,21 @@ public abstract class CoverageViewExtension {
   protected final CoverageViewManager.StateBean myStateBean;
   protected final CoverageDataManager myCoverageDataManager;
 
-  public CoverageViewExtension(@NotNull Project project, CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean) {
+  /**
+   * @deprecated Use {@link CoverageViewExtension#CoverageViewExtension(Project, CoverageSuitesBundle)}
+   */
+  @Deprecated
+  public CoverageViewExtension(@NotNull Project project,
+                               CoverageSuitesBundle suitesBundle,
+                               @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    this(project, suitesBundle);
+  }
+
+  public CoverageViewExtension(@NotNull Project project, CoverageSuitesBundle suitesBundle) {
     assert !project.isDefault() : "Should not run coverage for default project";
     myProject = project;
     mySuitesBundle = suitesBundle;
-    myStateBean = stateBean;
+    myStateBean = CoverageViewManager.getInstance(myProject).getStateBean();
     myCoverageDataManager = CoverageDataManager.getInstance(myProject);
   }
 
