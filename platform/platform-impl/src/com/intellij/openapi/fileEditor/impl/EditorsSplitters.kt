@@ -104,7 +104,7 @@ open class EditorsSplitters internal constructor(
     }
 
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
-      return getSplittersToFocus(project)?.currentWindow?.selectedComposite?.preferredFocusedComponent
+      return getSplittersToFocus(project)?.currentCompositeFlow?.value?.preferredFocusedComponent
     }
 
     @JvmStatic
@@ -332,9 +332,7 @@ open class EditorsSplitters internal constructor(
   }
 
   @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
-  fun openFilesAsync(): Job {
-    return openFilesAsync(requestFocus = true)
-  }
+  fun openFilesAsync(): Job = openFilesAsync(requestFocus = true)
 
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
@@ -527,7 +525,7 @@ open class EditorsSplitters internal constructor(
   }
 
   val isEmptyVisible: Boolean
-    get() = getWindowSequence().all { it.isEmptyVisible }
+    get() = windows().all { it.isEmptyVisible }
 
   private fun findNextFile(file: VirtualFile): VirtualFile? {
     for (window in windows) {
@@ -670,13 +668,13 @@ open class EditorsSplitters internal constructor(
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.composites() }
 
   @RequiresEdt
-  fun getAllComposites(file: VirtualFile): List<EditorComposite> = getWindowSequence().mapNotNull { it.getComposite(file) }.toList()
+  fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows().mapNotNull { it.getComposite(file) }.toList()
 
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 
   fun getWindows(): Array<EditorWindow> = windows.toTypedArray()
 
-  internal fun getWindowSequence(): Sequence<EditorWindow> = windows.asSequence()
+  internal fun windows(): Sequence<EditorWindow> = windows.asSequence()
 
   // collector for windows in tree ordering: get a root component and traverse splitters tree
   internal fun getOrderedWindows(): MutableList<EditorWindow> {
@@ -839,12 +837,15 @@ class EditorSplitterState(element: Element) {
     if (first == null || second == null) {
       splitters = null
       leaf = element.getChild("leaf")?.let { leafElement ->
-        EditorSplitterStateLeaf(element = leafElement, storedIdeFingerprint = try {
-          leafElement.getAttributeValue(IDE_FINGERPRINT)?.let(::IdeFingerprint)
-        }
-        catch (ignored: NumberFormatException) {
-          null
-        } ?: IdeFingerprint(0))
+        EditorSplitterStateLeaf(
+          element = leafElement,
+          storedIdeFingerprint = (try {
+            leafElement.getAttributeValue(IDE_FINGERPRINT)?.let(::IdeFingerprint)
+          }
+          catch (ignored: NumberFormatException) {
+            null
+          }) ?: IdeFingerprint(0),
+        )
       }
     }
     else {

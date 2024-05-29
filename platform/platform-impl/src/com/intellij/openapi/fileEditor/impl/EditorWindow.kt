@@ -140,7 +140,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     LOG.assertTrue(isValid, "EditorWindow not in collection")
   }
 
-  val isValid: Boolean
+  internal val isValid: Boolean
     get() = owner.containsWindow(this)
 
   @Suppress("DEPRECATION")
@@ -262,7 +262,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     return adjacentEditors
   }
 
-  @Deprecated("{@link #setSelectedComposite(EditorComposite, boolean)}", ReplaceWith("setSelectedComposite(composite, focusEditor)"))
+  @Deprecated("{@link #setSelectedComposite(EditorComposite, boolean)}",
+              ReplaceWith("setSelectedComposite(composite, focusEditor)"),
+              level = DeprecationLevel.ERROR)
   fun setSelectedEditor(composite: EditorComposite, focusEditor: Boolean) {
     setSelectedComposite(file = composite.file, focusEditor = focusEditor)
   }
@@ -527,7 +529,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   fun getSiblings(): List<EditorWindow> {
     checkConsistency()
     val splitter = (component.parent as? Splitter) ?: return emptyList()
-    return owner.getWindowSequence().filter { it != this@EditorWindow && SwingUtilities.isDescendingFrom(it.component, splitter) }.toList()
+    return owner.windows().filter { it != this@EditorWindow && SwingUtilities.isDescendingFrom(it.component, splitter) }.toList()
   }
 
   fun requestFocus(forced: Boolean) {

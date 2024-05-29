@@ -405,9 +405,9 @@ open class JBTabsImpl(
     relayoutAlarm.cancelAllRequests()
     isRecentlyActive = true
     relayoutAlarm.addRequest(ContextAwareRunnable {
-                               isRecentlyActive = false
-                               relayout(false, false)
-                             }, RELAYOUT_DELAY)
+      isRecentlyActive = false
+      relayout(false, false)
+    }, RELAYOUT_DELAY)
 
   }
 
@@ -968,10 +968,7 @@ open class JBTabsImpl(
           // the icon will be set in customizeComponent
         }
 
-        override fun createSeparator(): SeparatorWithText {
-          val labelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets()
-          return GroupHeaderSeparator(labelInsets)
-        }
+        override fun createSeparator() = GroupHeaderSeparator(JBUI.CurrentTheme.Popup.separatorLabelInsets())
 
         private fun addMouseListener(list: JList<out TabInfo>) {
           if (listMouseListener != null) {
@@ -1469,10 +1466,6 @@ open class JBTabsImpl(
     return callback
   }
 
-  private fun unqueueFromRemove(c: Component) {
-    deferredToRemove.remove(c)
-  }
-
   private fun removeDeferredNow() {
     for (each in deferredToRemove.keys) {
       if (each != null && each.parent === this) {
@@ -1482,40 +1475,40 @@ open class JBTabsImpl(
     deferredToRemove.clear()
   }
 
-  override fun propertyChange(evt: PropertyChangeEvent) {
-    val tabInfo = evt.source as TabInfo
-    when {
-      TabInfo.ACTION_GROUP == evt.propertyName -> {
+  override fun propertyChange(event: PropertyChangeEvent) {
+    val tabInfo = event.source as TabInfo
+    when (event.propertyName) {
+      TabInfo.ACTION_GROUP -> {
         updateSideComponent(tabInfo)
         relayout(false, false)
       }
-      TabInfo.COMPONENT == evt.propertyName -> {
+      TabInfo.COMPONENT -> {
         relayout(true, false)
       }
-      TabInfo.TEXT == evt.propertyName -> {
+      TabInfo.TEXT -> {
         updateText(tabInfo)
         revalidateAndRepaint()
       }
-      TabInfo.ICON == evt.propertyName -> {
+      TabInfo.ICON -> {
         updateIcon(tabInfo)
         revalidateAndRepaint()
       }
-      TabInfo.TAB_COLOR == evt.propertyName -> {
+      TabInfo.TAB_COLOR -> {
         revalidateAndRepaint()
       }
-      TabInfo.ALERT_STATUS == evt.propertyName -> {
-        val start = evt.newValue as Boolean
+      TabInfo.ALERT_STATUS -> {
+        val start = event.newValue as Boolean
         updateAttraction(tabInfo, start)
       }
-      TabInfo.TAB_ACTION_GROUP == evt.propertyName -> {
+      TabInfo.TAB_ACTION_GROUP -> {
         updateTabActions(tabInfo)
         relayout(false, false)
       }
-      TabInfo.HIDDEN == evt.propertyName -> {
+      TabInfo.HIDDEN -> {
         updateHiding()
         relayout(false, false)
       }
-      TabInfo.ENABLED == evt.propertyName -> {
+      TabInfo.ENABLED -> {
         updateEnabling()
       }
     }
@@ -2387,7 +2380,7 @@ open class JBTabsImpl(
     for (tabInfo in java.util.List.copyOf(visibleInfos)) {
       val component = tabInfo.component
       if (tabInfo == selectedInfo) {
-        unqueueFromRemove(component)
+        deferredToRemove.remove(component)
         val parent = component.parent
         if (parent != null && parent !== this) {
           parent.remove(component)
@@ -2479,7 +2472,7 @@ open class JBTabsImpl(
   }
 
   override fun addImpl(component: Component, constraints: Any?, index: Int) {
-    unqueueFromRemove(component)
+    deferredToRemove.remove(component)
     if (component is TabLabel) {
       val uiDecorator = uiDecorator
       component.apply(uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration())

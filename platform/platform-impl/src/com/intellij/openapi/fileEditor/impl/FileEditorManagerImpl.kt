@@ -653,7 +653,7 @@ open class FileEditorManagerImpl(
   override fun hasSplitOrUndockedWindows(): Boolean = getAllSplitters().size > 1 || windowSplitCount > 1
 
   override val windows: Array<EditorWindow>
-    get() = getAllSplitters().flatMap(EditorsSplitters::getWindowSequence).toTypedArray()
+    get() = getAllSplitters().flatMap(EditorsSplitters::windows).toTypedArray()
 
   override fun getNextWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = true)
 
@@ -2134,7 +2134,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun closeOpenedEditors() {
-    for (window in getAllSplitters().flatMap(EditorsSplitters::getWindowSequence)) {
+    for (window in getAllSplitters().flatMap(EditorsSplitters::windows)) {
       for (file in window.files().toList()) {
         window.closeFile(file)
       }
@@ -2539,7 +2539,7 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
     editorManager.openFile(newFile, window, newOptions.withOpenMode(FileEditorManagerImpl.OpenMode.NEW_WINDOW))
   }
   else if (oldFile == newFile) {
-    val index = window.files.indexOf(oldFile)
+    val index = window.files().indexOf(oldFile)
     newOptions = newOptions.withIndex(index)
     window.closeFile(oldFile, disposeIfNeeded = false)
     editorManager.openFile(newFile, window, newOptions)

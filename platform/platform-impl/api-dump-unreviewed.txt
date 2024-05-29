@@ -6611,10 +6611,6 @@ f:com.intellij.ide.impl.PatchProjectUtil
 - s:patchProject(com.intellij.openapi.project.Project):V
 - s:patchProject(com.intellij.openapi.project.Project,java.util.Map,java.util.Map):V
 - s:processIncluded(com.intellij.openapi.roots.ContentEntry,java.util.Set):V
-f:com.intellij.ide.impl.PlatformDataValidators
-- com.intellij.ide.impl.DataValidators
-- <init>():V
-- collectValidators(com.intellij.ide.impl.DataValidators$Registry):V
 f:com.intellij.ide.impl.ProjectNewWindowDoNotAskOption
 - com.intellij.openapi.ui.DialogWrapper$DoNotAskOption
 - <init>():V
@@ -15987,7 +15983,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:findSiblings():com.intellij.openapi.fileEditor.impl.EditorWindow[]
 - f:getAllComposites():java.util.List
 - f:getComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorComposite
-- f:getContextComposite():com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:getEditors():com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite[]
 - f:getFileList():java.util.List
 - f:getFiles():com.intellij.openapi.vfs.VirtualFile[]
@@ -16009,7 +16004,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
 - f:isFilePinned(com.intellij.openapi.vfs.VirtualFile):Z
 - f:isShowing():Z
-- f:isValid():Z
 - f:removeFromSplitter():V
 - f:requestFocus(Z):V
 - f:restoreClosedTab():V
@@ -16317,13 +16311,6 @@ f:com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer
 - com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer
 - <init>():V
 - maySaveDocument(com.intellij.openapi.editor.Document,Z):Z
-c:com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>(Z):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 e:com.intellij.openapi.fileEditor.impl.MultilineWrapMode
 - java.lang.Enum
 - sf:Auto:com.intellij.openapi.fileEditor.impl.MultilineWrapMode
@@ -16332,9 +16319,6 @@ e:com.intellij.openapi.fileEditor.impl.MultilineWrapMode
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.fileEditor.impl.MultilineWrapMode
 - s:values():com.intellij.openapi.fileEditor.impl.MultilineWrapMode[]
-f:com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction
-- com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction
-- <init>():V
 f:com.intellij.openapi.fileEditor.impl.OpenFilesScope
 - com.intellij.psi.search.scope.packageSet.NamedScope
 - sf:INSTANCE:com.intellij.openapi.fileEditor.impl.OpenFilesScope
