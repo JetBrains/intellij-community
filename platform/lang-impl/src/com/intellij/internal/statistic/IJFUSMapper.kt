@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
@@ -12,6 +13,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
  */
 class IJFUSMapper: ApplicationUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("map.ml.fus", 1, IJMapperEventLoggerProvider.RECORDER_ID)
+  private val ML_RECORDER = "ML"
+  private val FUS_RECORDER = "FUS"
+
 
   private val mlMachineId = EventFields.StringValidatedByRegexpReference("ml_machine_id", "hash")
   private val fusMachineId = EventFields.StringValidatedByRegexpReference("fus_machine_id", "hash")
@@ -19,9 +23,11 @@ class IJFUSMapper: ApplicationUsagesCollector() {
   private val report = GROUP.registerEvent("paired", mlMachineId, fusMachineId, "Paired FUS and ML machine_id")
 
   override fun getMetrics(): Set<MetricEvent> {
+    val mlConfig = EventLogConfigOptionsService.getInstance().getOptions(ML_RECORDER)
+    val fusConfig = EventLogConfigOptionsService.getInstance().getOptions(FUS_RECORDER)
     return setOf(report.metric(
-      MachineIdManager.getAnonymizedMachineId("JetBrainsML", ""),
-      MachineIdManager.getAnonymizedMachineId("JetBrainsFUS", ""),
+      MachineIdManager.getAnonymizedMachineId("JetBrains$ML_RECORDER", mlConfig.machineIdSalt),
+      MachineIdManager.getAnonymizedMachineId("JetBrains$FUS_RECORDER", fusConfig.machineIdSalt),
     ))
   }
 }
