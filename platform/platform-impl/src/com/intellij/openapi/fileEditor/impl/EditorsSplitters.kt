@@ -174,14 +174,14 @@ open class EditorsSplitters internal constructor(
 
   init {
     background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
-    val l = PropertyChangeListener { e ->
+    val propertyChangeListener = PropertyChangeListener { e ->
       val propName = e.propertyName
       if (propName == "Editor.background" || propName == "Editor.foreground" || propName == "Editor.shortcutForeground") {
         repaint()
       }
     }
-    UIManager.getDefaults().addPropertyChangeListener(l)
-    coroutineScope.coroutineContext.job.invokeOnCompletion { UIManager.getDefaults().removePropertyChangeListener(l) }
+    UIManager.getDefaults().addPropertyChangeListener(propertyChangeListener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion { UIManager.getDefaults().removePropertyChangeListener(propertyChangeListener) }
     MyFocusWatcher().install(this)
 
     focusTraversalPolicy = MyFocusTraversalPolicy(this)
@@ -326,7 +326,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun setCurrentWindowAndComposite(window: EditorWindow?) {
     _currentWindowFlow.value = window
-    _currentCompositeFlow.value = window?.getContextComposite()
+    _currentCompositeFlow.value = window?.selectedComposite
   }
 
   @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
@@ -729,7 +729,7 @@ open class EditorsSplitters internal constructor(
       // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
       val window = findWindowWith(component) ?: return
       _currentWindowFlow.value = window
-      _currentCompositeFlow.value = window.getContextComposite()
+      _currentCompositeFlow.value = window.selectedComposite
     }
   }
 

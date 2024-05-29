@@ -107,9 +107,9 @@ class EditorTabbedContainer internal constructor(
     editorTabs.setDataProvider(object : EdtCompatibleDataProvider {
       override fun uiDataSnapshot(sink: DataSink) {
         sink[CommonDataKeys.PROJECT] = window.manager.project
-        sink[CommonDataKeys.VIRTUAL_FILE] = window.getContextComposite()?.file
+        sink[CommonDataKeys.VIRTUAL_FILE] = window.selectedComposite?.file
         sink[EditorWindow.DATA_KEY] = window
-        sink[PlatformCoreDataKeys.FILE_EDITOR] = window.getContextComposite()?.selectedEditor
+        sink[PlatformCoreDataKeys.FILE_EDITOR] = window.selectedComposite?.selectedEditor
         sink[PlatformCoreDataKeys.HELP_ID] = HELP_ID
         sink[CloseTarget.KEY] = if (editorTabs.selectedInfo == null) null else this@EditorTabbedContainer
       }

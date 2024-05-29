@@ -2573,6 +2573,11 @@ private suspend fun focusEditorOnCompositeOpenComplete(
           preferredFocusedComponent?.requestFocusInWindow()
           IdeFocusManager.getGlobalInstance().toFront(splitters)
         }
+        else {
+          LOG.warn("Cannot focus editor (splitters=$splitters, " +
+                   "composite=$composite, currentComposite=${splitters.currentCompositeFlow.value}, " +
+                   "reason=selection changed)")
+        }
       }
     }
     else {

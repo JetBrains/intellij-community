@@ -150,14 +150,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   @Suppress("DEPRECATION")
   @get:Deprecated("Use selectedComposite", ReplaceWith("selectedComposite"), level = DeprecationLevel.ERROR)
   val selectedEditor: EditorWithProviderComposite?
-    get() = getContextComposite() as EditorWithProviderComposite?
+    get() = selectedComposite as EditorWithProviderComposite?
+
   val selectedComposite: EditorComposite?
-    get() = getContextComposite()
+    get() = tabbedPane.tabs.targetInfo?.composite
 
   @Suppress("DEPRECATION")
   @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
   fun getSelectedEditor(@Suppress("UNUSED_PARAMETER") ignorePopup: Boolean): EditorWithProviderComposite? {
-    return getContextComposite() as EditorWithProviderComposite?
+    return selectedComposite as EditorWithProviderComposite?
   }
 
   // used externally
@@ -169,12 +170,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
     return (tabbedPane.getSelectedComponent(ignorePopup) as? EditorCompositePanel)?.composite
   }
-
-  /**
-   * A composite in a context.
-   * For example, if a context menu is shown currently for some tab, the composite for which a menu is invoked will be returned
-   */
-  fun getContextComposite(): EditorComposite? = tabbedPane.tabs.targetInfo?.composite
 
   val allComposites: List<EditorComposite>
     get() = composites().toList()
