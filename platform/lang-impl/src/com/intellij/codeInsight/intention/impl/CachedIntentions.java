@@ -12,10 +12,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ReadAction;
@@ -176,15 +173,23 @@ public final class CachedIntentions implements IntentionContainer {
       EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
+    boolean hasSeparatorAbove = false;
     for (AnAction action : actions) {
       Presentation presentation = presentationFactory.getPresentation(action);
-      if (StringUtil.isEmpty(presentation.getText())) continue;
-      GutterIntentionAction intentionAction = new GutterIntentionAction(action, order++);
+      if (action instanceof SeparatorAction) {
+        hasSeparatorAbove = true;
+        continue;
+      }
+      else if (StringUtil.isEmpty(presentation.getText())) {
+        continue;
+      }
+      GutterIntentionAction intentionAction = new GutterIntentionAction(action, order++, hasSeparatorAbove);
       intentionAction.updateFromPresentation(presentation);
       if (!filter.test(intentionAction)) continue;
       HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(
         intentionAction, Collections.emptyList(), intentionAction.getText(), intentionAction.getIcon(0), null, null, null);
       descriptors.add(descriptor);
+      hasSeparatorAbove = false;
     }
     wrapActionsTo(descriptors, myGutters, false);
   }

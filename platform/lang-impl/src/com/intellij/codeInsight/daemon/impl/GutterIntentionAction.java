@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.openapi.actionSystem.*;
@@ -28,21 +29,24 @@ import java.util.function.Supplier;
  */
 @ApiStatus.Internal
 public class GutterIntentionAction extends AbstractIntentionAction
-  implements Comparable<IntentionAction>, Iconable, ShortcutProvider, PriorityAction {
+  implements Comparable<IntentionAction>, Iconable, ShortcutProvider, PriorityAction, CustomizableIntentionAction {
 
   private final @NotNull Supplier<? extends AnAction> myActionSupplier;
   // do not expose myPresentation
   private final @NotNull Presentation myPresentation = Presentation.newTemplatePresentation();
   private final int myOrder;
+  private final boolean myHasSeparatorAbove;
 
-  public GutterIntentionAction(@NotNull AnAction action, int order) {
+  public GutterIntentionAction(@NotNull AnAction action, int order, boolean hasSeparatorAbove) {
     myActionSupplier = () -> action;
     myOrder = order;
+    myHasSeparatorAbove = hasSeparatorAbove;
   }
 
   public GutterIntentionAction(@NotNull Supplier<? extends AnAction> action, int order) {
     myActionSupplier = action;
     myOrder = order;
+    myHasSeparatorAbove = false;
   }
 
   public void updateFromPresentation(@NotNull Presentation presentation) {
@@ -97,5 +101,10 @@ public class GutterIntentionAction extends AbstractIntentionAction
   @Override
   public @Nullable ShortcutSet getShortcut() {
     return getAction().getShortcutSet();
+  }
+
+  @Override
+  public boolean hasSeparatorAbove() {
+    return myHasSeparatorAbove;
   }
 }

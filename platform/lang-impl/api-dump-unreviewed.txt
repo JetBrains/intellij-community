@@ -7452,6 +7452,7 @@ f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 - s:getShortcutSet(com.intellij.codeInsight.intention.IntentionAction):com.intellij.openapi.actionSystem.ShortcutSet
 - getText():java.lang.String
 - getToolId():java.lang.String
+- hasSeparatorAbove():Z
 - hashCode():I
 - isSelectable():Z
 - isShowIcon():Z

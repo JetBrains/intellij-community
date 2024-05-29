@@ -252,6 +252,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public ListSeparator getSeparatorAbove(IntentionActionWithTextCaching value) {
+    if (value.hasSeparatorAbove()) {
+      return new ListSeparator();
+    }
     List<IntentionActionWithTextCaching> values = getValues();
     int index = values.indexOf(value);
     if (index <= 0) return null;

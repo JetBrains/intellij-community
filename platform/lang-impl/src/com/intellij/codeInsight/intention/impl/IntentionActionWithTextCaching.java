@@ -168,6 +168,14 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     return true;
   }
 
+  public boolean hasSeparatorAbove() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)action).hasSeparatorAbove();
+    }
+    return false;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
