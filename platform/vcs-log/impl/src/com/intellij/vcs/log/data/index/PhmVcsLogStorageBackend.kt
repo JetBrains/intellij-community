@@ -24,6 +24,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer.PathsEncoder
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.DataInput
@@ -323,8 +324,10 @@ internal class PhmVcsLogStorageBackend(
     try {
       runnable()
     }
-    catch (e: IOException) {
-      LOG.warn(e)
+    catch (_: CancellationException) {
+    }
+    catch (t: Throwable) {
+      LOG.warn(t)
     }
   }
 
