@@ -1033,17 +1033,22 @@ public final class IndexLookupTimingsReporting {
     private IndexOperationToOTelMetricsReporter() {
       final Meter meter = TelemetryManager.getInstance().getMeter(Indexes);
 
-      allKeysTotalLookups = meter.counterBuilder("Indexes.allKeys.lookups").buildObserver();
+      //RC: It is important to use 'gauge', NOT 'counter' for the metrics below -- even for lookups count, which seems
+      //    very 'counter'-like. This is because 'counters' requires reporting cumulative total since the _session start_,
+      //    while we report values accumulated only _between_ the reporting points, not accumulated since JVM start
+      //    -- i.e. we reset all the accumulators to 0 in .drainValuesToOTel().
+
+      allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").ofLongs().buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();
       allKeysLookupDuration90P = meter.gaugeBuilder("Indexes.allKeys.lookupDuration90PMs").buildObserver();
       allKeysLookupDurationMax = meter.gaugeBuilder("Indexes.allKeys.lookupDurationMaxMs").buildObserver();
 
-      entriesTotalLookups = meter.counterBuilder("Indexes.entries.lookups").buildObserver();
+      entriesTotalLookups = meter.gaugeBuilder("Indexes.entries.lookups").ofLongs().buildObserver();
       entriesLookupDurationAvg = meter.gaugeBuilder("Indexes.entries.lookupDurationAvgMs").buildObserver();
       entriesLookupDuration90P = meter.gaugeBuilder("Indexes.entries.lookupDuration90PMs").buildObserver();
       entriesLookupDurationMax = meter.gaugeBuilder("Indexes.entries.lookupDurationMaxMs").buildObserver();
 
-      stubsTotalLookups = meter.counterBuilder("Indexes.stubs.lookups").buildObserver();
+      stubsTotalLookups = meter.gaugeBuilder("Indexes.stubs.lookups").ofLongs().buildObserver();
       stubsLookupDurationAvg = meter.gaugeBuilder("Indexes.stubs.lookupDurationAvgMs").buildObserver();
       stubsLookupDuration90P = meter.gaugeBuilder("Indexes.stubs.lookupDuration90PMs").buildObserver();
       stubsLookupDurationMax = meter.gaugeBuilder("Indexes.stubs.lookupDurationMaxMs").buildObserver();
