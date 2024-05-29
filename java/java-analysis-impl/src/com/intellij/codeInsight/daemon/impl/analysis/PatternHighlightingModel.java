@@ -31,8 +31,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClasses;
-
 final class PatternHighlightingModel {
   private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
 
@@ -411,7 +409,7 @@ final class PatternHighlightingModel {
         Set<PatternTypeTestDescription> toAdd = new HashSet<>();
         Set<PsiType> existedTypes = StreamEx.of(typeTestDescriptions).map(t -> t.type()).toSet();
         Set<PsiClass> visitedCovered =
-          findMissedClasses(mySelectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
+          PatternsInSwitchBlockHighlightingModel.findMissedClasses(mySelectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
       boolean changed = addNewClasses(context, mySelectorType, visitedCovered, existedTypes, toAdd);
         if (!changed) {
           return new ReduceResult(currentPatterns, false);
@@ -582,7 +580,7 @@ final class PatternHighlightingModel {
           for (int i = 0; i < recordComponentTypes.size(); i++) {
             PsiType recordComponentType = recordComponentTypes.get(i);
             PsiType descriptionComponentType = descriptionTypes.get(i);
-            if (!SwitchBlockHighlightingModel.cover(context, descriptionComponentType, recordComponentType)) {
+            if (!PatternsInSwitchBlockHighlightingModel.cover(context, descriptionComponentType, recordComponentType)) {
               allCovered = false;
               break;
             }
@@ -605,7 +603,7 @@ final class PatternHighlightingModel {
     /**
      * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
      * Previous sealed classes are not excluded because they can be used in another combination.
-     * This method uses {@link SwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClassesForSealed}
+     * This method uses {@link PatternsInSwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClassesForSealed}
      * To prevent recursive calls, only TypeTest descriptions are passed to this method.
      */
     @NotNull
@@ -684,12 +682,12 @@ final class PatternHighlightingModel {
     for (PsiClass covered : visitedCovered) {
       PsiClassType classType = TypeUtils.getType(covered);
       if (!existedTypes.contains(classType)) {
-        if (SwitchBlockHighlightingModel.cover(context, selectorType, classType)) {
+        if (PatternsInSwitchBlockHighlightingModel.cover(context, selectorType, classType)) {
           toAdd.add(new PatternTypeTestDescription(classType));
           changed = true;
         }
         //find something upper. let's change to selectorType
-        if (SwitchBlockHighlightingModel.cover(context, classType, selectorType)) {
+        if (PatternsInSwitchBlockHighlightingModel.cover(context, classType, selectorType)) {
           toAdd.add(new PatternTypeTestDescription(selectorType));
           changed = true;
           break;
@@ -796,7 +794,7 @@ final class PatternHighlightingModel {
         else {
           Set<PsiType> existedTypes = nestedTypeDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
           Set<PsiClass> sealedResult =
-            findMissedClasses(componentType, nestedTypeDescriptions, new ArrayList<>(), context).missedClasses();
+            PatternsInSwitchBlockHighlightingModel.findMissedClasses(componentType, nestedTypeDescriptions, new ArrayList<>(), context).missedClasses();
           if (!sealedResult.isEmpty()) {
             addNewClasses(context, componentType, sealedResult, existedTypes, missedComponentTypeDescription);
           }
@@ -878,7 +876,7 @@ final class PatternHighlightingModel {
       return false;
     }
     for (int i = 0; i < whoType.list().size(); i++) {
-      if (!SwitchBlockHighlightingModel.cover(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
+      if (!PatternsInSwitchBlockHighlightingModel.cover(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
         return false;
       }
     }
@@ -890,7 +888,7 @@ final class PatternHighlightingModel {
                                            @NotNull PsiType selectorType) {
     for (PatternDescription pattern : patterns) {
       if (pattern instanceof PatternTypeTestDescription &&
-          SwitchBlockHighlightingModel.cover(context, pattern.type(), selectorType)) {
+          PatternsInSwitchBlockHighlightingModel.cover(context, pattern.type(), selectorType)) {
         return true;
       }
     }
