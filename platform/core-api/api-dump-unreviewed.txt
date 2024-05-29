@@ -5968,7 +5968,6 @@ c:com.intellij.usageView.UsageInfo
 - <init>(com.intellij.psi.SmartPsiElementPointer,com.intellij.psi.SmartPsiFileRange,Z,Z):V
 - <init>(com.intellij.psi.SmartPsiElementPointer,com.intellij.psi.SmartPsiFileRange,Z,Z,java.lang.Class):V
 - compareToByStartOffset(com.intellij.usageView.UsageInfo):I
-- copy():com.intellij.usageView.UsageInfo
 - equals(java.lang.Object):Z
 - getElement():com.intellij.psi.PsiElement
 - getFile():com.intellij.psi.PsiFile

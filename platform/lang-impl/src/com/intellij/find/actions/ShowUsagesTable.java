@@ -147,7 +147,7 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
             break;
           }
           if (usages == null) usages = new ArrayList<>();
-          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
+          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo() : usage);
         }
       }
 
