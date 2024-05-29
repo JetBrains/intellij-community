@@ -72,7 +72,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
                         addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
                     }
                 }
-                buildScriptData.addRepositoriesDefinition("mavenCentral()")
+                buildScriptData.withMavenCentral()
                 buildScriptData.addRepositoriesDefinition(repository)
             }
 
@@ -82,20 +82,20 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
             if (additionalRepository != null) {
                 val repository = additionalRepository.toKotlinRepositorySnippet()
                 buildScriptData.addBuildscriptRepositoriesDefinition(repository)
-                buildScriptData.addRepositoriesDefinition("mavenCentral()")
+                buildScriptData.withMavenCentral()
                 buildScriptData.addRepositoriesDefinition(repository)
             }
 
             buildScriptData
                 .addPropertyDefinition("val $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra")
                 .addPluginDefinition(getOldSyntaxPluginDefinition())
-                .addBuildscriptRepositoriesDefinition("mavenCentral()")
+                .withBuildScriptMavenCentral()
                 // TODO: in gradle > 4.1 this could be single declaration e.g. 'val kotlin_version: String by extra { "1.1.11" }'
                 .addBuildscriptPropertyDefinition("var $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra\n    $GSK_KOTLIN_VERSION_PROPERTY_NAME = \"${kotlinVersion.artifactVersion}\"")
                 .addBuildscriptDependencyNotation(getKotlinGradlePluginClassPathSnippet())
         }
 
-        buildScriptData.addRepositoriesDefinition("mavenCentral()")
+        buildScriptData.withMavenCentral()
 
         val isNewProject = module.project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
         if (isNewProject) {

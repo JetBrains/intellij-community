@@ -49,7 +49,7 @@ public final class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDsl
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("java")
-      .addRepositoriesDefinition("mavenCentral()")
+      .withMavenCentral()
       .addOther("""
                   tasks.getByName<Test>("test") {
                       useJUnitPlatform()
