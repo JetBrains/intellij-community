@@ -599,6 +599,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
+  private void mouseButtonInTheSearchFieldPressed() {
+    if (keepEvenWhenFocusLost() && myComponent.isVisible() && !myComponent.isFocusOwner()) {
+      myComponent.requestFocus();
+    }
+  }
+
 
   protected class SearchPopup extends JPanel {
     protected final @NotNull SearchField mySearchField;
@@ -641,6 +647,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       setLayout(new BorderLayout());
       add(mySearchField, BorderLayout.CENTER);
       mySearchField.setText(initialString);
+
+      mySearchField.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          super.mousePressed(e);
+          if (e.getButton() == MouseEvent.BUTTON1) mouseButtonInTheSearchFieldPressed();
+        }
+      });
 
       updateLastPattern();
     }
