@@ -1248,7 +1248,7 @@ com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 - a:matchesFile(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.vcs.changes.IgnoredFileGenerator
 - a:generateFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.AbstractVcs,Z):V
-*:com.intellij.openapi.vcs.changes.IgnoredFileProvider
+com.intellij.openapi.vcs.changes.IgnoredFileProvider
 - sf:IGNORE_FILE:com.intellij.openapi.extensions.ExtensionPointName
 - a:getIgnoredFiles(com.intellij.openapi.project.Project):java.util.Set
 - a:getIgnoredGroupDescription():java.lang.String
