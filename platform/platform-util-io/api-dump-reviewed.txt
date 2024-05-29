@@ -239,3 +239,13 @@ c:com.intellij.execution.process.CapturingProcessRunner
 - runProcess(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator,I):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator,I,Z):com.intellij.execution.process.ProcessOutput
+c:com.intellij.execution.process.ColoredProcessHandler
+- com.intellij.execution.process.KillableProcessHandler
+- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
+- <init>(com.intellij.execution.configurations.GeneralCommandLine):V
+- p:<init>(java.lang.Process,com.intellij.execution.configurations.GeneralCommandLine):V
+- <init>(java.lang.Process,java.lang.String):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
+- <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
+- coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
+- f:notifyTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
