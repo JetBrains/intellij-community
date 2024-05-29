@@ -2,6 +2,10 @@
 package com.intellij.vcs.log.paint
 
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.paint.PaintUtil.ParityMode.ODD
+import com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.SmartList
 import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.NodePrintElement
@@ -9,6 +13,7 @@ import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import java.awt.*
 import java.awt.geom.Ellipse2D
+import java.awt.geom.Line2D
 import kotlin.math.floor
 import kotlin.math.hypot
 import kotlin.math.max
@@ -23,7 +28,7 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
   override fun paint(g2: Graphics2D, printElements: Collection<PrintElement>) {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    val painter = MyPainter(rowHeight)
+    val painter = MyPainter(ScaleContext.create(g2), rowHeight)
     val selected: MutableList<PrintElement> = SmartList()
     for (printElement in printElements) {
       if (printElement.isSelected) {
@@ -44,21 +49,19 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
     }
   }
 
-  override fun getElementUnderCursor(printElements: Collection<PrintElement>, x: Int, y: Int): PrintElement? {
-    val elementWidth = PaintParameters.getElementWidth(rowHeight)
-    val circleRadius = PaintParameters.getCircleRadius(rowHeight)
+  override fun getElementUnderCursor(scaleContext: ScaleContext, printElements: Collection<PrintElement>, x: Int, y: Int): PrintElement? {
+    val painter = MyPainter(scaleContext, rowHeight)
     for (printElement in printElements) {
       if (printElement is NodePrintElement) {
-        if (isOverNode(printElement.positionInCurrentRow, x, y, rowHeight, elementWidth, circleRadius)) {
+        if (painter.isOverNode(printElement.positionInCurrentRow, x, y)) {
           return printElement
         }
       }
     }
 
-    val lineThickness = PaintParameters.getLineThickness(rowHeight)
     for (printElement in printElements) {
       if (printElement is EdgePrintElement) {
-        if (isOverEdge(printElement.positionInCurrentRow, printElement.positionInOtherRow, printElement.type, x, y, rowHeight, elementWidth, lineThickness)) {
+        if (painter.isOverEdge(printElement.positionInCurrentRow, printElement.positionInOtherRow, printElement.type, x, y)) {
           return printElement
         }
       }
@@ -66,29 +69,20 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
     return null
   }
 
-  private fun isOverEdge(position: Int, otherPosition: Int, edgeType: EdgePrintElement.Type, x: Int, y: Int,
-                         rowHeight: Int, elementWidth: Int, lineThickness: Float): Boolean {
-    val x1 = elementWidth * position + elementWidth / 2
-    val y1 = rowHeight / 2
-    val x2 = elementWidth * otherPosition + elementWidth / 2
-    val y2 = if (edgeType == EdgePrintElement.Type.DOWN) rowHeight + rowHeight / 2 else -rowHeight / 2
-    return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + lineThickness
-  }
+  private class MyPainter(scaleContext: ScaleContext, private val rowHeight: Int) {
+    private val rowCenter = PaintUtil.alignToInt(rowHeight / 2.0, scaleContext, FLOOR, ODD)
 
-  private fun isOverNode(position: Int, x: Int, y: Int, rowHeight: Int, elementWidth: Int, circleRadius: Int): Boolean {
-    val x0 = elementWidth * position + elementWidth / 2
-    val y0 = rowHeight / 2
-    return distance(x0, y0, x, y) <= circleRadius
-  }
+    private val elementWidth = PaintUtil.alignToInt(PaintParameters.getElementWidth(rowHeight), scaleContext, FLOOR, ODD)
+    private val elementCenter = PaintUtil.alignToInt(PaintParameters.getElementWidth(rowHeight) / 2, scaleContext, FLOOR, null)
 
-  private class MyPainter(private val rowHeight: Int) {
-    private val elementWidth = PaintParameters.getElementWidth(rowHeight)
+    private val lineThickness = PaintUtil.alignToInt(PaintParameters.getLineThickness(rowHeight), scaleContext, FLOOR, ODD).toFloat()
+    private val selectedLineThickness = PaintUtil.alignToInt(PaintParameters.getSelectedLineThickness(rowHeight), scaleContext, FLOOR,
+                                                             ODD).toFloat()
 
-    private val circleRadius = PaintParameters.getCircleRadius(rowHeight)
-    private val lineThickness = PaintParameters.getLineThickness(rowHeight)
-
-    private val selectedCircleRadius = PaintParameters.getSelectedCircleRadius(rowHeight)
-    private val selectedLineThickness = PaintParameters.getSelectedLineThickness(rowHeight)
+    private val circleDiameter = PaintUtil.alignToInt(2 * PaintParameters.getCircleRadius(rowHeight), scaleContext, FLOOR, ODD)
+    private val selectedCircleDiameter = circleDiameter + selectedLineThickness - lineThickness
+    private val circleRadius = PaintUtil.alignToInt(circleDiameter / 2, scaleContext, FLOOR, null)
+    private val selectedCircleRadius = PaintUtil.alignToInt(selectedCircleDiameter / 2, scaleContext, FLOOR, null)
 
     private val ordinaryStroke = BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
     private val selectedStroke = BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
@@ -103,27 +97,39 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
                          dash[0] / 2)
     }
 
-    private fun paintLine(g2: Graphics2D, x1: Int, y1: Int, x2: Int, y2: Int, startArrowX: Int, startArrowY: Int,
+    fun isOverEdge(position: Int, otherPosition: Int, edgeType: EdgePrintElement.Type, x: Int, y: Int): Boolean {
+      val x1 = elementWidth * position + elementCenter
+      val y1 = rowCenter
+      val x2 = elementWidth * otherPosition + elementCenter
+      val y2 = if (edgeType == EdgePrintElement.Type.DOWN) rowHeight + rowCenter else rowCenter - rowHeight
+      return hypot(x1 - x, y1 - y) + hypot(x2 - x, y2 - y) < hypot(x1 - x2, y1 - y2) + lineThickness
+    }
+
+    fun isOverNode(position: Int, x: Int, y: Int): Boolean {
+      val x0 = elementWidth * position + elementCenter
+      val y0 = rowCenter
+      return hypot(x0 - x, y0 - y) <= circleRadius
+    }
+
+    private fun paintLine(g2: Graphics2D, x1: Double, y1: Double, x2: Double, y2: Double, startArrowX: Double, startArrowY: Double,
                           hasArrow: Boolean, isUsual: Boolean, isSelected: Boolean) {
       g2.stroke = if (isUsual || hasArrow) {
         if (isSelected) selectedStroke else ordinaryStroke
       }
       else {
-        val edgeLength = if (x1 == x2) rowHeight.toDouble() else hypot((x1 - x2).toDouble(), (y1 - y2).toDouble())
+        val edgeLength = if (x1 == x2) rowHeight.toDouble() else hypot((x1 - x2), (y1 - y2))
         val dashLength = getDashLength(edgeLength, rowHeight)
         if (isSelected) getSelectedDashedStroke(dashLength) else getDashedStroke(dashLength)
       }
 
-      g2.drawLine(x1, y1, x2, y2)
+      g2.draw(Line2D.Double(x1, y1, x2, y2))
       if (hasArrow) {
-        val (endArrowX1, endArrowY1) = rotate(x1.toDouble(), y1.toDouble(), startArrowX.toDouble(), startArrowY.toDouble(),
-                                              sqrt(ARROW_ANGLE_COS2), sqrt(1 - ARROW_ANGLE_COS2),
+        val (endArrowX1, endArrowY1) = rotate(x1, y1, startArrowX, startArrowY, sqrt(ARROW_ANGLE_COS2), sqrt(1 - ARROW_ANGLE_COS2),
                                               ARROW_LENGTH * rowHeight)
-        val (endArrowX2, endArrowY2) = rotate(x1.toDouble(), y1.toDouble(), startArrowX.toDouble(), startArrowY.toDouble(),
-                                              sqrt(ARROW_ANGLE_COS2), -sqrt(1 - ARROW_ANGLE_COS2),
+        val (endArrowX2, endArrowY2) = rotate(x1, y1, startArrowX, startArrowY, sqrt(ARROW_ANGLE_COS2), -sqrt(1 - ARROW_ANGLE_COS2),
                                               ARROW_LENGTH * rowHeight)
-        g2.drawLine(startArrowX, startArrowY, endArrowX1, endArrowY1)
-        g2.drawLine(startArrowX, startArrowY, endArrowX2, endArrowY2)
+        g2.draw(Line2D.Double(startArrowX, startArrowY, endArrowX1, endArrowY1))
+        g2.draw(Line2D.Double(startArrowX, startArrowY, endArrowX2, endArrowY2))
       }
     }
 
@@ -136,29 +142,29 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
       val from = edge.positionInCurrentRow
       val to = edge.positionInOtherRow
 
-      val elementWidth = PaintParameters.getElementWidth(rowHeight)
-      val x1 = elementWidth * from + elementWidth / 2
-      val y1 = rowHeight / 2
+      val x1 = elementWidth * from + elementCenter
+      val y1 = rowCenter
       if (from == to) {
-        val arrowGap = if (isTerminal) PaintParameters.getCircleRadius(rowHeight) / 2 + 1 else 0
+        val arrowGap = if (isTerminal) circleRadius / 2 + 1 else 0.0
         val y2 = if (isDown) rowHeight - arrowGap else arrowGap
         paintLine(g2, x1, y1, x1, y2, x1, y2, hasArrow, isUsual, isSelected)
       }
       else {
         assert(!isTerminal)
         // paint non-vertical lines twice the size to make them dock with each other well
-        val x2 = elementWidth * to + elementWidth / 2
-        val y2 = if (isDown) rowHeight + rowHeight / 2 else -rowHeight / 2
+        val x2 = elementWidth * to + elementCenter
+        val y2 = if (isDown) rowHeight + rowCenter else rowCenter - rowHeight
         paintLine(g2, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, hasArrow, isUsual, isSelected)
       }
     }
 
     private fun paintCircle(g2: Graphics2D, position: Int, isSelected: Boolean) {
-      val x0 = elementWidth * position + elementWidth / 2
-      val y0 = rowHeight / 2
-      val r = if (isSelected) selectedCircleRadius else circleRadius
+      val x0 = elementWidth * position + elementCenter
+      val y0 = rowCenter
+      val radius = if (isSelected) selectedCircleRadius else circleRadius
+      val diameter = if (isSelected) selectedCircleDiameter else circleDiameter
 
-      val circle = Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, (2 * r).toDouble(), (2 * r).toDouble())
+      val circle = Ellipse2D.Double(x0 - radius, y0 - radius, diameter, diameter)
       g2.fill(circle)
     }
 
@@ -177,7 +183,7 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
     private const val ARROW_LENGTH = 0.3
 
     private fun rotate(x: Double, y: Double, centerX: Double, centerY: Double, cos: Double, sin: Double,
-                       arrowLength: Double): Pair<Int, Int> {
+                       arrowLength: Double): Pair<Double, Double> {
       val translateX = (x - centerX)
       val translateY = (y - centerY)
 
@@ -188,7 +194,7 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
       val rotateX = scaleX * cos - scaleY * sin
       val rotateY = scaleX * sin + scaleY * cos
 
-      return Pair(Math.round(rotateX + centerX).toInt(), Math.round(rotateY + centerY).toInt())
+      return Pair(rotateX + centerX, rotateY + centerY)
     }
 
     private fun getDashLength(edgeLength: Double, rowHeight: Int): FloatArray {
@@ -201,10 +207,6 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
       val spaceLength = rowHeight / 2.0f - 2
       val dashLength = (edgeLength / dashCount - spaceLength).toFloat()
       return floatArrayOf(dashLength, spaceLength)
-    }
-
-    private fun distance(x1: Int, y1: Int, x2: Int, y2: Int): Double {
-      return hypot((x1 - x2).toDouble(), (y1 - y2).toDouble())
     }
   }
 }

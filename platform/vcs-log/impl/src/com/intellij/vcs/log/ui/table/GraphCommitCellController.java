@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -85,7 +86,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   private @Nullable PrintElement findPrintElement(int row, @NotNull Point pointInCell) {
     Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
-    return myGraphCellPainter.getElementUnderCursor(printElements, pointInCell.x, pointInCell.y);
+    return myGraphCellPainter.getElementUnderCursor(ScaleContext.create(myTable), printElements, pointInCell.x, pointInCell.y);
   }
 
   private @Nullable Cursor performGraphAction(@Nullable PrintElement printElement,

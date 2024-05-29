@@ -23,7 +23,7 @@ open class CommitNodeComponent : JComponent() {
   }
 
   override fun getPreferredSize() = JBDimension(
-    PaintParameters.getElementWidth(PaintParameters.ROW_HEIGHT),
+    PaintParameters.getElementWidth(PaintParameters.ROW_HEIGHT).toInt(),
     PaintParameters.ROW_HEIGHT
   )
 
@@ -58,7 +58,7 @@ open class CommitNodeComponent : JComponent() {
     g.fill(circle)
   }
 
-  protected open fun calcRadius(rect: Rectangle) = PaintParameters.getCircleRadius(rect.height)
+  protected open fun calcRadius(rect: Rectangle) = PaintParameters.getCircleRadius(rect.height).toInt()
 
   private fun drawEdgeUp(g: Graphics2D, rect: Rectangle) {
     val y1 = 0.0
@@ -79,7 +79,7 @@ open class CommitNodeComponent : JComponent() {
     g.fill(line)
   }
 
-  protected open fun calcLineThickness(rect: Rectangle) = PaintParameters.getLineThickness(rect.height)
+  protected open fun calcLineThickness(rect: Rectangle) = PaintParameters.getLineThickness(rect.height).toFloat()
 
   enum class Type {
     SINGLE, FIRST, MIDDLE, LAST
