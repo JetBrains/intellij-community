@@ -1965,6 +1965,11 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean hasNextOccurence() {
       return mySupport != null && mySupport.hasNextOccurence();
     }
