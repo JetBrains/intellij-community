@@ -64,7 +64,7 @@ fun <T> waitFor(
   }
 }
 
-class WaitForException(duration: Duration, errorMessage: String) : IllegalStateException("Timeout($duration): $errorMessage")
+class WaitForException(val duration: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($duration): $errorMessage", cause)
 
 fun <T : UiComponent> T.wait(duration: Duration): T {
   Thread.sleep(duration.inWholeMilliseconds)
