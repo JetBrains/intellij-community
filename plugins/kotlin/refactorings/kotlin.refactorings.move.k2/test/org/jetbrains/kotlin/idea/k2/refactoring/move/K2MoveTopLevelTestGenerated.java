@@ -160,6 +160,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
     }
 
+    @TestMetadata("kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test")
+    public void testKotlin_innerEnumReferenceWithoutQualifier_InnerEnumReferenceWithoutQualifier() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test");
+    }
+
     @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
     public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");

@@ -393,6 +393,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
         }
 
+        @TestMetadata("kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test")
+        public void testKotlin_innerEnumReferenceWithoutQualifier_InnerEnumReferenceWithoutQualifier() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test");
+        }
+
         @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
         public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
