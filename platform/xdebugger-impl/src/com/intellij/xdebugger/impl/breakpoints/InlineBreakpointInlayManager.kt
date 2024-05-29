@@ -349,7 +349,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
   }
 
   private fun breakpointHasTheBiggestRange(breakpoint: XLineBreakpointImpl<*>, variants: List<XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant>) : Boolean {
-    val range = getBreakpointHighlightRange(breakpoint)
+    val range = breakpoint.highlightRange
     if (range == null) {
       return true
     }
@@ -376,16 +376,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
   }
 
   private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, lineRange: IntRange): Int {
-    val range = getBreakpointHighlightRange(breakpoint)
+    val range = breakpoint.highlightRange
     return getBreakpointRangeStartNormalized(range, lineRange)
-  }
-
-  @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
-  private fun getBreakpointHighlightRange(breakpoint: XLineBreakpointImpl<*>): TextRange? {
-    val type: XLineBreakpointType<XBreakpointProperties<*>> = breakpoint.type as XLineBreakpointType<XBreakpointProperties<*>>
-    val b = breakpoint as XLineBreakpoint<XBreakpointProperties<*>>
-
-    return type.getHighlightRange(b)
   }
 
   private fun getBreakpointRangeStartNormalized(breakpointRange: TextRange?, lineRange: IntRange): Int {

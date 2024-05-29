@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerManager
@@ -270,3 +271,7 @@ val XBreakpoint<*>.propertyXMLDescriptions: List<@Nls String>
     @Suppress("UNCHECKED_CAST") val t = type as XBreakpointType<XBreakpoint<*>, *>
     return t.getPropertyXMLDescriptions(this)
   }
+
+val <P : XBreakpointProperties<*>> XLineBreakpoint<P>.highlightRange: TextRange?
+  get() =
+    type.getHighlightRange(this)

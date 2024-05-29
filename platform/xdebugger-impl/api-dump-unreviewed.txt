@@ -1186,6 +1186,7 @@ f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtilKt
 - sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getHighlightRange(com.intellij.xdebugger.breakpoints.XLineBreakpoint):com.intellij.openapi.util.TextRange
 - sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
 - sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
