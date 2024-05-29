@@ -408,7 +408,6 @@ class PyDB(object):
 
     def __init__(self, set_as_global=True):
         if set_as_global:
-            set_global_debugger(self)
             pydevd_tracing.replace_sys_set_trace_func()
 
         self.reader = None
@@ -516,6 +515,12 @@ class PyDB(object):
         self.is_pep669_monitoring_enabled = False
 
         self.value_resolve_thread_list = []
+
+        if set_as_global:
+            # All debugger fields need to be initialized first. If they aren't,
+            # there can be instances in a multithreaded environment where the debugger
+            # is accessible but the attempts to access its fields may fail.
+            set_global_debugger(self)
 
     def get_thread_local_trace_func(self):
         try:
