@@ -311,7 +311,7 @@ open class EditorsSplitters internal constructor(
     }
 
     for (window in windows) {
-      for (file in window.fileList) {
+      for (file in window.files().toList()) {
         window.closeFile(file = file, disposeIfNeeded = false, transferFocus = false)
       }
     }

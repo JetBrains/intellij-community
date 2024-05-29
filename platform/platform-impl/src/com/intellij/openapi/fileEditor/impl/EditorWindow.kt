@@ -42,7 +42,6 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -96,14 +95,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   val isDisposed: Boolean
     get() = !coroutineScope.isActive
 
-  private val removedTabs = object : Stack<Pair<String, FileEditorOpenOptions>>() {
-    override fun push(pair: Pair<String, FileEditorOpenOptions>) {
-      if (size >= tabLimit) {
-        removeAt(0)
-      }
-      super.push(pair)
-    }
-  }
+  private val removedTabs = ArrayDeque<Pair<String, FileEditorOpenOptions>>()
 
   val isShowing: Boolean
     get() = component.isShowing
@@ -192,12 +184,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   init {
     // tab layout policy
-    if (UISettings.getInstance().scrollTabLayoutInEditor) {
-      setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT)
-    }
-    else {
-      setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT)
-    }
+    tabbedPane.tabs.presentation.setSingleRow(UISettings.getInstance().scrollTabLayoutInEditor)
     updateTabsVisibility()
   }
 
@@ -558,16 +545,18 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     owner.removeWindow(this)
   }
 
-  fun hasClosedTabs(): Boolean = !removedTabs.empty()
+  fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
 
   fun restoreClosedTab() {
     assert(hasClosedTabs()) { "Nothing to restore" }
-    val info = removedTabs.pop()
+    val info = removedTabs.last()
     val file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst()) ?: return
-    manager.openFileImpl4(window = this,
-                          _file = file,
-                          entry = null,
-                          options = info.getSecond().copy(selectAsCurrent = true, requestFocus = true))
+    manager.openFileImpl4(
+      window = this,
+      _file = file,
+      entry = null,
+      options = info.getSecond().copy(selectAsCurrent = true, requestFocus = true),
+    )
   }
 
   fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true, @Suppress("UNUSED_PARAMETER") transferFocus: Boolean = true) {
@@ -590,7 +579,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         // composite could close itself on decomposition
         if (componentIndex >= 0) {
           val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
-          removedTabs.push(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
+
+          removedTabs.addLast(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
+          if (removedTabs.size >= tabLimit) {
+            removedTabs.removeFirst()
+          }
+
           tabbedPane.removeTabAt(componentIndex, indexToSelect)
           fileEditorManager.disposeComposite(composite)
         }
@@ -1002,7 +996,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   private fun isAnyTabClosable(fileToIgnore: VirtualFile?): Boolean {
-    return (tabbedPane.tabs.tabs.asReversed()).any { fileCanBeClosed(it.composite.file, fileToIgnore) }
+    return tabbedPane.tabs.tabs.asReversed().any { fileCanBeClosed(it.composite.file, fileToIgnore) }
   }
 
   private fun defaultCloseFile(file: VirtualFile, transferFocus: Boolean) {
@@ -1023,7 +1017,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
 
     val composite = getComposite(file) ?: return true
-    return extensions.all { handler -> handler.isClosingAllowed(composite) }
+    return extensions.all { it.isClosingAllowed(composite) }
   }
 
   override fun toString(): String {
