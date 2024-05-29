@@ -5,11 +5,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 public interface VcsBaseRevisionAdviser {
   /**
    * @return true if base revision was found by this provider
    */
-  boolean getBaseVersionContent(final FilePath filePath, Processor<? super @NlsSafe String> processor, @NlsSafe String beforeVersionId)
+  boolean getBaseVersionContent(@NotNull FilePath filePath,
+                                @NotNull Processor<? super @NlsSafe String> processor,
+                                @NotNull @NlsSafe String beforeVersionId)
     throws VcsException;
 }

@@ -36,6 +36,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -1075,6 +1076,15 @@ public final class GitUtil {
   }
 
   public static boolean isHashString(@NotNull @NonNls String revision) {
-    return HASH_STRING_PATTERN.matcher(revision).matches();
+    return isHashString(revision, true);
+  }
+
+  public static boolean isHashString(@NotNull @NonNls String revision, boolean fullHashOnly) {
+    if (fullHashOnly) {
+      return HASH_STRING_PATTERN.matcher(revision).matches();
+    }
+    else {
+      return VcsLogUtil.HASH_REGEX.matcher(revision).matches();
+    }
   }
 }
