@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -46,11 +47,12 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
 
       if (!Registry.`is`("external.system.auto.import.disabled")) {
         ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-          ExternalSystemUtil.refreshProject(
-            externalProjectPath,
-            ImportSpecBuilder(project, SYSTEM_ID)
-              .callback(createFinalImportCallback(project, externalProjectPath))
-          )
+          val importSpec = ImportSpecBuilder(project, SYSTEM_ID)
+          if (!project.isTrusted()) {
+            importSpec.usePreviewMode()
+          }
+          importSpec.callback(createFinalImportCallback(project, externalProjectPath))
+          ExternalSystemUtil.refreshProject(externalProjectPath, importSpec)
         }
       }
     }
