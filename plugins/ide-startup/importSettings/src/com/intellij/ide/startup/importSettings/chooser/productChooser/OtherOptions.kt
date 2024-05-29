@@ -41,7 +41,7 @@ class OtherOptions(private val controller: ImportSettingsController, private val
       jb = addActionList(jbProducts, jbDataProvider, ImportSettingsBundle.message("other.options.sub.title.installed"))
     }
 
-    if(syncDataProvider.settingsService.isSyncEnabled.value) {
+    if (syncDataProvider.settingsService.isSyncEnabled && syncDataProvider.settingsService.hasDataToSync.value) {
       syncDataProvider.other?.let { products ->
         addActionList(products, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync")).let {
           if (it.isNotEmpty()) {

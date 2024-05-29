@@ -177,7 +177,7 @@ class SyncActionsDataProvider private constructor(lifetime: Lifetime) : ActionsD
 
   private fun updateSyncMap() {
     val service = settingsService.getSyncService()
-    if (!settingsService.isSyncEnabled.value) {
+    if (!settingsService.isSyncEnabled || !settingsService.hasDataToSync.value) {
       map = null
       return
     }

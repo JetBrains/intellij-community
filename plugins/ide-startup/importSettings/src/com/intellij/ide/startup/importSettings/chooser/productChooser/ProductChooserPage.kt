@@ -33,6 +33,7 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
   private val lifetime = controller.lifetime.createNested().intersect(this.createLifetime())
   private val syncDataProvider = SyncActionsDataProvider.createProvider(lifetime)
 
+  /*
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
 
@@ -42,10 +43,11 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
       text = it?.loginName
     }
 
-    settService.isSyncEnabled.advise(lifetime) {
+    settService.hasDataToSync.advise(lifetime) {
       isVisible = it
     }
   }
+  */
 
   private val pane = object: JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)) {
     override fun getComponentGraphics(g: Graphics?): Graphics {
@@ -102,7 +104,7 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     at.setReservePlaceAutoPopupIcon(false)
     at.targetComponent = pane
 
-    add(accountLabel, BorderLayout.WEST)
+    //add(accountLabel, BorderLayout.WEST)
     add(at.component, BorderLayout.EAST)
 
     border = JBUI.Borders.empty(0, 20, 10, 7)
