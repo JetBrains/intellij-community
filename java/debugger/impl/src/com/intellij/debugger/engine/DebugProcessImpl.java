@@ -84,6 +84,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.jetbrains.jdi.ClassLoaderReferenceImpl;
 import com.jetbrains.jdi.MethodImpl;
+import com.jetbrains.jdi.VirtualMachineImpl;
 import com.jetbrains.jdi.VirtualMachineManagerImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
@@ -382,7 +383,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     });
     LOG.debug("*******************VM attached******************");
 
-    vm.setDebugTraceMode(getTraceMask());
+    int mask = getTraceMask();
+    if (mask == 0 && vm instanceof VirtualMachineImpl extendedVM) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        mask = VirtualMachine.TRACE_ALL;
+        extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
+      }
+    }
+    vm.setDebugTraceMode(mask);
 
     checkVirtualMachineVersion(vm);
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
