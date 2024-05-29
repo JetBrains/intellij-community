@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.*
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -34,6 +35,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolW
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+
+private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
@@ -152,8 +155,12 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
           emit(null)
           return@transform
         }
+        val diffData = parsedChanges.patchesByChange[change] ?: run {
+          LOG.info("Diff data not found for change $change")
+          emit(null)
+          return@transform
+        }
         val changeSelection = ChangesSelection.Precise(parsedChanges.changes, change)
-        val diffData = parsedChanges.patchesByChange[change]!!
         emit(changeSelection to diffData)
       }.mapNullableScoped { (change, diffData) ->
         createChangeVm(change, diffData)

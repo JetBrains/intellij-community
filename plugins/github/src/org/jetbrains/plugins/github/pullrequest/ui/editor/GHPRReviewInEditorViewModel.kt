@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
@@ -87,7 +86,11 @@ internal class GHPRReviewInEditorViewModelImpl(
           emit(null)
           return@transformLatest
         }
-        val diffData = parsedChanges.patchesByChange[change]!!
+        val diffData = parsedChanges.patchesByChange[change] ?: run {
+          LOG.info("Diff data not found for change $change")
+          emit(null)
+          return@transformLatest
+        }
         coroutineScope {
           val vm = createFileVm(change, diffData)
           emit(vm)
