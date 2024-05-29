@@ -86,7 +86,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
             } else {
-                // Here we assume that the passed fqName uniquely identifiers the new target element
+                // Here we assume that the passed fqName uniquely identifies the new target element
                 val oldTarget = simpleNameReference.resolve()
                 if (oldTarget?.kotlinFqName == fqName) return expression
             }
