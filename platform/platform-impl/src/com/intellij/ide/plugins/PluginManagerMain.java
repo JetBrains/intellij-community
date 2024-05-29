@@ -12,6 +12,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -366,7 +367,7 @@ public final class PluginManagerMain {
     var pluginList = aliens.stream()
       .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfo.getInstance().getShortCompanyName());
     var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
     var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {

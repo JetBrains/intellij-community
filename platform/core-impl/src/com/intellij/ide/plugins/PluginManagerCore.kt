@@ -10,6 +10,7 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -813,7 +814,7 @@ object PluginManagerCore {
   private fun ask3rdPartyPluginsPrivacyConsent(descriptors: List<IdeaPluginDescriptorImpl>): Boolean {
     val title = CoreBundle.message("third.party.plugins.privacy.note.title")
     val pluginList = descriptors.joinToString(separator = "<br>") { "&nbsp;&nbsp;&nbsp;${getPluginNameAndVendor(it)}" }
-    val text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList)
+    val text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfo.getInstance().shortCompanyName)
     val buttons = arrayOf(CoreBundle.message("third.party.plugins.privacy.note.accept"),
                           CoreBundle.message("third.party.plugins.privacy.note.disable"))
     val choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
