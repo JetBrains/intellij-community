@@ -184,7 +184,7 @@ class SearchEverywhereFileFeaturesProvider
       return null
     }
 
-    return extensionInQuery == fileExtension
+    return extensionInQuery.lowercase() == fileExtension.lowercase()
   }
 }
 
