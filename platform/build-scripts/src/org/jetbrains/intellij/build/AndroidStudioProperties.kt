@@ -76,6 +76,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
   init {
     platformPrefix = "AndroidStudio"
+    mainClassName = "com.android.tools.idea.MainWrapper"
     applicationInfoModule = "intellij.android.adt.branding"
     useSplash = true
     additionalIDEPropertiesFilePaths = listOf(home.resolve("build/conf/ideaCE.properties"))
