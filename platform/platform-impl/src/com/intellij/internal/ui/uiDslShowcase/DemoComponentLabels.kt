@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.ui.DialogPanel
@@ -31,7 +31,7 @@ fun demoComponentLabels(): DialogPanel {
         textField()
       }
       row {
-        comment("According to <a href='https://jetbrains.design/intellij/principles/layout/#checkboxes-and-radio-buttons'>UI Guidelines</a> " +
+        comment("According to <a href='https://plugins.jetbrains.com/docs/intellij/layout.html#checkboxes-and-radio-buttons'>UI Guidelines</a> " +
                 "space after labels is increased if CheckBox/RadioButton is used")
       }
     }

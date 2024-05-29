@@ -223,7 +223,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("actions/wordsHovered.svg", 1488302022, 0);
     /** 16x16 */ public static final @NotNull Icon WordsSelected = load("actions/wordsSelected.svg", 128086410, 0);
 
-    /** @deprecated to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+    /** @deprecated to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html) */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
