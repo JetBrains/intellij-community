@@ -26,7 +26,6 @@ com.intellij.codeInsight.daemon.NonHideableIconGutterMark
 - com.intellij.codeInsight.daemon.GutterMark
 a:com.intellij.ide.DataManager
 - <init>():V
-- *a:getCustomizedData(java.lang.String,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 - a:getDataContext():com.intellij.openapi.actionSystem.DataContext
 - a:getDataContext(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
 - a:getDataContext(java.awt.Component,I,I):com.intellij.openapi.actionSystem.DataContext
@@ -1286,11 +1285,6 @@ c:com.intellij.openapi.actionSystem.CommonDataKeys
 - sf:VIRTUAL_FILE:com.intellij.openapi.actionSystem.DataKey
 - sf:VIRTUAL_FILE_ARRAY:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
-f:com.intellij.openapi.actionSystem.CompositeDataProvider
-- com.intellij.openapi.actionSystem.DataProvider
-- s:compose(com.intellij.openapi.actionSystem.DataProvider,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.DataProvider
-- s:compose(java.lang.Iterable):com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
 f:com.intellij.openapi.actionSystem.CustomShortcutSet
 - com.intellij.openapi.actionSystem.ShortcutSet
 - sf:EMPTY:com.intellij.openapi.actionSystem.CustomShortcutSet
@@ -1301,22 +1295,28 @@ f:com.intellij.openapi.actionSystem.CustomShortcutSet
 - s:fromStrings(java.util.Collection):com.intellij.openapi.actionSystem.CustomShortcutSet
 - getShortcuts():com.intellij.openapi.actionSystem.Shortcut[]
 - hasShortcuts():Z
-a:com.intellij.openapi.actionSystem.CustomizedDataContext
+c:com.intellij.openapi.actionSystem.CustomizedDataContext
 - com.intellij.openapi.actionSystem.DataContext
+- com.intellij.openapi.util.UserDataHolder
 - sf:EXPLICIT_NULL:java.lang.Object
 - <init>():V
+- p:<init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider,com.intellij.openapi.util.UserDataHolder):V
+- p:<init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider,Z):V
+- p:<init>(com.intellij.openapi.actionSystem.DataContext,Z):V
+- p:<init>(Z):V
 - s:create(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.CustomizedDataContext
 - getData(java.lang.String):java.lang.Object
-- a:getParent():com.intellij.openapi.actionSystem.DataContext
-- a:getRawCustomData(java.lang.String):java.lang.Object
-c:com.intellij.openapi.actionSystem.DataContextWrapper
-- com.intellij.openapi.actionSystem.CustomizedDataContext
-- com.intellij.openapi.util.UserDataHolder
-- <init>(com.intellij.openapi.actionSystem.DataContext):V
-- f:getParent():com.intellij.openapi.actionSystem.DataContext
+- getInjectedDataContext():com.intellij.openapi.actionSystem.DataContext
+- getParent():com.intellij.openapi.actionSystem.DataContext
 - getRawCustomData(java.lang.String):java.lang.Object
 - f:getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - f:putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+- s:withProvider(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.DataContext
+- s:withSnapshot(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataSnapshotProvider):com.intellij.openapi.actionSystem.DataContext
+c:com.intellij.openapi.actionSystem.DataContextWrapper
+- com.intellij.openapi.actionSystem.CustomizedDataContext
+- <init>(com.intellij.openapi.actionSystem.DataContext):V
+- getRawCustomData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DynamicActionGroup
 f:com.intellij.openapi.actionSystem.KeyboardShortcut
 - com.intellij.openapi.actionSystem.Shortcut

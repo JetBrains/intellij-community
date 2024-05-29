@@ -15513,15 +15513,14 @@ a:com.intellij.ide.hierarchy.HierarchyBrowserBase
 - dispose():V
 - getAvailableElements():com.intellij.psi.PsiElement[]
 - pa:getCurrentTree():javax.swing.JTree
-- getData(java.lang.String):java.lang.Object
 - ps:getDescriptor(javax.swing.tree.DefaultMutableTreeNode):com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 - pa:getElementFromDescriptor(com.intellij.ide.hierarchy.HierarchyNodeDescriptor):com.intellij.psi.PsiElement
 - f:getSelectedDescriptors():com.intellij.ide.hierarchy.HierarchyNodeDescriptor[]
 - pf:getSelectedElement(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
 - p:getSelectedElements():com.intellij.psi.PsiElement[]
-- p:getSlowData(java.lang.String,com.intellij.ide.hierarchy.HierarchyNodeDescriptor[]):java.lang.Object
 - isDisposed():Z
 - setContent(com.intellij.ui.content.Content):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 - com.intellij.ide.hierarchy.HierarchyBrowserBase
 - com.intellij.ide.OccurenceNavigator
@@ -15549,7 +15548,6 @@ a:com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 - p:getCurrentScopeType():java.lang.String
 - p:getCurrentTree():javax.swing.JTree
 - pf:getCurrentViewType():java.lang.String
-- getData(java.lang.String):java.lang.Object
 - pa:getElementFromDescriptor(com.intellij.ide.hierarchy.HierarchyNodeDescriptor):com.intellij.psi.PsiElement
 - p:getFileColorForNode(java.lang.Object):java.awt.Color
 - p:getHierarchyBase():com.intellij.psi.PsiElement
@@ -15569,6 +15567,7 @@ a:com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 - p:prependActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - setContent(com.intellij.ui.content.Content):V
 - p:setHierarchyBase(com.intellij.psi.PsiElement):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pf:com.intellij.ide.hierarchy.HierarchyBrowserBaseEx$AlphaSortAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - <init>(com.intellij.ide.hierarchy.HierarchyBrowserBaseEx):V
@@ -15684,7 +15683,6 @@ a:com.intellij.ide.hierarchy.TypeHierarchyBrowserBase
 - p:createTreeAndSetupCommonActions(java.util.Map,java.lang.String):V
 - p:getActionPlace():java.lang.String
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- f:getData(java.lang.String):java.lang.Object
 - p:getNextOccurenceActionNameImpl():java.lang.String
 - p:getPresentableNameMap():java.util.Map
 - p:getPrevOccurenceActionNameImpl():java.lang.String
@@ -15696,6 +15694,7 @@ a:com.intellij.ide.hierarchy.TypeHierarchyBrowserBase
 - pa:isInterface(com.intellij.psi.PsiElement):Z
 - p:prependActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - p:setHierarchyBase(com.intellij.psi.PsiElement):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pc:com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction
 - com.intellij.ide.hierarchy.HierarchyBrowserBaseEx$BaseOnThisElementAction
 - <init>():V
@@ -15797,10 +15796,10 @@ f:com.intellij.ide.impl.LangDataValidators
 f:com.intellij.ide.impl.ModuleStructureComponent
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtDataProvider
 - <init>(com.intellij.openapi.module.Module):V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.impl.ModuleStructurePane
 - com.intellij.ide.projectView.impl.ProjectViewPane
 - <init>(com.intellij.openapi.module.Module):V
@@ -16246,7 +16245,7 @@ a:com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - isAlwaysLeaf(java.lang.Object):Z
 a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.openapi.util.BusyObject
 - sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - pf:myProject:com.intellij.openapi.project.Project
@@ -16269,7 +16268,6 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - p:enableDnD():V
 - s:extractValueFromNode(java.lang.Object):java.lang.Object
 - getComponentToFocus():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getElementsFromNode(java.lang.Object):java.util.List
 - a:getIcon():javax.swing.Icon
 - a:getId():java.lang.String
@@ -16319,6 +16317,7 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - selectModuleGroup(com.intellij.ide.projectView.impl.ModuleGroup,Z):V
 - f:setSubId(java.lang.String):V
 - supportsManualOrder():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateFrom(java.lang.Object,Z,Z):V
 - a:updateFromRoot(Z):com.intellij.openapi.util.ActionCallback
 - writeExternal(org.jdom.Element):V
@@ -16796,6 +16795,7 @@ f:com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory
 - getIcon():javax.swing.Icon
 c:com.intellij.ide.projectView.impl.ProjectViewTree
 - com.intellij.ide.dnd.aware.DnDAwareTree
+- com.intellij.openapi.actionSystem.EdtDataProvider
 - com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - p:<init>(com.intellij.openapi.project.Project,javax.swing.tree.TreeModel):V
 - <init>(javax.swing.tree.TreeModel):V
@@ -16807,6 +16807,7 @@ c:com.intellij.ide.projectView.impl.ProjectViewTree
 - isFileColorsEnabled():Z
 - s:isFileColorsEnabledFor(javax.swing.JTree):Z
 - setModel(javax.swing.tree.TreeModel):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.projectView.impl.ProjectViewUtilKt
 - sf:getSelectedLibrary(java.lang.Object[]):com.intellij.openapi.roots.LibraryOrderEntry
 f:com.intellij.ide.projectView.impl.PsiFileUrl
@@ -17157,7 +17158,6 @@ f:com.intellij.ide.scopeView.ScopeViewPane
 - createComponent():javax.swing.JComponent
 - createSelectInTarget():com.intellij.ide.SelectInTarget
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getIcon():javax.swing.Icon
 - getId():java.lang.String
 - getPresentableSubIdIcon(java.lang.String):javax.swing.Icon
@@ -17176,6 +17176,7 @@ f:com.intellij.ide.scopeView.ScopeViewPane
 - supportsHideEmptyMiddlePackages():Z
 - supportsShowExcludedFiles():Z
 - supportsShowModules():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateFromRoot(Z):com.intellij.openapi.util.ActionCallback
 - updateSelectedScope():V
 c:com.intellij.ide.scopeView.nodes.BasePsiNode
@@ -17323,7 +17324,6 @@ f:com.intellij.ide.scratch.ScratchTreeStructureProvider
 - com.intellij.openapi.project.DumbAware
 - <init>(com.intellij.openapi.project.Project):V
 - s:createRootNode(com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
-- getData(java.util.Collection,java.lang.String):java.lang.Object
 - s:getVirtualFile(com.intellij.ide.scratch.RootType):com.intellij.openapi.vfs.VirtualFile
 - modify(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection,com.intellij.ide.projectView.ViewSettings):java.util.Collection
 f:com.intellij.ide.scratch.ScratchesAndConsolesIndexSetContributor
@@ -17487,7 +17487,6 @@ c:com.intellij.ide.structureView.newStructureView.StructureViewComponent
 - s:createWrapper(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.TreeElement,com.intellij.ide.util.treeView.smartTree.TreeModel):com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
 - disableStoreState():V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getFileEditor():com.intellij.openapi.fileEditor.FileEditor
 - getHelpID():java.lang.String
 - getProject():com.intellij.openapi.project.Project
@@ -17509,6 +17508,7 @@ c:com.intellij.ide.structureView.newStructureView.StructureViewComponent
 - p:showScrollToFromSourceActions():Z
 - pf:showToolbar():V
 - storeState():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - s:unwrapNavigatable(java.lang.Object):java.lang.Object
 - s:unwrapValue(java.lang.Object):java.lang.Object
 - s:unwrapWrapper(java.lang.Object):java.lang.Object
@@ -17674,7 +17674,6 @@ a:com.intellij.ide.todo.TodoPanel
 - pa:createTreeBuilder(javax.swing.JTree,com.intellij.openapi.project.Project):com.intellij.ide.todo.TodoTreeBuilder
 - dispose():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getData(java.lang.String):java.lang.Object
 - getNextOccurenceActionName():java.lang.String
 - getPreviousOccurenceActionName():java.lang.String
 - p:getSelectedFile():com.intellij.psi.PsiFile
@@ -17687,6 +17686,7 @@ a:com.intellij.ide.todo.TodoPanel
 - hasPreviousOccurence():Z
 - p:rebuildWithAlarm(com.intellij.util.Alarm):V
 - p:setDisplayName(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware

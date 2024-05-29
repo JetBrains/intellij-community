@@ -40,6 +40,11 @@ f:com.intellij.ide.ui.UINumericRange
 - f:min:I
 - <init>(I,I,I):V
 - fit(I):I
+f:com.intellij.openapi.actionSystem.CompositeDataProvider
+- com.intellij.openapi.actionSystem.DataProvider
+- s:compose(com.intellij.openapi.actionSystem.DataProvider,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.DataProvider
+- s:compose(java.lang.Iterable):com.intellij.openapi.actionSystem.DataProvider
+- getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
 - getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
@@ -53,6 +58,36 @@ f:com.intellij.openapi.actionSystem.DataKey
 - is(java.lang.String):Z
 com.intellij.openapi.actionSystem.DataProvider
 - a:getData(java.lang.String):java.lang.Object
+com.intellij.openapi.actionSystem.DataSink
+- sf:Companion:com.intellij.openapi.actionSystem.DataSink$Companion
+- a:dataSnapshot(com.intellij.openapi.actionSystem.DataSnapshotProvider):V
+- a:lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
+- a:set(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
+- a:setNull(com.intellij.openapi.actionSystem.DataKey):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataProvider):V
+- s:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
+- s:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.EdtDataProvider):V
+f:com.intellij.openapi.actionSystem.DataSink$Companion
+- f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
+- f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
+com.intellij.openapi.actionSystem.DataSnapshot
+- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+com.intellij.openapi.actionSystem.DataSnapshotProvider
+- a:dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtDataProvider
+- getData(java.lang.String):java.lang.Object
+com.intellij.openapi.actionSystem.EdtDataProvider
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+com.intellij.openapi.actionSystem.EdtDataRule
+- s:forEachRule(java.util.function.Consumer):V
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+com.intellij.openapi.actionSystem.EdtNoGetDataProvider
+- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.DataSnapshotProvider
+- getData(java.lang.String):java.lang.Object
 com.intellij.openapi.ui.popup.BalloonHandler
 - a:hide():V
 com.intellij.openapi.ui.popup.LightweightWindow

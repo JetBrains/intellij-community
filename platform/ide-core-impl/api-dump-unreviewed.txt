@@ -120,6 +120,7 @@ a:com.intellij.ide.fileTemplates.FileTemplatesScheme
 c:com.intellij.ide.impl.DataManagerImpl
 - com.intellij.ide.DataManager
 - <init>():V
+- customizeDataContext(com.intellij.openapi.actionSystem.DataContext,java.lang.Object):com.intellij.openapi.actionSystem.DataContext
 - getCustomizedData(java.lang.String,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 - getDataContext():com.intellij.openapi.actionSystem.DataContext
 - getDataContext(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
@@ -342,17 +343,12 @@ f:com.intellij.notification.impl.NotificationParentGroupBean
 - a:getPermanentComponent():java.awt.Component
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
 - com.intellij.openapi.actionSystem.CustomizedDataContext
-- com.intellij.openapi.util.UserDataHolder
 - s:builder():com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
-- getParent():com.intellij.openapi.actionSystem.DataContext
 - s:getProjectContext(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.DataContext
-- getRawCustomData(java.lang.String):java.lang.Object
 - s:getSimpleContext(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(com.intellij.openapi.actionSystem.DataKey,java.lang.Object,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(java.lang.String,java.lang.Object,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(java.util.Map,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
-- getUserData(com.intellij.openapi.util.Key):java.lang.Object
-- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - add(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - addAll(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataKey[]):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder

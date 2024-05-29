@@ -6794,27 +6794,11 @@ f:com.intellij.ide.impl.TrustedProjectsStatistics
 - f:getTRUST_HOST_CHECKBOX_SELECTED():com.intellij.internal.statistic.eventLog.events.EventId
 - f:getTRUST_LOCATION_CHECKBOX_SELECTED():com.intellij.internal.statistic.eventLog.events.EventId
 - f:getTRUST_PROJECT_FROM_BANNER():com.intellij.internal.statistic.eventLog.events.EventId
-f:com.intellij.ide.impl.dataRules.CopyProviderRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-f:com.intellij.ide.impl.dataRules.CutProviderRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 f:com.intellij.ide.impl.dataRules.FileEditorRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V
 - getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-f:com.intellij.ide.impl.dataRules.InactiveEditorRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 f:com.intellij.ide.impl.dataRules.NavigatableArrayRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-f:com.intellij.ide.impl.dataRules.PasteProviderRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V
 - getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
@@ -13991,7 +13975,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - javax.swing.text.JTextComponent
 - com.intellij.ide.ui.UISettingsListener
 - com.intellij.internal.inspector.UiInspectorPreciseContextProvider
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.openapi.ui.Queryable
 - com.intellij.openapi.ui.TypingTarget
 - javax.accessibility.Accessible
@@ -14001,7 +13985,6 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - getBackground():java.awt.Color
 - getCaretPosition():I
-- getData(java.lang.String):java.lang.Object
 - getDocument():javax.swing.text.Document
 - getEditor():com.intellij.openapi.editor.impl.EditorImpl
 - getInputMethodRequests():java.awt.im.InputMethodRequests
@@ -14021,6 +14004,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - setCursor(java.awt.Cursor):V
 - setText(java.lang.String):V
 - type(java.lang.String):com.intellij.openapi.util.ActionCallback
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - updateUI():V
 f:com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl
@@ -21592,7 +21576,7 @@ c:com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 - getFileTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getProjectTitle(com.intellij.openapi.project.Project):java.lang.String
 c:com.intellij.openapi.wm.impl.ProjectFrameHelper
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtDataProvider
 - com.intellij.openapi.wm.IdeFrame
 - com.intellij.util.ui.accessibility.AccessibleContextAccessor
 - sf:Companion:com.intellij.openapi.wm.impl.ProjectFrameHelper$Companion
@@ -21602,7 +21586,6 @@ c:com.intellij.openapi.wm.impl.ProjectFrameHelper
 - getBalloonLayout():com.intellij.ui.BalloonLayout
 - getComponent():javax.swing.JComponent
 - getCurrentAccessibleContext():javax.accessibility.AccessibleContext
-- getData(java.lang.String):java.lang.Object
 - f:getFrame():com.intellij.openapi.wm.impl.IdeFrameImpl
 - sf:getFrameHelper(java.awt.Window):com.intellij.openapi.wm.impl.ProjectFrameHelper
 - getNorthExtension(java.lang.String):javax.swing.JComponent
@@ -21619,6 +21602,7 @@ c:com.intellij.openapi.wm.impl.ProjectFrameHelper
 - f:storeStateForReuse():V
 - suggestChildFrameBounds():java.awt.Rectangle
 - toggleFullScreen(Z):kotlinx.coroutines.Job
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:updateTitle(java.lang.String,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:updateView():V
 - windowClosing(com.intellij.openapi.project.Project):V
@@ -22081,7 +22065,7 @@ f:com.intellij.openapi.wm.impl.content.TabbedContentTabLabel
 - removeNotify():V
 - update():V
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.ui.content.ContentUI
 - sf:ALLOW_DND_FOR_TABS:com.intellij.openapi.util.Key
 - sf:DONT_HIDE_TOOLBAR_IN_HEADER:com.intellij.openapi.util.Key
@@ -22099,7 +22083,6 @@ f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 - getComponent():javax.swing.JComponent
 - getContentManager():com.intellij.ui.content.ContentManager
 - getCurrentLayout():com.intellij.openapi.wm.impl.content.ContentLayout
-- getData(java.lang.String):java.lang.Object
 - getNextContentActionName():java.lang.String
 - getPreviousContentActionName():java.lang.String
 - getTabComponent():javax.swing.JPanel
@@ -22117,6 +22100,7 @@ f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 - setType(com.intellij.openapi.wm.ToolWindowContentUiType):V
 - showContextMenu(java.awt.Component,I,I,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.ui.content.Content):V
 - s:toggleContentPopup(com.intellij.openapi.wm.impl.content.ToolWindowContentUi,com.intellij.ui.content.ContentManager):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - update():V
 f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi$TabPanel
 - com.intellij.ui.components.panels.NonOpaquePanel

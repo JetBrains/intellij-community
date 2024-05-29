@@ -2238,6 +2238,7 @@ a:com.intellij.openapi.editor.actionSystem.EditorActionHandler
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>():V
 - p:<init>(Z):V
+- s:caretDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.Caret):com.intellij.openapi.actionSystem.DataContext
 - p:doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 - execute(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):V
 - f:execute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
@@ -4702,7 +4703,7 @@ f:com.intellij.openapi.ui.ShadowAction
 - reconnect(com.intellij.openapi.actionSystem.AnAction):V
 c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.ui.components.JBPanelWithEmptyText
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.ui.switcher.QuickActionProvider
 - sf:SCROLLED_STATE:com.intellij.openapi.util.Key
 - p:myVertical:Z
@@ -4712,7 +4713,6 @@ c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - getActions(Z):java.util.List
 - getComponent():javax.swing.JComponent
 - getContent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getToolbar():javax.swing.JComponent
 - isToolbarVisible():Z
 - isVertical():Z
@@ -4721,6 +4721,7 @@ c:com.intellij.openapi.ui.SimpleToolWindowPanel
 - setProvideQuickActions(Z):com.intellij.openapi.ui.SimpleToolWindowPanel
 - setToolbar(javax.swing.JComponent):V
 - setVertical(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.openapi.ui.SplitterProportionsData
 - com.intellij.openapi.util.JDOMExternalizable
 - a:externalizeFromDimensionService(java.lang.String):V
@@ -10962,7 +10963,7 @@ a:com.intellij.ui.tabs.impl.JBEditorTabsPainter
 c:com.intellij.ui.tabs.impl.JBTabsImpl
 - javax.swing.JComponent
 - com.intellij.ide.ui.UISettingsListener
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - com.intellij.openapi.actionSystem.TimerListener
 - com.intellij.openapi.ui.Queryable
 - com.intellij.ui.switcher.QuickActionProvider
@@ -11013,7 +11014,6 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - getComponent():javax.swing.JComponent
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - sf:getComponentImage(com.intellij.ui.tabs.TabInfo):java.awt.Image
-- getData(java.lang.String):java.lang.Object
 - getDataProvider():com.intellij.openapi.actionSystem.DataProvider
 - f:getDecoration():com.intellij.ui.tabs.UiDecorator$UiDecoration
 - pf:getDragHelper():com.intellij.ui.tabs.impl.DragHelper
@@ -11165,6 +11165,7 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - sortTabs(java.util.Comparator):V
 - startDropOver(com.intellij.ui.tabs.TabInfo,com.intellij.ui.awt.RelativePoint):java.awt.Image
 - f:supportCompression():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - f:unHover(com.intellij.ui.tabs.impl.TabLabel):V
 - updateTabActions(Z):V
@@ -11304,7 +11305,7 @@ c:com.intellij.ui.tabs.impl.SingleHeightTabs$SingleHeightLabel
 - getPreferredSize():java.awt.Dimension
 c:com.intellij.ui.tabs.impl.TabLabel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
 - javax.accessibility.Accessible
 - p:actionPanel:com.intellij.ui.tabs.impl.ActionPanel
 - pf:label:com.intellij.ui.SimpleColoredComponent
@@ -11317,7 +11318,6 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - enableCompressionMode(Z):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
-- getData(java.lang.String):java.lang.Object
 - p:getEffectiveBackground():java.awt.Color
 - getInfo():com.intellij.ui.tabs.TabInfo
 - getLabelComponent():javax.swing.JComponent
@@ -11352,6 +11352,7 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - setText(com.intellij.ui.SimpleColoredText):V
 - p:shouldPaintFadeout():Z
 - toggleShowActions(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateTabActions():Z
 pc:com.intellij.ui.tabs.impl.TabLabel$AccessibleTabLabel
 - javax.swing.JPanel$AccessibleJPanel
