@@ -104,6 +104,7 @@ object CodeReviewDetailsStatusComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = CIBuildStatusIcons.failed
       text = CollaborationToolsBundle.message("review.details.status.conversations")
+      isVisible = false
       bindVisibilityIn(scope, requiredConversationsResolved)
     }
   }
