@@ -23,11 +23,14 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
 * @author zajac
@@ -36,6 +39,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private final Project myProject;
   private final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
   private final JLabel myLabel = new JLabel("", SwingConstants.CENTER);
+  private final Collection<EditorChangedListener> myEditorChangedListeners = new ArrayList<>();
 
   private Editor myEditor;
   private ItemWrapper myWrapper;
@@ -99,6 +103,9 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   public void setEditor(Editor editor) {
     myEditor = editor;
+    for (EditorChangedListener listener : myEditorChangedListeners) {
+      listener.editorChanged(editor);
+    }
   }
 
   @Override
@@ -210,5 +217,16 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     myDataHolderBase.putUserData(key, value);
+  }
+
+  @ApiStatus.Internal
+  public void addEditorChangedListener(EditorChangedListener listener) {
+    myEditorChangedListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  @FunctionalInterface
+  public interface EditorChangedListener {
+    void editorChanged(@Nullable Editor newEditor);
   }
 }
