@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
@@ -50,13 +48,5 @@ class GitLabProjectConnection(
     }
     catch (_: Exception) {
     }
-  }
-
-  fun checkIsOpen() {
-    (scope.coroutineContext[Job] ?: error("Missing job")).ensureActive()
-  }
-
-  companion object {
-    val KEY: Key<GitLabProjectConnection> = Key.create("GitLab.Project.Connection")
   }
 }
