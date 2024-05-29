@@ -272,8 +272,8 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
       .suppliedByOrganizations("AJ Alt"),
     LibraryLicense(name = "CMake For VisualStudio Code", attachedTo = "intellij.textmate", version = "0.0.17",
-                   url = "https://github.com/twxs/vs.language.cmake",
-                   licenseUrl = "https://github.com/twxs/vs.language.cmake/blob/master/LICENSE").mit(),
+                   url = "https://github.com/twxs/vs.language.cmake")
+      .mit("https://github.com/twxs/vs.language.cmake/blob/master/LICENSE"),
     LibraryLicense(name = "Command Line Interface Parser for Java", libraryName = "cli-parser",
                    url = "https://code.google.com/p/cli-parser/").apache(),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
@@ -546,8 +546,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/square/javapoet")
       .apache("https://github.com/square/javapoet/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Java Server Pages (JSP) for Visual Studio Code", attachedTo = "intellij.textmate", version = "0.0.3",
-                   url = "https://github.com/pthorsson/vscode-jsp",
-                   licenseUrl = "https://github.com/pthorsson/vscode-jsp/blob/master/LICENSE").mit(),
+                   url = "https://github.com/pthorsson/vscode-jsp")
+      .mit("https://github.com/pthorsson/vscode-jsp/blob/master/LICENSE"),
     LibraryLicense(name = "Java Simple Serial Connector", libraryName = "io.github.java.native.jssc",
                    url = "https://github.com/java-native/jssc", license = "LGPL 3.0",
                    licenseUrl = "https://github.com/java-native/jssc/blob/master/LICENSE.txt"),
@@ -865,6 +865,9 @@ object CommunityLibraryLicenses {
                    additionalLibraryNames = listOf("org.apache.maven.shared:maven-dependency-tree:1.2",
                                                    "org.apache.maven.archetype:archetype-common:2.2"),
                    version = "3.6.1", url = "https://maven.apache.org/").apache(),
+    LibraryLicense(name = "MDX for Visual Studio Code", attachedTo = "intellij.textmate", version = "1.8.7",
+                   url = "https://github.com/mdx-js/mdx-analyzer/tree/main/packages/vscode-mdx")
+      .mit("https://github.com/mdx-js/mdx-analyzer/blob/main/packages/vscode-mdx/LICENSE"),
     LibraryLicense(name = "Memory File System", libraryName = "memoryfilesystem",
                    url = "https://github.com/marschall/memoryfilesystem")
       .mit("https://github.com/marschall/memoryfilesystem#faq"),
@@ -1092,6 +1095,9 @@ object CommunityLibraryLicenses {
                    url = "https://tensorflow.org/lite").apache(),
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/doc/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "The Erlang LS extension for VSCode", attachedTo = "intellij.textmate", version = "0.0.43",
+                   url = "https://github.com/mblode/vscode-twig-language-2")
+      .apache("https://github.com/erlang-ls/vscode/blob/main/LICENSE.md"),
     LibraryLicense(name = "Thrift", libraryName = "libthrift", url = "https://thrift.apache.org/")
       .apache("https://github.com/apache/thrift/blob/master/LICENSE"),
     LibraryLicense(name = "thriftpy2", attachedTo = "intellij.python", version = "0.4.13",
@@ -1129,12 +1135,18 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "Velocity", url = "https://velocity.apache.org/")
       .apache("https://gitbox.apache.org/repos/asf?p=velocity-engine.git;a=blob_plain;f=LICENSE;hb=HEAD")
       .suppliedByOrganizations("The Apache Software Foundation"),
+    LibraryLicense(name = "Vim Script language support for Atom", attachedTo = "intellij.textmate", version = "1.2.1",
+                   url = "https://github.com/AlexPl292/language-viml")
+      .mit("https://github.com/AlexPl292/language-viml/blob/master/LICENSE.txt"),
     LibraryLicense(name = "virtualenv", attachedTo = "intellij.python", version = "20.13.0",
                    url = "https://virtualenv.pypa.io/")
       .mit("https://github.com/pypa/virtualenv/blob/main/LICENSE"),
-    LibraryLicense(name = "Visual Studio Code", attachedTo = "intellij.textmate", version = "1.33.1",
-                   url = "https://github.com/Microsoft/vscode/",
-                   licenseUrl = "https://github.com/Microsoft/vscode-react-native/blob/master/LICENSE.txt").mit(),
+    LibraryLicense(name = "Visual Studio Code", attachedTo = "intellij.textmate", version = "1.90.0",
+                   url = "https://github.com/Microsoft/vscode/")
+      .mit("https://github.com/Microsoft/vscode-react-native/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "VS Code Twig Language 2", attachedTo = "intellij.textmate", version = "0.9.4",
+                   url = "https://github.com/mblode/vscode-twig-language-2")
+      .mit("https://github.com/mblode/vscode-twig-language-2/blob/master/LICENSE.md"),
     LibraryLicense(name = "weberknecht", libraryName = "weberknecht-0.1.5.jar", version = "0.1.5",
                    url = "https://github.com/pelotoncycle/weberknecht")
       .apache("https://github.com/pelotoncycle/weberknecht/blob/master/src/de/roderick/weberknecht/WebSocket.java"),

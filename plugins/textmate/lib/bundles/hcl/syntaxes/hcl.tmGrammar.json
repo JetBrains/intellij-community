@@ -82,7 +82,7 @@
     },
     "block": {
       "name": "meta.block.hcl",
-      "begin": "([\\w][\\-\\w]*)([^?{\\r\\n]*)(\\{)",
+      "begin": "([\\w][\\-\\w]*)([^?\\r\\n]*)(\\{)",
       "end": "\\}",
       "comment": "This will match HCL blocks like `thing1 \"one\" \"two\" {` or `thing2 {`",
       "beginCaptures": {
