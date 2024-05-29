@@ -24,7 +24,7 @@ import kotlin.io.path.*
 internal object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
   private const val INFO = "info.json"
-  private const val PLUGINS = "plugins.json"
+  const val PLUGINS = "plugins.json"
 
   private val LOG = logger<SettingsSnapshotZipSerializer>()
 

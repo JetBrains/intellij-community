@@ -262,8 +262,8 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     val settings = SettingsSyncSettings.getInstance()
     return settings.isCategoryEnabled(category) &&
            (category != SettingsCategory.PLUGINS ||
-            isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID) ||
-            settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, id.idString))
+            (isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID)) ||
+            (!isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, id.idString)))
   }
 
   override fun dispose() {
@@ -320,13 +320,17 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
               LOG.warn("got ${ed(enable)} info about non-existing plugin ${pluginDescriptor.pluginId}")
               continue
             }
+            if (!isPluginSyncEnabled(plugin)) {
+              LOG.info("Sync of state of ${plugin.pluginId} is disabled. Won't touch its info in ${SettingsSnapshotZipSerializer.PLUGINS}")
+              continue
+            }
             if (plugin.isEnabled != enable) {
               LOG.info("State of plugin ${pluginDescriptor.pluginId} is inconsistent: received ${ed(enable)} event, " +
                        "but plugin is ${ed(plugin.isEnabled)}d. Probably, a restart is required.")
             }
             if (plugin.isBundled && enable) {
               newPlugins.remove(pluginDescriptor.pluginId)
-              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d. Will remove its info from plugins.json")
+              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d. Will remove its info from ${com.intellij.settingsSync.SettingsSnapshotZipSerializer.PLUGINS}")
             }
             else {
               newPlugins[pluginDescriptor.pluginId] = getPluginData(pluginDescriptor, enable)
