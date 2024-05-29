@@ -12,9 +12,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Extend this provider for:
@@ -93,21 +93,17 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
       .getApplication()
       .executeOnPooledThread(() -> progressManager.runProcess(() -> getItems(prefix, false, parameters), indicator));
 
-    while (true) {
-      try {
-        Collection<T> tasks = future.get(100, TimeUnit.MILLISECONDS);
-        if (tasks != null) {
-          addCompletionElements(result, this, tasks, 0);
-          return;
-        }
+    try {
+      Collection<T> tasks = ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
+      if (tasks != null) {
+        addCompletionElements(result, this, tasks, 0);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception ignore) {
-
-      }
-      ProgressManager.checkCanceled();
+    }
+    catch (CancellationException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
