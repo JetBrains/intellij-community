@@ -3936,7 +3936,6 @@ f:com.intellij.openapi.vcs.ex.DocumentTracker
 - f:readLock(kotlin.jvm.functions.Function0):java.lang.Object
 - f:refreshDirty(Z,Z):V
 - bs:refreshDirty$default(com.intellij.openapi.vcs.ex.DocumentTracker,Z,Z,I,java.lang.Object):V
-- f:removeHandler(com.intellij.openapi.vcs.ex.DocumentTracker$Handler):V
 - f:replaceDocument(com.intellij.diff.util.Side,com.intellij.openapi.editor.Document):V
 - f:setFrozenState(java.lang.CharSequence,java.lang.CharSequence,java.util.List):Z
 - f:setFrozenState(java.util.List):Z
@@ -4146,6 +4145,7 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 - pf:updateHighlighters():V
 f:com.intellij.openapi.vcs.ex.LineStatusTrackerBase$Companion
 - f:createVcsDocument(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
+- f:createVcsDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
 - f:getSEPARATE_UNDO_STACK():com.intellij.openapi.util.Key
 - f:updateDocument(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,java.lang.String,kotlin.jvm.functions.Function1):Z
 pa:com.intellij.openapi.vcs.ex.LineStatusTrackerBase$InnerRangesDocumentTrackerHandler

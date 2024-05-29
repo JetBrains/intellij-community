@@ -282,8 +282,10 @@ abstract class LineStatusTrackerBase<R : Range>(
     private val VCS_DOCUMENT_KEY: Key<Boolean> = Key.create("LineStatusTrackerBase.VCS_DOCUMENT_KEY")
     val SEPARATE_UNDO_STACK: Key<Boolean> = Key.create("LineStatusTrackerBase.SEPARATE_UNDO_STACK")
 
-    fun createVcsDocument(originalDocument: Document): Document {
-      val result = DocumentImpl(originalDocument.immutableCharSequence, true)
+    fun createVcsDocument(originalDocument: Document): Document = createVcsDocument(originalDocument.immutableCharSequence)
+
+    fun createVcsDocument(content: CharSequence): Document {
+      val result = DocumentImpl(content, true)
       UndoUtil.disableUndoFor(result)
       result.putUserData(VCS_DOCUMENT_KEY, true)
       result.setReadOnly(true)
