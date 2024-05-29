@@ -124,9 +124,8 @@ private fun guessMaxPathLength(relativePath: String?, files: List<String>): Int 
   // NOTE: The AppData path for non-admin installation might be longer than the one in Program Files, so let's consider that here.
   // Also, "IntelliJ IDEA Community Edition" is the longest product name so far.
   val instDirGuessedLength = "C:\\Users\\some-reasonably-long-user-name\\AppData\\Local\\JetBrains\\IntelliJ IDEA Community Edition 2024.1.2.SNAPSHOT\\".length + 10
-  if (files.isEmpty()) return (relativePath?.length?.let { it + 1 } ?: 0) + instDirGuessedLength
-
-  return instDirGuessedLength + (relativePath?.length?.let { it + 1 } ?: 0) + files.maxOf { it.length }
+  val directoryPathLength = instDirGuessedLength + (relativePath?.length?.let { it + 1 /* backslash */ } ?: 0)
+  return directoryPathLength + (files.maxOfOrNull { it.length } ?: 0)
 }
 
 private const val MAX_PATH = 260
