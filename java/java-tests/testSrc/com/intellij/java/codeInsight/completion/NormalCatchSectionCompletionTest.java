@@ -116,6 +116,12 @@ public class NormalCatchSectionCompletionTest extends NormalCompletionTestCase {
     simpleTestCatchSection(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"));
   }
 
+
+  @NeedsIndex.ForStandardLibrary
+  public void testUnhandledCheckedExceptionsWithNullType() {
+    simpleTestCatchSection(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"));
+  }
+
   private void simpleTestCatchSection(@NotNull List<String> catches) {
     configure();
 
