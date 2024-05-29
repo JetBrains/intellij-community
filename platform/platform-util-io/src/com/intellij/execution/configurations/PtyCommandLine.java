@@ -175,7 +175,6 @@ public class PtyCommandLine extends GeneralCommandLine {
   public static @NotNull LocalPtyOptions getDefaultPtyOptions() {
     return LocalPtyOptions.DEFAULT.builder()
       .consoleMode(true)
-      .useWinConPty(LocalPtyOptions.shouldUseWinConPty())
       .build();
   }
 }

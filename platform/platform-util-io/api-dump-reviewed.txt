@@ -281,3 +281,24 @@ c:com.intellij.execution.process.KillableProcessHandler
 - setShouldKillProcessSoftly(Z):V
 - *:setShouldKillProcessSoftlyWithWinP(Z):V
 - shouldKillProcessSoftly():Z
+f:com.intellij.execution.process.LocalPtyOptions
+- sf:Companion:com.intellij.execution.process.LocalPtyOptions$Companion
+- sf:DEFAULT:com.intellij.execution.process.LocalPtyOptions
+- f:builder():com.intellij.execution.process.LocalPtyOptions$Builder
+- f:getConsoleMode():Z
+- f:getInitialColumns():I
+- f:getInitialRows():I
+- f:getUseCygwinLaunch():Z
+- f:getUseWinConPty():Z
+f:com.intellij.execution.process.LocalPtyOptions$Builder
+- f:build():com.intellij.execution.process.LocalPtyOptions
+- f:consoleMode():Z
+- f:consoleMode(Z):com.intellij.execution.process.LocalPtyOptions$Builder
+- f:initialColumns():I
+- f:initialColumns(I):com.intellij.execution.process.LocalPtyOptions$Builder
+- f:initialRows():I
+- f:initialRows(I):com.intellij.execution.process.LocalPtyOptions$Builder
+- f:set(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.process.LocalPtyOptions$Builder
+- f:useCygwinLaunch():Z
+- f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
+f:com.intellij.execution.process.LocalPtyOptions$Companion

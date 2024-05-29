@@ -290,7 +290,6 @@ f:com.intellij.execution.process.LocalPtyOptions
 - f:getInitialRows():I
 - f:getUseCygwinLaunch():Z
 - f:getUseWinConPty():Z
-- sf:shouldUseWinConPty():Z
 f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:build():com.intellij.execution.process.LocalPtyOptions
 - f:consoleMode():Z
@@ -302,10 +301,7 @@ f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:set(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:useCygwinLaunch():Z
 - f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
-- f:useWinConPty():Z
-- f:useWinConPty(Z):com.intellij.execution.process.LocalPtyOptions$Builder
 f:com.intellij.execution.process.LocalPtyOptions$Companion
-- f:shouldUseWinConPty():Z
 c:com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.process.BaseOSProcessHandler
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
