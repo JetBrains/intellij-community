@@ -2180,6 +2180,41 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkResolveConstructorCallFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Test.kt", """
+                package test.pkg
+
+                open class Test(
+                    val p: String
+                )
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.Test
+                
+                object : Test("hi")
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                val resolved = node.resolve()
+                TestCase.assertNotNull(resolved)
+
+                TestCase.assertTrue(resolved!!.isConstructor)
+                val containingClass = resolved.containingClass
+                TestCase.assertEquals("Test", containingClass?.name)
+
+                return super.visitCallExpression(node)
+            }
+        })
+
+        mockLibraryFacility.tearDown(myFixture.module)
+    }
+
     fun checkResolveTopLevelInlineReifiedFromLibrary(myFixture: JavaCodeInsightTestFixture, withJvmName: Boolean) {
         val anno = if (withJvmName) "@file:JvmName(\"Mocking\")" else ""
         val mockLibraryFacility = myFixture.configureLibraryByText(

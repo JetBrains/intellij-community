@@ -280,6 +280,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolvePropertiesInInnerClassFromBinaryDependency(myFixture)
     }
 
+    fun testResolveConstructorCallFromLibrary() {
+        checkResolveConstructorCallFromLibrary(myFixture)
+    }
+
     fun testResolveTopLevelInlineReifiedFromLibrary() {
         checkResolveTopLevelInlineReifiedFromLibrary(myFixture, withJvmName = false)
     }

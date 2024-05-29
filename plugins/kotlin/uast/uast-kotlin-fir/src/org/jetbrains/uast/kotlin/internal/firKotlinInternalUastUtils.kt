@@ -213,7 +213,9 @@ private fun toPsiMethodForDeserialized(
     }
 
     // Deserialized member function
-    functionSymbol.callableId?.classId?.let { classId ->
+    val classId = psi?.containingClass()?.getClassId()
+        ?: functionSymbol.callableId?.classId
+    if (classId != null) {
         toPsiClass(
             buildClassType(classId),
             source = null,
