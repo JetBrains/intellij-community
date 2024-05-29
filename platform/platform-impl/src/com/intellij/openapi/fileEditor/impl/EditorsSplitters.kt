@@ -121,8 +121,8 @@ open class EditorsSplitters internal constructor(
 
   private val _currentWindowFlow = MutableStateFlow<EditorWindow?>(null)
 
-  private val _currentCompositeFlow: MutableStateFlow<EditorComposite?> = MutableStateFlow(null)
-  internal val currentCompositeFlow: StateFlow<EditorComposite?> = _currentCompositeFlow.asStateFlow()
+  @JvmField
+  internal val currentCompositeFlow: StateFlow<EditorComposite?>
 
   val currentWindow: EditorWindow?
     get() = _currentWindowFlow.value
@@ -199,6 +199,13 @@ open class EditorsSplitters internal constructor(
     coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
       iconUpdateChannel.start()
     }
+
+    @Suppress("OPT_IN_USAGE")
+    currentCompositeFlow = _currentWindowFlow
+      .flatMapLatest {
+        it?.currentCompositeFlow ?: flowOf(null)
+      }
+      .stateIn(coroutineScope, SharingStarted.Lazily, null)
 
     coroutineScope.launch(CoroutineName("EditorSplitters frame title update")) {
       currentCompositeFlow.collectLatest { _ ->
@@ -297,7 +304,6 @@ open class EditorsSplitters internal constructor(
 
   fun closeAllFiles(repaint: Boolean = true) {
     val oldWindow = _currentWindowFlow.value
-    val oldComposite = currentCompositeFlow.value
 
     val windows = windows.toList()
     this.windows.clear()
@@ -319,14 +325,10 @@ open class EditorsSplitters internal constructor(
     if (oldWindow != null) {
       _currentWindowFlow.compareAndSet(oldWindow, null)
     }
-    if (oldComposite != null) {
-      _currentCompositeFlow.compareAndSet(oldComposite, null)
-    }
   }
 
   internal fun setCurrentWindowAndComposite(window: EditorWindow?) {
     _currentWindowFlow.value = window
-    _currentCompositeFlow.value = window?.selectedComposite
   }
 
   @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
@@ -631,7 +633,6 @@ open class EditorsSplitters internal constructor(
     add(window.component, BorderLayout.CENTER)
     windows.add(window)
     _currentWindowFlow.value = window
-    _currentCompositeFlow.value = window.selectedComposite
   }
 
   /**
@@ -657,14 +658,11 @@ open class EditorsSplitters internal constructor(
   internal fun addWindow(window: EditorWindow) {
     windows.add(window)
     _currentWindowFlow.compareAndSet(null, window)
-    _currentCompositeFlow.compareAndSet(null, window.selectedComposite)
   }
 
   internal fun removeWindow(window: EditorWindow) {
-    val selectedComposite = window.selectedComposite
     windows.remove(window)
     _currentWindowFlow.compareAndSet(window, null)
-    _currentCompositeFlow.compareAndSet(selectedComposite, null)
   }
 
   fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
@@ -729,7 +727,6 @@ open class EditorsSplitters internal constructor(
       // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
       val window = findWindowWith(component) ?: return
       _currentWindowFlow.value = window
-      _currentCompositeFlow.value = window.selectedComposite
     }
   }
 

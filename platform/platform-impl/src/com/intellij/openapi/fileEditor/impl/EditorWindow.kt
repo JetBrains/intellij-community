@@ -39,11 +39,15 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tabs.TabInfo
+import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -145,7 +149,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     get() = selectedComposite as EditorWithProviderComposite?
 
   val selectedComposite: EditorComposite?
-    get() = tabbedPane.tabs.targetInfo?.composite
+    get() = currentCompositeFlow.value
 
   @Suppress("DEPRECATION")
   @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
@@ -160,7 +164,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
    */
   @Suppress("MemberVisibilityCanBePrivate", "unused")
   fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
-    return (tabbedPane.getSelectedComponent(ignorePopup) as? EditorCompositePanel)?.composite
+    return if (ignorePopup) tabbedPane.tabs.selectedInfo?.composite else selectedComposite
   }
 
   val allComposites: List<EditorComposite>
@@ -182,13 +186,23 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   @RequiresEdt
   internal fun files(): Sequence<VirtualFile> = composites().map { it.file }
 
+  private val _currentCompositeFlow: MutableStateFlow<EditorComposite?> = MutableStateFlow(null)
+  @JvmField
+  internal val currentCompositeFlow: StateFlow<EditorComposite?> = _currentCompositeFlow.asStateFlow()
+
   init {
     // tab layout policy
     tabbedPane.tabs.presentation.setSingleRow(UISettings.getInstance().scrollTabLayoutInEditor)
     updateTabsVisibility()
+
+    tabbedPane.tabs.addListener(object : TabsListener {
+      override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+        _currentCompositeFlow.value = newSelection?.composite
+      }
+    })
   }
 
-  internal enum class RelativePosition(val swingConstant: Int) {
+  internal enum class RelativePosition(@JvmField val swingConstant: Int) {
     CENTER(SwingConstants.CENTER),
     UP(SwingConstants.TOP),
     LEFT(SwingConstants.LEFT),
