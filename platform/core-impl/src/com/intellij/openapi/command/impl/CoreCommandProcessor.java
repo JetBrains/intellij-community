@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -64,7 +65,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<>();
   private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myUndoTransparentCount;
-  private boolean myAllowMergeGlobalCommands;
+  private int myAllowMergeGlobalCommandsCount = 0;
 
   private final CommandListener eventPublisher;
 
@@ -430,21 +431,29 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public Boolean isMergeGlobalCommandsAllowed() {
-    return myAllowMergeGlobalCommands;
+    return myAllowMergeGlobalCommandsCount > 0;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public AccessToken allowMergeGlobalCommands() {
+    ThreadingAssertions.assertWriteIntentReadAccess();
+    myAllowMergeGlobalCommandsCount++;
+
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        ThreadingAssertions.assertWriteIntentReadAccess();
+        myAllowMergeGlobalCommandsCount--;
+      }
+    };
   }
 
   @Override
   public void allowMergeGlobalCommands(@NotNull Runnable action) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    if (myAllowMergeGlobalCommands) {
+    try (AccessToken ignored = allowMergeGlobalCommands()) {
       action.run();
-    }
-
-    myAllowMergeGlobalCommands = true;
-    try {
-      action.run();
-    } finally {
-      myAllowMergeGlobalCommands = false;
     }
   }
 
