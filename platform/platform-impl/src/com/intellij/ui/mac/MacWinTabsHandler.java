@@ -20,7 +20,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
@@ -257,7 +256,7 @@ public class MacWinTabsHandler {
     boolean visible = height > 0;
     boolean oldVisible = filler.isVisible();
     filler.setVisible(visible);
-    filler.setPreferredSize(new JBDimension(-1, height));
+    filler.setPreferredSize(new Dimension(-1, height)); // native header doesn't scale
 
     Container parent = filler.getParent();
     if (parent == null || oldVisible == visible) {
