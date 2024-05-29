@@ -18,7 +18,7 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
 ) {
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("moduleDependents")
+        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-platform").resolve("testData").resolve("moduleDependents")
 
     private val moduleDependentsProvider get() = KotlinModuleDependentsProvider.getInstance(project)
 

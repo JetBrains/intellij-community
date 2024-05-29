@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" scope="RUNTIME" />
@@ -71,7 +71,7 @@
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />

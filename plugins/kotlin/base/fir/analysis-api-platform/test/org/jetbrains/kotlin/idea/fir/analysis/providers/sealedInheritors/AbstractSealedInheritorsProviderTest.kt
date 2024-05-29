@@ -21,7 +21,7 @@ abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTe
 ) {
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sealedInheritors")
+        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-platform").resolve("testData").resolve("sealedInheritors")
 
     override fun doTestWithProjectStructure(testDirectory: String) {
         testProjectStructure.targets.forEach { checkTargetFile(it, testDirectory) }

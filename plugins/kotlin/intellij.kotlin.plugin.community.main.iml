@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="kotlin.base.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.base.platforms" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" exported="" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" exported="" />
@@ -33,12 +33,12 @@
     <orderEntry type="module" module-name="kotlin.base.obsolete-compat" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis-api-providers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis-api-platform" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" exported="" />

@@ -37,7 +37,7 @@
   </projectListeners>
 
   <dependencies>
-    <module name="kotlin.base.analysis-api-providers"/>
+    <module name="kotlin.base.analysis-api-platform"/>
     <module name="kotlin.searching.k2"/>
   </dependencies>
 

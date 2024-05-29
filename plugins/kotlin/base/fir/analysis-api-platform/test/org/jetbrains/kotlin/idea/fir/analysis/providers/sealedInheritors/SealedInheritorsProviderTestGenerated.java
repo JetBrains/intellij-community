@@ -15,7 +15,7 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("base/fir/analysis-api-providers")
+@TestRoot("base/fir/analysis-api-platform")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/sealedInheritors")

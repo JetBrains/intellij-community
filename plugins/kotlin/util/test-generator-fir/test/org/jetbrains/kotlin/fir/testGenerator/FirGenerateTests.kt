@@ -85,7 +85,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2SearchTests()
     generateK2RefIndexTests()
 
-    testGroup("base/fir/analysis-api-providers") {
+    testGroup("base/fir/analysis-api-platform") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
         }

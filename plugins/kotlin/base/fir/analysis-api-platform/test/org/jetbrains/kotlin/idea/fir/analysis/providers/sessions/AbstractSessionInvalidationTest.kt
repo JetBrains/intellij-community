@@ -18,7 +18,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
 ) {
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sessionInvalidation")
+        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-platform").resolve("testData").resolve("sessionInvalidation")
 
     protected abstract fun publishModificationEvents()
 

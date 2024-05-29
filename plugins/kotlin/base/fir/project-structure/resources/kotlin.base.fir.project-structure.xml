@@ -5,6 +5,6 @@
   </projectListeners>
 
   <dependencies>
-    <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.base.fir.analysis-api-platform"/>
   </dependencies>
 </idea-plugin>
