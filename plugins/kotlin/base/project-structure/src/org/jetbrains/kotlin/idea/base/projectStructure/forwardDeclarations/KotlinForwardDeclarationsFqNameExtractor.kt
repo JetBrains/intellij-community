@@ -11,7 +11,7 @@ import java.util.Properties
  * Utility functions for grouping K/N forward declarations from a native manifest properties or a [NativeKlibLibraryInfo].
  * Grouped declaration [FqName]s share the same package and so the same [org.jetbrains.kotlin.name.NativeForwardDeclarationKind].
  */
-object KotlinForwardDeclarationsFqNameExtractor {
+internal object KotlinForwardDeclarationsFqNameExtractor {
     fun getGroupedForwardDeclarations(libraryInfo: NativeKlibLibraryInfo): Map<FqName, List<FqName>> {
         val fqNames = getForwardDeclarationFqNames(libraryInfo)
         return groupByPackage(fqNames)

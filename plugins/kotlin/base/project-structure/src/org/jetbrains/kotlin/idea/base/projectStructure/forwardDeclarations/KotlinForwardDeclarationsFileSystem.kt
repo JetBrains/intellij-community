@@ -41,7 +41,7 @@ abstract class KotlinForwardDeclarationsFileSystem : NewVirtualFileSystem() {
  */
 // TODO: KTIJ-29679 rethink the design or drop altogether.
 // TODO: KTIJ-29679 potential problem with long paths after nesting under the storage root.
-class KotlinForwardDeclarationsFileSystemImpl : KotlinForwardDeclarationsFileSystem() {
+internal class KotlinForwardDeclarationsFileSystemImpl : KotlinForwardDeclarationsFileSystem() {
     override fun extractRootPath(normalizedPath: String): String {
         return normalizedPath // TODO: KTIJ-29679
     }

@@ -35,7 +35,7 @@ import java.io.File
  * @see [KotlinForwardDeclarationsFileGenerator]
  */
 @Suppress("LightServiceMigrationCode") // K2-only service
-class KotlinForwardDeclarationsModelChangeService(private val project: Project, cs: CoroutineScope) {
+internal class KotlinForwardDeclarationsModelChangeService(private val project: Project, cs: CoroutineScope) {
     init {
         if (Registry.`is`("kotlin.k2.kmp.enabled")) {
             cs.launch {
@@ -126,7 +126,7 @@ class KotlinForwardDeclarationsModelChangeService(private val project: Project, 
 /**
  * Request [KotlinForwardDeclarationsModelChangeService] on startup to start receiving workspace model update events.
  */
-class KotlinForwardDeclarationsStartupActivity : ProjectActivity {
+internal class KotlinForwardDeclarationsStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         if (!Registry.`is`("kotlin.k2.kmp.enabled")) return
 

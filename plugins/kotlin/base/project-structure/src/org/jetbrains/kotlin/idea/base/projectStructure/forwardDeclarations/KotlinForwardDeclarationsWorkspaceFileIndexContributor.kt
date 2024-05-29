@@ -11,13 +11,19 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
  * File Index Contributor of generated K/N forward declaration files.
  * They are not part of the project and require explicit indexing registration.
  *
- * @see [KotlinForwardDeclarationsFileGenerator], [KotlinForwardDeclarationsModelChangeService]
+ * @see [KotlinForwardDeclarationsFileGenerator]
+ * @see [KotlinForwardDeclarationsModelChangeService]
  */
-class KotlinForwardDeclarationsWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinForwardDeclarationsWorkspaceEntity> {
+internal class KotlinForwardDeclarationsWorkspaceFileIndexContributor :
+    WorkspaceFileIndexContributor<KotlinForwardDeclarationsWorkspaceEntity> {
     override val entityClass: Class<KotlinForwardDeclarationsWorkspaceEntity>
         get() = KotlinForwardDeclarationsWorkspaceEntity::class.java
 
-    override fun registerFileSets(entity: KotlinForwardDeclarationsWorkspaceEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    override fun registerFileSets(
+        entity: KotlinForwardDeclarationsWorkspaceEntity,
+        registrar: WorkspaceFileSetRegistrar,
+        storage: EntityStorage,
+    ) {
         if (!Registry.`is`("kotlin.k2.kmp.enabled")) return
 
         entity.forwardDeclarationRoots.forEach { fwdDeclarationRootUrl ->

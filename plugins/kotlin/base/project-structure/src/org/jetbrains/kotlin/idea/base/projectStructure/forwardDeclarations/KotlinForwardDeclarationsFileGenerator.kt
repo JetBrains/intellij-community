@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
@@ -14,7 +14,7 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
-private val LOG = Logger.getInstance(KotlinForwardDeclarationsFileGenerator::class.java)
+private val LOG = logger<KotlinForwardDeclarationsFileGenerator>()
 
 /**
  * Generator of synthetic K/N forward declaration files.
@@ -27,11 +27,11 @@ private val LOG = Logger.getInstance(KotlinForwardDeclarationsFileGenerator::cla
  * The generated declarations are grouped into files by package.
  * The exact form of the declaration depends on the package, see [org.jetbrains.kotlin.name.NativeForwardDeclarationKind].
  *
- * @see
- * [KotlinForwardDeclarationsWorkspaceEntity] workspace model entity for storing the information about the extra roots
- * [KotlinForwardDeclarationsModelChangeService] service responsible for launching the generation
+ * See also:
+ * [KotlinForwardDeclarationsWorkspaceEntity] workspace model entity for storing the information about the extra roots.
+ * [KotlinForwardDeclarationsModelChangeService] service responsible for launching the generation.
  */
-object KotlinForwardDeclarationsFileGenerator {
+internal object KotlinForwardDeclarationsFileGenerator {
     fun generateForwardDeclarationFiles(libraryInfo: NativeKlibLibraryInfo): Path? {
         if (!Registry.`is`("kotlin.k2.kmp.enabled")) return null
 
@@ -41,8 +41,7 @@ object KotlinForwardDeclarationsFileGenerator {
 
     private fun generateForwardDeclarationsForFqNames(groupedFqNames: Map<FqName, List<FqName>>, libraryPath: String): Path {
         val root = KotlinForwardDeclarationsFileSystem.storageRootPath
-        val subPath = libraryPath.let { if (it.startsWith("/")) it.drop(1) else it }
-        val libraryLocation = root.resolve(subPath)
+        val libraryLocation = root.resolve(libraryPath.removePrefix("/"))
 
         groupedFqNames.mapNotNull { (pkg, classes) ->
             val kind = NativeForwardDeclarationKind.packageFqNameToKind[pkg] ?: run {
@@ -52,9 +51,9 @@ object KotlinForwardDeclarationsFileGenerator {
 
             generateFile(libraryLocation, pkg, kind, classes)
         }
-        val virtualRootFile = VfsUtil.findFile(root, true)
+        val virtualRootFile = VfsUtil.findFile(root, /* refreshIfNeeded = */ true)
         virtualRootFile?.let {
-            VfsUtil.markDirty(true, true, it)
+            VfsUtil.markDirty(/* recursive = */ true, /* reloadChildren = */ true, it)
         }
         return libraryLocation
     }
