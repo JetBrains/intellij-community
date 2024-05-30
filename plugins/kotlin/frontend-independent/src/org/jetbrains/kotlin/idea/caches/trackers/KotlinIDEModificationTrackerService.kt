@@ -8,14 +8,18 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinIDEModificationTrackerService(project: Project) : KotlinModificationTrackerService() {
+class KotlinIDEModificationTrackerService(private val project: Project) : KotlinModificationTrackerService() {
     override val modificationTracker: ModificationTracker = PsiModificationTracker.getInstance(project)
 
     override val outOfBlockModificationTracker: ModificationTracker =
         KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+
+    override val allLibrariesModificationTracker: ModificationTracker
+        get() = KotlinModificationTrackerFactory.getInstance(project).createLibrariesWideModificationTracker()
 
     override fun fileModificationTracker(file: KtFile): ModificationTracker =
         file.perFileModificationTracker
@@ -23,6 +27,7 @@ class KotlinIDEModificationTrackerService(project: Project) : KotlinModification
     companion object {
         @TestOnly
         fun invalidateCaches(project: Project) {
+            // We only want to clear source caches, so `allLibrariesModificationTracker` is not incremented.
             project.getService(KotlinModificationTrackerService::class.java).apply {
                 (outOfBlockModificationTracker as SimpleModificationTracker).incModificationCount()
 

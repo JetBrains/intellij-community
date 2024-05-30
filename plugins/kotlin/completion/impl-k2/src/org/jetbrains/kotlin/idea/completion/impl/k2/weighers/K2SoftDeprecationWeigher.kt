@@ -30,7 +30,7 @@ fun addWeight(
     }
 
     private fun isLibrarySoftDeprecatedMethod(symbol: KtCallableSymbol, languageVersionSettings: LanguageVersionSettings): Boolean {
-        val fqName = symbol.callableIdIfNonLocal?.asSingleFqName()
+        val fqName = symbol.callableId?.asSingleFqName()
         return fqName != null &&
                 SoftDeprecationWeigher.isSoftDeprecatedFqName(fqName, languageVersionSettings)
     }

@@ -369,7 +369,7 @@ fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
         ?.singleFunctionCallOrNull()
         ?.partiallyAppliedSymbol
         ?.symbol
-        ?.callableIdIfNonLocal
+        ?.callableId
         ?.asSingleFqName()
         ?: return false
     return targetFqNames.any { it == fqName }

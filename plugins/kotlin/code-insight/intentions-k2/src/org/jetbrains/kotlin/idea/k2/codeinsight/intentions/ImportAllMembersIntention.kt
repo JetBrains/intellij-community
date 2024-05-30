@@ -54,7 +54,7 @@ internal class ImportAllMembersIntention :
     override fun prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
         val target = actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
-        val classId = target.classIdIfNonLocal ?: return null
+        val classId = target.classId ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&
             (target.classKind == KtClassKind.OBJECT ||
                     // One cannot use on-demand import for properties or functions declared inside objects
@@ -69,7 +69,7 @@ internal class ImportAllMembersIntention :
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
             classShortenStrategy = {
-                if (it.classIdIfNonLocal?.isNestedClassIn(classId) == true) {
+                if (it.classId?.isNestedClassIn(classId) == true) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
                     ShortenStrategy.DO_NOT_SHORTEN
@@ -78,9 +78,9 @@ internal class ImportAllMembersIntention :
             callableShortenStrategy = {
                 if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
                 val containingClassId = if (it is KtConstructorSymbol) {
-                    it.containingClassIdIfNonLocal?.outerClassId
+                    it.containingClassId?.outerClassId
                 } else {
-                    it.callableIdIfNonLocal?.classId
+                    it.callableId?.classId
                 }
                 if (containingClassId == classId) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
@@ -158,7 +158,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
 private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KtClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
 
 private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
-    target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableIdIfNonLocal?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
+    target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 
 private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()
@@ -177,7 +177,7 @@ private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirecti
             is KtNameReferenceExpression -> mainReference.resolveToSymbol()
             else -> return false
         } ?: return false
-        val referencedName = (referencedSymbol as? KtCallableSymbol)?.callableIdIfNonLocal?.callableName ?: return false
+        val referencedName = (referencedSymbol as? KtCallableSymbol)?.callableId?.callableName ?: return false
         return referencedSymbol.psi?.kotlinFqName == importedEnumFqName && referencedName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
     }
 

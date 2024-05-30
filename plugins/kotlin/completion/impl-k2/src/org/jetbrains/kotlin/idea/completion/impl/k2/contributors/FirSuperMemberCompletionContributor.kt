@@ -86,13 +86,13 @@ internal class FirSuperMemberCompletionContributor(
                 if (symbol !is KtSymbolWithModality || symbol.modality == Modality.ABSTRACT) continue
 
                 // Unlike typical diamond cases, calls to method of `Any` always do not need extra qualification.
-                if (symbol.callableIdIfNonLocal?.classId == StandardClassIds.Any) {
+                if (symbol.callableId?.classId == StandardClassIds.Any) {
                     if (symbol in symbolsInAny) continue
                     symbolsInAny.add(symbol)
                 }
 
                 allSymbols.add(CallableInfo(superType, callableInfo.signature, callableInfo.scopeKind))
-                val name = callableInfo.signature.callableIdIfNonLocal?.callableName ?: continue
+                val name = callableInfo.signature.callableId?.callableName ?: continue
                 symbolCountsByName[name] = (symbolCountsByName[name] ?: 0) + 1
             }
         }
@@ -228,7 +228,7 @@ internal class FirSuperMemberCompletionContributor(
         superReceiver: KtSuperExpression
     ): CallableInsertionStrategy {
         val superClassId = (superType as? KtUsualClassType)?.classId
-        val needDisambiguation = callableSignature.callableIdIfNonLocal?.callableName in namesNeedDisambiguation
+        val needDisambiguation = callableSignature.callableId?.callableName in namesNeedDisambiguation
         return if (needDisambiguation && superClassId != null) {
             CallableInsertionStrategy.WithSuperDisambiguation(superReceiver.createSmartPointer(), superClassId, insertionStrategy)
         } else {

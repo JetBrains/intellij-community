@@ -5,12 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -258,10 +258,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
-        allowAnalysisFromWriteAction {
-            if (ktReference is KtSymbolBasedReference) {
-                @OptIn(KaAllowAnalysisOnEdt::class)
-                allowAnalysisOnEdt {
+        return allowAnalysisFromWriteAction {
+            @OptIn(KaAllowAnalysisOnEdt::class)
+            allowAnalysisOnEdt {
+                if (ktReference is KaSymbolBasedReference) {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()
                         if (symbol is KtSyntheticJavaPropertySymbol) {
@@ -274,9 +274,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                         }
                     }
                 }
-            }
 
-            return super.handleElementRename(ktReference, newElementName)
+                super.handleElementRename(ktReference, newElementName)
+            }
         }
     }
 

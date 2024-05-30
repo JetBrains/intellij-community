@@ -373,7 +373,7 @@ private fun ExtractionData.registerQualifierReplacements(
             parametersInfo.typeParameters.add(TypeParameter(typeParameter, typeParameter.collectRelevantConstraints()))
         }
     } else if (referencedClassifierSymbol is KtClassOrObjectSymbol && originalRef is KtSimpleNameExpression) {
-        val fqName = referencedClassifierSymbol.classIdIfNonLocal?.asSingleFqName()
+        val fqName = referencedClassifierSymbol.classId?.asSingleFqName()
         if (fqName != null) {
             val name = when (originalDeclaration) {
                 is KtConstructor<*> -> null

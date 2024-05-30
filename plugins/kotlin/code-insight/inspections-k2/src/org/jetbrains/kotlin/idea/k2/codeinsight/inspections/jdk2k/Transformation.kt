@@ -42,7 +42,7 @@ object ToKotlinPrint : Transformation {
 
     context(KtAnalysisSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveCall()
-            ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal?.asSingleFqName() == FqName("java.lang.System.out")
+            ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
 }
 
 object ToExtensionFunctionWithNonNullableReceiver : Transformation {
@@ -103,7 +103,7 @@ object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformat
 
     context(KtAnalysisSession)
     private fun KtType?.isMutableList(): Boolean =
-        this?.expandedClassSymbol?.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.mutableList
+        this?.expandedClassSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
 
     context(KtAnalysisSession)
     private fun KtType?.isMutableListOrSubtype(): Boolean =

@@ -102,13 +102,13 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
                     .firstNotNullOfOrNull { declaration ->
                         val fqNameParts = when (val symbol = declaration.getSymbol()) {
                             is KtFunctionSymbol -> {
-                                val callableId = symbol.callableIdIfNonLocal
+                                val callableId = symbol.callableId
                                     ?: return@firstNotNullOfOrNull null
                                 callableId.className?.pathSegments().orEmpty() + callableId.callableName
                             }
 
                             is KtClassLikeSymbol -> {
-                                symbol.classIdIfNonLocal?.relativeClassName?.pathSegments()
+                                symbol.classId?.relativeClassName?.pathSegments()
                                     ?: return@firstNotNullOfOrNull null
                             }
 

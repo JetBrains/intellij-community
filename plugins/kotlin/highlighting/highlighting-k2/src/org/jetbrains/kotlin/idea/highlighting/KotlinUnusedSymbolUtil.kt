@@ -272,7 +272,7 @@ object KotlinUnusedSymbolUtil {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
           val symbol = reference.resolveToSymbol() ?: return@mapNotNull null
           val constructorSymbol = symbol as? KtConstructorSymbol ?: return@mapNotNull null
-          constructorSymbol.containingClassIdIfNonLocal?.asSingleFqName()?.asString()
+          constructorSymbol.containingClassId?.asSingleFqName()?.asString()
       }
       if (annotationsPresent.isEmpty()) return false
 
@@ -604,7 +604,7 @@ object KotlinUnusedSymbolUtil {
           if (getQualifiedExpressionForSelector() != null) return false
           if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
           val symbol = mainReference?.resolveToSymbol() as? KtCallableSymbol ?: return false
-          return symbol.callableIdIfNonLocal?.asSingleFqName() in enumStaticMethods
+          return symbol.callableId?.asSingleFqName() in enumStaticMethods
       }
 
       return containingFile.anyDescendantOfType<KtExpression> {
@@ -663,7 +663,7 @@ object KotlinUnusedSymbolUtil {
           when (element) {
               is KtClassOrObject -> {
                   val overridingCallableSymbol = element.getClassOrObjectSymbol()?.getMemberScope()
-                      ?.getCallableSymbols { name -> name == callableSymbol.callableIdIfNonLocal?.callableName }?.filter {
+                      ?.getCallableSymbols { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.unwrapFakeOverrides == callableSymbol
                       }?.singleOrNull() ?: return@any false
                   overridingCallableSymbol != callableSymbol && overridingCallableSymbol.getIntersectionOverriddenSymbols()

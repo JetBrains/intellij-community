@@ -204,7 +204,7 @@ class KotlinFunctionCallInstruction(
     private fun fromKnownDescriptor(call: KtFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
         val functionSymbol = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
         val name = functionSymbol.name.asString()
-        val containingPackage = functionSymbol.callableIdIfNonLocal?.packageName?.asString() ?: return null
+        val containingPackage = functionSymbol.callableId?.packageName?.asString() ?: return null
         if (containingPackage == "kotlin.collections") {
             val args = arguments.arguments
             if (args.size > 1) return null

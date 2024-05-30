@@ -40,8 +40,8 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
 context(KtAnalysisSession)
 fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KtPackageSymbol -> fqName
-    is KtCallableSymbol -> callableIdIfNonLocal?.asSingleFqName()
-    is KtClassLikeSymbol -> classIdIfNonLocal?.asSingleFqName()
+    is KtCallableSymbol -> callableId?.asSingleFqName()
+    is KtClassLikeSymbol -> classId?.asSingleFqName()
     else -> null
 }
 
@@ -51,7 +51,7 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
             ArrayFqNames.ARRAY_OF_FUNCTION +
             ArrayFqNames.EMPTY_ARRAY
 
-    val call = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal ?: return false
+    val call = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId ?: return false
 
     return call.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             functionNames.contains(call.callableName)

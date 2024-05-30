@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -99,7 +99,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
 
         return buildList {
             for (enumEntry in enumEntries) {
-                val callableId = enumEntry.callableIdIfNonLocal ?: return emptyList()
+                val callableId = enumEntry.callableId ?: return emptyList()
                 add(CaseBranch.Callable(callableId))
             }
         }
@@ -112,7 +112,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
 
     context(KtAnalysisSession)
     private fun processSealedClassInheritor(klass: KtNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
-        val classId = klass.classIdIfNonLocal ?: return false
+        val classId = klass.classId ?: return false
 
         if (klass.classKind == KtClassKind.OBJECT) {
             consumer.add(CaseBranch.Object(classId))

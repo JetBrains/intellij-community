@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.patternMatching.AbstractKotlinPsiUnifierTest

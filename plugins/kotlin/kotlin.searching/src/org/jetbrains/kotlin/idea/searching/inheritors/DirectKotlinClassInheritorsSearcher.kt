@@ -98,7 +98,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                     fun KtUsualClassType.classIdWithExpandedTypeAlias(): ClassId? =
                         ((classSymbol as? KtTypeAliasSymbol)?.expandedType as? KtUsualClassType)?.classId ?: classId
 
-                    return ktSymbol.superTypes.any { it is KtUsualClassType && (it.classSymbol == baseSymbol || it.classIdWithExpandedTypeAlias() == baseSymbol.classIdIfNonLocal) }
+                    return ktSymbol.superTypes.any { it is KtUsualClassType && (it.classSymbol == baseSymbol || it.classIdWithExpandedTypeAlias() == baseSymbol.classId) }
                 }
             }
         }

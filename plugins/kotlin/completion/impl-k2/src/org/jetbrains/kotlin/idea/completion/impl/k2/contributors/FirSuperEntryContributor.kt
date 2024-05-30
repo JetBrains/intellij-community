@@ -25,8 +25,8 @@ internal class FirSuperEntryContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) = getSuperClassesAvailableForSuperCall(positionContext.nameExpression).forEach { superType ->
-        val tailText = superType.classIdIfNonLocal?.asString()?.let { "($it)" }
-        LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classIdIfNonLocal), superType.name.asString())
+        val tailText = superType.classId?.asString()?.let { "($it)" }
+        LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classId), superType.name.asString())
             .withTailText(tailText)
             .withInsertHandler(SuperCallInsertionHandler)
             .let { sink.addElement(it) }

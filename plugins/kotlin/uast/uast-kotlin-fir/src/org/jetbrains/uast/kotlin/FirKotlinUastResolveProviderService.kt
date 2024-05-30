@@ -238,7 +238,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val other = UastBinaryOperator.OTHER
         analyzeForUast(ktBinaryExpression) {
             val resolvedCall = ktBinaryExpression.resolveCall()?.singleFunctionCallOrNull() ?: return other
-            val operatorName = resolvedCall.symbol.callableIdIfNonLocal?.callableName?.asString() ?: return other
+            val operatorName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return other
             return KotlinUBinaryExpression.BITWISE_OPERATORS[operatorName] ?: other
         }
     }
@@ -300,7 +300,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveCall()?.singleConstructorCallOrNull()?.symbol ?: return null
-            return resolvedAnnotationConstructorSymbol.containingClassIdIfNonLocal
+            return resolvedAnnotationConstructorSymbol.containingClassId
                 ?.asSingleFqName()
                 ?.toString()
         }
@@ -310,7 +310,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol =
                 ktCallElement.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return UastCallKind.METHOD_CALL
-            val fqName = resolvedFunctionLikeSymbol.callableIdIfNonLocal?.asSingleFqName()
+            val fqName = resolvedFunctionLikeSymbol.callableId?.asSingleFqName()
             return when {
                 resolvedFunctionLikeSymbol is KtSamConstructorSymbol ||
                         resolvedFunctionLikeSymbol is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
@@ -441,7 +441,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
                 val ktType = when (classOrObject) {
                     is KtEnumEntry -> {
-                        classOrObject.getEnumEntrySymbol().callableIdIfNonLocal?.classId?.let(::buildClassType)
+                        classOrObject.getEnumEntrySymbol().callableId?.classId?.let(::buildClassType)
                     }
                     else -> {
                         // NB: Avoid symbol creation/retrieval

@@ -50,7 +50,7 @@ fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
         val file = fileSymbol.psi as? KtFile ?: return null
         JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.asString().fqnToInternalName()
     } else {
-        val classId = classOrObject.classIdIfNonLocal ?: return null
+        val classId = classOrObject.classId ?: return null
         JvmClassName.internalNameByClassId(classId)
     }
 }

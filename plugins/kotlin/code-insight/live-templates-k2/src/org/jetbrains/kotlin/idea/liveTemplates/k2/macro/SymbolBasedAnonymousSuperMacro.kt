@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -41,7 +41,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
     }
 
     private fun shouldSuggest(declaration: KtNamedClassOrObjectSymbol): Boolean {
-        val classId = declaration.classIdIfNonLocal
+        val classId = declaration.classId
         if (classId != null) {
             val packageName = classId.packageFqName.asString()
             for (forbiddenPackageName in FORBIDDEN_PACKAGE_NAMES) {

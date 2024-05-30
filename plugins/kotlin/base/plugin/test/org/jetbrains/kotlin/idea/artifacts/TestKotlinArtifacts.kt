@@ -82,6 +82,9 @@ object TestKotlinArtifacts {
     @JvmStatic val jetbrainsAnnotations: File by lazy { getLibraryFile("org.jetbrains", "annotations", "jetbrains_annotations.xml") }
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
+    @JvmStatic val kotlinxCoroutines: File by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!.toFile()
+    }
 
     /**
      * @throws org.jetbrains.kotlin.konan.target.TargetSupportException on access from an inappropriate host.

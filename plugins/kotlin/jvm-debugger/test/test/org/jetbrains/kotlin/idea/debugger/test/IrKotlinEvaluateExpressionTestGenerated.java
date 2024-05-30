@@ -1355,6 +1355,73 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint/reflectiveAccess")
+        public abstract static class ReflectiveAccess extends AbstractIrKotlinEvaluateExpressionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/reflectiveAccess")
+            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("typeParametersInSignature.kt")
+                public void testTypeParametersInSignature() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/typeParametersInSignature.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses")
+            public static class ValueClasses extends AbstractIrKotlinEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("constructor.kt")
+                public void testConstructor() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses/constructor.kt");
+                }
+
+                @TestMetadata("delegatedProperty.kt")
+                public void testDelegatedProperty() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses/delegatedProperty.kt");
+                }
+
+                @TestMetadata("memberFunction.kt")
+                public void testMemberFunction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses/memberFunction.kt");
+                }
+
+                @TestMetadata("memberProperty.kt")
+                public void testMemberProperty() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses/memberProperty.kt");
+                }
+
+                @TestMetadata("topLevelFunction.kt")
+                public void testTopLevelFunction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses/topLevelFunction.kt");
+                }
+
+                @TestMetadata("topLevelProperty.kt")
+                public void testTopLevelProperty() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses/topLevelProperty.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
         public static class Renderer extends AbstractIrKotlinEvaluateExpressionTest {
             @java.lang.Override

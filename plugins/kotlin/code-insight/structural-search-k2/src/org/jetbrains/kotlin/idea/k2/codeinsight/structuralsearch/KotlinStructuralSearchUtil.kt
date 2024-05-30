@@ -48,7 +48,7 @@ context(KtAnalysisSession)
 fun KtExpression.findDispatchReceiver(): KtType? {
     val symbol = resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
     val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return null
-    val classId = containingClass.classIdIfNonLocal ?: return null
+    val classId = containingClass.classId ?: return null
     val fromKotlinPkg = classId.packageFqName.asString().startsWith("kotlin")
     val isFunctionCall = classId.relativeClassName.asString().startsWith("Function")
     if (fromKotlinPkg && isFunctionCall) return null // if function is function local return null

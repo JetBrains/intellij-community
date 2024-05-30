@@ -63,19 +63,19 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         is KtConstructorSymbol,
         is KtClassOrObjectSymbol -> {
             val classId = if (symbol is KtClassOrObjectSymbol) {
-                symbol.classIdIfNonLocal
+                symbol.classId
             } else {
-                (symbol as KtConstructorSymbol).containingClassIdIfNonLocal
+                (symbol as KtConstructorSymbol).containingClassId
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
                 classShortenStrategy = {
-                    if (it.classIdIfNonLocal == classId)
+                    if (it.classId == classId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
                     else
                         ShortenStrategy.DO_NOT_SHORTEN
                 }, callableShortenStrategy = {
-                    if (it is KtConstructorSymbol && it.containingClassIdIfNonLocal == classId)
+                    if (it is KtConstructorSymbol && it.containingClassId == classId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
                     else
                         ShortenStrategy.DO_NOT_SHORTEN
@@ -85,14 +85,14 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         }
 
         is KtCallableSymbol -> {
-            val callableId = symbol.callableIdIfNonLocal ?: return null
+            val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
             if (!canBeImported(symbol)) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
                 callableShortenStrategy = {
-                    if (it.callableIdIfNonLocal == callableId)
+                    if (it.callableId == callableId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
                     else
                         ShortenStrategy.DO_NOT_SHORTEN

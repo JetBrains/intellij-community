@@ -7,9 +7,11 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 
 abstract class KotlinStatementsSurrounder : ModCommandSurrounder() {

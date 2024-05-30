@@ -77,7 +77,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         val receiverTypeArgument = receiverType.ownTypeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
         val resolvedCall = expression.resolveCall()?.singleFunctionCallOrNull() ?: return
-        val callableName = resolvedCall.symbol.callableIdIfNonLocal?.callableName?.asString() ?: return
+        val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return
         if (callableName == "filterIsInstance") {
             if (receiverTypeArgument is KtTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return
             val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return
