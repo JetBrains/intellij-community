@@ -1112,8 +1112,8 @@ f:com.intellij.vcs.log.paint.PaintParameters
 - sf:ROW_HEIGHT:I
 - <init>():V
 - s:getCircleRadius(I):I
+- s:getElementWidth(I):I
 - s:getLineThickness(I):F
-- s:getNodeWidth(I):I
 - s:getSelectedCircleRadius(I):I
 - s:getSelectedLineThickness(I):F
 f:com.intellij.vcs.log.statistics.NullableRoundedLongEventField

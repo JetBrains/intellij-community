@@ -325,7 +325,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       maxIndex++;
       maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, table.getVisibleGraph().getRecommendedWidth()));
 
-      return (int)(maxIndex * PaintParameters.getNodeWidth(table.getRowHeight()));
+      return (int)(maxIndex * PaintParameters.getElementWidth(table.getRowHeight()));
     }
   }
 
