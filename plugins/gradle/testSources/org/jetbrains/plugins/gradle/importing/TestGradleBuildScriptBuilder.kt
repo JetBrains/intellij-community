@@ -107,23 +107,15 @@ open class TestGradleBuildScriptBuilder(
     applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
   }
 
-  override fun withBuildScriptMavenCentral() =
-    withBuildScriptRepository {
-      mavenCentralRepository()
-    }
-
-  override fun withMavenCentral() =
-    withRepository {
-      mavenCentralRepository()
-    }
-
-  private fun ScriptTreeBuilder.mavenCentralRepository() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      mavenRepository("https://repo.labs.intellij.net/repo1", false)
-    }
-    else {
-      // IntelliJ internal maven repo is not available in local environment
-      call("mavenCentral")
+  override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
+    when {
+      UsefulTestCase.IS_UNDER_TEAMCITY -> {
+        mavenRepository("https://repo.labs.intellij.net/repo1")
+      }
+      else -> {
+        // IntelliJ internal maven repo is not available in local environment
+        call("mavenCentral")
+      }
     }
   }
 
@@ -155,17 +147,5 @@ open class TestGradleBuildScriptBuilder(
     @JvmStatic
     fun extPluginVersionIsAtLeast(version: String) =
       Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
-
-    fun ScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
-      call("maven") {
-        call("url", url)
-        if (useOldStyleMetadata) {
-          call("metadataSources") {
-            call("mavenPom")
-            call("artifact")
-          }
-        }
-      }
-    }
   }
 }

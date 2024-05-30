@@ -32,6 +32,12 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
     }
   }
 
+  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+    call("maven") {
+      call("url", url)
+    }
+  }
+
   override fun generate() = GroovyScriptBuilder().generate(generateTree())
 
   internal class Impl(gradleVersion: GradleVersion) : GroovyDslGradleBuildScriptBuilder<Impl>(gradleVersion) {

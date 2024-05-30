@@ -88,6 +88,9 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun project(name: String): Expression
   fun project(name: String, configuration: String): Expression
 
+  fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder
+  fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder
+
   companion object {
 
     @JvmStatic

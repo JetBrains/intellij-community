@@ -39,4 +39,8 @@ class KotlinDslGradleBuildScriptBuilder(
     withPostfix {
       callIfNotEmpty("tasks.test", configure)
     }
+
+  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+    call("maven", "url" to url)
+  }
 }
