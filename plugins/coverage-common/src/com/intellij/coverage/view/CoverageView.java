@@ -153,7 +153,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
 
-    myTable.getTree().registerKeyboardAction(e -> resetView(),
+    myTable.getTree().registerKeyboardAction(e -> resetView(null),
                                              KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH,
                                                                     ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
                                                                                              : InputEvent.CTRL_DOWN_MASK),
@@ -176,8 +176,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     boolean hasChildren = myViewExtension.hasChildren(root);
     if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
       if (!hasChildren) {
-        myStateBean.setShowOnlyModified(false);
-        resetView();
+        resetView(() -> myStateBean.setShowOnlyModified(false));
       }
       else {
         final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
@@ -281,14 +280,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     if (hasVcsFiltered && myStateBean.isShowOnlyModified()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.setShowOnlyModified(false);
-        resetView();
+        resetView(() -> myStateBean.setShowOnlyModified(false));
       });
     }
     if (hasFullyCovered && myStateBean.isHideFullyCovered()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.fully.covered.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.setHideFullyCovered(false);
-        resetView();
+        resetView(() -> myStateBean.setHideFullyCovered(false));
       });
     }
   }
@@ -389,16 +386,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       hasFilters = true;
       myHasVCSFilter = true;
     }
-    else {
-      myStateBean.setShowOnlyModified(false);
-    }
     if (myViewExtension.supportFlattenPackages()) {
       filtersActionGroup.add(new HideFullyCoveredAction());
       hasFilters = true;
       myHasFullyCoveredFilter = true;
-    }
-    else {
-      myStateBean.setHideFullyCovered(false);
     }
     if (hasFilters) {
       filtersActionGroup.setPopup(true);
@@ -484,9 +475,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return null;
   }
 
-  private void resetView() {
-    myTreeStructure.reset();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> myModel.reset(true));
+  private void resetView(@Nullable Runnable updateSettings) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (updateSettings != null) {
+        updateSettings.run();
+      }
+      myTreeStructure.reset();
+      myModel.reset(true);
+    });
   }
 
   private void addLoggingListeners() {
@@ -540,8 +536,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setFlattenPackages(state);
-      resetView();
+      resetView(() -> myStateBean.setFlattenPackages(state));
     }
 
     @Override
@@ -563,8 +558,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setHideFullyCovered(state);
-      resetView();
+      resetView(() -> myStateBean.setHideFullyCovered(state));
     }
 
     @Override
@@ -586,8 +580,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setShowOnlyModified(state);
-      resetView();
+      resetView(() -> myStateBean.setShowOnlyModified(state));
     }
 
     @Override

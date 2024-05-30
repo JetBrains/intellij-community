@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -61,7 +62,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
 
   fun getNodeInfo(id: String): CoverageNodeInfo? = nodeMap[id]?.userObject
 
-
+  @RequiresBackgroundThread
   private fun buildClassesTree() {
     val onlyModified = state.isShowOnlyModified
     val hideFullyCovered = state.isHideFullyCovered
