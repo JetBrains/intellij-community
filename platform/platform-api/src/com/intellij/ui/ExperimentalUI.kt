@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui
@@ -23,9 +23,6 @@ abstract class ExperimentalUI {
     @Suppress("DEPRECATION")
     const val KEY: String = NewUiValue.KEY
 
-    @Deprecated("please use {@link #isNewUiUsedOnce()} instead ")
-    const val NEW_UI_USED_PROPERTY: String = "experimental.ui.used.once"
-
     // last IDE version when the New UI was enabled
     const val NEW_UI_USED_VERSION: String = "experimental.ui.used.version"
     const val NEW_UI_FIRST_SWITCH: String = "experimental.ui.first.switch"
@@ -37,6 +34,7 @@ abstract class ExperimentalUI {
     var wasThemeReset = false
 
     @Internal
+    @JvmField
     val EP_LISTENER: ExtensionPointName<Listener> = ExtensionPointName("com.intellij.uiChangeListener")
 
     init {
@@ -66,8 +64,7 @@ abstract class ExperimentalUI {
       /** Whether New UI was enabled at least once. Note: tracked since 2023.1  */
       get() {
         val propertiesComponent = PropertiesComponent.getInstance()
-        @Suppress("DEPRECATION")
-        return propertiesComponent.getValue(NEW_UI_USED_VERSION) != null || propertiesComponent.getBoolean(NEW_UI_USED_PROPERTY)
+        return propertiesComponent.getValue(NEW_UI_USED_VERSION) != null || propertiesComponent.getBoolean("experimental.ui.used.once")
       }
   }
 

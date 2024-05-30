@@ -1,6 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
-
 
 import org.jetbrains.annotations.Nullable;
 
@@ -19,10 +18,10 @@ public final class NewUiValue {
    */
   @Deprecated
   public static final String KEY = "ide.experimental.ui";
-  @Nullable
-  private static volatile Boolean overrideNewUiForOneRemDevSession = null;
+
+  private static volatile @Nullable Boolean overrideNewUiForOneRemDevSession = null;
   private static volatile boolean isInitialized = false;
-  private static volatile Supplier<Boolean> isEnabled = () -> false;
+  private static volatile Supplier<Boolean> isEnabled = () -> true;
 
   public static synchronized void initialize(Supplier<Boolean> enabled) {
     if (isInitialized) {
@@ -34,19 +33,11 @@ public final class NewUiValue {
   }
 
   public static void overrideNewUiForOneRemDevSession(boolean newUi) {
-    checkInitialized();
     overrideNewUiForOneRemDevSession = newUi;
   }
 
   public static boolean isEnabled() {
-    checkInitialized();
     Boolean override = overrideNewUiForOneRemDevSession;
     return override == null ? isEnabled.get() : override;
-  }
-
-  private static void checkInitialized() {
-    if (!isInitialized) {
-      throw new IllegalStateException("NewUi setting is not initialized");
-    }
   }
 }
