@@ -165,14 +165,14 @@
     },
     {
       "number": 34,
-      "description": "Full Line - WA5 + Filter model",
+      "description": "Full Line - PHP WA5 + Filter model",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 35,
-      "description": "Full Line - WA5",
+      "description": "Full Line - PHP WA5",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
