@@ -145,6 +145,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test");
     }
 
+    @TestMetadata("kotlin/getOperatorInternalUsage/getOperatorInternalUsage.test")
+    public void testKotlin_getOperatorInternalUsage_GetOperatorInternalUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/getOperatorInternalUsage/getOperatorInternalUsage.test");
+    }
+
     @TestMetadata("kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test")
     public void testKotlin_implicitInvokeCalls_differentSourceAndTarget_DifferentSourceAndTarget() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test");

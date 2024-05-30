@@ -378,6 +378,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test");
         }
 
+        @TestMetadata("kotlin/getOperatorInternalUsage/getOperatorInternalUsage.test")
+        public void testKotlin_getOperatorInternalUsage_GetOperatorInternalUsage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/getOperatorInternalUsage/getOperatorInternalUsage.test");
+        }
+
         @TestMetadata("kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test")
         public void testKotlin_implicitInvokeCalls_differentSourceAndTarget_DifferentSourceAndTarget() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test");
