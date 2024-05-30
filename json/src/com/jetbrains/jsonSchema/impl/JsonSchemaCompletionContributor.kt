@@ -35,6 +35,7 @@ import com.intellij.ui.IconManager.Companion.getInstance
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider
@@ -59,7 +60,7 @@ private const val REMOTE_USAGE_KEY = "remote"
 class JsonSchemaCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val position = parameters.position
-    val file = PsiUtilCore.getVirtualFile(position)?: return
+    val file = PsiUtilCore.getVirtualFile(position) ?: return
 
     val service = JsonSchemaService.Impl.get(position.project)
     if (!service.isApplicableToFile(file)) return
@@ -72,8 +73,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
   }
 
   private fun skipForSchemaAndRef(position: PsiElement,
-                service: JsonSchemaService,
-                file: VirtualFile): Boolean {
+                                  service: JsonSchemaService,
+                                  file: VirtualFile): Boolean {
     val positionParent = position.parent ?: return false
     val parent = positionParent.parent as? JsonProperty ?: return false
     val propName = parent.name
@@ -227,8 +228,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             val deprecated = valueMetadata?.get("deprecationMessage")
             val order = if (isEnumOrderSensitive) i else null
             val handlers = customHandlers.mapNotNull { p -> p.createHandlerForEnumValue(schema, variant) }.toList()
-            addValueVariant(variant, description, if (deprecated != null) ("$variant ($deprecated)") else null,
-                            if (handlers.size == 1) handlers[0] else null, order)
+            addValueVariant(
+              key = variant,
+              description = description,
+              deprecated = deprecated != null,
+              handler = handlers.singleOrNull(),
+              order = order
+            )
           }
         }
       }
@@ -271,10 +277,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .filter { LanguageUtil.isInjectableLanguage(it) }
         .map { Injectable.fromLanguage(it) }
         .forEach {
-          completionVariants.add(LookupElementBuilder
-                           .create(it.id)
-                           .withIcon(it.icon)
-                           .withTailText("(" + it.displayName + ")", true))
+          completionVariants.add(
+            LookupElementBuilder
+              .create(it.id)
+              .withIcon(it.icon)
+              .withTailText("(" + it.displayName + ")", true)
+          )
         }
     }
 
@@ -285,7 +293,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val parent = checkable.parent
       val items = if (parent is JsonArray) {
         parent.valueList.filterIsInstance<JsonStringLiteral>().map { it.value }.toSet()
-      } else emptySet()
+      }
+      else emptySet()
       propertiesObject.propertyList.map { it.name }.filter { !items.contains(it) }
         .forEach { addStringVariant(it) }
     }
@@ -299,25 +308,34 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       }
       when (type) {
         JsonSchemaType._boolean -> {
-          addValueVariant("true", null)
-          addValueVariant("false", null)
+          addValueVariant("true")
+          addValueVariant("false")
         }
-        JsonSchemaType._null -> addValueVariant("null", null)
+        JsonSchemaType._null -> {
+          addValueVariant("null")
+        }
         JsonSchemaType._array -> {
           val value = psiWalker!!.defaultArrayValue
-          addValueVariant(value, null,
-                          "[...]", createArrayOrObjectLiteralInsertHandler(
-            psiWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
+          addValueVariant(
+            key = value,
+            altText = "[...]",
+            handler = createArrayOrObjectLiteralInsertHandler(
+              psiWalker.hasWhitespaceDelimitedCodeBlocks(), value.length
+            )
           )
         }
         JsonSchemaType._object -> {
           val value = psiWalker!!.defaultObjectValue
-          addValueVariant(value, null,
-                          "{...}", createArrayOrObjectLiteralInsertHandler(
-            psiWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
+          addValueVariant(
+            key = value,
+            altText = "{...}",
+            handler = createArrayOrObjectLiteralInsertHandler(
+              psiWalker.hasWhitespaceDelimitedCodeBlocks(), value.length
+            )
           )
         }
-        else -> { /* no suggestions */ }
+        else -> { /* no suggestions */
+        }
       }
     }
 
@@ -338,7 +356,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       else if (!shouldQuote && isQuoted) {
         normalizedValue = StringUtil.unquoteString(normalizedValue)
       }
-      addValueVariant(normalizedValue, null)
+      addValueVariant(normalizedValue)
     }
 
     fun suggestValuesForSchemaVariants(list: List<JsonSchemaObject>?, isSurelyValue: Boolean, completionPath: SchemaPath?) {
@@ -349,21 +367,18 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addValueVariant(key: String,
-                        description: String?,
+                        description: String? = null,
                         altText: String? = null,
                         handler: InsertHandler<LookupElement?>? = null,
-                        order: Int? = null) {
+                        order: Int? = null,
+                        deprecated: Boolean = false) {
       val unquoted = StringUtil.unquoteString(key)
-      var builder = LookupElementBuilder.create(if (!shouldWrapInQuotes(unquoted, true)) unquoted else key)
-      if (altText != null) {
-        builder = builder.withPresentableText(altText)
-      }
-      if (description != null) {
-        builder = builder.withTypeText(description)
-      }
-      if (handler != null) {
-        builder = builder.withInsertHandler(handler)
-      }
+      val lookupString = if (!shouldWrapInQuotes(unquoted, true)) unquoted else key
+      val builder = LookupElementBuilder.create(lookupString)
+        .withPresentableText(altText ?: lookupString)
+        .withTypeText(description)
+        .withInsertHandler(handler)
+        .withDeprecation(deprecated)
       if (order != null) {
         completionVariants.add(PrioritizedLookupElement.withPriority(builder, -order.toDouble()))
       }
@@ -388,47 +403,54 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val variants = JsonSchemaResolver(myProject, schemaObject).resolve()
       schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
       propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
-      var builder = LookupElementBuilder.create(propertyKey)
 
-      val typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, schemaObject)
-      if (!typeText.isNullOrBlank()) {
-        val text = StringUtil.removeHtmlTags(typeText)
-        builder = builder.withTypeText(findFirstSentence(text), true)
-      }
-      else {
-        val type = JsonSchemaObjectReadingUtils.getTypeDescription(schemaObject, true)
-        if (type != null) {
-          builder = builder.withTypeText(type, true)
-        }
-      }
+      val builder = LookupElementBuilder.create(propertyKey)
+        .withTypeText(getDocumentationOrTypeName(schemaObject), true)
+        .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
+        .withInsertHandler(choosePropertyInsertHandler(variants, schemaObject, hasValue, insertComma))
+        .withDeprecation(schemaObject.deprecationMessage != null)
 
-      builder = builder.withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
+      completionVariants.add(builder.prefixedBy(completionPath, psiWalker!!))
+    }
 
+    private fun LookupElementBuilder.withDeprecation(deprecated: Boolean): LookupElementBuilder {
+      if (!deprecated) return this
+      return withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true)
+    }
+
+    private fun choosePropertyInsertHandler(variants: Collection<JsonSchemaObject>,
+                                            schemaObject: JsonSchemaObject,
+                                            hasValue: Boolean,
+                                            insertComma: Boolean): InsertHandler<LookupElement> {
       if (hasSameType(variants)) {
         val type = JsonSchemaObjectReadingUtils.guessType(schemaObject)
         val values = schemaObject.enum
-        val defaultValue = schemaObject.default
-
-        builder = if (type != null || !values.isNullOrEmpty() || defaultValue != null) {
-          builder.withInsertHandler(
-            if (values.isNullOrEmpty() || values.map { v -> v.javaClass }.distinct().count() == 1) createPropertyInsertHandler(
-              schemaObject, hasValue, insertComma)
-            else createDefaultPropertyInsertHandler(true, insertComma))
+        if (!values.isNullOrEmpty()) {
+          // if we have an enum with a single kind of values - trigger the handler with value
+          if (values.map { v -> v.javaClass }.distinct().count() == 1) {
+            return createPropertyInsertHandler(schemaObject, hasValue, insertComma)
+          }
         }
         else {
-          builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma))
+          // insert a default value if no enum
+          if (type != null || schemaObject.default != null) {
+            return createPropertyInsertHandler(schemaObject, hasValue, insertComma)
+          }
         }
       }
+
+      return createDefaultPropertyInsertHandler(hasValue || !schemaObject.enum.isNullOrEmpty(),
+                                                insertComma)
+    }
+
+    private fun getDocumentationOrTypeName(schemaObject: JsonSchemaObject): String? {
+      val docText = JsonSchemaDocumentationProvider.getBestDocumentation(true, schemaObject)
+      return if (!docText.isNullOrBlank()) {
+        findFirstSentence(StringUtil.removeHtmlTags(docText))
+      }
       else {
-        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma))
+        JsonSchemaObjectReadingUtils.getTypeDescription(schemaObject, true)
       }
-
-      val deprecationMessage = schemaObject.deprecationMessage
-      if (deprecationMessage != null) {
-        builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true)
-      }
-
-      completionVariants.add(builder.prefixedBy(completionPath, psiWalker!!))
     }
 
     fun createDefaultPropertyInsertHandler(hasValue: Boolean,
@@ -490,13 +512,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     fun createPropertyInsertHandler(jsonSchemaObject: JsonSchemaObject,
                                     hasValue: Boolean,
                                     insertComma: Boolean): InsertHandler<LookupElement> {
-      var type = JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject)
-      val values = jsonSchemaObject.enum
-      if (type == null && !values.isNullOrEmpty()) type = detectType(values)
-      val defaultValue = jsonSchemaObject.default
-      val defaultValueAsString = if (defaultValue == null || defaultValue is JsonSchemaObject) null else (if (defaultValue is String) "\"" + defaultValue + "\"" else defaultValue.toString())
-      val finalType = type
-      return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, values, psiWalker!!, insideStringLiteral)
+      val defaultValueAsString = when (val defaultValue = jsonSchemaObject.default) {
+        null, is JsonSchemaObject -> null
+        is String -> "\"" + defaultValue + "\""
+        else ->  defaultValue.toString()
+      }
+      val finalType = JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject) ?: detectTypeByEnumValues(jsonSchemaObject.enum.orEmpty())
+      return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, jsonSchemaObject.enum, psiWalker!!, insideStringLiteral)
     }
 
     companion object {
@@ -553,7 +575,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         }
       }
 
-      private fun detectType(values: List<Any>): JsonSchemaType? {
+      private fun detectTypeByEnumValues(values: List<Any>): JsonSchemaType? {
         var type: JsonSchemaType? = null
         for (value in values) {
           var newType: JsonSchemaType? = null
@@ -664,7 +686,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                     values: List<Any>?, walker: JsonLikePsiWalker,
                                     insideStringLiteral: Boolean): InsertHandler<LookupElement> {
       return InsertHandler { context, _ ->
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
+        ThreadingAssertions.assertWriteAccess()
         val editor = context.editor
         val project = context.project
         var stringToInsert: String? = null
