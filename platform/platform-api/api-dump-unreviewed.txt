@@ -10917,6 +10917,7 @@ f:com.intellij.ui.tabs.impl.JBEditorTabPainter
 c:com.intellij.ui.tabs.impl.JBEditorTabs
 - com.intellij.ui.tabs.impl.JBTabsImpl
 - com.intellij.ui.tabs.JBEditorTabsBase
+- sf:Companion:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
 - sf:MARK_MODIFIED_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionManager,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
@@ -10927,6 +10928,7 @@ c:com.intellij.ui.tabs.impl.JBEditorTabs
 - shouldPaintBottomBorder():Z
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - useSmallLabels():Z
+f:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
 f:com.intellij.ui.tabs.impl.JBEditorTabsBorder
 - com.intellij.ui.tabs.JBTabsBorder
 - sf:Companion:com.intellij.ui.tabs.impl.JBEditorTabsBorder$Companion
@@ -11006,17 +11008,15 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - pf:getDragHelper():com.intellij.ui.tabs.impl.DragHelper
 - p:getDraggedTabSelectionInfo():com.intellij.ui.tabs.TabInfo
 - pf:getDropInfo():com.intellij.ui.tabs.TabInfo
-- getDropInfoIndex():I
-- getDropSide():I
+- f:getDropInfoIndex():I
+- f:getDropSide():I
 - p:getEntryPointActionGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
 - f:getEntryPointPreferredSize():java.awt.Dimension
-- f:getEntryPointToolbar():com.intellij.openapi.actionSystem.ActionToolbar
 - f:getFirstTabOffset():I
 - p:getFocusOwnerToStore():javax.swing.JComponent
 - f:getHeaderFitSize():java.awt.Dimension
 - f:getHorizontalSide():Z
 - f:getIndexOf(com.intellij.ui.tabs.TabInfo):I
-- f:getInfoToForeToolbar():java.util.Map
 - f:getInfoToToolbar():java.util.Map
 - getJBTabs():com.intellij.ui.tabs.JBTabs
 - f:getLastLayoutPass():com.intellij.ui.tabs.impl.LayoutPassInfo
@@ -11065,7 +11065,6 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - pf:isNavigatable():Z
 - isOpaque():Z
 - f:isRecentlyActive():Z
-- f:isScrollBarAdjusting():Z
 - sf:isSelectionClick(java.awt.event.MouseEvent):Z
 - f:isSideComponentBefore():Z
 - f:isSideComponentOnTabs():Z
@@ -11112,10 +11111,9 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):com.intellij.ui.tabs.impl.JBTabsImpl
 - pf:setDragHelper(com.intellij.ui.tabs.impl.DragHelper):V
 - pf:setDropInfo(com.intellij.ui.tabs.TabInfo):V
-- setDropInfoIndex(I):V
-- setDropSide(I):V
+- f:setDropInfoIndex(I):V
+- f:setDropSide(I):V
 - setEmptyText(java.lang.String):com.intellij.ui.tabs.JBTabsPresentation
-- f:setEntryPointToolbar(com.intellij.openapi.actionSystem.ActionToolbar):V
 - setFirstTabOffset(I):V
 - setFocusCycle(Z):com.intellij.ui.tabs.JBTabsPresentation
 - f:setFocused(Z):V
@@ -11138,7 +11136,7 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - setSideComponentOnTabs(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setSideComponentVertical(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setSingleRow(Z):com.intellij.ui.tabs.JBTabsPresentation
-- setSupportsCompression(Z):com.intellij.ui.tabs.JBTabsPresentation
+- f:setSupportsCompression(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setTabDraggingEnabled(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setTabLabelActionsAutoHide(Z):com.intellij.ui.tabs.JBTabsPresentation
 - setTabLabelActionsMouseDeadzone(com.intellij.util.ui.TimedDeadzone$Length):com.intellij.ui.tabs.JBTabsPresentation
@@ -11399,7 +11397,6 @@ f:com.intellij.ui.tabs.impl.multiRow.CompressibleTabsRow
 f:com.intellij.ui.tabs.impl.multiRow.CompressibleTabsRow$Companion
 a:com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
 - com.intellij.ui.tabs.impl.table.TableLayout
-- <init>(com.intellij.ui.tabs.impl.JBTabsImpl,Z):V
 - getDropIndexFor(java.awt.Point):I
 - pf:getPrevLayoutPassInfo():com.intellij.ui.tabs.impl.multiRow.MultiRowPassInfo
 - getScrollOffset():I

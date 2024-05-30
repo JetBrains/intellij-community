@@ -1,74 +1,58 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.tabs.impl;
+package com.intellij.ui.tabs.impl
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.tabs.JBEditorTabsBase;
-import com.intellij.ui.tabs.JBTabsPresentation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.tabs.JBEditorTabsBase
+import com.intellij.ui.tabs.JBTabsPresentation
 
-public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
-  public static final Key<Boolean> MARK_MODIFIED_KEY = Key.create("EDITOR_TABS_MARK_MODIFIED");
-
-  private boolean isAlphabeticalModeChanged = false;
-
-  public JBEditorTabs(@Nullable Project project, @SuppressWarnings("unused") @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
-    super(project, parentDisposable);
-    setSupportsCompression(true);
+open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
+  companion object {
+    @JvmField
+    val MARK_MODIFIED_KEY: Key<Boolean> = Key.create("EDITOR_TABS_MARK_MODIFIED")
   }
 
-  public JBEditorTabs(@Nullable Project project, @NotNull Disposable parentDisposable) {
-    super(project, parentDisposable);
-    setSupportsCompression(true);
+  private var isAlphabeticalModeChanged = false
+
+  @Suppress("UNUSED_PARAMETER")
+  constructor(project: Project?, focusManager: IdeFocusManager?, parentDisposable: Disposable)
+    : super(project = project, parentDisposable = parentDisposable) {
+    setSupportsCompression(true)
   }
 
-  @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    resetTabsCache();
-    relayout(true, false);
-
-    super.uiSettingsChanged(uiSettings);
+  constructor(project: Project?, parentDisposable: Disposable) : super(project, parentDisposable) {
+    setSupportsCompression(value = true)
   }
 
-  /**
-   * @deprecated Use {@link #JBEditorTabs(Project, Disposable)}
-   */
-  @Deprecated(forRemoval = true)
-  public JBEditorTabs(@Nullable Project project,
-                      @SuppressWarnings("unused") @NotNull ActionManager actionManager,
-                      @Nullable IdeFocusManager focusManager,
-                      @NotNull Disposable parent) {
-    this(project, parent);
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    resetTabsCache()
+    relayout(forced = true, layoutNow = false)
+
+    super.uiSettingsChanged(uiSettings)
   }
 
-  @Override
-  public boolean isEditorTabs() {
-    return true;
+  @Suppress("UNUSED_PARAMETER")
+  @Deprecated("Use {@link #JBEditorTabs(Project, Disposable)}", level = DeprecationLevel.ERROR)
+  constructor(project: Project?, actionManager: ActionManager, focusManager: IdeFocusManager?, parent: Disposable) : this(project, parent)
+
+  override val isEditorTabs: Boolean
+    get() = true
+
+  override fun useSmallLabels(): Boolean = !ExperimentalUI.isNewUI() && UISettings.getInstance().useSmallLabelsOnTabs
+
+  override fun isAlphabeticalMode(): Boolean {
+    return if (isAlphabeticalModeChanged) super.isAlphabeticalMode() else UISettings.getInstance().sortTabsAlphabetically
   }
 
-  @Override
-  public boolean useSmallLabels() {
-    return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs();
+  override fun setAlphabeticalMode(value: Boolean): JBTabsPresentation {
+    isAlphabeticalModeChanged = true
+    return super.setAlphabeticalMode(value)
   }
 
-  @Override
-  public boolean isAlphabeticalMode() {
-    return isAlphabeticalModeChanged ? super.isAlphabeticalMode() : UISettings.getInstance().getSortTabsAlphabetically();
-  }
-
-  @Override
-  public @NotNull JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
-    isAlphabeticalModeChanged = true;
-    return super.setAlphabeticalMode(alphabeticalMode);
-  }
-
-  public boolean shouldPaintBottomBorder() {
-    return true;
-  }
+  open fun shouldPaintBottomBorder(): Boolean = true
 }

@@ -256,7 +256,7 @@ public class TableLayout extends TabLayout {
     rect.y += myTabs.getBorderThickness();
     myTabs.getMoreToolbar().getComponent().setBounds(rect);
 
-    ActionToolbar entryPointToolbar = myTabs.getEntryPointToolbar();
+    ActionToolbar entryPointToolbar = myTabs.entryPointToolbar;
     if (entryPointToolbar != null) {
       entryPointToolbar.getComponent().setBounds(data.entryPointRect);
     }

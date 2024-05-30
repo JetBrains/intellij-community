@@ -13,7 +13,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import kotlin.math.abs
 
-abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
+sealed class MultiRowLayout(protected val tabs: JBTabsImpl,
                               protected val showPinnedTabsSeparately: Boolean) : TableLayout(tabs) {
   protected var prevLayoutPassInfo: MultiRowPassInfo? = null
 

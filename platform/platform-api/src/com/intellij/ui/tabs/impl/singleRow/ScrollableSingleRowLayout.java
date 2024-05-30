@@ -63,7 +63,7 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private void doScrollToSelectedTab(SingleRowPassInfo passInfo) {
-    if (tabs.isMouseInsideTabsArea() || tabs.isScrollBarAdjusting() || tabs.isRecentlyActive()) {
+    if (tabs.isMouseInsideTabsArea() || tabs.isScrollBarAdjusting$intellij_platform_ide() || tabs.isRecentlyActive()) {
       return;
     }
     int offset = -myScrollOffset;

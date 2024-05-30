@@ -149,7 +149,7 @@ public abstract class SingleRowLayout extends TabLayout {
       data.insets.left += tabs.getFirstTabOffset();
     }
 
-    JBTabsImpl.Toolbar selectedForeToolbar = tabs.getInfoToForeToolbar().get(selected);
+    JBTabsImpl.Toolbar selectedForeToolbar = tabs.infoToForeToolbar.get(selected);
     data.hfToolbar =
       new WeakReference<>(
         selectedForeToolbar != null && tabs.getHorizontalSide() && !selectedForeToolbar.isEmpty() ? selectedForeToolbar : null);

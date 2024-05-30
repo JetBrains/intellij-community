@@ -117,19 +117,18 @@ open class JBTabsImpl(
     @JvmStatic
     fun getComponentImage(info: TabInfo): Image {
       val component = info.component
-      val image: BufferedImage
       if (component.isShowing) {
         val width = component.width
         val height = component.height
-        image = ImageUtil.createImage(info.component.graphicsConfiguration, if (width > 0) width else 500, if (height > 0) height else 500,
-                                      BufferedImage.TYPE_INT_ARGB)
+        val image = ImageUtil.createImage(info.component.graphicsConfiguration, if (width > 0) width else 500, if (height > 0) height else 500,
+                                          BufferedImage.TYPE_INT_ARGB)
         val g = image.createGraphics()
         component.paint(g)
+        return image
       }
       else {
-        image = ImageUtil.createImage(info.component.graphicsConfiguration, 500, 500, BufferedImage.TYPE_INT_ARGB)
+        return ImageUtil.createImage(info.component.graphicsConfiguration, 500, 500, BufferedImage.TYPE_INT_ARGB)
       }
-      return image
     }
 
     @JvmStatic
@@ -138,10 +137,8 @@ open class JBTabsImpl(
 
     @JvmStatic
     fun isSelectionClick(e: MouseEvent): Boolean {
-      if (e.clickCount == 1) {
-        if (!e.isPopupTrigger) {
-          return e.button == MouseEvent.BUTTON1 && !e.isControlDown && !e.isAltDown && !e.isMetaDown
-        }
+      if (e.clickCount == 1 && !e.isPopupTrigger) {
+        return e.button == MouseEvent.BUTTON1 && !e.isControlDown && !e.isAltDown && !e.isMetaDown
       }
       return false
     }
@@ -166,11 +163,13 @@ open class JBTabsImpl(
   @Internal
   fun getInfoToLabel(): Map<TabInfo, TabLabel> = tabs.asSequence().filter { it.tabLabel != null }.associateWith { it.tabLabel!! }
 
-  val infoToForeToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
+  @JvmField
+  internal val infoToForeToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
   val infoToToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
 
   val moreToolbar: ActionToolbar?
-  var entryPointToolbar: ActionToolbar? = null
+  @JvmField
+  internal var entryPointToolbar: ActionToolbar? = null
   val titleWrapper: NonOpaquePanel = NonOpaquePanel()
 
   var headerFitSize: Dimension? = null
@@ -200,6 +199,7 @@ open class JBTabsImpl(
 
   // it's an invisible splitter intended for changing the size of tab zone
   private val splitter = TabSideSplitter(this)
+  @JvmField
   internal var effectiveLayout: TabLayout? = null
   var lastLayoutPass: LayoutPassInfo? = null
     private set
@@ -207,6 +207,7 @@ open class JBTabsImpl(
   internal var forcedRelayout: Boolean = false
     private set
 
+  @JvmField
   internal var uiDecorator: UiDecorator? = null
   private var paintFocus = false
   private var hideTabs = false
@@ -255,9 +256,10 @@ open class JBTabsImpl(
   private var navigationActionsEnabled = true
   protected var dropInfo: TabInfo? = null
 
-  override var dropInfoIndex: Int = 0
+  final override var dropInfoIndex: Int = 0
 
-  override var dropSide: Int = -1
+  final override var dropSide: Int = -1
+
   protected var showDropLocation: Boolean = true
   private var oldSelection: TabInfo? = null
   private var selectionChangeHandler: JBTabs.SelectionChangeHandler? = null
@@ -409,10 +411,9 @@ open class JBTabsImpl(
       isRecentlyActive = false
       relayout(false, false)
     }, RELAYOUT_DELAY)
-
   }
 
-  fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
+  internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
     StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable) { event ->
@@ -507,7 +508,7 @@ open class JBTabsImpl(
       singleRow = true
     }
 
-    val layout = if (useMultiRowLayout()) createMultiRowLayout() else createSingleRowLayout()
+    val layout = if (isSingleRow) createSingleRowLayout() else createMultiRowLayout()
     // set the current scroll value to new layout
     layout.scroll(scrollBarModel.value)
     setLayout(layout)
@@ -2992,7 +2993,7 @@ open class JBTabsImpl(
     return this
   }
 
-  override fun setSupportsCompression(value: Boolean): JBTabsPresentation {
+  final override fun setSupportsCompression(value: Boolean): JBTabsPresentation {
     supportCompression = value
     updateRowLayout()
     return this

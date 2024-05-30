@@ -331,7 +331,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
       // Fadeout for right side
-      else if (tabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
+      else if (tabs.effectiveLayout.isScrollable() &&
                myRect.width < getPreferredSize().width + tabs.getTabHGap()) {
         Rectangle rightRect = new Rectangle(myRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
@@ -832,7 +832,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
       int prefWidth = parent.getPreferredSize().width;
       synchronized (parent.getTreeLock()) {
         if (!info.isPinned() && tabs != null &&
-            tabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
+            tabs.effectiveLayout.isScrollable() &&
             (ExperimentalUI.isNewUI() && !isHovered() || tabs.isHorizontalTabs()) &&
             isShowTabActions() && isTabActionsOnTheRight() &&
             parent.getWidth() < prefWidth) {
