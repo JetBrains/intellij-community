@@ -1118,8 +1118,6 @@ f:com.intellij.vcs.log.paint.PaintParameters
 - s:getSelectedLineThickness(I):F
 f:com.intellij.vcs.log.paint.PositionUtil
 - <init>():V
-- s:getRowIndex(java.awt.Point,I):I
-- s:getYInsideRow(java.awt.Point,I):I
 - s:overDownEdge(I,I,I,I,I,I,F):Z
 - s:overNode(I,I,I,I,I,I):Z
 - s:overUpEdge(I,I,I,I,I,I,F):Z

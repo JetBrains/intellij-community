@@ -1,10 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.paint;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
-
 public final class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {
     return (float)Math.hypot(x1 - x2, y1 - y2);
@@ -32,13 +28,5 @@ public final class PositionUtil {
     int y0 = rowHeight / 2;
 
     return distance(x0, y0, x, y) <= circleRadius;
-  }
-
-  public static int getYInsideRow(@NotNull Point point, int rowHeight) {
-    return point.y - getRowIndex(point, rowHeight) * rowHeight;
-  }
-
-  public static int getRowIndex(@NotNull Point point, int rowHeight) {
-    return point.y / rowHeight;
   }
 }
