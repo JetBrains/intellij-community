@@ -1210,8 +1210,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       presentation.setText(getText(side));
 
-      presentation.setVisible(true);
-      presentation.setEnabled(isSomeChangeSelected(side) && !isExternalOperationInProgress());
+      presentation.setEnabledAndVisible(isSomeChangeSelected(side) && !isExternalOperationInProgress());
     }
 
     @Override
