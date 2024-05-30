@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
@@ -387,8 +388,17 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     if (options.selectAsCurrent) {
       _currentCompositeFlow.value = composite
-      owner.setCurrentWindow(window = this)
-      (composite.preferredFocusedComponent ?: composite.component).requestFocusInWindow()
+      if (isOpenedInBulk) {
+        owner.setCurrentWindow(window = this)
+      }
+      else {
+        // If you invoke action via context menu, then on mouse release we will process focus event,
+        // and EditorSplitters.MyFocusWatcher will focus the old editor window.
+        // So, we must use doWhenFocusSettlesDown.
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(ContextAwareRunnable {
+          owner.setCurrentWindow(window = this)
+        }, ModalityState.any())
+      }
     }
 
     if (!isOpenedInBulk) {
