@@ -205,7 +205,7 @@
     },
     {
       "id": "php",
-      "experimentBucketsCount": 2,
+      "experimentBucketsCount": 4,
       "includeGroups": [28, 34, 22, 35],
       "shouldLogElementFeatures": false
     },
@@ -217,8 +217,8 @@
     },
     {
       "id": "ruby",
-      "experimentBucketsCount": 2,
-      "includeGroups": [28, 22],
+      "experimentBucketsCount": 1,
+      "includeGroups": [22],
       "shouldLogElementFeatures": true
     },
     {
