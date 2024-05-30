@@ -39,7 +39,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   /**
    * @deprecated Use {@link #JBEditorTabs(Project, Disposable)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JBEditorTabs(@Nullable Project project,
                       @SuppressWarnings("unused") @NotNull ActionManager actionManager,
                       @Nullable IdeFocusManager focusManager,
@@ -59,10 +59,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public boolean isAlphabeticalMode() {
-    if (isAlphabeticalModeChanged) {
-      return super.isAlphabeticalMode();
-    }
-    return UISettings.getInstance().getSortTabsAlphabetically();
+    return isAlphabeticalModeChanged ? super.isAlphabeticalMode() : UISettings.getInstance().getSortTabsAlphabetically();
   }
 
   @Override

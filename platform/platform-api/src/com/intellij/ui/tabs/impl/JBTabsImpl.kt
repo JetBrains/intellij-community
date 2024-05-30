@@ -269,6 +269,7 @@ open class JBTabsImpl(
   val tabPainter: JBTabPainter = tabPainterAdapter.tabPainter
 
   private var alphabeticalMode = false
+
   open fun isAlphabeticalMode(): Boolean = alphabeticalMode
 
   private var supportCompression = false
@@ -2103,7 +2104,9 @@ open class JBTabsImpl(
       sortTabsAlphabetically(result)
       return result
     }
-    return visibleInfos
+    else {
+      return visibleInfos
+    }
   }
 
   private fun groupPinnedFirst(infos: MutableList<TabInfo>) {
