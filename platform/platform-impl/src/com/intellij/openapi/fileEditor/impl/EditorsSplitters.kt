@@ -677,7 +677,7 @@ open class EditorsSplitters internal constructor(
     _currentWindowFlow.compareAndSet(window, null)
   }
 
-  fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
+  internal fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
 
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.composites() }
 

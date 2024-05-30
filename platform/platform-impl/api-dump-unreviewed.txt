@@ -16041,7 +16041,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - f:closeAllFiles(Z):V
 - bs:closeAllFiles$default(com.intellij.openapi.fileEditor.impl.EditorsSplitters,Z,I,java.lang.Object):V
 - f:closeFile(com.intellij.openapi.vfs.VirtualFile,Z):V
-- f:containsWindow(com.intellij.openapi.fileEditor.impl.EditorWindow):Z
 - sf:focusDefaultComponentInSplittersIfPresent(com.intellij.openapi.project.Project):Z
 - f:getAllComposites():java.util.List
 - f:getAllComposites(com.intellij.openapi.vfs.VirtualFile):java.util.List
