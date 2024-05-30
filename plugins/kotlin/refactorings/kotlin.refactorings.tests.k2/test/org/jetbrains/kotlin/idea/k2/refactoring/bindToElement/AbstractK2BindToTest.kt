@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
@@ -23,6 +24,7 @@ abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTest
         val elem = mainFile.findElementAt(myFixture.caretOffset) ?: error("Couldn't find element at caret")
         val refElement = elem.parentOfType<KtSimpleNameExpression>(withSelf = true)
             ?: elem.parentOfType<KDocName>()
+            ?: elem.parentOfType<KtCallExpression>()
             ?: error("Element at caret isn't of type 'KtSimpleNameExpression'")
         bindElement(refElement)
     }

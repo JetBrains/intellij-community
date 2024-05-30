@@ -741,6 +741,25 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/invokeReference")
+        public static class InvokeReference extends AbstractK2BindToElementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ConflictingImport.kt")
+            public void testConflictingImport() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/invokeReference/ConflictingImport.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/operationReference")
         public static class OperationReference extends AbstractK2BindToElementTest {
             @java.lang.Override

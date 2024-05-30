@@ -23,10 +23,7 @@ import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
-import org.jetbrains.kotlin.idea.references.KDocReference
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.KtSimpleReference
+import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -47,8 +44,22 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             when (ktReference) {
                 is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
                 is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+                is KtInvokeFunctionReference -> bindToElement(ktReference, element)
                 else -> throw IncorrectOperationException()
             }
+        }
+    }
+
+    private fun bindToElement(
+        invokeReference: KtInvokeFunctionReference,
+        targetElement: PsiElement
+    ): PsiElement {
+        val expression = invokeReference.expression
+        if (targetElement !is KtNamedFunction) return expression
+        if (targetElement.nameAsName != OperatorNameConventions.INVOKE) return expression
+        val fqName = targetElement.kotlinFqName ?: return targetElement
+        return modifyPsiWithOptimizedImports(expression.containingKtFile) {
+            expression.containingKtFile.addImport(fqName)
         }
     }
 
