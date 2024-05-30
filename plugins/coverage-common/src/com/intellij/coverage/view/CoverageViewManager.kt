@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -83,10 +84,11 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     if (oldView != null) {
       oldView.saveSize()
       runInEdt {
+        Disposer.dispose(oldView)
         val manager = myContentManager ?: return@runInEdt
         val content = manager.getContent(oldView)
         if (content != null) {
-          manager.removeContent(content, false)
+          manager.removeContent(content, true)
         }
       }
     }

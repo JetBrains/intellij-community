@@ -12,6 +12,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.await
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -73,8 +74,9 @@ class CoverageTreeTest : CoverageIntegrationBaseTest() {
   }
 
   private fun testCoverageSuiteTree(suite: CoverageSuitesBundle, expected: String): Unit = runBlocking {
+    val stateBean = CoverageViewManager.getInstance(myProject).stateBean
+    stateBean.isShowOnlyModified = false
     openSuiteAndWait(suite)
-
 
     val treeStructure = CoverageViewTreeStructure(project, suite)
     val disposable = Disposer.newDisposable()
@@ -82,11 +84,10 @@ class CoverageTreeTest : CoverageIntegrationBaseTest() {
 
     withContext(Dispatchers.EDT) {
       val tree = JTree(model)
-      TreeUtil.expandAll(tree)
+      TreeUtil.promiseExpandAll(tree).await()
       PlatformTestUtil.assertTreeEqual(tree, expected)
       Disposer.dispose(disposable)
+      closeSuite(suite)
     }
-
-    closeSuite(suite)
   }
 }
