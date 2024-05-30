@@ -1547,11 +1547,17 @@ public final class UIUtil {
    */
   public static boolean isFocusAncestor(@NotNull Component component) {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null) return false;
-    if (SwingUtilities.isDescendingFrom(owner, component)) return true;
+    if (owner == null) {
+      return false;
+    }
+    if (SwingUtilities.isDescendingFrom(owner, component) || component != null && GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
 
     while (component != null) {
-      if (kindaHasFocus(component)) return true;
+      if (kindaHasFocus(component)) {
+        return true;
+      }
       component = component.getParent();
     }
     return false;
@@ -1620,10 +1626,6 @@ public final class UIUtil {
   }
 
   private static boolean kindaHasFocus(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless()) {
-      return true;
-    }
-
     JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
     return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
   }
@@ -1637,7 +1639,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    return kindaHasFocus(component) || component.hasFocus();
+    return GraphicsEnvironment.isHeadless() || kindaHasFocus(component) || component.hasFocus();
   }
 
   /**
