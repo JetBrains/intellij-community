@@ -175,6 +175,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/internalReferences/internalReferences.test");
     }
 
+    @TestMetadata("kotlin/invokeOperatorInternalUsage/invokeOperatorInternalUsage.test")
+    public void testKotlin_invokeOperatorInternalUsage_InvokeOperatorInternalUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/invokeOperatorInternalUsage/invokeOperatorInternalUsage.test");
+    }
+
     @TestMetadata("kotlin/kt17032/kt17032.test")
     public void testKotlin_kt17032_Kt17032() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/kt17032/kt17032.test");
