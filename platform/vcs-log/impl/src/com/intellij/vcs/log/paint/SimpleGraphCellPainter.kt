@@ -84,16 +84,16 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
     private val circleRadius = PaintUtil.alignToInt(circleDiameter / 2, scaleContext, FLOOR, null)
     private val selectedCircleRadius = PaintUtil.alignToInt(selectedCircleDiameter / 2, scaleContext, FLOOR, null)
 
-    private val ordinaryStroke = BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
-    private val selectedStroke = BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
+    private val ordinaryStroke = BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+    private val selectedStroke = BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
 
     private fun getDashedStroke(dash: FloatArray): Stroke {
-      return BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0f, dash,
+      return BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0f, dash,
                          dash[0] / 2)
     }
 
     private fun getSelectedDashedStroke(dash: FloatArray): Stroke {
-      return BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0f, dash,
+      return BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0f, dash,
                          dash[0] / 2)
     }
 
