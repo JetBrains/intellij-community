@@ -57,7 +57,7 @@ fun KtClass.getDslStyleId(): Int? {
         val classSymbol = getNamedClassOrObjectSymbol()?.takeIf {
             it.classKind == KtClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
         } ?: return null
-        val className = classSymbol.classIdIfNonLocal?.asSingleFqName() ?: return null
+        val className = classSymbol.classId?.asSingleFqName() ?: return null
         return DslStyleUtils.styleIdByFQName(className)
     }
 }

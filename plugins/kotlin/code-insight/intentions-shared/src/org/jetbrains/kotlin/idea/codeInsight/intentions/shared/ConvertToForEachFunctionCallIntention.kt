@@ -59,7 +59,7 @@ internal class ConvertToForEachFunctionCallIntention :
         if (calleeExpression?.text == WITH_INDEX_NAME) {
             if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
             val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return null
-            if (symbol.callableIdIfNonLocal?.asSingleFqName() !in withIndexedFunctionFqNames) return null
+            if (symbol.callableId?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 
         return loopRange.getKtType()

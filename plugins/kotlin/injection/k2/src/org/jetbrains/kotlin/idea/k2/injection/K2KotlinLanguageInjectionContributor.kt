@@ -33,7 +33,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
         val symbol = resolveCall()?.singleFunctionCallOrNull()?.symbol
-        symbol?.callableIdIfNonLocal == CallableId(packageName, callableName)
+        symbol?.callableId == CallableId(packageName, callableName)
     }
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()

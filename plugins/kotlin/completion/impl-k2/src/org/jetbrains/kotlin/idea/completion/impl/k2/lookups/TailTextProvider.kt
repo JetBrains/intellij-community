@@ -54,7 +54,7 @@ internal object TailTextProvider {
         usePackageFqName: Boolean = false,
         addTypeParameters: Boolean = true
     ): String = buildString {
-        symbol.classIdIfNonLocal?.let { classId ->
+        symbol.classId?.let { classId ->
             if (addTypeParameters && symbol.typeParameters.isNotEmpty()) {
                 // We want to render type parameter names without modifiers and bounds, so no renderer is required.
                 append(symbol.typeParameters.joinToString(", ", "<", ">") { it.name.render() })
@@ -76,7 +76,7 @@ internal object TailTextProvider {
 
     context(KtAnalysisSession)
     private fun KtCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
-        val callableId = callableIdIfNonLocal ?: return null
+        val callableId = callableId ?: return null
         val className = callableId.className
 
         val isExtensionCall = isExtensionCall(isFunctionalVariableCall)

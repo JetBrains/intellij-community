@@ -1,0 +1,16 @@
+LineBreakpoint created at delegatedProperty.kt:15
+Run Java
+Connected to the target VM
+delegatedProperty.kt:15
+Compile bytecode for privateDelegatedPropertyUInt = 42u
+Compile bytecode for (privateDelegatedPropertyUInt) as Any?
+Compile bytecode for privateDelegatedPropertyUInt.toInt()
+Compile bytecode for privateDelegatedPropertyIntN = IntN(42)
+Compile bytecode for (privateDelegatedPropertyIntN) as Any?
+Compile bytecode for privateDelegatedPropertyIntN.toInt()
+Compile bytecode for privateDelegatedPropertyStr = OverStr("abacaba")
+Compile bytecode for (privateDelegatedPropertyStr) as Any?
+Compile bytecode for privateDelegatedPropertyStr.x
+Disconnected from the target VM
+
+Process finished with exit code 0

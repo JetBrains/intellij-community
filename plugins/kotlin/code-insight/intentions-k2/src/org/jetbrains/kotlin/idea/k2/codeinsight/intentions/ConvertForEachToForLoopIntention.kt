@@ -88,7 +88,7 @@ internal class ConvertForEachToForLoopIntention
     context(KtAnalysisSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
         val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return false
-        val callableId = symbol.callableIdIfNonLocal
+        val callableId = symbol.callableId
         return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }
 

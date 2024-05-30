@@ -51,9 +51,9 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
     val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KtCallableSymbol
     val classContainingPlus = plusOperation?.getContainingSymbol() as? KtNamedClassOrObjectSymbol
     return if (classContainingPlus != null) {
-        classContainingPlus.classIdIfNonLocal?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
+        classContainingPlus.classId?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
     } else {
-        plusOperation?.callableIdIfNonLocal?.asSingleFqName()?.asString() in listOf("kotlin.text.plus", "kotlin.plus")
+        plusOperation?.callableId?.asSingleFqName()?.asString() in listOf("kotlin.text.plus", "kotlin.plus")
     }
 }
 

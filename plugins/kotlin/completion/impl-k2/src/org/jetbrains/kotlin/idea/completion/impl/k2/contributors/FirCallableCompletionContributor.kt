@@ -562,7 +562,7 @@ internal open class FirCallableCompletionContributor(
             val shadowedCallablesFilter = ShadowedCallablesFilter()
 
             for (callableWithMetadata in this@filterOutShadowedCallables) {
-                val callableFqName = callableWithMetadata.signature.callableIdIfNonLocal?.asSingleFqName()
+                val callableFqName = callableWithMetadata.signature.callableId?.asSingleFqName()
                 val isAlreadyImported = with(importStrategyDetector) { callableFqName?.isAlreadyImported() == true }
                 val typeArgumentsAreRequired = (callableWithMetadata.signature.symbol as? KtFunctionLikeSymbol)?.let {
                     FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
@@ -598,7 +598,7 @@ internal open class FirCallableCompletionContributor(
                 is KtKotlinPropertySymbol -> symbol.isConst
                 is KtEnumEntrySymbol -> true
                 is KtFunctionSymbol -> {
-                    val isArrayOfCall = symbol.callableIdIfNonLocal?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
+                    val isArrayOfCall = symbol.callableId?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 
                     isArrayOfCall && expectedType?.let { symbol.returnType.isPossiblySubTypeOf(it) } != false
                 }
@@ -633,7 +633,7 @@ internal class FirCallableReferenceCompletionContributor(
     override fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
         if (isImportDefinitelyNotRequired) return ImportStrategy.DoNothing
 
-        return signature.callableIdIfNonLocal?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
+        return signature.callableId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
     }
 
     context(KtAnalysisSession)

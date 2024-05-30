@@ -200,7 +200,7 @@ internal class ShadowedCallablesFilter {
                     val expandedClassSymbol = type.expandedClassSymbol ?: return null
                     val name = expandedClassSymbol.name ?: return null
 
-                    return when (val classId = expandedClassSymbol.classIdIfNonLocal) {
+                    return when (val classId = expandedClassSymbol.classId) {
                         null -> NameForLocal(name)
                         else -> ClassIdForNonLocal(classId)
                     }
@@ -277,7 +277,7 @@ private sealed class SimplifiedSignature {
 
         context(KtAnalysisSession)
         private fun KtCallableSymbol.getContainerFqName(): FqName? {
-            val callableId = callableIdIfNonLocal ?: return null
+            val callableId = callableId ?: return null
             return when (symbolKind) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
                 KaSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }

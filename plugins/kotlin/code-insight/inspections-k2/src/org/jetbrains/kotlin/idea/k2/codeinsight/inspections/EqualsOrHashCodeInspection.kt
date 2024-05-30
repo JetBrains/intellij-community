@@ -181,7 +181,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
              *  named "Any". To preserve the same behavior for FIR, we tried
              *  [org.jetbrains.kotlin.analysis.api.components.KtSymbolDeclarationRendererMixIn.render] with
              *  [org.jetbrains.kotlin.analysis.api.components.KtBuiltinTypes.ANY],
-             *  `builtinTypes.ANY.expandedClassSymbol.classIdIfNonLocal?.asSingleFqName()?.asString()`, and
+             *  `builtinTypes.ANY.expandedClassSymbol.classId?.asSingleFqName()?.asString()`, and
              *  `org.jetbrains.kotlin.builtins.StandardNames.FqNames.any.render()`, but they all have the same rendering result
              *  regardless of the user-defined "Any" class. We specify the parameter and the return type as `kotlin.Any?` and
              *  `kotlin.Boolean` and rely on [org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences], but it always

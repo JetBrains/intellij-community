@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -13,7 +12,8 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
@@ -44,7 +44,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
     private object Resolver : ParcelMigrateToParcelizeResolver<KtAnalysisSession> {
         context(KtAnalysisSession)
         private val KtType.classId: ClassId?
-            get() = expandedClassSymbol?.classIdIfNonLocal
+            get() = expandedClassSymbol?.classId
 
         context(KtAnalysisSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
@@ -94,7 +94,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
             resolveCall()
                 ?.successfulConstructorCallOrNull()
                 ?.symbol
-                ?.containingClassIdIfNonLocal
+                ?.containingClassId
                 ?.let { getClassOrObjectSymbolByClassId(it) }
                 ?.psi as? KtClassOrObject
 

@@ -35,7 +35,7 @@ data class PrimitiveLiteralData(
 
 context(KtAnalysisSession)
 fun preparePrimitiveLiteral(element: KtExpression, type: KtType): PrimitiveLiteralData {
-    val typeName = type.expandedClassSymbol?.classIdIfNonLocal?.asSingleFqName()?.toUnsafe()
+    val typeName = type.expandedClassSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloat
     val expectedTypeIsDouble = type.isDouble
     val expectedTypeIsUnsigned = type.isUNumberType()

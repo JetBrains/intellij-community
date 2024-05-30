@@ -122,7 +122,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
           return super.visitCallExpression(expression)
         }
 
-        when (calledSymbol.callableIdIfNonLocal?.asSingleFqName()) {
+        when (calledSymbol.callableId?.asSingleFqName()) {
           progressManagerCheckedCanceledName -> {
             holder.registerProblem(
               extractElementToHighlight(expression),

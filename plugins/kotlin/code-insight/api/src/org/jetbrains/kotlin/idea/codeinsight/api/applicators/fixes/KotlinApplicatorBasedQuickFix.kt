@@ -7,7 +7,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
+import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -44,7 +44,7 @@ abstract class KotlinApplicatorBasedQuickFix<T : PsiElement, in I : KotlinApplic
     ) {
         val element = element ?: return
 
-        val isApplicableByPsi = KtAnalysisAllowanceManager.forbidAnalysisInside("KotlinApplicator.isApplicableByPsi") {
+        val isApplicableByPsi = forbidAnalysis("KotlinApplicator.isApplicableByPsi") {
             isApplicableByPsi(element, project)
         }
 

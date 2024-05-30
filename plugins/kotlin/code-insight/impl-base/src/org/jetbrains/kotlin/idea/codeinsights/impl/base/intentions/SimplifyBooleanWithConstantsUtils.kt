@@ -120,7 +120,7 @@ object SimplifyBooleanWithConstantsUtils {
         val callExpression = expression.getNonStrictParentOfType<KtCallExpression>() ?: return
         val fqName = analyze(callExpression) {
             val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return
-            resolvedCall.symbol.callableIdIfNonLocal?.let {
+            resolvedCall.symbol.callableId?.let {
                 it.packageName.asString() + "." + it.callableName.asString()
             }
         }

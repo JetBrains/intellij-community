@@ -11,8 +11,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.injection.Injectable
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
