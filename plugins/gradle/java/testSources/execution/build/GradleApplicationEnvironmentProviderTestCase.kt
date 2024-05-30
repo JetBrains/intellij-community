@@ -9,10 +9,8 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.DumbService
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
-import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution
-import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
+import org.jetbrains.plugins.gradle.testFramework.util.*
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * @author Vladislav.Soroka
@@ -49,10 +47,12 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
         .build()
     }
 
-    waitForGradleEventDispatcherClosing {
-      waitForAnyExecution(project) {
-        waitForAnyGradleTaskExecution {
-          ProgramRunnerUtil.executeConfiguration(environment, false, true)
+    withThreadDumpEvery(1.minutes) {
+      waitForGradleEventDispatcherClosing {
+        waitForAnyExecution(project) {
+          waitForAnyGradleTaskExecution {
+            ProgramRunnerUtil.executeConfiguration(environment, false, true)
+          }
         }
       }
     }
