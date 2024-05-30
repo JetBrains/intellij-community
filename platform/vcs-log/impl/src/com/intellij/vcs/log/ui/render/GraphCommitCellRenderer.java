@@ -202,7 +202,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         myReferencePainter.paint(g2d, myGraphWidth, 0, getHeight());
       }
-      myPainter.draw(g2d, myPrintElements);
+      myPainter.paint(g2d, myPrintElements);
     }
 
     public void customize(@NotNull GraphCommitCell cell, boolean isSelected, boolean hasFocus, int row, int column) {

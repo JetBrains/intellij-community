@@ -1106,8 +1106,8 @@ f:com.intellij.vcs.log.impl.VcsStatusMerger$MergedStatusInfo
 com.intellij.vcs.log.paint.ColorGenerator
 - a:getColor(I):java.awt.Color
 com.intellij.vcs.log.paint.GraphCellPainter
-- a:draw(java.awt.Graphics2D,java.util.Collection):V
 - a:getElementUnderCursor(java.util.Collection,I,I):com.intellij.vcs.log.graph.PrintElement
+- a:paint(java.awt.Graphics2D,java.util.Collection):V
 f:com.intellij.vcs.log.paint.PaintParameters
 - sf:ROW_HEIGHT:I
 - <init>():V
