@@ -426,7 +426,10 @@ class J2KNullityInferrer {
         private boolean processParameter(@NotNull PsiParameter parameter, @NotNull PsiReferenceExpression expr, PsiElement parent) {
             if (PsiUtil.isAccessedForWriting(expr)) return true;
 
-            if (parent instanceof PsiArrayAccessExpression) {
+            if (parent instanceof PsiSynchronizedStatement) {
+                registerNotNullAnnotation(parameter);
+                return true;
+            } else if (parent instanceof PsiArrayAccessExpression) {
                 // For both array and index expressions
                 registerNotNullAnnotation(parameter);
                 return true;

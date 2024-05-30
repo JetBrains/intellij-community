@@ -5336,6 +5336,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/ParameterComparedWithNull.java");
         }
 
+        @TestMetadata("synchronized.java")
+        public void testSynchronized() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/synchronized.java");
+        }
+
         @TestMetadata("VariableAssignedWithNull.java")
         public void testVariableAssignedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/VariableAssignedWithNull.java");
