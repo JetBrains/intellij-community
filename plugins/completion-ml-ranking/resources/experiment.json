@@ -248,7 +248,7 @@
     {
       "id": "C#",
       "experimentBucketsCount": 4,
-      "includeGroups": [8, 24],
+      "includeGroups": [8, 22, 24],
       "shouldLogElementFeatures": false
     },
     {
