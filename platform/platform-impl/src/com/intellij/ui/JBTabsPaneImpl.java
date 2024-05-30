@@ -4,8 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.tabs.*;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,13 +18,13 @@ import java.util.concurrent.CopyOnWriteArraySet;
 // used externally - cannot be final
 public class JBTabsPaneImpl implements TabbedPane {
   private final JBEditorTabsBase tabs;
-  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
+  private final CopyOnWriteArraySet<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
     tabs = JBTabsFactory.createEditorTabs(project, parent);
     tabs.getPresentation()
       .setAlphabeticalMode(false)
-      .setPaintFocus(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
+      .setPaintFocus(true)
       .setFirstTabOffset(10);
 
     tabs.addListener(new TabsListener() {
@@ -40,7 +38,7 @@ public class JBTabsPaneImpl implements TabbedPane {
   }
 
   private void fireChanged(ChangeEvent event) {
-    for (ChangeListener each : myListeners) {
+    for (ChangeListener each : listeners) {
       each.stateChanged(event);
     }
   }
@@ -62,7 +60,7 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void addChangeListener(@NotNull ChangeListener listener) {
-    myListeners.add(listener);
+    listeners.add(listener);
   }
 
   @Override
@@ -213,7 +211,7 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void removeChangeListener(ChangeListener listener) {
-    myListeners.remove(listener);
+    listeners.remove(listener);
   }
 
   public @NotNull JBTabs getTabs() {
