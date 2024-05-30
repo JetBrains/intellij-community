@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
@@ -44,99 +43,42 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendClassExtendsImplements(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (!refClass.getBaseClasses().isEmpty()) {
-      HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extends.implements"));
-      myComposer.startList(buf);
-      for (RefClass refBase : refClass.getBaseClasses()) {
-        myComposer.appendListItem(buf, refBase);
-      }
-      myComposer.doneList(buf);
-    }
+    myComposer.appendSection(buf, AnalysisBundle.message("inspection.export.results.extends.implements"), refClass.getBaseClasses());
   }
 
   @Override
   public void appendDerivedClasses(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (!refClass.getSubClasses().isEmpty()) {
-      if (refClass.isInterface()) {
-        HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extended.implemented"));
-      }
-      else {
-        HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extended"));
-      }
-
-      myComposer.startList(buf);
-      for (RefClass refDerived : refClass.getSubClasses()) {
-        myComposer.appendListItem(buf, refDerived);
-      }
-      myComposer.doneList(buf);
-    }
+    String header = refClass.isInterface()
+                    ? AnalysisBundle.message("inspection.export.results.extended.implemented")
+                    : AnalysisBundle.message("inspection.export.results.extended");
+    myComposer.appendSection(buf, header, refClass.getSubClasses());
   }
 
   @Override
   public void appendLibraryMethods(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (!refClass.getLibraryMethods().isEmpty()) {
-      HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.overrides.library.methods"));
-
-      myComposer.startList(buf);
-      for (RefMethod refMethod : refClass.getLibraryMethods()) {
-        myComposer.appendListItem(buf, refMethod);
-      }
-      myComposer.doneList(buf);
-    }
+    myComposer.appendSection(buf, JavaBundle.message("inspection.export.results.overrides.library.methods"), refClass.getLibraryMethods());
   }
 
   @Override
   public void appendSuperMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
-    if (!refMethod.getSuperMethods().isEmpty()) {
-      HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.overrides.implements"));
-
-      myComposer.startList(buf);
-      for (RefMethod refSuper : refMethod.getSuperMethods()) {
-        myComposer.appendListItem(buf, refSuper);
-      }
-      myComposer.doneList(buf);
-    }
+    myComposer.appendSection(buf, AnalysisBundle.message("inspection.export.results.overrides.implements"), refMethod.getSuperMethods());
   }
 
   @Override
   public void appendDerivedMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
-    if (!refMethod.getDerivedMethods().isEmpty()) {
-      HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.derived.methods"));
-
-      myComposer.startList(buf);
-      for (RefMethod refDerived : refMethod.getDerivedMethods()) {
-        myComposer.appendListItem(buf, refDerived);
-      }
-      myComposer.doneList(buf);
-    }
+    myComposer.appendSection(buf, AnalysisBundle.message("inspection.export.results.derived.methods"), refMethod.getDerivedMethods());
   }
 
   @Override
   public void appendDerivedFunctionalExpressions(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
     List<RefFunctionalExpression> functionalExpressions =
       ContainerUtil.filterIsInstance(refMethod.getDerivedReferences(), RefFunctionalExpression.class);
-    if (!functionalExpressions.isEmpty()) {
-      HTMLComposer.appendHeading(buf, "Derived lambdas and method references");
-
-      myComposer.startList(buf);
-      for (RefFunctionalExpression functionalExpression : functionalExpressions) {
-        myComposer.appendListItem(buf, functionalExpression);
-      }
-      myComposer.doneList(buf);
-    }
+    myComposer.appendSection(buf, AnalysisBundle.message("inspection.export.results.derived.functional.expressions"), functionalExpressions);
   }
 
   @Override
   public void appendTypeReferences(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (!refClass.getInTypeReferences().isEmpty()) {
-      HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.type.references"));
-
-      myComposer.startList(buf);
-      for (final RefElement refElement : refClass.getInTypeReferences()) {
-        myComposer.appendListItem(buf, refElement);
-      }
-      myComposer.doneList(buf);
-    }
+    myComposer.appendSection(buf, JavaBundle.message("inspection.export.results.type.references"), refClass.getInTypeReferences());
   }
 
   @Override

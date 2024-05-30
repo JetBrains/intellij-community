@@ -1148,11 +1148,14 @@ a:com.intellij.codeInspection.HTMLComposer
 - s:appendHeading(java.lang.StringBuilder,java.lang.String):V
 - a:appendListItem(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefElement):V
 - a:appendNoProblems(java.lang.StringBuilder):V
+- appendSection(java.lang.StringBuilder,java.lang.String,java.util.Collection):V
 - a:composeNumereables(I,java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - a:doneList(java.lang.StringBuilder):V
+- doneProblemDescription(java.lang.StringBuilder):V
 - a:getExtension(com.intellij.openapi.util.Key):java.lang.Object
 - a:startList(java.lang.StringBuilder):V
 - a:startListItem(java.lang.StringBuilder):V
+- startProblemDescription(java.lang.StringBuilder):V
 com.intellij.codeInspection.HintAction
 - com.intellij.codeInsight.intention.IntentionAction
 - fixSilently(com.intellij.openapi.editor.Editor):Z

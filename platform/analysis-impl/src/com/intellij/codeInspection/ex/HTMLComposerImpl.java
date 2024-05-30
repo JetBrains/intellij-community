@@ -164,6 +164,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_CLOSING);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   protected void appendQuickFix(@NotNull StringBuilder buf, String text) {
     buf.append(text);
   }
@@ -193,9 +194,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public String composeNumereables(int n, String statement, String singleEnding, String multipleEnding) {
     final StringBuilder buf = new StringBuilder();
-    buf.append(n);
-    buf.append(' ');
-    buf.append(statement);
+    buf.append(n).append(' ').append(statement);
 
     if (n % 10 == 1 && n % 100 != 11) {
       buf.append(singleEnding);
@@ -208,26 +207,12 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementInReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (!refElement.getInReferences().isEmpty()) {
-      appendHeading(buf, AnalysisBundle.message("inspection.export.results.used.from"));
-      startList(buf);
-      for (RefElement refCaller : refElement.getInReferences()) {
-        appendListItem(buf, refCaller);
-      }
-      doneList(buf);
-    }
+    appendSection(buf, AnalysisBundle.message("inspection.export.results.used.from"), refElement.getInReferences());
   }
 
   @Override
   public void appendElementOutReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (!refElement.getOutReferences().isEmpty()) {
-      appendHeading(buf, AnalysisBundle.message("inspection.export.results.uses"));
-      startList(buf);
-      for (RefElement refCallee : refElement.getOutReferences()) {
-        appendListItem(buf, refCallee);
-      }
-      doneList(buf);
-    }
+    appendSection(buf, AnalysisBundle.message("inspection.export.results.uses"), refElement.getOutReferences());
   }
 
   @Override
@@ -280,6 +265,16 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   }
 
   public static void doneListItem(@NotNull StringBuilder buf) {}
+
+  @Override
+  public void startProblemDescription(@NotNull StringBuilder buf) {
+    buf.append("\n<div class=\"problem-description\">");
+  }
+
+  @Override
+  public void doneProblemDescription(@NotNull StringBuilder buf) {
+    buf.append("\n</div><br>");
+  }
 
   @Override
   public void appendNoProblems(@NotNull StringBuilder buf) {

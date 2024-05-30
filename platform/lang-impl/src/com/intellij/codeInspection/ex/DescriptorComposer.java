@@ -39,7 +39,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
     genPageHeader(buf, refEntity);
     if (myTool.getDescriptions(refEntity) != null) {
       appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
-      buf.append("\n<div class=\"problem-description\">");
+      startProblemDescription(buf);
       CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
       LOG.assertTrue(descriptions != null);
@@ -51,7 +51,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
         doneListItem(buf);
       }
       doneList(buf);
-      buf.append("\n</div>");
+      doneProblemDescription(buf);
 
       appendResolution(buf, refEntity, quickFixTexts(refEntity, myTool));
     }

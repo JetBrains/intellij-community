@@ -1840,7 +1840,9 @@ c:com.intellij.codeInspection.ProblemDescriptorBase
 - setTextAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - showTooltip():Z
 f:com.intellij.codeInspection.ProblemDescriptorUtil
+- sf:LOC_REFERENCE:java.lang.String
 - sf:NONE:I
+- sf:REF_REFERENCE:java.lang.String
 - sf:TRIM_AT_TREE_END:I
 - sf:XML_CODE_MARKER:com.intellij.openapi.util.Couple
 - <init>():V
@@ -2754,10 +2756,12 @@ a:com.intellij.codeInspection.ex.HTMLComposerImpl
 - composeNumereables(I,java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - doneList(java.lang.StringBuilder):V
 - s:doneListItem(java.lang.StringBuilder):V
+- doneProblemDescription(java.lang.StringBuilder):V
 - p:genPageHeader(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity):V
 - getExtension(com.intellij.openapi.util.Key):java.lang.Object
 - startList(java.lang.StringBuilder):V
 - startListItem(java.lang.StringBuilder):V
+- startProblemDescription(java.lang.StringBuilder):V
 a:com.intellij.codeInspection.ex.InspectionElementsMergerBase
 - com.intellij.codeInspection.ex.InspectionElementsMerger
 - <init>():V
