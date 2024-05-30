@@ -1,4 +1,4 @@
-// FILE: test/ConflictingImport.kt
+// FILE: test/ChangeImport.kt
 // BIND_TO test.bar.barFoo
 package test
 
