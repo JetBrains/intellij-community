@@ -47,8 +47,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
@@ -551,37 +552,17 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 }
                 CallableKind.CLASS_WITH_PRIMARY_CONSTRUCTOR -> {
                     val classWithPrimaryConstructorInfo = callableInfo as ClassWithPrimaryConstructorInfo
-                    with(classWithPrimaryConstructorInfo.classInfo) {
-                        val classBody = when (kind) {
-                            ClassKind.ANNOTATION_CLASS, ClassKind.ENUM_ENTRY -> ""
-                            else -> "{\n\n}"
-                        }
-                        val safeName = name.quoteIfNeeded()
-                        when (kind) {
-                            ClassKind.ENUM_ENTRY -> {
-                                val targetParent = applicableParents.singleOrNull()
-                                if (!(targetParent is KtClass && targetParent.isEnum())) {
-                                    throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
-                                        .withPsiAttachment("targetParent", targetParent)
-                                }
-                                val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
-                                psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
-                            }
-                            else -> {
-                                val openMod = if (open && kind != ClassKind.INTERFACE) "open " else ""
-                                val innerMod = if (inner || isInsideInnerOrLocalClass()) "inner " else ""
-                                val typeParamList = when (kind) {
-                                    ClassKind.PLAIN_CLASS, ClassKind.INTERFACE -> "<>"
-                                    else -> ""
-                                }
-                                val ctor =
-                                    classWithPrimaryConstructorInfo.primaryConstructorVisibility?.name?.let { " $it constructor" } ?: ""
-                                psiFactory.createDeclaration<KtClassOrObject>(
-                                    "$openMod$innerMod${kind.keyword} $safeName$typeParamList$ctor$paramList$returnTypeString $classBody"
-                                )
-                            }
-                        }
-                    }
+                    val classInfo = classWithPrimaryConstructorInfo.classInfo
+
+                    CreateClassUtil.createClassDeclaration(config.currentFile.project,
+                                                           paramList,
+                                                           returnTypeString,
+                                                           classInfo.kind,
+                                                           classInfo.name,
+                                                           classInfo.applicableParents,
+                                                           classInfo.open,
+                                                           classInfo.inner, isInsideInnerOrLocalClass(), classWithPrimaryConstructorInfo.primaryConstructorVisibility?.name
+                    )
                 }
                 CallableKind.PROPERTY -> {
                     val isVar = (callableInfo as PropertyInfo).writable
@@ -1109,6 +1090,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             }
         }
     }
+
 
 }
 

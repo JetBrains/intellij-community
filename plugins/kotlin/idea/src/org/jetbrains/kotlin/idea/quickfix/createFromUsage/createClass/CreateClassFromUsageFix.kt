@@ -10,17 +10,16 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.psi.*
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind.*
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.SeparateFileWrapper
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
@@ -40,19 +39,8 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 import java.util.*
-import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind as IdeaClassKind
 
-enum class ClassKind(@NonNls val keyword: String, @Nls val description: String) {
-    PLAIN_CLASS("class", KotlinBundle.message("text.class")),
-    ENUM_CLASS("enum class", KotlinBundle.message("text.enum")),
-    ENUM_ENTRY("", KotlinBundle.message("text.enum.constant")),
-    ANNOTATION_CLASS("annotation class", KotlinBundle.message("text.annotation")),
-    INTERFACE("interface", KotlinBundle.message("text.interface")),
-    OBJECT("object", KotlinBundle.message("text.object")),
-    DEFAULT("", "") // Used as a placeholder and must be replaced with one of the kinds above
-}
-
-fun ClassKind.toIdeaClassKind(): com.intellij.codeInsight.daemon.impl.quickfix.ClassKind = IdeaClassKind { this@toIdeaClassKind.description.capitalize() }
+fun ClassKind.toIdeaClassKind(): com.intellij.codeInsight.daemon.impl.quickfix.ClassKind = com.intellij.codeInsight.daemon.impl.quickfix.ClassKind { description.capitalize() }
 
 val ClassKind.actionPriority: IntentionActionPriority
     get() = if (this == ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL

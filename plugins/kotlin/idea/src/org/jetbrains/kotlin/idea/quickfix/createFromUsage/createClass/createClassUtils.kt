@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.quickfix.DelegatingIntentionAction
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.containsStarProjections
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.guessTypes
@@ -100,7 +101,7 @@ internal fun getClassKindFilter(expectedType: KotlinType, containingDeclaration:
         when (classKind) {
             ClassKind.ENUM_ENTRY -> isEnum && containingDeclaration == DescriptorToSourceUtils.descriptorToDeclaration(descriptor)
             ClassKind.INTERFACE -> containingDeclaration !is PsiClass
-                    || (descriptor as? ClassDescriptor)?.kind == ClassDescriptorKind.INTERFACE
+                                   || (descriptor as? ClassDescriptor)?.kind == ClassDescriptorKind.INTERFACE
             else -> canHaveSubtypes
         }
     }
