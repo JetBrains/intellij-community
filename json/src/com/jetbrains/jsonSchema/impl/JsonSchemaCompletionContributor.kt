@@ -524,12 +524,14 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     companion object {
       // some schemas provide an empty array or an empty object in enum values...
       private val filtered = setOf("[]", "{}", "[ ]", "{ }")
+      private val commonAbbreviations = listOf("e.g.", "i.e.")
 
       private fun findFirstSentence(sentence: String): String {
         var i = sentence.indexOf(". ")
         while (i >= 0) {
-          val egText = ", e.g."
-          if (!sentence.regionMatches(i - egText.length + 1, egText, 0, egText.length)) {
+          if (commonAbbreviations.none { abbr ->
+              sentence.regionMatches(i - abbr.length + 1, abbr, 0, abbr.length)
+            }) {
             return sentence.substring(0, i + 1)
           }
           i = sentence.indexOf(". ", i + 1)
