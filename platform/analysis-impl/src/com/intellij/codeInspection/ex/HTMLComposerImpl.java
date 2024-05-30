@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class HTMLComposerImpl extends HTMLComposer {
-  private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
-  private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
+  private final Map<Key<? extends HTMLComposerExtension<?>>, HTMLComposerExtension<?>> myExtensions = new HashMap<>();
+  private final Map<Language, HTMLComposerExtension<?>> myLanguageExtensions = new HashMap<>();
   protected static final @NonNls String BR = "<br>";
   public static final @NonNls String NBSP = "&nbsp;";
   public static final @NonNls String CODE_CLOSING = "</code>";
@@ -66,7 +66,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   }
 
   private void appendLocation(@NotNull StringBuilder buf, final RefElement refElement) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendLocation(refElement, buf);
     }
@@ -82,13 +82,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
-  private @Nullable HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
+  private @Nullable HTMLComposerExtension<?> getLanguageExtension(final RefElement refElement) {
     final PsiElement element = refElement.getPsiElement();
     return element != null ? myLanguageExtensions.get(element.getLanguage()) : null;
   }
 
   private void appendShortName(@NotNull StringBuilder buf, RefElement refElement) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendShortName(refElement, buf);
     } else {
@@ -114,8 +114,8 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       if (!qName.isEmpty()) qName.insert(0, ".");
 
       String name = null;
-      if (refEntity instanceof RefElement) {
-        final HTMLComposerExtension extension = getLanguageExtension((RefElement)refEntity);
+      if (refEntity instanceof RefElement refElement) {
+        final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
         if (extension != null) {
           name = extension.getQualifiedName(refEntity);
         }
@@ -170,7 +170,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementReference(@NotNull StringBuilder buf, RefElement refElement, boolean isPackageIncluded) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
 
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
@@ -290,6 +290,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public <T> T getExtension(Key<T> key) {
+    //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 }
