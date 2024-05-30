@@ -2,6 +2,7 @@
 package com.intellij.platform.feedback.impl
 
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -9,10 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.FeedbackSurvey
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 @Service(Service.Level.APP)
-class IdleFeedbackResolver {
+class IdleFeedbackResolver(private val cs: CoroutineScope) {
   companion object {
     @JvmStatic
     internal fun getInstance(): IdleFeedbackResolver = service()
@@ -35,20 +40,24 @@ class IdleFeedbackResolver {
       return
     }
 
-    val suitableFeedbackTypes = IdleFeedbackTypes.values().filter { it.isSuitable() }
-    val suitableIdleFeedbackSurveys = getJbIdleFeedbackSurveyExtensionList().filter { it.isSuitableToShow(project) }
+    cs.launch {
+      val suitableFeedbackTypes = IdleFeedbackTypes.entries.filter { it.isSuitable() }
+      val suitableIdleFeedbackSurveys = getJbIdleFeedbackSurveyExtensionList().filter { it.isSuitableToShow(project) }
 
-    if (suitableFeedbackTypes.isEmpty() && suitableIdleFeedbackSurveys.isEmpty()) {
-      return
-    }
+      if (suitableFeedbackTypes.isEmpty() && suitableIdleFeedbackSurveys.isEmpty()) {
+        return@launch
+      }
 
-    val feedbackIndex = Random.Default.nextInt(suitableFeedbackTypes.size + suitableIdleFeedbackSurveys.size)
+      val feedbackIndex = Random.Default.nextInt(suitableFeedbackTypes.size + suitableIdleFeedbackSurveys.size)
 
-    if (feedbackIndex < suitableFeedbackTypes.size) {
-      suitableFeedbackTypes[feedbackIndex].showNotification(project)
-    }
-    else {
-      suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
+      withContext(Dispatchers.EDT) {
+        if (feedbackIndex < suitableFeedbackTypes.size) {
+          suitableFeedbackTypes[feedbackIndex].showNotification(project)
+        }
+        else {
+          suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
+        }
+      }
     }
   }
 }

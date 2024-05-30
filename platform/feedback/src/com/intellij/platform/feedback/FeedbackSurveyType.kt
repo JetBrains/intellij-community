@@ -4,6 +4,7 @@ package com.intellij.platform.feedback
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.impl.isSuitableToShow
 import com.intellij.platform.feedback.impl.showNotification
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
 
@@ -13,6 +14,7 @@ sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
     return feedbackSurveyConfig.surveyId
   }
 
+  @RequiresBackgroundThread
   internal fun isSuitableToShow(project: Project): Boolean {
     return isSuitableToShow(feedbackSurveyConfig, project)
   }

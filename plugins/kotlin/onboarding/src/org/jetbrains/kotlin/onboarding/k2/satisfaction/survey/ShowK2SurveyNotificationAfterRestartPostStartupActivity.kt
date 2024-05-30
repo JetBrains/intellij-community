@@ -19,9 +19,12 @@ private class ShowK2SurveyNotificationAfterRestartPostStartupActivity : ProjectA
             "propertiesComponent.getBoolean($propertiesComponentKey) " + propertiesComponent.getBoolean(propertiesComponentKey)
         }
         if (Registry.`is`("test.k2.feedback.survey", false) || !propertiesComponent.getBoolean(propertiesComponentKey)) {
-            if (OnDemandFeedbackResolver.getInstance().showFeedbackNotification(K2FeedbackSurvey::class, project)) {
-                propertiesComponent.updateValue(propertiesComponentKey, /* newValue = */ true)
-            }
+            OnDemandFeedbackResolver.getInstance()
+                .showFeedbackNotification(K2FeedbackSurvey::class, project) { isNotificationShown: Boolean ->
+                    if (isNotificationShown) {
+                        propertiesComponent.updateValue(propertiesComponentKey, true)
+                    }
+                }
         }
     }
 }
