@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.blobstorage;
 
 import com.intellij.openapi.Forceable;
@@ -50,7 +50,7 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
   /** @return version of application data stored in storage -- managed by application */
   int getDataFormatVersion() throws IOException;
 
-  void setDataFormatVersion(final int expectedVersion) throws IOException;
+  void setDataFormatVersion(int expectedVersion) throws IOException;
 
   /**
    * @return max size of a record this storage could store.
@@ -58,13 +58,13 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    */
   int maxPayloadSupported();
 
-  <Out> Out readRecord(final int recordId,
-                       final @NotNull ByteBufferReader<Out> reader) throws IOException;
+  <Out> Out readRecord(int recordId,
+                       @NotNull ByteBufferReader<Out> reader) throws IOException;
 
-  boolean hasRecord(final int recordId) throws IOException;
+  boolean hasRecord(int recordId) throws IOException;
 
-  boolean hasRecord(final int recordId,
-                    final @Nullable IntRef redirectToIdRef) throws IOException;
+  boolean hasRecord(int recordId,
+                    @Nullable IntRef redirectToIdRef) throws IOException;
 
   /**
    * reader will be called with read-only ByteBuffer set up for reading the record content (payload):
@@ -76,16 +76,16 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    *                        outdated. Clients could still use old recordId, but better to replace
    *                        this outdated id with actual one, since it improves performance (at least)
    */
-  <Out> Out readRecord(final int recordId,
-                       final @NotNull ByteBufferReader<Out> reader,
-                       final @Nullable IntRef redirectToIdRef) throws IOException;
+  <Out> Out readRecord(int recordId,
+                       @NotNull ByteBufferReader<Out> reader,
+                       @Nullable IntRef redirectToIdRef) throws IOException;
 
-  int writeToRecord(final int recordId,
-                    final @NotNull ByteBufferWriter writer) throws IOException;
+  int writeToRecord(int recordId,
+                    @NotNull ByteBufferWriter writer) throws IOException;
 
-  int writeToRecord(final int recordId,
-                    final @NotNull ByteBufferWriter writer,
-                    final int expectedRecordSizeHint) throws IOException;
+  int writeToRecord(int recordId,
+                    @NotNull ByteBufferWriter writer,
+                    int expectedRecordSizeHint) throws IOException;
 
   /**
    * Writer is called with writeable ByteBuffer represented current record content (payload).
@@ -112,10 +112,10 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    *                                        record, so new content could still be accesses via old
    *                                        recordId.
    */
-  int writeToRecord(final int recordId,
-                    final @NotNull ByteBufferWriter writer,
-                    final int expectedRecordSizeHint,
-                    final boolean leaveRedirectOnRecordRelocation) throws IOException;
+  int writeToRecord(int recordId,
+                    @NotNull ByteBufferWriter writer,
+                    int expectedRecordSizeHint,
+                    boolean leaveRedirectOnRecordRelocation) throws IOException;
 
   /**
    * Delete record by recordId.
@@ -132,7 +132,7 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    * @throws IllegalStateException if record is already deleted
    */
 
-  void deleteRecord(final int recordId) throws IOException;
+  void deleteRecord(int recordId) throws IOException;
 
   /**
    * Scan all records (even deleted one), and deliver their content to processor. ByteBuffer is read-only, and
@@ -142,9 +142,9 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    *
    * @return how many records were processed
    */
-  <E extends Exception> int forEach(final @NotNull Processor<E> processor) throws IOException, E;
+  <E extends Exception> int forEach(@NotNull Processor<E> processor) throws IOException, E;
 
-  boolean isRecordActual(final int recordActualLength);
+  boolean isRecordActual(int recordActualLength);
 
   int liveRecordsCount();
 
@@ -169,9 +169,9 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
 
 
   interface Processor<E extends Exception> {
-    boolean processRecord(final int recordId,
-                          final int recordCapacity,
-                          final int recordLength,
-                          final ByteBuffer payload) throws IOException, E;
+    boolean processRecord(int recordId,
+                          int recordCapacity,
+                          int recordLength,
+                          @NotNull ByteBuffer payload) throws IOException, E;
   }
 }
