@@ -370,6 +370,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private CompletableFuture<Void> enableRequest(EventRequest request, Function<EventRequest, CompletableFuture<Void>> enabler) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
+    DebuggerDiagnosticsUtil.logDebug("Enable request " + request.getClass());
     try {
       final ThreadReference filterThread = myFilterThread == null ? null : myFilterThread.getRealThread();
       if (filterThread != null && DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {

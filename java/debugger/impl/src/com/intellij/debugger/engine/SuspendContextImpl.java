@@ -170,7 +170,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   void resume(boolean callResume) {
     assertNotResumed();
     if (isEvaluating()) {
-      logError("Resuming context while evaluating");
+      logError("Resuming context " + this + " while evaluating");
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {

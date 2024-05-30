@@ -387,7 +387,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (mask == 0 && vm instanceof VirtualMachineImpl extendedVM) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         mask = VirtualMachine.TRACE_ALL;
-        extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
+        extendedVM.setDebugTraceConsumer(string -> DebuggerDiagnosticsUtil.logDebug("[JDI: " + string + "]"));
       }
     }
     vm.setDebugTraceMode(mask);
