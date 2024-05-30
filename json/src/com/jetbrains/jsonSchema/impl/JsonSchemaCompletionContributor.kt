@@ -1,351 +1,284 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.impl
 
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.json.JsonBundle;
-import com.intellij.json.pointer.JsonPointerPosition;
-import com.intellij.json.psi.*;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.injection.Injectable;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.PlatformIcons;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.jetbrains.jsonSchema.extension.*;
-import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
-import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
-import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsKt;
-import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
-import com.jetbrains.jsonSchema.impl.nestedCompletions.SchemaPath;
-import kotlin.Unit;
-import kotlin.collections.SetsKt;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.json.JsonBundle
+import com.intellij.json.psi.*
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.openapi.editor.EditorModificationUtilEx
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.actions.EditorActionUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.TokenType
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.injection.Injectable
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.ui.IconManager.Companion.getInstance
+import com.intellij.ui.PlatformIcons
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ThreeState
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
+import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
+import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
+import com.jetbrains.jsonSchema.extension.SchemaType
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
+import com.jetbrains.jsonSchema.ide.JsonSchemaService
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_ORDER_SENSITIVE
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
+import com.jetbrains.jsonSchema.impl.nestedCompletions.*
+import one.util.streamex.StreamEx
+import org.jetbrains.annotations.TestOnly
+import java.util.function.Consumer
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.*;
-import java.util.stream.Collectors;
+private const val BUILTIN_USAGE_KEY = "builtin"
+private const val SCHEMA_USAGE_KEY = "schema"
+private const val USER_USAGE_KEY = "user"
+private const val REMOTE_USAGE_KEY = "remote"
 
-import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.effectiveBranchOrNull;
-import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.findPropertiesThatMustNotBePresent;
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_ENUM_ORDER_SENSITIVE;
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_LANGUAGE_INJECTION;
-import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
+class JsonSchemaCompletionContributor : CompletionContributor() {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    val position = parameters.position
+    val file = PsiUtilCore.getVirtualFile(position)
+    if (file == null) return
 
-public final class JsonSchemaCompletionContributor extends CompletionContributor {
-  private static final String BUILTIN_USAGE_KEY = "builtin";
-  private static final String SCHEMA_USAGE_KEY = "schema";
-  private static final String USER_USAGE_KEY = "user";
-  private static final String REMOTE_USAGE_KEY = "remote";
-
-  @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final PsiElement position = parameters.getPosition();
-    final VirtualFile file = PsiUtilCore.getVirtualFile(position);
-    if (file == null) return;
-
-    final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
-    if (!service.isApplicableToFile(file)) return;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(position.getContainingFile());
-    if (rootSchema == null) return;
-    PsiElement positionParent = position.getParent();
+    val service = JsonSchemaService.Impl.get(position.project)
+    if (!service.isApplicableToFile(file)) return
+    val rootSchema = service.getSchemaObject(position.containingFile)
+    if (rootSchema == null) return
+    val positionParent = position.parent
     if (positionParent != null) {
-      PsiElement parent = positionParent.getParent();
-      if (parent instanceof JsonProperty) {
-        final String propName = ((JsonProperty)parent).getName();
-        if ("$schema".equals(propName) && parent.getParent() instanceof JsonObject && parent.getParent().getParent() instanceof JsonFile
-            || "$ref".equals(propName) && service.isSchemaFile(file)) {
-          return;
+      val parent = positionParent.parent
+      if (parent is JsonProperty) {
+        val propName = parent.name
+        if (("\$schema" == propName && parent.parent is JsonObject && parent.parent.parent is JsonFile
+             || "\$ref" == propName && service.isSchemaFile(file))
+        ) {
+          return
         }
       }
     }
 
-    updateStat(service.getSchemaProvider(rootSchema), service.resolveSchemaFile(rootSchema));
-    doCompletion(parameters, result, rootSchema, true);
+    updateStat(service.getSchemaProvider(rootSchema), service.resolveSchemaFile(rootSchema))
+    doCompletion(parameters, result, rootSchema, true)
   }
 
-  public static void doCompletion(final @NotNull CompletionParameters parameters,
-                                  final @NotNull CompletionResultSet result,
-                                  final @NotNull JsonSchemaObject rootSchema,
-                                  boolean stop) {
-    final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
-                                          parameters.getPosition();
-    Worker worker = new Worker(rootSchema, parameters.getPosition(), completionPosition, result);
-    worker.work();
-    // stop further completion only if current contributor has at least one new completion variant
-    if (stop && !worker.myVariants.isEmpty()) {
-      result.stopHere();
-    }
-  }
+  private class Worker(private val myRootSchema: JsonSchemaObject,
+                       private val myPosition: PsiElement,
+                       private val myOriginalPosition: PsiElement,
+                       private val myResultConsumer: Consumer<LookupElement>) {
+    private val myWrapInQuotes: Boolean
+    private val myInsideStringLiteral: Boolean
 
-  @TestOnly
-  public static @NotNull List<LookupElement> getCompletionVariants(final @NotNull JsonSchemaObject schema,
-                                                                   final @NotNull PsiElement position, final @NotNull PsiElement originalPosition) {
-    final List<LookupElement> result = new ArrayList<>();
-    new Worker(schema, position, originalPosition, element -> result.add(element)).work();
-    return result;
-  }
-
-  private static void updateStat(@Nullable JsonSchemaFileProvider provider, VirtualFile schemaFile) {
-    if (provider == null) {
-      if (schemaFile instanceof HttpVirtualFile) {
-        // auto-detected and auto-downloaded JSON schemas
-        JsonSchemaUsageTriggerCollector.trigger(REMOTE_USAGE_KEY);
-      }
-      return;
-    }
-    final SchemaType schemaType = provider.getSchemaType();
-    JsonSchemaUsageTriggerCollector.trigger(switch (schemaType) {
-      case schema -> SCHEMA_USAGE_KEY;
-      case userSchema -> USER_USAGE_KEY;
-      case embeddedSchema -> BUILTIN_USAGE_KEY;
-      case remoteSchema ->
-        // this works only for user-specified remote schemas in our settings, but not for auto-detected remote schemas
-        REMOTE_USAGE_KEY;
-    });
-  }
-
-  private static final class Worker {
-    private final @NotNull JsonSchemaObject myRootSchema;
-    private final @NotNull PsiElement myPosition;
-    private final @NotNull PsiElement myOriginalPosition;
-    private final @NotNull Consumer<LookupElement> myResultConsumer;
-    private final boolean myWrapInQuotes;
-    private final boolean myInsideStringLiteral;
     // we need this set to filter same-named suggestions (they can be suggested by several matching schemes)
-    private final Set<LookupElement> myVariants;
-    private final JsonLikePsiWalker myWalker;
-    private final Project myProject;
+    val myVariants: MutableSet<LookupElement> = HashSet()
+    private val myWalker: JsonLikePsiWalker?
+    private val myProject: Project = myOriginalPosition.project
 
-    Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
-           @NotNull PsiElement originalPosition, final @NotNull Consumer<LookupElement> resultConsumer) {
-      myRootSchema = rootSchema;
-      myPosition = position;
-      myOriginalPosition = originalPosition;
-      myProject = originalPosition.getProject();
-      myResultConsumer = resultConsumer;
-      myVariants = new HashSet<>();
-      JsonLikePsiWalker psiWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
-      PsiElement positionParent = position.getParent();
-      boolean isInsideQuotedString = positionParent != null
-                               && psiWalker != null
-                               && psiWalker.isQuotedString(positionParent);
-      myWrapInQuotes = !isInsideQuotedString;
-      myWalker = psiWalker;
-      myInsideStringLiteral = isInsideQuotedString;
-    }
+    fun work() {
+      if (myWalker == null) return
+      val checkable = myWalker.findElementToCheck(myPosition)
+      if (checkable == null) return
+      val isName = myWalker.isName(checkable)
+      val position = myWalker.findPosition(checkable, isName == ThreeState.NO)
+      if (position == null || position.isEmpty && isName == ThreeState.NO) return
 
-    public void work() {
-      if (myWalker == null) return;
-      final PsiElement checkable = myWalker.findElementToCheck(myPosition);
-      if (checkable == null) return;
-      final ThreeState isName = myWalker.isName(checkable);
-      final JsonPointerPosition position = myWalker.findPosition(checkable, isName == ThreeState.NO);
-      if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
+      val knownNames: MutableSet<String> = HashSet()
 
-      final Set<String> knownNames = new HashSet<>();
+      val nestedCompletionsNode = getNestedCompletionsData(myOriginalPosition.containingFile)
+        .navigate(position
+        )
 
-      final var nestedCompletionsNode = NestedCompletionsNodeKt.navigate(
-        JsonSchemaNestedCompletionsTreeProvider.getNestedCompletionsData(myOriginalPosition.getContainingFile()),
-        position
-      );
-
-      new JsonSchemaResolver(myProject, myRootSchema, position)
+      JsonSchemaResolver(myProject, myRootSchema, position)
         .resolve()
-        .forEach(schema -> {
-          NestedCompletionsKt.collectNestedCompletions(schema, myProject, nestedCompletionsNode, null, (path, subSchema) -> {
-            processSchema(subSchema, isName, checkable, knownNames, path);
-            return Unit.INSTANCE;
-          });
-        });
+        .forEach(java.util.function.Consumer { schema: JsonSchemaObject ->
+          schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path: SchemaPath?, subSchema: JsonSchemaObject ->
+            processSchema(subSchema, isName, checkable, knownNames, path)
+            Unit
+          }
+        })
 
-      for (LookupElement variant : myVariants) {
-        myResultConsumer.consume(variant);
+      for (variant in myVariants) {
+        myResultConsumer.accept(variant)
       }
     }
 
     /**
      * @param completionPath Linked node representation of the names of all the parent
-     *                       schema objects that we have navigated for nested completions
+     * schema objects that we have navigated for nested completions
      */
-    private void processSchema(JsonSchemaObject schema,
-                               ThreeState isName,
-                               PsiElement checkable,
-                               Set<String> knownNames,
-                               @Nullable SchemaPath completionPath) {
+    fun processSchema(schema: JsonSchemaObject,
+                      isName: ThreeState,
+                      checkable: PsiElement,
+                      knownNames: MutableSet<String>,
+                      completionPath: SchemaPath?) {
       if (isName != ThreeState.NO) {
-        final var completionOriginalPosition = NestedCompletionsKt.findChildBy(myWalker, completionPath, myOriginalPosition);
-        final var completionPosition = NestedCompletionsKt.findChildBy(myWalker, completionPath, myPosition);
-        final boolean insertComma = myWalker.hasMissingCommaAfter(myPosition);
-        final boolean hasValue = myWalker.isPropertyWithValue(checkable);
+        val completionOriginalPosition = myWalker!!.findChildBy(completionPath, myOriginalPosition)
+        val completionPosition = myWalker.findChildBy(completionPath, myPosition)
+        val insertComma = myWalker.hasMissingCommaAfter(myPosition)
+        val hasValue = myWalker.isPropertyWithValue(checkable)
 
-        final Set<String> properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition);
-        final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(completionOriginalPosition);
+        val properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition)
+        val adapter = myWalker.getParentPropertyAdapter(completionOriginalPosition)
 
-        final Set<String> forbiddenNames = SetsKt.plus(
-          findPropertiesThatMustNotBePresent(schema, myPosition, myProject, properties),
-          properties
-        );
-        addAllPropertyVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
-        addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
-        addPropertyNameSchemaVariants(schema);
+        val forbiddenNames = findPropertiesThatMustNotBePresent(schema, myPosition, myProject, properties)
+          .plus(properties
+          )
+        addAllPropertyVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath)
+        addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath)
+        addPropertyNameSchemaVariants(schema)
       }
 
       if (isName != ThreeState.YES) {
-        suggestValues(schema, isName == ThreeState.NO, completionPath);
+        suggestValues(schema, isName == ThreeState.NO, completionPath)
       }
     }
 
-    private void addPropertyNameSchemaVariants(@NotNull JsonSchemaObject schema) {
-      JsonSchemaObject propertyNamesSchema = schema.getPropertyNamesSchema();
-      if (propertyNamesSchema == null) return;
-      List<Object> anEnum = propertyNamesSchema.getEnum();
-      if (anEnum == null) return;
-      for (Object o : anEnum) {
-        if (!(o instanceof String key)) continue;
-        key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
-        myVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(key)));
+    fun addPropertyNameSchemaVariants(schema: JsonSchemaObject) {
+      val propertyNamesSchema = schema.propertyNamesSchema
+      if (propertyNamesSchema == null) return
+      val anEnum = propertyNamesSchema.enum
+      if (anEnum == null) return
+      for (o in anEnum) {
+        if (o !is String) continue
+        myVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(
+          if (!shouldWrapInQuotes(o, false)) o else StringUtil.wrapWithDoubleQuote(o)
+        )))
       }
     }
 
-    private void addIfThenElsePropertyNameVariants(@NotNull JsonSchemaObject schema,
-                                                   boolean insertComma,
-                                                   boolean hasValue,
-                                                   @NotNull Set<String> forbiddenNames,
-                                                   @Nullable JsonPropertyAdapter adapter,
-                                                   Set<String> knownNames,
-                                                   @Nullable SchemaPath completionPath) {
-      List<IfThenElse> ifThenElseList = schema.getIfThenElse();
-      if (ifThenElseList == null) return;
+    fun addIfThenElsePropertyNameVariants(schema: JsonSchemaObject,
+                                          insertComma: Boolean,
+                                          hasValue: Boolean,
+                                          forbiddenNames: Set<String>,
+                                          adapter: JsonPropertyAdapter?,
+                                          knownNames: MutableSet<String>,
+                                          completionPath: SchemaPath?) {
+      val ifThenElseList = schema.ifThenElse
+      if (ifThenElseList == null) return
 
-      JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(myPosition, schema);
-      JsonPropertyAdapter propertyAdapter = walker == null ? null : walker.getParentPropertyAdapter(myPosition);
-      if (propertyAdapter == null) return;
+      val walker = JsonLikePsiWalker.getWalker(myPosition, schema)
+      val propertyAdapter = walker?.getParentPropertyAdapter(myPosition)
+      if (propertyAdapter == null) return
 
-      JsonObjectValueAdapter object = propertyAdapter.getParentObject();
-      if (object == null) return;
+      val `object` = propertyAdapter.parentObject
+      if (`object` == null) return
 
-      for (IfThenElse ifThenElse : ifThenElseList) {
-        JsonSchemaObject effectiveBranch = effectiveBranchOrNull(ifThenElse, myProject, object);
-        if (effectiveBranch == null) continue;
+      for (ifThenElse in ifThenElseList) {
+        val effectiveBranch = ifThenElse.effectiveBranchOrNull(myProject, `object`)
+        if (effectiveBranch == null) continue
 
         addAllPropertyVariants(effectiveBranch, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath
-        );
+        )
       }
     }
 
-    private void addAllPropertyVariants(JsonSchemaObject schema,
-                                        boolean insertComma,
-                                        boolean hasValue,
-                                        Set<String> forbiddenNames,
-                                        JsonPropertyAdapter adapter,
-                                        Set<String> knownNames,
-                                        @Nullable SchemaPath completionPath) {
-      StreamEx.of(schema.getPropertyNames())
-        .filter(name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
-        .forEach(name -> {
-          knownNames.add(name);
-          var propertySchema = schema.getPropertyByName(name);
-          assert propertySchema != null;
-          addPropertyVariant(name, propertySchema, hasValue, insertComma, completionPath);
-        });
+    fun addAllPropertyVariants(schema: JsonSchemaObject,
+                               insertComma: Boolean,
+                               hasValue: Boolean,
+                               forbiddenNames: Set<String>,
+                               adapter: JsonPropertyAdapter?,
+                               knownNames: MutableSet<String>,
+                               completionPath: SchemaPath?) {
+      StreamEx.of(schema.propertyNames)
+        .filter { name: String -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name == adapter.name }
+        .forEach { name: String ->
+          knownNames.add(name)
+          val propertySchema = checkNotNull(schema.getPropertyByName(name))
+          addPropertyVariant(name, propertySchema, hasValue, insertComma, completionPath)
+        }
     }
 
-    // some schemas provide an empty array or an empty object in enum values...
-    private static final Set<String> filtered = Set.of("[]", "{}", "[ ]", "{ }");
+    init {
+      val psiWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema)
+      val positionParent = myPosition.parent
+      val isInsideQuotedString = (positionParent != null && psiWalker != null && psiWalker.isQuotedString(positionParent))
+      myWrapInQuotes = !isInsideQuotedString
+      myWalker = psiWalker
+      myInsideStringLiteral = isInsideQuotedString
+    }
 
-    private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue, SchemaPath completionPath) {
-      suggestValuesForSchemaVariants(schema.getAnyOf(), isSurelyValue, completionPath);
-      suggestValuesForSchemaVariants(schema.getOneOf(), isSurelyValue, completionPath);
-      suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue, completionPath);
+    fun suggestValues(schema: JsonSchemaObject, isSurelyValue: Boolean, completionPath: SchemaPath?) {
+      suggestValuesForSchemaVariants(schema.anyOf, isSurelyValue, completionPath)
+      suggestValuesForSchemaVariants(schema.oneOf, isSurelyValue, completionPath)
+      suggestValuesForSchemaVariants(schema.allOf, isSurelyValue, completionPath)
 
-      if (schema.getEnum() != null && completionPath == null) {
+      if (schema.enum != null && completionPath == null) {
         // custom insert handlers are currently applicable only to enum values but can be extended later to cover more cases
-        List<JsonSchemaCompletionHandlerProvider> customHandlers = JsonSchemaCompletionHandlerProvider.EXTENSION_POINT_NAME.getExtensionList();
-         Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
-         boolean isEnumOrderSensitive = Boolean.parseBoolean(schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE));
-         List<Object> anEnum = schema.getEnum();
-         for (int i = 0; i < anEnum.size(); i++) {
-           Object o = anEnum.get(i);
-           if (myInsideStringLiteral && !(o instanceof String)) continue;
-           String variant = o.toString();
-           if (!filtered.contains(variant)) {
-             Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
-             String description = valueMetadata == null ? null : valueMetadata.get("description");
-             String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
-             Integer order = isEnumOrderSensitive ? i : null;
-             List<InsertHandler<LookupElement>> handlers = customHandlers.stream()
-               .map(p -> p.createHandlerForEnumValue(schema, variant))
-               .filter(h -> h != null).toList();
-             addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null,
-                             handlers.size() == 1 ? handlers.get(0) : null, order);
-           }
+        val customHandlers = JsonSchemaCompletionHandlerProvider.EXTENSION_POINT_NAME.extensionList
+        val metadata = schema.enumMetadata
+        val isEnumOrderSensitive = schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE).toBoolean()
+        val anEnum = schema.enum
+        for (i in anEnum!!.indices) {
+          val o = anEnum[i]
+          if (myInsideStringLiteral && o !is String) continue
+          val variant = o.toString()
+          if (!filtered.contains(variant)) {
+            val valueMetadata = metadata?.get(StringUtil.unquoteString(variant))
+            val description = valueMetadata?.get("description")
+            val deprecated = valueMetadata?.get("deprecationMessage")
+            val order = if (isEnumOrderSensitive) i else null
+            val handlers = customHandlers.mapNotNull { p -> p.createHandlerForEnumValue(schema, variant) }.toList()
+            addValueVariant(variant, description, if (deprecated != null) ("$variant ($deprecated)") else null,
+                            if (handlers.size == 1) handlers[0] else null, order)
+          }
         }
       }
       else if (isSurelyValue) {
-        final JsonSchemaType type = guessType(schema);
-        suggestSpecialValues(type);
+        val type = JsonSchemaObjectReadingUtils.guessType(schema)
+        suggestSpecialValues(type)
         if (type != null) {
-          suggestByType(schema, type);
+          suggestByType(schema, type)
         }
-        else if (schema.getTypeVariants() != null) {
-          for (JsonSchemaType schemaType : schema.getTypeVariants()) {
-            suggestByType(schema, schemaType);
+        else if (schema.typeVariants != null) {
+          for (schemaType in schema.typeVariants!!) {
+            suggestByType(schema, schemaType)
           }
         }
       }
     }
 
-    private void suggestSpecialValues(@Nullable JsonSchemaType type) {
-      if (JsonSchemaVersion.isSchemaSchemaId(myRootSchema.getId()) && type == JsonSchemaType._string) {
-        JsonPropertyAdapter propertyAdapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
+    fun suggestSpecialValues(type: JsonSchemaType?) {
+      if (JsonSchemaVersion.isSchemaSchemaId(myRootSchema.id) && type == JsonSchemaType._string) {
+        val propertyAdapter = myWalker!!.getParentPropertyAdapter(myOriginalPosition)
         if (propertyAdapter == null) {
-          return;
+          return
         }
-        String name = propertyAdapter.getName();
+        val name = propertyAdapter.name
         if (name == null) {
-          return;
+          return
         }
-        switch (name) {
-          case "required" -> addRequiredPropVariants();
-          case X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants();
-          case "language" -> {
-            JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
+        when (name) {
+          "required" -> addRequiredPropVariants()
+          X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants()
+          "language" -> {
+            val parent = propertyAdapter.parentObject
             if (parent != null) {
-              JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
-              if (adapter != null && X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
-                addInjectedLanguageVariants();
+              val adapter = myWalker.getParentPropertyAdapter(parent.delegate)
+              if (adapter != null && X_INTELLIJ_LANGUAGE_INJECTION == adapter.name) {
+                addInjectedLanguageVariants()
               }
             }
           }
@@ -353,535 +286,570 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       }
     }
 
-    private void addInjectedLanguageVariants() {
-      PsiElement checkable = myWalker.findElementToCheck(myPosition);
-      if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
+    fun addInjectedLanguageVariants() {
+      val checkable = myWalker!!.findElementToCheck(myPosition)
+      if (checkable !is JsonStringLiteral && checkable !is JsonReferenceExpression) return
       JBIterable.from(Language.getRegisteredLanguages())
-        .filter(LanguageUtil::isInjectableLanguage)
-        .map(Injectable::fromLanguage)
-        .forEach(it -> myVariants.add(LookupElementBuilder
-                                        .create(it.getId())
-                                        .withIcon(it.getIcon())
-                                        .withTailText("(" + it.getDisplayName() + ")", true)));
+        .filter { language: Language? ->
+          LanguageUtil.isInjectableLanguage(
+            language!!)
+        }
+        .map { language: Language? -> Injectable.fromLanguage(language) }
+        .forEach(
+          java.util.function.Consumer { it: Injectable ->
+            myVariants.add(LookupElementBuilder
+                             .create(it.id)
+                             .withIcon(it.icon)
+                             .withTailText("(" + it.displayName + ")", true))
+          })
     }
 
-    private void addRequiredPropVariants() {
-      PsiElement checkable = myWalker.findElementToCheck(myPosition);
-      if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
-      JsonObject propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable);
-      if (propertiesObject == null) return;
-      PsiElement parent = checkable.getParent();
-      Set<String> items = parent instanceof JsonArray
-                          ? ((JsonArray)parent).getValueList().stream()
-                            .filter(v -> v instanceof JsonStringLiteral).map(v -> ((JsonStringLiteral)v).getValue())
-                            .collect(Collectors.toSet())
-                          : new HashSet<>();
-      propertiesObject.getPropertyList().stream().map(p -> p.getName()).filter(n -> !items.contains(n))
-        .forEach(n -> addStringVariant(n));
+    fun addRequiredPropVariants() {
+      val checkable = myWalker!!.findElementToCheck(myPosition)
+      if (checkable !is JsonStringLiteral && checkable !is JsonReferenceExpression) return
+      val propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable)
+      if (propertiesObject == null) return
+      val parent = checkable.parent
+      val items = if (parent is JsonArray
+      ) parent.valueList
+        .filterIsInstance<JsonStringLiteral>().map { it.value }.toSet()
+      else HashSet()
+      propertiesObject.propertyList.map { it.name }.filter {!items.contains(it) }
+        .forEach { addStringVariant(it) }
     }
 
-    private void suggestByType(JsonSchemaObject schema, JsonSchemaType type) {
-      if (JsonSchemaType._string.equals(type)) {
-        addPossibleStringValue(schema);
+    fun suggestByType(schema: JsonSchemaObject, type: JsonSchemaType) {
+      if (JsonSchemaType._string == type) {
+        addPossibleStringValue(schema)
       }
       if (myInsideStringLiteral) {
-        return;
+        return
       }
-      if (JsonSchemaType._boolean.equals(type)) {
-        addPossibleBooleanValue(type);
+      if (JsonSchemaType._boolean == type) {
+        addPossibleBooleanValue(type)
       }
-      else if (JsonSchemaType._null.equals(type)) {
-        addValueVariant("null", null);
+      else if (JsonSchemaType._null == type) {
+        addValueVariant("null", null)
       }
-      else if (JsonSchemaType._array.equals(type)) {
-        String value = myWalker.getDefaultArrayValue();
+      else if (JsonSchemaType._array == type) {
+        val value = myWalker!!.defaultArrayValue
         addValueVariant(value, null,
-                        "[...]", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length())
-        );
+                        "[...]", createArrayOrObjectLiteralInsertHandler(
+            myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
+        )
       }
-      else if (JsonSchemaType._object.equals(type)) {
-        String value = myWalker.getDefaultObjectValue();
+      else if (JsonSchemaType._object == type) {
+        val value = myWalker!!.defaultObjectValue
         addValueVariant(value, null,
-                        "{...}", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length())
-        );
+                        "{...}", createArrayOrObjectLiteralInsertHandler(
+            myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
+        )
       }
     }
 
-    private void addPossibleStringValue(JsonSchemaObject schema) {
-      Object defaultValue = schema.getDefault();
-      String defaultValueString = defaultValue == null ? null : defaultValue.toString();
-      addStringVariant(defaultValueString);
+    fun addPossibleStringValue(schema: JsonSchemaObject) {
+      val defaultValue = schema.default
+      val defaultValueString = defaultValue?.toString()
+      addStringVariant(defaultValueString)
     }
 
-    private void addStringVariant(String defaultValueString) {
+    fun addStringVariant(defaultValueString: String?) {
       if (defaultValueString != null) {
-        String normalizedValue = defaultValueString;
-        boolean shouldQuote = myWalker.requiresValueQuotes();
-        boolean isQuoted = StringUtil.isQuotedString(normalizedValue);
+        var normalizedValue: String = defaultValueString
+        val shouldQuote = myWalker!!.requiresValueQuotes()
+        val isQuoted = StringUtil.isQuotedString(normalizedValue)
         if (shouldQuote && !isQuoted) {
-          normalizedValue = StringUtil.wrapWithDoubleQuote(normalizedValue);
+          normalizedValue = StringUtil.wrapWithDoubleQuote(normalizedValue)
         }
         else if (!shouldQuote && isQuoted) {
-          normalizedValue = StringUtil.unquoteString(normalizedValue);
+          normalizedValue = StringUtil.unquoteString(normalizedValue)
         }
-        addValueVariant(normalizedValue, null);
+        addValueVariant(normalizedValue, null)
       }
     }
 
-    private void suggestValuesForSchemaVariants(List<? extends JsonSchemaObject> list, boolean isSurelyValue, SchemaPath completionPath) {
-      if (list != null && list.size() > 0) {
-        for (JsonSchemaObject schemaObject : list) {
-          suggestValues(schemaObject, isSurelyValue, completionPath);
+    fun suggestValuesForSchemaVariants(list: List<JsonSchemaObject>?, isSurelyValue: Boolean, completionPath: SchemaPath?) {
+      if (!list.isNullOrEmpty()) {
+        for (schemaObject in list) {
+          suggestValues(schemaObject, isSurelyValue, completionPath)
         }
       }
     }
 
-    private void addPossibleBooleanValue(JsonSchemaType type) {
-      if (JsonSchemaType._boolean.equals(type)) {
-        addValueVariant("true", null);
-        addValueVariant("false", null);
+    fun addPossibleBooleanValue(type: JsonSchemaType) {
+      if (JsonSchemaType._boolean == type) {
+        addValueVariant("true", null)
+        addValueVariant("false", null)
       }
     }
 
 
-    private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") final @Nullable String description) {
-      addValueVariant(key, description, null, null);
-    }
-
-    private void addValueVariant(@NotNull String key,
-                                 @SuppressWarnings("SameParameterValue") final @Nullable String description,
-                                 final @Nullable String altText,
-                                 @Nullable InsertHandler<LookupElement> handler) {
-      addValueVariant(key, description, altText, handler, null);
-    }
-
-    private void addValueVariant(@NotNull String key,
-                                 @SuppressWarnings("SameParameterValue") final @Nullable String description,
-                                 final @Nullable String altText,
-                                 @Nullable InsertHandler<LookupElement> handler,
-                                 @Nullable Integer order) {
-      String unquoted = StringUtil.unquoteString(key);
-      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted, true) ? unquoted : key);
+    fun addValueVariant(key: String,
+                        description: String?,
+                        altText: String? = null,
+                        handler: InsertHandler<LookupElement?>? = null,
+                        order: Int? = null) {
+      val unquoted = StringUtil.unquoteString(key)
+      var builder = LookupElementBuilder.create(if (!shouldWrapInQuotes(unquoted, true)) unquoted else key)
       if (altText != null) {
-        builder = builder.withPresentableText(altText);
+        builder = builder.withPresentableText(altText)
       }
       if (description != null) {
-        builder = builder.withTypeText(description);
+        builder = builder.withTypeText(description)
       }
       if (handler != null) {
-        builder = builder.withInsertHandler(handler);
+        builder = builder.withInsertHandler(handler)
       }
       if (order != null) {
-        myVariants.add(PrioritizedLookupElement.withPriority(builder, -order));
+        myVariants.add(PrioritizedLookupElement.withPriority(builder, -order.toDouble()))
       }
       else {
-        myVariants.add(builder);
+        myVariants.add(builder)
       }
     }
 
-    private boolean shouldWrapInQuotes(String key, boolean isValue) {
+    fun shouldWrapInQuotes(key: String?, isValue: Boolean): Boolean {
       return myWrapInQuotes && myWalker != null &&
-             (isValue && myWalker.requiresValueQuotes()
-                || !isValue && myWalker.requiresNameQuotes()
-                || !myWalker.isValidIdentifier(key, myProject));
+             (isValue && myWalker.requiresValueQuotes() || !isValue && myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key,
+                                                                                                                                    myProject))
     }
 
-    private void addPropertyVariant(@NotNull String key,
-                                    @NotNull JsonSchemaObject jsonSchemaObject,
-                                    boolean hasValue,
-                                    boolean insertComma,
-                                    @Nullable SchemaPath completionPath) {
-      final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
-      jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
-      key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
-      LookupElementBuilder builder = LookupElementBuilder.create(key);
+    fun addPropertyVariant(key: String,
+                           jsonSchemaObject: JsonSchemaObject,
+                           hasValue: Boolean,
+                           insertComma: Boolean,
+                           completionPath: SchemaPath?) {
+      var propertyKey = key
+      var schemaObject = jsonSchemaObject
+      val variants = JsonSchemaResolver(myProject, schemaObject).resolve()
+      schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
+      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
+      var builder = LookupElementBuilder.create(propertyKey)
 
-      final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
-      if (!StringUtil.isEmptyOrSpaces(typeText)) {
-        final String text = StringUtil.removeHtmlTags(typeText);
-        builder = builder.withTypeText(findFirstSentence(text), true);
+      val typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, schemaObject)
+      if (!typeText.isNullOrBlank()) {
+        val text = StringUtil.removeHtmlTags(typeText)
+        builder = builder.withTypeText(findFirstSentence(text), true)
       }
       else {
-        String type = JsonSchemaObjectReadingUtils.getTypeDescription(jsonSchemaObject, true);
+        val type = JsonSchemaObjectReadingUtils.getTypeDescription(schemaObject, true)
         if (type != null) {
-          builder = builder.withTypeText(type, true);
+          builder = builder.withTypeText(type, true)
         }
       }
 
-      builder = builder.withIcon(getIcon(guessType(jsonSchemaObject)));
+      builder = builder.withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
 
       if (hasSameType(variants)) {
-        final JsonSchemaType type = guessType(jsonSchemaObject);
-        final List<Object> values = jsonSchemaObject.getEnum();
-        Object defaultValue = jsonSchemaObject.getDefault();
+        val type = JsonSchemaObjectReadingUtils.guessType(schemaObject)
+        val values = schemaObject.enum
+        val defaultValue = schemaObject.default
 
-        boolean hasValues = !ContainerUtil.isEmpty(values);
-        if (type != null || hasValues || defaultValue != null) {
-          builder = builder.withInsertHandler(
-            !hasValues || values.stream().map(v -> v.getClass()).distinct().count() == 1 ?
-            createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma) :
-            createDefaultPropertyInsertHandler(true, insertComma));
+        builder = if (type != null || !values.isNullOrEmpty() || defaultValue != null) {
+          builder.withInsertHandler(
+            if (values.isNullOrEmpty() || values.map { v -> v.javaClass }.distinct().count() == 1) createPropertyInsertHandler(
+              schemaObject, hasValue, insertComma)
+            else createDefaultPropertyInsertHandler(true, insertComma))
         }
         else {
-          builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
+          builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma))
         }
       }
       else {
-        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
+        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma))
       }
 
-      String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
+      val deprecationMessage = schemaObject.deprecationMessage
       if (deprecationMessage != null) {
-        builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true);
+        builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true)
       }
 
-      myVariants.add(NestedCompletionsKt.prefixedBy(builder, completionPath, myWalker));
+      myVariants.add(builder.prefixedBy(completionPath, myWalker!!))
     }
 
-    private static @NotNull String findFirstSentence(@NotNull String sentence) {
-      int i = sentence.indexOf(". ");
-      while (i >= 0) {
-        String egText = ", e.g.";
-        if (!sentence.regionMatches(i - egText.length() + 1, egText, 0, egText.length())) {
-          return sentence.substring(0, i + 1);
-        }
-        i = sentence.indexOf(". ", i + 1);
-      }
-      return sentence;
-    }
+    fun createDefaultPropertyInsertHandler(hasValue: Boolean,
+                                           insertComma: Boolean): InsertHandler<LookupElement> {
+      return object : InsertHandler<LookupElement> {
+        override fun handleInsert(context: InsertionContext, item: LookupElement) {
+          ApplicationManager.getApplication().assertWriteAccessAllowed()
+          val editor = context.editor
+          val project = context.project
 
-    private static @NotNull Icon getIcon(@Nullable JsonSchemaType type) {
-      if (type == null) {
-        return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
-      }
-      return switch (type) {
-        case _object -> AllIcons.Json.Object;
-        case _array -> AllIcons.Json.Array;
-        default -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
-      };
-    }
-
-    private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
-      // enum is not a separate type, so we should treat whether it can be an enum distinctly from the types
-      return variants.stream().map(it -> new Pair<>(guessType(it), isUntypedEnum(it))).distinct().count() <= 1;
-    }
-
-    private static boolean isUntypedEnum(JsonSchemaObject it) {
-      if (guessType(it) != null) return false;
-      List<Object> anEnum = it.getEnum();
-      return anEnum != null && !anEnum.isEmpty();
-    }
-
-    private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline, int insertedTextSize) {
-      return new InsertHandler<>() {
-        @Override
-        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-          Editor editor = context.getEditor();
-
-          if (!newline) {
-            EditorModificationUtil.moveCaretRelatively(editor, -1);
+          if (handleInsideQuotesInsertion(context, editor, hasValue, myInsideStringLiteral)) return
+          var offset = editor.caretModel.offset
+          val initialOffset = offset
+          val docChars = context.document.charsSequence
+          while (offset < docChars.length && Character.isWhitespace(docChars[offset])) {
+            offset++
           }
-          else {
-            EditorModificationUtil.moveCaretRelatively(editor, -insertedTextSize);
-            PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
-            invokeEnterHandler(editor);
-            EditorActionUtil.moveCaretToLineEnd(editor, false, false);
-          }
-          AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(editor, null);
-        }
-      };
-    }
-
-    private InsertHandler<LookupElement> createDefaultPropertyInsertHandler(@SuppressWarnings("SameParameterValue") boolean hasValue,
-                                                                            boolean insertComma) {
-      return new InsertHandler<LookupElement>() {
-        @Override
-        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-          ApplicationManager.getApplication().assertWriteAccessAllowed();
-          Editor editor = context.getEditor();
-          Project project = context.getProject();
-
-          if (handleInsideQuotesInsertion(context, editor, hasValue, myInsideStringLiteral)) return;
-          int offset = editor.getCaretModel().getOffset();
-          int initialOffset = offset;
-          CharSequence docChars = context.getDocument().getCharsSequence();
-          while (offset < docChars.length() && Character.isWhitespace(docChars.charAt(offset))) {
-            offset++;
-          }
-          String propertyValueSeparator = myWalker.getPropertyValueSeparator(null);
+          val propertyValueSeparator = myWalker!!.getPropertyValueSeparator(null)
           if (hasValue) {
             // fix colon for YAML and alike
-            if (offset < docChars.length() && !isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
-              editor.getDocument().insertString(initialOffset, propertyValueSeparator);
-              handleWhitespaceAfterColon(editor, docChars, initialOffset + propertyValueSeparator.length());
+            if (offset < docChars.length && !isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
+              editor.document.insertString(initialOffset, propertyValueSeparator)
+              handleWhitespaceAfterColon(editor, docChars, initialOffset + propertyValueSeparator.length)
             }
-            return;
+            return
           }
 
-          if (offset < docChars.length() && isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
-            handleWhitespaceAfterColon(editor, docChars, offset + propertyValueSeparator.length());
+          if (offset < docChars.length && isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
+            handleWhitespaceAfterColon(editor, docChars, offset + propertyValueSeparator.length)
           }
           else {
             // inserting longer string for proper formatting
-            final String stringToInsert = propertyValueSeparator + " 1" + (insertComma ? "," : "");
-            EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, propertyValueSeparator.length() + 1);
-            formatInsertedString(context, stringToInsert.length());
-            offset = editor.getCaretModel().getOffset();
-            context.getDocument().deleteString(offset, offset + 1);
+            val stringToInsert = propertyValueSeparator + " 1" + (if (insertComma) "," else "")
+            EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, propertyValueSeparator.length + 1)
+            formatInsertedString(context, stringToInsert.length)
+            offset = editor.caretModel.offset
+            context.document.deleteString(offset, offset + 1)
           }
-          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-          AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+          PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+          AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
         }
 
-        private static boolean isSeparatorAtOffset(CharSequence docChars, int offset, @NotNull String propertyValueSeparator) {
-          return docChars.subSequence(offset, docChars.length()).toString().startsWith(propertyValueSeparator);
+        fun isSeparatorAtOffset(docChars: CharSequence, offset: Int, propertyValueSeparator: String): Boolean {
+          return docChars.subSequence(offset, docChars.length).toString().startsWith(propertyValueSeparator)
         }
 
-        public void handleWhitespaceAfterColon(Editor editor, CharSequence docChars, int nextOffset) {
-          if (nextOffset < docChars.length() && docChars.charAt(nextOffset) == ' ') {
-            editor.getCaretModel().moveToOffset(nextOffset + 1);
+        fun handleWhitespaceAfterColon(editor: Editor, docChars: CharSequence, nextOffset: Int) {
+          if (nextOffset < docChars.length && docChars[nextOffset] == ' ') {
+            editor.caretModel.moveToOffset(nextOffset + 1)
           }
           else {
-            editor.getCaretModel().moveToOffset(nextOffset);
-            EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1);
+            editor.caretModel.moveToOffset(nextOffset)
+            EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1)
           }
         }
-      };
-    }
-
-    private @NotNull InsertHandler<LookupElement> createPropertyInsertHandler(@NotNull JsonSchemaObject jsonSchemaObject,
-                                                                              final boolean hasValue,
-                                                                              boolean insertComma) {
-      JsonSchemaType type = guessType(jsonSchemaObject);
-      List<Object> values = jsonSchemaObject.getEnum();
-      if (type == null && values != null && !values.isEmpty()) type = detectType(values);
-      final Object defaultValue = jsonSchemaObject.getDefault();
-      final String defaultValueAsString = defaultValue == null || defaultValue instanceof JsonSchemaObject ? null :
-                                          (defaultValue instanceof String ? "\"" + defaultValue + "\"" :
-                                           String.valueOf(defaultValue));
-      JsonSchemaType finalType = type;
-      return JsonSchemaCompletionContributor.createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, values, myWalker, myInsideStringLiteral);
-    }
-
-    private static @Nullable JsonSchemaType detectType(List<Object> values) {
-      JsonSchemaType type = null;
-      for (Object value : values) {
-        JsonSchemaType newType = null;
-        if (value instanceof Integer) newType = JsonSchemaType._integer;
-        if (type != null && !type.equals(newType)) return null;
-        type = newType;
       }
-      return type;
     }
-  }
 
-  private static void invokeEnterHandler(Editor editor) {
-    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-    Caret caret = editor.getCaretModel().getCurrentCaret();
-    handler.execute(editor, caret, CaretSpecificDataContext.create(
-      DataManager.getInstance().getDataContext(editor.getContentComponent()), caret));
-  }
+    fun createPropertyInsertHandler(jsonSchemaObject: JsonSchemaObject,
+                                    hasValue: Boolean,
+                                    insertComma: Boolean): InsertHandler<LookupElement> {
+      var type = JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject)
+      val values = jsonSchemaObject.enum
+      if (type == null && !values.isNullOrEmpty()) type = detectType(values)
+      val defaultValue = jsonSchemaObject.default
+      val defaultValueAsString = if (defaultValue == null || defaultValue is JsonSchemaObject) null else (if (defaultValue is String) "\"" + defaultValue + "\"" else defaultValue.toString())
+      val finalType = type
+      return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, values, myWalker!!, myInsideStringLiteral)
+    }
 
-  private static boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue,
-                                                     boolean insideStringLiteral) {
-    if (insideStringLiteral) {
-      int offset = editor.getCaretModel().getOffset();
-      PsiElement element = context.getFile().findElementAt(offset);
-      int tailOffset = context.getTailOffset();
-      int guessEndOffset = tailOffset + 1;
-      if (element instanceof LeafPsiElement) {
-        if (handleIncompleteString(editor, element)) return false;
-        int endOffset = element.getTextRange().getEndOffset();
-        if (endOffset > tailOffset) {
-          context.getDocument().deleteString(tailOffset, endOffset - 1);
+    companion object {
+      // some schemas provide an empty array or an empty object in enum values...
+      private val filtered = setOf("[]", "{}", "[ ]", "{ }")
+
+      private fun findFirstSentence(sentence: String): String {
+        var i = sentence.indexOf(". ")
+        while (i >= 0) {
+          val egText = ", e.g."
+          if (!sentence.regionMatches(i - egText.length + 1, egText, 0, egText.length)) {
+            return sentence.substring(0, i + 1)
+          }
+          i = sentence.indexOf(". ", i + 1)
+        }
+        return sentence
+      }
+
+      private fun getIcon(type: JsonSchemaType?): Icon {
+        if (type == null) {
+          return getInstance().getPlatformIcon(PlatformIcons.Property)
+        }
+        return when (type) {
+          JsonSchemaType._object -> AllIcons.Json.Object
+          JsonSchemaType._array -> AllIcons.Json.Array
+          else -> getInstance().getPlatformIcon(PlatformIcons.Property)
         }
       }
-      if (hasValue) {
-        return true;
-      }
-      editor.getCaretModel().moveToOffset(guessEndOffset);
-    }
-    else {
-      editor.getCaretModel().moveToOffset(context.getTailOffset());
-    }
-    return false;
-  }
 
-  private static boolean handleIncompleteString(@NotNull Editor editor, @NotNull PsiElement element) {
-    if (((LeafPsiElement)element).getElementType() == TokenType.WHITE_SPACE) {
-      PsiElement prevSibling = element.getPrevSibling();
-      if (prevSibling instanceof JsonProperty) {
-        JsonValue nameElement = ((JsonProperty)prevSibling).getNameElement();
-        if (!nameElement.getText().endsWith("\"")) {
-          editor.getCaretModel().moveToOffset(nameElement.getTextRange().getEndOffset());
-          EditorModificationUtil.insertStringAtCaret(editor, "\"", false, true, 1);
-          return true;
+      private fun hasSameType(variants: Collection<JsonSchemaObject>): Boolean {
+        // enum is not a separate type, so we should treat whether it can be an enum distinctly from the types
+        return variants.map {
+          Pair(JsonSchemaObjectReadingUtils.guessType(it), isUntypedEnum(it))
+        }.distinct().count() <= 1
+      }
+
+      private fun isUntypedEnum(it: JsonSchemaObject): Boolean {
+        return JsonSchemaObjectReadingUtils.guessType(it) == null && !it.enum.isNullOrEmpty()
+      }
+
+      private fun createArrayOrObjectLiteralInsertHandler(newline: Boolean, insertedTextSize: Int): InsertHandler<LookupElement?> {
+        return InsertHandler { context, _ ->
+          val editor = context.editor
+          if (!newline) {
+            EditorModificationUtil.moveCaretRelatively(editor, -1)
+          }
+          else {
+            EditorModificationUtil.moveCaretRelatively(editor, -insertedTextSize)
+            PsiDocumentManager.getInstance(context.project).commitDocument(editor.document)
+            invokeEnterHandler(editor)
+            EditorActionUtil.moveCaretToLineEnd(editor, false, false)
+          }
+          AutoPopupController.getInstance(context.project).autoPopupMemberLookup(editor, null)
         }
       }
+
+      private fun detectType(values: List<Any>): JsonSchemaType? {
+        var type: JsonSchemaType? = null
+        for (value in values) {
+          var newType: JsonSchemaType? = null
+          if (value is Int) newType = JsonSchemaType._integer
+          if (type != null && type != newType) return null
+          type = newType
+        }
+        return type
+      }
     }
-    return false;
   }
 
-  public static @NotNull InsertHandler<LookupElement> createPropertyInsertHandler(boolean hasValue,
-                                                                                   boolean insertComma,
-                                                                                   JsonSchemaType finalType,
-                                                                                   String defaultValueAsString,
-                                                                                   List<Object> values, JsonLikePsiWalker walker,
-                                                                                   boolean insideStringLiteral) {
-    return new InsertHandler<>() {
-      @Override
-      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-        ApplicationManager.getApplication().assertWriteAccessAllowed();
-        Editor editor = context.getEditor();
-        Project project = context.getProject();
-        String stringToInsert = null;
-        final String comma = insertComma ? "," : "";
+  companion object {
+    @JvmStatic
+    fun doCompletion(parameters: CompletionParameters,
+                     result: CompletionResultSet,
+                     rootSchema: JsonSchemaObject,
+                     stop: Boolean) {
+      val completionPosition = if (parameters.originalPosition != null) parameters.originalPosition else parameters.position
+      val worker = Worker(rootSchema, parameters.position, completionPosition!!, result)
+      worker.work()
+      // stop further completion only if the current contributor has at least one new completion variant
+      if (stop && !worker.myVariants.isEmpty()) {
+        result.stopHere()
+      }
+    }
 
-        if (handleInsideQuotesInsertion(context, editor, hasValue, insideStringLiteral)) return;
+    @JvmStatic
+    @TestOnly
+    fun getCompletionVariants(schema: JsonSchemaObject,
+                              position: PsiElement, originalPosition: PsiElement): List<LookupElement> {
+      val result: MutableList<LookupElement> = ArrayList()
+      Worker(schema, position, originalPosition) { element: LookupElement -> result.add(element) }.work()
+      return result
+    }
 
-        String propertyValueSeparator = walker.getPropertyValueSeparator(finalType);
+    private fun updateStat(provider: JsonSchemaFileProvider?, schemaFile: VirtualFile?) {
+      if (provider == null) {
+        if (schemaFile is HttpVirtualFile) {
+          // auto-detected and auto-downloaded JSON schemas
+          JsonSchemaUsageTriggerCollector.trigger(REMOTE_USAGE_KEY)
+        }
+        return
+      }
+      val schemaType = provider.schemaType
+      JsonSchemaUsageTriggerCollector.trigger(when (schemaType) {
+                                                SchemaType.schema -> SCHEMA_USAGE_KEY
+                                                SchemaType.userSchema -> USER_USAGE_KEY
+                                                SchemaType.embeddedSchema -> BUILTIN_USAGE_KEY
+                                                SchemaType.remoteSchema ->  // this works only for user-specified remote schemas in our settings, but not for auto-detected remote schemas
+                                                  REMOTE_USAGE_KEY
+                                              })
+    }
 
-        PsiElement element = context.getFile().findElementAt(editor.getCaretModel().getOffset());
-        boolean insertColon = element == null || !propertyValueSeparator.equals(element.getText());
+    private fun invokeEnterHandler(editor: Editor) {
+      val handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
+      val caret = editor.caretModel.currentCaret
+      handler.execute(editor, caret, CaretSpecificDataContext.create(
+        DataManager.getInstance().getDataContext(editor.contentComponent), caret))
+    }
+
+    private fun handleInsideQuotesInsertion(context: InsertionContext, editor: Editor, hasValue: Boolean,
+                                            insideStringLiteral: Boolean): Boolean {
+      if (insideStringLiteral) {
+        val offset = editor.caretModel.offset
+        val element = context.file.findElementAt(offset)
+        val tailOffset = context.tailOffset
+        val guessEndOffset = tailOffset + 1
+        if (element is LeafPsiElement) {
+          if (handleIncompleteString(editor, element)) return false
+          val endOffset = element.getTextRange().endOffset
+          if (endOffset > tailOffset) {
+            context.document.deleteString(tailOffset, endOffset - 1)
+          }
+        }
+        if (hasValue) {
+          return true
+        }
+        editor.caretModel.moveToOffset(guessEndOffset)
+      }
+      else {
+        editor.caretModel.moveToOffset(context.tailOffset)
+      }
+      return false
+    }
+
+    private fun handleIncompleteString(editor: Editor, element: PsiElement): Boolean {
+      if ((element as LeafPsiElement).elementType === TokenType.WHITE_SPACE) {
+        val prevSibling = element.prevSibling
+        if (prevSibling is JsonProperty) {
+          val nameElement = prevSibling.nameElement
+          if (!nameElement.text.endsWith("\"")) {
+            editor.caretModel.moveToOffset(nameElement.textRange.endOffset)
+            EditorModificationUtil.insertStringAtCaret(editor, "\"", false, true, 1)
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    fun createPropertyInsertHandler(hasValue: Boolean,
+                                    insertComma: Boolean,
+                                    finalType: JsonSchemaType?,
+                                    defaultValueAsString: String?,
+                                    values: List<Any>?, walker: JsonLikePsiWalker,
+                                    insideStringLiteral: Boolean): InsertHandler<LookupElement> {
+      return InsertHandler { context, _ ->
+        ApplicationManager.getApplication().assertWriteAccessAllowed()
+        val editor = context.editor
+        val project = context.project
+        var stringToInsert: String? = null
+        val comma = if (insertComma) "," else ""
+
+        if (handleInsideQuotesInsertion(context, editor, hasValue, insideStringLiteral)) return@InsertHandler
+
+        val propertyValueSeparator = walker.getPropertyValueSeparator(finalType)
+
+        val element = context.file.findElementAt(editor.caretModel.offset)
+        val insertColon = element == null || propertyValueSeparator != element.text
         if (!insertColon) {
-          editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + propertyValueSeparator.length());
+          editor.caretModel.moveToOffset(editor.caretModel.offset + propertyValueSeparator.length)
         }
-
         if (finalType != null) {
-          boolean hadEnter;
-          switch (finalType) {
-            case _object -> {
-              EditorModificationUtil.insertStringAtCaret(editor, insertColon ? (propertyValueSeparator + " ") : " ",
+          var hadEnter: Boolean
+          when (finalType) {
+            JsonSchemaType._object -> {
+              EditorModificationUtil.insertStringAtCaret(editor, if (insertColon) ("$propertyValueSeparator ") else " ",
                                                          false, true,
-                                                         insertColon ? propertyValueSeparator.length() + 1 : 1);
-              hadEnter = false;
-              boolean invokeEnter = walker.hasWhitespaceDelimitedCodeBlocks();
+                                                         if (insertColon) propertyValueSeparator.length + 1 else 1)
+              hadEnter = false
+              val invokeEnter = walker.hasWhitespaceDelimitedCodeBlocks()
               if (insertColon && invokeEnter) {
-                invokeEnterHandler(editor);
-                hadEnter = true;
+                invokeEnterHandler(editor)
+                hadEnter = true
               }
               if (insertColon) {
-                stringToInsert = walker.getDefaultObjectValue() + comma;
+                stringToInsert = walker.defaultObjectValue + comma
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                            false, true,
-                                                           hadEnter ? 0 : 1);
+                                                           if (hadEnter) 0 else 1)
               }
 
               if (hadEnter || !insertColon) {
-                EditorActionUtil.moveCaretToLineEnd(editor, false, false);
+                EditorActionUtil.moveCaretToLineEnd(editor, false, false)
               }
 
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              PsiDocumentManager.getInstance(project).commitDocument(editor.document)
               if (!hadEnter && stringToInsert != null) {
-                formatInsertedString(context, stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length)
               }
               if (stringToInsert != null && !invokeEnter) {
-                invokeEnterHandler(editor);
+                invokeEnterHandler(editor)
               }
             }
-            case _boolean -> {
-              String value = String.valueOf(Boolean.TRUE.toString().equals(defaultValueAsString));
-              stringToInsert = (insertColon ? propertyValueSeparator + " " : " ") + value + comma;
-              SelectionModel model = editor.getSelectionModel();
+            JsonSchemaType._boolean -> {
+              val value = (true.toString() == defaultValueAsString).toString()
+              stringToInsert = (if (insertColon) "$propertyValueSeparator " else " ") + value + comma
+              val model = editor.selectionModel
 
               EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                          false, true,
-                                                         stringToInsert.length() - comma.length());
-              formatInsertedString(context, stringToInsert.length());
-              int start = editor.getSelectionModel().getSelectionStart();
-              model.setSelection(start - value.length(), start);
-              AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+                                                         stringToInsert.length - comma.length)
+              formatInsertedString(context, stringToInsert.length)
+              val start = editor.selectionModel.selectionStart
+              model.setSelection(start - value.length, start)
+              AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
             }
-            case _array -> {
-              EditorModificationUtilEx.insertStringAtCaret(editor, insertColon ? propertyValueSeparator : " ",
+            JsonSchemaType._array -> {
+              EditorModificationUtilEx.insertStringAtCaret(editor, if (insertColon) propertyValueSeparator else " ",
                                                            false, true,
-                                                           propertyValueSeparator.length());
-              hadEnter = false;
+                                                           propertyValueSeparator.length)
+              hadEnter = false
               if (insertColon && walker.hasWhitespaceDelimitedCodeBlocks()) {
-                invokeEnterHandler(editor);
-                hadEnter = true;
+                invokeEnterHandler(editor)
+                hadEnter = true
               }
               else {
-                EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1);
+                EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1)
               }
               if (insertColon) {
-                stringToInsert = walker.getDefaultArrayValue() + comma;
+                stringToInsert = walker.defaultArrayValue + comma
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                            false, true,
-                                                           hadEnter ? 0 : 1);
+                                                           if (hadEnter) 0 else 1)
               }
               if (hadEnter) {
-                EditorActionUtil.moveCaretToLineEnd(editor, false, false);
+                EditorActionUtil.moveCaretToLineEnd(editor, false, false)
               }
 
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              PsiDocumentManager.getInstance(project).commitDocument(editor.document)
 
               if (stringToInsert != null && walker.requiresReformatAfterArrayInsertion()) {
-                formatInsertedString(context, stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length)
               }
             }
-            case _string, _integer, _number ->
-              insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, walker, insertColon);
-            default -> {
-            }
+            JsonSchemaType._string, JsonSchemaType._integer, JsonSchemaType._number -> insertPropertyWithEnum(context, editor,
+                                                                                                              defaultValueAsString, values,
+                                                                                                              finalType, comma, walker,
+                                                                                                              insertColon)
+            else -> {}
           }
         }
         else {
-          insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma, walker, insertColon);
+          insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma, walker, insertColon)
         }
       }
-    };
-  }
-
-  private static void insertPropertyWithEnum(InsertionContext context,
-                                             Editor editor,
-                                             String defaultValue,
-                                             List<Object> values,
-                                             JsonSchemaType type,
-                                             String comma,
-                                             JsonLikePsiWalker walker,
-                                             boolean insertColon) {
-    String propertyValueSeparator = walker.getPropertyValueSeparator(type);
-    if (!walker.requiresValueQuotes() && defaultValue != null) {
-      defaultValue = StringUtil.unquoteString(defaultValue);
-    }
-    final boolean isNumber = type != null && (JsonSchemaType._integer.equals(type) || JsonSchemaType._number.equals(type)) ||
-                             type == null && (defaultValue != null &&
-                                              !StringUtil.isQuotedString(defaultValue) ||
-                                              values != null && ContainerUtil.and(values, v -> !(v instanceof String)));
-    boolean hasValues = !ContainerUtil.isEmpty(values);
-    boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
-    boolean hasQuotes = isNumber || !walker.requiresValueQuotes();
-    int offset = editor.getCaretModel().getOffset();
-    CharSequence charSequence = editor.getDocument().getCharsSequence();
-    final String ws = charSequence.length() > offset && charSequence.charAt(offset) == ' ' ? "" : " ";
-    final String colonWs = insertColon ? propertyValueSeparator + ws : ws;
-    String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
-    EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
-                                               insertColon ? propertyValueSeparator.length() + 1 : 1);
-    if (!hasQuotes || hasDefaultValue) {
-      SelectionModel model = editor.getSelectionModel();
-      int caretStart = model.getSelectionStart();
-      int newOffset = caretStart + (hasDefaultValue ? defaultValue.length() : 1);
-      if (hasDefaultValue && !hasQuotes) newOffset--;
-      model.setSelection(hasQuotes ? caretStart : (caretStart + 1), newOffset);
-      editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    if (!walker.hasWhitespaceDelimitedCodeBlocks() && !stringToInsert.equals(colonWs + comma)) {
-      formatInsertedString(context, stringToInsert.length());
+    private fun insertPropertyWithEnum(context: InsertionContext,
+                                       editor: Editor,
+                                       defaultValue: String?,
+                                       values: List<Any>?,
+                                       type: JsonSchemaType?,
+                                       comma: String,
+                                       walker: JsonLikePsiWalker,
+                                       insertColon: Boolean) {
+      var value = defaultValue
+      val propertyValueSeparator = walker.getPropertyValueSeparator(type)
+      if (!walker.requiresValueQuotes() && value != null) {
+        value = StringUtil.unquoteString(value)
+      }
+      val isNumber = type != null && (JsonSchemaType._integer == type || JsonSchemaType._number == type) ||
+                     type == null && (value != null &&
+                                      !StringUtil.isQuotedString(value) ||
+                                      values != null && values.all { it !is String })
+      val hasValues = !ContainerUtil.isEmpty(values)
+      val hasDefaultValue = !StringUtil.isEmpty(value)
+      val hasQuotes = isNumber || !walker.requiresValueQuotes()
+      val offset = editor.caretModel.offset
+      val charSequence = editor.document.charsSequence
+      val ws = if (charSequence.length > offset && charSequence[offset] == ' ') "" else " "
+      val colonWs = if (insertColon) propertyValueSeparator + ws else ws
+      val stringToInsert = colonWs + (if (hasDefaultValue) value else (if (hasQuotes) "" else "\"\"")) + comma
+      EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
+                                                 if (insertColon) propertyValueSeparator.length + 1 else 1)
+      if (!hasQuotes || hasDefaultValue) {
+        val model = editor.selectionModel
+        val caretStart = model.selectionStart
+        var newOffset = caretStart + (if (hasDefaultValue) value!!.length else 1)
+        if (hasDefaultValue && !hasQuotes) newOffset--
+        model.setSelection(if (hasQuotes) caretStart else (caretStart + 1), newOffset)
+        editor.caretModel.moveToOffset(newOffset)
+      }
+
+      if (!walker.hasWhitespaceDelimitedCodeBlocks() && stringToInsert != colonWs + comma) {
+        formatInsertedString(context, stringToInsert.length)
+      }
+
+      if (hasValues) {
+        AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
+      }
     }
 
-    if (hasValues) {
-      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+    fun formatInsertedString(context: InsertionContext,
+                             offset: Int) {
+      val project = context.project
+      PsiDocumentManager.getInstance(project).commitDocument(context.document)
+      val codeStyleManager = CodeStyleManager.getInstance(project)
+      codeStyleManager.reformatText(context.file, context.startOffset, context.tailOffset + offset)
     }
-  }
-
-  public static void formatInsertedString(@NotNull InsertionContext context,
-                                          int offset) {
-    Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitDocument(context.getDocument());
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformatText(context.getFile(), context.getStartOffset(), context.getTailOffset() + offset);
   }
 }
