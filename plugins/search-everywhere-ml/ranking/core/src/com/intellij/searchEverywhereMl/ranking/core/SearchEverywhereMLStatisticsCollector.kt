@@ -363,7 +363,8 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY)
       }.map { it.name to it }.toTypedArray()
     )
-    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values.map { it.name to it })
+    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.prefixMatchingNameFeatureToField.values.map { it.name to it })
+    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.wholeMatchingNameFeatureToField.values.map { it.name to it })
     for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {
       nameFeatureToField.putAll(featureProvider.getFeaturesDeclarations().map {
         it.name to it
