@@ -3132,7 +3132,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 f:com.intellij.openapi.fileEditor.FileEditorManagerEvent
 - <init>(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.fileEditor.ex.FileEditorWithProvider,com.intellij.openapi.fileEditor.ex.FileEditorWithProvider):V
 - <init>(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):V
-- <init>(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditor):V
 - f:getManager():com.intellij.openapi.fileEditor.FileEditorManager
 - f:getNewEditor():com.intellij.openapi.fileEditor.FileEditor
 - f:getNewFile():com.intellij.openapi.vfs.VirtualFile
@@ -3217,11 +3216,13 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - ps:unfoldCurrentLine(com.intellij.openapi.editor.Editor):V
 f:com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):V
-- component1():com.intellij.openapi.fileEditor.FileEditor
-- component2():com.intellij.openapi.fileEditor.FileEditorProvider
+- f:component1():com.intellij.openapi.fileEditor.FileEditor
+- f:component2():com.intellij.openapi.fileEditor.FileEditorProvider
+- f:copy(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+- bs:copy$default(com.intellij.openapi.fileEditor.ex.FileEditorWithProvider,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider,I,java.lang.Object):com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 - equals(java.lang.Object):Z
-- getFileEditor():com.intellij.openapi.fileEditor.FileEditor
-- getProvider():com.intellij.openapi.fileEditor.FileEditorProvider
+- f:getFileEditor():com.intellij.openapi.fileEditor.FileEditor
+- f:getProvider():com.intellij.openapi.fileEditor.FileEditorProvider
 - hashCode():I
 com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 - a:getStructureViewBuilder(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.structureView.StructureViewBuilder
