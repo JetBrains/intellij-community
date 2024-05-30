@@ -15945,7 +15945,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - f:getTabs():com.intellij.ui.tabs.JBTabs
 - f:isEmptyVisible():Z
 - f:removeTabAt(I,I):V
-- f:requestFocus(Z):V
 - f:setForegroundAt(I,java.awt.Color):V
 - f:setSelectedIndex(I):com.intellij.openapi.util.ActionCallback
 - f:setTabLayoutPolicy(I):V
@@ -16011,6 +16010,7 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:setEditor(com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite,Z):V
 - f:setFilePinned(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setForegroundAt(I,java.awt.Color):V
+- f:setSelectedComposite(com.intellij.openapi.fileEditor.impl.EditorComposite):V
 - f:setSelectedComposite(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
 - f:setSelectedComposite(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
