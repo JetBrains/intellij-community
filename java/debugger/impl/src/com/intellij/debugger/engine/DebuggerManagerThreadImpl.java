@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.managerThread.DebuggerCommand;
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.InvokeAndWaitThread;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.openapi.Disposable;
@@ -165,6 +166,9 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       throw new RuntimeException(e);
     }
     catch (Exception e) {
+      if (DebuggerUtilsAsync.unwrap(e) instanceof InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
       LOG.error(e);
     }
     finally {
