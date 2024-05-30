@@ -293,12 +293,8 @@ f:com.intellij.coverage.view.CoverageViewManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
 - f:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
 f:com.intellij.coverage.view.CoverageViewManager$StateBean
-- myAutoScrollFromSource:Z
-- myAutoScrollToSource:Z
-- <init>():V
-- f:isDefaultFilters():Z
-- f:isFlattenPackages():Z
-- f:setFlattenPackages(Z):V
+- *f:isShowOnlyModified():Z
+- *f:setShowOnlyModified(Z):V
 c:com.intellij.coverage.view.DirectoryCoverageViewExtension
 - com.intellij.coverage.view.CoverageViewExtension
 - pf:myAnnotator:com.intellij.coverage.CoverageAnnotator

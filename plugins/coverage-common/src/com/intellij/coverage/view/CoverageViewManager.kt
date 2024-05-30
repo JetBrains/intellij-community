@@ -120,12 +120,17 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
 
   private fun getToolWindow(): ToolWindow? = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID)
 
-  class StateBean {
+  class StateBean internal constructor() {
+    private val myListeners = DisposableWrapperList<CoverageViewSettingsListener>()
     private var myFlattenPackages = false
+    private var myHideFullyCovered = false
+    private var myShowOnlyModified = true
 
+    @ApiStatus.Internal
     @JvmField
     var myAutoScrollToSource: Boolean = false
 
+    @ApiStatus.Internal
     @JvmField
     var myAutoScrollFromSource: Boolean = false
 
@@ -141,15 +146,14 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     @JvmField
     var mySortingColumn: Int = 0
 
-    private var myHideFullyCovered = false
-    private var myShowOnlyModified = true
+    @ApiStatus.Internal
     var isDefaultFilters: Boolean = true
       private set
 
-    private val myListeners = DisposableWrapperList<CoverageViewSettingsListener>()
-
     var isFlattenPackages: Boolean
+      @ApiStatus.Internal
       get() = myFlattenPackages
+      @ApiStatus.Internal
       set(flattenPackages) {
         if (myFlattenPackages != flattenPackages) {
           myFlattenPackages = flattenPackages
@@ -170,9 +174,9 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
       }
 
     var isShowOnlyModified: Boolean
-      @ApiStatus.Internal
+      @ApiStatus.Experimental
       get() = myShowOnlyModified
-      @ApiStatus.Internal
+      @ApiStatus.Experimental
       set(showOnlyModified) {
         if (myShowOnlyModified != showOnlyModified) {
           myShowOnlyModified = showOnlyModified
