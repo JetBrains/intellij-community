@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking.core.model
 
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
+import com.intellij.textMatching.WholeTextMatchUtil
 
 internal abstract class SearchEverywhereRankingModel(protected val model: DecisionFunction) {
   abstract fun predict(features: Map<String, Any?>): Double
@@ -26,21 +27,45 @@ internal class SimpleSearchEverywhereRankingModel(model: DecisionFunction) : Sea
 }
 
 internal class ExactMatchSearchEverywhereRankingModel(model: DecisionFunction) : SearchEverywhereRankingModel(model) {
-  private val exactMatchKey = "prefixExact"
-  private val extensionMatchKey = "fileTypeMatchesQuery"
+
   /**
-   * Predict the preference adjusted for exact matches (mainly in Files and Classes tabs)
-   * The value will be:
-   *  - `> 0.99 for exact matches with a matching extension
-   *  - 0.9-0.99 for exact match without the matching extension
-   *  - `< 0.9 for non-exact matches
+   * Determine if the given features map represents an exact match.
+   * An exact match is determined by the following conditions:
+   * - If there is just one word in the query, all the letters must match case-insensitively
+   * - If there is more than just one word in the query, all words must match case-insensitively
    *
-   *  In these categories, the value is ordered by the ML model predicted value
+   *
+   * Exact match examples (**Q**uery, **I**tem):
+   * - Q: filter ... I: filter
+   * - Q: filter ... I: Filter
+   * - Q: Filter ... I: filter
+   * - Q: filtersearch ... I: filterSearch
+   * - Q: filter_search ... I: filterSearch
+   * - Q: Filters ... I: filters
+   * - Q: Filters ... I: filterS
+   *
+   * Not exact match examples:
+   * - Q: FilterS ... I: filters
+   * - Whatever doesn't match case-insensitively (Q: filter ... I: filters
+   *
+   * @return true if the features represent an exact match, false otherwise.
    */
+  private fun isExactMatch(features: Map<String, Any?>): Boolean {
+    val wordsInQuery = features.getOrDefault("${WholeTextMatchUtil.baseName}WordsInQuery", 0)
+    val wordsInElement = features.getOrDefault("${WholeTextMatchUtil.baseName}WordsInElement", 0)
+    val exactlyMatchedWords = features.getOrDefault("${WholeTextMatchUtil.baseName}ExactlyMatchedWords", 0)
+    val levenshteinDistance = features.getOrDefault("${WholeTextMatchUtil.baseName}LevenshteinDistanceCaseInsensitive", 1.0)
+    val allWordsMatch = (wordsInElement == wordsInQuery
+                         && wordsInElement == exactlyMatchedWords
+                         && exactlyMatchedWords != 0)
+    return if (wordsInQuery == 1) levenshteinDistance == 0.0 else allWordsMatch
+
+  }
+
   override fun predict(features: Map<String, Any?>): Double {
 
-    val isExactMatch = features.getOrDefault(exactMatchKey, false) == true
-    val extensionMatch = features.getOrDefault(extensionMatchKey, false) == true
+    val isExactMatch = isExactMatch(features)
+    val extensionMatch = features.getOrDefault("fileTypeMatchesQuery", false) == true
     val mlPrediction = model.predict(buildArray(model.featuresOrder, features))
     return if (isExactMatch) {
       if (extensionMatch) 0.99 + mlPrediction * 0.01 // Name + extension matches -> return preference is > 0.99
