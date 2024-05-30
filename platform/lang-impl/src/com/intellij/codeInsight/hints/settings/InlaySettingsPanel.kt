@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
@@ -50,7 +49,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   private var currentEditor: Editor? = null
 
   companion object {
-    @kotlin.jvm.JvmField
+    @JvmField
     val PREVIEW_KEY: Key<Any> = Key.create("inlay.preview.key")
 
     fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
@@ -216,7 +215,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
         if (item.description != null) {
           addDescription(item.description)
         }
-        if (!(item.component is JPanel) || item.component.componentCount > 0) {
+        if (item.component !is JPanel || item.component.componentCount > 0) {
           item.component.border = JBUI.Borders.empty()
           rightPanel.add(item.component)
         }
@@ -307,7 +306,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   }
 
   private fun addDescription(@Nls s: String?) {
-    val htmlLabel = SwingHelper.createHtmlLabel(StringUtil.notNullize(s), null, null)
+    val htmlLabel = SwingHelper.createHtmlLabel((s ?: ""), null, null)
     rightPanel.add(htmlLabel, "growy")
   }
 
