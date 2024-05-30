@@ -1,0 +1,61 @@
+class TestSwitchWrapReturnJavac {
+   public static void main(String[] args) {
+      System.out.println(test(new S.A()));// 14
+   }// 15
+
+   private static int test(S a) {
+      switch (a) {// 18
+         case S.A var3 -> {// 20
+            return 1;
+         }
+         case S.B var4 -> {// 23
+            return 2;
+         }
+         case S.C var5 -> {// 26
+            return 3;
+         }
+      }
+   }
+
+   sealed interface S {
+      public static record C() implements S {
+      }
+
+      public static record B() implements S {
+      }
+
+      public static record A() implements S {
+      }
+   }
+}
+
+class 'TestSwitchWrapReturnJavac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      2
+      a      2
+      d      2
+      10      3
+   }
+
+   method 'test (LTestSwitchWrapReturnJavac$S;)I' {
+      10      6
+      3b      7
+      3c      7
+      43      10
+      44      10
+      4b      13
+      4c      13
+   }
+}
+
+Lines mapping:
+14 <-> 3
+15 <-> 4
+18 <-> 7
+20 <-> 8
+23 <-> 11
+26 <-> 14
+Not mapped:
+19
+22
+25

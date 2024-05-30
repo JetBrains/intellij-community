@@ -14,10 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -228,7 +225,21 @@ public final class SwitchStatement extends Statement {
         tracer.incrementCurrentSourceLine();
       }
       else {
-        buf.append(ExprProcessor.jmpWrapper(stat, canBeRule ? 0 : indent + 2, false, tracer));
+        if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getExprents() != null &&
+            (blockStatement.getExprents().size() > 1 ||
+             (blockStatement.getExprents().size() == 1 &&
+              blockStatement.getExprents().get(0) instanceof ExitExprent exitExprent &&
+              exitExprent.getExitType() == ExitExprent.EXIT_RETURN))) {
+          TextBuffer buffer = ExprProcessor.jmpWrapper(stat, indent + 2, false, tracer);
+          buf.append("{").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+          buf.append(buffer).appendIndent(indent + 1).append("}").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+        }
+        else {
+          TextBuffer buffer = ExprProcessor.jmpWrapper(stat, canBeRule ? 0 : indent + 2, false, tracer);
+          buf.append(buffer);
+        }
       }
     }
     buf.appendIndent(indent).append("}").appendLineSeparator();
