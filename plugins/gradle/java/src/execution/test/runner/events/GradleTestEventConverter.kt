@@ -144,7 +144,7 @@ internal class GradleTestEventConverter(
       ?: displayName
     when {
       isTestSuite ->
-        extractName(displayName, JUNIT5_PARAMETRIZED_SUITE_DISPLAY_NAME_EXTRACTOR)
+        extractName(displayName, JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR)
         ?: displayName
       isTestClass ->
         extractName(displayName, JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR)
@@ -172,7 +172,6 @@ internal class GradleTestEventConverter(
     private val TEST_LAUNCHER_CLASS_DISPLAY_NAME_EXTRACTOR = "Test class (.+)".toRegex()
     private val TEST_LAUNCHER_TEST_DISPLAY_NAME_EXTRACTOR = "Test (.+)\\(.+\\)".toRegex()
 
-    private val JUNIT5_PARAMETRIZED_SUITE_DISPLAY_NAME_EXTRACTOR = "(.+?)\\s?\\(.*\\)".toRegex()
     private val JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR = "(.+)\\(\\)".toRegex()
     private val JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR = ".*[.$]([^.$]+)".toRegex()
 

@@ -87,7 +87,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                     assertNode("successful test") {
                         assertPsiLocation("TestCase", "successful test")
                     }
-                    assertNode("parametrized test") {
+                    assertNode("parametrized test(int, String)") {
                         assertPsiLocation("TestCase", "parametrized test")
                         assertNode("[1] 1, first") {
                             assertPsiLocation("TestCase", "parametrized test", "[1]")
