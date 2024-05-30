@@ -18,7 +18,7 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
       callIfNotEmpty("test", configure)
     }
 
-  override fun withKotlinJvmPlugin(version: String?): BSB = apply {
+  override fun withKotlinJvmPlugin(version: String?) = apply {
     withMavenCentral()
     withPlugin("org.jetbrains.kotlin.jvm", version)
   }

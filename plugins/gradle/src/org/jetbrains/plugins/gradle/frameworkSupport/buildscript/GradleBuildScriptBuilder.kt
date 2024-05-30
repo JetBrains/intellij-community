@@ -96,7 +96,7 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
     @JvmStatic
     fun create(gradleVersion: GradleVersion, useKotlinDsl: Boolean): GradleBuildScriptBuilder<*> {
       return when (useKotlinDsl) {
-        true -> KotlinDslGradleBuildScriptBuilder(gradleVersion)
+        true -> KotlinDslGradleBuildScriptBuilder.Impl(gradleVersion)
         else -> GroovyDslGradleBuildScriptBuilder.Impl(gradleVersion)
       }
     }

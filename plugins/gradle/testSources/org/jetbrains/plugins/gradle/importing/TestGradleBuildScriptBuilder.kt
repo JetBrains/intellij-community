@@ -2,12 +2,11 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Version
-import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigurationAvoidanceSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript.TestGroovyDslGradleBuildScriptBuilder
 import java.io.File
 import java.util.function.Consumer
 import kotlin.apply as applyKt
@@ -15,7 +14,7 @@ import kotlin.apply as applyKt
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 open class TestGradleBuildScriptBuilder(
   gradleVersion: GradleVersion
-) : GroovyDslGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
+) : TestGroovyDslGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
 
   override fun apply(action: TestGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
@@ -105,18 +104,6 @@ open class TestGradleBuildScriptBuilder(
     addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
     addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
     applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
-  }
-
-  override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
-    when {
-      UsefulTestCase.IS_UNDER_TEAMCITY -> {
-        mavenRepository("https://repo.labs.intellij.net/repo1")
-      }
-      else -> {
-        // IntelliJ internal maven repo is not available in local environment
-        call("mavenCentral")
-      }
-    }
   }
 
   override fun generate(): String {

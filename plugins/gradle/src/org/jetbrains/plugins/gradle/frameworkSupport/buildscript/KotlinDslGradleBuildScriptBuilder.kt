@@ -8,15 +8,14 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
-class KotlinDslGradleBuildScriptBuilder(
+@ApiStatus.NonExtendable
+abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScriptBuilder<BSB>>(
   gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<KotlinDslGradleBuildScriptBuilder>(gradleVersion) {
-
-  override fun apply(action: KotlinDslGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
+) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {
 
   override fun generate() = KotlinScriptBuilder().generate(generateTree())
 
-  override fun withKotlinJvmPlugin(version: String?): KotlinDslGradleBuildScriptBuilder = apply {
+  override fun withKotlinJvmPlugin(version: String?) = apply {
     withMavenCentral()
     withPlugin {
       if (version != null) {
@@ -42,5 +41,9 @@ class KotlinDslGradleBuildScriptBuilder(
 
   override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
     call("maven", "url" to url)
+  }
+
+  internal class Impl(gradleVersion: GradleVersion) : KotlinDslGradleBuildScriptBuilder<Impl>(gradleVersion) {
+    override fun apply(action: Impl.() -> Unit) = applyKt(action)
   }
 }
