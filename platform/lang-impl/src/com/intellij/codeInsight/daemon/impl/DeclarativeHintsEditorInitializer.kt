@@ -3,6 +3,7 @@
 
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
@@ -152,7 +153,10 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
 
 private fun isCacheEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
 
-private fun isDeclarativeEnabled() = Registry.`is`("inlays.declarative.hints", true)
+private fun isDeclarativeEnabled(): Boolean {
+  val enabledGlobally = InlayHintsSettings.instance().hintsEnabledGlobally()
+  return enabledGlobally && Registry.`is`("inlays.declarative.hints", true)
+}
 
 internal class ZombieInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {

@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -77,22 +78,27 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     }
 
     val declarativeInlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
-    val passProviders = getSuitableToFileProviders(file)
-      .filter {
-        declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault
-      }
-      .map {
-        val optionsToEnabled = HashMap<String, Boolean>()
-        for (optionInfo in it.options) {
-          val isOptionEnabled = declarativeInlayHintsSettings.isOptionEnabled(optionInfo.id, it.providerId) ?: optionInfo.isEnabledByDefault
-          require(optionsToEnabled.put(optionInfo.id, isOptionEnabled) == null)
+    val enabledGlobally = InlayHintsSettings.instance().hintsEnabledGlobally()
+    val passProviders = if (enabledGlobally) {
+      getSuitableToFileProviders(file)
+        .filter {
+          declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault
         }
-        InlayProviderPassInfo(
-          provider = it.provider,
-          providerId = it.providerId,
-          optionToEnabled = optionsToEnabled
-        )
-      }
+        .map {
+          val optionsToEnabled = HashMap<String, Boolean>()
+          for (optionInfo in it.options) {
+            val isOptionEnabled = declarativeInlayHintsSettings.isOptionEnabled(optionInfo.id, it.providerId) ?: optionInfo.isEnabledByDefault
+            require(optionsToEnabled.put(optionInfo.id, isOptionEnabled) == null)
+          }
+          InlayProviderPassInfo(
+            provider = it.provider,
+            providerId = it.providerId,
+            optionToEnabled = optionsToEnabled
+          )
+        }
+    } else {
+      emptyList()
+    }
     return DeclarativeInlayHintsPass(file, editor, passProviders, false)
   }
 
