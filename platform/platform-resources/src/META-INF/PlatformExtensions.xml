@@ -1891,6 +1891,9 @@
   </applicationListeners>
 
   <projectListeners>
+    <listener class="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$MyEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInTestMode="false"/>
+
     <listener class="com.intellij.notification.impl.NotificationsListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"

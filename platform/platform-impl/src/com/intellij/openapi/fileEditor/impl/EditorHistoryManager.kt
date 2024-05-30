@@ -44,7 +44,6 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
                            changeEntryOrderOnly = false)
       }
     })
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, MyEditorManagerListener())
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(object : ExtensionPointListener<FileEditorProvider> {
       override fun extensionRemoved(extension: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
         for (it in entries) {
@@ -350,9 +349,11 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   /**
    * Updates history
    */
-  private inner class MyEditorManagerListener : FileEditorManagerListener {
+  internal class MyEditorManagerListener(private val project: Project) : FileEditorManagerListener {
+    private val service by lazy(LazyThreadSafetyMode.NONE) { getInstance(project) }
+
     override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-      fileOpenedImpl(
+      service.fileOpenedImpl(
         file = file,
         fallbackEditor = null,
         fallbackProvider = null,
@@ -371,20 +372,24 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
         val oldFile = event.oldFile
         if (oldFile != null) {
-          updateHistoryEntry(fileEditorManager = event.manager as FileEditorManagerEx,
-                             file = oldFile,
-                             fileEditor = event.oldEditor,
-                             fileEditorProvider = event.oldProvider,
-                             changeEntryOrderOnly = false)
+          service.updateHistoryEntry(
+            fileEditorManager = event.manager as FileEditorManagerEx,
+            file = oldFile,
+            fileEditor = event.oldEditor,
+            fileEditorProvider = event.oldProvider,
+            changeEntryOrderOnly = false,
+          )
         }
 
         val newFile = event.newFile
         if (newFile != null) {
-          updateHistoryEntry(fileEditorManager = event.manager as FileEditorManagerEx,
-                             file = newFile,
-                             fileEditor = event.newEditor,
-                             fileEditorProvider = event.newProvider,
-                             changeEntryOrderOnly = true)
+          service.updateHistoryEntry(
+            fileEditorManager = event.manager as FileEditorManagerEx,
+            file = newFile,
+            fileEditor = event.newEditor,
+            fileEditorProvider = event.newProvider,
+            changeEntryOrderOnly = true,
+          )
         }
       }
     }
