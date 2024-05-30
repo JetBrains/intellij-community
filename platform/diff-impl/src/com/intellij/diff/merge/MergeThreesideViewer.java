@@ -246,6 +246,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT));
     group.add(new ResolveSelectedConflictsAction());
     group.add(new IgnoreSelectedChangesAction());
+    group.add(new ResetResolvedChangeAction());
 
     group.add(Separator.getInstance());
     group.add(ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions"));
@@ -1237,13 +1238,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @NotNull
     @RequiresEdt
-    private List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
+    protected List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
       BitSet lines = DiffUtil.getSelectedLines(editor);
       return ContainerUtil.filter(getChanges(), change -> isChangeSelected(change, lines, side));
     }
 
-    private boolean isChangeSelected(@NotNull TextMergeChange change, @NotNull BitSet lines, @NotNull ThreeSide side) {
+    protected boolean isChangeSelected(@NotNull TextMergeChange change, @NotNull BitSet lines, @NotNull ThreeSide side) {
       if (!isEnabled(change)) return false;
       int line1 = change.getStartLine(side);
       int line2 = change.getEndLine(side);
@@ -1332,6 +1333,42 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       for (TextMergeChange change : changes) {
         markChangeResolved(change);
       }
+    }
+  }
+
+  private class ResetResolvedChangeAction extends ApplySelectedChangesActionBase {
+    ResetResolvedChangeAction() {
+      getTemplatePresentation().setIcon(AllIcons.Diff.Revert);
+    }
+
+    @Override
+    protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
+      for (TextMergeChange change : changes) {
+        resetResolvedChange(change);
+      }
+    }
+
+    @Override
+    protected @NotNull List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
+      EditorEx editor = getEditor(side);
+      BitSet lines = DiffUtil.getSelectedLines(editor);
+      return ContainerUtil.filter(getAllChanges(), change -> isChangeSelected(change, lines, side));
+    }
+
+    @Nls
+    @Override
+    protected String getText(@NotNull ThreeSide side) {
+      return DiffBundle.message("action.presentation.diff.revert.text");
+    }
+
+    @Override
+    protected boolean isVisible(@NotNull ThreeSide side) {
+      return true;
+    }
+
+    @Override
+    protected boolean isEnabled(@NotNull TextMergeChange change) {
+      return change.isResolvedWithAI();
     }
   }
 

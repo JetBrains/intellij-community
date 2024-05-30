@@ -118,6 +118,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myIsResolvedWithAI = true;
   }
 
+  @ApiStatus.Internal
+  boolean isResolvedWithAI() {
+    return myIsResolvedWithAI;
+  }
+
   public boolean isImportChange() {
     return myIsImportChange;
   }
