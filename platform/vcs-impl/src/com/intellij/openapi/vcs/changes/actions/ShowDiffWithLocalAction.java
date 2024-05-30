@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.diff.DiffDialogHints;
@@ -79,6 +79,10 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   }
 
   public static @Nullable Change getChangeWithLocal(@NotNull Change c, boolean useBeforeVersion) {
+    return getChangeWithLocal(c, useBeforeVersion, true);
+  }
+
+  public static @Nullable Change getChangeWithLocal(@NotNull Change c, boolean useBeforeVersion, boolean isAfterRevisionLocal) {
     ContentRevision revision = useBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
     ContentRevision otherRevision = useBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
 
@@ -88,7 +92,10 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     ContentRevision localRevision = file != null ? CurrentContentRevision.create(VcsUtil.getFilePath(file)) : null;
     if (revision == null && localRevision == null) return null;
 
-    return new Change(revision, localRevision);
+    if (isAfterRevisionLocal) {
+      return new Change(revision, localRevision);
+    }
+    return new Change(localRevision, revision);
   }
 
   @Nullable

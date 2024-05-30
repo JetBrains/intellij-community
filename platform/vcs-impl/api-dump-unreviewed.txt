@@ -2680,6 +2680,7 @@ c:com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getChangeWithLocal(com.intellij.openapi.vcs.changes.Change,Z):com.intellij.openapi.vcs.changes.Change
+- s:getChangeWithLocal(com.intellij.openapi.vcs.changes.Change,Z,Z):com.intellij.openapi.vcs.changes.Change
 - isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction
