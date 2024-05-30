@@ -70,7 +70,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
   /** null means {@link #initializeTools(List, List, List)} wasn't called yet */
-  private @Unmodifiable Map<String, Tools> myTools;
+  private Map<String, Tools> myTools;
 
   public static final @NonNls String PROBLEMS_TAG_NAME = "problems";
   public static final @NonNls String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
@@ -334,7 +334,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         appendJobDescriptor(jobDescriptor);
       }
     }
-    myTools = Collections.unmodifiableMap(tools);
+    myTools = tools;
     for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
       extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
     }
