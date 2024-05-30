@@ -8,22 +8,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.impl.source.codeStyle.CodeFormattingData;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -68,21 +60,9 @@ public final class CoreFormattingService implements FormattingService {
   public void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhitespaceOnly) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       formatElement(element, range, canChangeWhitespaceOnly);
+      return;
     }
-    PsiFile file = element.getContainingFile();
-    Project project = file.getProject();
-    ReadAction
-      .nonBlocking(
-        () -> CodeFormattingData.prepare(file, Collections.singletonList(range)))
-      .expireWhen(() -> project.isDisposed() || !file.isValid())
-      .finishOnUiThread(ModalityState.nonModal(), data -> {
-        CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-          WriteAction.run(() -> {
-            formatElement(element, range, canChangeWhitespaceOnly);
-          });
-        });
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
+    AsyncFormattingService.getInstance().asyncFormatElement(this, element, range, canChangeWhitespaceOnly);
   }
 
   @Override
