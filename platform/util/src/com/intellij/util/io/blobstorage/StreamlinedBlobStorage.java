@@ -58,9 +58,6 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    */
   int maxPayloadSupported();
 
-  <Out> Out readRecord(int recordId,
-                       @NotNull ByteBufferReader<Out> reader) throws IOException;
-
   boolean hasRecord(int recordId) throws IOException;
 
   boolean hasRecord(int recordId,
@@ -80,12 +77,11 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
                        @NotNull ByteBufferReader<Out> reader,
                        @Nullable IntRef redirectToIdRef) throws IOException;
 
-  int writeToRecord(int recordId,
-                    @NotNull ByteBufferWriter writer) throws IOException;
+  default <Out> Out readRecord(int recordId,
+                               @NotNull ByteBufferReader<Out> reader) throws IOException {
+    return readRecord(recordId, reader, /*redirectToIdRef: */null);
+  }
 
-  int writeToRecord(int recordId,
-                    @NotNull ByteBufferWriter writer,
-                    int expectedRecordSizeHint) throws IOException;
 
   /**
    * Writer is called with writeable ByteBuffer represented current record content (payload).
@@ -116,6 +112,17 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
                     @NotNull ByteBufferWriter writer,
                     int expectedRecordSizeHint,
                     boolean leaveRedirectOnRecordRelocation) throws IOException;
+
+  default int writeToRecord(int recordId,
+                            @NotNull ByteBufferWriter writer,
+                            int expectedRecordSizeHint) throws IOException {
+    return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
+  }
+
+  default int writeToRecord(int recordId,
+                            @NotNull ByteBufferWriter writer) throws IOException {
+    return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
+  }
 
   /**
    * Delete record by recordId.

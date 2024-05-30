@@ -209,26 +209,6 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   }
 
   @Override
-  public <Out> Out readRecord(final int recordId,
-                              final @NotNull ByteBufferReader<Out> reader) throws IOException {
-    return readRecord(recordId, reader, null);
-  }
-
-  @Override
-  public int writeToRecord(final int recordId,
-                           final @NotNull ByteBufferWriter writer,
-                           final int expectedRecordSizeHint) throws IOException {
-    return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
-  }
-
-  @Override
-  public int writeToRecord(final int recordId,
-                           final @NotNull ByteBufferWriter writer) throws IOException {
-    return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
-  }
-
-
-  @Override
   public boolean isRecordActual(int recordActualLength) {
     return recordActualLength >= 0;
   }
