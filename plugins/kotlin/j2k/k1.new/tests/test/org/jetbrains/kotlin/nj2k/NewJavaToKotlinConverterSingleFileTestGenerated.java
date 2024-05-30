@@ -5141,6 +5141,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayAccess.java")
+        public void testArrayAccess() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/arrayAccess.java");
+        }
+
         @TestMetadata("autoNotNull.java")
         public void testAutoNotNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/autoNotNull.java");
