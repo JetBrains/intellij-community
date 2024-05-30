@@ -1116,11 +1116,6 @@ f:com.intellij.vcs.log.paint.PaintParameters
 - s:getNodeWidth(I):I
 - s:getSelectedCircleRadius(I):I
 - s:getSelectedLineThickness(I):F
-f:com.intellij.vcs.log.paint.PositionUtil
-- <init>():V
-- s:overDownEdge(I,I,I,I,I,I,F):Z
-- s:overNode(I,I,I,I,I,I):Z
-- s:overUpEdge(I,I,I,I,I,I,F):Z
 f:com.intellij.vcs.log.statistics.NullableRoundedLongEventField
 - <init>(java.lang.String):V
 - addData(com.intellij.internal.statistic.eventLog.FeatureUsageData,java.lang.Long):V

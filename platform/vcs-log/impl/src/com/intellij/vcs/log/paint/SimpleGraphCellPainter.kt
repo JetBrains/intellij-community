@@ -48,7 +48,7 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
     val circleRadius = PaintParameters.getCircleRadius(rowHeight)
     for (printElement in printElements) {
       if (printElement is NodePrintElement) {
-        if (PositionUtil.overNode(printElement.positionInCurrentRow, x, y, rowHeight, nodeWidth, circleRadius)) {
+        if (isOverNode(printElement.positionInCurrentRow, x, y, rowHeight, nodeWidth, circleRadius)) {
           return printElement
         }
       }
@@ -57,21 +57,27 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
     val lineThickness = PaintParameters.getLineThickness(rowHeight)
     for (printElement in printElements) {
       if (printElement is EdgePrintElement) {
-        val position = printElement.positionInCurrentRow
-        val positionInOtherRow = printElement.positionInOtherRow
-        if (printElement.type == EdgePrintElement.Type.DOWN) {
-          if (PositionUtil.overDownEdge(position, positionInOtherRow, x, y, rowHeight, nodeWidth, lineThickness)) {
-            return printElement
-          }
-        }
-        else {
-          if (PositionUtil.overUpEdge(positionInOtherRow, position, x, y, rowHeight, nodeWidth, lineThickness)) {
-            return printElement
-          }
+        if (isOverEdge(printElement.positionInCurrentRow, printElement.positionInOtherRow, printElement.type, x, y, rowHeight, nodeWidth, lineThickness)) {
+          return printElement
         }
       }
     }
     return null
+  }
+
+  private fun isOverEdge(position: Int, otherPosition: Int, edgeType: EdgePrintElement.Type, x: Int, y: Int,
+                         rowHeight: Int, nodeWidth: Int, lineThickness: Float): Boolean {
+    val x1 = nodeWidth * position + nodeWidth / 2
+    val y1 = rowHeight / 2
+    val x2 = nodeWidth * otherPosition + nodeWidth / 2
+    val y2 = if (edgeType == EdgePrintElement.Type.DOWN) rowHeight + rowHeight / 2 else -rowHeight / 2
+    return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + lineThickness
+  }
+
+  private fun isOverNode(position: Int, x: Int, y: Int, rowHeight: Int, nodeWidth: Int, circleRadius: Int): Boolean {
+    val x0 = nodeWidth * position + nodeWidth / 2
+    val y0 = rowHeight / 2
+    return distance(x0, y0, x, y) <= circleRadius
   }
 
   private val ordinaryStroke: BasicStroke
@@ -219,6 +225,10 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
       val spaceLength = rowHeight / 2.0f - 2
       val dashLength = (edgeLength / dashCount - spaceLength).toFloat()
       return floatArrayOf(dashLength, spaceLength)
+    }
+
+    private fun distance(x1: Int, y1: Int, x2: Int, y2: Int): Double {
+      return hypot((x1 - x2).toDouble(), (y1 - y2).toDouble())
     }
   }
 }
