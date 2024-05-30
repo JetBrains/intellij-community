@@ -36,7 +36,6 @@ import com.intellij.ui.PlatformIcons
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.JBIterable
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
@@ -50,7 +49,6 @@ import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.TestOnly
-import java.util.function.Consumer
 import javax.swing.Icon
 
 private const val BUILTIN_USAGE_KEY = "builtin"
@@ -61,68 +59,72 @@ private const val REMOTE_USAGE_KEY = "remote"
 class JsonSchemaCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val position = parameters.position
-    val file = PsiUtilCore.getVirtualFile(position)
-    if (file == null) return
+    val file = PsiUtilCore.getVirtualFile(position)?: return
 
     val service = JsonSchemaService.Impl.get(position.project)
     if (!service.isApplicableToFile(file)) return
-    val rootSchema = service.getSchemaObject(position.containingFile)
-    if (rootSchema == null) return
-    val positionParent = position.parent
-    if (positionParent != null) {
-      val parent = positionParent.parent
-      if (parent is JsonProperty) {
-        val propName = parent.name
-        if (("\$schema" == propName && parent.parent is JsonObject && parent.parent.parent is JsonFile
-             || "\$ref" == propName && service.isSchemaFile(file))
-        ) {
-          return
-        }
-      }
-    }
+    val rootSchema = service.getSchemaObject(position.containingFile) ?: return
+
+    if (skipForSchemaAndRef(position, service, file)) return
 
     updateStat(service.getSchemaProvider(rootSchema), service.resolveSchemaFile(rootSchema))
     doCompletion(parameters, result, rootSchema, true)
   }
 
-  private class Worker(private val myRootSchema: JsonSchemaObject,
-                       private val myPosition: PsiElement,
-                       private val myOriginalPosition: PsiElement,
-                       private val myResultConsumer: Consumer<LookupElement>) {
-    private val myWrapInQuotes: Boolean
-    private val myInsideStringLiteral: Boolean
+  private fun skipForSchemaAndRef(position: PsiElement,
+                service: JsonSchemaService,
+                file: VirtualFile): Boolean {
+    val positionParent = position.parent ?: return false
+    val parent = positionParent.parent as? JsonProperty ?: return false
+    val propName = parent.name
+    return ("\$schema" == propName && parent.parent is JsonObject && parent.parent.parent is JsonFile
+            || "\$ref" == propName && service.isSchemaFile(file))
+  }
+
+  private class Worker(private val rootSchema: JsonSchemaObject,
+                       private val position: PsiElement,
+                       private val originalPosition: PsiElement,
+                       private val resultHandler: (Collection<LookupElement>) -> Unit) {
+    private val wrapInQuotes: Boolean
+    private val insideStringLiteral: Boolean
 
     // we need this set to filter same-named suggestions (they can be suggested by several matching schemes)
-    val myVariants: MutableSet<LookupElement> = HashSet()
-    private val myWalker: JsonLikePsiWalker?
-    private val myProject: Project = myOriginalPosition.project
+    val completionVariants = mutableSetOf<LookupElement>()
+    private val psiWalker: JsonLikePsiWalker?
+    private val myProject: Project = originalPosition.project
+
+    init {
+      val walker = JsonLikePsiWalker.getWalker(position, rootSchema)
+      val positionParent = position.parent
+      val isInsideQuotedString = (positionParent != null && walker != null && walker.isQuotedString(positionParent))
+      wrapInQuotes = !isInsideQuotedString
+      psiWalker = walker
+      insideStringLiteral = isInsideQuotedString
+    }
+
 
     fun work() {
-      if (myWalker == null) return
-      val checkable = myWalker.findElementToCheck(myPosition)
+      if (psiWalker == null) return
+      val checkable = psiWalker.findElementToCheck(position)
       if (checkable == null) return
-      val isName = myWalker.isName(checkable)
-      val position = myWalker.findPosition(checkable, isName == ThreeState.NO)
+      val isName = psiWalker.isName(checkable)
+      val position = psiWalker.findPosition(checkable, isName == ThreeState.NO)
       if (position == null || position.isEmpty && isName == ThreeState.NO) return
 
-      val knownNames: MutableSet<String> = HashSet()
+      val knownNames = mutableSetOf<String>()
 
-      val nestedCompletionsNode = getNestedCompletionsData(myOriginalPosition.containingFile)
-        .navigate(position
-        )
+      val nestedCompletionsNode = getNestedCompletionsData(originalPosition.containingFile)
+        .navigate(position)
 
-      JsonSchemaResolver(myProject, myRootSchema, position)
+      JsonSchemaResolver(myProject, rootSchema, position)
         .resolve()
-        .forEach(java.util.function.Consumer { schema: JsonSchemaObject ->
-          schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path: SchemaPath?, subSchema: JsonSchemaObject ->
+        .forEach { schema ->
+          schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path, subSchema ->
             processSchema(subSchema, isName, checkable, knownNames, path)
-            Unit
           }
-        })
+        }
 
-      for (variant in myVariants) {
-        myResultConsumer.accept(variant)
-      }
+      resultHandler(completionVariants)
     }
 
     /**
@@ -135,17 +137,16 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                       knownNames: MutableSet<String>,
                       completionPath: SchemaPath?) {
       if (isName != ThreeState.NO) {
-        val completionOriginalPosition = myWalker!!.findChildBy(completionPath, myOriginalPosition)
-        val completionPosition = myWalker.findChildBy(completionPath, myPosition)
-        val insertComma = myWalker.hasMissingCommaAfter(myPosition)
-        val hasValue = myWalker.isPropertyWithValue(checkable)
+        val completionOriginalPosition = psiWalker!!.findChildBy(completionPath, originalPosition)
+        val completionPosition = psiWalker.findChildBy(completionPath, position)
+        val insertComma = psiWalker.hasMissingCommaAfter(position)
+        val hasValue = psiWalker.isPropertyWithValue(checkable)
 
-        val properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition)
-        val adapter = myWalker.getParentPropertyAdapter(completionOriginalPosition)
+        val properties = psiWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition)
+        val adapter = psiWalker.getParentPropertyAdapter(completionOriginalPosition)
 
-        val forbiddenNames = findPropertiesThatMustNotBePresent(schema, myPosition, myProject, properties)
-          .plus(properties
-          )
+        val forbiddenNames = findPropertiesThatMustNotBePresent(schema, position, myProject, properties)
+          .plus(properties)
         addAllPropertyVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath)
         addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath)
         addPropertyNameSchemaVariants(schema)
@@ -157,13 +158,10 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addPropertyNameSchemaVariants(schema: JsonSchemaObject) {
-      val propertyNamesSchema = schema.propertyNamesSchema
-      if (propertyNamesSchema == null) return
-      val anEnum = propertyNamesSchema.enum
-      if (anEnum == null) return
+      val anEnum = schema.propertyNamesSchema?.enum ?: return
       for (o in anEnum) {
         if (o !is String) continue
-        myVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(
+        completionVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(
           if (!shouldWrapInQuotes(o, false)) o else StringUtil.wrapWithDoubleQuote(o)
         )))
       }
@@ -176,22 +174,19 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                           adapter: JsonPropertyAdapter?,
                                           knownNames: MutableSet<String>,
                                           completionPath: SchemaPath?) {
-      val ifThenElseList = schema.ifThenElse
-      if (ifThenElseList == null) return
+      val ifThenElseList = schema.ifThenElse ?: return
 
-      val walker = JsonLikePsiWalker.getWalker(myPosition, schema)
-      val propertyAdapter = walker?.getParentPropertyAdapter(myPosition)
-      if (propertyAdapter == null) return
+      val walker = JsonLikePsiWalker.getWalker(position, schema)
+      val propertyAdapter = walker?.getParentPropertyAdapter(position) ?: return
 
-      val `object` = propertyAdapter.parentObject
-      if (`object` == null) return
+      val parentObject = propertyAdapter.parentObject ?: return
 
       for (ifThenElse in ifThenElseList) {
-        val effectiveBranch = ifThenElse.effectiveBranchOrNull(myProject, `object`)
+        val effectiveBranch = ifThenElse.effectiveBranchOrNull(myProject, parentObject)
         if (effectiveBranch == null) continue
 
-        addAllPropertyVariants(effectiveBranch, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath
-        )
+        addAllPropertyVariants(effectiveBranch, insertComma,
+                               hasValue, forbiddenNames, adapter, knownNames, completionPath)
       }
     }
 
@@ -203,21 +198,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                knownNames: MutableSet<String>,
                                completionPath: SchemaPath?) {
       StreamEx.of(schema.propertyNames)
-        .filter { name: String -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name == adapter.name }
-        .forEach { name: String ->
+        .filter { name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name == adapter.name }
+        .forEach { name ->
           knownNames.add(name)
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
           addPropertyVariant(name, propertySchema, hasValue, insertComma, completionPath)
         }
-    }
-
-    init {
-      val psiWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema)
-      val positionParent = myPosition.parent
-      val isInsideQuotedString = (positionParent != null && psiWalker != null && psiWalker.isQuotedString(positionParent))
-      myWrapInQuotes = !isInsideQuotedString
-      myWalker = psiWalker
-      myInsideStringLiteral = isInsideQuotedString
     }
 
     fun suggestValues(schema: JsonSchemaObject, isSurelyValue: Boolean, completionPath: SchemaPath?) {
@@ -233,7 +219,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         val anEnum = schema.enum
         for (i in anEnum!!.indices) {
           val o = anEnum[i]
-          if (myInsideStringLiteral && o !is String) continue
+          if (insideStringLiteral && o !is String) continue
           val variant = o.toString()
           if (!filtered.contains(variant)) {
             val valueMetadata = metadata?.get(StringUtil.unquoteString(variant))
@@ -261,25 +247,17 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun suggestSpecialValues(type: JsonSchemaType?) {
-      if (JsonSchemaVersion.isSchemaSchemaId(myRootSchema.id) && type == JsonSchemaType._string) {
-        val propertyAdapter = myWalker!!.getParentPropertyAdapter(myOriginalPosition)
-        if (propertyAdapter == null) {
-          return
-        }
-        val name = propertyAdapter.name
-        if (name == null) {
-          return
-        }
-        when (name) {
-          "required" -> addRequiredPropVariants()
-          X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants()
-          "language" -> {
-            val parent = propertyAdapter.parentObject
-            if (parent != null) {
-              val adapter = myWalker.getParentPropertyAdapter(parent.delegate)
-              if (adapter != null && X_INTELLIJ_LANGUAGE_INJECTION == adapter.name) {
-                addInjectedLanguageVariants()
-              }
+      if (!JsonSchemaVersion.isSchemaSchemaId(rootSchema.id) || type != JsonSchemaType._string) return
+      val propertyAdapter = psiWalker!!.getParentPropertyAdapter(originalPosition) ?: return
+      when (propertyAdapter.name) {
+        "required" -> addRequiredPropVariants()
+        X_INTELLIJ_LANGUAGE_INJECTION -> addInjectedLanguageVariants()
+        "language" -> {
+          val parent = propertyAdapter.parentObject
+          if (parent != null) {
+            val adapter = psiWalker.getParentPropertyAdapter(parent.delegate)
+            if (adapter != null && X_INTELLIJ_LANGUAGE_INJECTION == adapter.name) {
+              addInjectedLanguageVariants()
             }
           }
         }
@@ -287,34 +265,28 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addInjectedLanguageVariants() {
-      val checkable = myWalker!!.findElementToCheck(myPosition)
+      val checkable = psiWalker!!.findElementToCheck(position)
       if (checkable !is JsonStringLiteral && checkable !is JsonReferenceExpression) return
-      JBIterable.from(Language.getRegisteredLanguages())
-        .filter { language: Language? ->
-          LanguageUtil.isInjectableLanguage(
-            language!!)
+      Language.getRegisteredLanguages()
+        .filter { LanguageUtil.isInjectableLanguage(it) }
+        .map { Injectable.fromLanguage(it) }
+        .forEach {
+          completionVariants.add(LookupElementBuilder
+                           .create(it.id)
+                           .withIcon(it.icon)
+                           .withTailText("(" + it.displayName + ")", true))
         }
-        .map { language: Language? -> Injectable.fromLanguage(language) }
-        .forEach(
-          java.util.function.Consumer { it: Injectable ->
-            myVariants.add(LookupElementBuilder
-                             .create(it.id)
-                             .withIcon(it.icon)
-                             .withTailText("(" + it.displayName + ")", true))
-          })
     }
 
     fun addRequiredPropVariants() {
-      val checkable = myWalker!!.findElementToCheck(myPosition)
+      val checkable = psiWalker!!.findElementToCheck(position)
       if (checkable !is JsonStringLiteral && checkable !is JsonReferenceExpression) return
-      val propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable)
-      if (propertiesObject == null) return
+      val propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable) ?: return
       val parent = checkable.parent
-      val items = if (parent is JsonArray
-      ) parent.valueList
-        .filterIsInstance<JsonStringLiteral>().map { it.value }.toSet()
-      else HashSet()
-      propertiesObject.propertyList.map { it.name }.filter {!items.contains(it) }
+      val items = if (parent is JsonArray) {
+        parent.valueList.filterIsInstance<JsonStringLiteral>().map { it.value }.toSet()
+      } else emptySet()
+      propertiesObject.propertyList.map { it.name }.filter { !items.contains(it) }
         .forEach { addStringVariant(it) }
     }
 
@@ -322,28 +294,30 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       if (JsonSchemaType._string == type) {
         addPossibleStringValue(schema)
       }
-      if (myInsideStringLiteral) {
+      if (insideStringLiteral) {
         return
       }
-      if (JsonSchemaType._boolean == type) {
-        addPossibleBooleanValue(type)
-      }
-      else if (JsonSchemaType._null == type) {
-        addValueVariant("null", null)
-      }
-      else if (JsonSchemaType._array == type) {
-        val value = myWalker!!.defaultArrayValue
-        addValueVariant(value, null,
-                        "[...]", createArrayOrObjectLiteralInsertHandler(
-            myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
-        )
-      }
-      else if (JsonSchemaType._object == type) {
-        val value = myWalker!!.defaultObjectValue
-        addValueVariant(value, null,
-                        "{...}", createArrayOrObjectLiteralInsertHandler(
-            myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
-        )
+      when (type) {
+        JsonSchemaType._boolean -> {
+          addValueVariant("true", null)
+          addValueVariant("false", null)
+        }
+        JsonSchemaType._null -> addValueVariant("null", null)
+        JsonSchemaType._array -> {
+          val value = psiWalker!!.defaultArrayValue
+          addValueVariant(value, null,
+                          "[...]", createArrayOrObjectLiteralInsertHandler(
+            psiWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
+          )
+        }
+        JsonSchemaType._object -> {
+          val value = psiWalker!!.defaultObjectValue
+          addValueVariant(value, null,
+                          "{...}", createArrayOrObjectLiteralInsertHandler(
+            psiWalker.hasWhitespaceDelimitedCodeBlocks(), value.length)
+          )
+        }
+        else -> { /* no suggestions */ }
       }
     }
 
@@ -354,35 +328,25 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addStringVariant(defaultValueString: String?) {
-      if (defaultValueString != null) {
-        var normalizedValue: String = defaultValueString
-        val shouldQuote = myWalker!!.requiresValueQuotes()
-        val isQuoted = StringUtil.isQuotedString(normalizedValue)
-        if (shouldQuote && !isQuoted) {
-          normalizedValue = StringUtil.wrapWithDoubleQuote(normalizedValue)
-        }
-        else if (!shouldQuote && isQuoted) {
-          normalizedValue = StringUtil.unquoteString(normalizedValue)
-        }
-        addValueVariant(normalizedValue, null)
+      if (defaultValueString == null) return
+      var normalizedValue: String = defaultValueString
+      val shouldQuote = psiWalker!!.requiresValueQuotes()
+      val isQuoted = StringUtil.isQuotedString(normalizedValue)
+      if (shouldQuote && !isQuoted) {
+        normalizedValue = StringUtil.wrapWithDoubleQuote(normalizedValue)
       }
+      else if (!shouldQuote && isQuoted) {
+        normalizedValue = StringUtil.unquoteString(normalizedValue)
+      }
+      addValueVariant(normalizedValue, null)
     }
 
     fun suggestValuesForSchemaVariants(list: List<JsonSchemaObject>?, isSurelyValue: Boolean, completionPath: SchemaPath?) {
-      if (!list.isNullOrEmpty()) {
-        for (schemaObject in list) {
-          suggestValues(schemaObject, isSurelyValue, completionPath)
-        }
+      if (list.isNullOrEmpty()) return
+      for (schemaObject in list) {
+        suggestValues(schemaObject, isSurelyValue, completionPath)
       }
     }
-
-    fun addPossibleBooleanValue(type: JsonSchemaType) {
-      if (JsonSchemaType._boolean == type) {
-        addValueVariant("true", null)
-        addValueVariant("false", null)
-      }
-    }
-
 
     fun addValueVariant(key: String,
                         description: String?,
@@ -401,17 +365,17 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         builder = builder.withInsertHandler(handler)
       }
       if (order != null) {
-        myVariants.add(PrioritizedLookupElement.withPriority(builder, -order.toDouble()))
+        completionVariants.add(PrioritizedLookupElement.withPriority(builder, -order.toDouble()))
       }
       else {
-        myVariants.add(builder)
+        completionVariants.add(builder)
       }
     }
 
     fun shouldWrapInQuotes(key: String?, isValue: Boolean): Boolean {
-      return myWrapInQuotes && myWalker != null &&
-             (isValue && myWalker.requiresValueQuotes() || !isValue && myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key,
-                                                                                                                                    myProject))
+      return wrapInQuotes && psiWalker != null &&
+             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || !psiWalker.isValidIdentifier(key,
+                                                                                                                                       myProject))
     }
 
     fun addPropertyVariant(key: String,
@@ -464,7 +428,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true)
       }
 
-      myVariants.add(builder.prefixedBy(completionPath, myWalker!!))
+      completionVariants.add(builder.prefixedBy(completionPath, psiWalker!!))
     }
 
     fun createDefaultPropertyInsertHandler(hasValue: Boolean,
@@ -475,14 +439,14 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           val editor = context.editor
           val project = context.project
 
-          if (handleInsideQuotesInsertion(context, editor, hasValue, myInsideStringLiteral)) return
+          if (handleInsideQuotesInsertion(context, editor, hasValue, insideStringLiteral)) return
           var offset = editor.caretModel.offset
           val initialOffset = offset
           val docChars = context.document.charsSequence
           while (offset < docChars.length && Character.isWhitespace(docChars[offset])) {
             offset++
           }
-          val propertyValueSeparator = myWalker!!.getPropertyValueSeparator(null)
+          val propertyValueSeparator = psiWalker!!.getPropertyValueSeparator(null)
           if (hasValue) {
             // fix colon for YAML and alike
             if (offset < docChars.length && !isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
@@ -532,7 +496,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val defaultValue = jsonSchemaObject.default
       val defaultValueAsString = if (defaultValue == null || defaultValue is JsonSchemaObject) null else (if (defaultValue is String) "\"" + defaultValue + "\"" else defaultValue.toString())
       val finalType = type
-      return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, values, myWalker!!, myInsideStringLiteral)
+      return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, values, psiWalker!!, insideStringLiteral)
     }
 
     companion object {
@@ -608,11 +572,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                      result: CompletionResultSet,
                      rootSchema: JsonSchemaObject,
                      stop: Boolean) {
-      val completionPosition = if (parameters.originalPosition != null) parameters.originalPosition else parameters.position
-      val worker = Worker(rootSchema, parameters.position, completionPosition!!, result)
+      val worker = Worker(rootSchema, parameters.position,
+                          parameters.originalPosition ?: parameters.position) {
+        result.addAllElements(it)
+      }
       worker.work()
       // stop further completion only if the current contributor has at least one new completion variant
-      if (stop && !worker.myVariants.isEmpty()) {
+      if (stop && !worker.completionVariants.isEmpty()) {
         result.stopHere()
       }
     }
@@ -622,7 +588,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     fun getCompletionVariants(schema: JsonSchemaObject,
                               position: PsiElement, originalPosition: PsiElement): List<LookupElement> {
       val result: MutableList<LookupElement> = ArrayList()
-      Worker(schema, position, originalPosition) { element: LookupElement -> result.add(element) }.work()
+      Worker(schema, position, originalPosition) { elements -> result.addAll(elements) }.work()
       return result
     }
 
