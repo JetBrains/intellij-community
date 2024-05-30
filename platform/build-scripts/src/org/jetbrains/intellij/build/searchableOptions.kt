@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import java.nio.file.Files
 import java.nio.file.Path
@@ -104,7 +105,7 @@ internal suspend fun buildSearchableOptions(
     productRunner.runProduct(
       args = listOf("traverseUI", targetDirectory.toString(), "true"),
       additionalVmProperties = systemProperties + getSystemPropertiesForSearchableOptions(langTag),
-      isLongRunning = true,
+      timeout = DEFAULT_TIMEOUT,
     )
   }
 
