@@ -274,8 +274,10 @@ function __jetbrains_intellij_fix_prompt_command_order() {
   __jetbrains_intellij_debug_log "After PROMPT_COMMAND modification: $(declare -p PROMPT_COMMAND)"
 }
 
-# override clear behaviour to handle it on IDE side and remove the blocks
-clear() {
+# Avoid conflict with user defined alias
+unalias clear 2>/dev/null
+# Override clear behaviour to handle it on IDE side and remove the blocks
+function clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
 
