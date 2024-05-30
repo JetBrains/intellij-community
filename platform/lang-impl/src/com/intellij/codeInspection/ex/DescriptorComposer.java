@@ -149,7 +149,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = StringUtil.replace(descriptionTemplate, "</code>", "'");
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
-    String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
+    String res = descriptionTemplate.replace(ProblemDescriptorUtil.REF_REFERENCE, anchor.toString());
     int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {
@@ -164,11 +164,10 @@ public final class DescriptorComposer extends HTMLComposerImpl {
         lineAnchor.append("\">");
         lineAnchor.append((lineNumber + 1));
         lineAnchor.append("</a>");
-        final String location = "#loc";
-        if (!res.contains(location)) {
-          res += " (" + location + ")";
+        if (!res.contains(ProblemDescriptorUtil.LOC_REFERENCE)) {
+          res += " (" + ProblemDescriptorUtil.LOC_REFERENCE + ")";
         }
-        res = res.replaceAll(location, lineAnchor.toString());
+        res = res.replace(ProblemDescriptorUtil.LOC_REFERENCE, lineAnchor.toString());
       }
     }
     buf.append(res.replace("#end", "").replace("#treeend",""));
