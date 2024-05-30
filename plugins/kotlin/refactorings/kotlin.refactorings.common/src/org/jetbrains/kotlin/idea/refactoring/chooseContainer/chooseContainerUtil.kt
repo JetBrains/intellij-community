@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.*
 import javax.swing.Icon
 
@@ -64,10 +63,10 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
     when {
         containers.isEmpty() -> return
         containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
-        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, selection, toPsi, onSelect)
+        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
-            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, selection as PsiElement?, onSelect as (PsiElement) -> Unit)
+            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, selection as PsiElement?, onSelect = onSelect as (PsiElement)->Unit)
         }
     }
 }
@@ -77,7 +76,6 @@ private fun <T> chooseContainerElement(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
-    selection: T? = null,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
 ) {
@@ -172,37 +170,6 @@ private fun <T : PsiElement> getPsiElementPopup(
 }
 
 private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer<PsiElement>() {
-    @NlsSafe
-    private fun PsiElement.renderName(): String = when {
-        this is KtPropertyAccessor -> property.renderName() + if (isGetter) ".get" else ".set"
-        this is KtObjectDeclaration && isCompanion() -> {
-            val name = getStrictParentOfType<KtClassOrObject>()?.renderName() ?: "<anonymous>"
-            "Companion object of $name"
-        }
-
-        else -> (this as? PsiNamedElement)?.name ?: "<anonymous>"
-    }
-
-    @NlsSafe
-    private fun PsiElement.renderDeclaration(): String? {
-        return null
-        //if (this is KtFunctionLiteral || isFunctionalExpression()) return renderText()
-        //val descriptor = when (this) {
-        //    is KtFile -> name
-        //    is KtElement -> analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
-        //    is PsiMember -> getJavaMemberDescriptor()
-        //    else -> null
-        //} ?: return null
-        //
-        //val name = renderName()
-        //val params = (descriptor as? FunctionDescriptor)?.valueParameters?.joinToString(
-        //    ", ",
-        //    "(",
-        //    ")"
-        //) { DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it.type) } ?: ""
-        //
-        //return "$name$params"
-    }
 
     @NlsSafe
     private fun PsiElement.renderText(): String = when (this) {
@@ -244,7 +211,7 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
 
     override fun getElementText(element: PsiElement): String {
         val representativeElement = element.getRepresentativeElement()
-        return representativeElement.renderDeclaration() ?: representativeElement.renderText()
+        return representativeElement.renderText()
     }
 
     override fun getContainerText(element: PsiElement): String? = null
@@ -287,5 +254,5 @@ private class SelectionAwareScopeHighlighter(val editor: Editor) {
 }
 
 class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLanguage.INSTANCE) {
-    override fun toString() = ""
+    override fun toString(): String = ""
 }
