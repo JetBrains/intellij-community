@@ -1838,9 +1838,11 @@ open class FileEditorManagerImpl(
       }
     }
 
-    publisher.selectionChanged(FileEditorManagerEvent(manager = this,
-                                                      oldEditorWithProvider = oldEditorWithProvider,
-                                                      newEditorWithProvider = newEditorWithProvider))
+    publisher.selectionChanged(FileEditorManagerEvent(
+      manager = this,
+      oldEditorWithProvider = oldEditorWithProvider,
+      newEditorWithProvider = newEditorWithProvider,
+    ))
   }
 
   override fun isChanged(editor: EditorComposite): Boolean {
