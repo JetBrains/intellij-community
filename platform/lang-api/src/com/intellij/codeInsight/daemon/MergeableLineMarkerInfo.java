@@ -90,8 +90,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
 
   public static @NotNull List<? extends MergeableLineMarkerInfo<?>> getMergedMarkers(LineMarkerInfo<?> info) {
-    if (info instanceof MyLineMarkerInfo) {
-      return ((MyLineMarkerInfo)info).getInfos();
+    if (info instanceof MyLineMarkerInfo myLineMarkerInfo) {
+      return myLineMarkerInfo.getInfos();
     }
     return Collections.emptyList();
   }
@@ -101,7 +101,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       Set<String> tooltips = new LinkedHashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
       StringBuilder tooltip = new StringBuilder();
       for (String info : tooltips) {
-        if (tooltip.length() > 0) {
+        if (!tooltip.isEmpty()) {
           tooltip.append(UIUtil.BORDER_LINE);
         }
         tooltip.append(UIUtil.getHtmlBody(info));
@@ -123,28 +123,39 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return myPresentationProvider != null ? myPresentationProvider.fun(element) : element.getText();
   }
 
-  public static @NotNull List<LineMarkerInfo<?>> merge(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, int passId) {
-    List<LineMarkerInfo<?>> result = new SmartList<>();
-    for (int i = 0; i < markers.size(); i++) {
-      MergeableLineMarkerInfo<?> marker = markers.get(i);
+  /**
+   * Try to merge every marker from {@code sameLineMarkers} with every other marker from this list.
+   * Yes, it's a quadratic number of {@link MergeableLineMarkerInfo#canMergeWith(MergeableLineMarkerInfo)} calls.
+   * The list is not modified in the process.
+   */
+  public static @NotNull List<LineMarkerInfo<?>> merge(@NotNull List<? extends MergeableLineMarkerInfo<?>> sameLineMarkers, int passId) {
+    // must maintain the order of sameLineMarkers, to show icons in consistent order
+    List<LineMarkerInfo<?>> result = new ArrayList<>(sameLineMarkers.size());
+    boolean[] alreadyMerged = new boolean[sameLineMarkers.size()]; // [i]=true means the `sameLineMarkers[i]` was merged with some other marker from this array, and should not be tried to merge again
+    for (int i = 0; i < sameLineMarkers.size(); i++) {
+      MergeableLineMarkerInfo<?> prev = sameLineMarkers.get(i);
+      if (alreadyMerged[i]) continue;
       List<MergeableLineMarkerInfo<?>> toMerge = new SmartList<>();
-      for (int k = markers.size() - 1; k > i; k--) {
-        MergeableLineMarkerInfo<?> current = markers.get(k);
-        boolean canMergeWith = marker.canMergeWith(current);
-        if (ApplicationManager.getApplication().isUnitTestMode() && !canMergeWith && current.canMergeWith(marker)) {
-          LOG.error(current.getClass() + "[" + current.getLineMarkerTooltip() + "] can merge " +
-                    marker.getClass() + "[" + marker.getLineMarkerTooltip() + "], but not vice versa");
+      for (int k = i + 1; k < sameLineMarkers.size(); k++) {
+        MergeableLineMarkerInfo<?> next = sameLineMarkers.get(k);
+        if (alreadyMerged[k]) continue;
+        boolean canMergeWith = prev.canMergeWith(next);
+        if (ApplicationManager.getApplication().isUnitTestMode() && !canMergeWith && next.canMergeWith(prev)) {
+          LOG.error("inconsistent canMergeWith():" + next.getClass() + "[" + next.getLineMarkerTooltip() + "] can merge " +
+                    prev.getClass() + "[" + prev.getLineMarkerTooltip() + "], but not vice versa");
         }
         if (canMergeWith) {
-          toMerge.add(0, current);
-          markers.remove(k);
+          alreadyMerged[k] = true; // mark as merged to avoid counting it twice
+          if (toMerge.isEmpty()) {
+            toMerge.add(prev);
+          }
+          toMerge.add(next);
         }
       }
       if (toMerge.isEmpty()) {
-        result.add(marker);
+        result.add(prev);
       }
       else {
-        toMerge.add(0, marker);
         result.add(new MyLineMarkerInfo(toMerge, passId));
       }
     }
@@ -161,7 +172,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
     /**
      *  An 'updatePass' field is explicitly set here to avoid duplicated markers
-     *  @see com.intellij.codeHighlighting.Pass.SLOW_LINE_MARKERS
+     *  @see com.intellij.codeHighlighting.Pass#SLOW_LINE_MARKERS
      */
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, @NotNull MergeableLineMarkerInfo<?> template, int passId) {
       //noinspection ConstantConditions
@@ -186,7 +197,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           commonActionGroup.addAll(popupActions);
         }
         else {
-          commonActionGroup.add(myMarkers.get(i).getNavigateAction());
+          MergeableLineMarkerInfo<?> mergeableLineMarkerInfo = myMarkers.get(i);
+          commonActionGroup.add(mergeableLineMarkerInfo.getNavigateAction());
         }
       }
       return commonActionGroup;
@@ -231,7 +243,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
-  protected AnAction getNavigateAction() {
+  @NotNull
+  private AnAction getNavigateAction() {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -241,12 +254,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
       private static @NotNull MouseEvent getMouseEvent(@NotNull AnActionEvent e) {
         InputEvent inputEvent = e.getInputEvent();
-        if (inputEvent instanceof MouseEvent) {
-          return (MouseEvent)inputEvent;
+        if (inputEvent instanceof MouseEvent mouseEvent) {
+          return mouseEvent;
         }
-        else {
-          return JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()).toMouseEvent();
-        }
+        return JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()).toMouseEvent();
       }
 
       @Override

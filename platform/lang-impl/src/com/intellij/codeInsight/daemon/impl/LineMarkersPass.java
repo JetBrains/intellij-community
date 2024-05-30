@@ -36,8 +36,8 @@ import com.intellij.util.InjectionUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -126,22 +126,19 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     }
     return markers;
   }
-
+  // maintain the `markers` order to show icons in the consistent order
   private static @NotNull List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document, int passId) {
-    Int2ObjectMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new Int2ObjectLinkedOpenHashMap<>();
+    List<LineMarkerInfo<?>> result = new ArrayList<>(markers.size());
 
-    for (int i = markers.size() - 1; i >= 0; i--) {
-      LineMarkerInfo<?> marker = markers.get(i);
+    for (LineMarkerInfo<?> marker : markers) {
       if (marker instanceof MergeableLineMarkerInfo<?> mergeable) {
-        markers.remove(i);
-
         int line = document.getLineNumber(marker.startOffset);
-        List<MergeableLineMarkerInfo<?>> infos = sameLineMarkers.get(line);
-        if (infos == null) {
-          infos = new ArrayList<>();
-          sameLineMarkers.put(line, infos);
-        }
+        List<MergeableLineMarkerInfo<?>> infos = sameLineMarkers.computeIfAbsent(line, __ -> new ArrayList<>());
         infos.add(mergeable);
+      }
+      else {
+        result.add(marker);
       }
     }
 
@@ -149,7 +146,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       return markers;
     }
 
-    List<LineMarkerInfo<?>> result = new ArrayList<>(markers);
     for (List<MergeableLineMarkerInfo<?>> value : sameLineMarkers.values()) {
       result.addAll(MergeableLineMarkerInfo.merge(value, passId));
     }
