@@ -235,10 +235,10 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) 
   }
 
   cs.launchNow(CoroutineName("Upstream text binding for $this")) {
-    textFlow.collect {
-      if (text != it) {
+    textFlow.collect { newText ->
+      if (text != newText) {
         writeAction {
-          setText(it)
+          setText(newText.filter { it != '\r' })
         }
       }
     }
