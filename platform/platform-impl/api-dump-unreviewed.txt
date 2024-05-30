@@ -1485,6 +1485,24 @@ f:com.intellij.codeInsight.inline.completion.elements.InlineCompletionTextElemen
 - <init>():V
 - isApplicable(com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement):Z
 - substring(com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement,I,I):com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
+- com.intellij.openapi.options.BoundCompositeConfigurable
+- com.intellij.application.options.editor.EditorOptionsProvider
+- com.intellij.openapi.options.Configurable$WithEpDependencies
+- sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable$Companion
+- sf:ID:java.lang.String
+- <init>():V
+- createConfigurables():java.util.List
+- createPanel():com.intellij.openapi.ui.DialogPanel
+- getDependencies():java.util.Collection
+- getId():java.lang.String
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable$Companion
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
+- sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
+- <init>():V
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.Disposable
