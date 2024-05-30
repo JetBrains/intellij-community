@@ -37,7 +37,7 @@ __jetbrains_intellij_encode_slow() {
 __jetbrains_intellij_encode() {
   builtin local value="$1"
   if builtin command -v od > /dev/null && builtin command -v tr > /dev/null; then
-    builtin printf "%s" "$value" | od -An -tx1 -v | tr -d "[:space:]"
+    builtin printf "%s" "$value" | builtin command od -An -tx1 -v | builtin command tr -d "[:space:]"
   else
     __jetbrains_intellij_encode_slow "$value"
   fi
@@ -77,7 +77,7 @@ __jetbrains_intellij_get_environment() {
 }
 
 __jetbrains_intellij_escape_json() {
-  sed -e 's/\\/\\\\/g'\
+  builtin command sed -e 's/\\/\\\\/g'\
       -e 's/"/\\"/g'\
       <<< "$1"
 }
@@ -158,7 +158,7 @@ __jetbrains_intellij_report_prompt_state() {
   builtin local conda_env=""
   if builtin command -v git > /dev/null
   then
-    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+    git_branch="$(builtin command git symbolic-ref --short HEAD 2> /dev/null || builtin command git rev-parse --short HEAD 2> /dev/null)"
   fi
   if [[ -n $VIRTUAL_ENV ]]
   then

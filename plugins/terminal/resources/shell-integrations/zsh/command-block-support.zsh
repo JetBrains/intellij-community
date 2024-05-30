@@ -21,7 +21,7 @@ __jetbrains_intellij_encode() {
 __jetbrains_intellij_encode_large() {
   builtin local value="$1"
   if builtin whence od > /dev/null && builtin whence sed > /dev/null && builtin whence tr > /dev/null; then
-    builtin printf "%s" "$value" | od -v -A n -t x1 | sed 's/ *//g' | tr -d '\n'
+    builtin printf "%s" "$value" | builtin command od -v -A n -t x1 | builtin command sed 's/ *//g' | builtin command tr -d '\n'
   else
     __jetbrains_intellij_encode "$value"
   fi
@@ -61,7 +61,7 @@ __jetbrains_intellij_get_environment() {
 }
 
 __jetbrains_intellij_escape_json() {
-  sed -e 's/\\/\\\\/g'\
+  builtin command sed -e 's/\\/\\\\/g'\
       -e 's/"/\\"/g'\
       <<< "$1"
 }
@@ -108,7 +108,7 @@ __jetbrains_intellij_report_prompt_state() {
   builtin local conda_env=""
   if builtin whence git > /dev/null
   then
-    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+    git_branch="$(builtin command git symbolic-ref --short HEAD 2> /dev/null || builtin command git rev-parse --short HEAD 2> /dev/null)"
   fi
   if [[ -n $VIRTUAL_ENV ]]
   then
