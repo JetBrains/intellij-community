@@ -1,4 +1,7 @@
 package p;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
 interface I0 <error descr="Invalid permits clause: 'I0' must be sealed">permits</error> I {}
 
 sealed interface I extends I0 permits <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>, <error descr="Duplicate class: 'p.I1'">I1</error>, <error descr="Duplicate class: 'p.I1'">I1</error>{}
@@ -27,4 +30,17 @@ sealed class Parent permits TypedChild<error descr="Generics are not allowed in 
 
 non-sealed class TypedChild<F> extends Parent {}
 
-@interface AnnotationType <error descr="'permits' not allowed on @interface">permits</error> I {}
+class TestWithAnnotations{
+  @Target(ElementType.TYPE_USE)
+  @interface Ann {
+  }
+
+  public static void main(String[] args) {
+
+  }
+  sealed class PermittedAnnotations permits <error descr="Annotation is not allowed in permit list">@Ann</error> SealedOne {
+  }
+
+  non-sealed class SealedOne extends PermittedAnnotations {
+  }
+}

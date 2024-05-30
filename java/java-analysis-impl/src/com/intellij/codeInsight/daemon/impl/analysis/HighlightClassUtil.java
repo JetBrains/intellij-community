@@ -1229,6 +1229,15 @@ public final class HighlightClassUtil {
     PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
     for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
+
+      for (PsiAnnotation annotation : PsiTreeUtil.findChildrenOfType(permitted, PsiAnnotation.class)) {
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation)
+          .descriptionAndTooltip(JavaErrorBundle.message("annotation.not.allowed.in.permit.list"));
+        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(annotation);
+        builder.registerFix(action, null, null, null, null);
+        errorSink.accept(builder);
+      }
+
       PsiReferenceParameterList parameterList = permitted.getParameterList();
       if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
         HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList)
