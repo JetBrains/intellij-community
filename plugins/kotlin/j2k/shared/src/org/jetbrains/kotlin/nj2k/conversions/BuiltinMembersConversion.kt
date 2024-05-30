@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_SELECTOR
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_WITH_QUALIFIER
@@ -819,12 +820,17 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
             JKThisExpression(JKLabelEmpty()) to expr.copyTreeAndDetach()
         }
 
-        val cast = JKTypeCastExpression(
-            receiver,
-            JKTypeElement(JKClassType(symbolProvider.provideClassSymbol("java.lang.Object")))
-        ).parenthesize()
+        val objectTypeElement = JKTypeElement(JKClassType(symbolProvider.provideClassSymbol("java.lang.Object"), nullability = NotNull))
+        val existingCast = (receiver as? JKParenthesizedExpression)?.expression as? JKTypeCastExpression
 
-        JKQualifiedExpression(cast, selector)
+        return@CustomExpression if ((existingCast?.type?.type as? JKClassType)?.classReference?.fqName == "kotlin.Any") {
+            // If we already have a cast to Any, replace "Any" with "Object" and don't produce a double cast
+            existingCast.type = objectTypeElement
+            JKQualifiedExpression(receiver, selector)
+        } else {
+            val cast = JKTypeCastExpression(receiver, objectTypeElement).parenthesize()
+            JKQualifiedExpression(cast, selector)
+        }
     }
 
     private fun filterReceiverCastToJavaLangObject(expr: JKExpression): Boolean {
