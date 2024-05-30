@@ -61,6 +61,9 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testSwitchExhaustivenessIn21Java() {
     doTest();
   }
+  public void testSwitchExhaustivenessIn21JavaInfiniteRecursion() {
+    doTest();
+  }
 
   public void testSwitchExhaustivenessForDirectClassesIn21Java() {
     doTest();

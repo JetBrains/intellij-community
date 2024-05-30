@@ -38,21 +38,25 @@ final class PatternHighlightingModel {
   private static final int MAX_ITERATION_COVERAGE = 5_000;
   private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
 
-  static boolean createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+  static boolean createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern,
+                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (deconstructionPattern == null) return false;
     PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
     PsiType recordType = typeElement.getType();
-    ClassResolveResult resolveResult = recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
+    ClassResolveResult resolveResult =
+      recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
     PsiClass recordClass = resolveResult.getElement();
     if (recordClass == null || !recordClass.isRecord()) {
       String message = JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(recordType));
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
+      HighlightInfo.Builder info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
       errorSink.accept(info);
       return true;
     }
     if (resolveResult.getInferenceError() != null) {
       String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
+      HighlightInfo.Builder info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
       errorSink.accept(info);
       return true;
     }
@@ -153,12 +157,15 @@ final class PatternHighlightingModel {
    *  record SomeClass(RecordComponentType component)
    *  (a instanceof SomeClass(PatternType obj))
    * </code></pre>
+   *
    * @param recordComponentType the type of the record component
-   * @param patternType the type of the pattern
-   * @param languageLevel the language level to consider
+   * @param patternType         the type of the pattern
+   * @param languageLevel       the language level to consider
    * @return true if the record component type is applicable for the pattern type, false otherwise
    */
-  private static boolean isApplicableForRecordComponent(@NotNull PsiType recordComponentType, @Nullable PsiType patternType, @NotNull LanguageLevel languageLevel) {
+  private static boolean isApplicableForRecordComponent(@NotNull PsiType recordComponentType,
+                                                        @Nullable PsiType patternType,
+                                                        @NotNull LanguageLevel languageLevel) {
     if ((recordComponentType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
         !JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
       return recordComponentType.equals(patternType);
@@ -168,9 +175,9 @@ final class PatternHighlightingModel {
 
   @NotNull
   private static HighlightInfo.Builder createIncorrectNumberOfNestedPatternsError(@NotNull PsiDeconstructionPattern deconstructionPattern,
-                                                                          PsiPattern @NotNull [] patternComponents,
-                                                                          PsiRecordComponent @NotNull [] recordComponents,
-                                                                          boolean needQuickFix) {
+                                                                                  PsiPattern @NotNull [] patternComponents,
+                                                                                  PsiRecordComponent @NotNull [] recordComponents,
+                                                                                  boolean needQuickFix) {
     assert patternComponents.length != recordComponents.length;
     String message = JavaErrorBundle.message("incorrect.number.of.nested.patterns", recordComponents.length, patternComponents.length);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).escapedToolTip(message);
@@ -178,8 +185,10 @@ final class PatternHighlightingModel {
     if (needQuickFix) {
       if (patternComponents.length < recordComponents.length) {
         builder.range(deconstructionList);
-        PsiRecordComponent[] missingRecordComponents = Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
-        List<Pattern> missingPatterns = ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
+        PsiRecordComponent[] missingRecordComponents =
+          Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
+        List<Pattern> missingPatterns =
+          ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
         ModCommandAction fix = new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
         builder.registerFix(fix, null, null, null, null);
       }
@@ -273,9 +282,10 @@ final class PatternHighlightingModel {
       Map<ReduceResultCacheContext, RecordExhaustivenessResult> cacheResult = ConcurrentFactoryMap.createMap(cacheContext -> {
         Set<? extends PatternDescription> patterns = cacheContext.currentPatterns;
         PsiType selectorType = cacheContext.mySelectorType;
-        HashMap<ReduceResultCacheContext, ReduceResult> cache = new HashMap<>();
+        ReduceCache cache = ReduceCache.init();
         LoopReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns),
-                                               (descriptionPatterns, type) -> coverSelectorType(context, descriptionPatterns, selectorType), cache);
+                                               (descriptionPatterns, type) -> coverSelectorType(context, descriptionPatterns, selectorType),
+                                               cache, true);
         if (result.stopped()) {
           return RecordExhaustivenessResult.createExhaustiveResult();
         }
@@ -291,21 +301,48 @@ final class PatternHighlightingModel {
     }).get(new ReduceResultCacheContext(targetType, new HashSet<>(descriptions)));
   }
 
+  private record ReduceCache(@NotNull Map<ReduceResultCacheContext, ReduceResult> loopReduceCache,
+                             @NotNull Map<ReduceUnwrapContext, ReduceResult> unwrapCache,
+                             @NotNull Map<PsiClass, Map<PsiClass, Boolean>> sealedPath){
+    static ReduceCache init() {
+      return new ReduceCache(new HashMap<>(), new HashMap<>(), new HashMap<>());
+    }
+  }
+
+  private record ReduceUnwrapContext(@NotNull Set<PatternDeconstructionDescription> currentPatterns) {
+  }
+
+  /**
+   * Reduces a set of patterns in a loop until a stopping condition is met.
+   *
+   * @param selectorType the type of the selector
+   * @param context      the context element
+   * @param patterns     the initial set of patterns
+   * @param stopAt       a condition that determines if the reduction should stop
+   * @param cache        the cache of reduce results
+   * @param tryToExpand  a flag indicating whether to try to expand sealed types
+   * @return the result of the reduction loop
+   */
   @NotNull
-  static LoopReduceResult reduceInLoop(@NotNull PsiType selectorType,
-                                   @NotNull PsiElement context,
-                                   @NotNull Set<? extends PatternDescription> patterns,
-                                   @NotNull BiPredicate<Set<? extends PatternDescription>, PsiType> stopAt,
-                                   @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+  private static LoopReduceResult reduceInLoop(@NotNull PsiType selectorType,
+                                               @NotNull PsiElement context,
+                                               @NotNull Set<? extends PatternDescription> patterns,
+                                               @NotNull BiPredicate<Set<? extends PatternDescription>, PsiType> stopAt,
+                                               @NotNull ReduceCache cache, boolean tryToExpand) {
     boolean changed = false;
     int currentIteration = 0;
     Set<? extends PatternDescription> currentPatterns = new HashSet<>(patterns);
+    boolean tryToExpandNext = tryToExpand;
     while (currentIteration < MAX_ITERATION_COVERAGE) {
       currentIteration++;
       if (stopAt.test(currentPatterns, selectorType)) {
         return new LoopReduceResult(currentPatterns, true, true);
       }
       ReduceResult reduceResult = reduce(selectorType, context, currentPatterns, cache);
+      if (tryToExpandNext && !reduceResult.changed() && reduceResult.patterns().size() > 1) {
+        reduceResult = unwrapSealedTypes(reduceResult.patterns(), cache);
+        tryToExpandNext = false;
+      }
       changed |= reduceResult.changed();
       currentPatterns = reduceResult.patterns();
       if (!reduceResult.changed()) {
@@ -314,8 +351,8 @@ final class PatternHighlightingModel {
     }
     LOG.error("The number of iteration is exceeded, length of set patterns: " + patterns.size() +
               "max length deconstruction: " + patterns.stream()
-                .filter(t->t instanceof PatternDeconstructionDescription)
-                .map(t->((PatternDeconstructionDescription)t).list.size())
+                .filter(t -> t instanceof PatternDeconstructionDescription)
+                .map(t -> ((PatternDeconstructionDescription)t).list.size())
                 .max(Comparator.naturalOrder())
     );
     return new LoopReduceResult(currentPatterns, changed, false);
@@ -337,6 +374,7 @@ final class PatternHighlightingModel {
     }
     return reducedToTypeTest;
   }
+
   @NotNull
   static List<PatternTypeTestDescription> reduceToTypeTest(@NotNull List<? extends PatternDescription> elements,
                                                            @NotNull PsiElement context) {
@@ -346,7 +384,7 @@ final class PatternHighlightingModel {
       if (element instanceof PatternTypeTestDescription typeTestDescription) {
         reducedToTypeTest.add(typeTestDescription);
       }
-      if(element instanceof PatternDeconstructionDescription deconstructionDescription) {
+      if (element instanceof PatternDeconstructionDescription deconstructionDescription) {
         deconstructionDescriptions.add(deconstructionDescription);
       }
     }
@@ -374,7 +412,8 @@ final class PatternHighlightingModel {
                                             @NotNull PsiType itemType,
                                             @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (!TypeConversionUtil.areTypesConvertible(itemType, patternType) &&
-        (!IncompleteModelUtil.isIncompleteModel(pattern) || !IncompleteModelUtil.isPotentiallyConvertible(patternType, itemType, pattern))) {
+        (!IncompleteModelUtil.isIncompleteModel(pattern) ||
+         !IncompleteModelUtil.isPotentiallyConvertible(patternType, itemType, pattern))) {
       errorSink.accept(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
       return;
     }
@@ -388,7 +427,7 @@ final class PatternHighlightingModel {
   }
 
 
-  static final class ReduceResultCacheContext {
+  private static final class ReduceResultCacheContext {
     private final @NotNull PsiType mySelectorType;
     private final @Nullable PsiClass myPsiClass;
     private final @NotNull Set<? extends PatternDescription> currentPatterns;
@@ -453,28 +492,121 @@ final class PatternHighlightingModel {
   private static ReduceResult reduce(@NotNull PsiType selectorType,
                                      @NotNull PsiElement context,
                                      @NotNull Set<? extends PatternDescription> currentPatterns,
-                                     @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+                                     @NotNull ReduceCache cache) {
     currentPatterns = new HashSet<>(currentPatterns);
     ReduceResultCacheContext cacheContext = new ReduceResultCacheContext(selectorType, currentPatterns);
-    ReduceResult result = cache.get(cacheContext);
+    ReduceResult result = cache.loopReduceCache().get(cacheContext);
     if (result == null) {
       result = new ReduceResult(currentPatterns, false)
         .reduceRecordPatterns(context, cache)
         .reduceDeconstructionRecordToTypePattern(context)
         .reduceClasses(selectorType, context);
-      cache.put(cacheContext, result);
+      cache.loopReduceCache().put(cacheContext, result);
     }
     return result;
   }
 
-  record LoopReduceResult(Set<? extends PatternDescription> patterns, boolean changed, boolean stopped){}
-  record ReduceResult(Set<? extends PatternDescription> patterns, boolean changed) {
+
+  /**
+   * Unwrap sealed types in the given ReduceResult.
+   * This method can expand a set of patterns drastically, that's why it is called only once and only for highlighting.
+   * Usually, it tries to expand for cases like in {@link ReduceResult#reduceRecordPatterns(PsiElement, ReduceCache)}
+   * The idea is to choose sealed types from q0,..,qn deconstruction components, find their inheritances and add patterns with
+   * (q0,..,inheritance,..,qn) components
+   * Inheritance must be only on a sealed path
+   * This behavior was changed in javac.
+   * According to jep, it is not clear what is the correct behaviour.
+   * @return a new ReduceResult with expanded sealed types
+   */
+  @NotNull
+  private static ReduceResult unwrapSealedTypes(@NotNull Set<? extends PatternDescription> existedPatterns,
+                                                @NotNull ReduceCache cache) {
+    Set<PatternDescription> result = new HashSet<>(existedPatterns);
+    if (existedPatterns.isEmpty()) return new ReduceResult(result, false);
+    List<PatternDeconstructionDescription> deconstructionExistedPatterns =
+      ContainerUtil.filterIsInstance(existedPatterns, PatternDeconstructionDescription.class);
+    if (deconstructionExistedPatterns.isEmpty()) return new ReduceResult(result, false);
+    ReduceUnwrapContext cacheContext = new ReduceUnwrapContext(new HashSet<>(deconstructionExistedPatterns));
+    ReduceResult cachedResult = cache.unwrapCache().get(cacheContext);
+    if (cachedResult != null) {
+      return new ReduceResult(cachedResult.patterns(), cachedResult.patterns().size() != existedPatterns.size());
+    }
+    PatternDeconstructionDescription first = deconstructionExistedPatterns.get(0);
+
+    for (int i = 0; i < first.list().size(); i++) {
+      for (PatternDeconstructionDescription basePattern : deconstructionExistedPatterns) {
+        PatternDescription baseDescription = basePattern.list().get(i);
+        if (!(baseDescription instanceof PatternTypeTestDescription baseTypeDescription)) continue;
+        if (baseTypeDescription.myPsiClass == null) continue;
+        if (!PatternsInSwitchBlockHighlightingModel.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
+        for (PatternDeconstructionDescription comparedPattern : deconstructionExistedPatterns) {
+          if (comparedPattern == basePattern) continue;
+          PatternDescription comparedDescription = comparedPattern.list().get(i);
+          if (!(comparedDescription instanceof PatternTypeTestDescription comparedTypeDescription)) continue;
+          if (comparedTypeDescription.myPsiClass == null) continue;
+          if (baseTypeDescription.myPsiClass.getManager()
+            .areElementsEquivalent(baseTypeDescription.myPsiClass, comparedTypeDescription.myPsiClass)) {
+            continue;
+          }
+          if (!baseTypeDescription.type.isAssignableFrom(comparedTypeDescription.type)) continue;
+          if (!isDirectSealedPath(comparedTypeDescription.myPsiClass, baseTypeDescription.myPsiClass, cache, new HashSet<>())) {
+            continue;
+          }
+          result.addAll(createPatternsFrom(i, Set.of(comparedDescription), basePattern));
+        }
+      }
+    }
+    ReduceResult reduceResult = new ReduceResult(result, result.size() != existedPatterns.size());
+    cache.unwrapCache().put(cacheContext, reduceResult);
+    ReduceUnwrapContext newContext =
+      new ReduceUnwrapContext(StreamEx.of(reduceResult.patterns()).select(PatternDeconstructionDescription.class).toSet());
+    cache.unwrapCache().put(newContext, reduceResult);
+    return reduceResult;
+  }
+
+  private static boolean isDirectSealedPath(@Nullable PsiClass from, @Nullable PsiClass to, @NotNull ReduceCache cache, @NotNull Set<PsiClass> visited) {
+    if (from == null || to == null) return false;
+    Map<PsiClass, Boolean> toCache = cache.sealedPath().get(from);
+    if (toCache != null) {
+      Boolean isSealedPath = toCache.get(to);
+      if (isSealedPath != null) return isSealedPath;
+    }
+    if (!visited.add(from)) return false;
+    if (from.getManager().areElementsEquivalent(from, to)) {
+      boolean result = PatternsInSwitchBlockHighlightingModel.isAbstractSealed(to);
+      addToSealedCache(from, to, cache, result);
+      return result;
+    }
+    if (!from.isInheritor(to, true)) {
+      boolean result = false;
+      addToSealedCache(from, to, cache, result);
+      return result;
+    }
+    boolean result = ContainerUtil.exists(from.getSupers(),
+                                          superClass -> PatternsInSwitchBlockHighlightingModel.isAbstractSealed(superClass) &&
+                                                        isDirectSealedPath(superClass, to, cache, visited));
+    addToSealedCache(from, to, cache, result);
+    return result;
+  }
+
+  private static void addToSealedCache(@Nullable PsiClass from,
+                                       @Nullable PsiClass to,
+                                       @NotNull PatternHighlightingModel.ReduceCache cache,
+                                       boolean result) {
+    cache.sealedPath().computeIfAbsent(from, k -> new HashMap<>()).put(to, result);
+  }
+
+  private record LoopReduceResult(@NotNull Set<? extends PatternDescription> patterns, boolean changed, boolean stopped) {
+  }
+
+  private record ReduceResult(@NotNull Set<? extends PatternDescription> patterns, boolean changed) {
+
     /**
      * Reduce i-component for a set of deconstruction patterns.
-     * Pattern(q0,...qi,.. qn)
+     * Pattern(q0,..,qi,.. qn)
      * This method finds all patterns, when q0..qk..qn (k!=i) equal across all patterns and
      * recursively call all reduction types for a set of qi components
-     * This way leads that the next case is NOT exhaustive:
+     * This way leads that the next case is not exhaustive, but it was changed in javac, and it must be exhausted:
      * <pre>{@code
      * sealed interface I permits C, D {}
      * final class C implements I {}
@@ -487,11 +619,12 @@ final class PatternHighlightingModel {
      *       case Pair<I>(D fst, I snd) -> {}
      *     }
      * }</pre>
-     * because there are no components with equal types.
+     * BUT if this method can't convert the result, {@link  PatternHighlightingModel#unwrapSealedTypes(Set, ReduceCache)} will be called.
+     * see {@link  PatternHighlightingModel#unwrapSealedTypes(Set, ReduceCache)}
      * Also, see <a href="https://bugs.openjdk.org/browse/JDK-8311815">bug in OpenJDK</a>
      */
     @NotNull
-    private ReduceResult reduceRecordPatterns(@NotNull PsiElement context, @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+    private ReduceResult reduceRecordPatterns(@NotNull PsiElement context, @NotNull ReduceCache cache) {
       boolean changed = false;
       Map<PsiType, Set<PatternDeconstructionDescription>> byType = StreamEx.of(patterns)
         .select(PatternDeconstructionDescription.class)
@@ -509,8 +642,7 @@ final class PatternHighlightingModel {
           MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent =
             getGroupWithoutOneComponent(descriptions, i);
 
-          for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value :
-            groupWithoutOneComponent.entrySet()) {
+          for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value : groupWithoutOneComponent.entrySet()) {
             Collection<PatternDeconstructionDescription> setWithOneDifferentElement = value.getValue();
             if (setWithOneDifferentElement.isEmpty()) {
               continue;
@@ -528,7 +660,7 @@ final class PatternHighlightingModel {
             if (componentTypes == null || componentTypes.size() <= i) {
               continue;
             }
-            LoopReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache);
+            LoopReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache, true);
             if (result.changed()) {
               changed = true;
               toRemove.addAll(setWithOneDifferentElement);
@@ -603,7 +735,7 @@ final class PatternHighlightingModel {
     /**
      * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
      * Previous sealed classes are not excluded because they can be used in another combination.
-     * This method uses {@link PatternsInSwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClassesForSealed}
+     * This method uses {@link PatternsInSwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClasses}
      * To prevent recursive calls, only TypeTest descriptions are passed to this method.
      */
     @NotNull
@@ -623,10 +755,10 @@ final class PatternHighlightingModel {
   }
 
   private static @NotNull Collection<PatternDeconstructionDescription> createPatternsFrom(int differentElement,
-                                                                                          @NotNull Set<? extends PatternDescription> nesterPatterns,
+                                                                                          @NotNull Set<? extends PatternDescription> nestedPatterns,
                                                                                           @NotNull PatternDeconstructionDescription sample) {
     HashSet<PatternDeconstructionDescription> descriptions = new HashSet<>();
-    for (PatternDescription nestedPattern : nesterPatterns) {
+    for (PatternDescription nestedPattern : nestedPatterns) {
       descriptions.add(sample.createFor(differentElement, nestedPattern));
     }
     return descriptions;
@@ -719,7 +851,7 @@ final class PatternHighlightingModel {
   private static List<? extends PatternDescription> findMissedRecordPatterns(@NotNull PsiType selectorType,
                                                                              @NotNull Set<? extends PatternDescription> patterns,
                                                                              @NotNull PsiElement context,
-                                                                             @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+                                                                             @NotNull ReduceCache cache) {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
     if (selectorClass == null) {
       return null;
@@ -816,7 +948,7 @@ final class PatternHighlightingModel {
         missingRecordPatterns.addAll(missingRecordPatternsForThisIteration);
       }
       combinedPatterns.addAll(missingRecordPatternsForThisIteration);
-      LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
+      LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache, false);
       //work only with reduced patterns to speed up
       Set<? extends PatternDescription> newPatterns = new HashSet<>(reduceResult.patterns());
       if (reduceResult.changed()) {
@@ -825,7 +957,7 @@ final class PatternHighlightingModel {
         combinedPatterns.addAll(newPatterns);
       }
     }
-    LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
+    LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache, false);
     return coverSelectorType(context, reduceResult.patterns(), selectorType) ? new ArrayList<>(missingRecordPatterns) : null;
   }
 
@@ -840,8 +972,7 @@ final class PatternHighlightingModel {
 
   @NotNull
   private static MultiMap<List<PatternDescription>, PatternDeconstructionDescription> getGroupWithoutOneComponent(
-    @NotNull Set<? extends PatternDescription> combinedPatterns,
-    int i) {
+    @NotNull Set<? extends PatternDescription> combinedPatterns, int i) {
     MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent = new MultiMap<>();
     for (PatternDescription description : combinedPatterns) {
       if (!(description instanceof PatternDeconstructionDescription deconstructionDescription)) {
