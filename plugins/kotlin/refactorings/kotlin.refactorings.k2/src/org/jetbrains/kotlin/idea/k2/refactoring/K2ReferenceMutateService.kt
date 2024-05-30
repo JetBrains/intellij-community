@@ -44,19 +44,17 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             when (ktReference) {
                 is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
                 is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
-                is KtInvokeFunctionReference -> bindToElement(ktReference, element)
+                is KtInvokeFunctionReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.INVOKE)
+                is KtArrayAccessReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.GET)
                 else -> throw IncorrectOperationException()
             }
         }
     }
 
-    private fun bindToElement(
-        invokeReference: KtInvokeFunctionReference,
-        targetElement: PsiElement
-    ): PsiElement {
-        val expression = invokeReference.expression
+    private fun bindUnnamedReference(reference: KtReference, targetElement: PsiElement?, resolvedName: Name): PsiElement {
+        val expression = reference.element
         if (targetElement !is KtNamedFunction) return expression
-        if (targetElement.nameAsName != OperatorNameConventions.INVOKE) return expression
+        if (targetElement.nameAsName != resolvedName) return expression
         val fqName = targetElement.kotlinFqName ?: return targetElement
         return modifyPsiWithOptimizedImports(expression.containingKtFile) {
             expression.containingKtFile.addImport(fqName)

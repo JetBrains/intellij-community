@@ -492,6 +492,25 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     @TestMetadata("../../idea/tests/testData/refactoring/bindToElement")
     public abstract static class BindToElement extends AbstractK2BindToElementTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/arrayAccessReference")
+        public static class ArrayAccessReference extends AbstractK2BindToElementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ConflictingImport.kt")
+            public void testConflictingImport() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/arrayAccessReference/ConflictingImport.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference")
         public static class CallableMemberReference extends AbstractK2BindToElementTest {
             @java.lang.Override
