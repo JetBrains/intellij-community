@@ -139,6 +139,7 @@ internal class GradleTestEventConverter(
     val displayName =
       extractName(displayName, TEST_LAUNCHER_SUITE_DISPLAY_NAME_EXTRACTOR)
       ?: extractName(displayName, TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR)
+      ?: extractName(displayName, TEST_LAUNCHER_CLASS_DISPLAY_NAME_EXTRACTOR)
       ?: extractName(displayName, TEST_LAUNCHER_TEST_DISPLAY_NAME_EXTRACTOR)
       ?: displayName
     when {
@@ -168,11 +169,12 @@ internal class GradleTestEventConverter(
   companion object {
     private val TEST_LAUNCHER_SUITE_DISPLAY_NAME_EXTRACTOR = "Test suite '(.+)'".toRegex()
     private val TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR = "Test method (.+)\\(.+\\)".toRegex()
+    private val TEST_LAUNCHER_CLASS_DISPLAY_NAME_EXTRACTOR = "Test class (.+)".toRegex()
     private val TEST_LAUNCHER_TEST_DISPLAY_NAME_EXTRACTOR = "Test (.+)\\(.+\\)".toRegex()
 
     private val JUNIT5_PARAMETRIZED_SUITE_DISPLAY_NAME_EXTRACTOR = "(.+?)\\s?\\(.*\\)".toRegex()
     private val JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR = "(.+)\\(\\)".toRegex()
-    private val JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR = ".*\\.([^.]+)".toRegex()
+    private val JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR = ".*[.$]([^.$]+)".toRegex()
 
     private val JUNIT5_PARAMETER_NAME_EXTRACTOR = ".+\\(.*\\)(\\[\\d+])".toRegex()
     private val JUNIT5_PARAMETRIZED_METHOD_NAME_EXTRACTOR = "(.+)\\(.*\\)\\[\\d+]".toRegex()
