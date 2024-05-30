@@ -102,6 +102,9 @@ __jetbrains_intellij_debug_log() {
 }
 
 __jetbrains_intellij_command_started() {
+  # The real command, typed by user.
+  builtin local typed_command="$1"
+  # Resolved command to be really executed by Bash. (i.e. alias value)
   builtin local bash_command="$BASH_COMMAND"
   if __jetbrains_intellij_is_generator_command "$bash_command"
   then
@@ -112,7 +115,7 @@ __jetbrains_intellij_command_started() {
   __jetbrains_intellij_debug_log "command_started '$bash_command'"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
-     "$(__jetbrains_intellij_encode "$bash_command")" \
+     "$(__jetbrains_intellij_encode "$typed_command")" \
      "$(__jetbrains_intellij_encode "$current_directory")"
 }
 
