@@ -22,6 +22,10 @@ class IJMapperEventLoggerProvider : StatisticsEventLoggerProvider(
   sendLogsOnIdeClose = true,
   isCharsEscapingRequired = true
 ) {
+
+  /**
+   * Should be in sync with MLEventLoggerProvider.isRecordEnabled()
+   */
   override fun isRecordEnabled(): Boolean {
     val app = ApplicationManager.getApplication()
     return !app.isUnitTestMode && app.isEAP &&
