@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.parameters
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
+import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.KtElement
@@ -64,6 +65,8 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
             if (unwrappedException is ControlFlowException) {
                 throw e
             }
+
+            KotlinFailureCollector.recordHighlightingFailure(file)
 
             if (unwrappedException is InvalidModuleException) {
                 val currentAttempt = attempt
