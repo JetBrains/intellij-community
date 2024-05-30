@@ -95,23 +95,12 @@ class DockableEditorTabbedContainer internal constructor(
     if (content !is DockableEditor) {
       return null
     }
-    val targetTabs = splitters.getTabsAt(point)
-    if (targetTabs != null) {
-      return targetTabs
+
+    splitters.getTabsAt(point)?.let {
+      return it
     }
-    else {
-      val window = splitters.currentWindow
-      if (window != null) {
-        return window.tabbedPane.tabs
-      }
-      else {
-        for (each in splitters.getWindows()) {
-          each.tabbedPane.tabs
-          return each.tabbedPane.tabs
-        }
-      }
-    }
-    return null
+
+    return (splitters.currentWindow ?: splitters.windows().firstOrNull())?.tabbedPane?.tabs
   }
 
   override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {
@@ -320,5 +309,5 @@ class DockableEditorTabbedContainer internal constructor(
     }
   }
 
-  override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.getWindows().joinToString()}"
+  override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.windows().joinToString()}"
 }

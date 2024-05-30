@@ -854,7 +854,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   private fun processSiblingComposite(composite: EditorComposite, openOptions: FileEditorOpenOptions) {
-    if (tabCount < UISettings.getInstance().state.editorTabLimit && getComposite(composite.file) == null) {
+    if (findTabByFile(composite.file) == null && tabCount < UISettings.getInstance().state.editorTabLimit) {
       addComposite(composite, openOptions)
     }
     else {
@@ -1191,7 +1191,7 @@ private class MySplitPainter(
     g.color = NamedColorUtil.getInactiveTextColor()
     g.font = font
     g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY)
-    if (owner.getWindows().size > 1) {
+    if (owner.windows().count() > 1) {
       g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.height)
     }
   }

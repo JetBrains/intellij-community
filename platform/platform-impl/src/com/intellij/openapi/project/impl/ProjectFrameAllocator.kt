@@ -58,7 +58,6 @@ import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
@@ -392,8 +391,7 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
     }
 
     span("editor reopening post-processing", Dispatchers.EDT) {
-      val windows = editorComponent.getWindows()
-      for (window in windows) {
+      for (window in editorComponent.windows().toList()) {
         // clear empty splitters
         if (window.tabCount == 0) {
           window.removeFromSplitter()

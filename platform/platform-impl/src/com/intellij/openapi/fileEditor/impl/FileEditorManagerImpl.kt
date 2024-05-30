@@ -224,14 +224,12 @@ open class FileEditorManagerImpl(
         }
 
         composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
-          if (fileEditorWithProvider == null) null else SelectionState(composite = composite, fileEditorProvider = fileEditorWithProvider)
+          fileEditorWithProvider?.let { SelectionState(composite = composite, fileEditorProvider = it) }
         }
       }
-      .stateIn(coroutineScope, SharingStarted.Eagerly, null)
+      .stateIn(scope = coroutineScope, started = SharingStarted.Eagerly, initialValue = null)
 
     coroutineScope.launch {
-      val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-
       // not using collectLatest() to ensure that the listeners miss no selection update
       selectionFlow
         .zipWithNext { oldState, state ->
@@ -240,6 +238,8 @@ open class FileEditorManagerImpl(
           if (oldEditorWithProvider == newEditorWithProvider) {
             return@zipWithNext
           }
+
+          val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
 
           // expected in EDT
           withContext(Dispatchers.EDT) {
@@ -920,7 +920,7 @@ open class FileEditorManagerImpl(
     }
 
     for (splitters in getAllSplitters()) {
-      for (window in splitters.getWindows()) {
+      for (window in splitters.windows()) {
         if (isFileOpenInWindow(file, window)) {
           if (AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
             return window
@@ -1857,13 +1857,12 @@ open class FileEditorManagerImpl(
     }
 
     openedComposites.remove(composite)
-    composite.deselectNotify()
+    composite.selectedEditorWithProvider.value?.fileEditor?.deselectNotify()
     splitters.onDisposeComposite(composite)
 
-    for (editorWithProvider in composite.allEditorsWithProviders.asReversed()) {
-      val editor = editorWithProvider.fileEditor
+    for ((editor, provider) in composite.allEditorsWithProviders.asReversed()) {
       editor.removePropertyChangeListener(editorPropertyChangeListener)
-      editorWithProvider.provider.disposeEditor(editor)
+      provider.disposeEditor(editor)
     }
     Disposer.dispose(composite)
   }
@@ -2378,7 +2377,7 @@ private class SelectionHistory {
     val copy = LinkedHashSet<kotlin.Pair<VirtualFile, EditorWindow>>()
     for (pair in history) {
       if (pair.second.files().none()) {
-        val windows = pair.second.owner.getWindows()
+        val windows = pair.second.owner.windows().toList()
         if (windows.isNotEmpty() && windows[0].files().any()) {
           copy.add(pair.first to windows[0])
         }
@@ -2480,14 +2479,12 @@ private inline fun <T> runBulkTabChangeInEdt(splitters: EditorsSplitters, task: 
     splitters.insideChange--
     if (!splitters.isInsideChange) {
       splitters.validate()
-      for (window in splitters.getWindows()) {
+      for (window in splitters.windows()) {
         (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
       }
     }
   }
 }
-
-private fun getFileEditorProviderManager() = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
 
 @RequiresEdt
 fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile) {
@@ -2535,35 +2532,28 @@ private fun createCompositeScope(editorWindow: EditorWindow, file: VirtualFile):
   return editorWindow.coroutineScope.childScope("EditorComposite(file=$file)")
 }
 
-private suspend fun focusEditorOnCompositeOpenComplete(
+internal suspend fun focusEditorOnCompositeOpenComplete(
   composite: EditorComposite,
   splitters: EditorsSplitters,
 ) {
-  doOnCompositeOpenComplete(composite = composite) { selectedEditor ->
-    if (selectedEditor is TextEditor) {
-      AsyncEditorLoader.waitForCompleted(selectedEditor.editor)
-      withContext(Dispatchers.EDT) {
-        // while the editor was loading asynchronously, the user switched to another editor - don't steal focus
-        val currentSelectedComposite = splitters.currentCompositeFlow.value
-        if (currentSelectedComposite === composite) {
-          val preferredFocusedComponent = composite.preferredFocusedComponent
-          if (preferredFocusedComponent == null) {
-            LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
-          }
-          preferredFocusedComponent?.requestFocusInWindow()
-          IdeFocusManager.getGlobalInstance().toFront(splitters)
+  doOnCompositeOpenComplete(composite = composite) { _ ->
+    withContext(Dispatchers.EDT) {
+      val currentSelectedComposite = splitters.currentCompositeFlow.value
+      // while the editor was loading, the user switched to another editor - don't steal focus
+      if (currentSelectedComposite === composite) {
+        val preferredFocusedComponent = composite.preferredFocusedComponent
+        if (preferredFocusedComponent == null) {
+          LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
         }
         else {
-          LOG.warn("Cannot focus editor (splitters=$splitters, " +
-                   "composite=$composite, currentComposite=$currentSelectedComposite, " +
-                   "reason=selection changed)")
+          preferredFocusedComponent.requestFocusInWindow()
+          IdeFocusManager.getGlobalInstance().toFront(splitters)
         }
       }
-    }
-    else {
-      withContext(Dispatchers.EDT) {
-        composite.preferredFocusedComponent?.requestFocusInWindow()
-        IdeFocusManager.getGlobalInstance().toFront(splitters)
+      else {
+        LOG.warn("Cannot focus editor (splitters=$splitters, " +
+                 "composite=$composite, currentComposite=$currentSelectedComposite, " +
+                 "reason=selection changed)")
       }
     }
   }

@@ -61,7 +61,6 @@ import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.ui.speedSearch.NameFilteringListModel
-import com.intellij.util.ArrayUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBDimension
@@ -830,8 +829,8 @@ object Switcher : BaseSwitcherAction(null) {
         if (UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE) {
           return window.owner.currentWindow
         }
-        val windows = window.owner.getWindows()
-        return if (ArrayUtil.contains(window, *windows)) window else if (windows.isNotEmpty()) windows[0] else null
+        val windows = window.owner.windows().toList()
+        return if (windows.contains(window)) window else windows.firstOrNull()
       }
 
       @TestOnly

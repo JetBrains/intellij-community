@@ -17,6 +17,7 @@ import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -61,6 +62,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
@@ -120,7 +122,6 @@ open class EditorsSplitters internal constructor(
   }
 
   private val _currentWindowFlow = MutableStateFlow<EditorWindow?>(null)
-
   @JvmField
   internal val currentCompositeFlow: StateFlow<EditorComposite?>
 
@@ -202,8 +203,19 @@ open class EditorsSplitters internal constructor(
 
     @Suppress("OPT_IN_USAGE")
     currentCompositeFlow = _currentWindowFlow
-      .flatMapLatest {
-        it?.currentCompositeFlow ?: flowOf(null)
+      .flatMapLatest { editorWindow ->
+        if (editorWindow == null) {
+          flowOf(null)
+        }
+        else {
+          val flow = editorWindow.currentCompositeFlow
+          if (flow.value == null) {
+            LOG.debug {
+              "editor window is selected but no editor composite yet, please avoid such selection (editorWindow=$editorWindow)"
+            }
+          }
+          flow
+        }
       }
       .stateIn(coroutineScope, SharingStarted.Lazily, null)
 
@@ -303,7 +315,7 @@ open class EditorsSplitters internal constructor(
   }
 
   fun closeAllFiles(repaint: Boolean = true) {
-    val oldWindow = _currentWindowFlow.value
+    val oldWindow = currentWindow
 
     val windows = windows.toList()
     this.windows.clear()
@@ -328,6 +340,9 @@ open class EditorsSplitters internal constructor(
   }
 
   internal fun setCurrentWindow(window: EditorWindow?) {
+    LOG.debug {
+     "set editor window to $window: ${ExceptionUtil.currentStackTrace()}"
+    }
     _currentWindowFlow.value = window
   }
 
@@ -630,7 +645,7 @@ open class EditorsSplitters internal constructor(
     val window = EditorWindow(owner = this, coroutineScope.childScope("EditorWindow"))
     add(window.component, BorderLayout.CENTER)
     windows.add(window)
-    _currentWindowFlow.value = window
+    setCurrentWindow(window)
   }
 
   /**
@@ -649,13 +664,12 @@ open class EditorsSplitters internal constructor(
 
   internal fun onDisposeComposite(composite: EditorComposite) {
     if (currentCompositeFlow.value == composite) {
-      setCurrentWindow(null)
+      _currentWindowFlow.value = null
     }
   }
 
   internal fun addWindow(window: EditorWindow) {
     windows.add(window)
-    _currentWindowFlow.compareAndSet(null, window)
   }
 
   internal fun removeWindow(window: EditorWindow) {
@@ -674,7 +688,8 @@ open class EditorsSplitters internal constructor(
 
   fun getWindows(): Array<EditorWindow> = windows.toTypedArray()
 
-  internal fun windows(): Sequence<EditorWindow> = windows.asSequence()
+  @Internal
+  fun windows(): Sequence<EditorWindow> = windows.asSequence()
 
   // collector for windows in tree ordering: get a root component and traverse splitters tree
   internal fun getOrderedWindows(): MutableList<EditorWindow> {
@@ -947,7 +962,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     val virtualFileManager = VirtualFileManager.getInstance()
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     var isLazy = false
-
     for ((index, fileEntry) in sorted) {
       span("opening editor") {
         val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
@@ -955,7 +969,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         try {
           // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
           // This enables painting the first editor as soon as it's ready (IJPL-687).
-          openFile(
+          val composite = openFile(
             file = file,
             fileEntry = fileEntry,
             fileEditorProviderManager = fileEditorProviderManager,
@@ -964,6 +978,14 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             index = index,
             isLazy = isLazy,
           )
+
+          if (requestFocus && fileEntry.currentInTab && composite != null) {
+            composite.coroutineScope.launch {
+              // we can select only when a component is added - wait for the window
+              windowDeferred.join()
+              focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)
+            }
+          }
 
           isLazy = isLazyComposite
         }
@@ -977,11 +999,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     splitters.coroutineScope.launch(Dispatchers.EDT) {
       window.owner.validate()
       window.updateTabsVisibility()
-      if (requestFocus) {
-        window.currentCompositeFlow.value?.let {
-          (it.preferredFocusedComponent ?: it.component).requestFocusInWindow()
-        }
-      }
     }
   }
 }
@@ -1010,7 +1027,7 @@ private suspend fun openFile(
   windowDeferred: Deferred<EditorWindow>,
   index: Int,
   isLazy: Boolean,
-) {
+): EditorComposite? {
   val options = FileEditorOpenOptions(
     selectAsCurrent = fileEntry.currentInTab,
     pin = fileEntry.pinned,
@@ -1021,13 +1038,13 @@ private suspend fun openFile(
   val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
   if (session != null && !session.isLocal) {
     session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, options = options)
-    return
+    return null
   }
 
   // we don't check canOpenFile (we don't have providers yet) -
   // empty windows will be removed later if needed, it should be quite a rare case
 
-  fileEditorManager.openFileInEdt(
+  return fileEditorManager.openFileInEdt(
     window = windowDeferred.await(),
     file = file,
     options = options,

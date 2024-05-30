@@ -94,10 +94,11 @@ open class EditorComposite internal constructor(
   }
 
   private val _selectedEditorWithProvider = MutableStateFlow<FileEditorWithProvider?>(null)
-  @JvmField
+
   /**
    * Currently selected editor
    */
+  @JvmField
   internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
 
   private val topComponents = HashMap<FileEditor, JComponent>()
@@ -246,6 +247,9 @@ open class EditorComposite internal constructor(
       }
     }
 
+    // select and focus before restoring state, to reduce the chance of focus stealing
+    _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
+
     for (fileEditorWithProvider in fileEditorWithProviders) {
       val provider = fileEditorWithProvider.provider
       val stateData = model.state?.providers?.get(provider.editorTypeId)
@@ -261,7 +265,6 @@ open class EditorComposite internal constructor(
       )
     }
 
-    _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
     fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
   }
 
@@ -458,12 +461,6 @@ open class EditorComposite internal constructor(
   @Suppress("HardCodedStringLiteral")
   protected fun getDisplayName(editor: FileEditor): @NlsContexts.TabTitle String = displayNames.get(editor) ?: editor.name
 
-  internal fun deselectNotify() {
-    val selected = selectedEditorWithProvider.value ?: return
-    _selectedEditorWithProvider.value = null
-    selected.fileEditor.deselectNotify()
-  }
-
   val selectedEditor: FileEditor?
     get() = selectedWithProvider?.fileEditor
 
@@ -645,6 +642,8 @@ open class EditorComposite internal constructor(
     }
     return element
   }
+
+  override fun toString() = "EditorComposite(identityHashCode=${System.identityHashCode(this)}, file=$file)"
 }
 
 internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), EdtDataProvider {
