@@ -51,6 +51,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
   private static final Key<Boolean> ASYNC_FOLDING_UPDATE = Key.create("ASYNC_FOLDING_UPDATE");
   private static final Key<Map<TextRange, Boolean>> ASYNC_FOLDING_CACHE = Key.create("ASYNC_FOLDING_CACHE");
+  private static final Key<Boolean> AUTO_CREATED = Key.create("AUTO_CREATED");
 
   private final Project myProject;
   private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
@@ -192,12 +193,24 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
   }
 
+  public void setCollapsedByDefault(@NotNull FoldRegion region, boolean isCollapsed) {
+    region.putUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT, isCollapsed);
+  }
+
   public void markForUpdate(FoldRegion region) {
     UpdateFoldRegionsOperation.UPDATE_REGION.set(region, Boolean.TRUE);
   }
 
   public void markUpdated(FoldRegion region) {
     UpdateFoldRegionsOperation.UPDATE_REGION.set(region, null);
+  }
+
+  public static void markAsAutoCreated(@NotNull FoldRegion region) {
+    AUTO_CREATED.set(region, true);
+  }
+
+  public static boolean isAutoCreated(@Nullable FoldRegion region) {
+    return AUTO_CREATED.isIn(region);
   }
 
   public static Map<TextRange, Boolean> getAsyncExpandStatusMap(@Nullable Editor editor) {

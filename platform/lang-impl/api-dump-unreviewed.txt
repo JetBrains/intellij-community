@@ -5385,8 +5385,10 @@ f:com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 - s:getAsyncExpandStatusMap(com.intellij.openapi.editor.Editor):java.util.Map
 - getFoldRegionsAtOffset(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.FoldRegion[]
 - s:isAsyncFoldingUpdater(com.intellij.openapi.editor.Editor):Z
+- s:isAutoCreated(com.intellij.openapi.editor.FoldRegion):Z
 - isCollapsedByDefault(com.intellij.openapi.editor.FoldRegion):java.lang.Boolean
 - s:markAsAsyncFoldingUpdater(com.intellij.openapi.editor.Editor):V
+- s:markAsAutoCreated(com.intellij.openapi.editor.FoldRegion):V
 - markForUpdate(com.intellij.openapi.editor.FoldRegion):V
 - markUpdated(com.intellij.openapi.editor.FoldRegion):V
 - readFoldingState(org.jdom.Element,com.intellij.openapi.editor.Document):com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
@@ -5395,6 +5397,7 @@ f:com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 - saveFoldingState(com.intellij.openapi.editor.Editor):com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
 - scheduleAsyncFoldingUpdate(com.intellij.openapi.editor.Editor):V
 - s:setAsyncExpandStatusMap(com.intellij.openapi.editor.Editor,java.util.Map):V
+- setCollapsedByDefault(com.intellij.openapi.editor.FoldRegion,Z):V
 - updateFoldRegions(com.intellij.openapi.editor.Editor):V
 - updateFoldRegions(com.intellij.openapi.editor.Editor,Z):V
 - updateFoldRegionsAsync(com.intellij.openapi.editor.Editor,Z):java.lang.Runnable
