@@ -186,7 +186,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     if (cefBrowser == null) {
       CefDelegate delegate = JBCefApp.getInstance().getDelegate();
       if (delegate != null) {
-        cefBrowser = delegate.createBrowser(validateUrl(builder.myUrl));
+        cefBrowser = delegate.createBrowser(myCefClient, validateUrl(builder.myUrl));
       }
       else if (myIsOffScreenRendering) {
         JBCefApp.checkOffScreenRenderingModeEnabled();

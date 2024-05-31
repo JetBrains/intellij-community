@@ -20,5 +20,5 @@ public interface CefDelegate {
 
   boolean isCefSupported();
   @NotNull JBCefClient createClient();
-  @NotNull CefBrowser createBrowser(@NotNull String url);
+  @NotNull CefBrowser createBrowser(@NotNull JBCefClient client, @NotNull String url);
 }
