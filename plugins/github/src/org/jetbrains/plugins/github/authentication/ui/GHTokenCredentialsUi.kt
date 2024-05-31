@@ -55,7 +55,7 @@ internal class GHTokenCredentialsUi(
 
   override suspend fun login(server: GithubServerPath): Pair<String, String> = withContext(Dispatchers.Main.immediate) {
     val token = tokenTextField.text
-    val executor = factory.create(token)
+    val executor = factory.create(server, token)
     val login = acquireLogin(server, executor, isAccountUnique, fixedLogin)
     login to token
   }

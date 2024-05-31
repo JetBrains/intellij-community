@@ -50,7 +50,7 @@ internal class GHHttpAuthDataProvider : HostedGitHttpAuthDataProvider<GithubAcco
 
     suspend fun getAccountDetails(account: GithubAccount, token: String): GithubAuthenticatedUser? =
       try {
-        val executor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+        val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
         withContext(Dispatchers.IO) {
           service<GithubAccountInformationProvider>().getInformation(executor, DumbProgressIndicator(), account)
         }

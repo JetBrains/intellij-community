@@ -82,7 +82,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
 
 
         val token = runBlocking { accountManager.findCredentials(account) } ?: continue
-        val requestExecutor = service<GithubApiRequestExecutor.Factory>().create(token)
+        val requestExecutor = service<GithubApiRequestExecutor.Factory>().create(account.server, token)
 
         SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.repository) })
           .loadAll(SensitiveProgressWrapper((indicator)))
