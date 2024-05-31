@@ -343,12 +343,8 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
-    if (!(dataContext instanceof UserDataHolder)) return;
-    for (DataContext cur = dataContext; cur != null; ) {
-      if (cur instanceof FreezingDataContext && ((FreezingDataContext)cur).isFrozenDataContext()) return;
-      cur = cur instanceof CustomizedDataContext ? ((CustomizedDataContext)cur).getParent() : null;
-    }
-    ((UserDataHolder)dataContext).putUserData(dataKey, data);
+    if (!(dataContext instanceof UserDataHolder holder)) return;
+    holder.putUserData(dataKey, data);
   }
 
   @Override

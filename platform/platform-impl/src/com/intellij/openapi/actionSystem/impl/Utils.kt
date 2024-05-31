@@ -72,7 +72,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 import javax.swing.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -184,11 +183,6 @@ object Utils {
   fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
-  fun freezeDataContext(dataContext: DataContext, missedKeys: Consumer<in String?>?): DataContext {
-    return if (dataContext is PreCachedDataContext) dataContext.frozenCopy(missedKeys) else dataContext
-  }
-
-  @JvmStatic
   fun isAsyncDataContext(dataContext: DataContext): Boolean = dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext
 
   @JvmStatic
@@ -205,13 +199,18 @@ object Utils {
    * in [AnAction.update] or [AnAction.actionPerformed]
    */
   @JvmStatic
-  fun getCachedDataContext(dataContext: DataContext): DataContext {
-    return DataContext { dataId: String? -> getRawDataIfCached(dataContext, dataId!!) }
+  fun getCachedOnlyDataContext(dataContext: DataContext): DataContext {
+    return AsyncDataContext { dataId: String -> getRawDataIfCached(dataContext, dataId, false) }
   }
 
   @JvmStatic
-  fun getRawDataIfCached(dataContext: DataContext, dataId: String): Any? = when (dataContext) {
-    is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId)
+  fun getUiOnlyDataContext(dataContext: DataContext): DataContext {
+    return AsyncDataContext { dataId: String -> getRawDataIfCached(dataContext, dataId, true) }
+  }
+
+  @JvmStatic
+  private fun getRawDataIfCached(dataContext: DataContext, dataId: String, uiOnly: Boolean): Any? = when (dataContext) {
+    is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId, uiOnly)
     is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
     else -> null
   }
@@ -1026,7 +1025,7 @@ object Utils {
 
 @ApiStatus.Internal
 suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
-  val frozenContext = Utils.freezeDataContext(dataContext, null)
+  val frozenContext = Utils.getUiOnlyDataContext(dataContext)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
       readActionUndispatchedForActionExpand {

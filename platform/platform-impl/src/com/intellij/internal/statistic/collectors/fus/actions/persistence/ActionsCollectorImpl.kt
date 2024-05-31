@@ -56,7 +56,7 @@ class ActionsCollectorImpl : ActionsCollector() {
 
   override fun recordUpdate(action: AnAction, event: AnActionEvent, durationMs: Long) {
     if (durationMs <= 5) return
-    val dataContext = Utils.getCachedDataContext(event.dataContext)
+    val dataContext = Utils.getCachedOnlyDataContext(event.dataContext)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     ActionsEventLogGroup.ACTION_UPDATED.log(project) {
       val info = getPluginInfo(action.javaClass)
@@ -132,7 +132,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                                   submenu: Boolean,
                                   durationMs: Long,
                                   result: List<AnAction>?) {
-      val dataContext = Utils.getCachedDataContext(context)
+      val dataContext = Utils.getCachedOnlyDataContext(context)
       val project = CommonDataKeys.PROJECT.getData(dataContext)
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
         val info = getPluginInfo(action.javaClass)
@@ -270,7 +270,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     @JvmStatic
     fun onBeforeActionInvoked(action: AnAction, event: AnActionEvent) {
       val project = event.project
-      val context = Utils.getCachedDataContext(event.dataContext)
+      val context = Utils.getCachedOnlyDataContext(event.dataContext)
       val stats = Stats(project, DataContextUtils.getFileLanguage(context), getInjectedOrFileLanguage(project, context))
       ourStats[event] = stats
     }
@@ -314,7 +314,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                                          contextBefore: Language?,
                                          injectedContextBefore: Language?,
                                          data: MutableList<EventPair<*>>) {
-      val dataContext = Utils.getCachedDataContext(event.dataContext)
+      val dataContext = Utils.getCachedOnlyDataContext(event.dataContext)
       val language = DataContextUtils.getFileLanguage(dataContext)
       data.add(EventFields.CurrentFile.with(language ?: contextBefore))
       val injectedLanguage = getInjectedOrFileLanguage(project, dataContext)

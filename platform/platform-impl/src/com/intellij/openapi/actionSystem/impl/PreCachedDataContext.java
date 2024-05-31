@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
-import com.intellij.ide.impl.FreezingDataContext;
 import com.intellij.ide.impl.GetDataRuleType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -43,7 +42,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
@@ -52,7 +50,7 @@ import static com.intellij.openapi.actionSystem.impl.EdtDataContextKt.wrapUnsafe
 /**
  * @author gregsh
  */
-class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, FreezingDataContext {
+class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
 
   private static final Logger LOG = Logger.getInstance(PreCachedDataContext.class);
 
@@ -66,13 +64,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private final ComponentRef myComponentRef;
   private final AtomicReference<KeyFMap> myUserData;
   private final FList<ProviderData> myCachedData;
-  private final Consumer<? super String> myMissedKeysIfFrozen;
   private final DataManagerImpl myDataManager;
   private final int myDataKeysCount;
 
   PreCachedDataContext(@Nullable Component component) {
     myComponentRef = new ComponentRef(component);
-    myMissedKeysIfFrozen = null;
     myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
     myDataManager = (DataManagerImpl)DataManager.getInstance();
     if (component == null) {
@@ -114,13 +110,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private PreCachedDataContext(@NotNull ComponentRef compRef,
                                @NotNull FList<ProviderData> cachedData,
                                @NotNull AtomicReference<KeyFMap> userData,
-                               @Nullable Consumer<? super String> missedKeys,
                                @NotNull DataManagerImpl dataManager,
                                int dataKeysCount) {
     myComponentRef = compRef;
     myCachedData = cachedData;
     myUserData = userData;
-    myMissedKeysIfFrozen = missedKeys;
     myDataManager = dataManager;
     myDataKeysCount = dataKeysCount;
   }
@@ -129,22 +123,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return myDataKeysCount == DataKey.allKeysCount();
   }
 
-  final @NotNull PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
-    Consumer<? super String> missedKeysNotNull = missedKeys == null ? s -> { } : missedKeys;
-    return this instanceof InjectedDataContext
-           ? new InjectedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataManager, myDataKeysCount)
-           : new PreCachedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataManager, myDataKeysCount);
-  }
-
   @Override
   public final @NotNull DataContext getInjectedDataContext() {
     return this instanceof InjectedDataContext ? this :
-           new InjectedDataContext(myComponentRef, myCachedData, myUserData, myMissedKeysIfFrozen, myDataManager, myDataKeysCount);
-  }
-
-  @Override
-  public boolean isFrozenDataContext() {
-    return myMissedKeysIfFrozen != null;
+           new InjectedDataContext(myComponentRef, myCachedData, myUserData, myDataManager, myDataKeysCount);
   }
 
   @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
@@ -155,8 +137,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     FList<ProviderData> newCachedData = cachedData == null ? myCachedData : myCachedData.prepend(cachedData);
     AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
     return this instanceof InjectedDataContext
-           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount)
-           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount);
+           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myDataManager, dataKeysCount)
+           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myDataManager, dataKeysCount);
   }
 
   @Override
@@ -171,7 +153,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
     boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
+    boolean rulesAllowed = !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
     Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
 
     int keyIndex; // for use with `nullsByContextRules` only, always != -1
@@ -189,10 +171,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         map.nullsByContextRules.set(keyIndex);
       }
-    }
-    if (answer == null && myMissedKeysIfFrozen != null) {
-      myMissedKeysIfFrozen.accept(dataId);
-      return null;
     }
     if (answer == null && rulesSuppressed) {
       Throwable throwable = new Throwable();
@@ -273,8 +251,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  @Nullable Object getRawDataIfCached(@NotNull String dataId) {
+  @Nullable Object getRawDataIfCached(@NotNull String dataId, boolean uiOnly) {
+    int index = uiOnly ? ourDataKeysIndices.getOrDefault(dataId, -1) : -1;
     for (ProviderData map : myCachedData) {
+      if (index > -1 && map.valueByRules.get(index)) continue;
       Object answer = map.get(dataId);
       if (answer != null) {
         return answer == EXPLICIT_NULL ? null : answer;
@@ -354,7 +334,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   @Override
   public String toString() {
     return (this instanceof InjectedDataContext ? "injected:" : "") +
-           (myMissedKeysIfFrozen != null ? "frozen:" : "") +
            "component=" + getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
   }
 
@@ -378,10 +357,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     InjectedDataContext(@NotNull ComponentRef compRef,
                         @NotNull FList<ProviderData> cachedData,
                         @NotNull AtomicReference<KeyFMap> userData,
-                        @Nullable Consumer<? super String> missedKeys,
                         @NotNull DataManagerImpl dataManager,
                         int dataKeysCount) {
-      super(compRef, cachedData, userData, missedKeys, dataManager, dataKeysCount);
+      super(compRef, cachedData, userData, dataManager, dataKeysCount);
     }
 
     @Override
