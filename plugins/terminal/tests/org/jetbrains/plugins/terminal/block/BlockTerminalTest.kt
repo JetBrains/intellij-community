@@ -178,7 +178,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
   private fun createCommandSentDeferred(session: BlockTerminalSession): CompletableDeferred<Unit> {
     val generatorCommandSent = CompletableDeferred<Unit>()
     val generatorCommandSentDisposable = Disposer.newDisposable(session)
-    session.commandManager.commandExecutionManager.addListener(object : ShellCommandSentListener {
+    session.commandExecutionManager.addListener(object : ShellCommandSentListener {
       override fun generatorCommandSent(generatorCommand: String) {
         generatorCommandSent.complete(Unit)
         Disposer.dispose(generatorCommandSentDisposable)

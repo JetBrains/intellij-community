@@ -54,7 +54,7 @@ internal class BlockTerminalController(
         TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
       }
     })
-    session.commandManager.commandExecutionManager.addListener(object : ShellCommandSentListener {
+    session.commandExecutionManager.addListener(object : ShellCommandSentListener {
       override fun userCommandSent(userCommand: String) {
         invokeLaterIfNeeded(getDisposed(), ModalityState.any()) {
           // If `userCommandSent` is triggered by the `commandFinished` event,
@@ -85,7 +85,7 @@ internal class BlockTerminalController(
       outputController.insertEmptyLine()
     }
     else {
-      session.commandManager.sendCommandToExecute(command) // will trigger `userCommandSent`
+      session.commandExecutionManager.sendCommandToExecute(command) // will trigger `userCommandSent`
       TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
     }
     // report event even if it is an empty command, because it will be reported as a separate command type

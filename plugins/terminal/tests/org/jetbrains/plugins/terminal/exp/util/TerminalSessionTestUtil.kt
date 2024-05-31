@@ -83,7 +83,7 @@ internal object TerminalSessionTestUtil {
     if (session.shellIntegration.shellType == ShellType.POWERSHELL) {
       val commandResultFuture = getCommandResultFuture(session)
       // Disable saving history for the session only, not persisting.
-      session.commandManager.sendCommandToExecute("Set-PSReadlineOption -HistorySaveStyle SaveNothing")
+      session.commandExecutionManager.sendCommandToExecute("Set-PSReadlineOption -HistorySaveStyle SaveNothing")
       assertCommandResult(0, "", commandResultFuture)
     }
   }
@@ -179,11 +179,11 @@ internal object TerminalSessionTestUtil {
   fun BlockTerminalSession.sendCommandlineToExecuteWithoutAddingToHistory(shellCommandline: String) {
     if (this.shellIntegration.shellType == ShellType.POWERSHELL) {
       // saving command history is disabled for PowerShell in [disableSavingHistory]
-      this.commandManager.sendCommandToExecute(shellCommandline)
+      this.commandExecutionManager.sendCommandToExecute(shellCommandline)
     }
     else {
       // add a leading space to prevent adding to global shell history
-      this.commandManager.sendCommandToExecute(" $shellCommandline")
+      this.commandExecutionManager.sendCommandToExecute(" $shellCommandline")
     }
   }
 

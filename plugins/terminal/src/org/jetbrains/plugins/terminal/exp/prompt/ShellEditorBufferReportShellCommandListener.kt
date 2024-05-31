@@ -49,7 +49,7 @@ internal class ShellEditorBufferReportShellCommandListener(
       terminalStarter?.let {
         // TODO @vshefer replace F12 with more appropriate key sequence
         val bytes = blockTerminalSession.controller.getCodeForKey(KeyEvent.VK_F12, 0)!!
-        blockTerminalSession.commandManager.commandExecutionManager.sendKeyBinding(KeyBinding(bytes))
+        blockTerminalSession.commandExecutionManager.sendKeyBinding(KeyBinding(bytes))
       }
     }
   }
