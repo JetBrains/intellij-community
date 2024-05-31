@@ -20,8 +20,7 @@ class EditorCellInput(
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
 
   val interval: NotebookCellLines.Interval
-    get() = cell.intervalPointer.get()
-            ?: error("Invalid interval")
+    get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
   private var foldRegion: FoldRegion? = null
   private val runCellButton = EditorCellRunButton(editor)
@@ -145,7 +144,9 @@ class EditorCellInput(
   }
 
   fun showRunButton() {
-    runCellButton.showRunButton(interval)
+    try {
+      runCellButton.showRunButton(interval)
+    } catch (e: IllegalStateException) { return }
   }
 
   fun hideRunButton() {
