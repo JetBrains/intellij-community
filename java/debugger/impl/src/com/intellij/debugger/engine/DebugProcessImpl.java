@@ -1795,6 +1795,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         else {
           // some VMs (like IBM VM 1.4.2 bundled with WebSphere) does not resume threads on dispose() like it should
           try {
+            virtualMachineProxy.addedSuspendAllContext();
             virtualMachineProxy.resume();
           }
           finally {
