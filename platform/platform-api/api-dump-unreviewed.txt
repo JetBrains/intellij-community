@@ -2891,6 +2891,8 @@ f:com.intellij.openapi.observable.operation.core.PromiseUtilKt
 - sf:getOperationStartPromise(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable):org.jetbrains.concurrency.Promise
 - sf:waitForOperation-vLdBGDU(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J,J,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - sf:waitForOperationCompletion-HG0u8IE(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J):V
+f:com.intellij.openapi.observable.operation.core.ResultUtilKt
+- sf:onFailureCatching(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 a:com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
 - com.intellij.openapi.observable.properties.ObservableBooleanProperty
