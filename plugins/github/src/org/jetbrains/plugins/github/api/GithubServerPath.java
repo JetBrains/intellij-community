@@ -133,6 +133,16 @@ public final class GithubServerPath implements ServerPath {
   }
 
   @NotNull
+  public String getApiHost() {
+    if (isGithubDotCom()) {
+      return API_PREFIX + myHost;
+    }
+    else {
+      return myHost;
+    }
+  }
+
+  @NotNull
   public String toApiUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
     if (isGithubDotCom()) {

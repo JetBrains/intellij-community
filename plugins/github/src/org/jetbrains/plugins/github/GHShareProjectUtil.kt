@@ -96,7 +96,7 @@ object GHShareProjectUtil {
               val token = runBlockingCancellable {
                 service<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
               }
-              val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+              val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
               val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
               val names = GithubApiPagesLoader
@@ -133,7 +133,7 @@ object GHShareProjectUtil {
       override fun run(indicator: ProgressIndicator) {
         val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
 
-        val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+        val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
         // create GitHub repo (network)
         LOG.info("Creating GitHub repository")

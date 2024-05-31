@@ -31,7 +31,7 @@ internal class GHOAuthCredentialsUi(
 
   override suspend fun login(server: GithubServerPath): Pair<String, String> {
     val token = acquireToken()
-    val executor = factory.create(token)
+    val executor = factory.create(server, token)
     val login = GHTokenCredentialsUi.acquireLogin(server, executor, isAccountUnique, null)
     return login to token
   }
