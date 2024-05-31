@@ -6,7 +6,6 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -42,7 +41,6 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -123,7 +121,8 @@ final class SearchForUsagesRunnable implements Runnable {
 
   private void notifyByFindBalloon(@Nullable HyperlinkListener listener,
                                    @NotNull MessageType messageType,
-                                   @NotNull List<String> lines) {
+                                   @NotNull List<String> lines,
+                                   @NotNull Collection<UnloadedModuleDescription> unloadedModulesBelongingToScope) {
     UsageViewContentManager.getInstance(myProject); // in case tool window not registered
 
     Collection<VirtualFile> largeFiles = myProcessPresentation.getLargeFiles();
@@ -151,16 +150,12 @@ final class SearchForUsagesRunnable implements Runnable {
       resultListener = addHrefHandling(resultListener, SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET, searchIncludingProjectFileUsages);
     }
 
-    Collection<UnloadedModuleDescription> unloaded;
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333936, EA-828575")) {
-      unloaded = getUnloadedModulesBelongingToScope();
-    }
     MessageType actualType = messageType;
-    if (!unloaded.isEmpty()) {
+    if (!unloadedModulesBelongingToScope.isEmpty()) {
       if (actualType == MessageType.INFO) {
         actualType = MessageType.WARNING;
       }
-      resultLines.add(mayHaveUsagesInUnloadedModulesMessage(unloaded));
+      resultLines.add(mayHaveUsagesInUnloadedModulesMessage(unloadedModulesBelongingToScope));
     }
 
     //noinspection SSBasedInspection
@@ -426,12 +421,14 @@ final class SearchForUsagesRunnable implements Runnable {
   private void endSearchForUsages() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     int usageCount = myUsageCountWithoutDefinition.get();
+    Collection<UnloadedModuleDescription> unloadedModulesBelongingToScope = getUnloadedModulesBelongingToScope();
     if (usageCount == 0) {
       if (myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myProcessPresentation.isCanceled()) {
             notifyByFindBalloon(null, MessageType.WARNING,
-                                Collections.singletonList(UsageViewBundle.message("message.usage.search.was.canceled")));
+                                Collections.singletonList(UsageViewBundle.message("message.usage.search.was.canceled")),
+                                unloadedModulesBelongingToScope);
           }
           else {
             List<String> lines = new ArrayList<>();
@@ -444,7 +441,7 @@ final class SearchForUsagesRunnable implements Runnable {
               lines.add(createOptionsHtml(mySearchFor));
             }
             MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-            notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
+            notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines, unloadedModulesBelongingToScope);
           }
         }, ModalityState.nonModal(), myProject.getDisposed());
       }
@@ -464,7 +461,7 @@ final class SearchForUsagesRunnable implements Runnable {
         }
         lines.add(createOptionsHtml(mySearchFor));
         MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-        notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
+        notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines, unloadedModulesBelongingToScope);
       }, ModalityState.nonModal(), myProject.getDisposed());
     }
     else {
@@ -484,10 +481,10 @@ final class SearchForUsagesRunnable implements Runnable {
       if (!myProcessPresentation.getLargeFiles().isEmpty() ||
           myOutOfScopeUsages.get() != 0 ||
           myProcessPresentation.searchIncludingProjectFileUsages() != null ||
-          !getUnloadedModulesBelongingToScope().isEmpty()) {
+          !unloadedModulesBelongingToScope.isEmpty()) {
         ApplicationManager.getApplication().invokeLater(() -> {
           MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-          notifyByFindBalloon(hyperlinkListener, type, lines);
+          notifyByFindBalloon(hyperlinkListener, type, lines, unloadedModulesBelongingToScope);
         }, ModalityState.nonModal(), myProject.getDisposed());
       }
     }
