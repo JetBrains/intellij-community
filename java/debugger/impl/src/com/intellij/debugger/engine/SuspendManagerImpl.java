@@ -124,7 +124,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   private void logError(String message) {
-    DebuggerDiagnosticsUtil.logError(myDebugProcess, message);
+    myDebugProcess.logError(message);
   }
 
   @Override

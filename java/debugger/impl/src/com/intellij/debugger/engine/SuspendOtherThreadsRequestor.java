@@ -37,9 +37,8 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   public static boolean initiateTransferToSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                                      @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
-      DebuggerDiagnosticsUtil.logError(suspendContext.getDebugProcess(),
-                                       "Replacing for all-thread mode can be done only from the suspend-thread mode. " +
-                                       "suspendContext = " + suspendContext);
+      suspendContext.getDebugProcess().logError("Replacing for all-thread mode can be done only from the suspend-thread mode. " +
+                                                "suspendContext = " + suspendContext);
       return false;
     }
     @NotNull DebugProcessImpl process = suspendContext.getDebugProcess();

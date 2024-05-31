@@ -43,13 +43,12 @@ public final class SuspendManagerUtil {
       currentCommand instanceof SuspendContextCommandImpl suspendContextCommand ? suspendContextCommand.getSuspendContext() : null;
     if (currentSuspendContext != null) {
       if (currentSuspendContext.isResumed()) {
-        DebuggerDiagnosticsUtil.logError(currentSuspendContext.getDebugProcess(),
-                                         "Cannot use context " + currentSuspendContext + " for evaluation");
+        currentSuspendContext.getDebugProcess().logError("Cannot use context " + currentSuspendContext + " for evaluation");
         return null;
       }
       return currentSuspendContext;
     }
-    DebuggerDiagnosticsUtil.logError(((SuspendManagerImpl)suspendManager).getDebugProcess(),
+    ((SuspendManagerImpl)suspendManager).getDebugProcess().logError(
       "Evaluation should be performed in the SuspendContextCommandImpl, so evaluation context should come from there");
     return suspendManager.getPausedContext();
   }

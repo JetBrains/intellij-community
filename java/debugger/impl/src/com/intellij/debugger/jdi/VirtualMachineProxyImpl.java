@@ -5,7 +5,10 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -211,7 +214,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myModelSuspendCount <= 0) {
-      DebuggerDiagnosticsUtil.logError(myDebugProcess, "Negative global suspend count number!");
+      myDebugProcess.logError("Negative global suspend count number!");
     }
     if (myModelSuspendCount > 0) {
       myModelSuspendCount--;
@@ -220,7 +223,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     LOG.debug("before resume VM");
     DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
       if (throwable != null && !(DebuggerUtilsAsync.unwrap(throwable) instanceof RejectedExecutionException)) {
-        DebuggerDiagnosticsUtil.logError(myDebugProcess, "Error on resume", throwable);
+        myDebugProcess.logError("Error on resume", throwable);
       }
       LOG.debug("VM resumed");
     });
@@ -523,7 +526,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public void resumedSuspendAllContext() {
     if (myModelSuspendCount <= 0) {
-      DebuggerDiagnosticsUtil.logError(myDebugProcess, "Negative global suspend count number!");
+      myDebugProcess.logError("Negative global suspend count number!");
     }
     myModelSuspendCount--;
   }

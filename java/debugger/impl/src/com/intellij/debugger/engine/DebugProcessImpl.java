@@ -37,6 +37,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -387,7 +388,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (mask == 0 && vm instanceof VirtualMachineImpl extendedVM) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         mask = VirtualMachine.TRACE_ALL;
-        extendedVM.setDebugTraceConsumer(string -> DebuggerDiagnosticsUtil.logDebug("[JDI: " + string + "]"));
+        extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
       }
     }
     vm.setDebugTraceMode(mask);
@@ -2789,11 +2790,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     DebuggerManagerThreadImpl debuggerManagerThread) {
   }
 
-  protected void logError(@NotNull String message) {
-    DebuggerDiagnosticsUtil.logError(this, message);
+  public void logError(@NotNull String message, @NotNull Attachment attachment) {
+    LOG.error(message, DebuggerDiagnosticsUtil.getAttachments(this, attachment));
   }
 
-  protected void logError(@NotNull String message, @NotNull Throwable e) {
-    DebuggerDiagnosticsUtil.logError(this, message, e);
+  public void logError(@NotNull String message) {
+    LOG.error(message, DebuggerDiagnosticsUtil.getAttachments(this));
+  }
+
+  public void logError(@NotNull String message, @NotNull Throwable e) {
+    LOG.error(message, e, DebuggerDiagnosticsUtil.getAttachments(this));
   }
 }

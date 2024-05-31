@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.toArray
 import com.sun.jdi.request.EventRequest
@@ -141,7 +140,7 @@ object DebuggerDiagnosticsUtil {
     }
 
     if (problems.isNotEmpty()) {
-      logError(process, "Found ${problems.size} problems", attachment = Attachment("Problems", problems.joinToString(separator = "\n")))
+      process.logError("Found ${problems.size} problems", Attachment("Problems", problems.joinToString(separator = "\n")))
     }
   }
 
@@ -165,22 +164,10 @@ object DebuggerDiagnosticsUtil {
   }
 
   @JvmStatic
-  fun assertTrue(process: DebugProcessImpl, value: Boolean, text: () -> String) {
-    if (value) return
-    logError(process, "Assertion failed: " + text())
-  }
-
-  @JvmStatic
   @JvmOverloads
-  fun logError(process: DebugProcessImpl, message: String, e: Throwable? = null, attachment: Attachment? = null) {
-    val paramAttachment = if (attachment != null) listOf(attachment) else emptyList()
-    val attachments = (paramAttachment + createStateAttachments(process)).toArray(Attachment.EMPTY_ARRAY)
-    if (e == null) {
-      thisLogger().error(message, *attachments)
-    }
-    else {
-      thisLogger().error(message, e, *attachments)
-    }
+  fun getAttachments(process: DebugProcessImpl, first: Attachment? = null): Array<Attachment?> {
+    val paramAttachment = if (first != null) listOf(first) else emptyList()
+    return (paramAttachment + createStateAttachments(process)).toArray(Attachment.EMPTY_ARRAY)
   }
 
   @JvmStatic
@@ -248,10 +235,5 @@ object DebuggerDiagnosticsUtil {
     catch (e: Exception) {
       return e.toString()
     }
-  }
-
-  @JvmStatic
-  fun logDebug(message: String) {
-    thisLogger().debug(message)
   }
 }

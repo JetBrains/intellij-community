@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
 import com.sun.jdi.Method
@@ -84,7 +85,7 @@ object CoroutineBreakpointFacility {
         debugProcess.setSteppingBreakpoint(breakpoint)
 
         val filterThread = debugProcess.requestsManager.filterThread
-        DebuggerDiagnosticsUtil.logDebug("Resume breakpoint for $method in thread $filterThread")
+        thisLogger().debug("Resume breakpoint for $method in thread $filterThread")
 
         return true
     }

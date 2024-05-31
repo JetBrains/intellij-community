@@ -23,7 +23,6 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
-import kotlin.jvm.functions.Function0;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
 
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext, Disposable {
   private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
@@ -225,7 +225,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         return myActiveExecutionStack.getThreadProxy().frame(0);
       }
       catch (EvaluateException e) {
-        DebuggerDiagnosticsUtil.logError(myDebugProcess, "Error in proxy extracting", e);
+        myDebugProcess.logError("Error in proxy extracting", e);
       }
     }
     return getFrameProxyFromTechnicalThread();
@@ -475,10 +475,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
 
   private void logError(@NotNull String message) {
-    DebuggerDiagnosticsUtil.logError(myDebugProcess, message);
+    myDebugProcess.logError(message);
   }
 
-  private void assertInLog(boolean value, @NotNull Function0<@NotNull String> function0) {
-    DebuggerDiagnosticsUtil.assertTrue(myDebugProcess, value, function0);
+  private void assertInLog(boolean value, @NotNull Supplier<@NotNull String> supplier) {
+    if (!value) {
+      myDebugProcess.logError(supplier.get());
+    }
   }
 }
