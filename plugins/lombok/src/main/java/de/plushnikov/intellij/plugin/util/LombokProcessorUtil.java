@@ -85,7 +85,7 @@ public final class LombokProcessorUtil {
 
   public static Collection<String> getOldOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
     PsiAnnotationMemberValue onXValue;
-    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
       onXValue = psiAnnotation.findDeclaredAttributeValue(parameterName);
     }
     else {
@@ -99,7 +99,7 @@ public final class LombokProcessorUtil {
   }
 
   public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation) || psiAnnotation.hasAttribute(parameterName)) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation) || psiAnnotation.hasAttribute(parameterName)) {
       final Collection<PsiAnnotation> annotations =
         PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class, List.of());
       return collectAnnotationStrings(annotations);

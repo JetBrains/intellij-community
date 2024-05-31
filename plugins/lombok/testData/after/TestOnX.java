@@ -6,14 +6,14 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
-import org.jetbrains.annotations.NotNull;
+import lombok.NonNull;
 
 public class TestOnX {
-    @NotNull
+    @NonNull
     private final Integer someIntField;
     /** @deprecated */
     @Deprecated
-    @NotNull
+    @NonNull
     private String someStringField;
     private float someFloatField;
 
@@ -30,7 +30,7 @@ public class TestOnX {
 
     @Inject
     @Named("myName1")
-    public TestOnX(@NotNull Integer someIntField, @NotNull String someStringField) {
+    public TestOnX(@NonNull Integer someIntField, @NonNull String someStringField) {
         if (someIntField == null) {
             throw new NullPointerException("someIntField is marked non-null but is null");
         } else if (someStringField == null) {
@@ -43,7 +43,7 @@ public class TestOnX {
 
     @Inject
     @Named("myName2")
-    public TestOnX(@NotNull Integer someIntField, @NotNull String someStringField, float someFloatField) {
+    public TestOnX(@NonNull Integer someIntField, @NonNull String someStringField, float someFloatField) {
         if (someIntField == null) {
             throw new NullPointerException("someIntField is marked non-null but is null");
         } else if (someStringField == null) {
@@ -108,7 +108,7 @@ public class TestOnX {
     }
 
     @Max(100)
-    @NotNull
+    @NonNull
     public Integer getSomeIntField() {
         return this.someIntField;
     }
@@ -118,7 +118,7 @@ public class TestOnX {
     @Size(
         max = 20
     )
-    @NotNull
+    @NonNull
     public String getSomeStringField() {
         return this.someStringField;
     }
@@ -128,7 +128,7 @@ public class TestOnX {
     @Size(
         min = 10
     )
-    public void setSomeStringField(@Size(min = 15) @NotNull String someStringField) {
+    public void setSomeStringField(@Size(min = 15) @NonNull String someStringField) {
         if (someStringField == null) {
             throw new NullPointerException("someStringField is marked non-null but is null");
         } else {
@@ -136,7 +136,7 @@ public class TestOnX {
         }
     }
 
-    @NotNull
+    @NonNull
     public TestOnX withSomeFloatField(@Min(1) float someFloatField) {
         return this.someFloatField == someFloatField ? this : new TestOnX(this.someIntField, this.someStringField, someFloatField);
     }

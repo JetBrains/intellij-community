@@ -42,7 +42,7 @@ public final class PsiAnnotationUtil {
                                                       @NotNull List<T> defaultDumbValue) {
     Collection<T> result = Collections.emptyList();
     PsiAnnotationMemberValue attributeValue;
-    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
       attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
       if (attributeValue == null) return defaultDumbValue;
     }
@@ -84,7 +84,7 @@ public final class PsiAnnotationUtil {
 
   public static String getEnumAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String attributeName, @NotNull String defaultValue) {
     PsiAnnotationMemberValue attrValue = psiAnnotation.findDeclaredAttributeValue(attributeName);
-    if (IncompleteModeUtil.isIncompleteMode(psiAnnotation) && attrValue instanceof PsiReferenceExpression referenceExpression) {
+    if (DumbIncompleteModeUtil.isIncompleteMode(psiAnnotation.getProject()) && attrValue instanceof PsiReferenceExpression referenceExpression) {
       //more or less good approximation if it is a complete mode
       return referenceExpression.getReferenceName();
     }

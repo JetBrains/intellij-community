@@ -5,6 +5,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
@@ -13,7 +14,7 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.util.IncompleteModeUtil;
+import de.plushnikov.intellij.plugin.util.DumbIncompleteModeUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,15 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
   @NotNull
   protected List<ModeRunnerType> modes() {
-    return List.of(ModeRunnerType.INCOMPLETE, ModeRunnerType.DUMB, ModeRunnerType.NORMAL);
+    ArrayList<ModeRunnerType> types = new ArrayList<>();
+    if (Registry.is("lombok.incomplete.mode.enabled", false)) {
+      types.add(ModeRunnerType.INCOMPLETE);
+    }
+    if (Registry.is("lombok.dumb.mode.enabled", false)) {
+      types.add(ModeRunnerType.DUMB);
+    }
+    types.add(ModeRunnerType.NORMAL);
+    return types;
   }
 
   /**
@@ -267,10 +276,21 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
 
-      assertTrue("Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations,
-                 beforeAnnotations.size() == afterAnnotations.size()
-                 && beforeAnnotations.containsAll(afterAnnotations)
-                 && afterAnnotations.containsAll(beforeAnnotations));
+      if (DumbIncompleteModeUtil.isIncompleteMode(beforeModifierList.getProject())) {
+        //In this case, it is impossible to resolve, and even if there are annotations we can't guess their fqn correctly.
+        //Let's check one by one considering import statements
+        for (String annotation : afterAnnotations) {
+          assertTrue("For " + afterModifierList.getParent() + " " + beforeAnnotations + " doesn't contain the annotation: " + annotation,
+                     ContainerUtil.or(beforeModifierList.getAnnotations(),
+                                      an -> PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(an, Set.of(annotation))));
+        }
+      }
+      else {
+        assertTrue("Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations,
+                   beforeAnnotations.size() == afterAnnotations.size()
+                   && beforeAnnotations.containsAll(afterAnnotations)
+                   && afterAnnotations.containsAll(beforeAnnotations));
+      }
 
       // compare annotations parameter list
       for (PsiAnnotation beforeAnnotation : beforeModifierList.getAnnotations()) {
@@ -293,16 +313,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   private static @NotNull String getAnnotationQualifiedName(@NotNull PsiAnnotation annotation) {
-    String qualifiedName = DumbService.getInstance(annotation.getProject())
+    return DumbService.getInstance(annotation.getProject())
       .computeWithAlternativeResolveEnabled(() -> annotation.getQualifiedName());
-
-    if (!qualifiedName.contains(".") && IncompleteModeUtil.isIncompleteMode(annotation)) {
-      String lombokAnnotation = PsiAnnotationSearchUtil.findLombokAnnotationQualifiedNameInIncompleteMode(annotation);
-      if (lombokAnnotation.startsWith("lombok")) {
-        qualifiedName = lombokAnnotation;
-      }
-    }
-    return qualifiedName;
   }
 
   private void compareMethods(PsiClass beforeClass, PsiClass afterClass) {

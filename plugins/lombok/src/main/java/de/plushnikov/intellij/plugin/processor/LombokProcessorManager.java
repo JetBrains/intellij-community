@@ -22,7 +22,7 @@ import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcesso
 import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.modifier.*;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.DumbIncompleteModeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -368,8 +368,8 @@ public final class LombokProcessorManager {
       return Collections.emptyList();
     }
     String qualifiedName = psiAnnotation.getQualifiedName();
-    if (PsiAnnotationSearchUtil.isDumbOrIncompleteMode(psiAnnotation)) {
-      qualifiedName = PsiAnnotationSearchUtil.findLombokAnnotationQualifiedNameInIncompleteMode(psiAnnotation);
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+      qualifiedName = DumbIncompleteModeUtil.findLombokAnnotationQualifiedNameInDumbIncompleteMode(psiAnnotation);
     }
     if (StringUtil.isEmpty(qualifiedName) || !qualifiedName.contains("lombok")) {
       return Collections.emptyList();

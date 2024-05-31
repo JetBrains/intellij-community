@@ -28,6 +28,8 @@ public class FieldDefaultsWithoutLombokImportTest extends AbstractLombokConfigSy
     //incomplete mode is not supported, because files don't contain any lombok annotations,
     //checking lombok.config is expensive, so skip such cases
     //after returning to normal mode, caches will be dropped
-    return List.of(ModeRunnerType.NORMAL, ModeRunnerType.DUMB);
+    return super.modes()
+      .stream().filter(t -> t != ModeRunnerType.INCOMPLETE)
+      .toList();
   }
 }

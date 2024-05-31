@@ -38,6 +38,8 @@ public class FieldNameConstantsTest extends AbstractLombokParsingTestCase {
   protected @NotNull List<ModeRunnerType> modes() {
     //now incomplete mode is not supported for this processor, because it depends on the lombok version
     //after returning to normal mode, caches will be dropped
-    return List.of(ModeRunnerType.NORMAL, ModeRunnerType.DUMB);
+    return super.modes()
+      .stream().filter(t -> t != ModeRunnerType.INCOMPLETE)
+      .toList();
   }
 }
