@@ -5,7 +5,11 @@ import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_GZIP
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
 import com.intellij.collaboration.api.logName
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
@@ -66,6 +70,22 @@ object HttpClientUtil {
                                          reader: (Reader) -> T): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
     return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+  }
+
+  /**
+   * Build the User-Agent header value for the [agentName]
+   * Append product, java and OS data
+   */
+  fun getUserAgentValue(agentName: String): String {
+    val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
+    val ideBuild =
+      if (ApplicationManager.getApplication().isUnitTestMode) "test"
+      else ApplicationInfo.getInstance().build.asStringWithoutProductCode()
+    val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
+    val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
+    val arch = SystemInfo.OS_ARCH
+
+    return "$agentName $ideName/$ideBuild ($java; $os; $arch)"
   }
 }
 
