@@ -23,8 +23,11 @@ import git4idea.*;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRefUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitTagLoader;
 import git4idea.ui.branch.GitBranchActionsUtilKt;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import it.unimi.dsi.fastutil.Hash;
@@ -167,8 +170,8 @@ public final class GitBranchUtil {
   public static @Nls @NotNull String getDisplayableBranchText(@NotNull GitRepository repository,
                                                               @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
     GitRepository.State state = repository.getState();
-    String currentRevision = getDetachedPresentableText(repository, state);
-    if (currentRevision != null) return currentRevision;
+    String detachedStatePresentableText = getDetachedStatePresentableText(repository, state, branchNameTruncator);
+    if (detachedStatePresentableText != null) return detachedStatePresentableText;
 
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branchNameTruncator.apply(branch.getName()));
@@ -191,8 +194,16 @@ public final class GitBranchUtil {
   }
 
   @Nls
-  private static @Nullable String getDetachedPresentableText(@NotNull GitRepository repository, GitRepository.State state) {
-    if (state == GitRepository.State.DETACHED) {
+  private static @Nullable String getDetachedStatePresentableText(@NotNull GitRepository repository, GitRepository.State state,
+                                                        @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
+    if (state != GitRepository.State.DETACHED) {
+      return null;
+    }
+    GitReference currentReference = GitRefUtil.getCurrentReference(repository);
+    if (currentReference instanceof GitTag) {
+      return branchNameTruncator.apply(currentReference.getName());
+    }
+    else {
       String currentRevision = repository.getCurrentRevision();
       if (currentRevision != null) {
         return DvcsUtil.getShortHash(currentRevision);
@@ -202,7 +213,6 @@ public final class GitBranchUtil {
         return GitBundle.message("git.status.bar.widget.text.unknown");
       }
     }
-    return null;
   }
 
   /**

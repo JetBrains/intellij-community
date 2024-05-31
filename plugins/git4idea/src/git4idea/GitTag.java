@@ -3,6 +3,7 @@ package git4idea;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.branch.GitBranchUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ public final class GitTag extends GitReference {
   public static final @NonNls String REFS_TAGS_PREFIX = "refs/tags/";
 
   public GitTag(@NotNull String name) {
-    super(name);
+    super(GitBranchUtil.stripRefsPrefix(name));
   }
 
   @Override
