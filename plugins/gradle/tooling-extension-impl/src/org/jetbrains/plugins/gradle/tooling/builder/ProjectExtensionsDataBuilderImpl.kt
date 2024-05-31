@@ -1,78 +1,72 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
-import groovy.transform.CompileStatic
+import groovy.lang.Closure
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.plugins.ExtensionContainer
-import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
-import java.lang.reflect.Method
 /**
  * @author Vladislav.Soroka
  */
-@CompileStatic
-class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
+class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
 
-  @Override
-  boolean canBuild(String modelName) {
-    modelName == GradleExtensions.name
+  override fun canBuild(modelName: String): Boolean {
+    return modelName == GradleExtensions::class.java.name
   }
 
-  @Override
-  Object buildAll(String modelName, Project project) {
-    DefaultGradleExtensions result = new DefaultGradleExtensions()
+  override fun buildAll(modelName: String, project: Project): Any {
+    val result = DefaultGradleExtensions()
     result.parentProjectPath = project.parent?.path
 
     result.configurations.addAll(collectConfigurations(project.configurations, false))
     result.configurations.addAll(collectConfigurations(project.buildscript.configurations, true))
     result.conventions.addAll(collectConventions(project))
 
-    def extensions = project.extensions
-    extensions.extraProperties.properties.each { name, value ->
-      if(name == 'extraModelBuilder' || name.contains('.')) return
-      String typeFqn = getType(value)
-      result.gradleProperties.add(new DefaultGradleProperty(name, typeFqn))
+    val extensions = project.extensions
+    extensions.extraProperties.properties.forEach { name, value ->
+      if (name == "extraModelBuilder" || name.contains(".")) return@forEach
+      val typeFqn = getType(value)
+      result.gradleProperties.add(DefaultGradleProperty(name, typeFqn))
     }
 
-    for (it in extensions.findAll()) {
-      def extension = it as ExtensionContainer
-      List<String> keyList = extractKeys(extension)
+    for (it in DefaultGroovyMethods.findAll(extensions)) {
+      val extension = it as ExtensionContainer
+      val keyList = extractKeys(extension)
 
       for (name in keyList) {
-        def value = extension.findByName(name)
+        val value = extension.findByName(name)
         if (value == null) continue
 
-        def rootTypeFqn = getType(value)
-        result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn))
+        val rootTypeFqn = getType(value)
+        result.extensions.add(DefaultGradleExtension(name, rootTypeFqn))
       }
     }
     return result
   }
 
-  private static List<String> extractKeys(ExtensionContainer extension) {
-    List<String> result = []
-    for (final ExtensionsSchema.ExtensionSchema schema in extension.extensionsSchema) {
+  private fun extractKeys(extension: ExtensionContainer): List<String> {
+    val result = mutableListOf<String>()
+    for (schema in extension.extensionsSchema) {
       result.add(schema.name)
     }
     return result
   }
 
-  @Override
-  void reportErrorMessage(
-    @NotNull String modelName,
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull Exception exception
+  override fun reportErrorMessage(
+    modelName: String,
+    project: Project,
+    context: ModelBuilderContext,
+    exception: Exception
   ) {
     context.getMessageReporter().createMessage()
       .withGroup(Messages.PROJECT_EXTENSION_MODEL_GROUP)
@@ -83,51 +77,58 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       .reportMessage(project)
   }
 
-  private static @NotNull List<DefaultGradleConfiguration> collectConfigurations(
-    @NotNull ConfigurationContainer configurations,
-    boolean scriptClasspathConfiguration
-  ) {
-    def result = new ArrayList<DefaultGradleConfiguration>()
-    for (configurationName in configurations.names) {
-      def configuration = configurations.getByName(configurationName)
-      def description = configuration.description
-      def visible = configuration.visible
-      def declarationAlternatives = getDeclarationAlternatives(configuration)
-      result.add(new DefaultGradleConfiguration(configurationName, description, visible, scriptClasspathConfiguration, declarationAlternatives))
+  companion object {
+    private fun collectConfigurations(
+      configurations: ConfigurationContainer,
+      scriptClasspathConfiguration: Boolean
+    ): List<DefaultGradleConfiguration> {
+      val result = mutableListOf<DefaultGradleConfiguration>()
+      for (configurationName in configurations.names) {
+        val configuration = configurations.getByName(configurationName)
+        val description = configuration.description
+        val visible = configuration.isVisible
+        val declarationAlternatives = getDeclarationAlternatives(configuration)
+        result.add(DefaultGradleConfiguration(configurationName, description, visible, scriptClasspathConfiguration, declarationAlternatives))
+      }
+      return result
     }
-    return result
-  }
 
-  private static @NotNull List<String> getDeclarationAlternatives(Configuration configuration) {
-    try {
-      Method method = configuration.class.getMethod("getDeclarationAlternatives")
-      List<String> result = method.invoke(configuration) as List<String>
-      return result != null ? result : Collections.<String>emptyList()
-    } catch (NoSuchMethodException | SecurityException | ClassCastException ignored) {
-      return Collections.emptyList()
+    private fun getDeclarationAlternatives(configuration: Configuration): List<String> {
+      try {
+        val method = configuration.javaClass.getMethod("getDeclarationAlternatives")
+        @Suppress("UNCHECKED_CAST")
+        return method.invoke(configuration) as? List<String> ?: emptyList()
+      }
+      catch (e: NoSuchMethodException) {
+        return emptyList()
+      }
+      catch (e: SecurityException) {
+        return emptyList()
+      }
     }
-  }
 
-  private static @NotNull List<DefaultGradleConvention> collectConventions(@NotNull Project project) {
-    if (GradleVersionUtil.isCurrentGradleAtLeast("8.2")) {
-      return Collections.emptyList()
+    private fun collectConventions(project: Project): List<DefaultGradleConvention> {
+      if (GradleVersionUtil.isCurrentGradleAtLeast("8.2")) {
+        return emptyList()
+      }
+      val result = mutableListOf<DefaultGradleConvention>()
+      @Suppress("DEPRECATION")
+      project.convention.plugins.forEach { (key, value) ->
+        result.add(DefaultGradleConvention(key, getType(value)))
+      }
+      return result
     }
-    def result = new ArrayList<DefaultGradleConvention>()
-    //noinspection GrDeprecatedAPIUsage
-    project.convention.plugins.each { key, value ->
-      result.add(new DefaultGradleConvention(key, getType(value)))
-    }
-    return result
-  }
 
-  static String getType(object) {
-    if (object instanceof HasPublicType) {
-      return object.publicType.toString()
+    @JvmStatic
+    fun getType(obj: Any?): String? {
+      if (obj is HasPublicType) {
+        return obj.publicType.toString()
+      }
+      val clazz = obj?.javaClass?.canonicalName
+      val decorIndex = clazz?.lastIndexOf("_Decorated")
+      val result = if (decorIndex == null || decorIndex == -1) clazz else clazz.substring(0, decorIndex)
+      if (result == null && obj is Closure<*>) return "groovy.lang.Closure"
+      return result
     }
-    def clazz = object?.getClass()?.canonicalName
-    def decorIndex = clazz?.lastIndexOf('_Decorated')
-    def result = !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)
-    if (!result && object instanceof Closure) return "groovy.lang.Closure"
-    return result
   }
 }
