@@ -549,7 +549,6 @@ object CommunityRepositoryModules {
       //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
       //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
 
-      spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
       spec.withProjectLibrary("asm-tools")
 
       val ffmpegVersion = "6.0-1.5.9"
@@ -604,33 +603,15 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("javax-inject")
       //spec.withProjectLibrary("jetty")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
-      spec.withProjectLibrary("kotlin-multiplatform-android-models-proto")
       spec.withProjectLibrary("kxml2")
-      spec.withProjectLibrary("layoutinspector-skia-proto")
-      spec.withProjectLibrary("layoutinspector-view-proto")
       //spec.withProjectLibrary("libadb-server-proto")
-      spec.withProjectLibrary("libam-instrumentation-data-proto")
-      spec.withProjectLibrary("libapp-processes-proto")
-      spec.withProjectLibrary("network_inspector_java_proto")
       //spec.withProjectLibrary("oauth2")
-      spec.withProjectLibrary("sqlite-inspector-proto")
-      spec.withProjectLibrary("studio-grpc")
-      spec.withProjectLibrary("utp-core-proto-jarjar")
-      spec.withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
       //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
-      spec.withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
       //tools/adt/idea/android/lib:android-sdk-tools-jps <= this is jarutils.jar
       spec.withModuleLibrary("instantapps-api", "intellij.android.core", "")
-      spec.withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
-      spec.withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
-      spec.withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
-      spec.withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
       //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
       //tools/adt/idea/compose-designer:ui-animation-tooling-internal <= not recognized
-      spec.withModuleLibrary("libstudio.android-test-plugin-result-listener-gradle-proto", "intellij.android.utp", "")
-      spec.withModuleLibrary("libjava_sites", "intellij.android.debuggers", "")
       //tools/vendor/google/game-tools/main:game-tools-protos <= not recognized
-      spec.withModuleLibrary("build-analysis-results-proto", "intellij.android.build-attribution", "")
       // :libs
 
 
