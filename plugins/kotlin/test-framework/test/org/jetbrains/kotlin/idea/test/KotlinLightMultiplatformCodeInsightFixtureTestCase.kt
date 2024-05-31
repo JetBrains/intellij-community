@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.Platf
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import java.io.File
 
+/**
+ * See [the YT KB article](https://youtrack.jetbrains.com/articles/KTIJ-A-50/Light-Multiplatform-Tests)
+ */
 abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
 
     @Deprecated("Migrate to 'testDataDirectory'.", ReplaceWith("testDataDirectory"))

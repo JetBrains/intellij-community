@@ -44,6 +44,8 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
  * One exception is the Kotlin/Native stdlib itself as it's shared by all native targets.
  *
  * Since we can't use Gradle in light fixture tests due to performance reasons, correct libraries are mapped to modules manually.
+ *
+ * For more details, please refer to [the YT KB article](https://youtrack.jetbrains.com/articles/KTIJ-A-50/Light-Multiplatform-Tests)
  */
 object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
