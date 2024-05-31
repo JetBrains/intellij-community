@@ -3142,10 +3142,14 @@ f:com.intellij.util.proxy.CommonProxy$HostInfo
 com.intellij.util.proxy.JavaProxyProperty
 - sf:HTTPS_HOST:java.lang.String
 - sf:HTTPS_PORT:java.lang.String
+- sf:HTTPS_PROXY_PASSWORD:java.lang.String
+- sf:HTTPS_PROXY_USER:java.lang.String
 - sf:HTTP_HOST:java.lang.String
 - sf:HTTP_NON_PROXY_HOSTS:java.lang.String
 - sf:HTTP_PASSWORD:java.lang.String
 - sf:HTTP_PORT:java.lang.String
+- sf:HTTP_PROXY_PASSWORD:java.lang.String
+- sf:HTTP_PROXY_USER:java.lang.String
 - sf:HTTP_USERNAME:java.lang.String
 - sf:PROXY_SET:java.lang.String
 - sf:SOCKS_HOST:java.lang.String

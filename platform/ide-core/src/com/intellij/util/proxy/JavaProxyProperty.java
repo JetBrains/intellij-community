@@ -7,12 +7,17 @@ package com.intellij.util.proxy;
  */
 public interface JavaProxyProperty {
   String PROXY_SET = "proxySet";
+
   String HTTP_HOST = "http.proxyHost";
   String HTTP_PORT = "http.proxyPort";
+  String HTTP_PROXY_USER = "http.proxyUser";
+  String HTTP_PROXY_PASSWORD = "http.proxyPassword";
   String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
 
   String HTTPS_HOST = "https.proxyHost";
   String HTTPS_PORT = "https.proxyPort";
+  String HTTPS_PROXY_USER = "https.proxyUser";
+  String HTTPS_PROXY_PASSWORD = "https.proxyPassword";
 
   String SOCKS_HOST = "socksProxyHost";
   String SOCKS_PORT = "socksProxyPort";
@@ -22,7 +27,14 @@ public interface JavaProxyProperty {
 
   String USE_SYSTEM_PROXY = "java.net.useSystemProxies";
 
-  // ????? seems not real
+  /**
+   * @deprecated correct jvm system property is {@link JavaProxyProperty#HTTP_PROXY_USER}/{@link JavaProxyProperty#HTTPS_PROXY_USER}
+   */
+  @Deprecated
   String HTTP_USERNAME = "proxy.authentication.username";
+  /**
+   * @deprecated correct jvm system property is {@link JavaProxyProperty#HTTP_PROXY_PASSWORD}/{@link JavaProxyProperty#HTTPS_PROXY_PASSWORD}
+   */
+  @Deprecated
   String HTTP_PASSWORD = "proxy.authentication.password";
 }
