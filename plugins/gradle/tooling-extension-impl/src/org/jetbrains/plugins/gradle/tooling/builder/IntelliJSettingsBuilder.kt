@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
-import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.plugins.ide.idea.IdeaPlugin
@@ -26,37 +11,34 @@ import org.jetbrains.plugins.gradle.model.IntelliJSettings
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
+
 /**
  * @author Vladislav.Soroka
  */
-@CompileStatic
-class IntelliJSettingsBuilder implements ModelBuilderService {
+class IntelliJSettingsBuilder : ModelBuilderService {
 
-  @Override
-  boolean canBuild(String modelName) {
-    modelName == IntelliJSettings.name
+  override fun canBuild(modelName: String): Boolean {
+    return modelName == IntelliJSettings::class.java.name
   }
 
-  @Override
-  Object buildAll(String modelName, Project project) {
-    ExtensionAware extensionAware = project.plugins.findPlugin(IdeaPlugin.class)?.model?.module as ExtensionAware
-    if (extensionAware) {
-      def object = extensionAware.extensions.findByName("settings")
-      if (object) {
-        return new DefaultIntelliJSettings(object.toString())
+  override fun buildAll(modelName: String, project: Project): Any? {
+    val extensionAware = project.plugins.findPlugin(IdeaPlugin::class.java)?.model?.module as ExtensionAware?
+    if (extensionAware != null) {
+      val obj = extensionAware.extensions.findByName("settings")
+      if (obj != null) {
+        return DefaultIntelliJSettings(obj.toString())
       }
     }
     return null
   }
 
-  @Override
-  void reportErrorMessage(
-    @NotNull String modelName,
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull Exception exception
+  override fun reportErrorMessage(
+    @NotNull modelName: String,
+    @NotNull project: Project,
+    @NotNull context: ModelBuilderContext,
+    @NotNull exception: Exception
   ) {
-    context.getMessageReporter().createMessage()
+    context.messageReporter.createMessage()
       .withGroup(Messages.INTELLIJ_SETTINGS_MODEL_GROUP)
       .withKind(Message.Kind.WARNING)
       .withTitle("IntelliJ settings import failure")
