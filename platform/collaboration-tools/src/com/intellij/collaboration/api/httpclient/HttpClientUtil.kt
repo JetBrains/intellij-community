@@ -80,7 +80,7 @@ object HttpClientUtil {
    */
   fun getUserAgentValue(agentName: String): String {
     val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
-    val ideBuild = ApplicationInfo.getInstance().build.asString()
+    val ideBuild = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
     val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
     val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     val arch = SystemInfo.OS_ARCH
