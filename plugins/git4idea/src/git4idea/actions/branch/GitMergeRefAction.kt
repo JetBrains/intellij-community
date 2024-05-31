@@ -4,36 +4,37 @@ package git4idea.actions.branch
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import git4idea.GitBranch
+import git4idea.GitReference
+import git4idea.actions.tag.GitSingleRefAction
 import git4idea.branch.GitBrancher
 import git4idea.config.GitSharedSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 
-internal class GitMergeBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.merge.into.current")) {
+internal class GitMergeRefAction : GitSingleRefAction<GitReference>(GitBundle.messagePointer("branches.merge.into.current")) {
 
   override val disabledForCurrent = true
+  override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
+    GitBrancher.getInstance(project).merge(reference, deleteOnMerge(reference, project), repositories)
+  }
 
-  override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
+  override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
     with(e.presentation) {
       text = GitBundle.message("branches.merge.into",
-                               getSelectedBranchTruncatedPresentation(project, branch.name),
+                               getSelectedBranchTruncatedPresentation(project, reference.name),
                                getCurrentBranchTruncatedPresentation(project, repositories))
       description = GitBundle.message("branches.merge.into",
-                                      getSelectedBranchFullPresentation(branch.name),
+                                      getSelectedBranchFullPresentation(reference.name),
                                       getCurrentBranchFullPresentation(project, repositories))
       addTooltipText(this, GitBundle.message("branches.merge.into",
-                                             getSelectedBranchFullPresentation(branch.name),
+                                             getSelectedBranchFullPresentation(reference.name),
                                              getCurrentBranchFullPresentation(project, repositories)))
     }
   }
 
-  override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
-    GitBrancher.getInstance(project).merge(branch, deleteOnMerge(branch, project), repositories)
-  }
-
-  private fun deleteOnMerge(branch: GitBranch, project: Project): GitBrancher.DeleteOnMergeOption {
-    return if (!branch.isRemote && !GitSharedSettings.getInstance(project).isBranchProtected(branch.name)) {
+  private fun deleteOnMerge(reference: GitReference, project: Project): GitBrancher.DeleteOnMergeOption {
+    return if (reference is GitBranch && !reference.isRemote && !GitSharedSettings.getInstance(project).isBranchProtected(reference.name)) {
       GitBrancher.DeleteOnMergeOption.PROPOSE
     }
     else GitBrancher.DeleteOnMergeOption.NOTHING

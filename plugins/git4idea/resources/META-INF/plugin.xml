@@ -235,6 +235,8 @@
 
     <group id="Git.Branch">
       <action class="git4idea.actions.branch.GitCheckoutAction"/>
+      <action class="git4idea.actions.tag.GitCheckoutTagAction"/>
+      <action class="git4idea.actions.tag.GitDeleteTagAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <separator/>
@@ -242,7 +244,7 @@
       <action class="git4idea.actions.branch.GitShowDiffWithBranchAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
-      <action class="git4idea.actions.branch.GitMergeBranchAction"/>
+      <action class="git4idea.actions.branch.GitMergeRefAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
