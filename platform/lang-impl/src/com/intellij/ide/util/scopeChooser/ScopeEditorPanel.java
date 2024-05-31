@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -28,10 +29,12 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -42,6 +45,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -52,16 +56,19 @@ import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class ScopeEditorPanel implements Disposable {
+  private static final @NotNull Logger LOG = Logger.getInstance(ScopeEditorPanel.class);
   private JPanel myButtonsPanel;
   private RawCommandLineEditor myPatternField;
   private JPanel myTreeToolbar;
   private final Tree myPackageTree;
+  private @Nullable Invoker myPackageTreeInvoker;
   private JPanel myPanel;
   private JPanel myTreePanel;
   private JLabel myMatchingCountLabel;
@@ -90,6 +97,8 @@ public final class ScopeEditorPanel implements Disposable {
   private final MyAction myIncludeRec = new MyAction("button.include.recursively", this::includeSelected);
   private final MyAction myExclude = new MyAction("button.exclude", this::excludeSelected);
   private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
+
+  private boolean myIsDisposed;
 
   interface SettingsChangedListener {
 
@@ -189,7 +198,9 @@ public final class ScopeEditorPanel implements Disposable {
   }
   
   @Override
-  public void dispose() { }
+  public void dispose() {
+    myIsDisposed = true;
+  }
 
   private void updateCaretPositionText() {
     if (myErrorMessage != null) {
@@ -266,13 +277,7 @@ public final class ScopeEditorPanel implements Disposable {
     myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        List<PackageSet> selection = getSelectedSets(false);
-        myInclude.setSelection(selection);
-        myExclude.setSelection(selection);
-
-        List<PackageSet> recursive = getSelectedSets(true);
-        myIncludeRec.setSelection(recursive);
-        myExcludeRec.setSelection(recursive);
+        updateSelectedSets();
       }
     });
 
@@ -282,6 +287,49 @@ public final class ScopeEditorPanel implements Disposable {
     buttonsPanel.add(new JButton(myExclude));
     buttonsPanel.add(new JButton(myExcludeRec));
     return buttonsPanel;
+  }
+
+  private void updateSelectedSets() {
+    var invoker = myPackageTreeInvoker;
+    if (invoker == null) {
+      LOG.warn("ScopeEditorPanel.updateSelectedSets called before tree initialization", new Throwable());
+      return;
+    }
+    int[] rows = myPackageTree.getSelectionRows();
+    if (rows == null) return;
+    PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+    if (provider == null) return;
+    final var nodes = new ArrayList<PackageDependenciesNode>(rows.length);
+    for (int row : rows) {
+      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
+      nodes.add(node);
+    }
+    computeSelection(invoker, nodes, provider, false).onSuccess(result -> {
+      myInclude.setSelection(result);
+      myExclude.setSelection(result);
+    });
+    computeSelection(invoker, nodes, provider, true).onSuccess(result -> {
+      myIncludeRec.setSelection(result);
+      myExcludeRec.setSelection(result);
+    });
+  }
+
+  private static @NotNull CancellablePromise<ArrayList<PackageSet>> computeSelection(
+    Invoker invoker,
+    ArrayList<PackageDependenciesNode> nodes,
+    PatternDialectProvider provider,
+    boolean recursively
+  ) {
+    return invoker.compute(() -> {
+      final ArrayList<PackageSet> result = new ArrayList<>();
+      for (PackageDependenciesNode node : nodes) {
+        final PackageSet set = provider.createPackageSet(node, recursively);
+        if (set != null) {
+          result.add(set);
+        }
+      }
+      return result;
+    });
   }
 
   private void excludeSelected(@NotNull List<? extends PackageSet> selected) {
@@ -392,21 +440,6 @@ public final class ScopeEditorPanel implements Disposable {
     return current;
   }
 
-  @Nullable
-  private ArrayList<PackageSet> getSelectedSets(boolean recursively) {
-    int[] rows = myPackageTree.getSelectionRows();
-    if (rows == null) return null;
-    final ArrayList<PackageSet> result = new ArrayList<>();
-    for (int row : rows) {
-      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
-      final PackageSet set = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, recursively);
-      if (set != null) {
-        result.add(set);
-      }
-    }
-    return result;
-  }
-  
   private JComponent createTreeToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     final Runnable update = () -> {
@@ -524,16 +557,6 @@ public final class ScopeEditorPanel implements Disposable {
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
-    tree.addTreeWillExpandListener(new TreeWillExpandListener() {
-      @Override
-      public void treeWillExpand(TreeExpansionEvent event) {
-        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).updateAndSortChildren();
-      }
-
-      @Override
-      public void treeWillCollapse(TreeExpansionEvent event) {
-      }
-    });
 
     PopupHandler.installPopupMenu(tree, createTreePopupActions(), "ScopeEditorPopup");
   }
@@ -554,7 +577,8 @@ public final class ScopeEditorPanel implements Disposable {
         if (myProject.isDisposed()) return;
         try {
           myTreeExpansionMonitor.freeze();
-          final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
+          TreeModel model = Objects.requireNonNull(PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE))
+            .createTreeModel(myProject, myTreeMarker);
           ((PackageDependenciesNode)model.getRoot()).updateAndSortChildren();
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
@@ -566,8 +590,16 @@ public final class ScopeEditorPanel implements Disposable {
           }
 
           SwingUtilities.invokeLater(() -> { //not under progress
-            myPackageTree.setModel(model);
-            myTreeExpansionMonitor.restore();
+            if (myIsDisposed) return;
+            var backgroundModel = new BackgroundTreeModel(() -> model, true);
+            myPackageTreeInvoker = backgroundModel.getInvoker();
+            var asyncModel = new AsyncTreeModel(backgroundModel, this);
+            var oldModel = myPackageTree.getModel();
+            myPackageTree.setModel(asyncModel);
+            if (oldModel instanceof Disposable disposable) {
+              Disposer.dispose(disposable);
+            }
+            myTreeExpansionMonitor.restoreAsync();
             TreeUtil.ensureSelection(myPackageTree);
           });
         } catch (ProcessCanceledException e) {

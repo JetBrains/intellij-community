@@ -5,7 +5,6 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -21,7 +20,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.SourceRootIconProvider;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,6 +38,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
   private String myFQName = null;
   private final VirtualFile myVDirectory;
   private Icon myIcon = AllIcons.Nodes.Package;
+  private String myComment;
 
   public DirectoryNode(VirtualFile aDirectory,
                        Project project,
@@ -233,6 +232,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
   public void update() {
     super.update();
     myIcon = doGetIcon();
+    myComment = doGetComment();
   }
 
   private Icon doGetIcon() {
@@ -241,6 +241,16 @@ public final class DirectoryNode extends PackageDependenciesNode {
       return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : SourceRootIconProvider.getDirectoryIcon(myVDirectory, myProject);
     }
     return AllIcons.Nodes.Package;
+  }
+
+  private @Nullable String doGetComment() {
+    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
+      final PsiDirectory directory = getPsiDirectory();
+      if (directory != null) {
+        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+      }
+    }
+    return null;
   }
 
   public void setCompactedDirNode(final DirectoryNode compactedDirNode) {
@@ -279,15 +289,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public String getComment() {
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339190, EA-853866")) {
-      if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
-        final PsiDirectory directory = getPsiDirectory();
-        if (directory != null) {
-          return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
-        }
-      }
-    }
-    return super.getComment();
+    return myComment;
   }
 
   @Override
