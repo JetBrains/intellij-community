@@ -128,7 +128,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         String token = GHCompatibilityUtil.getOrRequestToken(account, project);
         if (token == null) return;
-        GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token);
+        GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.getServer(), token);
 
         List<FileContent> contents = collectContents(project, editor, file, files);
         if (contents.isEmpty()) return;
