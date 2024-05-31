@@ -62,13 +62,16 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
         val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
-        readActionBlocking {
-          val highlighter = editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
-          // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
-          // (the document text is compared, so, double work is not performed)
-          highlighter.setText(effectiveDocument.immutableCharSequence)
-          highlighter
+        // two separate read actions to avoid one long-running - https://youtrack.jetbrains.com/issue/IJPL-796
+        val highlighter = readActionBlocking {
+          editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
         }
+        readActionBlocking {
+          // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+           // (the document text is compared, so, double work is not performed)
+           highlighter.setText(effectiveDocument.immutableCharSequence)
+        }
+        highlighter
       }
 
       val editorDeferred = CompletableDeferred<EditorEx>()
@@ -118,9 +121,15 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       object : AsyncFileEditorProvider.Builder() {
         override fun build(): FileEditor {
-          val editor = factory.createMainEditor(document = effectiveDocument, project = project, file = file, highlighter = highlighter, afterCreation = {
-            it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
-          })
+          val editor = factory.createMainEditor(
+            document = effectiveDocument,
+            project = project,
+            file = file,
+            highlighter = highlighter,
+            afterCreation = {
+              it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+            },
+          )
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           editorDeferred.complete(editor)
           val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
