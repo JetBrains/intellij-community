@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
@@ -312,9 +311,7 @@ public final class CustomizationUtil {
 
   public static @NotNull MouseListener installPopupHandler(@NotNull JComponent component, @NotNull String groupId, @NotNull String place) {
     Supplier<ActionGroup> actionGroupSupplier = () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-    PopupHandler popupHandler = PopupHandler.installPopupMenu(component, new PopupComputableActionGroup(actionGroupSupplier), place);
-    PopupMenuPreloader.install(component, place, popupHandler, actionGroupSupplier);
-    return popupHandler;
+    return PopupHandler.installPopupMenu(component, new PopupComputableActionGroup(actionGroupSupplier), place);
   }
 
   /**

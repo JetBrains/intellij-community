@@ -160,9 +160,6 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
-    if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
-      throw ComputeOnEDTSkipped()
-    }
     @Suppress("removal", "DEPRECATION")
     if (updateThread == ActionUpdateThread.OLD_EDT) {
       ensureSlowDataKeysPreCached(action, operationName)
