@@ -213,8 +213,8 @@
     },
     {
       "id": "scala",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 7 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 8, 12, 13 ],
       "shouldLogElementFeatures": true
     },
     {
@@ -243,20 +243,20 @@
     },
     {
       "id": "rust",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 8 ],
+      "experimentBucketsCount": 16,
+      "includeGroups": [ 8, 12],
       "shouldLogElementFeatures": true
     },
     {
       "id": "swift",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 7 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 8, 12, 13],
       "shouldLogElementFeatures": true
     },
     {
       "id": "mysql",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 7 ],
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 12 ],
       "shouldLogElementFeatures": false
     },
     {
@@ -267,8 +267,8 @@
     },
     {
       "id": "objectivec",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 7 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [7, 8, 12],
       "shouldLogElementFeatures": false
     },
     {
@@ -279,8 +279,8 @@
     },
     {
       "id": "html",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 7 ],
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
       "shouldLogElementFeatures": false
     },
     {
@@ -291,8 +291,8 @@
     },
     {
       "id": "shell script",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 7 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 12, 13 ],
       "shouldLogElementFeatures": true
     }
   ]
