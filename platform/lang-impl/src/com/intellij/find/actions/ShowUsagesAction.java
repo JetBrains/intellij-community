@@ -287,6 +287,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandlerBase handler;
+    ShowUsagesActionHandler actionHandler;
     FindUsagesOptions options;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
@@ -303,9 +304,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       else {
         options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
       }
+      actionHandler = createActionHandler(handler, options, title);
     }
-    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition),
-                                       createActionHandler(handler, options, title));
+    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), actionHandler);
   }
 
   @ApiStatus.Internal
