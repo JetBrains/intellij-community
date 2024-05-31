@@ -24,13 +24,11 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.TokenType
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.injection.Injectable
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.*
 import com.intellij.ui.IconManager.Companion.getInstance
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ObjectUtils
@@ -47,6 +45,7 @@ import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
 import one.util.streamex.StreamEx
+import java.util.*
 import javax.swing.Icon
 
 private const val BUILTIN_USAGE_KEY = "builtin"
@@ -403,6 +402,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
       val builder = LookupElementBuilder.create(propertyKey)
         .withPresentableText(completionPath?.let { it.prefix() + "." + propertyKey } ?: propertyKey)
+        .withLookupStrings(listOf(propertyKey) + completionPath?.accessor().orEmpty())
         .withTypeText(getDocumentationOrTypeName(schemaObject), true)
         .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
         .withInsertHandler(choosePropertyInsertHandler(completionPath, variants, schemaObject, hasValue, insertComma))
@@ -662,9 +662,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         }
         editor.caretModel.moveToOffset(guessEndOffset)
       }
-      else {
-        editor.caretModel.moveToOffset(context.tailOffset)
-      }
       return false
     }
 
@@ -799,25 +796,77 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       if (completionPath == null) return
       val element = context.file.findElementAt(context.startOffset)?.parent ?: return
       val walker = JsonLikePsiWalker.getWalker(element) ?: return
-      val container = walker.getParentContainer(element) ?: return
+      val container = element.parent ?: return
       val parentObject = walker.createValueAdapter(container)?.asObject ?: return
-      doExpand(parentObject, completionPath.accessor(), walker)
-      PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+      val path = completionPath.accessor()
+      if (path.isNotEmpty()) {
+        val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
+        val pointer = SmartPointerManager.createPointer(newElement)
+        element.delete()
+        PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+        var psiElement = pointer.element?.lastLeaf()
+        while (psiElement is PsiWhiteSpace || psiElement is PsiComment) {
+          psiElement = psiElement.prevLeaf()
+        }
+        if (psiElement != null) {
+          context.editor.caretModel.moveToOffset(psiElement.endOffset)
+        }
+      }
     }
 
-    private fun doExpand(parentObject: JsonObjectValueAdapter, completionPath: List<String>, walker: JsonLikePsiWalker) {
-      if (completionPath.isEmpty()) return
-      val property: JsonPropertyAdapter = parentObject.propertyList.firstOrNull { it.name == completionPath[0] }
-                     ?: addNewPropertyWithObjectValue(parentObject, completionPath[0], walker)
+    private fun doExpand(parentObject: JsonObjectValueAdapter,
+                         completionPath: List<String>,
+                         walker: JsonLikePsiWalker,
+                         element: PsiElement,
+                         index: Int,
+                         fakeProperty: PsiElement?): PsiElement? {
+      val property: JsonPropertyAdapter = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
+                                          ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
+      fakeProperty?.let {
+        // cleanup redundant whitespace
+        var next = it.nextSibling
+        while (next != null && next.text.isBlank()) {
+          val n = next
+          next = next.nextSibling
+          n.delete()
+        }
+        it.delete()
+      }
       val value = property.values.singleOrNull()
-      if (value?.isObject != true) return
-      doExpand(value.asObject!!, completionPath.drop(1), walker)
+      if (value == null) return null
+      if (index + 1 < completionPath.size) {
+        val project = parentObject.delegate.project
+        val fake = walker.getSyntaxAdapter(project).createProperty("f", "f", project)
+        val newValue = if (value.isObject) value.delegate else value.delegate.replace(fake.parent)
+        val newValueAsObject = walker.createValueAdapter(newValue)!!.asObject!!
+        return doExpand(newValueAsObject, completionPath, walker, element, index + 1,
+                        if (value.isObject) null
+                        else newValueAsObject.propertyList.single().delegate)
+      }
+      else {
+        val movedElement =
+          if (value.isObject) {
+            value.delegate.addAfter(element.copy(), value.asObject!!.propertyList.last().delegate)
+          }
+          else value.delegate.replace(element.copy())
+        movedElement.parent.addBefore(createLeaf("\n", movedElement)!!, movedElement)
+        return movedElement
+      }
     }
 
-    private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, propertyName: String, walker: JsonLikePsiWalker): JsonPropertyAdapter {
+    private fun createLeaf(content: String, context: PsiElement): LeafPsiElement? {
+      val psiFileFactory = PsiFileFactory.getInstance(context.project)
+      return psiFileFactory.createFileFromText("dummy." + context.containingFile.virtualFile.extension,
+                                               context.containingFile.fileType, content)
+        .descendantsOfType<LeafPsiElement>().firstOrNull { it.text == content }
+    }
+
+    private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, propertyName: String, walker: JsonLikePsiWalker, element: PsiElement): JsonPropertyAdapter {
       val project = parentObject.delegate.project
       val syntaxAdapter = walker.getSyntaxAdapter(project)
-      return syntaxAdapter.createProperty(propertyName, "f", project).let {
+      return syntaxAdapter.createProperty(propertyName, "f", project).also {
+        walker.getParentPropertyAdapter(it)!!.values.single().delegate.replace(element)
+      }.let {
         syntaxAdapter.addProperty(parentObject.delegate, it)
       }.let { walker.getParentPropertyAdapter(it)!! }
     }
