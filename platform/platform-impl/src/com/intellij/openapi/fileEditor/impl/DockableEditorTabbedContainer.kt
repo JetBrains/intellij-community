@@ -169,7 +169,7 @@ class DockableEditorTabbedContainer internal constructor(
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
     coroutineScope.launch {
       val openOptions = FileEditorOpenOptions(index = index, requestFocus = true, pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
-      splitters.manager.checkForbidSplitAndOpenFile(window, file, openOptions)
+      splitters.manager.checkForbidSplitAndOpenFile(window = window, file = file, options = openOptions)
     }
   }
 

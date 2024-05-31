@@ -158,9 +158,11 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   }
 
   override fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor> {
-    return openFile(file = file,
-                    window = null,
-                    options = FileEditorOpenOptions(requestFocus = focusEditor, reuseOpen = searchForOpen))
+    return openFile(
+      file = file,
+      window = null,
+      options = FileEditorOpenOptions(requestFocus = focusEditor, reuseOpen = searchForOpen),
+    )
       .allEditors
       .toTypedArray()
   }

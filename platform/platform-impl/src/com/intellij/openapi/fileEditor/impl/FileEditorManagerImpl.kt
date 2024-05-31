@@ -75,7 +75,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
@@ -848,32 +847,18 @@ open class FileEditorManagerImpl(
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
 
-    return doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
+    val composite = doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
+    if (composite is EditorComposite) {
+      blockingWaitForCompositeFileOpen(composite)
+    }
+    return composite
   }
 
-  private fun doOpenFile(file: VirtualFile,
-                         windowToOpenIn: EditorWindow,
-                         options: FileEditorOpenOptions): FileEditorComposite {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
-        closeFile(file)
-      }
-      return openFileImpl4(window = windowToOpenIn, _file = file, entry = null, options = options)
+  private fun doOpenFile(file: VirtualFile, windowToOpenIn: EditorWindow, options: FileEditorOpenOptions): FileEditorComposite {
+    if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
+      closeFile(file)
     }
-    else {
-      val context = ClientId.coroutineContext()
-      val composite = runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
-        withContext(context) {
-          openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), options = options)
-        }
-      }
-      if (composite is EditorComposite && options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-        // NOTE: it is a workaround on problem with runWithModalProgressBlocking that does not respect focus requests.
-        // It can be removed when the problem is solved. Original bug: IDEA-327729
-        composite.preferredFocusedComponent?.requestFocusInWindow()
-      }
-      return composite
-    }
+    return openFileImpl4(window = windowToOpenIn, _file = file, entry = null, options = options)
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
@@ -913,7 +898,12 @@ open class FileEditorManagerImpl(
         closeFile(file)
       }
     }
-    return openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), options = options)
+    val composite = openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), options = options)
+    if (composite is EditorComposite) {
+      // The client of the `openFile` API expects an editor to be available after invocation, so we wait until the file is opened
+      composite.selectedEditorWithProvider.filterNotNull().first()
+    }
+    return composite
   }
 
   private fun findWindowInAllSplitters(file: VirtualFile): EditorWindow? {
@@ -999,13 +989,11 @@ open class FileEditorManagerImpl(
     return openFileImpl4(window = window, _file = file, entry = null, options = options)
   }
 
-  internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow,
-                                                   file: VirtualFile,
-                                                   options: FileEditorOpenOptions): FileEditorComposite {
+  internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions) {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }
-    return openFileAsync(window = window, file = file, options = options)
+    openFileAsync(window = window, file = file, options = options)
   }
 
   private val clientFileEditorManager: ClientFileEditorManager?
@@ -1035,8 +1023,6 @@ open class FileEditorManagerImpl(
       return openFileUsingClient(file, options)
     }
 
-    val effectiveOptions = getEffectiveOptions(options = options, entry = entry)
-
     fun open(): FileEditorComposite {
       return runBulkTabChange(window.owner) {
         if (!file.isValid) {
@@ -1046,19 +1032,27 @@ open class FileEditorManagerImpl(
           window = window,
           file = file,
           entry = entry,
-          options = effectiveOptions,
+          options = getEffectiveOptions(options = options, entry = entry),
         ) ?: FileEditorComposite.EMPTY
       }
     }
 
     if (EDT.isCurrentThreadEdt()) {
-      return open()
+      val composite = open()
+      if (composite is EditorComposite) {
+        blockingWaitForCompositeFileOpen(composite)
+      }
+      return composite
     }
     else {
       return runBlockingCancellable {
-        withContext(Dispatchers.EDT) {
+        val composite = withContext(Dispatchers.EDT) {
           open()
         }
+        if (composite is EditorComposite) {
+          composite.selectedEditorWithProvider.filterNotNull().first()
+        }
+        composite
       }
     }
   }
@@ -1359,17 +1353,7 @@ open class FileEditorManagerImpl(
       openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
     )
 
-    // https://youtrack.jetbrains.com/issue/IDEA-319932
-    // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
-
-    val composite = openFile(file = file, window = null, options = openOptions)
-    //!ApplicationManager.getApplication().isWriteAccessAllowed
-    if (composite is EditorComposite) {
-      // we don't need progress - handled by async editor loader
-      blockingWaitForCompositeFileOpen(composite)
-    }
-
-    val fileEditors = composite.allEditors
+    val fileEditors = openFile(file = file, window = null, options = openOptions).allEditors
 
     val currentCompositeForFile = getComposite(file)
     for (editor in fileEditors) {
@@ -2474,6 +2458,8 @@ internal suspend fun doOnCompositeOpenComplete(
 private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   ThreadingAssertions.assertEventDispatchThread()
 
+  // https://youtrack.jetbrains.com/issue/IDEA-319932
+  // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
     // todo silenceWriteLock instead of executeSuspendingWriteAction
     (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(
@@ -2488,6 +2474,7 @@ private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
     }
   }
   else {
+    // we don't need progress - handled by async editor loader
     runBlocking {
       val mainJob = coroutineContext.job
       val loopJob = launch {
@@ -2497,10 +2484,6 @@ private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
         ThreadingAssertions.assertEventDispatchThread()
 
         while (true) {
-          //runInterruptible()
-          // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
-          // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
-          // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
           val event = queue.getNextEvent()
           queue.dispatchEvent(event)
           if (composite.coroutineScope.coroutineContext.job.isCompleted) {

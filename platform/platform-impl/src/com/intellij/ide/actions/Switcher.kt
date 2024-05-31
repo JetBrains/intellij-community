@@ -612,7 +612,11 @@ object Switcher : BaseSwitcherAction(null) {
                   val settings = UISettings.getInstance().state
                   val oldValue = settings.reuseNotModifiedTabs
                   settings.reuseNotModifiedTabs = false
-                  manager.openFile(file, true, true)
+                  manager.openFile(
+                    file = file,
+                    window = null,
+                    options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true),
+                  )
                   if (LightEdit.owns(project)) {
                     LightEditFeatureUsagesUtil.logFileOpen(project, OpenPlace.RecentFiles)
                   }
