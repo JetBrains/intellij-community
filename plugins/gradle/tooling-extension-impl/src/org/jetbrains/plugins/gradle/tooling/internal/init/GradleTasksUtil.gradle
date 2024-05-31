@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-//file:noinspection GrPackage
-//file:noinspection unused
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.invocation.Gradle
 
 class GradleTasksUtil {
 
@@ -64,5 +63,50 @@ class GradleTasksUtil {
 
   private enum MatchResult {
     MATCHED, PARTIALLY_MATCHED, NOT_MATCHED
+  }
+
+  static Project getCurrentProject(Gradle gradle, Project rootProject) {
+    def currentPath = gradle.startParameter.currentDir.path
+    return rootProject.allprojects.find { it.projectDir.path == currentPath }
+  }
+
+  static List<Task> filterStartTasks(List<Task> tasks, Gradle gradle, Project rootProject) {
+    def currentProject = getCurrentProject(gradle, rootProject)
+    def logger = currentProject.logger
+
+    logger.debug("Current Project: ${currentProject}")
+
+    def rootGradle = gradle
+    def compositePathPrefix = []
+
+    while (rootGradle.getParent() != null) {
+      compositePathPrefix.add(0, gradle.rootProject.name)
+      rootGradle = rootGradle.getParent()
+    }
+
+    def startTaskNames = rootGradle.startParameter.taskNames
+    logger.debug("Start Tasks Names: ${startTaskNames}")
+
+    if (!compositePathPrefix.isEmpty()) {
+      def compositePathPrefixString = ":" + compositePathPrefix.join(":")
+      logger.debug("composite path prefix string: ${compositePathPrefixString}")
+      startTaskNames = startTaskNames.collect {
+        if (it.startsWith(compositePathPrefixString)) {
+          return it.substring(compositePathPrefixString.length())
+        } else {
+          return it
+        }
+      }
+    }
+
+    logger.debug("Start startTaskNames after cleanup: ${startTaskNames}")
+    if (startTaskNames.isEmpty()) {
+      startTaskNames = (currentProject ?: rootProject).defaultTasks
+    }
+
+    //noinspection GrUnresolvedAccess
+    List<Task> matchedTasks = filterTasks(currentProject, tasks, startTaskNames)
+    logger.debug("Matched tasks: ${matchedTasks}")
+    return matchedTasks
   }
 }
