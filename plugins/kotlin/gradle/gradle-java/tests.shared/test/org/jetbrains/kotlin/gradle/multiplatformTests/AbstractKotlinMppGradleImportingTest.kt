@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
@@ -205,6 +207,10 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // @Parametrized
             (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
             super.setUp()
+            if (useK2Plugin == true) {
+                // undefined in K1 plugin
+                Registry.get("kotlin.k2.kmp.enabled").setValue(true, testRootDisposable)
+            }
         }
 
         context.testProject = myProject

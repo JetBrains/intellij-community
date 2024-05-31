@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
@@ -37,7 +38,7 @@ import java.io.File
 @Suppress("LightServiceMigrationCode") // K2-only service
 internal class KotlinForwardDeclarationsModelChangeService(private val project: Project, cs: CoroutineScope) {
     init {
-        if (Registry.`is`("kotlin.k2.kmp.enabled")) {
+        if (shouldRunForwardDeclarationServices()) {
             cs.launch {
                 WorkspaceModel.getInstance(project).subscribe { _, changes ->
                     changes.collect { event ->
@@ -128,8 +129,16 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
  */
 internal class KotlinForwardDeclarationsStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-        if (!Registry.`is`("kotlin.k2.kmp.enabled")) return
+        if (!shouldRunForwardDeclarationServices()) return
 
         project.service<KotlinForwardDeclarationsModelChangeService>()
     }
 }
+
+// We can't set the the `kotlin.k2.kmp.enabled` registry property before the Kotlin plugin is loaded.
+// Without the property, the forward declaration services are no-ops.
+// In tests, it is hard (if at all possible) to catch the moment between Kotlin plugin loading and startup activities launching.
+// This is why the switch is disabled in the test environment.
+// Since changing the property requires an IDE reload, this problem doesn't exist in the production environment.
+private fun shouldRunForwardDeclarationServices(): Boolean =
+    Registry.`is`("kotlin.k2.kmp.enabled") || ApplicationManager.getApplication().isUnitTestMode
