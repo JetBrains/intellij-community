@@ -103,6 +103,28 @@ internal class GitBranchesTreePopupShowRecentBranchesAction :
   }
 }
 
+internal class GitBranchesTreePopupShowTagsAction :
+  ToggleAction(GitBundle.messagePointer("git.branches.popup.show.tags.name")), DumbAware {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = e.project != null
+                                         && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun isSelected(e: AnActionEvent): Boolean =
+    e.project?.let(GitVcsSettings::getInstance)?.showTags() ?: false
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
+
+    GitVcsSettings.getInstance(project).setShowTags(state)
+    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+  }
+}
+
 internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {
 
   init {

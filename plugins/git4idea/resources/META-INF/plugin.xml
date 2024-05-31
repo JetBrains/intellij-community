@@ -216,6 +216,7 @@
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowTagsAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
