@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,6 +57,8 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   private Document myDocument;
   private final Project myProject;
   private volatile LineHistoryMapper myMapper;
+  private final Object myLock = new Object();
+  private Disposable myListenerDisposable;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -86,12 +89,6 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
         }
         fileEditorManager.removeTopComponent(fileEditor, map.get(fileEditor));
       }
-    }
-
-    final DocumentListener documentListener = editor.getUserData(COVERAGE_DOCUMENT_LISTENER);
-    if (documentListener != null) {
-      document.removeDocumentListener(documentListener);
-      editor.putUserData(COVERAGE_DOCUMENT_LISTENER, null);
     }
   }
 
@@ -186,6 +183,12 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
         if (mapping == null) return;
         removeHighlighters();
         myUpdateAlarm.cancelAllRequests();
+        synchronized (myLock) {
+          var listenerDisposable = myListenerDisposable;
+          if (listenerDisposable != null) {
+            Disposer.dispose(listenerDisposable);
+          }
+        }
         showCoverage(suite);
       });
     }
@@ -197,34 +200,34 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     final TreeMap<Integer, String> classNames = new TreeMap<>();
     collectLinesInFile(suite, psiFile, module, oldToNewLineMapping, markupModel, executableLines, classNames);
 
-    if (editor.getUserData(COVERAGE_DOCUMENT_LISTENER) == null) {
-      final DocumentListener documentListener = new DocumentListener() {
-        @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
-          myMapper.clear();
-          int offset = e.getOffset();
-          final int lineNumber = document.getLineNumber(offset);
-          final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
-          if (!removeChangedHighlighters(lineNumber, lastLineNumber, document)) return;
-          if (!myUpdateAlarm.isDisposed()) {
-            myUpdateAlarm.addRequest(() -> {
-              Int2IntMap newToOldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
-              if (newToOldLineMapping != null) {
-                final int lastLine = Math.min(document.getLineCount() - 1, lastLineNumber);
-                for (int line = lineNumber; line <= lastLine; line++) {
-                  if (!newToOldLineMapping.containsKey(line)) continue;
-                  int oldLineNumber = newToOldLineMapping.get(line);
-                  var lineData = executableLines.get(oldLineNumber);
-                  if (lineData == null) continue;
-                  addHighlighter(markupModel, executableLines, suite, oldLineNumber, line, classNames.get(oldLineNumber));
-                }
+    final DocumentListener documentListener = new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull final DocumentEvent e) {
+        myMapper.clear();
+        int offset = e.getOffset();
+        final int lineNumber = document.getLineNumber(offset);
+        final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
+        if (!removeChangedHighlighters(lineNumber, lastLineNumber, document)) return;
+        if (!myUpdateAlarm.isDisposed()) {
+          myUpdateAlarm.addRequest(() -> {
+            Int2IntMap newToOldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
+            if (newToOldLineMapping != null) {
+              final int lastLine = Math.min(document.getLineCount() - 1, lastLineNumber);
+              for (int line = lineNumber; line <= lastLine; line++) {
+                if (!newToOldLineMapping.containsKey(line)) continue;
+                int oldLineNumber = newToOldLineMapping.get(line);
+                var lineData = executableLines.get(oldLineNumber);
+                if (lineData == null) continue;
+                addHighlighter(markupModel, executableLines, suite, oldLineNumber, line, classNames.get(oldLineNumber));
               }
-            }, 100);
-          }
+            }
+          }, 100);
         }
-      };
-      document.addDocumentListener(documentListener);
-      editor.putUserData(COVERAGE_DOCUMENT_LISTENER, documentListener);
+      }
+    };
+    synchronized (myLock) {
+      myListenerDisposable = Disposer.newDisposable(this);
+      document.addDocumentListener(documentListener, myListenerDisposable);
     }
   }
 

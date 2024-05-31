@@ -170,7 +170,6 @@ c:com.intellij.coverage.CoverageSuitesBundle
 - isBranchCoverage():Z
 - isTrackTestFolders():Z
 - isValid():Z
-- restoreCoverageData():V
 - setCoverageData(com.intellij.rt.coverage.data.ProjectData):V
 - setShouldActivateToolWindow(Z):V
 - shouldActivateToolWindow():Z
