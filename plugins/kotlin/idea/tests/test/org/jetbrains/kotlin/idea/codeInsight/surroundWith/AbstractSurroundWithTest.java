@@ -8,8 +8,8 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.execution.junit.FileComparisonData;
 import kotlin.io.FilesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,8 +119,7 @@ public abstract class AbstractSurroundWithTest extends KotlinLightCodeInsightFix
         try {
             String localPath = FilesKt.toRelativeString(new File(filePath), getTestDataDirectory());
             myFixture.checkResultByFile(localPath);
-        } catch (AssertionError exception) {
-            if (!(exception instanceof FileComparisonData)) throw exception;
+        } catch (FileComparisonFailedError exception) {
             KotlinTestUtils.assertEqualsToFile(new File(filePath), getEditor());
         }
     }

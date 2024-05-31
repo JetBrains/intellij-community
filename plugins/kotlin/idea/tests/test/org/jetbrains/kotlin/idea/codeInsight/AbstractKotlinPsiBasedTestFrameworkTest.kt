@@ -5,7 +5,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.java.codeInsight.navigation.MockGradleRunConfiguration
-import com.intellij.rt.execution.junit.FileComparisonData
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -19,7 +19,7 @@ abstract class AbstractKotlinPsiBasedTestFrameworkTest : AbstractLineMarkersTest
         doRunTest(false) {
             try {
                 super.doTest(path) {}
-            } catch (e: AssertionError) {
+            } catch (e: FileComparisonFailedError) {
                 checkSuppressions("LIGHT_CLASS_FALLBACK", e)
             }
         }
@@ -41,7 +41,7 @@ abstract class AbstractKotlinPsiBasedTestFrameworkTest : AbstractLineMarkersTest
         runManager.selectedConfiguration = runnerAndConfigurationSettings
         try {
             super.doTest(path) {}
-        } catch (e : AssertionError) {
+        } catch (e : FileComparisonFailedError) {
             checkSuppressions("DISABLED_WITH_GRADLE_CONFIGURATION", e)
         }
         finally {
@@ -49,8 +49,7 @@ abstract class AbstractKotlinPsiBasedTestFrameworkTest : AbstractLineMarkersTest
         }
     }
 
-    private fun checkSuppressions(suppressionName : String, e: AssertionError) {
-        if (e !is FileComparisonData) throw e
+    private fun checkSuppressions(suppressionName : String, e: FileComparisonFailedError) {
         val lines = e.actualStringPresentation.split("\n")
         e.message?.let { msg ->
             val regex = "^${Regex.escapeReplacement(dataFile().name)}: missing \\((\\d+):".toRegex()

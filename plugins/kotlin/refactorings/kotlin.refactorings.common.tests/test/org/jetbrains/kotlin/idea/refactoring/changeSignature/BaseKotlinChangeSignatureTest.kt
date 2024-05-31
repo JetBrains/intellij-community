@@ -8,6 +8,7 @@ import com.intellij.codeInsight.TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
 import com.intellij.lang.LanguageRefactoringSupport
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.*
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.searches.MethodReferencesSearch
@@ -19,7 +20,6 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
@@ -242,8 +242,7 @@ public @interface NotNull {
             val afterFilePath: String = getAfterFilePath(file)
             try {
                 myFixture.checkResultByFile(file, afterFilePath, true)
-            } catch (e: AssertionError) {
-                if (e !is FileComparisonData) throw e
+            } catch (e: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, afterFilePath), psiFile.text)
             }
 

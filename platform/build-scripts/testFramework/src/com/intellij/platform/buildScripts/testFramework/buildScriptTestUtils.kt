@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.rt.execution.junit.FileComparisonData
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt
 import io.opentelemetry.api.trace.Span
@@ -188,7 +188,7 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
           throw e
         }
         catch (e: Throwable) {
-          if (e !is FileComparisonData) {
+          if (e !is FileComparisonFailedError) {
             span.recordException(e)
           }
           span.setStatus(StatusCode.ERROR)
