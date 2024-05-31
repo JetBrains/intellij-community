@@ -139,8 +139,6 @@ com.intellij.ide.impl.DataValidators$Registry
 - a:register(com.intellij.openapi.actionSystem.DataKey,com.intellij.ide.impl.DataValidators$Validator):V
 com.intellij.ide.impl.DataValidators$Validator
 - a:checkValid(java.lang.Object,java.lang.String,java.lang.Object):Z
-com.intellij.ide.impl.FreezingDataContext
-- a:isFrozenDataContext():Z
 f:com.intellij.ide.impl.OpenProjectTask
 - sf:Companion:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:asNewProject():com.intellij.ide.impl.OpenProjectTask
