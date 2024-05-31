@@ -8,13 +8,11 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.injected.editor.VirtualFileWindow
@@ -31,7 +29,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.ScrollType
@@ -80,7 +77,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
@@ -200,7 +196,8 @@ open class FileEditorManagerImpl(
   /**
    * Removes invalid editor and updates "modified" status.
    */
-  private val editorPropertyChangeListener = MyEditorPropertyChangeListener()
+  @JvmField
+  internal val editorPropertyChangeListener: PropertyChangeListener = MyEditorPropertyChangeListener()
 
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
@@ -1119,28 +1116,14 @@ open class FileEditorManagerImpl(
       return composite
     }
 
-    return coroutineScope {
-      // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
-      val providers = serviceAsync<FileEditorProviderManager>().getProvidersAsync(project, file)
-      if (!canOpenFileAsync(file, providers)) {
-        return@coroutineScope FileEditorComposite.EMPTY
-      }
-
-      openFileInEdt(
-        window = window,
-        file = file,
-        options = effectiveOptions,
-        model = flow {
-          fileEditorWithProviderFlow(
-            providers = createBuilders(providers = providers, file = file, project = project, document = null),
-            file = file,
-            state = null,
-          )
-        },
-        isOpenedInBulk = false,
-        isLazy = false,
-      ) ?: FileEditorComposite.EMPTY
-    }
+    return openFileInEdt(
+      window = window,
+      file = file,
+      options = effectiveOptions,
+      model = createEditorCompositeModel(editorPropertyChangeListener = editorPropertyChangeListener, file = file, project = project),
+      isOpenedInBulk = false,
+      isLazy = false,
+    ) ?: FileEditorComposite.EMPTY
   }
 
   protected open suspend fun canOpenFileAsync(file: VirtualFile, providers: List<FileEditorProvider>): Boolean = !providers.isEmpty()
@@ -1227,20 +1210,19 @@ open class FileEditorManagerImpl(
       file = file,
       coroutineScope = createCompositeScope(window, file),
       isLazy = false,
-      model = flow {
-        val newProviders = serviceAsync<FileEditorProviderManager>().getProvidersAsync(project, file).map { provider ->
-          provider to (if (provider is AsyncFileEditorProvider) {
-            provider.createEditorBuilder(project = project, file = file, document = null)
-          }
-          else {
-            null
-          })
-        }
-
-        // todo respect entry
-        fileEditorWithProviderFlow(providers = newProviders, file = file)
-      },
+      // todo respect entry
+      model = createEditorCompositeModel(editorPropertyChangeListener, file, project),
     )
+  }
+
+  // only for remote dev
+  protected fun createCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
+    return flow {
+      EditorCompositeModelManager(editorPropertyChangeListener, project).fileEditorWithProviderFlow(
+        editorsWithProviders = editorsWithProviders,
+        flowCollector = this@flow,
+      )
+    }
   }
 
   protected open fun createComposite(
@@ -1282,14 +1264,6 @@ open class FileEditorManagerImpl(
     }
     job.cancelOnDispose(composite)
     return composite
-  }
-
-  protected fun postProcessFileEditorWithProviderList(editorsWithProviders: List<FileEditorWithProvider>) {
-    for (editorWithProvider in editorsWithProviders) {
-      val editor = editorWithProvider.fileEditor
-      editor.addPropertyChangeListener(editorPropertyChangeListener)
-      editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
-    }
   }
 
   protected fun createCompositeInstance(
@@ -1335,19 +1309,12 @@ open class FileEditorManagerImpl(
   }
 
   internal fun newEditorComposite(file: VirtualFile, editorWindow: EditorWindow): EditorComposite? {
-    if (!canOpenFile(file)) {
-      return null
-    }
-
     val compositeScope = createCompositeScope(editorWindow = editorWindow, file = file)
     val newComposite = createComposite(
       file = file,
       coroutineScope = compositeScope,
       isLazy = false,
-      model = flow {
-        val providers = serviceAsync<FileEditorProviderManager>().getProvidersAsync(project, file)
-        fileEditorWithProviderFlow(providers = providers.map { it to null }, file = file)
-      },
+      model = createEditorCompositeModel(editorPropertyChangeListener, file, project),
     ) ?: return null
     val editorHistoryManager = EditorHistoryManager.getInstance(project)
     for (editorWithProvider in newComposite.allEditorsWithProviders) {
@@ -1359,38 +1326,6 @@ open class FileEditorManagerImpl(
       }
     }
     return newComposite
-  }
-
-  internal suspend fun FlowCollector<EditorCompositeModel>.fileEditorWithProviderFlow(
-    providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
-    file: VirtualFile,
-    state: FileEntry? = null,
-  ) {
-    val editorsWithProviders = providers.mapNotNull { (provider, builder) ->
-      try {
-        val editor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          builder?.build() ?: provider.createEditor(project, file)
-        }
-        if (editor.isValid) {
-          FileEditorWithProvider(editor, provider)
-        }
-        else {
-          val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
-          LOG.error(PluginException("Invalid editor created by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
-          null
-        }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        null
-      }
-    }
-
-    postProcessFileEditorWithProviderList(editorsWithProviders)
-    emit(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = state))
   }
 
   override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {
@@ -1643,9 +1578,9 @@ open class FileEditorManagerImpl(
     if (ApplicationManager.getApplication().isDispatchThread) {
       val splitters = getAllSplitters().toMutableList()
       if (!splitters.isEmpty()) {
-        splitters.sortWith(Comparator { o1, o2 ->
+        splitters.sortWith { o1, o2 ->
           o2.lastFocusGainedTime.compareTo(o1.lastFocusGainedTime)
-        })
+        }
         return splitters[0]
       }
     }
@@ -2401,35 +2336,6 @@ suspend fun waitForFullyCompleted(fileEditorComposite: FileEditorComposite) {
 
 private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEntry?): FileEditorOpenOptions {
   return if (entry != null && entry.isPreview) options.copy(usePreviewTab = false) else options
-}
-
-internal suspend fun createBuilders(
-  providers: List<FileEditorProvider>,
-  file: VirtualFile,
-  project: Project,
-  document: Document?,
-): List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>> {
-  return coroutineScope {
-    providers.map { provider ->
-      async {
-        if (provider is AsyncFileEditorProvider) {
-          try {
-            provider to provider.createEditorBuilder(project = project, file = file, document = document)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-            null
-          }
-        }
-        else {
-          provider to null
-        }
-      }
-    }
-  }.mapNotNull { it.getCompleted() }
 }
 
 internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {

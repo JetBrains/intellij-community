@@ -23,11 +23,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -949,7 +946,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val fileEditorManager = splitters.manager
-    val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
 
     fun weight(item: FileEntry) = if (item.currentInTab) 1 else 0
 
@@ -959,7 +955,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val virtualFileManager = VirtualFileManager.getInstance()
-    // the file is not opened  yet - in this case we have to create editors and select the created EditorComposite
+    // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     var isLazy = false
     for ((index, fileEntry) in sorted) {
       span("opening editor") {
@@ -969,7 +965,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         val composite = openFile(
           file = file,
           fileEntry = fileEntry,
-          fileEditorProviderManager = fileEditorProviderManager,
           fileEditorManager = fileEditorManager,
           windowDeferred = windowDeferred,
           index = index,
@@ -1015,7 +1010,6 @@ private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEn
 private suspend fun openFile(
   file: VirtualFile,
   fileEntry: FileEntry,
-  fileEditorProviderManager: FileEditorProviderManager,
   fileEditorManager: FileEditorManagerImpl,
   windowDeferred: Deferred<EditorWindow>,
   index: Int,
@@ -1041,47 +1035,12 @@ private suspend fun openFile(
     window = windowDeferred.await(),
     file = file,
     options = options,
-    model = flow {
-      coroutineScope {
-        val document = async {
-          val fileDocumentManager = serviceAsync<FileDocumentManager>()
-          readAction {
-            fileDocumentManager.getDocument(file)
-          }
-        }
-
-        val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
-          async(CoroutineName("editor provider resolving")) {
-            val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
-              fileEditorProviderManager.getProvider(it)
-            }
-
-            // if some provider is not found, compute without taking cache in an account
-            if (fileEntry.providers.size == list.size) {
-              list
-            }
-            else {
-              fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
-            }
-          }
-        }
-        else {
-          async(CoroutineName("editor provider computing")) {
-            fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
-          }
-        }
-
-        fileEditorManager.apply {
-          val providerAndBuilders = createBuilders(
-            providers = deferredProviders.await(),
-            file = file,
-            project = fileEditorManager.project,
-            document = document.await(),
-          )
-          fileEditorWithProviderFlow(providers = providerAndBuilders, file = file, state = fileEntry)
-        }
-      }
-    },
+    model = createEditorCompositeModel(
+      editorPropertyChangeListener = fileEditorManager.editorPropertyChangeListener,
+      file = file,
+      project = fileEditorManager.project,
+      fileEntry = fileEntry,
+    ),
     isOpenedInBulk = true,
     isLazy = isLazy,
   )
