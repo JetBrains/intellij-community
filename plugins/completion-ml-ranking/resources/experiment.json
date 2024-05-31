@@ -176,25 +176,32 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 36,
+      "description": "Full Line - Filter simplified",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 22, 24],
+      "includeGroups": [28, 36, 22, 24],
       "shouldLogElementFeatures": false
     },
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 22, 26],
+      "includeGroups": [28, 36, 22, 26],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 22, 24],
+      "includeGroups": [28, 36, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
@@ -224,7 +231,7 @@
     {
       "id": "go",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 24, 33],
+      "includeGroups": [28, 36, 24, 33],
       "shouldLogElementFeatures": true
     },
     {
