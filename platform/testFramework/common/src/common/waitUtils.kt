@@ -32,6 +32,21 @@ suspend fun waitUntil(message: String? = null, timeout: Duration = DEFAULT_TEST_
 }
 
 @TestOnly
+suspend fun waitUntil(message: suspend () -> String, timeout: Duration = DEFAULT_TEST_TIMEOUT, condition: suspend CoroutineScope.() -> Boolean) {
+  try {
+    withTimeout(timeout) {
+      while (!condition()) {
+        delay(DELAY_INTERVAL)
+      }
+    }
+  }
+  catch (e: TimeoutCancellationException) {
+    println(dumpCoroutines())
+    throw AssertionError(message(), e)
+  }
+}
+
+@TestOnly
 suspend fun waitUntilAssertSucceeds(message: String? = null, timeout: Duration = DEFAULT_TEST_TIMEOUT, block: suspend CoroutineScope.() -> Unit) {
   var storedFailure: AssertionError? = null
 
