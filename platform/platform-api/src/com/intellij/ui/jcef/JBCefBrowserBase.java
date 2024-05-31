@@ -184,7 +184,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     CefBrowser cefBrowser = builder.myCefBrowser;
 
     if (cefBrowser == null) {
-      CefDelegate delegate = JBCefApp.getInstance().getDelegate();
+      CefDelegate delegate = getCefDelegate();
       if (delegate != null) {
         cefBrowser = delegate.createBrowser(myCefClient, validateUrl(builder.myUrl));
       }
@@ -553,6 +553,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   static boolean isCefBrowserCreated(@NotNull CefBrowser cefBrowser) {
+    if (getCefDelegate() != null) {
+      return true;
+    }
     if (cefBrowser instanceof CefNativeAdapter)
       return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0; // [tav] todo: this can be thread race prone
 
@@ -903,5 +906,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   private static @NotNull String validateUrl(@Nullable String url) {
     return url != null && !url.isEmpty() ? url : "";
+  }
+
+  private static @Nullable CefDelegate getCefDelegate() {
+    return JBCefApp.getInstance().getDelegate();
   }
 }
