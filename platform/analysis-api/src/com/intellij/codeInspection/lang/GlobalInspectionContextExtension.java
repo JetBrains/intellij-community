@@ -19,6 +19,9 @@ public interface GlobalInspectionContextExtension<T> {
   @NotNull
   Key<T> getID();
 
+  default void performPreInitToolsActivities(@NotNull List<Tools> usedTools,
+                                             @NotNull GlobalInspectionContext context) {}
+
   void performPreRunActivities(@NotNull List<Tools> globalTools,
                                @NotNull List<Tools> localTools,
                                @NotNull GlobalInspectionContext context);
