@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
@@ -497,6 +498,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                     }
 
                     @TestMetadata("stepThroughCoroutineScope.kt")
+                    @IJIgnore(issue = "IDEA-354297")
                     public void testStepThroughCoroutineScope() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepThroughCoroutineScope.kt");
                     }
