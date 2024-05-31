@@ -6,7 +6,6 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
@@ -107,7 +106,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
-    val perfTest = PlatformTestUtil.newPerformanceTest(testName) {
+    val perfTest = PerformanceTestUtil.newPerformanceTest(testName) {
       runWithSpan(tracer, customSpanName) {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }

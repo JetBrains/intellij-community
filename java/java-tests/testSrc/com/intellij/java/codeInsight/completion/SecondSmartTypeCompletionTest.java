@@ -21,7 +21,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -114,7 +114,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testChainingPerformance() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java");
-    PlatformTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         configure();

@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -32,7 +32,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         fixture.editor.caretModel.moveToOffset(pos + 1)
         fixture.checkHighlighting()
 
-        PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
+        PerformanceTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
           fixture.psiManager.dropPsiCaches()
           repeat(4) {
             fixture.type('a')
@@ -60,7 +60,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         val document = PsiDocumentManager.getInstance(project).getDocument(fixture.file)
         disableSlowCompletionElements(fixture.testRootDisposable)
         val repeatSize = 10
-        PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testCompletion") {
+        PerformanceTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testCompletion") {
           fixture.psiManager.dropResolveCaches()
           repeat(repeatSize) {
             val lookupElements = fixture.completeBasic()

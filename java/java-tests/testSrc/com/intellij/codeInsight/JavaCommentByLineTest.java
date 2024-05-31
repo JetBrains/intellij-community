@@ -6,7 +6,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaCommentByLineTest extends CommentByLineTestBase {
@@ -131,7 +131,7 @@ public class JavaCommentByLineTest extends CommentByLineTestBase {
     source.append("}");
     configureFromFileText(getTestName(false) + ".java", source.toString());
     executeAction(IdeActions.ACTION_SELECT_ALL);
-    PlatformTestUtil.newPerformanceTest("Uncommenting large file", CommentByLineTestBase::performAction)
+    PerformanceTestUtil.newPerformanceTest("Uncommenting large file", CommentByLineTestBase::performAction)
       .setup(CommentByLineTestBase::performAction)
       .start();
   }

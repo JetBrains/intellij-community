@@ -4,7 +4,7 @@ package org.intellij.lang.xpath;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.intellij.plugins.xpathView.XPathExpressionGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ public class XPathExpressionGeneratorTest extends TestBase {
   }
 
   public void testManySiblings() {
-    PlatformTestUtil.newPerformanceTest("Many siblings", () -> {
+    PerformanceTestUtil.newPerformanceTest("Many siblings", () -> {
         assertXPath("/stopWord/word", "/stopWord/word[2359]");
       })
       .start();

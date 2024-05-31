@@ -28,6 +28,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
@@ -146,7 +147,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val jrt = JavaVersion.current().feature >= 9
     val base = if (jrt) "jrt://${SystemProperties.getJavaHome()}!/java.desktop/" else "jar://${SystemProperties.getJavaHome()}/lib/rt.jar!/"
     val file = VirtualFileManager.getInstance().findFileByUrl(base + "javax/swing/JTable.class")!!
-    PlatformTestUtil.newPerformanceTest("decompiling JTable.class") { decompiler.getText(file) }.start()
+    PerformanceTestUtil.newPerformanceTest("decompiling JTable.class") { decompiler.getText(file) }.start()
   }
 
   fun testStructureView() {

@@ -5,6 +5,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.testFramework.*
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
@@ -84,7 +85,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
                        SimpleTextRepeater.Item("Done", false, true, 1))
     setTerminalBufferMaxLines(items.sumOf { it.count })
     val session = startBlockTerminalSession(TermSize(200, 100))
-    PlatformTestUtil.newPerformanceTest("$shellPath - large output is read") {
+    PerformanceTestUtil.newPerformanceTest("$shellPath - large output is read") {
       val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
       session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommand(items))
       assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)

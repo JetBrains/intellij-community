@@ -4,7 +4,7 @@ package com.intellij.util.io;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.CollectionFactory;
@@ -334,7 +334,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     };
 
     AtomicInteger count = new AtomicInteger();
-    PlatformTestUtil.newPerformanceTest("put/remove", () -> {
+    PerformanceTestUtil.newPerformanceTest("put/remove", () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
@@ -368,7 +368,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       strings.add(createRandomString());
     }
 
-    PlatformTestUtil.newPerformanceTest("put/remove", () -> {
+    PerformanceTestUtil.newPerformanceTest("put/remove", () -> {
       for (int i = 0; i < 100000; ++i) {
         final String string = strings.get(i);
         myMap.put(string, string);

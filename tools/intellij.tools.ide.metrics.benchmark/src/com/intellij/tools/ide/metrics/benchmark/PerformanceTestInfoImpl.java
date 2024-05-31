@@ -169,7 +169,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
    *
    *     val meterCollector = OpenTelemetryJsonMeterCollector(MetricsSelectionStrategy.SUM) { it.name.contains("custom") }
    *
-   *     PlatformTestUtil.newPerformanceTest("my perf test") {
+   *     PerformanceTestUtil.newPerformanceTest("my perf test") {
    *       counter.incrementAndGet()
    *     }
    *       .withMetricsCollector(meterCollector)

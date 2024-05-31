@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.openapi.project.modules
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
@@ -45,7 +45,7 @@ class GradleModuleDataFinderPerformanceTest : GradleTestCase() {
       initProject(projectInfo)
       openProject("project").useProjectAsync { project ->
         assertProjectStructure(project, projectInfo)
-        PlatformTestUtil.newPerformanceTest("CachedModuleDataFinderPerformanceTest CachedModuleDataFinder#findModuleData($numModules)") {
+        PerformanceTestUtil.newPerformanceTest("CachedModuleDataFinderPerformanceTest CachedModuleDataFinder#findModuleData($numModules)") {
           for (module in project.modules) {
             val moduleData = CachedModuleDataFinder.findModuleData(module)!!
             Assertions.assertEquals(module.name, moduleData.data.internalName)

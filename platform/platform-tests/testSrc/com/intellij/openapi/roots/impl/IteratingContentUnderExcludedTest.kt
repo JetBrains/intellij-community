@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
@@ -175,7 +175,7 @@ class IteratingContentUnderExcludedTest {
     IoTestUtil.assumeSymLinkCreationIsSupported()
     val root = projectModel.baseProjectDir.virtualFileRoot
     generateSymlinkExplosion(VfsUtilCore.virtualToIoFile(root), 17)
-    PlatformTestUtil.newPerformanceTest("traversing non-project roots") { checkIterate(root) }.start()
+    PerformanceTestUtil.newPerformanceTest("traversing non-project roots") { checkIterate(root) }.start()
   }
 
   companion object {

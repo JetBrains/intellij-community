@@ -4,7 +4,7 @@ package org.editorconfig.language.codeinsight
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
@@ -115,7 +115,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   private fun doTestPerf(inspection: KClass<out LocalInspectionTool>) {
     myFixture.enableInspections(inspection.java)
     myFixture.configureByFile("${getTestName(true)}/.editorconfig")
-    PlatformTestUtil.newPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
+    PerformanceTestUtil.newPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
       myFixture.doHighlighting()
     }).attempts(1).start()
   }

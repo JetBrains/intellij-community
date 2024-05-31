@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -79,7 +79,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ThreadingAssertions.assertEventDispatchThread();
 
     try {
-      PlatformTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
+      PerformanceTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job<Void>> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -492,7 +492,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
     });
 
-    PlatformTestUtil.newPerformanceTest("RWLock/unlock", ()-> {
+    PerformanceTestUtil.newPerformanceTest("RWLock/unlock", ()-> {
       ThreadingAssertions.assertEventDispatchThread();
       assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);

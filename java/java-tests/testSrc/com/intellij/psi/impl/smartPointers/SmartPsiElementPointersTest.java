@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.*;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
@@ -682,7 +683,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    WriteAction.run(() -> PlatformTestUtil.newPerformanceTest("smart pointer range update", () -> {
+    WriteAction.run(() -> PerformanceTestUtil.newPerformanceTest("smart pointer range update", () -> {
       for (int i = 0; i < 10000; i++) {
         document.insertString(i * 20 + 100, "x\n");
         assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
@@ -882,7 +883,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
     List<XmlTag> tags = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
     List<SmartPsiElementPointer> pointers = ContainerUtil.map(tags, this::createPointer);
-    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.newPerformanceTest("smart pointer range update after PSI change", () -> {
+    ApplicationManager.getApplication().runWriteAction(() -> PerformanceTestUtil.newPerformanceTest("smart pointer range update after PSI change", () -> {
       for (int i = 0; i < tags.size(); i++) {
         XmlTag tag = tags.get(i);
         SmartPsiElementPointer pointer = pointers.get(i);
@@ -949,7 +950,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       List<SmartPsiFileRange> pointers = new ArrayList<>();
       for (int i = 0; i < text.length() - 1; i++) {
         pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));

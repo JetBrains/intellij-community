@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -2048,7 +2049,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String pattern = loadFile("ReformatAndShortenClassRefPerformance_pattern.java");
     final String replacement = loadFile("ReformatAndShortenClassRefPerformance_replacement.java");
 
-    PlatformTestUtil.newPerformanceTest("SSR Reformat",
+    PerformanceTestUtil.newPerformanceTest("SSR Reformat",
                                         () -> assertEquals("Reformat Performance", loadFile("ReformatPerformance_result.java"),
                                                              replace(source, pattern, replacement, true, true)))
       .startAsSubtest();
@@ -2056,7 +2057,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(true);
 
-    PlatformTestUtil.newPerformanceTest("SSR Shorten Class Reference",
+    PerformanceTestUtil.newPerformanceTest("SSR Shorten Class Reference",
                                         () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
                                                              replace(source, pattern, replacement, true, true)))
       .startAsSubtest();

@@ -43,6 +43,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -1239,7 +1240,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
                     IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
                     "]>\n" +
                     "<rules/>");
-    PlatformTestUtil
+    PerformanceTestUtil
       .newPerformanceTest("highlighting", () -> doHighlighting())
       .setup(() -> getPsiManager().dropPsiCaches())
       .start();

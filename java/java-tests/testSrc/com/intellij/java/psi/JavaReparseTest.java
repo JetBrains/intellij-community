@@ -30,7 +30,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.Language;
@@ -293,7 +293,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     Document document = pdm.getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PlatformTestUtil.newPerformanceTest("deep reparse", () -> {
+      PerformanceTestUtil.newPerformanceTest("deep reparse", () -> {
         document.insertString(document.getTextLength() - suffix.length(), call1);
         pdm.commitDocument(document);
 

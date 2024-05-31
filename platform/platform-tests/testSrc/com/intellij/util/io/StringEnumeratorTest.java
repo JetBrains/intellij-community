@@ -17,7 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.containers.IntObjectCache;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +163,7 @@ public class StringEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.newPerformanceTest("PersistentStringEnumerator.enumerate", () -> {
+    PerformanceTestUtil.newPerformanceTest("PersistentStringEnumerator.enumerate", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();

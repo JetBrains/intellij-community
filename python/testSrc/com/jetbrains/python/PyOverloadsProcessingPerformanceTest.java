@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -141,7 +141,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   private void doPerformanceTestResettingCaches(@NotNull String text, ThrowableRunnable<Throwable> runnable) {
     PsiManager psiManager = myFixture.getPsiManager();
-    PlatformTestUtil.newPerformanceTest(text, runnable)
+    PerformanceTestUtil.newPerformanceTest(text, runnable)
       .setup(() -> {
         psiManager.dropPsiCaches();
         psiManager.dropResolveCaches();

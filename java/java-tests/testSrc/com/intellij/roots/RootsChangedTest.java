@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.JavaModuleTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -407,7 +407,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     VirtualFile xxx = createChildDirectory(temp, dirName);
 
-    PlatformTestUtil.newPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", ()->{
+    PerformanceTestUtil.newPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", ()->{
       for (int i = 0; i < 100; i++) {
         rename(xxx, "yyy");
         rename(xxx, dirName);

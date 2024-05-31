@@ -2,7 +2,7 @@
 package com.intellij.find;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 
 public class FindInEditorPerformanceTest extends AbstractFindInEditorTest {
   public void testEditingWithSearchResultsShown() {
@@ -11,7 +11,7 @@ public class FindInEditorPerformanceTest extends AbstractFindInEditorTest {
     setTextToFind("s");
     assertEquals(9999 + 1 /* cursor highlighting */, getEditor().getMarkupModel().getAllHighlighters().length);
     getEditor().getCaretModel().moveToOffset(0);
-    PlatformTestUtil.newPerformanceTest("typing in editor when a lot of search results are highlighted", () -> {
+    PerformanceTestUtil.newPerformanceTest("typing in editor when a lot of search results are highlighted", () -> {
       for (int i = 0; i < 100; i++) {
         myFixture.type(' ');
       }

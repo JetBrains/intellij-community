@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.psi.*;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -21,7 +21,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     final PsiElement expression =
       JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text.toString(), null);
     final int[] n = {0};
-    PlatformTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
       public void run() {
         n[0] = 0;
@@ -48,7 +48,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     final PsiElement expression =
       JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text.toString(), null);
     final int[] n = {0};
-    PlatformTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
       public void run() {
         n[0] = 0;
