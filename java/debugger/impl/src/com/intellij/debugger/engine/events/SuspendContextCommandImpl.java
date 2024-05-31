@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,9 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     else {
       try {
         if (!suspendContext.isResumed()) {
-          LOG.assertTrue(!suspendContext.myInProgress, "Suspend context is already in progress");
+          if (suspendContext.myInProgress) {
+            LOG.error("Suspend context is already in progress", ThreadDumper.dumpThreadsToString());
+          }
           suspendContext.myInProgress = true;
           contextAction(suspendContext);
         }
