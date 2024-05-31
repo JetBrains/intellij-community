@@ -106,12 +106,13 @@ internal class EditorCompositeModelManager(
   private val project: Project,
 ) {
   suspend fun fileEditorWithProviderFlow(
-    providers: List<Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>,
+    providers: List<Deferred<Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>?>>,
     file: VirtualFile,
     state: FileEntry? = null,
     flowCollector: FlowCollector<EditorCompositeModel>,
   ) {
-    val editorsWithProviders = providers.mapNotNull { (provider, builder) ->
+    val editorsWithProviders = providers.mapNotNull { item ->
+      val (provider, builder) = item.await() ?: return@mapNotNull null
       try {
         val editor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           builder?.build() ?: provider.createEditor(project, file)
@@ -155,31 +156,29 @@ internal class EditorCompositeModelManager(
   }
 }
 
-internal suspend fun createBuilders(
+internal fun CoroutineScope.createBuilders(
   providers: List<FileEditorProvider>,
   file: VirtualFile,
   project: Project,
   document: Document?,
-): List<Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>> {
-  return coroutineScope {
-    providers.map { provider ->
-      async {
-        if (provider is AsyncFileEditorProvider) {
-          try {
-            provider to provider.createEditorBuilder(project = project, file = file, document = document)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-            null
-          }
+): List<Deferred<Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>?>> {
+  return providers.map { provider ->
+    async {
+      if (provider is AsyncFileEditorProvider) {
+        try {
+          provider to provider.createEditorBuilder(project = project, file = file, document = document)
         }
-        else {
-          provider to null
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          null
         }
       }
+      else {
+        provider to null
+      }
     }
-  }.mapNotNull { it.getCompleted() }
+  }
 }
