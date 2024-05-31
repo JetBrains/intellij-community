@@ -175,6 +175,8 @@ function Global:__JetBrainsIntellijGetCompletions([string]$Command, [int]$Cursor
 }
 
 function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
+  # This setting is effective only in the scope of this function.
+  $ErrorActionPreference="Stop"
   $Files = Get-ChildItem -Force -Path $Path | Where { $_ -is [System.IO.FileSystemInfo] }
   $Separator = [System.IO.Path]::DirectorySeparatorChar
   $FileNames = $Files | ForEach-Object { if ($_ -is [System.IO.DirectoryInfo]) { $_.Name + $Separator } else { $_.Name } }
