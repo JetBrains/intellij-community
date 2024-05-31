@@ -349,6 +349,11 @@
       "since": "2024.2"
     },
     {
+      "key": "DisclosureButton.textRightIconGap",
+      "description": "Gap between text and right icon",
+      "since": "2024.2"
+    },
+    {
       "key": "FindPopup.scopesPanelInsets",
       "description": "Inner insets of the scope selection panel in the Find in Files / Replace in Files popups",
       "since": "2023.1.1"
