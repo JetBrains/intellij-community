@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Marked in the browser</title>
+</head>
+<body>
+<div id="content"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+
+  let mdText = `
+    {MD_TEXT}
+  `
+  document.getElementById('content').innerHTML = marked.parse(mdText)
+</script>
+</body>
+</html>

@@ -20,9 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
@@ -48,7 +46,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
@@ -252,7 +249,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun convertToHTML(contentType: String?, description: String): String {
     return withContext(Dispatchers.IO) {
       when (contentType?.split(';')?.firstOrNull()?.trim()) {
-        "text/markdown" -> markdownToHtml(description, ProjectRootManager.getInstance(project).contentRoots.first(), project)
+        "text/markdown" -> markdownToHtml(description)
         "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
         else -> description
       }
@@ -306,8 +303,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private fun markdownToHtml(text: String, homeDir: VirtualFile, project: Project): String {
-    return wrapHtml(MarkdownUtil.generateMarkdownHtml(homeDir, text, project))
+  private fun markdownToHtml(text: String): String {
+    val mdHtml = PyPIPackageRanking::class.java.getResource("/packaging/md.template.html")?.readText() ?: error("Cannot get md template")
+    val quotedText = text.replace("`", "\\`")
+
+    val prepared = mdHtml.replace("{MD_TEXT}", "\n" + quotedText)
+    return prepared
   }
 
   override fun dispose() {
