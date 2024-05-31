@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -79,10 +78,6 @@ object GradleSyncProjectConfigurator {
 
   private suspend fun ExternalSystemTaskId.project(): Project {
     checkCanceled()
-    val project = findProject()
-    if (project == null) {
-      throw AlreadyDisposedException("Project $ideProjectId is closed")
-    }
-    return project
+    return getProject()
   }
 }
