@@ -85,7 +85,9 @@ class EditorTabbedContainer internal constructor(
 
   init {
     val disposable = Disposer.newDisposable()
-    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      Disposer.dispose(disposable)
+    }
 
     editorTabs = EditorTabs(coroutineScope = coroutineScope, parentDisposable = disposable, window = window)
     val project = window.manager.project
@@ -545,7 +547,11 @@ private class EditorTabs(
   coroutineScope: CoroutineScope,
   parentDisposable: Disposable,
   private val window: EditorWindow,
-) : JBEditorTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder, DataProvider {
+) : JBEditorTabs(
+  project = window.manager.project,
+  parentDisposable = parentDisposable,
+  coroutineScope = window.coroutineScope,
+), ComponentWithMnemonics, EditorWindowHolder, DataProvider {
   private val _entryPointActionGroup: DefaultActionGroup
   private var isActive = false
 

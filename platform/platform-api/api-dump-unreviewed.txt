@@ -10920,6 +10920,7 @@ c:com.intellij.ui.tabs.impl.JBEditorTabs
 - sf:Companion:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
 - sf:MARK_MODIFIED_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionManager,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
 - isAlphabeticalMode():Z
@@ -10969,6 +10970,8 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - sf:SIDE_TABS_SIZE_LIMIT_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
+- b:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:addImpl(java.awt.Component,java.lang.Object,I):V
 - addListener(com.intellij.ui.tabs.TabsListener):com.intellij.ui.tabs.JBTabs
 - addListener(com.intellij.ui.tabs.TabsListener,com.intellij.openapi.Disposable):com.intellij.ui.tabs.JBTabs

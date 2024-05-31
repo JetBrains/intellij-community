@@ -51,8 +51,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.currentThreadCoroutineScope
-import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -123,6 +121,7 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<FileEditorManagerImpl>()
@@ -773,7 +772,9 @@ open class FileEditorManagerImpl(
       if (ClientId.isCurrentlyUnderLocalId) {
         openFileSetModificationCount.increment()
         val activeSplitters = getActiveSplitterSync()
-        runBulkTabChangeInEdt(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
+        runBulkTabChangeInEdt(activeSplitters) {
+          activeSplitters.closeFile(file = file, moveFocus = moveFocus)
+        }
       }
       else {
         clientFileEditorManager?.closeFile(file = file, closeAllCopies = false)
@@ -2468,6 +2469,7 @@ internal suspend fun doOnCompositeOpenComplete(
   action(composite.selectedEditorWithProvider.filterNotNull().first().fileEditor)
 }
 
+@Suppress("SSBasedInspection")
 @RequiresEdt
 private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   ThreadingAssertions.assertEventDispatchThread()
@@ -2486,12 +2488,38 @@ private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
     }
   }
   else {
-    val modalJob = currentThreadCoroutineScope().launch {
-      attachAsChildTo(composite.coroutineScope)
+    runBlocking {
+      val mainJob = coroutineContext.job
+      val loopJob = launch {
+        attachAsChildTo(composite.coroutineScope)
 
-      // wait for first not-null selection
-      composite.selectedEditorWithProvider.filterNotNull().first()
+        val queue = IdeEventQueue.getInstance()
+        ThreadingAssertions.assertEventDispatchThread()
+
+        while (true) {
+          //runInterruptible()
+          // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
+          // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
+          // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
+          val event = queue.getNextEvent()
+          queue.dispatchEvent(event)
+          if (composite.coroutineScope.coroutineContext.job.isCompleted) {
+            mainJob.cancel()
+          }
+          yield()
+        }
+      }
+
+      withContext(Dispatchers.Default) {
+        try {
+          // wait for first not-null selection
+          composite.selectedEditorWithProvider.filterNotNull().first()
+        }
+        finally {
+          loopJob.cancel()
+          SwingUtilities.invokeLater(EmptyRunnable.getInstance())
+        }
+      }
     }
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(exitCondition = modalJob::isCompleted)
   }
 }

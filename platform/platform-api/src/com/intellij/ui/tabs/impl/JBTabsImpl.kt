@@ -60,6 +60,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.lazyUiDisposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -90,9 +92,10 @@ private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @DirtyUI
-open class JBTabsImpl(
+open class JBTabsImpl @JvmOverloads constructor(
   private var project: Project?,
   private val parentDisposable: Disposable,
+  coroutineScope: CoroutineScope? = null,
 ) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, EdtCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
@@ -168,6 +171,7 @@ open class JBTabsImpl(
   val infoToToolbar: MutableMap<TabInfo, Toolbar> = HashMap()
 
   val moreToolbar: ActionToolbar?
+
   @JvmField
   internal var entryPointToolbar: ActionToolbar? = null
   val titleWrapper: NonOpaquePanel = NonOpaquePanel()
@@ -199,6 +203,7 @@ open class JBTabsImpl(
 
   // it's an invisible splitter intended for changing the size of tab zone
   private val splitter = TabSideSplitter(this)
+
   @JvmField
   internal var effectiveLayout: TabLayout? = null
   var lastLayoutPass: LayoutPassInfo? = null
@@ -330,7 +335,14 @@ open class JBTabsImpl(
       add(entryPointToolbar!!.component)
     }
     add(titleWrapper)
-    Disposer.register(parentDisposable) { setTitleProducer(null) }
+    if (coroutineScope == null) {
+      Disposer.register(parentDisposable) { setTitleProducer(null) }
+    }
+    else {
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        setTitleProducer(null)
+      }
+    }
 
     // This scroll pane won't be shown on screen, it is needed only to handle scrolling events and properly update a scrolling model
     val fakeScrollPane = JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS)
@@ -358,7 +370,7 @@ open class JBTabsImpl(
       val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(), modifiers, event.x, event.y)
       MouseEventAdapter.redispatch(e, fakeScrollPane)
     }
-    addMouseMotionAwtListener(parentDisposable)
+    addMouseMotionAwtListener(parentDisposable, coroutineScope)
     isFocusTraversalPolicyProvider = true
     focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
       override fun getDefaultComponent(aContainer: Container): Component? = getToFocus()
@@ -375,9 +387,19 @@ open class JBTabsImpl(
       Disposer.register(parentDisposable, tabActionsAutoHideListenerDisposable)
       gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
       glassPane = gp
-      StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK, parentDisposable) {
+
+      val listener = { _: AWTEvent? ->
         if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
           processFocusChange()
+        }
+      }
+      if (coroutineScope == null) {
+        StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK, parentDisposable, listener)
+      }
+      else {
+        Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
+        coroutineScope.coroutineContext.job.invokeOnCompletion {
+          Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
         }
       }
       dragHelper = createDragHelper(child, parentDisposable)
@@ -415,9 +437,9 @@ open class JBTabsImpl(
 
   internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
-  private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
-    StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable) { event ->
-      val tabRectangle = lastLayoutPass?.headerRectangle ?: return@addAwtListener
+  private fun addMouseMotionAwtListener(parentDisposable: Disposable, coroutineScope: CoroutineScope?) {
+    val listener = fun(event: AWTEvent) {
+      val tabRectangle = lastLayoutPass?.headerRectangle ?: return
       event as MouseEvent
       val point = event.point
       SwingUtilities.convertPointToScreen(point, event.component)
@@ -428,13 +450,23 @@ open class JBTabsImpl(
       rectangle.location = p
       val inside = rectangle.contains(point)
       if (inside == isMouseInsideTabsArea) {
-        return@addAwtListener
+        return
       }
 
       isMouseInsideTabsArea = inside
       relayoutAlarm.cancelAllRequests()
       if (!inside) {
         setRecentlyActive()
+      }
+    }
+
+    if (coroutineScope == null) {
+      StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable, listener)
+    }
+    else {
+      Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
       }
     }
   }
@@ -1269,7 +1301,7 @@ open class JBTabsImpl(
   }
 
   private fun updateAll(forcedRelayout: Boolean) {
-    val toSelect = selectedInfo
+    val toSelect = getSelectedInfo()
     setSelectedInfo(toSelect)
     updateContainer(forcedRelayout, false)
     removeDeferred()
@@ -1293,7 +1325,7 @@ open class JBTabsImpl(
     return doSetSelected(info = info, requestFocus = requestFocus, requestFocusInWindow = false)
   }
 
-  private fun  doSetSelected(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
+  private fun doSetSelected(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
     if (!isEnabled) {
       return ActionCallback.REJECTED
     }
@@ -2254,7 +2286,7 @@ open class JBTabsImpl(
   }
 
   override fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?) {
-    doRemoveTab(info, forcedSelectionTransfer, false)
+    doRemoveTab(info = info, forcedSelectionTransfer = forcedSelectionTransfer, isDropTarget = false)
   }
 
   @RequiresEdt
@@ -2262,14 +2294,19 @@ open class JBTabsImpl(
     if (removeNotifyInProgress) {
       LOG.warn(IllegalStateException("removeNotify in progress"))
     }
-    if (popupInfo == info) popupInfo = null
-    if (!isDropTarget) {
-      if (info == null || !tabs.contains(info)) return ActionCallback.DONE
+
+    if (popupInfo == info) {
+      popupInfo = null
     }
+
+    if (!isDropTarget && (info == null || !tabs.contains(info))) {
+      return ActionCallback.DONE
+    }
+
     if (isDropTarget && lastLayoutPass != null) {
       lastLayoutPass!!.myVisibleInfos.remove(info)
     }
-    val result = ActionCallback()
+
     val toSelect = if (forcedSelectionTransfer == null) {
       getToSelectOnRemoveOf(info!!)
     }
@@ -2277,19 +2314,25 @@ open class JBTabsImpl(
       assert(visibleInfos.contains(forcedSelectionTransfer)) { "Cannot find tab for selection transfer, tab=$forcedSelectionTransfer" }
       forcedSelectionTransfer
     }
-    if (toSelect != null) {
+
+    val result = ActionCallback()
+    if (toSelect == null) {
+      processRemove(tab = info!!, forcedNow = true, updateSelection = true)
+      removeDeferred().notifyWhenDone(result)
+    }
+    else {
       val clearSelection = info == selectedInfo
       val transferFocus = isFocused(info!!)
-      processRemove(info, false)
+      processRemove(tab = info, forcedNow = false, updateSelection = false)
       if (clearSelection) {
         setSelectedInfo(info)
       }
-      doSetSelected(toSelect, transferFocus, true).doWhenProcessed { removeDeferred().notifyWhenDone(result) }
+      doSetSelected(info = toSelect, requestFocus = transferFocus, requestFocusInWindow = true)
+        .doWhenProcessed {
+          removeDeferred().notifyWhenDone(result)
+        }
     }
-    else {
-      processRemove(info!!, true)
-      removeDeferred().notifyWhenDone(result)
-    }
+
     if (visibleInfos.isEmpty()) {
       removeDeferredNow()
     }
@@ -2322,7 +2365,7 @@ open class JBTabsImpl(
     return ourWindow != null && !ourWindow.isFocused && ancestorChecker.test(ourWindow.mostRecentFocusOwner)
   }
 
-  private fun processRemove(tab: TabInfo, forcedNow: Boolean) {
+  private fun processRemove(tab: TabInfo, forcedNow: Boolean, updateSelection: Boolean) {
     val tabLabel = tab.tabLabel
     tabLabel?.let { remove(it) }
     infoToForeToolbar.get(tab)?.let { remove(it) }
@@ -2345,7 +2388,16 @@ open class JBTabsImpl(
       tabLabelAtMouse = null
     }
     resetTabsCache()
-    updateAll(false)
+
+    if (updateSelection) {
+      setSelectedInfo(null)
+    }
+
+    updateContainer(forced = false, layoutNow = false)
+    removeDeferred()
+    updateListeners()
+    updateTabActions(validateNow = false)
+    updateEnabling()
   }
 
   override fun findInfo(component: Component): TabInfo? = tabs.firstOrNull { it.component === component }

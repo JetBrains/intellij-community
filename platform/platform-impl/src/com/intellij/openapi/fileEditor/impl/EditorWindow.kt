@@ -202,7 +202,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     coroutineScope.launch {
       _currentCompositeFlow.collect { composite ->
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.EDT) {
           // select a composite in a tabbed pane and then focus on a composite if needed
           tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
             tabbedPane.tabs.select(it, false)
@@ -592,7 +592,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
   }
 
-  fun dispose() {
+  internal fun dispose() {
     coroutineScope.cancel()
     owner.removeWindow(this)
   }
@@ -647,6 +647,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         else {
           component.revalidate()
         }
+
+        if (tabbedPane.tabs.selectedInfo == null) {
+          // selection event is not fired
+          _currentCompositeFlow.value = null
+        }
       }
       finally {
         val openedTs = file.getUserData(README_OPENED_ON_START_TS)
@@ -656,7 +661,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
           file.removeUserData(README_OPENED_ON_START_TS)
         }
 
-        fileEditorManager.removeSelectionRecord(file, this)
+        fileEditorManager.removeSelectionRecord(file = file, window = this)
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
         fileEditorManager.notifyPublisher {
           val project = fileEditorManager.project
@@ -851,7 +856,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       sibling.dispose()
     }
 
-    swapComponents(parent, toAdd = tabbedPane.component, toRemove = splitter)
+    swapComponents(parent = parent, toAdd = tabbedPane.component, toRemove = splitter)
     parent.revalidate()
 
     if (compositeToSelect != null) {

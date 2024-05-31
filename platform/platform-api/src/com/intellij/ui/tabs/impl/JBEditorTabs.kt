@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.JBEditorTabsBase
 import com.intellij.ui.tabs.JBTabsPresentation
+import kotlinx.coroutines.CoroutineScope
 
 open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
   companion object {
@@ -26,6 +27,14 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
   }
 
   constructor(project: Project?, parentDisposable: Disposable) : super(project, parentDisposable) {
+    setSupportsCompression(value = true)
+  }
+
+  constructor(
+    project: Project?,
+    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope?,
+  ) : super(project, parentDisposable, coroutineScope) {
     setSupportsCompression(value = true)
   }
 
