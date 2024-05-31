@@ -24,6 +24,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.*
@@ -53,6 +54,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -79,6 +82,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
@@ -90,6 +94,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.toArray
@@ -1363,7 +1368,7 @@ open class FileEditorManagerImpl(
   ) {
     val editorsWithProviders = providers.mapNotNull { (provider, builder) ->
       try {
-        val editor = withContext(Dispatchers.EDT) {
+        val editor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           builder?.build() ?: provider.createEditor(project, file)
         }
         if (editor.isValid) {
@@ -1417,43 +1422,36 @@ open class FileEditorManagerImpl(
       requestFocus = focusEditor,
       openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
     )
-    val result = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
-      openFile(file = file, window = null, options = openOptions).allEditors
-    }
-    else {
-      val context = ClientId.coroutineContext()
-      val composite = runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
-        withContext(context) {
-          openFile(file = file, options = openOptions)
-        }
-      }
-      if (composite is EditorComposite && openOptions.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-        // NOTE: it is a workaround on problem with runWithModalProgressBlocking that does not respect focus requests.
-        // It can be removed when the problem is solved. Original bug: IDEA-327729
-        composite.preferredFocusedComponent?.requestFocusInWindow()
-      }
-      composite.allEditors
+
+    // https://youtrack.jetbrains.com/issue/IDEA-319932
+    // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
+
+    val composite = openFile(file = file, window = null, options = openOptions)
+    //!ApplicationManager.getApplication().isWriteAccessAllowed
+    if (composite is EditorComposite) {
+      // we don't need progress - handled by async editor loader
+      blockingWaitForCompositeFileOpen(composite)
     }
 
-    for (editor in result) {
+    val fileEditors = composite.allEditors
+
+    val currentCompositeForFile = getComposite(file)
+    for (editor in fileEditors) {
       // try to navigate opened editor
-      if (editor is NavigatableFileEditor && getSelectedEditor(effectiveDescriptor.file) === editor) {
-        if (navigateAndSelectEditor(editor, effectiveDescriptor)) {
-          return result to editor
-        }
+      if (editor is NavigatableFileEditor && currentCompositeForFile?.selectedWithProvider?.fileEditor === editor &&
+          navigateAndSelectEditor(editor, effectiveDescriptor)) {
+        return fileEditors to editor
       }
     }
 
-    for (editor in result) {
+    for (editor in fileEditors) {
       // try other editors
-      if (editor is NavigatableFileEditor && getSelectedEditor(effectiveDescriptor.file) !== editor) {
-        if (navigateAndSelectEditor(editor, effectiveDescriptor)) {
-          return result to editor
-        }
+      if (editor is NavigatableFileEditor && currentCompositeForFile?.selectedWithProvider?.fileEditor !== editor &&
+          navigateAndSelectEditor(editor, effectiveDescriptor)) {
+        return fileEditors to editor
       }
     }
-    return result to null
+    return fileEditors to null
   }
 
   private fun navigateAndSelectEditor(editor: NavigatableFileEditor, descriptor: Navigatable): Boolean {
@@ -1472,9 +1470,7 @@ open class FileEditorManagerImpl(
   override fun getProject(): Project = project
 
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    val editorsWithSelected = openEditorImpl(descriptor = descriptor, focusEditor = focusEditor)
-    val fileEditors = editorsWithSelected.first
-    val selectedEditor = editorsWithSelected.second
+    val (fileEditors, selectedEditor) = openEditorImpl(descriptor = descriptor, focusEditor = focusEditor)
     if (fileEditors.isEmpty()) {
       return null
     }
@@ -1937,18 +1933,18 @@ open class FileEditorManagerImpl(
   private inner class MyEditorPropertyChangeListener : PropertyChangeListener {
     @RequiresEdt
     override fun propertyChange(e: PropertyChangeEvent) {
-      if (project.isDisposed) return
+      if (project.isDisposed) {
+        return
+      }
+
       val propertyName = e.propertyName
       if (FileEditor.PROP_MODIFIED == propertyName) {
-        val editor = e.source as FileEditor
-        val composite = getComposite(editor)
-        if (composite != null) {
-          updateFileIcon(composite.file)
+        getComposite(e.source as FileEditor)?.let {
+          updateFileIcon(it.file)
         }
       }
       else if (FileEditor.PROP_VALID == propertyName) {
-        val valid = e.newValue as Boolean
-        if (!valid) {
+        if (e.newValue == false) {
           closeFileEditor(e.source as FileEditor)
         }
       }
@@ -2563,10 +2559,33 @@ internal suspend fun doOnCompositeOpenComplete(
   composite: EditorComposite,
   action: suspend (selectedEditor: FileEditor) -> Unit,
 ) {
-  composite.selectedEditorWithProvider
-    .filterNotNull()
-    .take(1)
-    .collect {
-      action(it.fileEditor)
+  action(composite.selectedEditorWithProvider.filterNotNull().first().fileEditor)
+}
+
+@RequiresEdt
+private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
+  ThreadingAssertions.assertEventDispatchThread()
+
+  if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+    // todo silenceWriteLock instead of executeSuspendingWriteAction
+    (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(
+      composite.project,
+      EditorBundle.message("editor.open.file.progress", composite.file.name),
+    ) {
+      runBlocking {
+        attachAsChildTo(composite.coroutineScope)
+        // wait for first not-null selection
+        composite.selectedEditorWithProvider.filterNotNull().first()
+      }
     }
+  }
+  else {
+    val modalJob = currentThreadCoroutineScope().launch {
+      attachAsChildTo(composite.coroutineScope)
+
+      // wait for first not-null selection
+      composite.selectedEditorWithProvider.filterNotNull().first()
+    }
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(exitCondition = modalJob::isCompleted)
+  }
 }

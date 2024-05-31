@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -131,7 +133,9 @@ open class EditorComposite internal constructor(
     coroutineScope.launch {
       shown.await()
       model.collect {
-        handleModel(it)
+        withContext(ModalityState.any().asContextElement()) {
+          handleModel(it)
+        }
       }
     }
   }
@@ -653,7 +657,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        composite.coroutineScope.launch(Dispatchers.EDT) {
+        composite.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (!hasFocus()) {
             return@launch
           }

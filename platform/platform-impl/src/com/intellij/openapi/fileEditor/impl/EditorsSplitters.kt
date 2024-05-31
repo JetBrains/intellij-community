@@ -28,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -145,12 +144,12 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  val currentFile: VirtualFile?
+  internal val currentFile: VirtualFile?
     get() = currentCompositeFlow.value?.file
 
   private fun showEmptyText(): Boolean = (currentWindow?.files() ?: emptySequence()).none()
 
-  val openFileList: List<VirtualFile>
+  internal val openFileList: List<VirtualFile>
     get() {
       return windows.asSequence()
         .flatMap { window -> window.composites().map { it.file } }
@@ -960,38 +959,32 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val virtualFileManager = VirtualFileManager.getInstance()
-    // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
+    // the file is not opened  yet - in this case we have to create editors and select the created EditorComposite
     var isLazy = false
     for ((index, fileEntry) in sorted) {
       span("opening editor") {
         val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
-        file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
-        try {
-          // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
-          // This enables painting the first editor as soon as it's ready (IJPL-687).
-          val composite = openFile(
-            file = file,
-            fileEntry = fileEntry,
-            fileEditorProviderManager = fileEditorProviderManager,
-            fileEditorManager = fileEditorManager,
-            windowDeferred = windowDeferred,
-            index = index,
-            isLazy = isLazy,
-          )
+        // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
+        // This enables painting the first editor as soon as it's ready (IJPL-687).
+        val composite = openFile(
+          file = file,
+          fileEntry = fileEntry,
+          fileEditorProviderManager = fileEditorProviderManager,
+          fileEditorManager = fileEditorManager,
+          windowDeferred = windowDeferred,
+          index = index,
+          isLazy = isLazy,
+        )
 
-          if (requestFocus && fileEntry.currentInTab && composite != null) {
-            composite.coroutineScope.launch {
-              // we can select only when a component is added - wait for the window
-              windowDeferred.join()
-              focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)
-            }
+        if (requestFocus && fileEntry.currentInTab && composite != null) {
+          composite.coroutineScope.launch {
+            // we can select only when a component is added - wait for the window
+            windowDeferred.join()
+            focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)
           }
+        }
 
-          isLazy = isLazyComposite
-        }
-        finally {
-          file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
-        }
+        isLazy = isLazyComposite
       }
     }
 
