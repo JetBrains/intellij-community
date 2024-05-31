@@ -1,8 +1,5 @@
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.AndroidStudioProperties
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -20,7 +17,7 @@ object TestModuleTarget {
       val home = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
       val properties = AndroidStudioProperties(home.communityRoot)
       val context = BuildContextImpl.createContext(home.communityRoot, properties)
-      val tasks = BuildTasks.create(context)
+      val tasks = CompilationTasks.create(context)
 
       val moduleName = System.getProperty("idea.test.module")
       val outDir = context.paths.artifactDir.resolve("module-tests")

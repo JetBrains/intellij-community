@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+import org.jetbrains.intellij.build.impl.PatchOverwriteMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
@@ -86,9 +87,13 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     // Software Bill of Materials (SBOM).
     sbomOptions.creator = "Organization: Google LLC"
-    sbomOptions.copyrightText = "Copyright 2023 Google LLC and contributors"
-    sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense(name = "Google", text = "NOASSERTION", url = null)
     sbomOptions.documentNamespace = "https://spdx.google/AndroidStudio-0794716c-a8f8-40ad-9bd0-90ce3dbaaf2a"
+    sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense(
+      name = "Google",
+      text = "NOASSERTION",
+      copyrightText = "Copyright 2023 Google LLC and contributors",
+      url = null,
+    )
 
     allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = BiPredicate { _, _ -> true }
@@ -107,11 +112,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-Dintellij.custom.startup.error.reporting.url=https://issuetracker.google.com/issues/new?component=192708",
     )
 
-    embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
     productLayout.productImplementationModules = listOf(
       // From IdeaCommunityProperties:
-      "intellij.platform.main",
-      "intellij.idea.customization.base",
+      "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
     productLayout.addPlatformSpec { layout, _ ->
@@ -148,7 +151,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         val moduleOutDir = context.getModuleOutputDir(context.findApplicationInfoModule())
         val original = Files.readString(moduleOutDir.resolve(appInfoPath))
         val patched = original.replace(Regex("<build (.*?)/>"), "<build $1 apiVersion=\"$apiVersion\"/>")
-        patcher.patchModuleOutput(applicationInfoModule, appInfoPath, patched, overwrite = true)
+        patcher.patchModuleOutput(applicationInfoModule, appInfoPath, patched, PatchOverwriteMode.TRUE)
       }
     }
 

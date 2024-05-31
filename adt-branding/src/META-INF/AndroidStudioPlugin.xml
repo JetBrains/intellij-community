@@ -4,9 +4,16 @@ If a plugin wants to perform Android-Studio-specific customizations, then it can
 optional dependency on the module 'com.intellij.modules.androidstudio' declared below.
 -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/JavaIdePlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.androidstudio"/>
-  <module value="com.intellij.modules.java-capable"/>
-  <module value="com.intellij.modules.python-core-capable"/>
   <module value="com.intellij.modules.cidr.ide"/>
+  <!-- The following content is loosely based on IdeaPlugin.xml. -->
+  <xi:include href="/META-INF/JavaIdePlugin.xml"/>
+  <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
+  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
+  <content>
+    <module name="intellij.platform.coverage"/>
+    <module name="intellij.platform.coverage.agent"/>
+  </content>
+  <xi:include href="/META-INF/common-ide-modules.xml"/>
 </idea-plugin>
