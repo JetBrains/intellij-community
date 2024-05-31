@@ -18,7 +18,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/networknt/json-schema-validator/blob/master/LICENSE"),
     LibraryLicense(name = "aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/")
       .apache("https://github.com/FasterXML/aalto-xml/blob/master/LICENSE"),
-    androidDependency(name = "Android Studio Platform", libraryName = "studio-platform"),
+    androidDependency(name = "AAPT Protos", libraryName = "aapt-proto"),
     LibraryLicense(name = "AhoCorasickDoubleArrayTrie", libraryName = "com.hankcs:aho-corasick-double-array-trie",
                    url = "https://github.com/hankcs/AhoCorasickDoubleArrayTrie")
       .apache("https://github.com/hankcs/AhoCorasickDoubleArrayTrie/blob/master/README.md#license")
@@ -31,8 +31,9 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("Amazon Ion Team")
       .copyrightText("Copyright 2007-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved."),
 
+    androidDependency(name = "Android Baksmali", libraryName = "google-baksmali"),
+
     // for android-core-proto module library in intellij.android.core
-    androidDependency(name = "Android Ddm libapp-processes-proto", libraryName = "libapp-processes-proto"),
     androidDependency(name = "Android DEX library", libraryName = "google-dexlib2"),
     androidDependency(name = "Android Gradle model", version = "0.4-SNAPSHOT", libraryName = null)
       .copy(
@@ -43,10 +44,15 @@ object CommunityLibraryLicenses {
       .copy(url = "https://source.android.com/", libraryName = "instantapps-api"),
     LibraryLicense(name = "Android Jimfs library", libraryName = "jimfs", url = "https://github.com/google/jimfs")
       .apache("https://github.com/google/jimfs/blob/master/LICENSE"),
+    androidDependency(name = "Android Layout Library", libraryName = "layoutlib"),
     LibraryLicense(name = "Android libwebp library", libraryName = "libwebp.jar",
                    url = "https://github.com/webmproject/libwebp",
                    version = LibraryLicense.CUSTOM_REVISION).newBsd("https://github.com/webmproject/libwebp/blob/main/COPYING"),
-    androidDependency(name = "AndroidX Test Library", libraryName = "utp-core-proto-jarjar"),
+    androidDependency(name = "Android SDK Common", libraryName = "android.tools.sdk.common"),
+    androidDependency(name = "Android Studio Platform", libraryName = "studio-platform"),
+    LibraryLicense(name = "ANTLR 4.9 Runtime", libraryName = "antlr4-runtime-4.9",
+                   url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html")
+      .suppliedByPersons("Terence Parr"),
     LibraryLicense(name = "ap-validation", libraryName = "ap-validation",
                    url = "https://github.com/JetBrains/ap-validation").apache(
       "https://github.com/JetBrains/ap-validation/blob/master/LICENSE"),
