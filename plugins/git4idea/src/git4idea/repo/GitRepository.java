@@ -117,4 +117,7 @@ public interface GitRepository extends Repository {
 
   @NotNull
   CoroutineScope getCoroutineScope();
+
+  @NotNull
+  GitTagHolder getTagHolder();
 }

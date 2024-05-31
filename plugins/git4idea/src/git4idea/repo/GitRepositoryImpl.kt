@@ -46,6 +46,7 @@ class GitRepositoryImpl private constructor(
   private val stagingAreaHolder: GitStagingAreaHolder
   private val untrackedFilesHolder: GitUntrackedFilesHolder
   private val ignoredRepositoryFilesHolder: GitRepositoryIgnoredFilesHolder
+  private val tagHolder: GitTagHolder
 
   @Volatile
   private var repoInfo: GitRepoInfo
@@ -66,8 +67,9 @@ class GitRepositoryImpl private constructor(
     Disposer.register(this, untrackedFilesHolder)
 
     ignoredRepositoryFilesHolder = GitRepositoryIgnoredFilesHolder(this)
-
+    tagHolder = GitTagHolder(this)
     repoInfo = readRepoInfo()
+    tagHolder.updateEnabled()
   }
 
   @Deprecated("Deprecated in Java")
@@ -89,6 +91,14 @@ class GitRepositoryImpl private constructor(
 
   override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
     return ignoredRepositoryFilesHolder
+  }
+
+  override fun getTagHolder(): GitTagHolder {
+    return tagHolder
+  }
+
+  override fun getCoroutineScope(): CoroutineScope {
+    return coroutineScope
   }
 
   override fun getInfo(): GitRepoInfo {
@@ -148,9 +158,6 @@ class GitRepositoryImpl private constructor(
     return state != Repository.State.DETACHED && state != Repository.State.REBASING
   }
 
-  override fun getCoroutineScope(): CoroutineScope {
-    return coroutineScope
-  }
 
   override fun update() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
