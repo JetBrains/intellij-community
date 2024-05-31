@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -138,7 +139,7 @@ sealed class GithubApiRequestExecutor {
         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
       }
         .connectTimeout(githubSettings.connectionTimeout)
-        .userAgent("Intellij IDEA Github Plugin")
+        .userAgent(HttpClientUtil.getUserAgentValue(PLUGIN_USER_AGENT_NAME))
         .throwStatusCodeException(false)
         .forceHttps(false)
         .accept(request.acceptMimeType)
@@ -239,6 +240,7 @@ sealed class GithubApiRequestExecutor {
   }
 
   companion object {
+    private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitHub-Plugin"
     private val LOG = logger<GithubApiRequestExecutor>()
 
     private fun isAuthorizedUrl(serverPath: GithubServerPath, url: URL): Boolean {
