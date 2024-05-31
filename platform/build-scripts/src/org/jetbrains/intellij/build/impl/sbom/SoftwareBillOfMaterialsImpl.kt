@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
 import com.intellij.util.io.DigestUtil.updateContentHash
@@ -67,7 +68,8 @@ internal class SoftwareBillOfMaterialsImpl(
   private val distributionFiles: List<DistributionFileEntry>
 ) : SoftwareBillOfMaterials {
   private companion object {
-    val JETBRAINS_GITHUB_ORGANIZATIONS = setOf("JetBrains", "Kotlin")
+    val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf("JetBrains", "Kotlin")
+    val STRICT_MODE: Boolean = SystemProperties.getBooleanProperty("intellij.build.sbom.strictMode", false)
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
@@ -621,14 +623,37 @@ internal class SoftwareBillOfMaterialsImpl(
       ?.takeIf { it.isNotBlank() }
       ?.let { "Person: $it" }
 
-    val supplier: String? = library.supplier ?: organizations ?: developers
+    val supplier: String? by lazy {
+      val supplierFromPomXml = organizations ?: developers
+      check(!STRICT_MODE || supplierFromPomXml == null || library.supplier == null) {
+        "Library '${library.name ?: library.libraryName}' ($coordinates): the explicitly specified supplier '${library.supplier}' is excessive " +
+        "because the library already has the supplier '$supplierFromPomXml' specified in the pom.xml"
+      }
+      supplierFromPomXml ?: library.supplier
+    }
 
     val copyrightText: String? by lazy {
-      library.copyrightText ?: when {
+      check(!isSupplierJetBrains || library.copyrightText == null) {
+        "Library '${library.name ?: library.libraryName}' ($coordinates): the explicitly specified copyrightText '${library.copyrightText}' is excessive " +
+        "because the library is supplied by JetBrains and the copyrightText '${jetBrainsOwnLicense.copyrightText}' " +
+        "will be used automatically"
+      }
+      val inferredCopyrightText = if (pomXmlModel?.inceptionYear != null && supplier != null) {
+        "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
+          ?.removePrefix("Organization: ")
+          ?.removePrefix("Person: ")
+      }
+      else {
+        null
+      }
+      check(!STRICT_MODE || inferredCopyrightText == null || library.copyrightText == null) {
+        "Library '$coordinates': the explicitly specified copyrightText '${library.copyrightText}' is excessive " +
+        "because the library already has the copyrightText '$inferredCopyrightText' inferred from the pom.xml"
+      }
+      when {
         isSupplierJetBrains -> jetBrainsOwnLicense.copyrightText
-        pomXmlModel?.inceptionYear != null && supplier != null -> "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
-          .removePrefix("Organization: ")
-          .removePrefix("Person: ")
+        inferredCopyrightText != null -> inferredCopyrightText
+        library.copyrightText != null -> library.copyrightText
         isSupplierApache -> "Copyright (C) ${Suppliers.APACHE}"
         else -> null
       }

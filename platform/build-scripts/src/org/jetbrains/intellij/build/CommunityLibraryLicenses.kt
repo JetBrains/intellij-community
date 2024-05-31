@@ -29,7 +29,8 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Am Instrument Data proto", libraryName = "libam-instrumentation-data-proto"),
     LibraryLicense(name = "Amazon Ion Java", libraryName = "ion", url = "https://github.com/amazon-ion/ion-java")
       .apache("https://github.com/amazon-ion/ion-java/blob/master/LICENSE")
-      .suppliedByOrganizations("Amazon Ion Team"),
+      .suppliedByOrganizations("Amazon Ion Team")
+      .copyrightText("Copyright 2007-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved."),
     androidDependency("android-test-plugin-host-device-info-proto"),
     androidDependency(name = "android-test-plugin-host-retention-proto",
                       libraryName = "libstudio.android-test-plugin-host-retention-proto"),
@@ -183,7 +184,8 @@ object CommunityLibraryLicenses {
         "Daniel Rall", "Robert Burrell Donkin", "James Carman", "Benedikt Ritter", "Rob Tompkins", "Stephen Colebourne",
         "Henri Yandell", "Steven Caswell", "Gary D. Gregory", "Fredrik Westermarck", "Niall Pemberton", "Matt Benson", "Joerg Schaible",
         "Oliver Heger", "Paul Benedict", "Duncan Jones", "Loic Guibert"
-      ),
+      )
+      .copyrightText("Copyright © 2001-2023 The Apache Software Foundation. All Rights Reserved."),
     LibraryLicense(name = "Apache Commons Logging", libraryName = "commons-logging",
                    url = "https://commons.apache.org/proper/commons-logging/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-logging.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
@@ -275,7 +277,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/twxs/vs.language.cmake")
       .mit("https://github.com/twxs/vs.language.cmake/blob/master/LICENSE"),
     LibraryLicense(name = "Command Line Interface Parser for Java", libraryName = "cli-parser",
-                   url = "https://code.google.com/p/cli-parser/").apache(),
+                   url = "https://code.google.com/p/cli-parser/").apache()
+      .copyrightText("Copyright 2012 Sam Pullara"),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
                    url = "https://github.com/javaee/javax.annotation",
                    license = "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl = "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
@@ -1133,8 +1136,8 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/unitsofmeasurement/uom-lib/blob/master/LICENSE")
       .suppliedByPersons("Jean-Marie Dautelle", "Werner Keil"),
     LibraryLicense(libraryName = "Velocity", url = "https://velocity.apache.org/")
-      .apache("https://gitbox.apache.org/repos/asf?p=velocity-engine.git;a=blob_plain;f=LICENSE;hb=HEAD")
-      .suppliedByOrganizations("The Apache Software Foundation"),
+      .suppliedByOrganizations(Suppliers.APACHE)
+      .apache("https://gitbox.apache.org/repos/asf?p=velocity-engine.git;a=blob_plain;f=LICENSE;hb=HEAD"),
     LibraryLicense(name = "Vim Script language support for Atom", attachedTo = "intellij.textmate", version = "1.2.1",
                    url = "https://github.com/AlexPl292/language-viml")
       .mit("https://github.com/AlexPl292/language-viml/blob/master/LICENSE.txt"),
