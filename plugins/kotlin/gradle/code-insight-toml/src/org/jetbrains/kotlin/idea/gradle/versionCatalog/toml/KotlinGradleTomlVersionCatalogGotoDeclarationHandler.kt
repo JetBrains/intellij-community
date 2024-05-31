@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog
+package org.jetbrains.kotlin.idea.gradle.versionCatalog.toml
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.editor.Editor
@@ -22,10 +22,9 @@ import org.jetbrains.uast.tryResolve
  *
  * @see [org.jetbrains.plugins.gradle.service.resolve.static.SyntheticVersionCatalogAccessor]
  */
-class KotlinGradleVersionCatalogGotoDeclarationHandler : GotoDeclarationHandler {
+class KotlinGradleTomlVersionCatalogGotoDeclarationHandler : GotoDeclarationHandler {
 
     override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
-        if (isTomlPluginDisabled()) return null
         if (sourceElement !is LeafPsiElement) return null
         if (!Registry.`is`(CommonGradleProjectResolverExtension.GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
             return null

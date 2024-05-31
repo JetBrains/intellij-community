@@ -21,11 +21,6 @@
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeABICompatibilityChecker"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeRunConfigurationProducer"/>
 
-    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinGradleVersionCatalogGotoDeclarationHandler"/>
-    <referencesSearch implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinGradleVersionCatalogReferencesSearcher"/>
-    <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtDotQualifiedExpression"
-                             implementationClass="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinDotQualifiedExpressionManipulator"/>
-
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinConfiguratorExternalSystemSyncListener"/>
 
     <registryKey

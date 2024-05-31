@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.gradle.versionCatalog.toml
 
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.runReadAction
@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 
-class KotlinGradleVersionCatalogReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
+class KotlinGradleTomlVersionCatalogReferencesSearcher :
+    QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
     override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
-        if (isTomlPluginDisabled()) return
         val element = queryParameters.elementToSearch
         if (element !is TomlKeySegment) return
         val (tomlKeyValue, name) = runReadAction {
@@ -40,7 +40,7 @@ class KotlinGradleVersionCatalogReferencesSearcher : QueryExecutorBase<PsiRefere
             if (element !is KtDotQualifiedExpression || element.hasWrappingVersionCatalogExpression()) {
                 return true
             }
-            val handler = KotlinGradleVersionCatalogGotoDeclarationHandler()
+            val handler = KotlinGradleTomlVersionCatalogGotoDeclarationHandler()
             // The handler doesn't work with KtDotQualifiedExpression directly, it expects its grandchild (LeafPsiElement)
             val grandChild = element.lastChild?.lastChild as? LeafPsiElement ?: return true
             val foundTargets = handler.getGotoDeclarationTargets(grandChild, 0, null)

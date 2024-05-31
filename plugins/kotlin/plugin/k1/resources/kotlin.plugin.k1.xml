@@ -51,6 +51,7 @@
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.gradle.code-insight-groovy"/>
+    <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.onboarding"/>

@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog
+package org.jetbrains.kotlin.idea.gradle.versionCatalog.toml
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
@@ -12,8 +10,3 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 internal fun KtDotQualifiedExpression.hasWrappingVersionCatalogExpression() =
     parent is KtDotQualifiedExpression
         && parent.lastChild is KtNameReferenceExpression // this is false if parent expression ends with `.get()`
-
-internal fun isTomlPluginDisabled(): Boolean {
-    val pluginId = PluginId.findId("org.toml.lang") ?: return true
-    return PluginManagerCore.isDisabled(pluginId)
-}
