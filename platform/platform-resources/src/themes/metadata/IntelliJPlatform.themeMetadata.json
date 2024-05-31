@@ -324,6 +324,11 @@
       "since": "2022.2"
     },
     {
+      "key": "DisclosureButton.arc",
+      "description": "Arc of disclosure button",
+      "since": "2024.2"
+    },
+    {
       "key": "DisclosureButton.defaultBackground",
       "description": "Background of disclosure button",
       "since": "2024.2"

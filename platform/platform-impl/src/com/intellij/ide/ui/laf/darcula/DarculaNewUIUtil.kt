@@ -15,7 +15,7 @@ object DarculaNewUIUtil {
    * Paints rounded border for a focusable component. Non focused border rect is inside [rect], focused/outlined border can come outside
    */
   fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean,
-                           bw: Int = DarculaUIUtil.BW.get()) {
+                           bw: Int = DarculaUIUtil.BW.get(), arc: Float = DarculaUIUtil.COMPONENT_ARC.float) {
     val g2 = g.create() as Graphics2D
 
     try {
@@ -24,7 +24,6 @@ object DarculaNewUIUtil {
                           if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
       val lw = DarculaUIUtil.LW.get()
-      val arc = DarculaUIUtil.COMPONENT_ARC.get()
 
       when {
         enabled && outline != null -> {
@@ -76,7 +75,7 @@ object DarculaNewUIUtil {
     }
   }
 
-  fun fillRoundedRectangle(g: Graphics, rect: Rectangle, color: Color) {
+  fun fillRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float = DarculaUIUtil.COMPONENT_ARC.float) {
     if (rect.width <= 0 || rect.height <= 0) {
       return
     }
@@ -88,7 +87,6 @@ object DarculaNewUIUtil {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
-      val arc = DarculaUIUtil.COMPONENT_ARC.float
       val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
       border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
       g2.translate(rect.x, rect.y)
@@ -103,7 +101,7 @@ object DarculaNewUIUtil {
   /**
    * Using DarculaUIUtil.doPaint and similar methods doesn't give good results when line thickness is 1 (right corners too thin)
    */
-  private fun paintRectangle(g: Graphics2D, rect: Rectangle, arc: Int, thick: Int) {
+  private fun paintRectangle(g: Graphics2D, rect: Rectangle, arc: Float, thick: Int) {
     val addToRect = thick - DarculaUIUtil.LW.get()
     if (addToRect > 0) {
       @Suppress("UseDPIAwareInsets")
@@ -112,8 +110,8 @@ object DarculaNewUIUtil {
 
     val w = thick.toFloat()
     val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
-    border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc.toFloat(), arc.toFloat()), false)
-    val innerArc = max(arc.toFloat() - thick * 2, 0.0f)
+    border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
+    val innerArc = max(arc - thick * 2, 0.0f)
     border.append(RoundRectangle2D.Float(w, w, rect.width - w * 2, rect.height - w * 2, innerArc, innerArc), false)
 
     g.translate(rect.x, rect.y)
