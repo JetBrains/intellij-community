@@ -529,6 +529,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processStepEvent(SuspendContextImpl suspendContext, StepEvent event) {
+    LOG.debug("processStepEvent on " + event);
     final ThreadReference thread = event.thread();
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
@@ -640,6 +641,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        LOG.debug("processLocatableEvent action on " + event);
         final SuspendManager suspendManager = getSuspendManager();
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
