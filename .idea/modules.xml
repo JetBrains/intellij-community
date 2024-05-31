@@ -40,6 +40,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/app-inspection/integration/intellij.android.app-inspection.integration.iml" filepath="$PROJECT_DIR$/android/app-inspection/integration/intellij.android.app-inspection.integration.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/android/artwork/intellij.android.artwork.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/artwork-compose/intellij.android.artwork-compose.iml" filepath="$PROJECT_DIR$/android/artwork-compose/intellij.android.artwork-compose.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/as-driver/agent/intellij.android.as-driver.agent.iml" filepath="$PROJECT_DIR$/android/as-driver/agent/intellij.android.as-driver.agent.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/as-driver/integration/intellij.android.as-driver.integration.iml" filepath="$PROJECT_DIR$/android/as-driver/integration/intellij.android.as-driver.integration.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/as-driver/utils/intellij.android.as-driver.utils.iml" filepath="$PROJECT_DIR$/android/as-driver/utils/intellij.android.as-driver.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/assistant/intellij.android.assistant.iml" filepath="$PROJECT_DIR$/android/assistant/intellij.android.assistant.iml" />
