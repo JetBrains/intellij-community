@@ -5,10 +5,10 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -426,6 +426,26 @@ class J2KNullityInferrer {
         private boolean processParameter(@NotNull PsiParameter parameter, @NotNull PsiReferenceExpression expr, PsiElement parent) {
             if (PsiUtil.isAccessedForWriting(expr)) return true;
 
+            // If Java DFA can determine that the nullability of the reference is definitely not-null,
+            // we are probably inside an "instance of" check (which is like a smart cast for Java DFA).
+            // So we give up trying to guess the nullability of the declaration from this reference.
+            CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expr);
+            if (dataflowResult != null) {
+                DfType dfType = dataflowResult.getDfType(expr);
+                if (dfType instanceof DfReferenceType refType) {
+                    DfaNullability nullability = refType.getNullability();
+                    if (nullability == DfaNullability.NOT_NULL) {
+                        return false;
+                    }
+
+                    //TypeConstraint constraint = refType.getConstraint();
+                    //List<TypeConstraint.Exact> instanceOfTypes = constraint.instanceOfTypes().toList();
+                    //if (!instanceOfTypes.isEmpty()) {
+                    //    return false;
+                    //}
+                }
+            }
+
             if (parent instanceof PsiThrowStatement) {
                 registerNotNullAnnotation(parameter);
                 return true;
@@ -454,8 +474,6 @@ class J2KNullityInferrer {
                     registerNullableAnnotation(parameter);
                     return true;
                 }
-            } else if (parent instanceof PsiInstanceOfExpression) {
-                return true;
             } else if (parent instanceof PsiReferenceExpression ref) {
                 final PsiExpression qualifierExpression = ref.getQualifierExpression();
                 if (qualifierExpression == expr) {

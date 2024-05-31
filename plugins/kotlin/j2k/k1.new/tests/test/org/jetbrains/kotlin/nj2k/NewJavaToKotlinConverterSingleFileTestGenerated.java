@@ -5196,6 +5196,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/IndirectOverride.java");
         }
 
+        @TestMetadata("instanceOf.java")
+        public void testInstanceOf() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/instanceOf.java");
+        }
+
         @TestMetadata("kt-12050.java")
         public void testKt_12050() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/kt-12050.java");
