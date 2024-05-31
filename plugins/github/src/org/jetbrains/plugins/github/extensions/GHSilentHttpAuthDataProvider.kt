@@ -47,7 +47,7 @@ internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvide
 
     suspend fun getAccountDetails(account: GithubAccount, token: String): GithubAuthenticatedUser? =
       try {
-        val executor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+        val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
         service<GHCachingAccountInformationProvider>().loadInformation(executor, account)
       }
       catch (e: Exception) {
