@@ -122,7 +122,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private void notifyByFindBalloon(@Nullable HyperlinkListener listener,
                                    @NotNull MessageType messageType,
                                    @NotNull List<String> lines,
-                                   @NotNull Collection<UnloadedModuleDescription> unloadedModulesBelongingToScope) {
+                                   @NotNull Collection<String> unloadedModulesBelongingToScope) {
     UsageViewContentManager.getInstance(myProject); // in case tool window not registered
 
     Collection<VirtualFile> largeFiles = myProcessPresentation.getLargeFiles();
@@ -163,18 +163,22 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  private Collection<String> getUnloadedModulesBelongingToScope() {
     return ReadAction.compute(() -> {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
       Collection<UnloadedModuleDescription> unloadedInSearchScope =
         ((GlobalSearchScope)mySearchScopeToWarnOfFallingOutOf).getUnloadedModulesBelongingToScope();
       Set<UnloadedModuleDescription> unloadedInUseScope = getUnloadedModulesBelongingToUseScopes();
+      Collection<UnloadedModuleDescription> result;
       if (unloadedInUseScope != null) {
         //when searching for usages of PsiElements return only those unloaded modules which may contain references to the elements, this way
         // we won't show a warning if e.g., 'find usages' for a private method is invoked
-        return ContainerUtil.intersection(unloadedInSearchScope, unloadedInUseScope);
+        result = ContainerUtil.intersection(unloadedInSearchScope, unloadedInUseScope);
       }
-      return unloadedInSearchScope;
+      else {
+        result = unloadedInSearchScope;
+      }
+      return ContainerUtil.map(result, UnloadedModuleDescription::getName);
     });
   }
 
@@ -421,7 +425,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private void endSearchForUsages() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     int usageCount = myUsageCountWithoutDefinition.get();
-    Collection<UnloadedModuleDescription> unloadedModulesBelongingToScope = getUnloadedModulesBelongingToScope();
+    Collection<String> unloadedModulesBelongingToScope = getUnloadedModulesBelongingToScope();
     if (usageCount == 0) {
       if (myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -499,11 +503,11 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
+  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<String> unloadedModules) {
     String modulesText = unloadedModules.size() > 1
                          ? UsageViewBundle.message("message.part.number.of.unloaded.modules", unloadedModules.size())
                          : UsageViewBundle.message("message.part.unloaded.module.0",
-                                                   Objects.requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName());
+                                                   Objects.requireNonNull(ContainerUtil.getFirstItem(unloadedModules)));
     return UsageViewBundle.message(
       "message.occurrences.in.0.may.be.skipped.load.all.modules.and.repeat.the.search.to.get.complete.results", modulesText);
   }
