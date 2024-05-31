@@ -414,7 +414,7 @@ val <T> LevelData<T>.environment: Environment
   get() = Environment.of(this.mainInstances.keys)
 
 @get:ApiStatus.Internal
-val <RootT, MainT, PredictionT> SessionTree<RootT, MainT, PredictionT>.predictions: List<SessionTree.PredictionContainer<RootT, MainT, PredictionT>>
+val <RootT, MainT, PredictionT> SessionTree<RootT, MainT, PredictionT>.predictions: List<PredictionT?>
   get() {
     val predictions: MutableList<SessionTree.PredictionContainer<RootT, MainT, PredictionT>> = mutableListOf()
     accept(object : SessionTree.Visitor<RootT, MainT, PredictionT, Unit> {
@@ -435,5 +435,5 @@ val <RootT, MainT, PredictionT> SessionTree<RootT, MainT, PredictionT>.predictio
       }
     })
 
-    return predictions
+    return predictions.map { it.prediction }
   }
