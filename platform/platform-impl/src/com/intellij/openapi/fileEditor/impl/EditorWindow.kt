@@ -297,7 +297,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         break
       }
     }
-    assert(currentCompositeFlow.value === composite)
+
+    val currentComposite = currentCompositeFlow.value
+    if (currentComposite !== composite) {
+      LOG.error("$currentComposite is not equal to $composite")
+    }
   }
 
   fun setSelectedComposite(composite: EditorComposite) {
@@ -441,8 +445,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     val splitter = createSplitter(isVertical = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-    val result = EditorWindow(owner = owner, coroutineScope = owner.coroutineScope.childScope("EditorWindow"))
-    owner.addWindow(result)
+    val newWindow = EditorWindow(owner = owner, coroutineScope = owner.coroutineScope.childScope("EditorWindow"))
+    owner.addWindow(newWindow)
     val selectedComposite = selectedComposite
 
     swapComponents(parent = component.parent as JPanel, toAdd = splitter, toRemove = component)
@@ -450,45 +454,51 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     if (fileIsSecondaryComponent) {
       splitter.firstComponent = existingEditor
-      splitter.secondComponent = result.component
+      splitter.secondComponent = newWindow.component
     }
     else {
       splitter.secondComponent = existingEditor
-      splitter.firstComponent = result.component
+      splitter.firstComponent = newWindow.component
     }
     normalizeProportionsIfNeed(existingEditor)
 
     // open only selected file in the new splitter instead of opening all tabs
     val nextFile = virtualFile ?: selectedComposite!!.file
     val composite = owner.manager.openFileInNewCompositeInEdt(
-      window = result,
+      window = newWindow,
       file = nextFile,
       entry = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile },
       options = FileEditorOpenOptions(
         requestFocus = focusNew,
         isExactState = true,
         pin = getComposite(nextFile)?.isPinned ?: false,
+        selectAsCurrent = focusNew,
       ),
-    ) ?: return result
+    ) ?: return newWindow
     if (composite is EditorComposite) {
       composite.coroutineScope.launch {
         doOnCompositeOpenComplete(composite = composite) {
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             syncCaretIfPossible(composite.allEditors)
           }
         }
       }
     }
     if (!focusNew) {
-      result.setSelectedComposite(composite = selectedComposite!!, focusEditor = true)
+      LOG.assertTrue(currentCompositeFlow.value == selectedComposite)
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
-        selectedComposite.focusComponent?.let {
+        selectedComposite?.preferredFocusedComponent?.let {
           IdeFocusManager.getGlobalInstance().requestFocus(it, true)
         }
       }
+
+      // we set selectAsCurrent to false, but the newly created window should have some selected composite
+      if (composite is EditorComposite) {
+        newWindow.setSelectedComposite(composite)
+      }
     }
     component.revalidate()
-    return result
+    return newWindow
   }
 
   private fun normalizeProportionsIfNeed(inputComponent: Container) {

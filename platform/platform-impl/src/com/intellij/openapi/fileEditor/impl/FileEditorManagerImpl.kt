@@ -655,30 +655,30 @@ open class FileEditorManagerImpl(
   override val windows: Array<EditorWindow>
     get() = getAllSplitters().flatMap(EditorsSplitters::windows).toTypedArray()
 
-  override fun getNextWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = true)
+  override fun getNextWindow(window: EditorWindow) = getNextWindowImpl(currentWindow = window, ascending = true)
 
-  override fun getPrevWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = false)
+  override fun getPrevWindow(window: EditorWindow) = getNextWindowImpl(currentWindow = window, ascending = false)
 
   private fun getNextWindowImpl(currentWindow: EditorWindow, ascending: Boolean): EditorWindow? {
     val windows = splitters.getOrderedWindows()
     val currentWindowIndex = windows.indexOf(currentWindow)
-    return if (currentWindowIndex != -1) {
+    if (currentWindowIndex != -1) {
       val nextWindowIndex = currentWindowIndex + (if (ascending) 1 else -1)
-      windows[(nextWindowIndex + windows.size) % windows.size]
+      return windows.get((nextWindowIndex + windows.size) % windows.size)
     }
     else {
       LOG.error("No window found")
-      null
+      return null
     }
   }
 
   override fun createSplitter(orientation: Int, window: EditorWindow?) {
     // the window was available from action event, for example, when invoked from the tab menu of an editor that is not the 'current'
-    if (window != null) {
-      window.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
+    if (window == null) {
+      splitters.currentWindow?.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
     }
     else {
-      splitters.currentWindow?.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
+      window.split(orientation = orientation, forceSplit = true, virtualFile = null, focusNew = false)
     }
   }
 

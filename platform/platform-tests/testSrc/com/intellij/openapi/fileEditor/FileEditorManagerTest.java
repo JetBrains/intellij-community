@@ -198,10 +198,13 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile file2 = getFile("/src/2.txt");
     assertNotNull(file2);
     manager.openFile(file2, true);
-    EditorWindow primaryWindow = manager.getCurrentWindow();//1.txt and selected 2.txt
+    // 1.txt and selected 2.txt
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
+    primaryWindow.split(SwingConstants.VERTICAL, true, null, true);
+
+    // 2.txt only, selected and focused
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     // here we have to ignore 'searchForSplitter'
