@@ -219,6 +219,7 @@ public class XValueHint extends AbstractValueHint {
       result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
         private XFullValueEvaluator myFullValueEvaluator;
         private boolean myShown = false;
+        private SimpleColoredComponent mySimpleColoredComponent;
 
         @Override
         public void applyPresentation(@Nullable Icon icon,
@@ -256,7 +257,22 @@ public class XValueHint extends AbstractValueHint {
                              .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
             }
 
-            showTooltipPopup(createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator));
+            // On presentation change we update our shown popup and resize if needed
+            if (myShown) {
+              var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
+              Icon previousIcon = mySimpleColoredComponent.getIcon();
+              mySimpleColoredComponent.clear();
+              fillSimpleColoredComponent(mySimpleColoredComponent, previousIcon, text, myFullValueEvaluator);
+
+              var delta = mySimpleColoredComponent.getPreferredSize().width - previousPreferredWidth;
+              if (delta < 0) return;
+
+              resizePopup(delta, 0);
+              return;
+            }
+
+            mySimpleColoredComponent = createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator);
+            showTooltipPopup(mySimpleColoredComponent);
           }
           myShown = true;
         }

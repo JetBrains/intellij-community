@@ -58,6 +58,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerPopupPanel.updatePopupBounds;
+
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
   private static final Key<AbstractValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
@@ -320,17 +322,27 @@ public abstract class AbstractValueHint {
     return myHintHidden;
   }
 
-  protected JComponent createExpandableHintComponent(@Nullable Icon icon,
-                                                     final SimpleColoredText text,
-                                                     final Runnable expand,
-                                                     @Nullable XFullValueEvaluator evaluator) {
-    SimpleColoredComponent component = HintUtil.createInformationComponent();
-    component.setIcon(icon != null
-                      ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
-                      : UIUtil.getTreeCollapsedIcon());
+  protected SimpleColoredComponent fillSimpleColoredComponent(SimpleColoredComponent component,
+                                                              Icon icon,
+                                                              final SimpleColoredText text,
+                                                              @Nullable XFullValueEvaluator evaluator) {
+    HintUtil.installInformationProperties(component);
+    component.setIcon(icon);
     component.setCursor(hintCursor());
     text.appendToComponent(component);
     appendEvaluatorLink(evaluator, component);
+    return component;
+  }
+
+  protected SimpleColoredComponent createExpandableHintComponent(@Nullable Icon icon,
+                                                     final SimpleColoredText text,
+                                                     final Runnable expand,
+                                                     @Nullable XFullValueEvaluator evaluator) {
+    Icon notNullIcon = icon != null
+                       ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
+                       : UIUtil.getTreeCollapsedIcon();
+
+    SimpleColoredComponent component = fillSimpleColoredComponent(new SimpleColoredComponent(), notNullIcon, text, evaluator);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -502,5 +514,13 @@ public abstract class AbstractValueHint {
 
   void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
     myEditorMouseEvent = editorMouseEvent;
+  }
+
+  protected void resizePopup(int widthDelta, int hightDelta) {
+    final Window popupWindow = SwingUtilities.windowForComponent(myCurrentPopup.getContent());
+    if (popupWindow == null) return;
+
+    Dimension popupSize = myCurrentPopup.getSize();
+    updatePopupBounds(popupWindow, popupSize.width + widthDelta, popupSize.height + hightDelta);
   }
 }
