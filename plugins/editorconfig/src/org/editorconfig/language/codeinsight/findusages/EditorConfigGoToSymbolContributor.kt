@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.findusages
 
 import com.intellij.navigation.ChooseByNameContributorEx
@@ -12,6 +12,7 @@ import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import org.editorconfig.language.index.EDITOR_CONFIG_IDENTIFIER_INDEX_ID
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
 
 internal class EditorConfigGoToSymbolContributor : ChooseByNameContributorEx {
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
@@ -24,6 +25,7 @@ internal class EditorConfigGoToSymbolContributor : ChooseByNameContributorEx {
       EDITOR_CONFIG_IDENTIFIER_INDEX_ID, setOf(name), { file ->
       SyntaxTraverser.psiTraverser(psiManager.findFile(file))
         .filter(EditorConfigDescribableElement::class.java)
+        .filter { it.getDescriptor(false) !is EditorConfigReferenceDescriptor }
         .processEach(processor)
     }, parameters.searchScope)
   }
