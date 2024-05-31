@@ -867,7 +867,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       return syntaxAdapter.createProperty(propertyName, "f", project).also {
         walker.getParentPropertyAdapter(it)!!.values.single().delegate.replace(element)
       }.let {
-        syntaxAdapter.addProperty(parentObject.delegate, it)
+        if (element.parent == parentObject.delegate) {
+          parentObject.delegate.addAfter(it, element)
+        }
+        else {
+          parentObject.delegate.addAfter(it, parentObject.propertyList.lastOrNull()?.delegate)
+        }
       }.let { walker.getParentPropertyAdapter(it)!! }
     }
 
