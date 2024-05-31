@@ -96,44 +96,6 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
                        dash[0] / 2)
   }
 
-  private fun paintUpLine(g2: Graphics2D, from: Int, to: Int, hasArrow: Boolean, isUsual: Boolean, isSelected: Boolean, isTerminal: Boolean) {
-    // paint vertical lines normal size
-    // paint non-vertical lines twice the size to make them dock with each other well
-    val elementWidth = PaintParameters.getElementWidth(rowHeight)
-    if (from == to) {
-      val x = elementWidth * from + elementWidth / 2
-      val y1 = rowHeight / 2 - 1
-      val y2 = if (isTerminal) PaintParameters.getCircleRadius(rowHeight) / 2 + 1 else 0
-      paintLine(g2, x, y1, x, y2, x, y2, hasArrow, isUsual, isSelected)
-    }
-    else {
-      assert(!isTerminal)
-      val x1 = elementWidth * from + elementWidth / 2
-      val y1 = rowHeight / 2
-      val x2 = elementWidth * to + elementWidth / 2
-      val y2 = -rowHeight / 2
-      paintLine(g2, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, hasArrow, isUsual, isSelected)
-    }
-  }
-
-  private fun paintDownLine(g2: Graphics2D, from: Int, to: Int, hasArrow: Boolean, isUsual: Boolean, isSelected: Boolean, isTerminal: Boolean) {
-    val elementWidth = PaintParameters.getElementWidth(rowHeight)
-    if (from == to) {
-      val y2 = rowHeight - (if (isTerminal) PaintParameters.getCircleRadius(rowHeight) / 2 + 1 else 0)
-      val y1 = rowHeight / 2
-      val x = elementWidth * from + elementWidth / 2
-      paintLine(g2, x, y1, x, y2, x, y2, hasArrow, isUsual, isSelected)
-    }
-    else {
-      assert(!isTerminal)
-      val x1 = elementWidth * from + elementWidth / 2
-      val y1 = rowHeight / 2
-      val x2 = elementWidth * to + elementWidth / 2
-      val y2 = rowHeight + rowHeight / 2
-      paintLine(g2, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, hasArrow, isUsual, isSelected)
-    }
-  }
-
   private fun paintLine(g2: Graphics2D, x1: Int, y1: Int, x2: Int, y2: Int, startArrowX: Int, startArrowY: Int,
                         hasArrow: Boolean, isUsual: Boolean, isSelected: Boolean) {
     g2.stroke = if (isUsual || hasArrow) {
@@ -159,16 +121,28 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
   }
 
   private fun paintEdge(g2: Graphics2D, edge: EdgePrintElement, isSelected: Boolean) {
-    val from = edge.positionInCurrentRow
-    val to = edge.positionInOtherRow
-    val isUsual = isUsual(edge.lineStyle)
+    val isDown = edge.type == EdgePrintElement.Type.DOWN
+    val isUsual = edge.lineStyle == EdgePrintElement.LineStyle.SOLID
+    val hasArrow = edge.hasArrow()
     val isTerminal = edge is TerminalEdgePrintElement
 
-    if (edge.type == EdgePrintElement.Type.DOWN) {
-      paintDownLine(g2, from, to, edge.hasArrow(), isUsual, isSelected, isTerminal)
+    val from = edge.positionInCurrentRow
+    val to = edge.positionInOtherRow
+
+    val elementWidth = PaintParameters.getElementWidth(rowHeight)
+    val x1 = elementWidth * from + elementWidth / 2
+    val y1 = rowHeight / 2
+    if (from == to) {
+      val arrowGap = if (isTerminal) PaintParameters.getCircleRadius(rowHeight) / 2 + 1 else 0
+      val y2 = if (isDown) rowHeight - arrowGap else arrowGap
+      paintLine(g2, x1, y1, x1, y2, x1, y2, hasArrow, isUsual, isSelected)
     }
     else {
-      paintUpLine(g2, from, to, edge.hasArrow(), isUsual, isSelected, isTerminal)
+      assert(!isTerminal)
+      // paint non-vertical lines twice the size to make them dock with each other well
+      val x2 = elementWidth * to + elementWidth / 2
+      val y2 = if (isDown) rowHeight + rowHeight / 2 else -rowHeight / 2
+      paintLine(g2, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, hasArrow, isUsual, isSelected)
     }
   }
 
@@ -209,10 +183,6 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
       val rotateY = scaleX * sin + scaleY * cos
 
       return Pair(Math.round(rotateX + centerX).toInt(), Math.round(rotateY + centerY).toInt())
-    }
-
-    private fun isUsual(lineStyle: EdgePrintElement.LineStyle): Boolean {
-      return lineStyle == EdgePrintElement.LineStyle.SOLID
     }
 
     private fun getDashLength(edgeLength: Double, rowHeight: Int): FloatArray {
