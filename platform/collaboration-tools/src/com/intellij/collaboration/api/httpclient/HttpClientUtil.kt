@@ -104,7 +104,7 @@ object HttpClientUtil {
     val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
     val ideBuild =
       if (ApplicationManager.getApplication().isUnitTestMode) "test"
-      else ApplicationInfo.getInstance().build.asString()
+      else ApplicationInfo.getInstance().build.asStringWithoutProductCode()
     val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
     val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     val arch = SystemInfo.OS_ARCH
