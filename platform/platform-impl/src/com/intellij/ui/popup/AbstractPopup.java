@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
+import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
@@ -963,6 +964,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   boolean anyModalWindowsKeepPopupOpen() {
+    return anyModalWindowsMatching(window -> ClientProperty.isTrue(window, DialogWrapper.KEEP_POPUPS_OPEN));
+  }
+
+  boolean anyModalWindowsAbovePopup() {
+    return anyModalWindowsMatching(window -> true);
+  }
+
+  private boolean anyModalWindowsMatching(Predicate<Window> predicate) {
     var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
     var i = 0;
     for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
@@ -971,7 +980,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
     for (; i < modalEntitiesNow.length; ++i) {
-      if (modalEntitiesNow[i] instanceof Window modalWindow && ClientProperty.isTrue(modalWindow, DialogWrapper.KEEP_POPUPS_OPEN)) {
+      if (modalEntitiesNow[i] instanceof Window modalWindow && predicate.apply(modalWindow)) {
         return true;
       }
     }
@@ -2615,7 +2624,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public final boolean dispatchInputMethodEvent(InputMethodEvent event) {
-    if (anyModalWindowsKeepPopupOpen()) {
+    if (anyModalWindowsAbovePopup()) {
       return false;
     }
 
