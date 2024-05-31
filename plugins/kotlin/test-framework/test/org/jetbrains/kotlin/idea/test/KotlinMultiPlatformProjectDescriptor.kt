@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.container.topologicalSort
 import org.jetbrains.kotlin.idea.artifacts.KmpAwareLibraryDependency
 import org.jetbrains.kotlin.idea.artifacts.KmpLightFixtureDependencyDownloader
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -272,8 +273,10 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
 }
 
 private object LibraryDependencies {
-    // TODO (KTIJ-29725): sliding version
-    private const val STDLIB_VERSION = "1.9.23"
+    private val STDLIB_VERSION: String
+        get() = KotlinNativeVersion.resolvedKotlinGradlePluginVersion
+    private val STDLIB_NATIVE_VERSION: String
+        get() = KotlinNativeVersion.resolvedKotlinNativeVersion
     private const val COROUTINES_VERSION = "1.8.0"
     private const val ATOMIC_FU_VERSION = "0.23.1"
     private const val JB_ANNOTATIONS_VERSION = "23.0.0"
@@ -288,7 +291,7 @@ private object LibraryDependencies {
     val stdlibCommon = KmpAwareLibraryDependency.allMetadataJar("$KOTLIN_GROUP:$STDLIB_ARTIFACT:commonMain:$STDLIB_VERSION")
     val stdlibJvm = KmpAwareLibraryDependency.jar("$KOTLIN_GROUP:$STDLIB_ARTIFACT:$STDLIB_VERSION")
     val stdlibJs = KmpAwareLibraryDependency.klib("$KOTLIN_GROUP:$STDLIB_ARTIFACT-js:$STDLIB_VERSION")
-    val stdlibNative = KmpAwareLibraryDependency.kotlinNativePrebuilt("klib/common/stdlib:$STDLIB_VERSION")
+    val stdlibNative = KmpAwareLibraryDependency.kotlinNativePrebuilt("klib/common/stdlib:$STDLIB_NATIVE_VERSION")
 
     val coroutinesCommonMain = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:commonMain:$COROUTINES_VERSION")
     val coroutinesConcurrent = KmpAwareLibraryDependency.metadataKlib("$KOTLINX_GROUP:$COROUTINES_ARTIFACT:concurrentMain:$COROUTINES_VERSION")
