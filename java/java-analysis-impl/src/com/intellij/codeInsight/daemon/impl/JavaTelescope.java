@@ -56,21 +56,32 @@ final class JavaTelescope {
     if (Registry.is("java.telescope.usages.single.threaded", true)) {
       ProgressManager.getInstance().runProcess(() -> {
         for (PsiMember member : members) {
-          int count = usagesCount(project, file, member, scope);
-          int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
-          if (newCount == TOO_MANY_USAGES) break;
+          if (!countUsagesForMember(file, scope, member, project, totalUsageCount)) break;
         }
       }, progress);
     } else {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
-        int count = usagesCount(project, file, member, scope);
-        int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
-        return newCount != TOO_MANY_USAGES;
+        return countUsagesForMember(file, scope, member, project, totalUsageCount);
       });
     }
 
     return totalUsageCount.get();
   }
+
+  /**
+   * Counts usages for the provided {@code member} and returns {@code true} if consecutive members should be processed.
+   */
+  private static boolean countUsagesForMember(@NotNull PsiFile file,
+                                              SearchScope scope,
+                                              PsiMember member,
+                                              Project project,
+                                              AtomicInteger totalUsageCount) {
+    int count = usagesCount(project, file, member, scope);
+    int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
+    if (newCount == TOO_MANY_USAGES) return false;
+    return true;
+  }
+
 
   private static int usagesCount(@NotNull Project project,
                                  @NotNull PsiFile containingFile,
