@@ -6,10 +6,10 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 
 class SimplePrintElementImpl(rowIndex: Int, positionInCurrentRow: Int, graphElement: GraphElement,
-                             presentationManager: PrintElementPresentationManager) : PrintElementWithGraphElement(rowIndex,
-                                                                                                                  positionInCurrentRow,
-                                                                                                                  graphElement,
-                                                                                                                  presentationManager), NodePrintElement {
+                             presentationManager: PrintElementPresentationManager) : PrintElementBase(rowIndex,
+                                                                                                      positionInCurrentRow,
+                                                                                                      graphElement,
+                                                                                                      presentationManager), NodePrintElement {
   override fun equals(o: Any?): Boolean {
     if (this === o) return true
     if (o !is NodePrintElement) return false

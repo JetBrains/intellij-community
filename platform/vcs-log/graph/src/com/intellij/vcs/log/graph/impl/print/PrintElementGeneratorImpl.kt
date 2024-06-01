@@ -12,10 +12,10 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
@@ -119,9 +119,9 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return Math.round(average + deviation).toInt()
   }
 
-  override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
-    val result = mutableListOf<PrintElementWithGraphElement>()
-    val nodes = mutableListOf<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
+  override fun getPrintElements(rowIndex: Int): Collection<GraphPrintElement> {
+    val result = mutableListOf<GraphPrintElement>()
+    val nodes = mutableListOf<GraphPrintElement>() // nodes at the end, to be drawn over the edges
 
     val visibleElements = getSortedVisibleElementsInRow(rowIndex)
     val upPosition = createEndPositionFunction(rowIndex - 1, true)
