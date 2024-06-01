@@ -4,6 +4,7 @@ package com.intellij.ide.workspace
 import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.roots.CompilerModuleExtension
@@ -51,7 +52,7 @@ private class DefaultImportedSettings(project: Project): ImportedProjectSettings
 
   init {
     val modules = ModuleManager.getInstance(project).modules
-    moduleImlPaths = modules.map { it.moduleFilePath }.toMutableSet()
+    moduleImlPaths = modules.filter { ModuleType.get(it).id != "JAVA_MODULE" }.map { it.moduleFilePath }.toMutableSet()
     hasInheritedOutputPath = modules.any { CompilerModuleExtension.getInstance(it)?.isCompilerOutputPathInherited == true }
   }
 

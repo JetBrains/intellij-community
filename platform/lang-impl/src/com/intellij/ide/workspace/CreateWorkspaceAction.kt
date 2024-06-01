@@ -1,28 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.workspace
 
-import com.intellij.CommonBundle
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.addIfNotNull
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.job
-import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -55,44 +43,6 @@ internal fun createWorkspace(project: Project) {
                     ?: return@executeOnPooledThread
     StartupManager.getInstance(workspace).runAfterOpened {
       addToWorkspace(workspace, dialog.projectPaths)
-    }
-  }
-}
-
-private fun importSettingsFromProject(project: Project): List<ImportedProjectSettings> {
-  val settings = mutableListOf<ImportedProjectSettings>()
-  val handlers = SubprojectHandler.EP_NAME.extensionList
-  for (handler in handlers) {
-    settings.addIfNotNull(handler.importFromProject(project))
-  }
-
-  val importers = WorkspaceSettingsImporter.EP_NAME.extensionList
-  for (importer in importers) {
-    settings.addIfNotNull(importer.importFromProject(project))
-  }
-  return settings
-}
-
-internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
-  val projectManagerImpl = blockingContext { ProjectManager.getInstance() as ProjectManagerImpl }
-  val referentProject = blockingContext { projectManagerImpl.loadProject(Path.of(projectPath), false, false) }
-  var success = false
-  try {
-    val settings = importSettingsFromProject(referentProject)
-    for (importedSettings in settings) {
-      if (importedSettings.applyTo(workspace)) {
-        success = true
-        break
-      }
-    }
-  }
-  finally {
-    (referentProject as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
-    withContext(Dispatchers.EDT) {
-      projectManagerImpl.forceCloseProject(referentProject)
-      if (!success) {
-        Messages.showErrorDialog(workspace, "Can't add this type of project to workspace", CommonBundle.getErrorTitle())
-      }
     }
   }
 }
