@@ -88,7 +88,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   final override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val asyncLoader = createAsyncEditorLoader(this, project, file)
+    val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file, editorCoroutineScope = null)
     val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
     return TextEditorImpl(
       project = project,

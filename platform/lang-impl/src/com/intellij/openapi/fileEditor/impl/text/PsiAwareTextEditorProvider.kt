@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -16,6 +18,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorGutterLayout
@@ -41,8 +44,134 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return PsiAwareTextEditorImpl(project = project, file = file, provider = this)
   }
 
+  override suspend fun createFileEditor(
+    project: Project,
+    file: VirtualFile,
+    document: Document?,
+    editorCoroutineScope: CoroutineScope,
+  ): FileEditor {
+    val asyncLoader = createAsyncEditorLoader(
+      provider = this,
+      project = project,
+      fileForTelemetry = file,
+      editorCoroutineScope = editorCoroutineScope,
+    )
+    val effectiveDocument = document!!
+
+    return coroutineScope {
+      val markupCacheInvalidated = async(CoroutineName("markup cache invalidation")) {
+        serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
+      }
+
+      val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
+        val scheme = serviceAsync<EditorColorsManager>().globalScheme
+        val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
+        // two separate read actions to avoid one long-running - https://youtrack.jetbrains.com/issue/IJPL-796
+        val highlighter = readActionBlocking {
+          editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+        }
+        readActionBlocking {
+          // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+          // (the document text is compared, so, double work is not performed)
+          highlighter.setText(effectiveDocument.immutableCharSequence)
+        }
+        highlighter
+      }
+
+      val editorDeferred = CompletableDeferred<EditorEx>()
+
+      val task = createInitTask(
+        asyncLoader = asyncLoader,
+        editorDeferred = editorDeferred,
+        highlighterDeferred = highlighterDeferred,
+        markupCacheInvalidated = markupCacheInvalidated,
+        project = project,
+        file = file,
+        document = effectiveDocument,
+      )
+
+      val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
+      val highlighter = highlighterDeferred.await()
+
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val editor = factory.createMainEditor(
+          document = effectiveDocument,
+          project = project,
+          file = file,
+          highlighter = highlighter,
+          afterCreation = {
+            it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+          },
+        )
+        editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
+        editorDeferred.complete(editor)
+        val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
+        val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
+        asyncLoader.start(textEditor = textEditor, task = task)
+        textEditor
+      }
+    }
+  }
+
+  // Deferred<Unit> - to handle error by loader
+  private fun createInitTask(
+    asyncLoader: AsyncEditorLoader,
+    editorDeferred: CompletableDeferred<EditorEx>,
+    highlighterDeferred: Deferred<EditorHighlighter>,
+    markupCacheInvalidated: Deferred<Unit>,
+    project: Project,
+    file: VirtualFile,
+    document: Document,
+  ): Deferred<Unit> {
+    return asyncLoader.coroutineScope.async(CoroutineName("call TextEditorInitializers")) {
+      val editorSupplier = suspend { editorDeferred.await() }
+      val highlighterReady = suspend { highlighterDeferred.join() }
+
+      coroutineScope {
+        markupCacheInvalidated.await()
+
+        for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
+          if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
+            thisLogger().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
+            continue
+          }
+
+          val initializer = item.instance ?: continue
+          launch(CoroutineName(item.implementationClassName)) {
+            try {
+              initializer.initializeEditor(
+                project = project,
+                file = file,
+                document = document,
+                editorSupplier = editorSupplier,
+                highlighterReady = highlighterReady,
+              )
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              logger<AsyncFileEditorProvider>()
+                .warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
+            }
+          }
+        }
+      }
+
+      val editor = editorSupplier()
+      span("editor languageSupplier set", Dispatchers.EDT) {
+        editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
+      }
+    }
+  }
+
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
-    val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file)
+    val asyncLoader = createAsyncEditorLoader(
+      provider = this,
+      project = project,
+      fileForTelemetry = file,
+      editorCoroutineScope = null,
+    )
 
     val effectiveDocument = if (document == null) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
@@ -76,45 +205,15 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val editorDeferred = CompletableDeferred<EditorEx>()
 
-      val task = asyncLoader.coroutineScope.async(CoroutineName("call TextEditorInitializers")) {
-        val editorSupplier = suspend { editorDeferred.await() }
-        val highlighterReady = suspend { highlighterDeferred.join() }
-
-        coroutineScope {
-          markupCacheInvalidated.await()
-
-          for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
-            if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-              thisLogger().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
-              continue
-            }
-
-            val initializer = item.instance ?: continue
-            launch(CoroutineName(item.implementationClassName)) {
-              try {
-                initializer.initializeEditor(
-                  project = project,
-                  file = file,
-                  document = effectiveDocument,
-                  editorSupplier = editorSupplier,
-                  highlighterReady = highlighterReady,
-                )
-              }
-              catch (e: CancellationException) {
-                throw e
-              }
-              catch (e: Throwable) {
-                logger<AsyncFileEditorProvider>().warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
-              }
-            }
-          }
-        }
-
-        val editor = editorSupplier()
-        span("editor languageSupplier set", Dispatchers.EDT) {
-          editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
-        }
-      }
+      val task = createInitTask(
+        asyncLoader = asyncLoader,
+        editorDeferred = editorDeferred,
+        highlighterDeferred = highlighterDeferred,
+        markupCacheInvalidated = markupCacheInvalidated,
+        project = project,
+        file = file,
+        document = effectiveDocument,
+      )
 
       val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
       val highlighter = highlighterDeferred.await()
@@ -235,4 +334,3 @@ private class PsiAwareTextEditorDelayedFoldingState(private val project: Project
 
   fun cloneSerializedState(): Element = state.clone()
 }
-

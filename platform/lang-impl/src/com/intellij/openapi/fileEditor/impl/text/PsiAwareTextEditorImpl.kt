@@ -31,7 +31,11 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
     file = file,
     componentAndLoader = createPsiAwareTextEditorComponent(
       file = file,
-      editorAndLoader = createEditorImpl(project, file, createAsyncEditorLoader(provider, project, file)),
+      editorAndLoader = createEditorImpl(
+        project = project,
+        file = file,
+        asyncLoader = createAsyncEditorLoader(provider = provider, project = project, fileForTelemetry = file, editorCoroutineScope = null),
+      ),
     ),
   )
 
@@ -46,7 +50,15 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
   protected constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl) : super(
     project = project,
     file = file,
-    componentAndLoader = createPsiAwareTextEditorComponent(file, editor to createAsyncEditorLoader(provider, project, file)),
+    componentAndLoader = createPsiAwareTextEditorComponent(
+      file = file,
+      editorAndLoader = editor to createAsyncEditorLoader(
+        provider = provider,
+        project = project,
+        fileForTelemetry = file,
+        editorCoroutineScope = null,
+      ),
+    ),
   )
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? {

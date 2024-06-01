@@ -1210,11 +1210,13 @@ open class FileEditorManagerImpl(
   ): EditorComposite? {
     // we don't check canOpenFile (we don't have providers yet) -
     // empty windows will be removed later if needed, it should be quite a rare case
+    val coroutineScope = window.coroutineScope.childScope("EditorComposite(file=$file)")
     return createComposite(
       file = file,
-      coroutineScope = window.coroutineScope.childScope("EditorComposite(file=$file)"),
+      coroutineScope = coroutineScope,
       isLazy = isLazy,
       model = createEditorCompositeModel(
+        coroutineScope = coroutineScope,
         editorPropertyChangeListener = editorPropertyChangeListener,
         file = file,
         project = project,
@@ -1226,7 +1228,7 @@ open class FileEditorManagerImpl(
   // only for remote dev
   protected fun createCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
     return flow {
-      EditorCompositeModelManager(editorPropertyChangeListener).fileEditorWithProviderFlow(
+      EditorCompositeModelManager(editorPropertyChangeListener, coroutineScope).fileEditorWithProviderFlow(
         editorsWithProviders = editorsWithProviders,
         flowCollector = this@flow,
       )

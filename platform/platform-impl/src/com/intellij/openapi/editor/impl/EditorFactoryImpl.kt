@@ -182,9 +182,23 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
   }
 
   @ApiStatus.Internal
-  fun createMainEditor(document: Document, project: Project, file: VirtualFile, highlighter: EditorHighlighter?, afterCreation: ((EditorImpl) -> Unit)?): EditorImpl {
+  fun createMainEditor(
+    document: Document,
+    project: Project,
+    file: VirtualFile,
+    highlighter: EditorHighlighter?,
+    afterCreation: ((EditorImpl) -> Unit)?,
+  ): EditorImpl {
     assert(document !is DocumentWindow)
-    return doCreateEditor(project = project, document = document, isViewer = false, kind = EditorKind.MAIN_EDITOR, file = file, highlighter = highlighter, afterCreation = afterCreation)
+    return doCreateEditor(
+      project = project,
+      document = document,
+      isViewer = false,
+      kind = EditorKind.MAIN_EDITOR,
+      file = file,
+      highlighter = highlighter,
+      afterCreation = afterCreation,
+    )
   }
 
   private fun doCreateEditor(

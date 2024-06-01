@@ -39,6 +39,7 @@ internal fun createEditorCompositeModel(
   file: VirtualFile,
   project: Project,
   fileEntry: FileEntry? = null,
+  coroutineScope: CoroutineScope,
 ): Flow<EditorCompositeModel> {
   return flow {
     coroutineScope {
@@ -57,6 +58,7 @@ internal fun createEditorCompositeModel(
 
       EditorCompositeModelManager(
         editorPropertyChangeListener = editorPropertyChangeListener,
+        editorCoroutineScope = coroutineScope,
       ).fileEditorWithProviderFlow(
         providers = deferredProviders.await(),
         file = file,
@@ -99,6 +101,7 @@ private fun CoroutineScope.computeFileEditorProviders(
 
 internal class EditorCompositeModelManager(
   private val editorPropertyChangeListener: PropertyChangeListener,
+  private val editorCoroutineScope: CoroutineScope,
 ) {
   suspend fun fileEditorWithProviderFlow(
     providers: List<FileEditorProvider>,
@@ -113,10 +116,12 @@ internal class EditorCompositeModelManager(
         async {
           try {
             val editor = if (provider is AsyncFileEditorProvider) {
-              val builder = provider.createEditorBuilder(project = project, file = file, document = document)
-              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-                builder.build()
-              }
+              provider.createFileEditor(
+                project = project,
+                file = file,
+                document = document,
+                editorCoroutineScope = editorCoroutineScope,
+              )
             }
             else {
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

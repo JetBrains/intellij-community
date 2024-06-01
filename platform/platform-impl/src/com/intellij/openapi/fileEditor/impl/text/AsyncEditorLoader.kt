@@ -115,7 +115,6 @@ class AsyncEditorLoader internal constructor(
     }
 
     coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
-      // don't show another loading indicator on project open - use 3-second delay yet
       val indicatorJob = showLoadingIndicator(
         startDelay = 300.milliseconds,
         addUi = textEditor.component::addLoadingDecoratorUi
@@ -151,7 +150,7 @@ class AsyncEditorLoader internal constructor(
           scrollingModel.enableAnimation()
         }
       }
-      EditorNotifications.getInstance(project).scheduleUpdateNotifications(textEditor)
+      project.serviceAsync<EditorNotifications>().scheduleUpdateNotifications(textEditor)
     }
       .invokeOnCompletion {
         // make sure that async loaded marked as completed
