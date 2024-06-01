@@ -13,7 +13,8 @@ class Y extends X{
     }
 }
 class Z extends Y {
-    @NotNull String dontAnnotateBase() {// trigger quick fix for inspection here
+    @NotNull
+    String dontAnnotateBase<caret>() {// trigger quick fix for inspection here
         return "Z";
     }
 }

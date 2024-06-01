@@ -39,7 +39,8 @@ class Test {
   final String myFoo13 = null;
   final Runnable myFoo14 = new Runnable() {
     {foo();}
-    @Nullable Object foo() {
+    @Nullable
+    Object foo() {
       return null;
     }
     public void run() {}
@@ -58,7 +59,8 @@ class Test {
     myFoo12 = "";
   }
 
-  @Nullable String foo10(boolean flag) {
+  @Nullable
+  String foo10(boolean flag) {
     return flag ? foo2() : foo3();
   }
 }

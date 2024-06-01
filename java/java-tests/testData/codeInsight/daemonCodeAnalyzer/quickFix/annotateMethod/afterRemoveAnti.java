@@ -9,7 +9,8 @@ import org.jetbrains.annotations.*;
      }
  }
  class XC extends XEM {
-     @NotNull String f() {
+     @NotNull
+     String f() {
          return "";
      }
  }
