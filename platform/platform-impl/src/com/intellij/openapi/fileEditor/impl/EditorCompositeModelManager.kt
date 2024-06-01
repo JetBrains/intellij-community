@@ -57,15 +57,11 @@ internal fun createEditorCompositeModel(
 
       EditorCompositeModelManager(
         editorPropertyChangeListener = editorPropertyChangeListener,
-        project = project,
       ).fileEditorWithProviderFlow(
-        providers = createBuilders(
-          providers = deferredProviders.await(),
-          file = file,
-          project = project,
-          document = document.await(),
-        ),
+        providers = deferredProviders.await(),
         file = file,
+        project = project,
+        document = document.await(),
         state = null,
         flowCollector = this@flow,
       )
@@ -103,37 +99,51 @@ private fun CoroutineScope.computeFileEditorProviders(
 
 internal class EditorCompositeModelManager(
   private val editorPropertyChangeListener: PropertyChangeListener,
-  private val project: Project,
 ) {
   suspend fun fileEditorWithProviderFlow(
-    providers: List<Deferred<Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>?>>,
+    providers: List<FileEditorProvider>,
+    project: Project,
+    document: Document?,
     file: VirtualFile,
     state: FileEntry? = null,
     flowCollector: FlowCollector<EditorCompositeModel>,
   ) {
-    val editorsWithProviders = providers.mapNotNull { item ->
-      val (provider, builder) = item.await() ?: return@mapNotNull null
-      try {
-        val editor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          builder?.build() ?: provider.createEditor(project, file)
-        }
-        if (editor.isValid) {
-          FileEditorWithProvider(editor, provider)
-        }
-        else {
-          val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
-          LOG.error(PluginException("Invalid editor created by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
-          null
+    val editorsWithProviders = coroutineScope {
+      providers.map { provider ->
+        async {
+          try {
+            val editor = if (provider is AsyncFileEditorProvider) {
+              val builder = provider.createEditorBuilder(project = project, file = file, document = document)
+              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                builder.build()
+              }
+            }
+            else {
+              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                provider.createEditor(project, file)
+              }
+            }
+
+            if (editor.isValid) {
+              FileEditorWithProvider(editor, provider)
+            }
+            else {
+              val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
+              LOG.error(PluginException("Invalid editor created by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
+              null
+            }
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
+            LOG.error(PluginException("Cannot create editor by provider ${provider.javaClass.name}", pluginDescriptor?.pluginId))
+            null
+          }
         }
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        null
-      }
-    }
+    }.mapNotNull { it.getCompleted() }
 
     postProcessFileEditorWithProviderList(editorsWithProviders)
     flowCollector.emit(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = state))
@@ -152,33 +162,6 @@ internal class EditorCompositeModelManager(
       val editor = editorWithProvider.fileEditor
       editor.addPropertyChangeListener(editorPropertyChangeListener)
       editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
-    }
-  }
-}
-
-internal fun CoroutineScope.createBuilders(
-  providers: List<FileEditorProvider>,
-  file: VirtualFile,
-  project: Project,
-  document: Document?,
-): List<Deferred<Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>?>> {
-  return providers.map { provider ->
-    async {
-      if (provider is AsyncFileEditorProvider) {
-        try {
-          provider to provider.createEditorBuilder(project = project, file = file, document = document)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-          null
-        }
-      }
-      else {
-        provider to null
-      }
     }
   }
 }
