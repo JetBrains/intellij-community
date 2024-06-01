@@ -15,7 +15,7 @@ class ExpandablePanelController(expandedControlContent: JComponent,
   @NonNls private val COLLAPSE = "collapse"
 
   val expandControlPanel =
-    JBPanel<JBPanel<*>>(CardLayout())
+    JBPanel(CardLayout())
       .apply {
         val collapsedWrapped = Wrapper(collapsedControlContent)
         val expandedWrapped = Wrapper(expandedControlContent)

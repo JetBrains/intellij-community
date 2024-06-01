@@ -65,7 +65,7 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
   }
 
   private fun doCreateContent(): JComponent {
-    val panel = JBPanel<JBPanel<*>>()
+    val panel = JBPanel()
     cs.launchNow {
       timelineVm.detailsVm.details.collectLatest {
         when (val result = it.result) {

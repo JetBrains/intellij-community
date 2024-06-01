@@ -175,11 +175,15 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   open fun stickDropPoint(point: Point) {
   }
 
-  override fun getPreferredSize(): Dimension? {
-    if (computedPreferredSize == null) {
-      computedPreferredSize = recomputeBounds(setBounds = false, toFitWith = null, noDrop = false).size
-    }
-    return computedPreferredSize
+  override fun getPreferredSize(): Dimension {
+    return computedPreferredSize ?: computePreferredSize()
+  }
+
+  private fun computePreferredSize(): Dimension {
+    val bounds = recomputeBounds(setBounds = false, toFitWith = null, noDrop = false)
+    val size = bounds.size
+    computedPreferredSize = size
+    return size
   }
 
   override fun invalidate() {

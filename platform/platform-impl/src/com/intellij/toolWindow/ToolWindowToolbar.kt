@@ -44,7 +44,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
-    val topWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+    val topWrapper = JBPanel(BorderLayout()).apply {
       border = JBUI.Borders.customLineTop(getBorderColor())
     }
     border = createBorder()

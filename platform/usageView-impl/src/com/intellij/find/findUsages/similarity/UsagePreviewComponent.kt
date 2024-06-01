@@ -27,7 +27,7 @@ internal class UsagePreviewComponent private constructor(
   usageInfo: UsageInfo,
   renderingData: SnippetRenderingData,
   parent: Disposable,
-) : JBPanel<JBPanel<*>>(), Disposable {
+) : JBPanel<UsagePreviewComponent>(), Disposable {
   var header: JPanel
   private var mySnippetComponent: UsageCodeSnippetComponent
   private val myUsageView: UsageView
