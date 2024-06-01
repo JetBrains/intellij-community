@@ -6077,10 +6077,6 @@ f:com.intellij.util.FileContentUtilCore
 - <init>():V
 - s:reparseFiles(java.util.Collection):V
 - s:reparseFiles(com.intellij.openapi.vfs.VirtualFile[]):V
-f:com.intellij.util.FileIconUtil
-- sf:INSTANCE:com.intellij.util.FileIconUtil
-- sf:getIconFromProviders(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
-- sf:patchIconByIconPatchers(javax.swing.Icon,com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
 com.intellij.util.FilePatternFilter
 - sf:Companion:com.intellij.util.FilePatternFilter$Companion
 - s:parseFilter(java.lang.CharSequence,java.lang.String,java.lang.String,I):com.intellij.util.FilePatternFilter

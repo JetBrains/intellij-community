@@ -3,17 +3,21 @@ package com.intellij.util
 
 import com.intellij.ide.FileIconPatcher
 import com.intellij.ide.FileIconProvider
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.IconFlags
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
+private val LOG: Logger
+  get() = logger<FileIconUtil>()
 
+@Internal
 object FileIconUtil {
-  @JvmStatic
   fun getIconFromProviders(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
     for (provider in FileIconProvider.EP_NAME.extensionList) {
       val icon = kotlin.runCatching {
@@ -30,7 +34,6 @@ object FileIconUtil {
     return null
   }
 
-  @JvmStatic
   fun patchIconByIconPatchers(icon: Icon, file: VirtualFile, flags: Int, project: Project?): Icon {
     var patched = icon
     for (patcher in FileIconPatcher.EP_NAME.extensionList) {
@@ -45,5 +48,3 @@ object FileIconUtil {
     return patched
   }
 }
-
-private val LOG = logger<FileIconUtil>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
@@ -101,10 +101,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (element instanceof PsiFileSystemItem) {
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
       if (file != null && icon == null) {
-        icon = FileIconUtil.getIconFromProviders(file, flags, element.getProject());
+        icon = FileIconUtil.INSTANCE.getIconFromProviders(file, flags, element.getProject());
       }
       if (file != null && icon != null) {
-        icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags, element.getProject());
+        icon = FileIconUtil.INSTANCE.patchIconByIconPatchers(icon, file, flags, element.getProject());
       }
       if (icon instanceof RowIcon) {
         return icon;
