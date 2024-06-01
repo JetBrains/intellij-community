@@ -1,35 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 abstract class ConvertLateinitPropertyToNotNullDelegateFixBase(
-    property: KtProperty,
+    element: KtProperty,
     private val type: String
-) : KotlinQuickFixAction<KtProperty>(property) {
-    override fun getText() = KotlinBundle.message("convert.to.notnull.delegate")
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, Unit>(element, Unit) {
 
-    override fun getFamilyName() = text
+    override fun getFamilyName() = KotlinBundle.message("convert.to.notnull.delegate")
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val property = element ?: return
-        val typeReference = property.typeReference ?: return
-        val psiFactory = KtPsiFactory(project)
-        property.removeModifier(KtTokens.LATEINIT_KEYWORD)
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtProperty,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
+        val typeReference = element.typeReference ?: return
+        val psiFactory = KtPsiFactory(actionContext.project)
+        element.removeModifier(KtTokens.LATEINIT_KEYWORD)
         val propertyDelegate = psiFactory.createPropertyDelegate(
             psiFactory.createExpression("kotlin.properties.Delegates.notNull<$type>()")
         )
-        property.addAfter(propertyDelegate, typeReference)
-        property.typeReference = null
-        shortenReferences(property)
+        element.addAfter(propertyDelegate, typeReference)
+        element.typeReference = null
+        shortenReferences(element)
     }
 
-    abstract fun shortenReferences(property: KtProperty)
+    abstract fun shortenReferences(element: KtProperty)
 }
