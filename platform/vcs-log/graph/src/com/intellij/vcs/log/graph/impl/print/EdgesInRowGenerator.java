@@ -5,11 +5,13 @@ import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class EdgesInRowGenerator {
   private static final int CACHE_SIZE = 10;
   private static final int BLOCK_SIZE = 40;

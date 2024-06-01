@@ -6,13 +6,13 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 
-open class EdgePrintElementImpl(rowIndex: Int, positionInCurrentRow: Int, override val positionInOtherRow: Int,
-                                override val type: EdgePrintElement.Type, graphEdge: GraphEdge,
-                                private val hasArrow: Boolean,
-                                presentationManager: PrintElementPresentationManager) : PrintElementBase(rowIndex,
-                                                                                                         positionInCurrentRow,
-                                                                                                         graphEdge,
-                                                                                                         presentationManager), EdgePrintElement {
+internal open class EdgePrintElementImpl(rowIndex: Int, positionInCurrentRow: Int, override val positionInOtherRow: Int,
+                                         override val type: EdgePrintElement.Type, graphEdge: GraphEdge,
+                                         private val hasArrow: Boolean,
+                                         presentationManager: PrintElementPresentationManager) : PrintElementBase(rowIndex,
+                                                                                                                  positionInCurrentRow,
+                                                                                                                  graphEdge,
+                                                                                                                  presentationManager), EdgePrintElement {
   override val lineStyle = convertToLineStyle(graphEdge.type)
 
   override fun hasArrow(): Boolean = hasArrow
