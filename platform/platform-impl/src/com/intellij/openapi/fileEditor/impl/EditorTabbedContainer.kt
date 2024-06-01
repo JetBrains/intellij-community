@@ -276,7 +276,6 @@ class EditorTabbedContainer internal constructor(
       return
     }
 
-    val project = window.manager.project
     val tab = TabInfo(component)
       .setText(file.presentableName)
       .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
@@ -285,6 +284,7 @@ class EditorTabbedContainer internal constructor(
       .setDragOutDelegate(dragOutDelegate)
     tab.setTestableUi { it.put("editorTab", tab.text) }
 
+    val project = window.manager.project
     coroutineScope.launch {
       val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
       withContext(Dispatchers.EDT) {
@@ -308,10 +308,9 @@ class EditorTabbedContainer internal constructor(
 
     if (isOpenedInBulk) {
       editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
-      editorTabs.updateListeners()
     }
     else {
-      editorTabs.addTabSilently(tab, indexToInsert)
+      editorTabs.addTabSilently(info = tab, index = indexToInsert)
     }
   }
 

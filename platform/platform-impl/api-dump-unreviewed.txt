@@ -17788,10 +17788,6 @@ com.intellij.openapi.project.ProjectNameListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:nameChanged(java.lang.String):V
 f:com.intellij.openapi.project.ProjectNameListener$Companion
-f:com.intellij.openapi.project.RefreshIconsOnEndOfDumbModeListener
-- com.intellij.openapi.project.DumbService$DumbModeListener
-- <init>(com.intellij.openapi.project.Project):V
-- exitDumbMode():V
 f:com.intellij.openapi.project.ScanningTracker
 - com.intellij.platform.backend.observation.ActivityTracker
 - <init>():V

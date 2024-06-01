@@ -36,13 +36,14 @@ private val LOG: Logger
 
 internal fun createEditorCompositeModel(
   editorPropertyChangeListener: PropertyChangeListener,
-  file: VirtualFile,
+  fileProvider: () -> VirtualFile,
   project: Project,
   fileEntry: FileEntry? = null,
   coroutineScope: CoroutineScope,
 ): Flow<EditorCompositeModel> {
   return flow {
     coroutineScope {
+      val file = fileProvider()
       val document = async {
         val fileDocumentManager = serviceAsync<FileDocumentManager>()
         readAction {
@@ -81,20 +82,20 @@ private fun CoroutineScope.computeFileEditorProviders(
       serviceAsync<FileEditorProviderManager>().getProvidersAsync(project, file)
     }
   }
-  else {
-    return async(CoroutineName("editor provider resolving")) {
-      val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
-      val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
-        fileEditorProviderManager.getProvider(it)
-      }
 
-      // if some provider is not found, compute without taking cache in an account
-      if (fileEntry.providers.size == list.size) {
-        list
-      }
-      else {
-        fileEditorProviderManager.getProvidersAsync(project, file)
-      }
+  return async(CoroutineName("editor provider resolving")) {
+    val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
+    val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
+      fileEditorProviderManager.getProvider(it)
+    }
+
+    // if some provider is not found, compute without taking cache in an account
+    if (fileEntry.providers.size == list.size && list.isNotEmpty()) {
+      list
+    }
+    else {
+      LOG.warn("Cannot use saved provider list (savedProviders=${fileEntry.providers}, resolvedProvider=$list)")
+      fileEditorProviderManager.getProvidersAsync(project, file)
     }
   }
 }

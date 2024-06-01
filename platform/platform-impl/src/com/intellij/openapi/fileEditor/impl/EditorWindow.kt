@@ -338,6 +338,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
     if (isNewEditor) {
+      if (!isOpenedInBulk) {
+        owner.scheduleUpdateFileIcon(file)
+      }
+
       var indexToInsert = options.index
       if (indexToInsert == -1) {
         if (isPreviewMode) {
@@ -380,8 +384,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       if (!isOpenedInBulk) {
         trimToSize(fileToIgnore = file, transferFocus = false)
       }
-
-      owner.updateFileIcon(file)
     }
 
     owner.scheduleUpdateFileColor(file)

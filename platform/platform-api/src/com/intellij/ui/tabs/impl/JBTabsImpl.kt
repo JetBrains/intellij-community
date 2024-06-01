@@ -429,10 +429,12 @@ open class JBTabsImpl @JvmOverloads constructor(
   private fun setRecentlyActive() {
     relayoutAlarm.cancelAllRequests()
     isRecentlyActive = true
-    relayoutAlarm.addRequest(ContextAwareRunnable {
-      isRecentlyActive = false
-      relayout(false, false)
-    }, RELAYOUT_DELAY)
+    if (!relayoutAlarm.isDisposed) {
+      relayoutAlarm.addRequest(ContextAwareRunnable {
+        isRecentlyActive = false
+        relayout(false, false)
+      }, RELAYOUT_DELAY)
+    }
   }
 
   internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
@@ -1661,8 +1663,8 @@ open class JBTabsImpl @JvmOverloads constructor(
   }
 
   private fun updateSideComponent(tabInfo: TabInfo) {
-    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar, null)
-    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar, tabInfo.group)
+    updateToolbar(tabInfo = tabInfo, side = tabInfo.foreSideComponent, toolbars = infoToForeToolbar, group = null)
+    updateToolbar(tabInfo = tabInfo, side = tabInfo.sideComponent, toolbars = infoToToolbar, group = tabInfo.group)
   }
 
   private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>, group: ActionGroup?) {

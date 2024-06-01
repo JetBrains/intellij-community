@@ -135,7 +135,7 @@ open class EditorsSplitters internal constructor(
   @JvmField
   internal var insideChange: Int = 0
 
-  private val iconUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 200.milliseconds) { toUpdate ->
+  private val iconUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 10.milliseconds) { toUpdate ->
     for (file in toUpdate) {
       doUpdateFileIcon(file)
     }
@@ -364,14 +364,15 @@ open class EditorsSplitters internal constructor(
     return if (editors.isEmpty()) FileEditor.EMPTY_ARRAY else editors.toTypedArray()
   }
 
-  internal fun updateFileIcon(file: VirtualFile) {
+  internal fun scheduleUpdateFileIcon(file: VirtualFile) {
     iconUpdateChannel.queue(file)
   }
 
   internal fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
+    val uiSettings = UISettings.getInstance()
     for (window in windows) {
       val (composite, tab) = window.findCompositeAndTab(file) ?: continue
-      tab.setIcon(decorateFileIcon(composite, icon))
+      tab.setIcon(decorateFileIcon(composite = composite, baseIcon = icon, uiSettings = uiSettings))
     }
   }
 
@@ -607,7 +608,7 @@ open class EditorsSplitters internal constructor(
 
     for (file in openFileList) {
       updateFileBackgroundColorAsync(file)
-      updateFileIcon(file)
+      scheduleUpdateFileIcon(file)
       scheduleUpdateFileColor(file)
     }
   }
@@ -892,6 +893,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           }
         }
       }
+
       coroutineScope {
         processFiles(
           fileEntries = trimmedFiles,
@@ -927,61 +929,99 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     requestFocus: Boolean,
     coroutineScope: CoroutineScope,
   ) {
+    val fileEditorManager = splitters.manager
+    val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
+    val virtualFileManager = VirtualFileManager.getInstance()
+    if (session != null && !session.isLocal) {
+      for ((index, fileEntry) in fileEntries.withIndex()) {
+        val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return
+        session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(
+          file = file,
+          options = FileEditorOpenOptions(
+            selectAsCurrent = fileEntry.currentInTab,
+            pin = fileEntry.pinned,
+            index = index,
+            usePreviewTab = fileEntry.isPreview,
+          ),
+        )
+      }
+      return
+    }
+
+    val windowCoroutineScope = splitters.coroutineScope.childScope("EditorWindow")
+
     val windowDeferred = coroutineScope.async(Dispatchers.EDT) {
       splitters.insideChange++
-      try {
-        val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope("EditorWindow"))
-        splitters.addWindow(editorWindow)
-        editorWindow.component.isFocusable = false
-        if (tabSizeLimit != 1) {
-          editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
-        }
-        addChild(editorWindow.component)
-        editorWindow
+      val editorWindow = EditorWindow(owner = splitters, coroutineScope = windowCoroutineScope)
+      splitters.addWindow(editorWindow)
+      editorWindow.component.isFocusable = false
+      if (tabSizeLimit != 1) {
+        editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
       }
-      finally {
-        // do not call `validate` - will be called on editor `add` in any case
-        splitters.insideChange--
-      }
+      addChild(editorWindow.component)
+      editorWindow
     }
 
-    fun weight(item: FileEntry) = if (item.currentInTab) 1 else 0
-
-    // open the selected tab first
-    val sorted = fileEntries.withIndex().sortedWith { o1, o2 ->
-      weight(o2.value) - weight(o1.value)
-    }
+    data class Item(@JvmField val scope: CoroutineScope, @JvmField val file: VirtualFile, @JvmField val model: Flow<EditorCompositeModel>)
 
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
-    var isLazy = false
-    for ((index, fileEntry) in sorted) {
-      span("opening editor") {
-        // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
-        // This enables painting the first editor as soon as it's ready (IJPL-687).
-        val composite = openFile(
+    // resolve virtual files
+    val items = fileEntries.map { fileEntry ->
+      coroutineScope.async {
+        val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@async null
+        splitters.scheduleUpdateFileIcon(file = file)
+
+        val compositeCoroutineScope = windowCoroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
+        val model = fileEditorManager.createEditorCompositeModel(
+          compositeCoroutineScope = compositeCoroutineScope,
+          fileProvider = { file },
           fileEntry = fileEntry,
-          fileEditorManager = splitters.manager,
-          window = windowDeferred.await(),
-          index = index,
-          isLazy = isLazy,
+          isLazy = !fileEntry.currentInTab && isLazyComposite,
+        )
+        Item(scope = compositeCoroutineScope, file = file, model = model)
+      }
+    }.awaitAll()
+
+    span("file opening in EDT", Dispatchers.EDT) {
+      val window = windowDeferred.await()
+      for ((index, fileEntry) in fileEntries.withIndex()) {
+        val item = items.get(index) ?: continue
+        val composite = fileEditorManager.createCompositeByEditorWithModel(
+          file = item.file,
+          model = item.model,
+          coroutineScope = item.scope,
+        ) ?: return@span
+
+        if (fileEntry.currentInTab || !isLazyComposite) {
+          composite.shownDeferred.complete(Unit)
+        }
+
+        fileEditorManager.openInEdtImpl(
+          composite = composite,
+          window = window,
+          file = composite.file,
+          options = FileEditorOpenOptions(
+            selectAsCurrent = fileEntry.currentInTab,
+            pin = fileEntry.pinned,
+            index = index,
+            usePreviewTab = fileEntry.isPreview,
+          ),
+          isNewEditor = true,
+          isOpenedInBulk = true,
         )
 
-        if (requestFocus && fileEntry.currentInTab && composite != null) {
+        (window.tabbedPane.tabs as JBTabsImpl).updateListeners()
+
+        if (requestFocus && fileEntry.currentInTab) {
           composite.coroutineScope.launch {
-            // we can select only when a component is added - wait for the window
-            windowDeferred.join()
             focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)
           }
         }
-
-        isLazy = isLazyComposite
       }
-    }
 
-    val window = windowDeferred.await()
-    splitters.coroutineScope.launch(Dispatchers.EDT) {
-      window.owner.validate()
+      splitters.validate()
       window.updateTabsVisibility()
+      splitters.insideChange--
     }
   }
 }
@@ -1000,38 +1040,6 @@ private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEn
     LOG.warn(message)
   }
   return null
-}
-
-private suspend fun openFile(
-  fileEntry: FileEntry,
-  fileEditorManager: FileEditorManagerImpl,
-  window: EditorWindow,
-  index: Int,
-  isLazy: Boolean,
-): EditorComposite? {
-  val options = FileEditorOpenOptions(
-    selectAsCurrent = fileEntry.currentInTab,
-    pin = fileEntry.pinned,
-    index = index,
-    usePreviewTab = fileEntry.isPreview,
-  )
-
-  val file = resolveFileOrLogError(VirtualFileManager.getInstance(), fileEntry) ?: return null
-
-  val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
-  if (session != null && !session.isLocal) {
-    session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, options = options)
-    return null
-  }
-
-  return fileEditorManager.openFileInEdt(
-    window = window,
-    file = file,
-    options = options,
-    fileEntry = fileEntry,
-    isOpenedInBulk = true,
-    isLazy = isLazy,
-  )
 }
 
 private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
@@ -1124,10 +1132,9 @@ internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Flo
   }
 }
 
-private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon): Icon? {
-  val settings = UISettings.getInstance()
-  val showAsterisk = settings.markModifiedTabsWithAsterisk && composite.isModified
-  val showFileIconInTabs = settings.showFileIconInTabs
+private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon, uiSettings: UISettings): Icon? {
+  val showAsterisk = uiSettings.markModifiedTabsWithAsterisk && composite.isModified
+  val showFileIconInTabs = uiSettings.showFileIconInTabs
   if (!showAsterisk || ExperimentalUI.isNewUI()) {
     return if (showFileIconInTabs) baseIcon else null
   }

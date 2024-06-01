@@ -82,7 +82,6 @@ open class EditorComposite internal constructor(
   model: Flow<EditorCompositeModel>,
   @JvmField internal val project: Project,
   @JvmField internal val coroutineScope: CoroutineScope,
-  isLazy: Boolean,
 ) : FileEditorComposite, Disposable {
   private val clientId: ClientId = ClientId.current
 
@@ -114,26 +113,21 @@ open class EditorComposite internal constructor(
   internal var selfBorder: Boolean = false
     private set
 
+
+  @JvmField
+  internal val shownDeferred = CompletableDeferred<Unit>()
+
   init {
     EDT.assertIsEdt()
 
-    val shown = if (isLazy) {
-      val shownDeferred = CompletableDeferred<Unit>()
-      UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
-        shownDeferred.complete(Unit)
-      }
-      shownDeferred
-    }
-    else {
-      CompletableDeferred(Unit)
+    UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
+      shownDeferred.complete(Unit)
     }
 
-    coroutineScope.launch {
-      shown.await()
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
+      shownDeferred.await()
       model.collect {
-        withContext(ModalityState.any().asContextElement()) {
-          handleModel(it)
-        }
+        handleModel(it)
       }
     }
   }

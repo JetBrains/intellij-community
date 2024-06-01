@@ -93,7 +93,6 @@ internal class LightEditFileEditorManagerImpl(
     val editorWithProvider = FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider)
     return createCompositeInstance(
       file = editorInfo.getFile(),
-      isLazy = false,
       model = flowOf(EditorCompositeModel(fileEditorAndProviderList = java.util.List.of(editorWithProvider), state = null)),
       coroutineScope = coroutineScope.childScope(editorInfo.toString()),
     )!!
