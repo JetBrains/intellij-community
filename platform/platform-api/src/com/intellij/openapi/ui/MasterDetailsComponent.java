@@ -520,9 +520,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   public @Nullable Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node) {
-      final NamedConfigurable configurable = node.getConfigurable();
-      LOG.assertTrue(configurable != null, "already disposed");
-      return configurable.getEditableObject();
+      NamedConfigurable<?> configurable = node.getConfigurable();
+      if (configurable == null) {
+        LOG.error("already disposed");
+      }
+      return configurable == null ? null : configurable.getEditableObject();
     }
     return null;
   }

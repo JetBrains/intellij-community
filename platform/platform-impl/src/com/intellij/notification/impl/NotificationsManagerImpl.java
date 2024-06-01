@@ -263,10 +263,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                 AnAction action = actionListeners.get(e.getDescription());
                 if (action != null) {
                   Object source = e.getSource();
-                  DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
                   if (source instanceof JComponent component) {
                     Notification.setDataProvider(notification, component);
                   }
+                  DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
                   Notification.fire(notification, action, context);
                   NotificationCollector.getInstance()
                     .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);

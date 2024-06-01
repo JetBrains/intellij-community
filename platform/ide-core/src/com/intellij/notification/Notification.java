@@ -284,7 +284,7 @@ public class Notification {
   }
 
   public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
-    DataManager.registerDataProvider(component, dataId -> KEY.is(dataId) ? notification : null);
+    DataManager.registerDataProvider(component, (EdtNoGetDataProvider)sink -> sink.set(KEY, notification));
   }
 
   public @NotNull @LinkLabel String getDropDownText() {
