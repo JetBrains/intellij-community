@@ -5783,7 +5783,54 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate")
+    public static class ConvertLateinitPropertyToNotNullDelegate extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/basic.kt");
+        }
+
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/basic2.kt");
+        }
+
+        @TestMetadata("hasInitializer.kt")
+        public void testHasInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/hasInitializer.kt");
+        }
+
+        @TestMetadata("noType.kt")
+        public void testNoType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/noType.kt");
+        }
+
+        @TestMetadata("notPrimitive.kt")
+        public void testNotPrimitive() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/notPrimitive.kt");
+        }
+
+        @TestMetadata("nullablePrimitive.kt")
+        public void testNullablePrimitive() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/nullablePrimitive.kt");
+        }
+
+        @TestMetadata("val.kt")
+        public void testVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertLateinitPropertyToNotNullDelegate/val.kt");
+        }
+    }
 
 
 
