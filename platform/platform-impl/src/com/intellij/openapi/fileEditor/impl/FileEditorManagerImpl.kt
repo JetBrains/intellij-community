@@ -75,6 +75,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
@@ -1072,7 +1073,8 @@ open class FileEditorManagerImpl(
       return openFileUsingClient(file = effectiveFile, options = getEffectiveOptions(options, entry))
     }
 
-    val composite = createCompositeAndModel(file, window) ?: return null
+    // todo respect entry (HistoryEntry -> FileEntry)
+    val composite = createCompositeAndModel(file = file, window = window, fileEntry = null, isLazy = false) ?: return null
     runBulkTabChange(window.owner) {
       openInEdtImpl(
         composite = composite,
@@ -1115,8 +1117,8 @@ open class FileEditorManagerImpl(
       window = window,
       file = file,
       options = effectiveOptions,
-      model = createEditorCompositeModel(editorPropertyChangeListener = editorPropertyChangeListener, file = file, project = project),
       isOpenedInBulk = false,
+      fileEntry = null,
       isLazy = false,
     ) ?: FileEditorComposite.EMPTY
   }
@@ -1138,7 +1140,7 @@ open class FileEditorManagerImpl(
     var composite = window.getComposite(file)
     val isNewEditor = composite == null
     if (composite == null) {
-      composite = createCompositeAndModel(file, window) ?: return null
+      composite = createCompositeAndModel(file = file, window = window, fileEntry = null, isLazy = false) ?: return null
       openedComposites.add(composite)
     }
 
@@ -1200,13 +1202,24 @@ open class FileEditorManagerImpl(
     }
   }
 
-  private fun createCompositeAndModel(file: VirtualFile, window: EditorWindow): EditorComposite? {
+  internal fun createCompositeAndModel(
+    file: VirtualFile,
+    window: EditorWindow,
+    fileEntry: FileEntry? = null,
+    isLazy: Boolean = false,
+  ): EditorComposite? {
+    // we don't check canOpenFile (we don't have providers yet) -
+    // empty windows will be removed later if needed, it should be quite a rare case
     return createComposite(
       file = file,
-      coroutineScope = createCompositeScope(window, file),
-      isLazy = false,
-      // todo respect entry
-      model = createEditorCompositeModel(editorPropertyChangeListener, file, project),
+      coroutineScope = window.coroutineScope.childScope("EditorComposite(file=$file)"),
+      isLazy = isLazy,
+      model = createEditorCompositeModel(
+        editorPropertyChangeListener = editorPropertyChangeListener,
+        file = file,
+        project = project,
+        fileEntry = fileEntry,
+      ),
     )
   }
 
@@ -1301,26 +1314,6 @@ open class FileEditorManagerImpl(
     composite.setSelectedEditor(fileEditorProviderId)
     // todo move to setSelectedEditor()?
     composite.selectedWithProvider?.fileEditor?.selectNotify()
-  }
-
-  internal fun newEditorComposite(file: VirtualFile, editorWindow: EditorWindow): EditorComposite? {
-    val compositeScope = createCompositeScope(editorWindow = editorWindow, file = file)
-    val newComposite = createComposite(
-      file = file,
-      coroutineScope = compositeScope,
-      isLazy = false,
-      model = createEditorCompositeModel(editorPropertyChangeListener, file, project),
-    ) ?: return null
-    val editorHistoryManager = EditorHistoryManager.getInstance(project)
-    for (editorWithProvider in newComposite.allEditorsWithProviders) {
-      val editor = editorWithProvider.fileEditor
-      val provider = editorWithProvider.provider
-
-      editorHistoryManager.getState(file, provider)?.let {
-        editor.setState(it)
-      }
-    }
-    return newComposite
   }
 
   override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {
@@ -2099,51 +2092,43 @@ open class FileEditorManagerImpl(
     window: EditorWindow,
     file: VirtualFile,
     options: FileEditorOpenOptions,
-    model: Flow<EditorCompositeModel>,
     isOpenedInBulk: Boolean,
     isLazy: Boolean,
+    fileEntry: FileEntry?,
   ): EditorComposite? {
-    val result = coroutineScope {
-      span("file opening in EDT and repaint", Dispatchers.EDT) {
-        val splitters = window.owner
-        splitters.insideChange++
-        try {
-          span("file opening in EDT") {
-            val composite = createComposite(
-              file = file,
-              coroutineScope = createCompositeScope(window, file),
-              model = model,
-              isLazy = isLazy,
-            )
-            if (composite == null) {
-              @Suppress("LABEL_NAME_CLASH")
-              return@span null
-            }
-
-            openedComposites.add(composite)
-
-            openInEdtImpl(
-              composite = composite,
-              window = window,
-              file = composite.file,
-              options = options,
-              isNewEditor = true,
-              isOpenedInBulk = isOpenedInBulk,
-            )
-
-            composite
+    return span("file opening in EDT and repaint", Dispatchers.EDT) {
+      val splitters = window.owner
+      splitters.insideChange++
+      try {
+        span("file opening in EDT") {
+          val composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, isLazy = isLazy)
+          if (composite == null) {
+            @Suppress("LABEL_NAME_CLASH")
+            return@span null
           }
+
+          openedComposites.add(composite)
+
+          openInEdtImpl(
+            composite = composite,
+            window = window,
+            file = composite.file,
+            options = options,
+            isNewEditor = true,
+            isOpenedInBulk = isOpenedInBulk,
+          )
+
+          composite
         }
-        finally {
-          splitters.insideChange--
-          if (!splitters.isInsideChange) {
-            splitters.validate()
-            (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
-          }
+      }
+      finally {
+        splitters.insideChange--
+        if (!splitters.isInsideChange) {
+          splitters.validate()
+          (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
         }
       }
     }
-    return result
   }
 
   private suspend fun openExistingFileInEdt(composite: EditorComposite, window: EditorWindow, options: FileEditorOpenOptions) {
@@ -2413,44 +2398,6 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
       window.closeFile(oldFile)
     }
   }
-}
-
-private fun createCompositeScope(editorWindow: EditorWindow, file: VirtualFile): CoroutineScope {
-  return editorWindow.coroutineScope.childScope("EditorComposite(file=$file)")
-}
-
-internal suspend fun focusEditorOnCompositeOpenComplete(
-  composite: EditorComposite,
-  splitters: EditorsSplitters,
-) {
-  doOnCompositeOpenComplete(composite = composite) { _ ->
-    withContext(Dispatchers.EDT) {
-      val currentSelectedComposite = splitters.currentCompositeFlow.value
-      // while the editor was loading, the user switched to another editor - don't steal focus
-      if (currentSelectedComposite === composite) {
-        val preferredFocusedComponent = composite.preferredFocusedComponent
-        if (preferredFocusedComponent == null) {
-          LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
-        }
-        else {
-          preferredFocusedComponent.requestFocusInWindow()
-          IdeFocusManager.getGlobalInstance().toFront(splitters)
-        }
-      }
-      else {
-        LOG.warn("Cannot focus editor (splitters=$splitters, " +
-                 "composite=$composite, currentComposite=$currentSelectedComposite, " +
-                 "reason=selection changed)")
-      }
-    }
-  }
-}
-
-internal suspend fun doOnCompositeOpenComplete(
-  composite: EditorComposite,
-  action: suspend (selectedEditor: FileEditor) -> Unit,
-) {
-  action(composite.selectedEditorWithProvider.filterNotNull().first().fileEditor)
 }
 
 @Suppress("SSBasedInspection")

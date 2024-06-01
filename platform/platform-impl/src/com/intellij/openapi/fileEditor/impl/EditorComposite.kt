@@ -48,10 +48,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -815,4 +812,38 @@ internal fun restoreEditorState(
 
 private fun isDumbAware(editor: FileEditor): Boolean {
   return editor.getUserData(DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
+}
+
+internal suspend fun focusEditorOnCompositeOpenComplete(
+  composite: EditorComposite,
+  splitters: EditorsSplitters,
+) {
+  doOnCompositeOpenComplete(composite = composite) { _ ->
+    withContext(Dispatchers.EDT) {
+      val currentSelectedComposite = splitters.currentCompositeFlow.value
+      // while the editor was loading, the user switched to another editor - don't steal focus
+      if (currentSelectedComposite === composite) {
+        val preferredFocusedComponent = composite.preferredFocusedComponent
+        if (preferredFocusedComponent == null) {
+          LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
+        }
+        else {
+          preferredFocusedComponent.requestFocusInWindow()
+          IdeFocusManager.getGlobalInstance().toFront(splitters)
+        }
+      }
+      else {
+        LOG.warn("Cannot focus editor (splitters=$splitters, " +
+                 "composite=$composite, currentComposite=$currentSelectedComposite, " +
+                 "reason=selection changed)")
+      }
+    }
+  }
+}
+
+internal suspend fun doOnCompositeOpenComplete(
+  composite: EditorComposite,
+  action: suspend (selectedEditor: FileEditor) -> Unit,
+) {
+  action(composite.selectedEditorWithProvider.filterNotNull().first().fileEditor)
 }

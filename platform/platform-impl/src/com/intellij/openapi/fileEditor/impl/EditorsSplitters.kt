@@ -578,7 +578,7 @@ open class EditorsSplitters internal constructor(
           window.tabCount == 0 &&
           !window.isDisposed &&
           nextFile != null && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
-        manager.newEditorComposite(nextFile, window)?.let {
+        manager.createCompositeAndModel(file = nextFile, window = window)?.let {
           window.addComposite(composite = it, options = FileEditorOpenOptions(requestFocus = moveFocus, usePreviewTab = it.isPreview))
         }
       }
@@ -945,8 +945,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       }
     }
 
-    val fileEditorManager = splitters.manager
-
     fun weight(item: FileEntry) = if (item.currentInTab) 1 else 0
 
     // open the selected tab first
@@ -954,19 +952,16 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       weight(o2.value) - weight(o1.value)
     }
 
-    val virtualFileManager = VirtualFileManager.getInstance()
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     var isLazy = false
     for ((index, fileEntry) in sorted) {
       span("opening editor") {
-        val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
         // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
         // This enables painting the first editor as soon as it's ready (IJPL-687).
         val composite = openFile(
-          file = file,
           fileEntry = fileEntry,
-          fileEditorManager = fileEditorManager,
-          windowDeferred = windowDeferred,
+          fileEditorManager = splitters.manager,
+          window = windowDeferred.await(),
           index = index,
           isLazy = isLazy,
         )
@@ -1008,10 +1003,9 @@ private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEn
 }
 
 private suspend fun openFile(
-  file: VirtualFile,
   fileEntry: FileEntry,
   fileEditorManager: FileEditorManagerImpl,
-  windowDeferred: Deferred<EditorWindow>,
+  window: EditorWindow,
   index: Int,
   isLazy: Boolean,
 ): EditorComposite? {
@@ -1022,25 +1016,19 @@ private suspend fun openFile(
     usePreviewTab = fileEntry.isPreview,
   )
 
+  val file = resolveFileOrLogError(VirtualFileManager.getInstance(), fileEntry) ?: return null
+
   val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
   if (session != null && !session.isLocal) {
     session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, options = options)
     return null
   }
 
-  // we don't check canOpenFile (we don't have providers yet) -
-  // empty windows will be removed later if needed, it should be quite a rare case
-
   return fileEditorManager.openFileInEdt(
-    window = windowDeferred.await(),
+    window = window,
     file = file,
     options = options,
-    model = createEditorCompositeModel(
-      editorPropertyChangeListener = fileEditorManager.editorPropertyChangeListener,
-      file = file,
-      project = fileEditorManager.project,
-      fileEntry = fileEntry,
-    ),
+    fileEntry = fileEntry,
     isOpenedInBulk = true,
     isLazy = isLazy,
   )
