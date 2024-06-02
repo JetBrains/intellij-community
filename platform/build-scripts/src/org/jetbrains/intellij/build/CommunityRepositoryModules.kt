@@ -207,7 +207,9 @@ object CommunityRepositoryModules {
         "intellij.driver.impl",
         "intellij.driver.client"
       )
-    ))
+    ),
+    pluginAuto(listOf("intellij.performanceTesting.ui"))
+  )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
     pluginAuto("intellij.errorProne") { spec ->
