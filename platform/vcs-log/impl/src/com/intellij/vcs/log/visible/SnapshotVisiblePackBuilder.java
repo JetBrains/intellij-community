@@ -28,7 +28,7 @@ final class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;
   private final @NotNull VcsLogStorage myStorage;
 
-  public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
+  SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
     myStorage = storage;
   }
 

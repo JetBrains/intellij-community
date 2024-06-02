@@ -85,11 +85,11 @@ class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
 
   private final @NotNull History myHistory;
 
-  public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel,
-                          @NotNull FileHistoryFilterUi filterUi, @NotNull VcsLogData logData,
-                          @NotNull FilePath filePath, @NotNull VirtualFile root,
-                          @NotNull VcsLogColorManager colorManager,
-                          @NotNull Disposable disposable) {
+  FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel,
+                   @NotNull FileHistoryFilterUi filterUi, @NotNull VcsLogData logData,
+                   @NotNull FilePath filePath, @NotNull VirtualFile root,
+                   @NotNull VcsLogColorManager colorManager,
+                   @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
