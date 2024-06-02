@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NoMergesFilterAction(private val parentFilterModel: ParentFilterModel) : DumbAwareToggleAction(VcsLogBundle.message("vcs.log.filter.no.merges")) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return parentFilterModel.getFilter() != null

@@ -6,6 +6,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.ui.JBColor.namedColor;
 
+@ApiStatus.Internal
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = namedColor("VersionControl.Log.Commit.currentBranchBackground",
                                                               new JBColor(new Color(228, 250, 255), new Color(63, 71, 73)));

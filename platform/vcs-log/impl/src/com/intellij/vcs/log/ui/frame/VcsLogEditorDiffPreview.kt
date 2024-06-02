@@ -16,7 +16,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import java.awt.Component
 import java.lang.ref.WeakReference
 
-class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
+internal class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
   : TreeHandlerEditorDiffPreview(changesBrowser.viewer, VcsLogDiffPreviewHandler(changesBrowser)) {
 
   init {

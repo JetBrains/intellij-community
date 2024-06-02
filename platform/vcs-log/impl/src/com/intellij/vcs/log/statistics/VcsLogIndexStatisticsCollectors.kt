@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.TimeUnit
 
@@ -91,6 +92,7 @@ internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() 
 
 }
 
+@ApiStatus.Internal
 class VcsLogIndexCollectorState : BaseState() {
   var indexTime by property(0L)
   var indexTimeByRoot by linkedMap<String, Long>()
@@ -106,6 +108,7 @@ class VcsLogIndexCollectorState : BaseState() {
 @State(name = "VcsLogIndexCollector",
        storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState> {
   private val lock = Any()
   private var state: VcsLogIndexCollectorState

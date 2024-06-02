@@ -14,11 +14,13 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class PostponableLogRefresher {
   private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
   private final @NotNull VcsLogData myLogData;
@@ -26,7 +28,7 @@ public final class PostponableLogRefresher {
   private final @NotNull Set<VcsLogWindow> myLogWindows = new HashSet<>();
   private final @NotNull Map<String, Throwable> myCreationTraces = new HashMap<>();
 
-  public PostponableLogRefresher(@NotNull VcsLogData logData) {
+  PostponableLogRefresher(@NotNull VcsLogData logData) {
     myLogData = logData;
     myLogData.addDataPackChangeListener(dataPack -> {
       LOG.debug("Refreshing log windows " + myLogWindows);

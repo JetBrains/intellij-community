@@ -6,12 +6,14 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * {@link VcsLogInternalDataKeys#FILE_HISTORY_UI}
  */
+@ApiStatus.Internal
 public class FileHistoryUiDataRule implements GetDataRule {
   @Override
   public @Nullable Object getData(@NotNull DataProvider dataProvider) {

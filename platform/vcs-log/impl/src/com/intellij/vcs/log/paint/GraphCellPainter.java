@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.paint;
 
 import com.intellij.vcs.log.graph.PrintElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.Collection;
 /**
  * @author erokhins
  */
+@ApiStatus.Internal
 public interface GraphCellPainter {
 
   void paint(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements);

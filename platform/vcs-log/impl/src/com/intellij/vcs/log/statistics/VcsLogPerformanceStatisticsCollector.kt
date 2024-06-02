@@ -14,8 +14,9 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.util.GraphOptionsUtil.optionKindNames
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.FilterKind
+import org.jetbrains.annotations.ApiStatus
 
-object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
+internal object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("vcs.log.performance", 6)
 
   val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computed",
@@ -45,7 +46,7 @@ object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 }
 
-class NullableRoundedLongEventField(override val name: String) : PrimitiveEventField<Long?>() {
+internal class NullableRoundedLongEventField(override val name: String) : PrimitiveEventField<Long?>() {
   override val validationRule: List<String> get() = listOf("{regexp#integer}")
   override fun addData(fuData: FeatureUsageData, value: Long?) {
     if (value != null) fuData.addData(name, StatisticsUtil.roundToPowerOfTwo(value))

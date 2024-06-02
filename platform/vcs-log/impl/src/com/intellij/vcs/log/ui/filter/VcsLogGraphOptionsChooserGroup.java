@@ -19,6 +19,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.GraphOptionsUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogParentFilterImplKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implements DumbAware {
 
   private final @NotNull ParentFilterModel myParentFilterModel;

@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.ui.table.column.VcsLogMetadataColumn;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.AbstractList;
 import java.util.List;
 import java.util.ListIterator;
 
+@ApiStatus.Internal
 public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   public VcsLogSpeedSearch(@NotNull VcsLogGraphTable component) {
     super(component, null);

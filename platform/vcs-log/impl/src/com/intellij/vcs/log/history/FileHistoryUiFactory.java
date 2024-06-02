@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
+class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
   private final @NotNull FilePath myFilePath;
   private final @NotNull VirtualFile myRoot;
   private final @Nullable Hash myHash;

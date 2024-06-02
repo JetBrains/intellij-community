@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.util.function.Supplier
@@ -16,6 +17,7 @@ import javax.swing.JComponent
 /**
  * Action class which allows to place [VcsLogPopupComponent] on a toolbar and supports "Quick Actions Popup".
  */
+@ApiStatus.Internal
 abstract class VcsLogPopupComponentAction(dynamicText: Supplier<@Nls @NlsActions.ActionText String>)
   : DumbAwareAction(dynamicText), CustomComponentAction {
 
