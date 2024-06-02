@@ -173,7 +173,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   @ApiStatus.Internal
   public static @NotNull LocalPtyOptions getDefaultPtyOptions() {
-    return LocalPtyOptions.DEFAULT.builder()
+    return LocalPtyOptions.defaults().builder()
       .consoleMode(true)
       .build();
   }

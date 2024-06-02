@@ -285,6 +285,7 @@ f:com.intellij.execution.process.LocalPtyOptions
 - sf:Companion:com.intellij.execution.process.LocalPtyOptions$Companion
 - sf:DEFAULT:com.intellij.execution.process.LocalPtyOptions
 - f:builder():com.intellij.execution.process.LocalPtyOptions$Builder
+- sf:defaults():com.intellij.execution.process.LocalPtyOptions
 - f:getConsoleMode():Z
 - f:getInitialColumns():I
 - f:getInitialRows():I
@@ -302,6 +303,7 @@ f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:useCygwinLaunch():Z
 - f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
 f:com.intellij.execution.process.LocalPtyOptions$Companion
+- f:defaults():com.intellij.execution.process.LocalPtyOptions
 c:com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.process.BaseOSProcessHandler
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V

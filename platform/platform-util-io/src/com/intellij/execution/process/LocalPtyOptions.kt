@@ -20,6 +20,10 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
   }
 
   companion object {
+    @JvmStatic
+    fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty())
+
+    @Deprecated("Use [defaults] instead", ReplaceWith("LocalPtyOptions.defaults()"))
     @JvmField
     val DEFAULT: LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, false)
 
@@ -32,7 +36,7 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
                                      private var useCygwinLaunch: Boolean,
                                      private var initialColumns: Int,
                                      private var initialRows: Int,
-                                     private var useWinConPty: Boolean = shouldUseWinConPty()) {
+                                     private var useWinConPty: Boolean) {
 
     /**
      * @param consoleMode `true` means that started process output will be shown using `ConsoleViewImpl`:
