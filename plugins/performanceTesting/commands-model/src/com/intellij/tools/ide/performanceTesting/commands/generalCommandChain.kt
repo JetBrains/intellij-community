@@ -357,7 +357,7 @@ fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = app
   addCommand("${CMD_PREFIX}getLibraryPathByName $name,$path")
 }
 
-fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: Path): T = apply {
+fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: String): T = apply {
   addCommand("${CMD_PREFIX}convertJavaToKotlin $moduleName $filePath")
 }
 

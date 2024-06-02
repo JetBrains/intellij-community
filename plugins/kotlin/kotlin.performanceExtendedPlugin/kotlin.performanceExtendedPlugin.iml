@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
     <orderEntry type="module" module-name="intellij.performanceTesting.vcs" />
+    <orderEntry type="module" module-name="kotlin.idea" />
   </component>
 </module>
