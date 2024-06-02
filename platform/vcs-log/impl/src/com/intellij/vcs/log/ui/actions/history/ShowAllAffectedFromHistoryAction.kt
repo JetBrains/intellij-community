@@ -1,44 +1,36 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.actions.history;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.ui.actions.history
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
-import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel;
-import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.data.DataGetter;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.history.FileHistoryModel;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.vcs.log.util.VcsLogUtil.createCommittedChangeList;
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel.ChangelistData
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.data.DataGetter
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.history.FileHistoryModel
+import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public class ShowAllAffectedFromHistoryAction extends FileHistoryOneCommitAction<VcsFullCommitDetails> {
+class ShowAllAffectedFromHistoryAction : FileHistoryOneCommitAction<VcsFullCommitDetails>() {
+  override fun getDetailsGetter(logData: VcsLogData): DataGetter<VcsFullCommitDetails> = logData.commitDetailsGetter
 
-  @Override
-  protected @NotNull DataGetter<VcsFullCommitDetails> getDetailsGetter(@NotNull VcsLogData logData) {
-    return logData.getCommitDetailsGetter();
-  }
+  override fun performAction(project: Project,
+                             model: FileHistoryModel,
+                             detail: VcsFullCommitDetails,
+                             e: AnActionEvent) {
+    val file = model.getPathInCommit(detail.id)
+    val title = VcsLogBundle.message("dialog.title.paths.affected.by.commit", detail.id.toShortString())
 
-  @Override
-  protected void performAction(@NotNull Project project,
-                               @NotNull FileHistoryModel model,
-                               @NotNull VcsFullCommitDetails detail,
-                               @NotNull AnActionEvent e) {
-    FilePath file = model.getPathInCommit(detail.getId());
-    String title = VcsLogBundle.message("dialog.title.paths.affected.by.commit", detail.getId().toShortString());
+    val panel = LoadingCommittedChangeListPanel(project)
+    panel.loadChangesInBackground {
+      val committedChangeList = VcsLogUtil.createCommittedChangeList(detail)
+      ChangelistData(committedChangeList, file)
+    }
 
-    LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(project);
-    panel.loadChangesInBackground(() -> {
-      CommittedChangeListForRevision committedChangeList = createCommittedChangeList(detail);
-      return new LoadingCommittedChangeListPanel.ChangelistData(committedChangeList, file);
-    });
-
-    ChangeListViewerDialog.show(project, title, panel);
+    ChangeListViewerDialog.show(project, title, panel)
   }
 }
