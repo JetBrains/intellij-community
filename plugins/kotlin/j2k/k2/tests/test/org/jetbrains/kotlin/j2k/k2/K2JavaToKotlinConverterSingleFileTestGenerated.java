@@ -5151,6 +5151,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/autoNotNull.java");
         }
 
+        @TestMetadata("autoUnboxing.java")
+        public void testAutoUnboxing() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/autoUnboxing.java");
+        }
+
         @TestMetadata("FieldAssignedWithNull.java")
         public void testFieldAssignedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/FieldAssignedWithNull.java");

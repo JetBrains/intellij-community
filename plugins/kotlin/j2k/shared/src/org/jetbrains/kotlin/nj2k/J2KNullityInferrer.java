@@ -424,6 +424,11 @@ class J2KNullityInferrer {
         }
 
         private boolean processParameter(@NotNull PsiParameter parameter, @NotNull PsiReferenceExpression expr, PsiElement parent) {
+            if (NullabilityKt.isUsedInAutoUnboxingContext(expr)) {
+                registerNotNullAnnotation(parameter);
+                return true;
+            }
+
             if (PsiUtil.isAccessedForWriting(expr)) return true;
 
             // If Java DFA can determine that the nullability of the reference is definitely not-null,

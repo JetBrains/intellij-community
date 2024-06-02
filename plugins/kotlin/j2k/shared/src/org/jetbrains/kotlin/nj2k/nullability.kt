@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.createSmartPointer
+import com.intellij.psi.*
+import com.intellij.psi.util.TypeConversionUtil
+import com.siyeh.ig.psiutils.ExpectedTypeUtils
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -32,4 +33,15 @@ internal fun JKDeclaration.updateNullability(declarationNullabilityInfo: Declara
         else -> return
     }
     typeElement.type = typeElement.type.updateNullability(newNullability)
+}
+
+internal fun isUsedInAutoUnboxingContext(expr: PsiReferenceExpression): Boolean {
+    val exprType = expr.type
+    if (!TypeConversionUtil.isAssignableFromPrimitiveWrapper(exprType)) return false
+
+    val expectedType = ExpectedTypeUtils.findExpectedType(expr, /* calculateTypeForComplexReferences = */ false) ?: return false
+    if (!TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) return false
+
+    val unboxedType = PsiPrimitiveType.getUnboxedType(exprType) ?: return false
+    return expectedType.isAssignableFrom(unboxedType)
 }
