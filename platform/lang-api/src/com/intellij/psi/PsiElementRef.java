@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.model.Pointer;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PsiElementRef<T extends PsiElement> {
+public final class PsiElementRef<T extends PsiElement> implements Pointer<T> {
   private volatile PsiRefColleague<T> myColleague;
 
-  public PsiElementRef(PsiRefColleague<T> colleague) {
+  PsiElementRef(PsiRefColleague<T> colleague) {
     myColleague = colleague;
   }
 
@@ -44,7 +45,12 @@ public final class PsiElementRef<T extends PsiElement> {
     return myColleague.isValid();
   }
 
-  public static <T extends PsiElement> PsiElementRef<T> real(final @NotNull T element) {
+  @Override
+  public @Nullable T dereference() {
+    return getPsiElement();
+  }
+
+  public static <T extends PsiElement> PsiElementRef<T> real(@NotNull T element) {
     return new PsiElementRef<>(new PsiRefColleague.Real<>(element));
   }
 

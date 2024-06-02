@@ -2296,10 +2296,12 @@ f:com.intellij.psi.PlainTextTokenTypes
 - sf:PLAIN_TEXT:com.intellij.psi.tree.IElementType
 - sf:PLAIN_TEXT_FILE:com.intellij.psi.tree.IElementType
 a:com.intellij.psi.PsiAnchor
+- com.intellij.model.Pointer
 - <init>():V
 - s:calcStubIndex(com.intellij.psi.StubBasedPsiElement):I
 - s:create(com.intellij.psi.PsiElement):com.intellij.psi.PsiAnchor
 - s:createStubReference(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.psi.PsiAnchor$StubIndexReference
+- dereference():com.intellij.psi.PsiElement
 - a:getEndOffset():I
 - a:getFile():com.intellij.psi.PsiFile
 - a:getStartOffset():I

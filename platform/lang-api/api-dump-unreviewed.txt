@@ -3729,7 +3729,8 @@ a:com.intellij.psi.PsiChildLink
 - f:createChildRef(com.intellij.psi.PsiElementRef):com.intellij.psi.PsiElementRef
 - a:findLinkedChild(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 f:com.intellij.psi.PsiElementRef
-- <init>(com.intellij.psi.PsiElementRef$PsiRefColleague):V
+- com.intellij.model.Pointer
+- dereference():com.intellij.psi.PsiElement
 - ensurePsiElementExists():com.intellij.psi.PsiElement
 - equals(java.lang.Object):Z
 - getPsiElement():com.intellij.psi.PsiElement
