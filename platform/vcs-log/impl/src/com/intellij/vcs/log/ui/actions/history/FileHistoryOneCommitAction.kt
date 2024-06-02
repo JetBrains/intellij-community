@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.data.DataGetter
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryModel
@@ -38,7 +35,7 @@ abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), D
       e.presentation.isEnabled = false
       return
     }
-    val detail = selection.lazyMap(getDetailsGetter(logData)::getCachedDataOrPlaceholder).singleOrNull()?.takeIf { it !is LoadingDetails }
+    val detail = selection.lazyMap(getCache(logData)::getCachedData).singleOrNull()?.takeIf { it !is LoadingDetails }
     e.presentation.isEnabled = isEnabled(model, detail, e)
   }
 
@@ -51,14 +48,15 @@ abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), D
 
     if (selection.size != 1) return
 
-    getDetailsGetter(logData).loadCommitsData(selection.ids, { details: List<T> ->
+    loadData(logData, selection, { details: List<T> ->
       if (!details.isEmpty()) performAction(project, model, details.single(), e)
-    }, { t -> showError(project, t) }, null)
+    }, { t -> showError(project, t) })
   }
 
   protected open fun isEnabled(selection: FileHistoryModel, detail: T?, e: AnActionEvent): Boolean = true
 
-  protected abstract fun getDetailsGetter(logData: VcsLogData): DataGetter<T>
+  protected abstract fun getCache(logData: VcsLogData): VcsLogCommitDataCache<T>
+  protected abstract fun loadData(logData: VcsLogData, selection: VcsLogCommitSelection, onSuccess: (List<T>) -> Unit, onError: (Throwable) -> Unit)
   protected abstract fun performAction(project: Project, model: FileHistoryModel, detail: T, e: AnActionEvent)
 }
 

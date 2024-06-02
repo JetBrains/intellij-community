@@ -1138,15 +1138,17 @@ c:com.intellij.vcs.log.ui.actions.VcsRefCompletionProvider
 a:com.intellij.vcs.log.ui.actions.history.FileHistoryMetadataAction
 - com.intellij.vcs.log.ui.actions.history.FileHistoryOneCommitAction
 - <init>():V
-- p:getDetailsGetter(com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.data.DataGetter
+- p:getCache(com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.VcsLogCommitDataCache
+- p:loadData(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.VcsLogCommitSelection,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 a:com.intellij.vcs.log.ui.actions.history.FileHistoryOneCommitAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pa:getDetailsGetter(com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.data.DataGetter
+- pa:getCache(com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.VcsLogCommitDataCache
 - p:isEnabled(com.intellij.vcs.log.history.FileHistoryModel,com.intellij.vcs.log.VcsCommitMetadata,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- pa:loadData(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.VcsLogCommitSelection,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 - pa:performAction(com.intellij.openapi.project.Project,com.intellij.vcs.log.history.FileHistoryModel,com.intellij.vcs.log.VcsCommitMetadata,com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.vcs.log.ui.actions.history.FileHistorySingleCommitAction

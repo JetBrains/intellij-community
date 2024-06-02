@@ -2,9 +2,17 @@
 package com.intellij.vcs.log.ui.actions.history
 
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.data.DataGetter
+import com.intellij.vcs.log.VcsLogCommitDataCache
+import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.VcsLogData
 
 abstract class FileHistoryMetadataAction : FileHistoryOneCommitAction<VcsCommitMetadata>() {
-  override fun getDetailsGetter(logData: VcsLogData): DataGetter<VcsCommitMetadata> = logData.miniDetailsGetter
+  override fun getCache(logData: VcsLogData): VcsLogCommitDataCache<VcsCommitMetadata> = logData.miniDetailsGetter
+
+  override fun loadData(logData: VcsLogData,
+                        selection: VcsLogCommitSelection,
+                        onSuccess: (List<VcsCommitMetadata>) -> Unit,
+                        onError: (Throwable) -> Unit) {
+    logData.miniDetailsGetter.loadCommitsData(selection.ids, { details -> onSuccess(details) }, { t -> onError(t) }, null)
+  }
 }

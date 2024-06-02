@@ -8,7 +8,8 @@ import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel.ChangelistData
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.DataGetter
+import com.intellij.vcs.log.VcsLogCommitDataCache
+import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryModel
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -16,7 +17,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ShowAllAffectedFromHistoryAction : FileHistoryOneCommitAction<VcsFullCommitDetails>() {
-  override fun getDetailsGetter(logData: VcsLogData): DataGetter<VcsFullCommitDetails> = logData.commitDetailsGetter
+  override fun getCache(logData: VcsLogData): VcsLogCommitDataCache<VcsFullCommitDetails> = logData.commitDetailsGetter
+
+  override fun loadData(logData: VcsLogData,
+                        selection: VcsLogCommitSelection,
+                        onSuccess: (List<VcsFullCommitDetails>) -> Unit,
+                        onError: (Throwable) -> Unit) {
+    logData.commitDetailsGetter.loadCommitsData(selection.ids, { details -> onSuccess(details) }, { t -> onError(t) }, null)
+  }
 
   override fun performAction(project: Project,
                              model: FileHistoryModel,
