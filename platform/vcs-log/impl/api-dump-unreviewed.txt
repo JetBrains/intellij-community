@@ -74,7 +74,7 @@ f:com.intellij.vcs.log.data.CommitDetailsGetter
 - com.intellij.vcs.log.data.AbstractDataGetter
 - dispose():V
 - getCachedData(I):com.intellij.vcs.log.VcsFullCommitDetails
-- getCachedDataOrPlaceholder(I):com.intellij.vcs.log.VcsFullCommitDetails
+- f:getCachedDataOrPlaceholder(I):com.intellij.vcs.log.VcsFullCommitDetails
 f:com.intellij.vcs.log.data.CommitIdByStringCondition
 - java.util.function.Predicate
 - <init>(java.lang.String):V
@@ -98,7 +98,6 @@ f:com.intellij.vcs.log.data.CurrentBranchConditionCache
 - f:getContainedInCurrentBranchCondition(com.intellij.openapi.vfs.VirtualFile):java.util.function.Predicate
 com.intellij.vcs.log.data.DataGetter
 - com.intellij.vcs.log.VcsLogCommitDataCache
-- a:getCachedDataOrPlaceholder(I):com.intellij.vcs.log.VcsShortCommitDetails
 - a:loadCommitsData(java.util.List,com.intellij.util.Consumer,com.intellij.util.Consumer,com.intellij.openapi.progress.ProgressIndicator):V
 c:com.intellij.vcs.log.data.DataPack
 - com.intellij.vcs.log.data.DataPackBase
@@ -152,7 +151,7 @@ f:com.intellij.vcs.log.data.MiniDetailsGetter
 - dispose():V
 - f:doLoadCommitsData(it.unimi.dsi.fastutil.ints.IntSet,kotlin.jvm.functions.Function2):V
 - getCachedData(I):com.intellij.vcs.log.VcsCommitMetadata
-- getCachedDataOrPlaceholder(I):com.intellij.vcs.log.VcsCommitMetadata
+- f:getCachedDataOrPlaceholder(I):com.intellij.vcs.log.VcsCommitMetadata
 - f:removeDetailsLoadedListener(java.lang.Runnable):V
 f:com.intellij.vcs.log.data.MiniDetailsGetter$Companion
 f:com.intellij.vcs.log.data.RefsModel

@@ -33,7 +33,7 @@ class CommitDetailsGetter internal constructor(storage: VcsLogStorage,
   }
 
   @CalledInAny
-  override fun getCachedDataOrPlaceholder(commitId: Int): VcsFullCommitDetails {
+  fun getCachedDataOrPlaceholder(commitId: Int): VcsFullCommitDetails {
     return getCachedData(commitId) ?: placeholdersCache.get(commitId)!!
   }
 
