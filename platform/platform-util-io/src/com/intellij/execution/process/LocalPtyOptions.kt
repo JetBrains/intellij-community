@@ -25,7 +25,7 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
 
     @JvmStatic
     @Internal
-    fun shouldUseWinConPty() : Boolean = SystemInfo.isWindows && Registry.`is`("terminal.use.conpty.on.windows", false)
+    fun shouldUseWinConPty() : Boolean = SystemInfo.isWindows && Registry.`is`("terminal.use.conpty.on.windows", true)
   }
 
   class Builder internal constructor(private var consoleMode: Boolean,
