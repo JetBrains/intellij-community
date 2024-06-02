@@ -680,6 +680,7 @@ com.intellij.lang.SyntaxTreeBuilder
 - a:getCurrentOffset():I
 - a:getLatestDoneMarker():com.intellij.lang.LighterASTNode
 - a:getOriginalText():java.lang.CharSequence
+- getProductions():java.util.List
 - a:getTokenText():java.lang.String
 - a:getTokenType():com.intellij.psi.tree.IElementType
 - isWhitespaceOrComment(com.intellij.psi.tree.IElementType):Z
@@ -694,6 +695,7 @@ com.intellij.lang.SyntaxTreeBuilder
 - a:setTokenTypeRemapper(com.intellij.lang.ITokenTypeRemapper):V
 - a:setWhitespaceSkippedCallback(com.intellij.lang.WhitespaceSkippedCallback):V
 com.intellij.lang.SyntaxTreeBuilder$Marker
+- com.intellij.lang.SyntaxTreeBuilder$Production
 - a:collapse(com.intellij.psi.tree.IElementType):V
 - a:done(com.intellij.psi.tree.IElementType):V
 - a:doneBefore(com.intellij.psi.tree.IElementType,com.intellij.lang.SyntaxTreeBuilder$Marker):V
@@ -704,6 +706,15 @@ com.intellij.lang.SyntaxTreeBuilder$Marker
 - a:precede():com.intellij.lang.SyntaxTreeBuilder$Marker
 - a:rollbackTo():V
 - a:setCustomEdgeTokenBinders(com.intellij.lang.WhitespacesAndCommentsBinder,com.intellij.lang.WhitespacesAndCommentsBinder):V
+com.intellij.lang.SyntaxTreeBuilder$Production
+- com.intellij.lang.LighterASTNode
+- getEndIndex():I
+- getEndOffset():I
+- getErrorMessage():java.lang.String
+- getStartIndex():I
+- getStartOffset():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- isCollapsed():Z
 com.intellij.lang.TokenSeparatorGenerator
 - a:generateWhitespaceBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 c:com.intellij.lang.TreeBackedLighterAST

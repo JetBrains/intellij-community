@@ -399,7 +399,7 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean isWhitespaceOrComment(@NotNull PsiBuilder builder, @Nullable IElementType type) {
-    return ((PsiBuilderImpl)((Builder)builder).getDelegate()).whitespaceOrComment(type);
+    return builder.isWhitespaceOrComment(type);
   }
 
   private static boolean wasAutoSkipped(@NotNull PsiBuilder builder, int steps) {
@@ -550,7 +550,7 @@ public class GeneratedParserUtilBase {
       final boolean eatMoreFlagOnce = !builder.eof() && eatMore.parse(builder, frame.level + 1);
       boolean eatMoreFlag = eatMoreFlagOnce || !result && frame.position == initialPos && lastErrorPos > frame.position;
 
-      PsiBuilderImpl.ProductionMarker latestDoneMarker =
+      PsiBuilder.Marker latestDoneMarker =
         (pinned || result) && (state.altMode || elementType != null) &&
         eatMoreFlagOnce ? getLatestExtensibleDoneMarker(builder) : null;
       // advance to the last error pos
@@ -638,7 +638,7 @@ public class GeneratedParserUtilBase {
     if (elementType != null && marker != null) {
       if (result || pinned) {
         if ((frame.modifiers & _COLLAPSE_) != 0) {
-          PsiBuilderImpl.ProductionMarker last = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+          PsiBuilder.Marker last = (PsiBuilder.Marker)builder.getLatestDoneMarker();
           if (last != null &&
               last.getStartIndex() == frame.position &&
               state.typeExtends(last.getTokenType(), elementType) &&
@@ -685,9 +685,9 @@ public class GeneratedParserUtilBase {
 
   private static void extend_marker_impl(PsiBuilder.Marker marker) {
     PsiBuilder.Marker precede = marker.precede();
-    IElementType elementType = ((LighterASTNode)marker).getTokenType();
+    IElementType elementType = marker.getTokenType();
     if (elementType == TokenType.ERROR_ELEMENT) {
-      precede.error(notNullize(PsiBuilderImpl.getErrorMessage((LighterASTNode)marker)));
+      precede.error(notNullize(marker.getErrorMessage()));
     }
     else {
       precede.done(elementType);
@@ -707,7 +707,7 @@ public class GeneratedParserUtilBase {
     }
     else {
       if (frame != null) {
-        int position = ((PsiBuilderImpl.ProductionMarker)marker).getStartIndex();
+        int position = marker.getStartIndex();
         if (frame.errorReportedAt > position) {
           frame.errorReportedAt = frame.parentFrame == null ? -1 : frame.parentFrame.errorReportedAt;
         }
@@ -748,11 +748,10 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  private static @Nullable PsiBuilderImpl.ProductionMarker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
-    Builder b = (Builder)builder;
-    PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(b.getProductions());
-    if (marker == null || ((PsiBuilderImpl)b.getDelegate()).isCollapsed(marker)) return null;
-    return marker.getTokenType() != null && marker instanceof PsiBuilder.Marker ? marker : null;
+  private static @Nullable PsiBuilder.Marker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
+    SyntaxTreeBuilder.Production marker = ContainerUtil.getLastItem(builder.getProductions());
+    if (marker == null || marker.isCollapsed()) return null;
+    return marker.getTokenType() != null && marker instanceof PsiBuilder.Marker ? (PsiBuilder.Marker)marker : null;
   }
 
   private static boolean reportError(PsiBuilder builder,
@@ -788,7 +787,7 @@ public class GeneratedParserUtilBase {
       mark.error(message);
     }
     else if (inner) {
-      PsiBuilderImpl.ProductionMarker latestDoneMarker = getLatestExtensibleDoneMarker(builder);
+      PsiBuilder.Marker latestDoneMarker = getLatestExtensibleDoneMarker(builder);
       builder.error(message);
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
@@ -810,8 +809,8 @@ public class GeneratedParserUtilBase {
     int pos = builder.rawTokenIndex();
     if (frame.errorReportedAt > pos) {
       // report error for previous unsuccessful frame
-      LighterASTNode marker = builder.getLatestDoneMarker();
-      int endOffset = marker != null ? ((PsiBuilderImpl.ProductionMarker)marker).getEndIndex() : pos + 1;
+      PsiBuilder.Marker marker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
+      int endOffset = marker != null ? marker.getEndIndex() : pos + 1;
       while (endOffset <= pos && isWhitespaceOrComment(builder, builder.rawLookup(endOffset - pos))) endOffset ++;
       boolean inner = endOffset == pos;
       builder.eof();
@@ -897,6 +896,7 @@ public class GeneratedParserUtilBase {
       return ((PsiBuilderImpl)myDelegate).getLexer();
     }
 
+    @Override
     public @NotNull List<PsiBuilderImpl.ProductionMarker> getProductions() {
       return ((PsiBuilderImpl)myDelegate).getProductions();
     }

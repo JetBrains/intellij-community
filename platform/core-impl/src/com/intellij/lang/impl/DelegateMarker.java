@@ -8,7 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DelegateMarker implements PsiBuilder.Marker {
+public class DelegateMarker implements PsiBuilder.Marker {
   private final @NotNull PsiBuilder.Marker myDelegate;
 
   public DelegateMarker(@NotNull PsiBuilder.Marker delegate) {
@@ -67,5 +67,40 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   @Override
   public void setCustomEdgeTokenBinders(@Nullable WhitespacesAndCommentsBinder left, @Nullable WhitespacesAndCommentsBinder right) {
     myDelegate.setCustomEdgeTokenBinders(left, right);
+  }
+
+  @Override
+  public int getStartIndex() {
+    return myDelegate.getStartIndex();
+  }
+
+  @Override
+  public int getEndIndex() {
+    return myDelegate.getEndIndex();
+  }
+
+  @Override
+  public @Nullable String getErrorMessage() {
+    return myDelegate.getErrorMessage();
+  }
+
+  @Override
+  public boolean isCollapsed() {
+    return myDelegate.isCollapsed();
+  }
+
+  @Override
+  public IElementType getTokenType() {
+    return myDelegate.getTokenType();
+  }
+
+  @Override
+  public int getStartOffset() {
+    return myDelegate.getStartOffset();
+  }
+
+  @Override
+  public int getEndOffset() {
+    return myDelegate.getEndOffset();
   }
 }

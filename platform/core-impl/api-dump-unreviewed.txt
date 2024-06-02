@@ -759,7 +759,7 @@ f:com.intellij.lang.WhitespacesBinders
 f:com.intellij.lang.folding.NamedFoldingDescriptor
 - com.intellij.lang.folding.FoldingDescriptor
 - <init>(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.FoldingGroup,java.lang.String):V
-a:com.intellij.lang.impl.DelegateMarker
+c:com.intellij.lang.impl.DelegateMarker
 - com.intellij.lang.PsiBuilder$Marker
 - <init>(com.intellij.lang.PsiBuilder$Marker):V
 - collapse(com.intellij.psi.tree.IElementType):V
@@ -770,6 +770,13 @@ a:com.intellij.lang.impl.DelegateMarker
 - error(java.lang.String):V
 - errorBefore(java.lang.String,com.intellij.lang.PsiBuilder$Marker):V
 - getDelegate():com.intellij.lang.PsiBuilder$Marker
+- getEndIndex():I
+- getEndOffset():I
+- getErrorMessage():java.lang.String
+- getStartIndex():I
+- getStartOffset():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- isCollapsed():Z
 - precede():com.intellij.lang.PsiBuilder$Marker
 - rollbackTo():V
 - setCustomEdgeTokenBinders(com.intellij.lang.WhitespacesAndCommentsBinder,com.intellij.lang.WhitespacesAndCommentsBinder):V
@@ -786,16 +793,19 @@ c:com.intellij.lang.impl.PsiBuilderAdapter
 - getLatestDoneMarker():com.intellij.lang.LighterASTNode
 - getLightTree():com.intellij.util.diff.FlyweightCapableTreeStructure
 - getOriginalText():java.lang.CharSequence
+- getProductions():java.util.List
 - getProject():com.intellij.openapi.project.Project
 - getTokenText():java.lang.String
 - getTokenType():com.intellij.psi.tree.IElementType
 - getTreeBuilt():com.intellij.lang.ASTNode
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getUserDataUnprotected(com.intellij.openapi.util.Key):java.lang.Object
+- isWhitespaceOrComment(com.intellij.psi.tree.IElementType):Z
 - lookAhead(I):com.intellij.psi.tree.IElementType
 - mark():com.intellij.lang.PsiBuilder$Marker
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - putUserDataUnprotected(com.intellij.openapi.util.Key,java.lang.Object):V
+- rawAdvanceLexer(I):V
 - rawLookup(I):com.intellij.psi.tree.IElementType
 - rawTokenIndex():I
 - rawTokenTypeStart(I):I
@@ -859,6 +869,7 @@ c:com.intellij.lang.impl.PsiBuilderImpl
 - whitespaceOrComment(com.intellij.psi.tree.IElementType):Z
 a:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
 - com.intellij.lang.LighterASTNode
+- com.intellij.lang.SyntaxTreeBuilder$Production
 - pf:myBuilder:com.intellij.lang.impl.PsiBuilderImpl
 - p:myLexemeIndex:I
 - p:myNext:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
@@ -866,6 +877,7 @@ a:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
 - getEndIndex():I
 - getStartIndex():I
 - getStartOffset():I
+- isCollapsed():Z
 - remapTokenType(com.intellij.psi.tree.IElementType):V
 - a:tokenTextMatches(java.lang.CharSequence):Z
 *c:com.intellij.lang.impl.TokenSequence

@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface SyntaxTreeBuilder {
   /**
    * Returns the complete text being parsed.
@@ -161,11 +163,48 @@ public interface SyntaxTreeBuilder {
   /**
    * @return latest left done node for context dependent parsing.
    */
-  @Nullable
-  LighterASTNode getLatestDoneMarker();
+  @Nullable LighterASTNode getLatestDoneMarker();
+
+  @NotNull default List<? extends Production> getProductions() {
+    throw new UnsupportedOperationException("not implemented for this kind of Builder");
+  }
 
   default boolean isWhitespaceOrComment(@NotNull IElementType elementType) {
     return false;
+  }
+
+  interface Production extends LighterASTNode {
+    @Override
+    default IElementType getTokenType() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    @Override
+    default int getStartOffset() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    @Override
+    default int getEndOffset() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    default int getStartIndex() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    };
+
+    default int getEndIndex() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    @NlsContexts.DetailedDescription
+    @Nullable default String getErrorMessage() {
+      return null;
+    };
+
+    default boolean isCollapsed() {
+      return false;
+    }
   }
 
   /**
@@ -173,7 +212,7 @@ public interface SyntaxTreeBuilder {
    * tree. The ranges defined by markers within the text range of the current marker
    * become child nodes of the node defined by the current marker.
    */
-  interface Marker {
+  interface Marker extends Production {
     /**
      * Creates and returns a new marker starting immediately before the start of
      * this marker and extending after its end. Can be called on a completed or

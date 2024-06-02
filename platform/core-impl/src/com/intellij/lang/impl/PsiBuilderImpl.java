@@ -225,6 +225,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return null;
   }
 
+  @Override
   public @NotNull List<ProductionMarker> getProductions() {
     return new AbstractList<ProductionMarker>() {
       @Override
@@ -243,7 +244,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     boolean tokenTextMatches(@NotNull CharSequence chars);
   }
 
-  public abstract static class ProductionMarker implements Node {
+  public abstract static class ProductionMarker implements Node, Production {
     final int markerId;
     protected final PsiBuilderImpl myBuilder;
     protected int myLexemeIndex = -1;
@@ -265,14 +266,21 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
     }
 
+    @Override
+    public boolean isCollapsed() {
+      return myBuilder.myOptionalData.isCollapsed(markerId);
+    }
+
     public void remapTokenType(@NotNull IElementType type) {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
+    @Override
     public int getStartIndex() {
       return myLexemeIndex;
     }
 
+    @Override
     public int getEndIndex() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
@@ -318,6 +326,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int getEndIndex() {
       return myDoneLexeme;
+    }
+
+    @Override
+    public @Nullable String getErrorMessage() {
+      return myType == TokenType.ERROR_ELEMENT ? myBuilder.myOptionalData.getDoneError(markerId) : null;
     }
 
     @Override
@@ -665,6 +678,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
+    public @Nullable String getErrorMessage() {
+      return myMessage;
+    }
+
+    @Override
     public @NotNull IElementType getTokenType() {
       return TokenType.ERROR_ELEMENT;
     }
@@ -738,7 +756,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private int shiftOverWhitespaceForward(int lexIndex) {
-    while (lexIndex < myLexemeCount && whitespaceOrComment(myLexTypes[lexIndex])) {
+    while (lexIndex < myLexemeCount && isWhitespaceOrComment(myLexTypes[lexIndex])) {
       lexIndex++;
     }
     return lexIndex;
@@ -797,7 +815,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private void skipWhitespace() {
-    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(remapCurrentToken())) {
+    while (myCurrentLexeme < myLexemeCount && isWhitespaceOrComment(remapCurrentToken())) {
       onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
       myCurrentLexeme++;
       clearCachedTokenType();
@@ -826,8 +844,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return myText.subSequence(myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1]).toString();
   }
 
+  @Deprecated
   public boolean whitespaceOrComment(IElementType token) {
-    return myWhitespaces.contains(token) || myComments.contains(token);
+    return isWhitespaceOrComment(token);
   }
 
   @Override
@@ -898,7 +917,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private boolean isEmpty(int startIdx, int endIdx) {
     for (int i = startIdx; i < endIdx; i++) {
       IElementType token = myLexTypes[i];
-      if (!whitespaceOrComment(token)) return false;
+      if (!isWhitespaceOrComment(token)) return false;
     }
     return true;
   }
@@ -1159,7 +1178,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         prevProductionLexIndex = pool.get(Math.abs(prevId)).getLexemeIndex(prevId < 0);
       }
       int wsStartIndex = Math.max(lexemeIndex, lastIndex);
-      while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
+      while (wsStartIndex > prevProductionLexIndex && isWhitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
 
       int wsEndIndex = shiftOverWhitespaceForward(lexemeIndex);
 
@@ -1250,7 +1269,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
           item = marker.myNext;
           itemDone = false;
         }
-        else if (!isCollapsed(marker)) {
+        else if (!marker.isCollapsed()) {
           curMarker = marker;
 
           CompositeElement childNode = createComposite(marker, astFactory);
@@ -1279,8 +1298,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
+  @Deprecated
   public boolean isCollapsed(@NotNull ProductionMarker marker) {
-    return myOptionalData.isCollapsed(marker.markerId);
+    return marker.isCollapsed();
   }
 
   private int insertLeaves(int curToken, int lastIdx, @NotNull CompositeElement curNode) {
@@ -1353,15 +1373,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   public static @Nullable @NlsContexts.DetailedDescription String getErrorMessage(@NotNull LighterASTNode node) {
-    if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
-    if (node instanceof StartMarker) {
-      StartMarker marker = (StartMarker)node;
-      if (marker.myType == TokenType.ERROR_ELEMENT) {
-        return marker.myBuilder.myOptionalData.getDoneError(marker.markerId);
-      }
-    }
-
-    return null;
+    return node instanceof Production ? ((Production)node).getErrorMessage() : null;
   }
 
   private static final class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
@@ -1574,7 +1586,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder, marker);
 
-        if (child instanceof StartMarker && child.myBuilder.isCollapsed(child)) {
+        if (child instanceof StartMarker && child.isCollapsed()) {
           int lastIndex = child.getEndIndex();
           insertLeaf(child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex, true, marker);
         }

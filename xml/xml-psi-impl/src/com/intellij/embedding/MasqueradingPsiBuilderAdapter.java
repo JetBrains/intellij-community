@@ -241,7 +241,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   private boolean isWhiteSpaceOnPos(int pos) {
-    return myBuilderDelegate.whitespaceOrComment(myShrunkSequence.get(pos).elementType);
+    return myBuilderDelegate.isWhitespaceOrComment(myShrunkSequence.get(pos).elementType);
   }
 
   protected void initShrunkSequence() {
