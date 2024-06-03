@@ -5,9 +5,7 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavBarShowPopup
-import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -229,8 +227,6 @@ class NewNavBarPanel(
         return list != null && SpeedSearchSupply.getSupply(list) != null
       }
     }
-    CONTEXT_COMPONENT.name -> this
-    PROJECT.name -> project
     SELECTED_ITEMS.name -> vm.selection()
     else -> null
   }

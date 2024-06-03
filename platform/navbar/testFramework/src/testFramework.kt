@@ -3,13 +3,16 @@ package com.intellij.platform.navbar.testFramework
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.NavBarItemPresentationData
+import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItem
+import com.intellij.platform.navbar.backend.compatibility.IdeNavBarVmItem
 import com.intellij.platform.navbar.backend.compatibility.compatibilityNavBarItem
-import com.intellij.platform.navbar.backend.compatibility.getBgData
 import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.frontend.contextModel
@@ -102,7 +105,10 @@ fun compatibilityNavBarChildObjects(o: Any): List<Any> {
 @RequiresReadLock
 @Suppress("UNCHECKED_CAST")
 fun <T> compatibilitySelectionData(project: Project, o: Any, key: DataKey<T>): T? {
-  val item = compatibilityNavBarItem(o, null)
-             ?: return null
-  return getBgData(project, listOf(item.createPointer()), key.name) as T?
+  val item = compatibilityNavBarItem(o, null) ?: return null
+  val dataContext = SimpleDataContext.builder()
+    .add(PlatformCoreDataKeys.PROJECT, project)
+    .add(NavBarVmItem.SELECTED_ITEMS, listOf(IdeNavBarVmItem(item)))
+    .build()
+  return key.getData(dataContext)
 }

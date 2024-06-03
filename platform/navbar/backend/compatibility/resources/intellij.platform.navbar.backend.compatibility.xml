@@ -6,8 +6,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <getDataRule key="navigationBarItem" type="context" order="last"
                  implementationClass="com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItemDataRule"/>
-    <getDataRule key="bgtDataProvider" type="provider"
-                 implementationClass="com.intellij.platform.navbar.backend.compatibility.BgtDataRule"/>
+    <edtDataRule implementation="com.intellij.platform.navbar.backend.compatibility.NavBarBgtDataRule"/>
     <navbar.item.provider order="last"
                           implementation="com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItemProvider"/>
   </extensions>

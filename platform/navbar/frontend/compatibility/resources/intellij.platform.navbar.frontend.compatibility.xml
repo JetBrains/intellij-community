@@ -4,12 +4,7 @@
     <module name="intellij.platform.navbar.compatibility"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <getDataRule key="cutProvider" type="fast"
-                 implementationClass="com.intellij.platform.navbar.frontend.compatibility.CutProviderDataRule"/>
-    <getDataRule key="copyProvider" type="fast"
-                 implementationClass="com.intellij.platform.navbar.frontend.compatibility.CopyProviderDataRule"/>
-    <getDataRule key="pasteProvider" type="fast"
-                 implementationClass="com.intellij.platform.navbar.frontend.compatibility.PasteProviderDataRule"/>
+    <edtDataRule implementation="com.intellij.platform.navbar.frontend.compatibility.NavBarEdtDataRule" />
     <selectInTarget implementation="com.intellij.platform.navbar.frontend.compatibility.SelectInNavBarTarget"/>
   </extensions>
   <actions resource-bundle="messages.NavBarFrontendBundle">

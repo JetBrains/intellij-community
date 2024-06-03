@@ -3,17 +3,18 @@ package com.intellij.platform.navbar.backend.compatibility
 
 import com.intellij.ide.IdeView
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.model.Pointer
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.toArray
 
-internal class NavBarIdeView(private val selectedItems: Lazy<List<NavBarItem>>) : IdeView {
+internal class NavBarIdeView(private val selection: List<Pointer<out NavBarItem>>) : IdeView {
 
   override fun getDirectories(): Array<out PsiDirectory> {
-    return selectedItems.value.flatMap {
-      it.psiDirectories()
+    return selection.flatMap {
+      it.dereference()?.psiDirectories() ?: emptyList()
     }.toArray(PsiDirectory.EMPTY_ARRAY)
   }
 
