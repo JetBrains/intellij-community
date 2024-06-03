@@ -380,6 +380,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/Samples.kt");
     }
 
+    @TestMetadata("SuperConstructorWithArgs.kt")
+    public void testSuperConstructorWithArgs() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/SuperConstructorWithArgs.kt");
+    }
+
     @TestMetadata("Tailrec.kt")
     public void testTailrec() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/Tailrec.kt");
