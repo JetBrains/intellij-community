@@ -223,6 +223,9 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
       .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE")
       .copyrightText("Copyright 2019-2023 The Apache Software Foundation"),
+    LibraryLicense(name = "AsciiDoc support for Visual Studio Code", attachedTo = "intellij.textmate", version = "3.2.4",
+                   url = "https://github.com/asciidoctor/asciidoctor-vscode")
+      .mit("https://github.com/asciidoctor/asciidoctor-vscode/blob/master/README.md"),
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
                    url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt")

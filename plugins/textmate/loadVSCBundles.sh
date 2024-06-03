@@ -106,6 +106,21 @@ cp -r "snippets" "$ROOT/lib/bundles/terraform"
 
 cd ..
 
+# asciidoc
+git clone https://github.com/asciidoctor/asciidoctor-vscode
+cd asciidoctor-vscode
+
+echo "Adding asciidoc"
+mkdir -p "$ROOT/lib/bundles/adoc"
+cp -r "LICENSE" "$ROOT/lib/bundles/adoc"
+cp -r "package.json" "$ROOT/lib/bundles/adoc"
+cp -r "asciidoc-language-configuration.json" "$ROOT/lib/bundles/adoc"
+cp -r "README.md" "$ROOT/lib/bundles/adoc"
+cp -r "syntaxes" "$ROOT/lib/bundles/adoc"
+cp -r "snippets" "$ROOT/lib/bundles/adoc"
+
+cd ..
+
 # hcl
 git clone https://github.com/hashicorp/vscode-hcl
 cd vscode-hcl

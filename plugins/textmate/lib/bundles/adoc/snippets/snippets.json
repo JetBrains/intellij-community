@@ -1,0 +1,201 @@
+{
+	"Technical Document": {
+		"prefix": "asciidoc-tech-doc",
+		"body": [
+			"${TM_FILENAME_BASE:Document Title}",
+			"===============",
+			"Author Name <author@email.com>",
+			"v1.0, ${CURRENT_MONTH_NAME:Month} ${CURRENT_YEAR:year}: Initial release",
+			":showtitlepage:",
+			":notitle:",
+			":noheader:",
+			":nofooter:",
+			"",
+			"== Introduction",
+			"",
+			"== Background",
+			"",
+			"== Theory",
+			"",
+			"== Materials and apparatus",
+			"",
+			"== Procedure",
+			"",
+			"== Workplan",
+			"",
+			"== Results",
+			"",
+			"== Discussion",
+			"",
+			"== Conclusion",
+			"",
+			"== Recommendations",
+			""
+		],
+		"description": "AsciiDoc Technical Document"
+	},
+	"Insert include statement": {
+		"prefix": "include",
+		"body": "include::${1:path}[${2:attributes}]",
+		"description": "Insert include statement"
+	},
+	"Insert image inline": {
+		"prefix": "image",
+		"body": "image:${1:path}[${2:alt}]",
+		"description": "Insert image inline"
+	},
+	"Insert image block": {
+		"prefix": "image",
+		"body": "image::${1:path}[${2:alt}]",
+		"description": "Insert image block"
+	},
+	"Insert video block": {
+		"prefix": "video",
+		"body": "video::${1:path}[${2:alt}]",
+		"description": "Insert video block"
+	},
+	"Insert link": {
+		"prefix": "link",
+		"body": "link:${1:${TM_SELECTED_TEXT:link}}[${2:alt}]",
+		"description": "Insert link"
+	},
+	"Insert simple link": {
+		"prefix": "link",
+		"body": "${1:${TM_SELECTED_TEXT:link}}[${2:alt}]",
+		"description": "Insert simple link"
+	},
+	"Insert mailto link": {
+		"prefix": "mailto",
+		"body": "mailto:${1:${TM_SELECTED_TEXT:link}}[${2:alt}]",
+		"description": "Insert mailto link"
+	},
+	"Insert header": {
+		"prefix": "header",
+		"body": [
+			"= ${1:${TM_FILENAME_BASE:Document Title}}",
+			"${2:Author} <${3:author@email.com}>",
+			"${4:version}, ${5:${CURRENT_YEAR:year}-${CURRENT_MONTH:month}-${CURRENT_DATE:day}}${6:: remark}",
+			"${7::attributes:}",
+			"\n$0"
+		],
+		"description": "Insert document header"
+	},
+	"Insert heading": {
+		"prefix": "heading",
+		"body": [
+			"${1|=,==,===,====,=====,======|} ${2:${TM_SELECTED_TEXT:Heading Title}}",
+			"\n$0"
+		],
+		"description": "Insert heading"
+	},
+	"Insert unordered list": {
+		"prefix": "unordered list",
+		"body": ["* ${1:first}", "* ${2:second}", "* ${3:third}", "$0"],
+		"description": "Insert unordered list"
+	},
+	"Insert ordered list": {
+		"prefix": "ordered list",
+		"body": [". ${1:first}", ". ${2:second}", ". ${3:third}", "$0"],
+		"description": "Insert ordered list"
+	},
+	"Insert checklist": {
+		"prefix": "checklist",
+		"body": [
+			"* [${1: }] ${2:first}",
+			"* [${3: }] ${4:second}",
+			"* [${5: }] ${6:third}",
+			"$0"
+		],
+		"description": "Insert checklist"
+	},
+	"Insert literal block": {
+		"prefix": "literal",
+		"body": [
+			"[${1:attributes}]",
+			"....",
+			"${2:${TM_SELECTED_TEXT:text}}",
+			"....",
+			"$0"
+		],
+		"description": "Insert literal block"
+	},
+	"Insert source block": {
+		"prefix": "source",
+		"body": [
+			"[source,${1:language},${2:attributes}]",
+			"----",
+			"${3:${TM_SELECTED_TEXT:code}}",
+			"----",
+			"$0"
+		],
+		"description": "Insert source block"
+	},
+	"Insert example block": {
+		"prefix": "example",
+		"body": [
+			"[${1:attributes}]",
+			"====",
+			"${2:${TM_SELECTED_TEXT:text}}",
+			"====",
+			"$0"
+		],
+		"description": "Insert example block"
+	},
+	"Insert sidebar block": {
+		"prefix": "sidebar",
+		"body": [
+			"[${1:attributes}]",
+			"****",
+			"${2:${TM_SELECTED_TEXT:text}}",
+			"****",
+			"$0"
+		],
+		"description": "Insert sidebar block"
+	},
+	"Insert table": {
+		"prefix": "table",
+		"body": [
+			"[${1:Attributes}]",
+			"|===",
+			"|${2:Header column 1} |${3:Header column 2} |${4:Header column 3}",
+			"",
+			"|${5:Cell 1, row 1}",
+			"|${6:Cell 2, row 1}",
+			"|${7:Cell 3, row 1}",
+			"|===",
+			"$0"
+		],
+		"description": "Insert table"
+	},
+	"Insert tagged block": {
+		"prefix": "tag",
+		"body": [
+			"// tag::${1:tagname}[]",
+			"${2:${TM_SELECTED_TEXT:text}}",
+			"// end::${1:tagname}[]",
+			"$0"
+		],
+		"description": "Insert tagged block"
+	},
+	"Insert quote block": {
+		"prefix": "quote",
+		"body": [
+			"[quote, ${1:attribution}, ${2:cite title}]",
+			"____",
+			"${3:${TM_SELECTED_TEXT:quote}}",
+			"____",
+			"$0"
+		],
+		"description": "Insert quote block"
+	},
+	"Insert footnote": {
+		"prefix": "footnote",
+		"body": "footnote:[${1:note}]",
+		"description": "Insert footnote"
+	},
+	"Insert footnote with label": {
+		"prefix": "footnote-label",
+		"body": "footnote:${1:label}[${2:note}]",
+		"description": "Insert footnote with label"
+	},
+}
