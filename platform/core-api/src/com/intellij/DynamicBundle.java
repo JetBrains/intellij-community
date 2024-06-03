@@ -63,7 +63,7 @@ public class DynamicBundle extends AbstractBundle {
   protected @NotNull ResourceBundle findBundle(@NotNull String pathToBundle,
                                                @NotNull ClassLoader baseLoader,
                                                @NotNull ResourceBundle.Control control) {
-    return resolveResourceBundle(getBundleClassLoader(), baseLoader, pathToBundle, getLocale(),
+    return resolveResourceBundle(getBundleClassLoader(), baseLoader, pathToBundle, getResolveLocale(),
                                  (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale));
   }
 
@@ -249,7 +249,7 @@ public class DynamicBundle extends AbstractBundle {
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle) {
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
-      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle, getLocale()));
+      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle, getResolveLocale()));
   }
 
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle, @NotNull Locale locale) {
@@ -310,6 +310,17 @@ public class DynamicBundle extends AbstractBundle {
 
   public static @NotNull Locale getLocale() {
     return LocalizationUtil.INSTANCE.getLocale();
+  }
+
+  /**
+   * @return Locale used to resolve messages
+   */
+  private static @NotNull Locale getResolveLocale() {
+    Locale resolveLocale = getLocale();
+    // we must use Locale.ROOT to get English messages from default bundles
+    if (resolveLocale.equals(Locale.ENGLISH)) return Locale.ROOT;
+
+    return resolveLocale;
   }
 
   @ApiStatus.Internal
