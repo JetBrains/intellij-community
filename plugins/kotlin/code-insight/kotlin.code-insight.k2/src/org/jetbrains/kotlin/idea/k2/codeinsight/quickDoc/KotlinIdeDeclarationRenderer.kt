@@ -485,7 +485,9 @@ internal class KotlinIdeDeclarationRenderer(
                                 declarationRenderer.nameRenderer.renderName(analysisSession, callableSymbol, declarationRenderer, printer)
                             } else if (callableSymbol is KtConstructorSymbol) {
                                 (callableSymbol.getContainingSymbol() as? KtNamedSymbol)?.let {
-                                    declarationRenderer.nameRenderer.renderName(analysisSession, it, declarationRenderer, printer)
+                                    printer.append(highlight(it.name.renderName()) {
+                                        asClassName
+                                    })
                                 }
                             }
                         },
