@@ -961,8 +961,6 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/KingSora/OverlayScrollbars/blob/master/LICENSE"),
     LibraryLicense(name = "Package Search API Models", libraryName = "package-search-api-models",
                    url = "https://github.com/JetBrains/package-search-api-models").apache(),
-    LibraryLicense(name = "Package Search Version Utils", libraryName = "package-search-version-utils",
-                   url = "https://github.com/JetBrains/package-search-version-utils").apache(),
     androidDependency(name = "Perfetto Library", libraryName = "trace-perfetto-library"),
     androidDependency(name = "Perfetto protos", libraryName = "perfetto-proto"),
 

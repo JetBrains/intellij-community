@@ -140,12 +140,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto(listOf(
-      "intellij.packageSearch",
-      "intellij.packageSearch.gradle",
-    )) { spec ->
-      spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
-    },
     pluginAuto(listOf("intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")

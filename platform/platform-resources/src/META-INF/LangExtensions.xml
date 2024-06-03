@@ -1,9 +1,4 @@
 <idea-plugin>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.dependenciesToolWindow.tabProvider"
-                    interface="com.intellij.dependencytoolwindow.DependenciesToolWindowTabProvider"
-                    dynamic="true"/>
-  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
@@ -1049,10 +1044,6 @@
 
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
                 factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
-
-    <postStartupActivity implementation="com.intellij.dependencytoolwindow.DependencyToolWindowFactory"/>
-
-    <toolWindowExtractor implementation="com.intellij.dependencytoolwindow.DependencyToolWindowViewModelExtractor"/>
 
     <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>

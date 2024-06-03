@@ -66,7 +66,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.structureView.impl",
   "intellij.platform.tasks.impl",
   "intellij.platform.testRunner",
-  "intellij.platform.dependenciesToolwindow",
   "intellij.platform.rd.community",
   "intellij.remoteDev.util",
   "intellij.platform.feedback",
