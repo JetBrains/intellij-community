@@ -104,7 +104,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
       blockingContext {
         try {
           indexingJob.setLocationBeingIndexed(fileIndexingJob)
-          indexOneFileOfJob(indexingJob, fileIndexingJob)
+          indexOneFileHandleExceptions(fileIndexingJob, indexingJob.myProject, indexingJob.myProject, indexingJob.myContentLoader, indexingJob.getStatistics(fileIndexingJob))
           progressReporter.oneMoreFileProcessed()
         }
         catch (t: Throwable) {
@@ -150,7 +150,11 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   }
 
   @Throws(ProcessCanceledException::class)
-  private fun indexOneFileOfJob(indexingJob: IndexingJob, fileIndexingJob: FileIndexingJob) {
+  private fun indexOneFileHandleExceptions(fileIndexingJob: FileIndexingJob,
+                                           project: Project,
+                                           parentDisposableForInvokeLater: Disposable,
+                                           contentLoader: CachedFileContentLoader,
+                                           statistics: IndexingFileSetStatistics) {
     val startTime = System.nanoTime()
 
     try {
@@ -160,18 +164,12 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
         LOG.info("Directory was passed for indexing unexpectedly: " + fileIndexingRequest.file.path)
       }
 
-      val project = indexingJob.myProject
-      val parentDisposable: Disposable = indexingJob.myProject
-      val contentLoader = indexingJob.myContentLoader
-      val statistics = indexingJob.getStatistics(fileIndexingJob)
-
-      indexer.indexOneFile(fileIndexingRequest, parentDisposable, startTime, project, contentLoader, statistics)
+      indexer.indexOneFile(fileIndexingRequest, parentDisposableForInvokeLater, startTime, project, contentLoader, statistics)
     }
     catch (e: ProcessCanceledException) {
       throw e
     }
     catch (e: TooLargeContentException) {
-      val statistics = indexingJob.getStatistics(fileIndexingJob)
       synchronized(statistics) {
         statistics.addTooLargeForIndexingFile(e.file)
       }
