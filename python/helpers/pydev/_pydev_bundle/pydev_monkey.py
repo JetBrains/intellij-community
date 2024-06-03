@@ -584,6 +584,37 @@ def create_warn_fork_exec(original_name):
     return new_warn_fork_exec
 
 
+def create_subprocess_fork_exec(original_name):
+    """
+    subprocess._fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+
+    def new_fork_exec(args, *other_args):
+        import subprocess
+        args = patch_args(args)
+        send_process_created_message()
+
+        return getattr(subprocess, original_name)(args, *other_args)
+
+    return new_fork_exec
+
+
+def create_subprocess_warn_fork_exec(original_name):
+    """
+    subprocess._fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+
+    def new_warn_fork_exec(*args):
+        try:
+            import subprocess
+            warn_multiproc()
+            return getattr(subprocess, original_name)(*args)
+        except:
+            pass
+
+    return new_warn_fork_exec
+
+
 def create_CreateProcess(original_name):
     """
     CreateProcess(*args, **kwargs)
@@ -730,6 +761,13 @@ def patch_new_process_functions():
                 monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
             except ImportError:
                 pass
+
+            try:
+                import subprocess
+                monkey_patch_module(subprocess, '_fork_exec',
+                                    create_subprocess_fork_exec)
+            except AttributeError:
+                pass
         else:
             # Windows
             try:
@@ -768,6 +806,13 @@ def patch_new_process_functions_with_warning():
                 import _posixsubprocess
                 monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
             except ImportError:
+                pass
+
+            try:
+                import subprocess
+                monkey_patch_module(subprocess, '_fork_exec',
+                                    create_subprocess_warn_fork_exec)
+            except AttributeError:
                 pass
         else:
             # Windows
