@@ -23,8 +23,8 @@ class AddReturnExpressionFix(
     ) {
         val bodyBlock = element.bodyBlockExpression ?: return
         val rBrace = bodyBlock.rBrace ?: return
-        val returnExpression =
-            KtPsiFactory(actionContext.project).createExpression("return TODO(\"${KotlinBundle.message("provide.return.value")}\")")
+        val psiFactory = KtPsiFactory(actionContext.project)
+        val returnExpression = psiFactory.createExpression("return TODO(\"${KotlinBundle.message("provide.return.value")}\")")
         val todo = bodyBlock.addBefore(returnExpression, rBrace).safeAs<KtReturnExpression>()?.returnedExpression ?: return
         updater.select(todo)
         updater.moveCaretTo(todo.endOffset)
