@@ -100,10 +100,11 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
     val progressReporter = IndexingProgressReporter2(indicator, fileSet.size())
 
-    runConcurrently(project, progressReporter, contentLoader, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
+    runConcurrently(project, contentLoader, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
       blockingContext {
         try {
-          indexingJob.setLocationBeingIndexed(fileIndexingJob)
+          val presentableLocation = getPresentableLocationBeingIndexed(indexingJob.myProject, fileIndexingJob.fileIndexingRequest.file)
+          progressReporter.setLocationBeingIndexed(presentableLocation)
           indexOneFileHandleExceptions(fileIndexingJob, indexingJob.myProject, indexingJob.myProject, indexingJob.myContentLoader, indexingJob.getStatistics(fileIndexingJob))
           progressReporter.oneMoreFileProcessed()
         }
@@ -122,13 +123,12 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
   private fun runConcurrently(
     project: Project,
-    progressReporter: IndexingProgressReporter2,
     contentLoader: CachedFileContentLoader,
     fileSet: FileSet,
     originalSuspender: ProgressSuspender?,
     task: suspend (IndexingJob, FileIndexingJob) -> Unit
   ) {
-    val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSet)
+    val indexingJob = IndexingJob(project, contentLoader, fileSet)
 
     runBlockingCancellable {
       repeat(INDEXING_THREADS_NUMBER) {
@@ -315,7 +315,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   private data class FileIndexingJob(val fileIndexingRequest: FileIndexingRequest, val fileSet: FileSet)
 
   private class IndexingJob(val myProject: Project,
-                            val progressReporter: IndexingProgressReporter2,
                             val myContentLoader: CachedFileContentLoader,
                             val fileSet: FileSet) {
 
@@ -342,11 +341,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
     fun areAllFilesProcessed(): Boolean {
       return files.get().isEmpty()
-    }
-
-    fun setLocationBeingIndexed(fileIndexingJob: FileIndexingJob) {
-      val presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.fileIndexingRequest.file)
-      progressReporter.setLocationBeingIndexed(presentableLocation)
     }
   }
 
