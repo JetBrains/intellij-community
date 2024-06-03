@@ -347,6 +347,7 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     return this
   }
 
+  @Internal
   fun setTestableUi(queryable: Queryable?): TabInfo {
     this.queryable = queryable
     return this
@@ -362,7 +363,6 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   }
 
   fun canBeDraggedOut(): Boolean = dragOutDelegate != null
-
 
   interface DragDelegate {
     fun dragStarted(mouseEvent: MouseEvent)

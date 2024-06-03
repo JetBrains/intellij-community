@@ -10806,7 +10806,6 @@ f:com.intellij.ui.tabs.TabInfo
 - f:setTabColor(java.awt.Color):com.intellij.ui.tabs.TabInfo
 - f:setTabLabelActions(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.tabs.TabInfo
 - f:setTabPaneActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.ui.tabs.TabInfo
-- f:setTestableUi(com.intellij.openapi.ui.Queryable):com.intellij.ui.tabs.TabInfo
 - f:setText(java.lang.String):com.intellij.ui.tabs.TabInfo
 - f:setTooltipText(java.lang.String):com.intellij.ui.tabs.TabInfo
 - f:stopAlerting():V

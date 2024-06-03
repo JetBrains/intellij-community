@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.Companion.createDockableEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
@@ -81,7 +82,7 @@ class EditorTabbedContainer internal constructor(
   private val coroutineScope: CoroutineScope,
 ) : CloseTarget {
   private val editorTabs: EditorTabs
-  private val dragOutDelegate = MyDragOutDelegate()
+  private val dragOutDelegate: DragOutDelegate
 
   init {
     val disposable = Disposer.newDisposable()
@@ -90,6 +91,8 @@ class EditorTabbedContainer internal constructor(
     }
 
     editorTabs = EditorTabs(coroutineScope = coroutineScope, parentDisposable = disposable, window = window)
+    dragOutDelegate = EditorTabbedContainerDragOutDelegate(window = window, editorTabs = editorTabs)
+
     val project = window.manager.project
     project.messageBus.connect(coroutineScope).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -276,35 +279,18 @@ class EditorTabbedContainer internal constructor(
       return
     }
 
-    val tab = TabInfo(component)
-      .setText(file.presentableName)
-      .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
-      .setTooltipText(tooltip)
-      .setObject(file)
-      .setDragOutDelegate(dragOutDelegate)
-    tab.setTestableUi { it.put("editorTab", tab.text) }
+    val tab = createTabInfo(
+      component = component,
+      file = file,
+      icon = icon,
+      tooltip = tooltip,
+      parentDisposable = parentDisposable,
+      selectedEditor = selectedEditor,
+      coroutineScope = coroutineScope,
+      window = window,
+    )
 
-    val project = window.manager.project
-    coroutineScope.launch {
-      val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
-      withContext(Dispatchers.EDT) {
-        tab.setText(title)
-      }
-    }
-    coroutineScope.launch {
-      val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
-      withContext(Dispatchers.EDT) {
-        tab.setTabColor(color)
-      }
-    }
-
-    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
-    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
-    val group = DefaultActionGroup(editorActionGroup, closeTab)
-    tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
-    selectedEditor?.tabActions?.let {
-      tab.setTabPaneActions(it)
-    }
+    tab.setDragOutDelegate(dragOutDelegate)
 
     if (isOpenedInBulk) {
       editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
@@ -431,68 +417,6 @@ class EditorTabbedContainer internal constructor(
     runnable?.run()
   }
 
-  internal inner class MyDragOutDelegate : DragOutDelegate {
-    private var file: VirtualFile? = null
-    private var session: DragSession? = null
-
-    override fun dragOutStarted(mouseEvent: MouseEvent, info: TabInfo) {
-      val previousSelection = info.previousSelection ?: editorTabs.getToSelectOnRemoveOf(info)
-      val img = JBTabsImpl.getComponentImage(info)
-
-      val dragStartIndex = editorTabs.getIndexOf(info)
-      val isPinnedAtStart = info.isPinned
-      info.isHidden = true
-      if (previousSelection != null) {
-        editorTabs.select(previousSelection, true)
-      }
-
-      val file = info.`object` as VirtualFile
-      this.file = file
-      file.putUserData(DRAG_START_INDEX_KEY, dragStartIndex)
-      file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))
-      file.putUserData(DRAG_START_PINNED_KEY, isPinnedAtStart)
-      val presentation = Presentation(info.text)
-      if (DockManagerImpl.REOPEN_WINDOW.isIn(file)) {
-        presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(file, true))
-      }
-      presentation.icon = info.icon
-      val editors = window.getComposite(file)?.allEditors ?: emptyList()
-      val isNorthPanelAvailable = isNorthPanelAvailable(editors)
-      presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
-      session = DockManager.getInstance(window.manager.project).createDragSession(mouseEvent, createDockableEditor(img, file, presentation, window, isNorthPanelAvailable))
-    }
-
-    override fun processDragOut(event: MouseEvent, source: TabInfo) {
-      session!!.process(event)
-    }
-
-    override fun dragOutFinished(event: MouseEvent, source: TabInfo) {
-      val copy = UIUtil.isControlKeyDown(event) || session!!.getResponse(event) == DockContainer.ContentResponse.ACCEPT_COPY
-      if (copy) {
-        source.isHidden = false
-      }
-      else {
-        file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, true)
-        window.manager.closeFile(file!!, window)
-      }
-      session!!.process(event)
-      if (!copy) {
-        file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
-      }
-      file = null
-      session = null
-    }
-
-    override fun dragOutCancelled(source: TabInfo) {
-      source.isHidden = false
-      session?.let {
-        it.cancel()
-        session = null
-      }
-      file = null
-    }
-  }
-
   class DockableEditor(
     val img: Image?,
     val file: VirtualFile,
@@ -528,6 +452,109 @@ class EditorTabbedContainer internal constructor(
 
     override fun close() {}
   }
+}
+
+internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWindow, private val editorTabs: JBTabsImpl) : DragOutDelegate {
+  private var file: VirtualFile? = null
+  private var session: DragSession? = null
+
+  override fun dragOutStarted(mouseEvent: MouseEvent, info: TabInfo) {
+    val previousSelection = info.previousSelection ?: editorTabs.getToSelectOnRemoveOf(info)
+    val img = JBTabsImpl.getComponentImage(info)
+
+    val dragStartIndex = editorTabs.getIndexOf(info)
+    val isPinnedAtStart = info.isPinned
+    info.isHidden = true
+    if (previousSelection != null) {
+      editorTabs.select(previousSelection, true)
+    }
+
+    val file = info.`object` as VirtualFile
+    this.file = file
+    file.putUserData(DRAG_START_INDEX_KEY, dragStartIndex)
+    file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))
+    file.putUserData(DRAG_START_PINNED_KEY, isPinnedAtStart)
+    val presentation = Presentation(info.text)
+    if (DockManagerImpl.REOPEN_WINDOW.isIn(file)) {
+      presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(file, true))
+    }
+    presentation.icon = info.icon
+    val editors = window.getComposite(file)?.allEditors ?: emptyList()
+    val isNorthPanelAvailable = isNorthPanelAvailable(editors)
+    presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
+    session = DockManager.getInstance(window.manager.project).createDragSession(mouseEvent, createDockableEditor(img, file, presentation, window, isNorthPanelAvailable))
+  }
+
+  override fun processDragOut(event: MouseEvent, source: TabInfo) {
+    session!!.process(event)
+  }
+
+  override fun dragOutFinished(event: MouseEvent, source: TabInfo) {
+    val copy = UIUtil.isControlKeyDown(event) || session!!.getResponse(event) == DockContainer.ContentResponse.ACCEPT_COPY
+    if (copy) {
+      source.isHidden = false
+    }
+    else {
+      file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, true)
+      window.manager.closeFile(file!!, window)
+    }
+    session!!.process(event)
+    if (!copy) {
+      file!!.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
+    }
+    file = null
+    session = null
+  }
+
+  override fun dragOutCancelled(source: TabInfo) {
+    source.isHidden = false
+    session?.let {
+      it.cancel()
+      session = null
+    }
+    file = null
+  }
+}
+
+private fun createTabInfo(
+  component: JComponent,
+  file: VirtualFile,
+  icon: Icon?,
+  tooltip: @NlsContexts.Tooltip String?,
+  parentDisposable: Disposable,
+  selectedEditor: FileEditor?,
+  coroutineScope: CoroutineScope,
+  window: EditorWindow,
+): TabInfo {
+  val tab = TabInfo(component)
+    .setText(file.presentableName)
+    .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
+    .setTooltipText(tooltip)
+    .setObject(file)
+  tab.setTestableUi { it.put("editorTab", tab.text) }
+
+  val project = window.manager.project
+  coroutineScope.launch {
+    val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
+    withContext(Dispatchers.EDT) {
+      tab.setText(title)
+    }
+  }
+  coroutineScope.launch {
+    val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
+    withContext(Dispatchers.EDT) {
+      tab.setTabColor(color)
+    }
+  }
+
+  val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
+  val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
+  val group = DefaultActionGroup(editorActionGroup, closeTab)
+  tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
+  selectedEditor?.tabActions?.let {
+    tab.setTabPaneActions(it)
+  }
+  return tab
 }
 
 private class EditorTabbedContainerTransferHandler(private val window: EditorWindow) : TransferHandler() {
