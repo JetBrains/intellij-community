@@ -145,6 +145,16 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/IndentedCodeBlock.kt");
     }
 
+    @TestMetadata("InlineClass.kt")
+    public void testInlineClass() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/InlineClass.kt");
+    }
+
+    @TestMetadata("InlineValueClass.kt")
+    public void testInlineValueClass() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/InlineValueClass.kt");
+    }
+
     @TestMetadata("JavaClassConstructorUsedInKotlin.kt")
     public void testJavaClassConstructorUsedInKotlin() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/JavaClassConstructorUsedInKotlin.kt");

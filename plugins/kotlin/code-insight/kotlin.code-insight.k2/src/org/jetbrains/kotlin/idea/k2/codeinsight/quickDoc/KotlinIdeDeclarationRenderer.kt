@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KtDeclarationModifiersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtCallableParameterRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtDeclarationNameRenderer
@@ -77,10 +78,12 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
 import org.jetbrains.kotlin.lexer.KtKeywordToken
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
@@ -272,9 +275,27 @@ internal class KotlinIdeDeclarationRenderer(
                 else -> false
             }
         }
-        otherModifiersProvider = otherModifiersProvider.onlyIf { symbol ->
-            !(symbol is KtFunctionSymbol && symbol.isOverride || symbol is KtPropertySymbol && symbol.isOverride)
+
+        fun KtDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KtNamedClassOrObjectSymbol && isInline
+
+        val valueModifierRenderer = object : KtRendererOtherModifiersProvider {
+            override fun getOtherModifiers(analysisSession: KtAnalysisSession, symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> {
+                if (symbol.isInlineClassOrObject()) {
+                    (symbol.psi as? KtClass)?.let { klass ->
+                        if (klass.hasModifier(KtTokens.INLINE_KEYWORD)) {
+                            return listOf(KtTokens.INLINE_KEYWORD)
+                        }
+                        if (klass.hasModifier(KtTokens.VALUE_KEYWORD)) {
+                            return listOf(KtTokens.VALUE_KEYWORD)
+                        }
+                    }
+                }
+                return emptyList()
+            }
         }
+        otherModifiersProvider = otherModifiersProvider.onlyIf { symbol ->
+            !(symbol is KtFunctionSymbol && symbol.isOverride || symbol is KtPropertySymbol && symbol.isOverride) && !symbol.isInlineClassOrObject()
+        }.and(valueModifierRenderer)
         keywordsRenderer = keywordsRenderer.keywordsRenderer()
     }
 

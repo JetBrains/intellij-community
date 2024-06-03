@@ -145,6 +145,16 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/IndentedCodeBlock.kt");
     }
 
+    @TestMetadata("InlineClass.kt")
+    public void testInlineClass() throws Exception {
+        runTest("testData/editor/quickDoc/InlineClass.kt");
+    }
+
+    @TestMetadata("InlineValueClass.kt")
+    public void testInlineValueClass() throws Exception {
+        runTest("testData/editor/quickDoc/InlineValueClass.kt");
+    }
+
     @TestMetadata("JavaClassConstructorUsedInKotlin.kt")
     public void testJavaClassConstructorUsedInKotlin() throws Exception {
         runTest("testData/editor/quickDoc/JavaClassConstructorUsedInKotlin.kt");
