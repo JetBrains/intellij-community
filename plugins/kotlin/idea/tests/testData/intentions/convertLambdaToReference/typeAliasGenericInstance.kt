@@ -6,5 +6,3 @@ typealias Global = List<String>
 fun usesGlobal(p: List<Global>) {
     p.map { <caret>it.isEmpty() }
 }
-
-// IGNORE_K2
