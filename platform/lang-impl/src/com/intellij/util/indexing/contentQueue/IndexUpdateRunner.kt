@@ -100,12 +100,12 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
     val progressReporter = IndexingProgressReporter2(indicator, fileSet.size())
 
-    runConcurrently(project, contentLoader, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
+    runConcurrently(project, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
       blockingContext {
         try {
-          val presentableLocation = getPresentableLocationBeingIndexed(indexingJob.myProject, fileIndexingJob.fileIndexingRequest.file)
+          val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingJob.fileIndexingRequest.file)
           progressReporter.setLocationBeingIndexed(presentableLocation)
-          indexOneFileHandleExceptions(fileIndexingJob, indexingJob.myProject, indexingJob.myProject, indexingJob.myContentLoader, indexingJob.getStatistics(fileIndexingJob))
+          indexOneFileHandleExceptions(fileIndexingJob, project, project, contentLoader, fileSet.statistics)
           progressReporter.oneMoreFileProcessed()
         }
         catch (t: Throwable) {
@@ -123,12 +123,11 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
   private fun runConcurrently(
     project: Project,
-    contentLoader: CachedFileContentLoader,
     fileSet: FileSet,
     originalSuspender: ProgressSuspender?,
     task: suspend (IndexingJob, FileIndexingJob) -> Unit
   ) {
-    val indexingJob = IndexingJob(project, contentLoader, fileSet)
+    val indexingJob = IndexingJob(fileSet)
 
     runBlockingCancellable {
       repeat(INDEXING_THREADS_NUMBER) {
@@ -314,15 +313,9 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   @JvmRecord
   private data class FileIndexingJob(val fileIndexingRequest: FileIndexingRequest, val fileSet: FileSet)
 
-  private class IndexingJob(val myProject: Project,
-                            val myContentLoader: CachedFileContentLoader,
-                            val fileSet: FileSet) {
+  private class IndexingJob(val fileSet: FileSet) {
 
     private val files: AtomicReference<PersistentSet<FileIndexingRequest>> = AtomicReference(fileSet.files)
-
-    fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {
-      return fileIndexingJob.fileSet.statistics
-    }
 
     fun poll(): FileIndexingJob? {
       var first: FileIndexingRequest? = null
