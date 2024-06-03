@@ -84,7 +84,7 @@ class WaitingForSubscribersTest {
 
     val duration = measureTime {
       try {
-        EventsBus.postAndWaitProcessing(Event())
+        EventsBus.postAndWaitProcessing(Event(), ignoreExceptions = false)
       } catch (e: EventBusException) {
         gotException.set(true)
       }
