@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ijent.IjentNetworkResult.Ok
 import com.intellij.platform.ijent.IjentTunnelsApi.Connection
 import kotlinx.coroutines.CoroutineScope
@@ -8,6 +9,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import java.io.IOException
+import java.nio.ByteBuffer
 import kotlin.time.Duration
 
 /**
@@ -42,12 +44,46 @@ sealed interface IjentTunnelsApi {
    */
   fun hostAddressBuilder(port: UShort): HostAddress.Builder
 
+  /**
+   * Represents an address to a remote host.
+   */
   interface HostAddress {
+    /**
+     * A builder class for remote host address.
+     */
     interface Builder {
+
+      /**
+       * Sets the hostname for a remote host.
+       * The hostname will be resolved remotely.
+       *
+       * By default, the hostname is `localhost`
+       */
       fun hostname(hostname: String): Builder
+
+      /**
+       * If [hostname] is resolved to an IPv4 address, then it is used.
+       *
+       * Overrides [preferIPv6] and [preferOSDefault]
+       */
       fun preferIPv4(): Builder
+
+      /**
+       * If [hostname] is resolved to an IPv6 address, then it is used.
+       * Overrides [preferIPv4] and [preferOSDefault]
+       */
       fun preferIPv6(): Builder
+
+      /**
+       * [hostname] is resolved according to the settings on the remote host.
+       *
+       * Overrides [preferIPv4] and [preferIPv6]. This is the default option.
+       */
       fun preferOSDefault(): Builder
+
+      /**
+       * Builds a remote host address object.
+       */
       fun build(): HostAddress
     }
   }
@@ -60,12 +96,12 @@ sealed interface IjentTunnelsApi {
     /**
      * A channel to the remote server
      */
-    val channelToServer: SendChannel<ByteArray>
+    val channelToServer: SendChannel<ByteBuffer>
 
     /**
      * A channel from the remote server
      */
-    val channelFromServer: ReceiveChannel<ByteArray>
+    val channelFromServer: ReceiveChannel<ByteBuffer>
 
     /**
      * Sets the size of send buffer of the socket
@@ -122,13 +158,13 @@ sealed interface IjentTunnelsApi {
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel to server
  */
-operator fun Connection.component1(): SendChannel<ByteArray> = channelToServer
+operator fun Connection.component1(): SendChannel<ByteBuffer> = channelToServer
 
 /**
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel from server
  */
-operator fun Connection.component2(): ReceiveChannel<ByteArray> = channelFromServer
+operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = channelFromServer
 
 interface IjentTunnelsPosixApi : IjentTunnelsApi {
   /**
@@ -211,49 +247,74 @@ suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   errorHandler: suspend (IjentConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
 
+/**
+ * Represents a common class for all network-related errors appearing during the interaction with IJent
+ */
 sealed interface IjentNetworkError
 
+/**
+ * Represents a result of a network operation
+ */
 sealed interface IjentNetworkResult<out T, out E : IjentNetworkError> {
+  /**
+   * Used when a network operation completed successfully
+   */
   interface Ok<out T> : IjentNetworkResult<T, Nothing> {
     val value: T
   }
 
+  /**
+   * Used when a network operation completed with an error
+   */
   interface Error<out E : IjentNetworkError> : IjentNetworkResult<Nothing, E> {
     val error: E
   }
 }
 
+/**
+ * An error that can happen during the creation of a connection to a remote server
+ */
 interface IjentConnectionError : IjentNetworkError {
-
-  data object AmbiguousAddress : IjentConnectionError
+  val message: @NlsSafe String
 
   /**
-   * Used when resolve of remote address failed
+   * Returned when a hostname on the remote server was resolved to multiple different addresses.
+   */
+  data object AmbiguousAddress : IjentConnectionError {
+    override val message: String = "Hostname could not be resolved uniquely"
+  }
+
+  /**
+   * Returned when a socket could not be created because of an OS error.
    */
   @JvmInline
-  value class SocketCreationFailure(val err: String) : IjentConnectionError
+  value class SocketCreationFailure(override val message: @NlsSafe String) : IjentConnectionError
 
   /**
-   * Used when resolve of remote address failed
+   * Returned when resolve of remote address failed during the creation of a socket.
    */
-  object HostUnreachable : IjentConnectionError
+  object HostUnreachable : IjentConnectionError {
+    override val message: @NlsSafe String = "Remote host is unreachable"
+  }
 
   /**
-   * Used when resolve of remote address failed
+   * Returned when the remote server does not accept connections.
    */
-  object ConnectionRefused : IjentConnectionError
+  object ConnectionRefused : IjentConnectionError {
+    override val message: @NlsSafe String = "Connection was refused by remote server"
+  }
 
   /**
-   * Used when resolve of remote address failed
+   * Returned when hostname could not be resolved.
    */
   @JvmInline
-  value class ResolveFailure(val err: String) : IjentConnectionError
+  value class ResolveFailure(override val message: @NlsSafe String) : IjentConnectionError
 
   /**
    * Unknown failure during a connection establishment
    */
   @JvmInline
-  value class UnknownFailure(val err: String) : IjentConnectionError
+  value class UnknownFailure(override val message: @NlsSafe String) : IjentConnectionError
 }
 
 
