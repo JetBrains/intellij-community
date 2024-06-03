@@ -2,7 +2,7 @@
 //file:noinspection GrPackage
 
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
-import org.gradle.util.GradleVersion
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
@@ -30,8 +30,8 @@ def javaExePath = JAVA_EXE_PATH
 def workingDirectory = WORKING_DIRECTORY
 def intelliJRtPath  = INTELLIJ_RT_PATH
 
-def isOlderThan64 = GradleVersion.current().baseVersion < GradleVersion.version("6.4")
-def isOlderThan33 = GradleVersion.current().baseVersion < GradleVersion.version("3.3")
+def isOlderThan64 = GradleVersionUtil.isCurrentGradleOlderThan("6.4")
+def isOlderThan33 = GradleVersionUtil.isCurrentGradleOlderThan("3.3")
 
 if (Properties.useManifestJar) {
   gradle.addListener(new ManifestTaskActionListener(Properties.runAppTaskName))
