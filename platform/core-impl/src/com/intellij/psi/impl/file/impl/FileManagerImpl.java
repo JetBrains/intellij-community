@@ -496,10 +496,12 @@ public final class FileManagerImpl implements FileManager {
     return files;
   }
 
+  @RequiresWriteLock
   private void removeInvalidDirs() {
     myVFileToPsiDirMap.set(null);
   }
 
+  @RequiresWriteLock
   void removeInvalidFilesAndDirs(boolean useFind) {
     removeInvalidDirs();
 
