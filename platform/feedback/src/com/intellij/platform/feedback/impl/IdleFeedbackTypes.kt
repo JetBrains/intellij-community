@@ -169,18 +169,18 @@ enum class IdleFeedbackTypes {
   },
   PYCHARM_CE_FEEDBACK {
     override val fusFeedbackId: String = "pycharm_ce_feedback"
-    override val suitableIdeVersion: String = "2023.3"
+    override val suitableIdeVersion: String = "2024.1"
     override fun getWebFormUrl(): String {
       val os = OS.CURRENT.name
       val locale = Locale.getDefault()
       val country = locale.country
       val lang = locale.language
       val ver = ApplicationInfo.getInstance().fullVersion
-      return "https://surveys.jetbrains.com/s3/pc-ccs-23-3?os=${os}&country=${country}&lang=${lang}&ver=${ver}"
+      return "https://surveys.jetbrains.com/s3/pc-ccs-24-1-3?os=${os}&country=${country}&lang=${lang}&ver=${ver}"
     }
 
-    private val firstDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER, 5)
-    private val lastDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER, 20)
+    private val firstDayCollectFeedback: LocalDate = LocalDate(2024, Month.JULY, 1)
+    private val lastDayCollectFeedback: LocalDate = LocalDate(2024, Month.JULY, 21)
 
     private val maxNumberNotificationShowed: Int = 1
 

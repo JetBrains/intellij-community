@@ -5,7 +5,7 @@ import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
-@State(name = "PyCharmCEFeedbackState",
+@State(name = "PyCharmCEFeedbackState2",
        storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE, deprecated = true), Storage("PyCharmCEFeedbackService.xml")])
 class PyCharmCeFeedbackService : PersistentStateComponent<PyCharmCeFeedbackState> {
   companion object {
