@@ -499,6 +499,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "teamcity.tests.recentlyFailedTests.file" to System.getProperty("teamcity.tests.recentlyFailedTests.file"),
       "teamcity.build.branch.is_default" to System.getProperty("teamcity.build.branch.is_default"),
       "jna.nosys" to "true",
+      "javax.xml.parsers.SAXParserFactory" to "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
       "file.encoding" to "UTF-8",
       "io.netty.leakDetectionLevel" to "PARANOID",
       "kotlinx.coroutines.debug" to "on",
