@@ -12,8 +12,10 @@ import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.jetbrains.annotations.ApiStatus
 
 @OptIn(EntityStorageInstrumentationApi::class)
+@ApiStatus.Internal
 class WmReactive(private val workspaceModel: WorkspaceModelImpl) {
   suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T> {
     return flow {

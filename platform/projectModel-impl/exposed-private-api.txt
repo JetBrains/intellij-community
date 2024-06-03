@@ -5,6 +5,5 @@ com/intellij/openapi/roots/impl/RootConfigurationAccessor
 com/intellij/platform/workspace/jps/serialization/impl/FileInDirectorySourceNames
 com/intellij/platform/workspace/jps/serialization/impl/ModulePath
 com/intellij/platform/workspace/storage/VersionedEntityStorage
-com/intellij/workspaceModel/ide/impl/WorkspaceModelImpl
 com/intellij/workspaceModel/ide/impl/legacyBridge/sdk/SdkBridgeImpl
 com/intellij/workspaceModel/ide/legacyBridge/ModuleBridge

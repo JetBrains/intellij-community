@@ -17,6 +17,7 @@ import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 
+@ApiStatus.Internal
 class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer?) {
   private val serializer: EntityStorageSerializer =
     EntityStorageSerializerImpl(

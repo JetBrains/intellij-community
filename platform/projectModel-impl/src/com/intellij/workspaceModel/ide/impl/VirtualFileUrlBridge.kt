@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -6,7 +6,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   VirtualFileUrlImpl(id, manager), VirtualFilePointer {
   @Volatile

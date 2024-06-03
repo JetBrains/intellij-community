@@ -30791,31 +30791,10 @@ a:com.intellij.util.ui.update.DisposableUpdate
 - pa:doRun():V
 - f:run():V
 c:com.intellij.workspaceModel.ide.impl.ApplicationLevelUrlRelativizer
-- com.intellij.platform.workspace.storage.impl.url.UrlRelativizerImpl
 - <init>():V
 f:com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
 - com.intellij.workspaceModel.ide.impl.ApplicationLevelUrlRelativizer
 - <init>(com.intellij.openapi.project.Project):V
-f:com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-- sf:Companion:com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$Companion
-- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrlManager,com.intellij.platform.workspace.storage.url.UrlRelativizer):V
-f:com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$Companion
-f:com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$PluginAwareEntityTypesResolver
-- com.intellij.platform.workspace.storage.EntityTypesResolver
-- sf:INSTANCE:com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$PluginAwareEntityTypesResolver
-- getClassLoader(java.lang.String):java.lang.ClassLoader
-- getPluginId(java.lang.Class):java.lang.String
-- resolveClass(java.lang.String,java.lang.String):java.lang.Class
-f:com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$SaveInfo
-- <init>(J,java.lang.Long):V
-- f:component1():J
-- f:component2():java.lang.Long
-- f:copy(J,java.lang.Long):com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$SaveInfo
-- bs:copy$default(com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$SaveInfo,J,java.lang.Long,I,java.lang.Object):com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer$SaveInfo
-- equals(java.lang.Object):Z
-- f:getLoadedSize():java.lang.Long
-- f:getLoadingTime():J
-- hashCode():I
 f:com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator
 - com.intellij.ide.caches.CachesInvalidator
 - <init>():V
@@ -30827,10 +30806,6 @@ f:com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger
 - f:logCacheLoading(J):V
 - f:logCacheSave(J,J):V
 - f:logLoadingJpsFromIml(J):V
-f:com.intellij.workspaceModel.ide.impl.WorkspaceStorageIdeConsistencyCheckingModeProvider
-- com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvider
-- <init>():V
-- getMode():com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
 a:com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 - com.intellij.platform.workspace.jps.serialization.SerializationContext
 - sf:Companion:com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext$Companion

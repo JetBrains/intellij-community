@@ -928,15 +928,6 @@ f:com.intellij.workspaceModel.ide.impl.ConstantEntitiesDisposableService
 - com.intellij.openapi.Disposable
 - <init>():V
 - dispose():V
-f:com.intellij.workspaceModel.ide.impl.DisposableCachedValue
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.workspaceModel.ide.impl.DisposableCachedValue$Companion
-- <init>(kotlin.jvm.functions.Function0,com.intellij.platform.workspace.storage.CachedValue,java.lang.String,com.intellij.openapi.project.Project):V
-- b:<init>(kotlin.jvm.functions.Function0,com.intellij.platform.workspace.storage.CachedValue,java.lang.String,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- dispose():V
-- f:dropCache():V
-- f:getValue():com.intellij.openapi.Disposable
-f:com.intellij.workspaceModel.ide.impl.DisposableCachedValue$Companion
 f:com.intellij.workspaceModel.ide.impl.EntityTracingLogger
 - sf:Companion:com.intellij.workspaceModel.ide.impl.EntityTracingLogger$Companion
 - <init>():V
@@ -947,9 +938,6 @@ f:com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener
 - com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 - <init>(com.intellij.openapi.project.Project):V
 - changed(com.intellij.platform.workspace.storage.VersionedStorageChange):V
-f:com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-- com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-- <init>():V
 f:com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 - com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 - <init>():V
@@ -972,14 +960,6 @@ f:com.intellij.workspaceModel.ide.impl.OrphanService
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:start():V
 f:com.intellij.workspaceModel.ide.impl.OrphanService$Companion
-f:com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-- com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
-- com.intellij.openapi.vfs.pointers.VirtualFilePointer
-- <init>(I,com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl):V
-- equals(java.lang.Object):Z
-- getFile():com.intellij.openapi.vfs.VirtualFile
-- hashCode():I
-- isValid():Z
 f:com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity
 - com.intellij.openapi.startup.ProjectActivity
 - <init>():V
@@ -1301,8 +1281,3 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescript
 - f:getDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - f:getRecursive():Z
 - hashCode():I
-f:com.intellij.workspaceModel.ide.impl.reactive.WmReactive
-- <init>(com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl):V
-- f:flowOfDiff(com.intellij.platform.workspace.storage.query.CollectionQuery,kotlin.coroutines.Continuation):java.lang.Object
-- f:flowOfNewElements(com.intellij.platform.workspace.storage.query.CollectionQuery,kotlin.coroutines.Continuation):java.lang.Object
-- f:flowOfQuery(com.intellij.platform.workspace.storage.query.StorageQuery,kotlin.coroutines.Continuation):java.lang.Object
