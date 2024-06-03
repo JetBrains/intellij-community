@@ -1599,6 +1599,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addReturnExpression/emptyBody.kt");
         }
 
+        @TestMetadata("noRightBrace.kt")
+        public void testNoRightBrace() throws Exception {
+            runTest("testData/quickfix/addReturnExpression/noRightBrace.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/addReturnExpression/simple.kt");

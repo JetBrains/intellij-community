@@ -5257,6 +5257,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/addReturnExpression/emptyBody.kt");
         }
 
+        @TestMetadata("noRightBrace.kt")
+        public void testNoRightBrace() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addReturnExpression/noRightBrace.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/addReturnExpression/simple.kt");
