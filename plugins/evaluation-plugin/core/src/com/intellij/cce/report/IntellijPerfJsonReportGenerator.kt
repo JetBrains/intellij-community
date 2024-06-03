@@ -3,20 +3,18 @@ package com.intellij.cce.report
 
 import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
-import com.intellij.cce.metric.MetricValueType
+import com.intellij.cce.report.ijmetric.AiApplicationMetricDto
+import com.intellij.cce.report.ijmetric.AiPerformanceMetricsDto
 import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
-import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import java.nio.file.Path
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlin.math.min
 
 class IntellijPerfJsonReportGenerator(
   outputDir: String,
@@ -37,7 +35,7 @@ class IntellijPerfJsonReportGenerator(
       val perfMetrics = globalMetrics.map { it.toPerfMetric() }
 
 
-      val metricsDto = PerformanceMetricsDto
+      val metricsDto = AiPerformanceMetricsDto
         .create(projectName = "#feature#_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
                 projectURL = "",
                 projectDescription = "",
@@ -69,14 +67,9 @@ class IntellijPerfJsonReportGenerator(
   }.create()
 }
 
-private fun MetricInfo.toPerfMetric(namePrefix: String = ""): PerformanceMetrics.Metric {
+private fun MetricInfo.toPerfMetric(namePrefix: String = ""): AiApplicationMetricDto {
   val metricName = "${namePrefix}${name}"
-
-  val metricValue = when (this.valueType) {
-    MetricValueType.INT -> value.toInt().toLong()
-    MetricValueType.DOUBLE -> min(Int.MAX_VALUE.toLong(), (value * 1_000_000).toLong())
-  }
-  return PerformanceMetrics.newCounter(metricName, metricValue)
+  return AiApplicationMetricDto(metricName, value)
 }
 
 
