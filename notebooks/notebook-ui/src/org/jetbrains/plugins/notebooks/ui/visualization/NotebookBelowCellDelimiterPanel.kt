@@ -16,7 +16,7 @@ class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
   @Nls private val tooltipText: String?,
   private val executionCount: Int?,
-  private val statusIcon: Icon,
+  private val statusIcon: Icon?,
   private val isExecutable: Boolean
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
