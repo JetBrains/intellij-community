@@ -9,15 +9,13 @@ abstract class P2 {
 }
 
 class PPP extends P2 {
-    @NotNull
-    String foo(P p) {
+    @NotNull String foo(P p) {
         return super.foo(p);
     }
 }
 class PPP2 extends P2 {
 
-    @NotNull
-    String foo(P p) {
+    @NotNull String foo(P p) {
         return super.foo(p);
     }
 }

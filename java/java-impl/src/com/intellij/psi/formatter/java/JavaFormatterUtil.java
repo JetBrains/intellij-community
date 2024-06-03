@@ -19,15 +19,13 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class JavaFormatterUtil {
   /**
@@ -37,6 +35,11 @@ public final class JavaFormatterUtil {
     .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
 
   private static final int CALL_EXPRESSION_DEPTH = 500;
+
+  private static final Set<String> KNOWN_TYPE_ANNOTATIONS = Set.of(
+    "org.jetbrains.annotations.NotNull",
+    "org.jetbrains.annotations.Nullable"
+  );
 
   private JavaFormatterUtil() { }
 
@@ -289,7 +292,8 @@ public final class JavaFormatterUtil {
       if (prev != null && prev.getElementType() == JavaElementType.MODIFIER_LIST) {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
-          if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
+          if (isTypeAnnotation(last) ||
+              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER &&
               isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
               isAnnotationAfterKeyword(last)
@@ -311,8 +315,15 @@ public final class JavaFormatterUtil {
         if (prev instanceof PsiKeyword) {
           return null;
         }
+
         else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent)) {
           return Wrap.createWrap(WrapType.NONE, false);
+        }
+
+        if (isTypeAnnotation(child)) {
+          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotation(prev)) {
+            return Wrap.createWrap(WrapType.NONE, false);
+          }
         }
 
         return Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings, javaSettings)), true);
@@ -430,6 +441,33 @@ public final class JavaFormatterUtil {
     ASTNode prev = node.getTreePrev();
     if (prev instanceof PsiWhiteSpace) prev = prev.getTreePrev();
     return prev != null && prev.getElementType() != JavaElementType.BLOCK_STATEMENT;
+  }
+
+  private static boolean isTypeAnnotation(@NotNull ASTNode child) {
+    PsiElement node = child.getPsi();
+    PsiElement next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class, PsiAnnotation.class);
+    if (next instanceof PsiKeyword) return false;
+    if (!(node instanceof PsiAnnotation psiAnnotation)) return false;
+
+    PsiJavaCodeReferenceElement psiReference = psiAnnotation.getNameReferenceElement();
+    if (psiReference == null) return false;
+
+    if (psiReference.isQualified()) {
+      return KNOWN_TYPE_ANNOTATIONS.contains(psiReference.getText());
+    }
+    else {
+      PsiElement referenceName = psiReference.getReferenceNameElement();
+      if (referenceName == null) return false;
+      if (!(psiReference.getContainingFile() instanceof PsiJavaFile javaFile)) return false;
+      PsiImportList importList = javaFile.getImportList();
+      if (importList == null) return false;
+      String referenceNameText = referenceName.getText();
+      return ContainerUtil.or(KNOWN_TYPE_ANNOTATIONS, fqn -> {
+        if (!fqn.endsWith(referenceNameText)) return false;
+        String packageName = StringUtil.getPackageName(fqn);
+        return importList.findOnDemandImportStatement(packageName) != null || importList.findSingleClassImportStatement(fqn) != null;
+      });
+    }
   }
 
   private static void putPreferredWrapInParentBlock(@NotNull AbstractJavaBlock block, @NotNull Wrap preferredWrap) {
