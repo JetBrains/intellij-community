@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.model.task;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,14 +70,6 @@ public final class ExternalSystemTaskId implements Serializable {
       if (myProjectId.equals(getProjectId(project))) return project;
     }
     return null;
-  }
-
-  public @NotNull Project getProject() {
-    Project project = findProject();
-    if (project == null) {
-      throw new AlreadyDisposedException(String.format("Project %s is closed", myProjectId));
-    }
-    return project;
   }
 
   @NotNull

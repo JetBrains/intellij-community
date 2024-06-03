@@ -824,7 +824,6 @@ f:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 - findProject():com.intellij.openapi.project.Project
 - getId():J
 - getIdeProjectId():java.lang.String
-- getProject():com.intellij.openapi.project.Project
 - s:getProjectId(com.intellij.openapi.project.Project):java.lang.String
 - getProjectSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getType():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType

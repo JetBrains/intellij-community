@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +34,8 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
   private final AtomicReference<Throwable> myError = new AtomicReference<>();
 
+  @NotNull private final transient Project myIdeProject;
+
   @NotNull private final ExternalSystemTaskId myId;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final String myExternalProjectPath;
@@ -44,7 +45,8 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
                                        @NotNull Project project,
                                        @NotNull String externalProjectPath) {
     myExternalSystemId = id;
-    myId = ExternalSystemTaskId.create(id, type, project);
+    myIdeProject = project;
+    myId = ExternalSystemTaskId.create(id, type, myIdeProject);
     myExternalProjectPath = externalProjectPath;
   }
 
@@ -80,7 +82,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
   @NotNull
   public Project getIdeProject() {
-    return myId.getProject();
+    return myIdeProject;
   }
 
   @NotNull
@@ -93,21 +95,17 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     if (getState() != ExternalSystemTaskState.IN_PROGRESS) {
       return;
     }
+    final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
     try {
-      final Project project = getIdeProject();
-      final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
-      final RemoteExternalSystemFacade<?> facade = manager.getFacade(project, myExternalProjectPath, myExternalSystemId);
+      final RemoteExternalSystemFacade<?> facade = manager.getFacade(myIdeProject, myExternalProjectPath, myExternalSystemId);
       setState(facade.isTaskInProgress(getId()) ? ExternalSystemTaskState.IN_PROGRESS : ExternalSystemTaskState.FAILED);
-    }
-    catch (AlreadyDisposedException e) {
-      setState(ExternalSystemTaskState.FAILED);
-      myError.set(e);
-      LOG.debug(e);
     }
     catch (Throwable e) {
       setState(ExternalSystemTaskState.FAILED);
       myError.set(e);
-      LOG.warn(e);
+      if (!myIdeProject.isDisposed()) {
+        LOG.warn(e);
+      }
     }
   }
 
