@@ -35,6 +35,13 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
   fun testPreserveWrappingSingleAnnotation() = doTest()
 
   fun testPreserveWrappingManyAnnotations() = doTest()
+
+  fun testFullyQualifiedName() = doTest()
+
+  fun testImportOnDemand() = doTest()
+
+  fun testImportMix() = doTest()
+
   private fun doTest() {
     val testName = getTestName(false)
     myFixture.configureByFile("$testName.java")
