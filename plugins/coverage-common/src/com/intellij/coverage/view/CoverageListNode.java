@@ -28,6 +28,13 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   private final VirtualFile myFile;
 
   /**
+   * @deprecated Use {@link CoverageViewManager#getStateBean()}
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  protected final CoverageViewManager.StateBean myStateBean;
+
+  /**
    * Children are cached in order to be able to filter nodes with no (interesting) children.
    * @see DirectoryCoverageViewExtension#getChildrenNodes(AbstractTreeNode)
    */
@@ -63,6 +70,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
 
     myName = ReadAction.compute(() -> element.getName());
     myBundle = bundle;
+    myStateBean = CoverageViewManager.getInstance(project).getStateBean();
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myFile = ReadAction.compute(() -> {
       VirtualFile file = element.isValid() ? PsiUtilCore.getVirtualFile(element) : null;

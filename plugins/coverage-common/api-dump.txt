@@ -230,6 +230,7 @@ f:com.intellij.coverage.lcov.LcovSerializationUtils
 c:com.intellij.coverage.view.CoverageListNode
 - com.intellij.ide.util.treeView.AbstractTreeNode
 - pf:myBundle:com.intellij.coverage.CoverageSuitesBundle
+- pf:myStateBean:com.intellij.coverage.view.CoverageViewManager$StateBean
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean,Z):V
