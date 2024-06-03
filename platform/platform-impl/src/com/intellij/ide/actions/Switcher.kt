@@ -62,7 +62,6 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -129,8 +128,7 @@ object Switcher : BaseSwitcherAction(null) {
       when {
         CommonDataKeys.PROJECT.`is`(dataId) -> return project
         PlatformCoreDataKeys.SELECTED_ITEM.`is`(dataId) -> {
-          if (files.isSelectionEmpty) return null
-          return ContainerUtil.getOnlyItem<SwitcherVirtualFile>(files.selectedValuesList)?.file
+          return if (files.isSelectionEmpty) null else files.selectedValuesList.singleOrNull()?.file
         }
         PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) -> {
           return if (speedSearch?.isPopupActive == true) speedSearch.enteredPrefix else null
@@ -209,7 +207,7 @@ object Switcher : BaseSwitcherAction(null) {
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles)
         WindowMoveListener(header).installTo(header)
         val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBox")
-        if (shortcuts.shortcuts.size > 0) {
+        if (shortcuts.shortcuts.isNotEmpty()) {
           val label = JLabel(KeymapUtil.getShortcutsText(shortcuts.shortcuts))
           label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
           header.add(HorizontalLayout.RIGHT, label)
@@ -508,7 +506,7 @@ object Switcher : BaseSwitcherAction(null) {
       go(false)
     }
 
-    internal val selectedList: JBList<out SwitcherListItem>?
+    private val selectedList: JBList<out SwitcherListItem>?
       get() = getSelectedList(files)
 
     private fun getSelectedList(preferable: JBList<out SwitcherListItem>?): JBList<out SwitcherListItem>? {
@@ -715,7 +713,7 @@ object Switcher : BaseSwitcherAction(null) {
         val editors = ArrayList<SwitcherVirtualFile>()
         val addedFiles: MutableSet<VirtualFile> = LinkedHashSet()
         if (!pinned) {
-          for (pair in (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistory()) {
+          for (pair in (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()) {
             editors.add(SwitcherVirtualFile(project, pair.first, pair.second))
           }
         }
@@ -790,7 +788,7 @@ object Switcher : BaseSwitcherAction(null) {
         val recentFiles = getInstance(project).fileList
         val openFiles = FileEditorManager.getInstance(project).openFiles
         val recentFilesSet: Set<VirtualFile> = HashSet(recentFiles)
-        val openFilesSet: Set<VirtualFile> = ContainerUtil.newHashSet(*openFiles)
+        val openFilesSet = openFiles.toHashSet()
 
         // Add missing FileEditor tabs right after the last one, that is available via "Recent Files"
         var index = 0

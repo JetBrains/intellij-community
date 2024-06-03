@@ -2103,6 +2103,8 @@ open class FileEditorManagerImpl(
     return selectionHistory.getHistory().map { Pair(it.first, it.second) }
   }
 
+  fun getSelectionHistoryList(): Collection<kotlin.Pair<VirtualFile, EditorWindow>> = selectionHistory.getHistory()
+
   final override fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {
     selectionHistory.addRecord(file, window)
   }
@@ -2290,19 +2292,24 @@ private class SelectionHistory {
   @Synchronized
   fun getHistory(): Collection<kotlin.Pair<VirtualFile, EditorWindow>> {
     val copy = LinkedHashSet<kotlin.Pair<VirtualFile, EditorWindow>>()
+    var modified = false
     for (pair in history) {
-      if (pair.second.files().none()) {
-        val windows = pair.second.owner.windows().toList()
+      val editorWindow = pair.second
+      if (editorWindow.files().none()) {
+        val windows = editorWindow.owner.windows().toList()
         if (windows.isNotEmpty() && windows[0].files().any()) {
           copy.add(pair.first to windows[0])
         }
+        modified = true
       }
       else {
         copy.add(pair)
       }
     }
-    history.clear()
-    history.addAll(copy)
+    if (modified) {
+      history.clear()
+      history.addAll(copy)
+    }
     return copy
   }
 }
@@ -2310,8 +2317,8 @@ private class SelectionHistory {
 private class SelectionState(@JvmField val composite: EditorComposite, @JvmField val fileEditorProvider: FileEditorWithProvider)
 
 @Internal
-suspend fun waitForFullyCompleted(fileEditorComposite: FileEditorComposite) {
-  for (editor in fileEditorComposite.allEditors) {
+suspend fun waitForFullyCompleted(composite: FileEditorComposite) {
+  for (editor in composite.allEditors) {
     if (editor is TextEditor) {
       AsyncEditorLoader.waitForCompleted(editor.editor)
     }

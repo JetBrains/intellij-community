@@ -791,11 +791,8 @@ f:com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 - s:setCustomUnlocker(com.intellij.util.NullableFunction):V
 c:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
 - com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
-- sf:Companion:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider$Companion
 - <init>():V
 - getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-f:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider$Companion
-- f:getEditorTabText(java.lang.String,java.lang.String,Z):java.lang.String
 a:com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 - com.intellij.openapi.fileTypes.FileTypeManager
 - <init>():V
