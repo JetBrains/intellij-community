@@ -302,8 +302,11 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
       .sortedBy { it.moduleName }
       .toList(),
   )
+
+  // sqlite - used by DB and "import settings" (temporarily)
+  layout.alwaysPackToPlugin(listOf("flexmark", "okhttp", "sqlite"))
   for (item in projectLibrariesUsedByPlugins) {
-    if (!layout.excludedProjectLibraries.contains(item.libraryName)) {
+    if (!layout.isProjectLibraryExcluded(item.libraryName) && !layout.isLibraryAlwaysPackedIntoPlugin(item.libraryName)) {
       layout.includedProjectLibraries.add(item)
     }
   }
@@ -332,9 +335,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
   return layout
 }
 
-// sqlite - used by DB and "import settings" (temporarily)
-fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp" || name == "sqlite"
-
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
   val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
@@ -354,7 +354,7 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
         }
 
         val libName = libRef.libraryName
-        if (plugin.hasLibrary(libName) || isLibraryAlwaysPackedIntoPlugin(libName)) {
+        if (plugin.hasLibrary(libName)) {
           continue
         }
 
