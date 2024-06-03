@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.random.Random
 
 class InlineCompletionRequest(
   val event: InlineCompletionEvent,
@@ -27,7 +28,9 @@ class InlineCompletionRequest(
   val startOffset: Int,
   val endOffset: Int,
   val lookupElement: LookupElement? = null,
-) : UserDataHolderBase()
+) : UserDataHolderBase() {
+  val requestId = Random.nextLong()
+}
 
 sealed interface TypingEvent {
 

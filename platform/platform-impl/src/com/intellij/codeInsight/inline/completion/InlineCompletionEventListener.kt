@@ -26,8 +26,9 @@ sealed class InlineCompletionEventType {
     val lastInvocation: Long,
     val request: InlineCompletionRequest,
     val provider: Class<out InlineCompletionProvider>,
-    val requestId: Long,
-  ) : InlineCompletionEventType()
+  ) : InlineCompletionEventType() {
+    val requestId: Long = request.requestId
+  }
 
   /**
    * This event is triggered when a provider either returned no variants, either all the returned variants are empty.
