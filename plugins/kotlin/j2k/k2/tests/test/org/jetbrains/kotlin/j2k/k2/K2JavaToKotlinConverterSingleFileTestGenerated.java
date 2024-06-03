@@ -5216,6 +5216,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/LocalValReassignment.java");
         }
 
+        @TestMetadata("localVariableNullabilityFromContext.java")
+        public void testLocalVariableNullabilityFromContext() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/localVariableNullabilityFromContext.java");
+        }
+
         @TestMetadata("MethodInvokedWithNullArg.java")
         public void testMethodInvokedWithNullArg() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/MethodInvokedWithNullArg.java");
@@ -5344,6 +5349,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("ParameterComparedWithNull.java")
         public void testParameterComparedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/ParameterComparedWithNull.java");
+        }
+
+        @TestMetadata("PrivateFieldNullabilityFromContext.java")
+        public void testPrivateFieldNullabilityFromContext() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/PrivateFieldNullabilityFromContext.java");
         }
 
         @TestMetadata("synchronized.java")
