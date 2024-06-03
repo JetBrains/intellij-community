@@ -8476,8 +8476,6 @@ c:com.intellij.ide.plugins.newui.PluginSearchTextField
 c:com.intellij.ide.plugins.newui.PluginUpdatesService
 - <init>():V
 - calculateUpdates(java.util.function.Consumer):V
-- s:connectWithCounter(java.util.function.Consumer):com.intellij.ide.plugins.newui.PluginUpdatesService
-- s:connectWithUpdates(java.util.function.Consumer):com.intellij.ide.plugins.newui.PluginUpdatesService
 - dispose():V
 - finishUpdate():V
 - s:getUpdates():java.util.Collection
@@ -8485,7 +8483,6 @@ c:com.intellij.ide.plugins.newui.PluginUpdatesService
 - s:isNeedUpdate(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - s:reapplyFilter():V
 - recalculateUpdates():V
-- setFilter(com.intellij.openapi.util.Condition):V
 c:com.intellij.ide.plugins.newui.PluginsGroup
 - clearCallback:java.lang.Runnable
 - f:descriptors:java.util.List

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,7 @@ public class PluginUpdatesService {
     });
   }
 
+  @ApiStatus.Internal
   public static @NotNull PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
     service.myCountCallback = callback;
@@ -71,6 +73,7 @@ public class PluginUpdatesService {
     return service;
   }
 
+  @ApiStatus.Internal
   public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
     service.myUpdateCallbacks = Collections.singletonList(callback);
@@ -147,6 +150,7 @@ public class PluginUpdatesService {
     ourReset = true;
   }
 
+  @ApiStatus.Internal
   public void setFilter(@NotNull Condition<? super IdeaPluginDescriptor> filter) {
     synchronized (ourLock) {
       if (!mySetFilter && ourFilter != DEFAULT_FILTER) {
