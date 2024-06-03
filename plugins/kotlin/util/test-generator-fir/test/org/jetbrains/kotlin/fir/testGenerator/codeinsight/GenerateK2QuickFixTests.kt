@@ -75,7 +75,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addJvmStaticAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addNewLineAfterAnnotations", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addNoinline", pattern = pattern)
-            model("$idea/quickfix/addReifiedToTypeParameterOfFunctionFix", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addReifiedToTypeParameterOfFunctionFix", pattern = pattern)
             model("$idea/quickfix/addReturnExpression", pattern = pattern)
             model("$idea/quickfix/addReturnToLastExpressionInFunction", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addReturnToUnusedLastExpressionInFunction", pattern = pattern, isIgnored = true)

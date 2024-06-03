@@ -5237,7 +5237,34 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addReifiedToTypeParameterOfFunctionFix")
+    public static class AddReifiedToTypeParameterOfFunctionFix extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("doubleColonClass.kt")
+        public void testDoubleColonClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addReifiedToTypeParameterOfFunctionFix/doubleColonClass.kt");
+        }
+
+        @TestMetadata("secondTypeParameter.kt")
+        public void testSecondTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addReifiedToTypeParameterOfFunctionFix/secondTypeParameter.kt");
+        }
+
+        @TestMetadata("toTypedArray.kt")
+        public void testToTypedArray() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addReifiedToTypeParameterOfFunctionFix/toTypedArray.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addReturnExpression")

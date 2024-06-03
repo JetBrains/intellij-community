@@ -105,6 +105,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ArgumentTypeMismatchFactory.addArrayOfTypeFixFactory)
         registerFactory(ArgumentTypeMismatchFactory.wrapWithArrayLiteralFixFactory)
         registerFactory(ConvertLateinitPropertyToNotNullDelegateFixFactory.convertLateinitPropertyToNotNullDelegateFixFactory)
+        registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory.addReifiedToTypeParameterOfFunctionFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
