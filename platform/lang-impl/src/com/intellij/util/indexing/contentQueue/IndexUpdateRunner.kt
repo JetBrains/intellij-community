@@ -132,7 +132,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   private fun indexOneFileOfJob(indexingJob: IndexingJob): Boolean {
     val startTime = System.nanoTime()
 
-    val fileIndexingJob = indexingJob.myQueueOfFiles.poll()
+    val fileIndexingJob = indexingJob.poll()
     if (fileIndexingJob == null) {
       return false
     }
@@ -155,7 +155,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     }
     catch (e: ProcessCanceledException) {
       // Push back the file.
-      indexingJob.myQueueOfFiles.add(fileIndexingJob)
+      indexingJob.pushBack(fileIndexingJob)
       throw e
     }
     catch (e: TooLargeContentException) {
@@ -310,7 +310,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
                             val progressReporter: IndexingProgressReporter2,
                             val myContentLoader: CachedFileContentLoader,
                             fileSet: FileSet) {
-    val myQueueOfFiles: ArrayBlockingQueue<FileIndexingJob> // the size for Community sources is about 615K entries
+    private val myQueueOfFiles: ArrayBlockingQueue<FileIndexingJob> // the size for Community sources is about 615K entries
 
     init {
       val maxFilesCount = fileSet.size()
@@ -323,6 +323,10 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {
       return fileIndexingJob.fileSet.statistics
     }
+
+    fun poll(): FileIndexingJob? = myQueueOfFiles.poll()
+
+    fun pushBack(job: FileIndexingJob) = myQueueOfFiles.add(job)
 
     fun areAllFilesProcessed(): Boolean {
       return myQueueOfFiles.isEmpty()
