@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
@@ -141,7 +142,9 @@ internal class TerminalPromptView(
     FileDocumentManager.getInstance().getFile(editor.document)?.let {
       editor.setFile(it)
     }
-    TerminalInlineCompletion.getInstance(project).install(editor)
+    if (Registry.`is`("terminal.new.ui.inline.completion")) {
+      TerminalInlineCompletion.getInstance(project).install(editor)
+    }
 
     editor.contextMenuGroupId = "Terminal.PromptContextMenu"
 
