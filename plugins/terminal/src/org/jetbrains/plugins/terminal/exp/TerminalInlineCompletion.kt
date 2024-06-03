@@ -5,6 +5,8 @@ import com.intellij.codeInsight.inline.completion.*
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
@@ -23,7 +25,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
@@ -43,15 +44,15 @@ internal class TerminalInlineCompletion(private val scope: CoroutineScope) {
 
 internal class TerminalInlineCompletionProvider : InlineCompletionProvider {
   override val id: InlineCompletionProviderID = InlineCompletionProviderID("TerminalInlineCompletionProvider")
+
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    val flow = flow {
+    return InlineCompletionSingleSuggestion.build {
       withContext(Dispatchers.EDT) {
         getCompletionElement(request.editor)
       }?.let {
         emit(it)
       }
     }
-    return InlineCompletionSuggestion.Default(flow)
   }
 
   private suspend fun getCompletionElement(editor: Editor): InlineCompletionElement? {
