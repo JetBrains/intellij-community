@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -476,13 +475,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ThreadingAssertions.assertEventDispatchThread();
     ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-    final Field myThreadLocalsField = Objects.requireNonNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
     //noinspection Convert2Lambda
     List<Callable<Void>> callables = Collections.nCopies(numOfThreads, new Callable<>() {
       @Override
       public Void call() {
-        // It's critical there are no collisions in the thread-local map
-        ReflectionUtil.resetField(Thread.currentThread(), myThreadLocalsField);
         for (int r = 0; r < readIterations; r++) {
           ReadMostlyRWLock.Reader reader = lock.startRead();
           assertNotNull(reader);
