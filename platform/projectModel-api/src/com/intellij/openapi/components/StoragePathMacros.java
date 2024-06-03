@@ -37,6 +37,8 @@ public final class StoragePathMacros {
 
   public static final @NotNull String MODULE_FILE = "$MODULE_FILE$";
 
+  public static final String PROJECT_DEFAULT_FILE = "project.default.xml";
+
   /**
    * Application level non-roamable storage.
    */

@@ -12,7 +12,7 @@ import java.io.InputStream
 import java.io.Writer
 import java.nio.file.Path
 
-const val PROJECT_DEFAULT_FILE_NAME = "project.default.xml"
+const val PROJECT_DEFAULT_FILE_NAME = StoragePathMacros.PROJECT_DEFAULT_FILE
 const val PROJECT_DEFAULT_FILE_SPEC = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
 
 internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {
