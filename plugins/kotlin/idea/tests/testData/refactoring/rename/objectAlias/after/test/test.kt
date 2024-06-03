@@ -5,5 +5,5 @@ typealias AliasNew = OOO
 
 fun f() {
     AliasNew
-    val a: Alias
+    val a: AliasNew
 }
