@@ -106,7 +106,8 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
-        command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions) {
+        command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions ||
+        command instanceof ModUpdateReferences) {
       return Result.INTERACTIVE;
     }
     if (command instanceof ModShowConflicts) {
