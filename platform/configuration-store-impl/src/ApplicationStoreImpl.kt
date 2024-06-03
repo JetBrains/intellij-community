@@ -25,6 +25,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 
+@ApiStatus.Internal
 const val APP_CONFIG: String = "\$APP_CONFIG\$"
 
 @ApiStatus.Internal

@@ -1,4 +1,3 @@
-com/intellij/configurationStore/StreamProvider
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/openapi/roots/impl/ProjectRootManagerImpl$BatchSession
 com/intellij/openapi/roots/impl/RootConfigurationAccessor

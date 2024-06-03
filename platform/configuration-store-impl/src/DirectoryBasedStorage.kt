@@ -21,10 +21,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.*
 import java.util.*
 
+@ApiStatus.Internal
 open class DirectoryBasedStorage(
   private val dir: Path,
   @Suppress("DEPRECATION", "removal") private val splitter: com.intellij.openapi.components.StateSplitter,

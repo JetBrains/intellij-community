@@ -76,6 +76,7 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
   NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
 }
 
+@ApiStatus.Internal
 class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
     val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl

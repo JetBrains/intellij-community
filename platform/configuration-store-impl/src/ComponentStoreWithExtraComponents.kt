@@ -10,7 +10,9 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   protected abstract val serviceContainer: ComponentManagerImpl
 

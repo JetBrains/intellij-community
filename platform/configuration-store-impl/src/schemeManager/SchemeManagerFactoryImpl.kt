@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -35,6 +36,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
 
+  @ApiStatus.Internal
   final override fun <T: Scheme, MutableT : T> create(
     directoryName: String,
     processor: SchemeProcessor<T, MutableT>,
@@ -73,7 +75,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     managers.remove(schemeManager)
   }
 
-  open fun checkPath(originalPath: String): String {
+  internal open fun checkPath(originalPath: String): String {
     when {
       originalPath.contains('\\') -> LOG.error("Path must be system-independent, use forward slash instead of backslash")
       originalPath.isEmpty() -> LOG.error("Path must not be empty")
@@ -81,7 +83,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     return originalPath
   }
 
-  abstract fun pathToFile(path: String): Path
+  internal abstract fun pathToFile(path: String): Path
 
   fun process(processor: (SchemeManagerImpl<Scheme, Scheme>) -> Unit) {
     for (manager in managers) {
@@ -188,6 +190,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   @TestOnly
+  @ApiStatus.Internal
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
     override fun pathToFile(path: String): Path = basePath.resolve(path)
   }

@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.ComposerVal
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
 
-class SettingsValueValidatorFactory : CustomValidationRuleFactory {
+internal class SettingsValueValidatorFactory : CustomValidationRuleFactory {
   override fun createValidator(contextData: EventGroupContextData): SettingsValueValidator {
     return SettingsValueValidator(contextData)
   }
@@ -24,7 +24,7 @@ class SettingsValueValidatorFactory : CustomValidationRuleFactory {
   }
 }
 
-class SettingsComponentNameValidator : CustomValidationRule() {
+internal class SettingsComponentNameValidator : CustomValidationRule() {
   override fun getRuleId(): String = "component_name"
 
   override fun acceptRuleId(ruleId: String?): Boolean {
@@ -43,7 +43,7 @@ class SettingsComponentNameValidator : CustomValidationRule() {
   }
 }
 
-class SettingsValueValidator(contextData: EventGroupContextData) : CustomValidationRule() {
+internal class SettingsValueValidator(contextData: EventGroupContextData) : CustomValidationRule() {
   private val composerValidationRule = ComposerValidationRule(
     listOf(contextData.getEnumValidationRule("boolean"),
            contextData.getRegexpValidationRule("integer"),

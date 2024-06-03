@@ -8,11 +8,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.Writer
 import java.nio.file.Path
 
+@ApiStatus.Internal
 const val PROJECT_DEFAULT_FILE_NAME = StoragePathMacros.PROJECT_DEFAULT_FILE
+@ApiStatus.Internal
 const val PROJECT_DEFAULT_FILE_SPEC = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
 
 internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {

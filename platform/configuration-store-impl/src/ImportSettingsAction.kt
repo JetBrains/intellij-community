@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -32,6 +33,7 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
+@ApiStatus.Internal
 open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
@@ -167,6 +169,7 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
   }
 }
 
+@ApiStatus.Internal
 fun getPaths(input: InputStream): Set<String> {
   val result = mutableSetOf<String>()
   val zipIn = ZipInputStream(input)

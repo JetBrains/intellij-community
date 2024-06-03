@@ -121,6 +121,7 @@ open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
 }
 
+@Internal
 fun exportSettings(exportableItems: Set<ExportableItem>,
                    out: OutputStream,
                    exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
@@ -266,7 +267,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
 private fun stringify(value: Boolean, name: String): String = if (value) name else "not $name"
 
-fun looksLikeDirectory(storage: Storage): Boolean {
+private fun looksLikeDirectory(storage: Storage): Boolean {
   return storage.stateSplitter.java != StateSplitterEx::class.java
 }
 

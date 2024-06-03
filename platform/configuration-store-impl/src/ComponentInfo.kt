@@ -5,6 +5,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 
 @Suppress("DEPRECATION", "removal")
@@ -49,6 +50,7 @@ private fun isUseSaveThreshold(storage: Storage): Boolean {
   return storage.useSaveThreshold != ThreeState.NO && getEffectiveRoamingType(storage.roamingType, storage.path) === RoamingType.DISABLED
 }
 
+@ApiStatus.Internal
 sealed class ComponentInfo {
   abstract val pluginId: PluginId
 

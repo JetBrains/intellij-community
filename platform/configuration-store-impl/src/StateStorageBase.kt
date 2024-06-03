@@ -25,6 +25,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
+@Internal
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
@@ -113,6 +114,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 }
 
+@Internal
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
   abstract val controller: SettingsController?
   abstract val roamingType: RoamingType?
