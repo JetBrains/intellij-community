@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionsOnSave.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.actions.SaveDocumentAction
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.actionSystem.AnAction
@@ -97,7 +98,7 @@ class ActionsOnSaveManager(val coroutineScope: CoroutineScope) {
     val processingAlreadyScheduled = !documentsToProcess.isEmpty()
     documentsToProcess.addAll(documents)
     if (!processingAlreadyScheduled) {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement() + ClientId.coroutineContext()) {
         processSavedDocuments()
       }
     }
