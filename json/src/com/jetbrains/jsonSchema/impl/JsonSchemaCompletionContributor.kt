@@ -809,8 +809,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         } ?: return
         val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
         val pointer = SmartPointerManager.createPointer(newElement)
-        cleanupWhitespaces(element)
-        element.delete()
+        cleanupWhitespacesAndDelete(element)
         PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
         var psiElement = pointer.element?.lastLeaf()
         while (psiElement is PsiWhiteSpace || psiElement is PsiComment) {
@@ -831,7 +830,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val property: JsonPropertyAdapter = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
                                           ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
       fakeProperty?.let {
-        cleanupWhitespaces(it)
+        cleanupWhitespacesAndDelete(it)
       }
       val value = property.values.singleOrNull()
       if (value == null) return null
@@ -850,7 +849,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             addBeforeOrAfter(value, element.copy(), element)
           }
           else {
-            val newElement = value.delegate.replace(element.copy())
+            val newElement = if (value.delegate.text == element.text) value.delegate else value.delegate.replace(element.copy())
             newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
             newElement
           }
@@ -876,12 +875,18 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       }
     }
 
-    private fun cleanupWhitespaces(it: PsiElement) {
+    private fun cleanupWhitespacesAndDelete(it: PsiElement) {
       // cleanup redundant whitespace
       var next = it.nextSibling
       while (next != null && next.text.isBlank()) {
         val n = next
         next = next.nextSibling
+        n.delete()
+      }
+      var prev = it.prevSibling
+      while (prev != null && prev.text.isBlank()) {
+        val n = prev
+        prev = prev.prevSibling
         n.delete()
       }
       it.delete()
