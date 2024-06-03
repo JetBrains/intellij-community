@@ -43,7 +43,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         doneProblemDescription(buf);
 
         if (toExternalHtml) {
-          buf.append(BR).append(BR);
           appendResolution(buf, refElement, DescriptorComposer.quickFixTexts(refElement, myToolPresentation));
         }
         refElement.accept(new RefJavaVisitor() {
@@ -324,7 +323,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, JavaBundle.message("inspection.export.results.callees"));
-        buf.append("<div class=\"problem-description\">");
       }
       final @NonNls String ul = "<ul>";
       buf.append(ul);
@@ -341,9 +339,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
       final @NonNls String closeUl = "</ul>";
       buf.append(closeUl);
-      if (appendCallees) {
-        buf.append("</div>");
-      }
     }
   }
 

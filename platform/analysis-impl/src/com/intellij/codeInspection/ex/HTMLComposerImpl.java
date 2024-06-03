@@ -61,7 +61,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append("in ");
       appendLocation(buf, refElement);
       buf.append("</div>");
-      buf.append(BR).append(BR);
     }
   }
 
@@ -273,7 +272,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void doneProblemDescription(@NotNull StringBuilder buf) {
-    buf.append("\n</div><br>");
+    buf.append("\n</div>");
   }
 
   @Override

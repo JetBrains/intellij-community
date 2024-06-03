@@ -171,7 +171,6 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       }
     }
     buf.append(res.replace("#end", "").replace("#treeend",""));
-    buf.append(BR).append(BR);
     composeAdditionalDescription(buf, refElement);
   }
 
