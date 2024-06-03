@@ -47,9 +47,18 @@ object PyPackageInstallUtils {
     return true
   }
 
-  suspend fun installPackage(project: Project, sdk: Sdk, packageName: String): Result<List<PythonPackage>> {
+  suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
     val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName)
+    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
+                               ?: return Result.failure(Exception("Could not find any repositories"))
+
+    return pythonPackageManager.updatePackage(packageSpecification)
+  }
+
+
+  suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
     return pythonPackageManager.installPackage(packageSpecification)
