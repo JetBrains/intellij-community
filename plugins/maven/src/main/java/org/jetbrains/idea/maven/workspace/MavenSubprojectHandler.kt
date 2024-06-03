@@ -6,7 +6,7 @@ import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import icons.MavenIcons
 import org.jetbrains.idea.maven.project.MavenProject
@@ -31,7 +31,6 @@ internal class MavenSubprojectHandler : SubprojectHandler {
   }
 
   override fun importFromProject(project: Project): ImportedProjectSettings {
-    // FIXME: does not work for new project: AbstractMavenModuleBuilder creates project in 'MavenUtil.runWhenInitialized' callback
     return MavenImportedProjectSettings(project)
   }
 
@@ -44,7 +43,7 @@ internal class MavenSubprojectHandler : SubprojectHandler {
 }
 
 private class MavenImportedProjectSettings(project: Project) : ImportedProjectSettings {
-  val projectDir = requireNotNull(project.guessProjectDir())
+  private val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(project.basePath!!))
 
   override suspend fun applyTo(workspace: Project): Boolean {
     val openProjectProvider = MavenOpenProjectProvider()

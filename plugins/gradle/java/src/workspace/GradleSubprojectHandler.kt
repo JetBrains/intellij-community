@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSyste
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
 import icons.GradleIcons
@@ -38,7 +38,7 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
 
 private class GradleImportedProjectSettings(private val project: Project) : ImportedProjectSettings {
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
-  private val projectDir = requireNotNull(project.guessProjectDir())
+  private val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(project.basePath!!))
 
   override suspend fun applyTo(workspace: Project): Boolean {
     if (gradleProjectsSettings.isEmpty()) {
