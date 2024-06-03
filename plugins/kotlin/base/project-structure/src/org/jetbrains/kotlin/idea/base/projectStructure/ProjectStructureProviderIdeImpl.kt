@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:OptIn(KaPlatformInterface::class)
+@file:OptIn(KaAnalysisApiInternals::class, KaPlatformInterface::class)
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
@@ -15,8 +15,10 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
@@ -38,7 +40,6 @@ import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
@@ -145,15 +146,11 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         return getKtModuleByModuleInfo(moduleInfo ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile))
     }
 
-    private fun computeBuiltinKtModule(virtualFile: VirtualFile, psiElement: PsiElement): KtBuiltinsModule? {
-        if (virtualFile in BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()) {
+    private fun computeBuiltinKtModule(virtualFile: VirtualFile, psiElement: PsiElement): KaBuiltinsModule? {
+        if (virtualFile in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
             val ktElement = psiElement.parentOfType<KtElement>(withSelf = true)
             if (ktElement != null) {
-                return KtBuiltinsModule(
-                    ktElement.platform,
-                    JvmPlatformAnalyzerServices /* unused, will be removed as a part of KT-67969 */,
-                    project
-                )
+                return KaBuiltinsModuleImpl(ktElement.platform, project)
             }
         }
         return null

@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.base.indices.contributors
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableSetContributor
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 
 internal class BuiltInsIndexableSetContributor: IndexableSetContributor() {
     override fun getAdditionalRootsToIndex(): Set<VirtualFile> {
-        return BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()
+        return BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()
     }
 }
