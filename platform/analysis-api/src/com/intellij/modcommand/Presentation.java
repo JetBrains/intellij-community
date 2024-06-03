@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Action presentation
+ * Action presentation.
  *
  * @param name     localized name of the action to be displayed in UI
  * @param priority priority to sort the action among other actions
@@ -59,7 +59,7 @@ public record Presentation(
 
   /**
    * @param thisAction        the action the presentation is created for
-   * @param belongsToMyFamily a predicate that checks if another action belongs to this action family,
+   * @param belongsToMyFamily a predicate that checks if another action belongs to this action family
    *                          and should be applied together with this action
    * @return a presentation for an action that has a standard "Fix all" option
    * to fix all the issues like this in the file. Inapplicable to intention quick-fixes.

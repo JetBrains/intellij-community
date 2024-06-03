@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * A command that allows to select arbitrary number of elements. In batch mode, it's assumed that default selection is selected.
+ * A command that allows to select an arbitrary number of elements. In batch mode, it's assumed that the default selection is selected.
  * 
  * @param title user-readable title to display in UI
  * @param elements all elements to select from
@@ -38,11 +38,11 @@ public record ModChooseMember(@NotNull @NlsContexts.PopupTitle String title,
      */
     SINGLE_OR_EMPTY,
     /**
-     * Selecting any non-zero amount of elements is allowed
+     * Selecting any non-zero number of elements is allowed
      */
     MULTIPLE,
     /**
-     * Selecting any mount of elements (including zero) is allowed
+     * Selecting any number of elements (including zero) is allowed
      */
     MULTIPLE_OR_EMPTY
   }

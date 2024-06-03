@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.openapi.util.TextRange;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * A command to invoke symbol rename UI. Ignored in batch mode.
+ * A command to invoke the Rename UI for a symbol. Ignored in batch mode.
  *
  * @param file            file with symbol location
  * @param symbolRange     symbol range within the file

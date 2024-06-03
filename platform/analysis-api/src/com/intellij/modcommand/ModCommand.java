@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -103,7 +103,7 @@ public sealed interface ModCommand
 
   /**
    * @param target element to select
-   * @return a command that selects given element in the editor, assuming that it's opened in the editor
+   * @return a command that selects the given element in the editor, assuming that it's opened in the editor
    */
   static @NotNull ModCommand select(@NotNull PsiElement target) {
     PsiFile psiFile = target.getContainingFile();
@@ -155,7 +155,7 @@ public sealed interface ModCommand
   }
 
   /**
-   * @param context context PSI element to retrieve proper copy of the tool 
+   * @param context context PSI element to retrieve a proper copy of the tool
    * @param inspection inspection instance to update (used as template, should not be changed)
    * @param updater updater function that receives a separate inspection instance and can change its options.
    *                Only options accessible via {@link InspectionProfileEntry#getOptionsPane()} will be tracked.
@@ -215,7 +215,7 @@ public sealed interface ModCommand
   /**
    * @param orig    PsiElement to update
    * @param updater a function that accepts a non-physical copy of the supplied orig element and performs
-   *                PSI write operations in background to modify this copy
+   *                PSI write operations in the background to modify this copy
    * @return a command that will perform the corresponding update to the original element
    */
   static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig, @NotNull Consumer<@NotNull E> updater) {
@@ -225,7 +225,7 @@ public sealed interface ModCommand
   /**
    * @param orig    PsiElement to update
    * @param updater a function that accepts a non-physical copy of the supplied orig element and a context to
-   *                perform additional editor operations if necessary; and performs PSI write operations in background
+   *                perform additional editor operations if necessary; and performs PSI write operations in the background
    *                to modify this copy
    * @return a command that will perform the corresponding update to the original element
    */
@@ -235,7 +235,7 @@ public sealed interface ModCommand
   }
 
   /**
-   * Create an action that depends on a PSI element in current file
+   * Create an action that depends on a PSI element in the current file.
    *
    * @param element element
    * @param title action title
@@ -268,7 +268,7 @@ public sealed interface ModCommand
   }
 
   /**
-   * Create an action that depends on a PSI element in current file and performs PSI update
+   * Create an action that depends on a PSI element in the current file and performs PSI update.
    *
    * @param element element
    * @param title action title
@@ -306,7 +306,7 @@ public sealed interface ModCommand
   }
 
   /**
-   * Create an action that depends on a PSI element in current file and performs PSI update
+   * Create an action that depends on a PSI element in the current file and performs PSI update.
    *
    * @param element element
    * @param title action title
@@ -325,7 +325,7 @@ public sealed interface ModCommand
    * @param command a command to tune
    * @param file a file where we want to navigate
    * @param offset an offset in the file before the command is executed 
-   * @param leanRight if true, lean to right side when the text was inserted right at the caret position
+   * @param leanRight if true, lean to the right side when the text was inserted right at the caret position
    * @return an updated command which tries to navigate inside the specified file, taking into account the modifications inside that file
    */
   @ApiStatus.Experimental
@@ -364,7 +364,7 @@ public sealed interface ModCommand
 
   /**
    * Creates a command that allows user to select arbitrary number of members (but at least one). 
-   * In batch mode, it's assumed that default selection is selected.
+   * In batch mode, it's assumed that the default selection is selected.
    *
    * @param title user-readable title to display in UI
    * @param elements all elements to select from

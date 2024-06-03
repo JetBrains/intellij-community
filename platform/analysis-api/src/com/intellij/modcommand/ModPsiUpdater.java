@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -21,9 +21,9 @@ import java.util.function.Consumer;
 
 /**
  * A helper to perform editor command when building the {@link ModCommand}. This helper is available inside the consumer provided by
- * {@link ModCommand#psiUpdate} overloads. It allows you to retrieve writable copies of physical files,
+ * {@link ModCommand#psiUpdate} overloads. It allows you to retrieve writable copies of physical files
  * and record various navigation and template operations that will appear in the final command. It also has a concept of 'current file',
- * which is the file to perform any interactive operations in. By default, the current file is a file where starting element
+ * which is the file to perform any interactive operations in. By default, the current file is a file where the starting element
  * is located, or which action context points at, depending on the used {@code psiUpdate} overload.
  * 
  * @see ModCommand#psiUpdate(PsiElement, BiConsumer)
@@ -37,7 +37,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * Other write operations on the directory may not work.
    * <p>
    * This method must be called before any writes to the returned non-physical file are performed. Otherwise, 
-   * the copy of original element may not exist anymore. It's better to get all the writable copies before doing any writes.  
+   * the copy of the original element may not exist anymore. It's better to get all the writable copies before doing any writes.
    * 
    * @param element element to update
    * @param <E> type of the element
@@ -48,8 +48,8 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   <E extends PsiElement> E getWritable(E element) throws IllegalStateException;
   
   /**
-   * Highlights given element as a search result. Does nothing when executed non-interactively.
-   * The current file may be changed if the element is located in the different file.
+   * Highlights the given element as a search result. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in a different file.
    * 
    * @param element element to select
    */
@@ -58,8 +58,8 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   }
   
   /**
-   * Highlights given element. Does nothing when executed non-interactively.
-   * The current file may be changed if the element is located in the different file.
+   * Highlights the given element. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in a different file.
    * 
    * @param element element to select
    * @param attributesKey attributes to use for highlighting
@@ -67,7 +67,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void highlight(@NotNull PsiElement element, @NotNull TextAttributesKey attributesKey);
 
   /**
-   * Highlights given range inside the current file. Does nothing when executed non-interactively.
+   * Highlights the given range inside the current file. Does nothing when executed non-interactively.
    * 
    * @param range range to select
    * @param attributesKey attributes to use for highlighting
@@ -76,7 +76,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
 
   /**
    * Displays the UI to rename a given element. Does nothing when executed non-interactively. 
-   * The current file may be changed if the element is located in the different file.
+   * The current file may be changed if the element is located in a different file.
    * 
    * @param element element to rename
    * @param suggestedNames names to suggest (user is free to type any other name as well)
@@ -85,10 +85,10 @@ public interface ModPsiUpdater extends ModPsiNavigator {
 
   /**
    * Displays the UI to rename a given element. Does nothing when executed non-interactively. 
-   * The current file may be changed if the element is located in the different file.
+   * The current file may be changed if the element is located in a different file.
    *
    * @param element element to rename
-   * @param nameIdentifier a descendant of element which represents the name identifier leaf.
+   * @param nameIdentifier a descendant of the element which represents the name identifier leaf.
    *                       Supplying null is discouraged, as some executors may not support it, and in this case rename will not start
    * @param suggestedNames names to suggest (user is free to type any other name as well)
    */
@@ -97,7 +97,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   /**
    * Tracks subsequent changes in a given declaration (e.g., method) and produce a command to 
    * update the references to the declaration (maybe displaying UI).
-   * The current file may be changed if the declaration is located in the different file.
+   * The current file may be changed if the declaration is located in a different file.
    * <p>
    *   This method must be called before you actually update the declaration (e.g., change method parameters).
    * </p>
@@ -122,7 +122,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
 
   /**
    * Records conflicts. All the recorded conflicts will be shown before any other modifications.
-   * If user cancels the conflict view, then no actual modification will be done.
+   * If the user cancels the conflict view, then no actual modification will be done.
    * <p>
    *   Subsequent calls of this method add new conflicts instead of replacing the old ones.
    * </p>
@@ -144,8 +144,8 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void message(@NotNull @NlsContexts.Tooltip String message);
 
   /**
-   * Selects given element. Does nothing when executed non-interactively.
-   * The current file may be changed if the element is located in the different file.
+   * Selects the given element. Does nothing when executed non-interactively.
+   * The current file may be changed if the element is located in a different file.
    *
    * @param element element to select
    */
@@ -153,7 +153,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
   void select(@NotNull PsiElement element);
 
   /**
-   * Selects given range in the current file. Does nothing when executed non-interactively.
+   * Selects the given range in the current file. Does nothing when executed non-interactively.
    *
    * @param range range to select
    */
@@ -170,7 +170,7 @@ public interface ModPsiUpdater extends ModPsiNavigator {
 
   /**
    * Navigates to a given element. Does nothing when executed non-interactively.
-   * The current file may be changed if the element is located in the different file.
+   * The current file may be changed if the element is located in a different file.
    *
    * @param element element to navigate to
    */

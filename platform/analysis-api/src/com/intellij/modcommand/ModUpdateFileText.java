@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A command that updates the content of a given {@link PsiFile}
+ * A command that updates the content of a given {@link PsiFile}.
  * 
  * @param file file to update
  * @param oldText old text (expected). The command aborts if the old text doesn't match
  * @param newText new text
  * @param updatedRanges ranges in the text that should be updated, sorted in ascending order; 
- *                      use empty list to calculate automatically
+ *                      use an empty list to calculate automatically
  */
 public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldText, @NotNull String newText,
                                 @NotNull List<@NotNull Fragment> updatedRanges) implements ModCommand {
@@ -58,7 +58,7 @@ public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldTe
   /**
    * A fragment of the text to update.
    *
-   * @param offset start offset inside the new text
+   * @param offset the start offset inside the new text
    * @param oldLength length of the old fragment
    * @param newLength length of the new fragment
    */

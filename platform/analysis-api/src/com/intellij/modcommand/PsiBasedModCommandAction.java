@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -113,7 +113,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    * @param element element to test
    * @param context context
    * @return true if no parent elements should be checked for applicability. By default, returns false,
-   * so we will search for applicable element until {@link PsiFile} element is reached.
+   * so we will search for the applicable element until {@link PsiFile} element is reached.
    */
   protected boolean stopSearchAt(@NotNull PsiElement element, @NotNull ActionContext context) {
     return false;
@@ -123,7 +123,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    * @param element element to test
    * @param context context
    * @return true if the supplied element is the one we want to apply the action on. Used when
-   * searching the appropriate element. By default, returns true always, meaning that the first found element
+   * searching for the appropriate element. By default, returns true always, meaning that the first found element
    * of type E is applicable.
    */
   protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
@@ -156,7 +156,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   }
 
   /**
-   * Computes a command to be executed to actually perform the action. 
+   * Computes a command to be executed to actually perform the action.
    * Called in a background read-action. Called after {@link #getPresentation(ActionContext)} returns non-null presentation.
    *
    * @param context context in which the action is executed
