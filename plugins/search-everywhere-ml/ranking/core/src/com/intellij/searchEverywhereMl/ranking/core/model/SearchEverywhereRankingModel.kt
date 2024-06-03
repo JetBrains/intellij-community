@@ -11,7 +11,7 @@ internal abstract class SearchEverywhereRankingModel(protected val model: Decisi
     return model.predict(buildArray(model.featuresOrder, features))
   }
 
-  protected fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any?>): DoubleArray {
+  private fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any?>): DoubleArray {
     val array = DoubleArray(featuresOrder.size)
     for (i in featuresOrder.indices) {
       val mapper = featuresOrder[i]
@@ -27,6 +27,7 @@ internal class SimpleSearchEverywhereRankingModel(model: DecisionFunction) : Sea
 }
 
 internal class ExactMatchSearchEverywhereRankingModel(model: DecisionFunction) : SearchEverywhereRankingModel(model) {
+  private val simpleModel = SimpleSearchEverywhereRankingModel(model)
 
   /**
    * Determine if the given features map represents an exact match.
@@ -65,12 +66,15 @@ internal class ExactMatchSearchEverywhereRankingModel(model: DecisionFunction) :
   override fun predict(features: Map<String, Any?>): Double {
 
     val isExactMatch = isExactMatch(features)
-    val extensionMatch = features.getOrDefault("fileTypeMatchesQuery", false) == true
-    val mlPrediction = model.predict(buildArray(model.featuresOrder, features))
-    return if (isExactMatch) {
-      if (extensionMatch) 0.99 + mlPrediction * 0.01 // Name + extension matches -> return preference is > 0.99
-      else 0.9 + mlPrediction * 0.09 // Name matches but the extension doesn't -> return preference is 0.9-0.99.
+    val isExtensionMatch = features.getOrDefault("fileTypeMatchesQuery", false) == true
+    val mlPrediction = simpleModel.predict(features)
+    val isNameAndExtensionMatch = isExactMatch && isExtensionMatch
+    val isNameOnlyMatch = isExactMatch && !isExtensionMatch
+
+    return when {
+      isNameAndExtensionMatch -> 0.99 + mlPrediction * 0.01 // return preference is > 0.99
+      isNameOnlyMatch -> 0.9 + mlPrediction * 0.09 // 0.9 < return preference < 0.99
+      else -> 0.0 + mlPrediction * 0.9 // return preference < 0.9
     }
-    else mlPrediction * 0.9 // No exact match -> return < 0.9
   }
 }
