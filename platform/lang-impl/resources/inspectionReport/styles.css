@@ -5,7 +5,7 @@ html {
 
 body {
     color: #4C4C4C;
-    margin: 60px 60px 0 60px;
+    margin: 0;
 }
 
 p {
@@ -78,4 +78,31 @@ li input:checked + ol > li:last-child {
 
 div.location {
     margin-left: 40px;
+}
+
+html, body, #inspection-tree, #description {
+  height: 100%;
+}
+
+#inspection-tree {
+    float: left;
+    overflow: auto;
+    margin-left: 20px;
+    width: 50%;
+}
+
+#description {
+  width: calc(50% - 40px);
+  float: left;
+  overflow: auto;
+  margin-left: 20px;
+}
+
+.problem-description-group {
+    margin-top: 40px;
+    font-weight: bold;
+}
+
+.problem-description {
+  margin-left: 40px;
 }
