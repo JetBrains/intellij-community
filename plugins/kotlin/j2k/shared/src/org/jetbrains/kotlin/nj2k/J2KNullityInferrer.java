@@ -7,8 +7,6 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -431,24 +429,11 @@ class J2KNullityInferrer {
 
             if (PsiUtil.isAccessedForWriting(expr)) return true;
 
-            // If Java DFA can determine that the nullability of the reference is definitely not-null,
-            // we are probably inside an "instance of" check (which is like a smart cast for Java DFA).
-            // So we give up trying to guess the nullability of the declaration from this reference.
-            CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expr);
-            if (dataflowResult != null) {
-                DfType dfType = dataflowResult.getDfType(expr);
-                if (dfType instanceof DfReferenceType refType) {
-                    DfaNullability nullability = refType.getNullability();
-                    if (nullability == DfaNullability.NOT_NULL) {
-                        return false;
-                    }
-
-                    //TypeConstraint constraint = refType.getConstraint();
-                    //List<TypeConstraint.Exact> instanceOfTypes = constraint.instanceOfTypes().toList();
-                    //if (!instanceOfTypes.isEmpty()) {
-                    //    return false;
-                    //}
-                }
+            if (NullabilityKt.getDfaNullability(expr) == DfaNullability.NOT_NULL) {
+                // If Java DFA can determine that the nullability of the reference is definitely not-null,
+                // we are probably inside an "instance of" check (which is like a smart cast for Java DFA).
+                // So we give up trying to guess the nullability of the declaration from this reference.
+                return false;
             }
 
             if (parent instanceof PsiThrowStatement) {

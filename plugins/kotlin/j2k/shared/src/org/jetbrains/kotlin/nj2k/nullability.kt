@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow
+import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
 import com.siyeh.ig.psiutils.ExpectedTypeUtils
@@ -44,4 +47,11 @@ internal fun isUsedInAutoUnboxingContext(expr: PsiReferenceExpression): Boolean 
 
     val unboxedType = PsiPrimitiveType.getUnboxedType(exprType) ?: return false
     return expectedType.isAssignableFrom(unboxedType)
+}
+
+internal fun getDfaNullability(expr: PsiReferenceExpression): DfaNullability? {
+    val dataflowResult = CommonDataflow.getDataflowResult(expr) ?: return null
+    val dfType = dataflowResult.getDfType(expr)
+    if (dfType !is DfReferenceType) return null
+    return dfType.getNullability()
 }
