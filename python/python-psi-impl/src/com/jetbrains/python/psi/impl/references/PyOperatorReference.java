@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl.references;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PyOperatorReference extends PyReferenceImpl {
@@ -158,10 +158,11 @@ public class PyOperatorReference extends PyReferenceImpl {
   private List<? extends RatedResolveResult> resolveDefinitionMember(@NotNull PyClassLikeType classLikeType,
                                                                      @NotNull PyExpression object,
                                                                      @NotNull String name) {
-    final PyClassLikeType metaClassType = classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true);
-    if (metaClassType != null) {
-      final List<? extends RatedResolveResult> results =
-        metaClassType.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+    final PyClassLikeType classType = !(classLikeType instanceof PyCustomType customType)
+                                      ? classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true)
+                                      : customType;
+    if (classType != null) {
+      List<? extends RatedResolveResult> results = classType.resolveMember(name, object, AccessDirection.of(myElement), myContext);
 
       if (!ContainerUtil.isEmpty(results)) return results;
     }
