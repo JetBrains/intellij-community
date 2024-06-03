@@ -38,10 +38,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotations
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtCallableParameterRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtDeclarationNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReturnTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReturnTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -245,7 +245,7 @@ internal class KotlinIdeDeclarationRenderer(
                 printer: PrettyPrinter
             ): Unit = printer {
                 val classId = annotation.classId
-                if (classId != null) {
+                if (classId != null && !classId.shortClassName.isSpecial) {
                     val buffer = StringBuilder()
                     DocumentationManagerUtil.createHyperlink(
                         buffer,
@@ -256,7 +256,7 @@ internal class KotlinIdeDeclarationRenderer(
                     )
                     printer.append(highlight(buffer.toString()) { asAnnotationName })
                 } else {
-                    printer.append(highlight("ERROR_ANNOTATION") { asError })
+                    printer.append(highlight(classId?.shortClassName?.renderName()?.escape() ?: "ERROR_ANNOTATION") { asError })
                 }
             }
         }

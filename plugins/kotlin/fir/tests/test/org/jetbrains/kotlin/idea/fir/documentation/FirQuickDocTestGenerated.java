@@ -429,4 +429,9 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     public void testTypeParameterConstraints() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/TypeParameterConstraints.kt");
     }
+
+    @TestMetadata("UnresolvedAnnotation.kt")
+    public void testUnresolvedAnnotation() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/UnresolvedAnnotation.kt");
+    }
 }

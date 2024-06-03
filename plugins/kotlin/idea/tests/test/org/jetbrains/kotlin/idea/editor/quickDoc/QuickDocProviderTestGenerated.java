@@ -429,4 +429,9 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     public void testTypeParameterConstraints() throws Exception {
         runTest("testData/editor/quickDoc/TypeParameterConstraints.kt");
     }
+
+    @TestMetadata("UnresolvedAnnotation.kt")
+    public void testUnresolvedAnnotation() throws Exception {
+        runTest("testData/editor/quickDoc/UnresolvedAnnotation.kt");
+    }
 }
