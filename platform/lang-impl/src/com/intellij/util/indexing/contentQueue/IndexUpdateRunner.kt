@@ -126,7 +126,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
         try {
           val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingRequest.file)
           progressReporter.setLocationBeingIndexed(presentableLocation)
-          indexOneFileHandleExceptions(FileIndexingJob(fileIndexingRequest, fileSet), project, project, contentLoader, fileSet.statistics)
+          indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
           progressReporter.oneMoreFileProcessed()
         }
         catch (t: Throwable) {
@@ -168,7 +168,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   }
 
   @Throws(ProcessCanceledException::class)
-  private fun indexOneFileHandleExceptions(fileIndexingJob: FileIndexingJob,
+  private fun indexOneFileHandleExceptions(fileIndexingRequest: FileIndexingRequest,
                                            project: Project,
                                            parentDisposableForInvokeLater: Disposable,
                                            contentLoader: CachedFileContentLoader,
@@ -176,8 +176,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val startTime = System.nanoTime()
 
     try {
-      val fileIndexingRequest = fileIndexingJob.fileIndexingRequest
-
       if (fileIndexingRequest.file.isDirectory) {
         LOG.info("Directory was passed for indexing unexpectedly: " + fileIndexingRequest.file.path)
       }
@@ -198,7 +196,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     }
     catch (e: Throwable) {
       FileBasedIndexImpl.LOG.error("""
-  Error while indexing ${fileIndexingJob.fileIndexingRequest.file.presentableUrl}
+  Error while indexing ${fileIndexingRequest.file.presentableUrl}
   To reindex this file IDEA has to be restarted
   """.trimIndent(), e)
     }
@@ -328,9 +326,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
   @JvmRecord
   private data class ContentLoadingResult(val cachedFileContent: CachedFileContent, val fileLength: Long)
-
-  @JvmRecord
-  private data class FileIndexingJob(val fileIndexingRequest: FileIndexingRequest, val fileSet: FileSet)
 
   companion object {
     private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
