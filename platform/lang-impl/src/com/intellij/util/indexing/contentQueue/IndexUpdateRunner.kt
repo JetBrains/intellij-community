@@ -25,6 +25,8 @@ import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -34,6 +36,7 @@ import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -54,8 +57,8 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
    */
   class IndexingInterruptedException(cause: Throwable) : Exception(cause)
 
-  class FileSet(project: Project, val debugName: String, internal val files: Set<FileIndexingRequest>) {
-    constructor(project: Project, debugName: String, files: Collection<FileIndexingRequest>) : this(project, debugName, files.toSet())
+  class FileSet(project: Project, val debugName: String, internal val files: PersistentSet<FileIndexingRequest>) {
+    constructor(project: Project, debugName: String, files: Collection<FileIndexingRequest>) : this(project, debugName, files.toPersistentSet())
     val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
 
     fun isEmpty(): Boolean = files.isEmpty()
@@ -309,27 +312,31 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   private class IndexingJob(val myProject: Project,
                             val progressReporter: IndexingProgressReporter2,
                             val myContentLoader: CachedFileContentLoader,
-                            fileSet: FileSet) {
-    private val myQueueOfFiles: ArrayBlockingQueue<FileIndexingJob> // the size for Community sources is about 615K entries
+                            val fileSet: FileSet) {
 
-    init {
-      val maxFilesCount = fileSet.size()
-      myQueueOfFiles = ArrayBlockingQueue(maxFilesCount)
-      for (file in fileSet.files) {
-        myQueueOfFiles.add(FileIndexingJob(file, fileSet))
-      }
-    }
+    private val files: AtomicReference<PersistentSet<FileIndexingRequest>> = AtomicReference(fileSet.files)
 
     fun getStatistics(fileIndexingJob: FileIndexingJob): IndexingFileSetStatistics {
       return fileIndexingJob.fileSet.statistics
     }
 
-    fun poll(): FileIndexingJob? = myQueueOfFiles.poll()
+    fun poll(): FileIndexingJob? {
+      var first: FileIndexingRequest? = null
+      do {
+        val curr = files.get()
+        first = curr.firstOrNull()
+        val replaced = (first == null || files.compareAndSet(curr, curr.remove(first)))
+      }
+      while (!replaced)
+      return if (first != null) FileIndexingJob(first, fileSet) else null
+    }
 
-    fun pushBack(job: FileIndexingJob) = myQueueOfFiles.add(job)
+    fun pushBack(job: FileIndexingJob) {
+      files.updateAndGet { it.add(job.fileIndexingRequest) }
+    }
 
     fun areAllFilesProcessed(): Boolean {
-      return myQueueOfFiles.isEmpty()
+      return files.get().isEmpty()
     }
 
     fun setLocationBeingIndexed(fileIndexingJob: FileIndexingJob) {
