@@ -1854,7 +1854,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         removeSingleIndexValue(indexId, fileId);
       }
     }
-    if (nontrivialFileIndexedStates.isEmpty() || file.isDirectory()) {
+    if (nontrivialFileIndexedStates.isEmpty() || (file.isValid() && file.isDirectory())) {
       getFilesToUpdateCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
     }
     else {
@@ -1871,7 +1871,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged, @NotNull List<Project> dirtyQueueProjects) {
     Set<Project> containingProjects = getContainingProjects(file);
-    if (containingProjects.isEmpty() || (!file.isDirectory() && isTooLarge(file))) {
+    if (containingProjects.isEmpty() || !file.isValid() || (!file.isDirectory() && isTooLarge(file))) {
       // large file might be scheduled for update in before event when its size was not large
       doInvalidateIndicesForFile(fileId, file, containingProjects, dirtyQueueProjects);
       return;
