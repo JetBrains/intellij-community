@@ -39,6 +39,7 @@ import com.jetbrains.jsonSchema.extension.*
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_ORDER_SENSITIVE
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
@@ -797,9 +798,15 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val element = context.file.findElementAt(context.startOffset)?.parent ?: return
       val walker = JsonLikePsiWalker.getWalker(element) ?: return
       val container = element.parent ?: return
-      val parentObject = walker.createValueAdapter(container)?.asObject ?: return
       val path = completionPath.accessor()
       if (path.isNotEmpty()) {
+        val parentObject = walker.createValueAdapter(container)?.asObject.let {
+          it ?: element.replace(walker.getSyntaxAdapter(context.project).createProperty(path.first(), "foo", context.project).parent).let {
+            walker.createValueAdapter(it)?.asObject
+          }?.also {
+            it.propertyList.single().values.single().delegate.replace(element.copy())
+          }
+        } ?: return
         val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
         val pointer = SmartPointerManager.createPointer(newElement)
         cleanupWhitespaces(element)
@@ -840,22 +847,32 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       else {
         val movedElement =
           if (value.isObject) {
-            val properties = value.asObject?.propertyList.orEmpty()
-            val firstProperty = properties.firstOrNull()
-            val lastProperty = properties.lastOrNull()
-            if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
-              val newElement = value.delegate.addAfter(element.copy(), lastProperty.delegate)
-              newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
-              newElement
-            }
-            else {
-              val newElement = value.delegate.addBefore(element.copy(), firstProperty?.delegate)
-              newElement.parent.addAfter(createLeaf("\n", newElement)!!, newElement)
-              newElement
-            }
+            addBeforeOrAfter(value, element.copy(), element)
           }
-          else value.delegate.replace(element.copy())
+          else {
+            val newElement = value.delegate.replace(element.copy())
+            newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
+            newElement
+          }
         return movedElement
+      }
+    }
+
+    private fun addBeforeOrAfter(value: JsonValueAdapter,
+                                 elementToAdd: PsiElement,
+                           element: PsiElement): PsiElement {
+      val properties = value.asObject?.propertyList.orEmpty()
+      val firstProperty = properties.firstOrNull()
+      val lastProperty = properties.lastOrNull()
+      return if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
+        val newElement = value.delegate.addAfter(elementToAdd, lastProperty.delegate)
+        newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
+        newElement
+      }
+      else {
+        val newElement = value.delegate.addBefore(elementToAdd, firstProperty?.delegate)
+        newElement.parent.addAfter(createLeaf("\n", newElement)!!, newElement)
+        newElement
       }
     }
 
@@ -887,7 +904,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           parentObject.delegate.addAfter(it, element)
         }
         else {
-          parentObject.delegate.addAfter(it, parentObject.propertyList.lastOrNull()?.delegate)
+          addBeforeOrAfter(parentObject, it, element)
+          //parentObject.delegate.addAfter(it, parentObject.propertyList.lastOrNull()?.delegate)
         }
       }.let { walker.getParentPropertyAdapter(it)!! }
     }
