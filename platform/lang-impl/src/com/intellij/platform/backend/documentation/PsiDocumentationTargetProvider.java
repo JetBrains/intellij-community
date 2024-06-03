@@ -40,6 +40,12 @@ public interface PsiDocumentationTargetProvider {
     throw new IllegalStateException("Override this or documentationTargets(PsiElement, PsiElement)");
   }
 
+  /**
+   * @return targets to handle documentation actions which are invoked on the given {@code element}, or an empty list if this provider is
+   * not aware of the given element.
+   * @apiNote if multiple targets are returned, then their order is maintained and will be reflected in the tool window and any popups.
+   * @see com.intellij.lang.documentation.DocumentationProvider#generateDoc
+   */
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   default @NotNull List<@NotNull DocumentationTarget> documentationTargets(@NotNull PsiElement element,
