@@ -6,12 +6,13 @@ package com.intellij.internal.statistic.service.fus.collectors
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object UIEventLogger : CounterUsagesCollector() {
 
-  private val uiEventGroup = EventLogGroup("ui.event", 22)
+  private val uiEventGroup = EventLogGroup("ui.event", 23)
 
   @JvmField
   val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -164,6 +165,14 @@ object UIEventLogger : CounterUsagesCollector() {
   val StickyLineNavigate: EventId1<Language?> = uiEventGroup.registerEvent(
     "StickyLineNavigate",
     EventFields.Language,
+  )
+
+  @JvmField
+  val ErrorStripeNavigate: EventId3<Int, Int, FileType?> = uiEventGroup.registerEvent(
+    "error.stripe.navigated",
+    EventFields.Int("error_severity"),
+    EventFields.LimitedInt("total_errors_count", 0..50),
+    EventFields.FileType,
   )
 
   override fun getGroup(): EventLogGroup = uiEventGroup

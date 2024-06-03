@@ -1,14 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -17,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A mirror of highlighters which should be rendered on the error stripe.
@@ -89,6 +96,7 @@ final class ErrorStripeMarkersModel {
   void fireErrorMarkerClicked(RangeHighlighter highlighter, MouseEvent e) {
     ThreadingAssertions.assertEventDispatchThread();
     ErrorStripeEvent event = new ErrorStripeEvent(myEditor, e, highlighter);
+    logMarkerClicked(event);
     myListeners.forEach(listener -> listener.errorMarkerClicked(event));
   }
 
@@ -224,6 +232,31 @@ final class ErrorStripeMarkersModel {
       RangeHighlighterEx highlighter = marker.getHighlighter();
       return highlighter.isValid() ? highlighter.getAffectedAreaStartOffset() : -1;
     });
+
+  private void logMarkerClicked(@NotNull ErrorStripeEvent event) {
+    Project project = event.getEditor().getProject();
+    if (project != null) {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(event.getHighlighter());
+      int severity = info != null ? info.getSeverity().myVal : -1;
+      int totalMarkersInFile = countStripeMarkers(myTree) + countStripeMarkers(myTreeForLines);
+      VirtualFile vFile = event.getEditor().getVirtualFile();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        FileType fileType = vFile != null && vFile.isValid() ? vFile.getFileType() : null;
+        UIEventLogger.ErrorStripeNavigate.log(project, severity, totalMarkersInFile, fileType);
+      });
+    }
+  }
+
+  private int countStripeMarkers(@NotNull ErrorStripeRangeMarkerTree tree) {
+    AtomicInteger counter = new AtomicInteger();
+    tree.processAll(marker -> {
+      if (isAvailable(marker.getHighlighter(), true)) {
+        counter.incrementAndGet();
+      }
+      return true;
+    });
+    return counter.get();
+  }
 
   private final class HighlighterIterator implements MarkupIterator<RangeHighlighterEx> {
     private final MarkupIterator<ErrorStripeMarkerImpl> myDelegate;
