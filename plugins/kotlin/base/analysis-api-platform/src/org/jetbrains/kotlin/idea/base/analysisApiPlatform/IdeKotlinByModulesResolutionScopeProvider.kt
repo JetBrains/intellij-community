@@ -91,8 +91,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
     }
 
     private fun GlobalSearchScope.withBuiltInsScope(project: Project): GlobalSearchScope {
-        val builtInFiles = BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()
-        val builtinsScope = GlobalSearchScope.filesScope(project, builtInFiles)
+        val builtinsScope = BuiltinsVirtualFileProvider.getInstance().createBuiltinsScope(project)
         return GlobalSearchScope.union(listOf(this, builtinsScope))
     }
 
