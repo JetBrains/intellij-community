@@ -99,6 +99,34 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
     val progressReporter = IndexingProgressReporter2(indicator, fileSet.size())
+
+    runConcurrently(project, progressReporter, contentLoader, fileSet, originalSuspender) { indexingJob ->
+      blockingContext {
+        LOG.assertTrue(ProgressManager.getGlobalProgressIndicator() == null,
+                       "There should be no global progress indicator, because it does not propagate implicitly through runConcurrently()")
+
+        // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
+        // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
+        if (indexOneFileOfJob(indexingJob)) {
+          progressReporter.oneMoreFileProcessed()
+        }
+
+        if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
+          // TODO: suspend, not block
+          IndexUpdateWriter.sleepIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
+        }
+      }
+    }
+  }
+
+  private fun runConcurrently(
+    project: Project,
+    progressReporter: IndexingProgressReporter2,
+    contentLoader: CachedFileContentLoader,
+    fileSet: FileSet,
+    originalSuspender: ProgressSuspender?,
+    task: suspend (IndexingJob) -> Unit
+  ) {
     val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSet)
 
     runBlockingCancellable {
@@ -109,21 +137,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
             while (originalSuspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
 
             GLOBAL_INDEXING_SEMAPHORE.withPermit {
-              blockingContext {
-                LOG.assertTrue(ProgressManager.getGlobalProgressIndicator() == null,
-                               "There should be no global progress indicator, because it does not propagate implicitly through launch()")
-
-                // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
-                // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
-                if (indexOneFileOfJob(indexingJob)) {
-                  progressReporter.oneMoreFileProcessed()
-                }
-
-                if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
-                  // TODO: suspend, not block
-                  IndexUpdateWriter.sleepIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
-                }
-              }
+              task(indexingJob)
             }
           }
         }
