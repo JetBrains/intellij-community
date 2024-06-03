@@ -844,9 +844,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       if (!commands.isEmpty()) {
         if (rawPattern.contains(" ")) {
-          contributorsMap.keySet().retainAll(commands.stream()
-                                               .map(SearchEverywhereCommandInfo::getContributor)
-                                               .collect(Collectors.toSet()));
+          Set<String> commandContributorsIds = commands.stream()
+            .map(info -> info.getContributor().getSearchProviderId())
+            .collect(Collectors.toSet());
+          contributorsMap.keySet().removeIf(c -> !commandContributorsIds.contains(c.getSearchProviderId()));
         }
         else {
           myListModel.clear();
