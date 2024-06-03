@@ -14,10 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,9 +27,19 @@ public final class FileChooserUtil {
   private static final String RECENT_FILES = "file.chooser.recent.files";
   private static final int RECENT_FILES_LIMIT = 30;
 
+  @ApiStatus.Internal
+  public static boolean isLastOpenedPathSet(@Nullable Project project) {
+    String last = getLastOpenedFilePath(project);
+    return last != null;
+  }
+
   public static @Nullable VirtualFile getLastOpenedFile(@Nullable Project project) {
-    String last = (project != null ? PropertiesComponent.getInstance(project) : PropertiesComponent.getInstance()).getValue(LAST_OPENED_FILE);
+    String last = getLastOpenedFilePath(project);
     return last != null ? LocalFileSystem.getInstance().findFileByPath(last) : null;
+  }
+
+  private static @NonNls @Nullable String getLastOpenedFilePath(@Nullable Project project) {
+    return (project != null ? PropertiesComponent.getInstance(project) : PropertiesComponent.getInstance()).getValue(LAST_OPENED_FILE);
   }
 
   /** @deprecated Use {@link #setLastOpenedFile(Project, Path)} */
@@ -92,7 +99,7 @@ public final class FileChooserUtil {
   }
 
   private static String pathToSelect(FileChooserDescriptor descriptor, @Nullable Project project, @Nullable VirtualFile toSelect) {
-    String last = (project != null ? PropertiesComponent.getInstance(project) : PropertiesComponent.getInstance()).getValue(LAST_OPENED_FILE);
+    String last = getLastOpenedFilePath(project);
     if (last != null && (toSelect == null || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == Boolean.TRUE)) {
       return last;
     }
