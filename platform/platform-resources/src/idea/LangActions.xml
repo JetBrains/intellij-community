@@ -1656,15 +1656,14 @@
 
     <group id="WorkspaceProjectGroup">
       <separator/>
-      <action id="ManageWorkspace" class="com.intellij.ide.workspace.ManageWorkspaceAction"/>
-      <action id="CreateWorkspace" class="com.intellij.ide.workspace.CreateWorkspaceAction"/>
+      <action id="ManageWorkspace" class="com.intellij.ide.workspace.configuration.ManageWorkspaceAction"/>
       <separator/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </group>
 
     <group id="WorkspaceContextMenuGroup">
-      <action id="AddToWorkspace" class="com.intellij.ide.workspace.AddProjectsToWorkspaceAction"/>
-      <action id="ManageWorkspacePopup" class="com.intellij.ide.workspace.ManageWorkspacePopupAction" use-shortcut-of="EditSource"/>
+      <action id="AddToWorkspace" class="com.intellij.ide.workspace.configuration.AddProjectsToWorkspaceAction"/>
+      <action id="ManageWorkspacePopup" class="com.intellij.ide.workspace.configuration.ManageWorkspacePopupAction" use-shortcut-of="EditSource"/>
       <separator/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </group>

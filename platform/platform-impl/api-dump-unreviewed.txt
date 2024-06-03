@@ -10754,10 +10754,12 @@ f:com.intellij.ide.wizard.NewProjectWizardBaseStep
 - com.intellij.ide.wizard.NewProjectWizardBaseData
 - sf:Companion:com.intellij.ide.wizard.NewProjectWizardBaseStep$Companion
 - <init>(com.intellij.ide.wizard.NewProjectWizardStep):V
+- f:getDefaultName():java.lang.String
 - getName():java.lang.String
 - getNameProperty():com.intellij.openapi.observable.properties.GraphProperty
 - getPath():java.lang.String
 - getPathProperty():com.intellij.openapi.observable.properties.GraphProperty
+- f:setDefaultName(java.lang.String):V
 - setName(java.lang.String):V
 - setPath(java.lang.String):V
 - setupProject(com.intellij.openapi.project.Project):V

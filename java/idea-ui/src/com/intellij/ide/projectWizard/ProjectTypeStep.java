@@ -13,6 +13,7 @@ import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.*;
 import com.intellij.ide.wizard.LanguageNewProjectWizard;
 import com.intellij.ide.wizard.language.*;
+import com.intellij.ide.workspace.configuration.NewWorkspaceWizard;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -377,6 +378,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     generators.sort(Comparator.comparing(it -> it.getOrdinal()));
     if (context.isCreatingNewProject()) {
       generators.add(new EmptyProjectGeneratorNewProjectWizard());
+      generators.add(new NewWorkspaceWizard());
     }
     var generatorItems = ContainerUtil.map(generators, it -> new LanguageGeneratorItem(it));
     for (var generatorItem : generatorItems) {

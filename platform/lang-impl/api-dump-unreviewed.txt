@@ -19202,6 +19202,14 @@ c:com.intellij.ide.util.treeView.SmartElementDescriptor
 - p:isMarkModified():Z
 - p:isMarkReadOnly():Z
 - update():Z
+f:com.intellij.ide.workspace.configuration.NewWorkspaceWizard
+- com.intellij.ide.wizard.GeneratorNewProjectWizard
+- <init>():V
+- createStep(com.intellij.ide.util.projectWizard.WizardContext):com.intellij.ide.wizard.NewProjectWizardStep
+- getIcon():javax.swing.Icon
+- getId():java.lang.String
+- getName():java.lang.String
+- isEnabled():Z
 f:com.intellij.internal.AddInlayBlockInternalAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
