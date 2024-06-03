@@ -179,7 +179,7 @@ public final class PyExtractSuperclassHelper {
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */
   @Nullable
-  public static PsiDirectory createDirectories(Project project, String target, boolean isNameSpace) throws IOException {
+  public static PsiDirectory createDirectories(Project project, String target, boolean isNamespace) throws IOException {
     String relativePath = null;
     VirtualFile closestRoot = null;
 
@@ -218,7 +218,7 @@ public final class PyExtractSuperclassHelper {
       else {
         subdir = resultDir.createChildDirectory(lfs, dirs[i]);
       }
-      if ((subdir.findChild(PyNames.INIT_DOT_PY) == null)&& !isNameSpace) {
+      if ((subdir.findChild(PyNames.INIT_DOT_PY) == null)&& !isNamespace) {
         subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
       }
       /*

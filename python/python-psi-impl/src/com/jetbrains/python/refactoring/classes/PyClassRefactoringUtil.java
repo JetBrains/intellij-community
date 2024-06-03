@@ -523,12 +523,12 @@ public final class PyClassRefactoringUtil {
 
 
   public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
-    return placeFile(project, path, filename, null,false);
+    return placeFile(project, path, filename, null, false);
   }
 
   //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
-  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content,boolean isNameSpace) throws IOException {
-    PsiDirectory psiDir = createDirectories(project, path,isNameSpace);
+  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content, boolean isNamespace) throws IOException {
+    PsiDirectory psiDir = createDirectories(project, path, isNamespace);
     LOG.assertTrue(psiDir != null);
     PsiFile psiFile = psiDir.findFile(filename);
     if (psiFile == null) {
@@ -546,7 +546,7 @@ public final class PyClassRefactoringUtil {
   }
 
   @NotNull
-  public static PyFile getOrCreateFile(String path, Project project, boolean isNameSpace) {
+  public static PyFile getOrCreateFile(String path, Project project, boolean isNamespace) {
     final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     final PsiFile psi;
     if (vfile == null) {
@@ -565,7 +565,7 @@ public final class PyClassRefactoringUtil {
                                                       .getPath() : "."
                                                   ),
                                                   file.getName(),
-                                                  content,isNameSpace
+                                                  content, isNamespace
         );
       }
       catch (IOException e) {

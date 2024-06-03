@@ -26,7 +26,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -84,9 +83,9 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
-    boolean isNameSpace = isNamespacePackage(this.mySourceFiles.stream().findFirst().get().getParent());
+    boolean isNamespace = isInNamespacePackage(this.mySourceFiles);
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject,isNameSpace);
+      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject, isNamespace);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
@@ -129,6 +128,17 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         PyClassRefactoringUtil.optimizeImports(file);
       }
     }), getRefactoringName(), null);
+  }
+
+  private static boolean isInNamespacePackage(LinkedHashSet<PsiFile> myFiles) {
+    if (myFiles == null || myFiles.isEmpty()) {
+      return false;
+    }
+
+    PsiFile firstFile = myFiles.iterator().next();
+    PsiDirectory containingDirectory = firstFile.getContainingDirectory();
+
+    return isNamespacePackage(containingDirectory);
   }
 
   @Override
