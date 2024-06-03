@@ -1897,6 +1897,7 @@ c:com.intellij.openapi.util.text.StringUtil
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
 - s:formatFileSize(J,java.lang.String,I):java.lang.String
+- s:formatFileSize(J,java.lang.String,I,Z):java.lang.String
 - s:formatLinks(java.lang.String):java.lang.String
 - s:getLineBreakCount(java.lang.CharSequence):I
 - s:getLineSeparatorAt(java.lang.CharSequence,I):com.intellij.util.LineSeparator

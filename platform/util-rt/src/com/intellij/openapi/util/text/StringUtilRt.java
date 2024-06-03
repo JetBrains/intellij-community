@@ -376,16 +376,23 @@ public final class StringUtilRt {
     return formatFileSize(fileSize, unitSeparator, -1);
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+    return formatFileSize(fileSize, unitSeparator, rank, false);
+  }
+
   /**
-   *
-   * @param fileSize - size of the file in bytes
-   * @param unitSeparator - separator inserted between value and unit
-   * @param rank - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @param fileSize               - size of the file in bytes
+   * @param unitSeparator          - separator inserted between value and unit
+   * @param rank                   - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @param fixedFractionPrecision - keep the fraction precision. if true, a number like 5.50 will be kept as it is, otherwise it will be
+   *                               rounded to 5.5
    * @return string with formatted file size
    */
   @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank, boolean fixedFractionPrecision) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
     if (rank < 0) {
@@ -393,7 +400,11 @@ public final class StringUtilRt {
     }
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
-    return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
+    DecimalFormat decimalFormat = new DecimalFormat("0.##");
+    if (fixedFractionPrecision) {
+      decimalFormat.setMinimumFractionDigits(2);
+    }
+    return decimalFormat.format(value) + unitSeparator + units[rank];
   }
 
   @Contract(pure = true)

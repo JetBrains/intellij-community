@@ -321,6 +321,7 @@ f:com.intellij.openapi.util.text.StringUtilRt
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
 - s:formatFileSize(J,java.lang.String,I):java.lang.String
+- s:formatFileSize(J,java.lang.String,I,Z):java.lang.String
 - s:getShortName(java.lang.Class):java.lang.String
 - s:getShortName(java.lang.String):java.lang.String
 - s:getShortName(java.lang.String,C):java.lang.String
