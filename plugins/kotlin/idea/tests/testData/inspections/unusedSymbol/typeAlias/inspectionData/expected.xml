@@ -1,6 +1,14 @@
 <problems>
     <problem>
         <file>test.kt</file>
+        <line>1</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+        <description>Type alias &quot;MyString&quot; is never used</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
         <line>4</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />

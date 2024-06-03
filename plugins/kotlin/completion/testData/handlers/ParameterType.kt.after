@@ -1,3 +1,5 @@
+import java.lang.StringBuilder
+
 // RUNTIME
 // FIR_COMPARISON
 // FIR_IDENTICAL

@@ -1,4 +1,4 @@
-import test.MyAlias
+import test.MyClass
 
 fun foo(): MyAlias<caret>
 

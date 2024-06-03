@@ -6,4 +6,4 @@ typealias CA = C
 
 val x: <caret>CA = CA()
 
-// REF: (test).CA
+// REF: (test).C

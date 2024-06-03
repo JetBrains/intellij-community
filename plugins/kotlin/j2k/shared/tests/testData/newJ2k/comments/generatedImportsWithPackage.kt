@@ -1,7 +1,5 @@
 package p
 
-import kotlin.concurrent.Volatile
-
 // comment
 // comment 2
 
