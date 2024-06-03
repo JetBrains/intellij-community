@@ -911,6 +911,7 @@ f:com.intellij.webSymbols.utils.ReferencingWebSymbol
 - sf:Companion:com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion
 - sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[]):com.intellij.webSymbols.utils.ReferencingWebSymbol
 - sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List):com.intellij.webSymbols.utils.ReferencingWebSymbol
 - createPointer():com.intellij.model.Pointer
 - getKind():java.lang.String
 - getName():java.lang.String
@@ -921,7 +922,8 @@ f:com.intellij.webSymbols.utils.ReferencingWebSymbol
 f:com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion
 - f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[]):com.intellij.webSymbols.utils.ReferencingWebSymbol
 - f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.ReferencingWebSymbol
-- bs:create$default(com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,I,java.lang.Object):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- bs:create$default(com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List,I,java.lang.Object):com.intellij.webSymbols.utils.ReferencingWebSymbol
 com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
 - com.intellij.find.usages.api.SearchTarget
 - com.intellij.refactoring.rename.api.RenameTarget
