@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
+import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
@@ -51,7 +52,7 @@ abstract class AbstractMavenStaticSyncTest : MavenMultiVersionImportingTestCase(
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
     try {
       MavenProjectStaticImporter.getInstance(project)
-        .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, activity)
+        .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, SimpleStructureProjectVisitor(), activity, true)
     }
     finally {
       activity.finished()
