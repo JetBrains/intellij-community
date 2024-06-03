@@ -7,6 +7,7 @@ import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.settings.SettingsController
@@ -135,6 +136,7 @@ class ApplicationStoreTest {
     test(ExportableItem(FileSpec("options/customization.xml", "customization.xml", false), "Menus and toolbars customization"))
     test(ExportableItem(FileSpec("options/templates.xml", "templates.xml", false), "Live templates"))
     test(ExportableItem(FileSpec("templates", "templates", true), "Live templates (schemes)"))
+    test(ExportableItem(FileSpec("options/project.default.xml", "project.default.xml", false), OptionsBundle.message("exportable.ProjectManager.presentable.name")))
   }
 
   @Test
