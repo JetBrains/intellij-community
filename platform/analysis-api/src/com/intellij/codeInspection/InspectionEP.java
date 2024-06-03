@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -210,7 +210,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
                       descriptor.getResourceBundleBaseName();
     if (baseName == null || key == null) {
       if (bundleName != null) {
-        LOG.warn(implementationClass);
+        LOG.warn("Cannot resolve message key '" + key + "' for " + implementationClass);
       }
       return null;
     }
