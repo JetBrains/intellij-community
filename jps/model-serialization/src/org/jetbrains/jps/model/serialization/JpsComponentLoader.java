@@ -10,7 +10,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.TimingLog;
+import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.io.IOException;
