@@ -5,6 +5,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -478,6 +479,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
     catch (e: Throwable) {
       if (e is AlreadyDisposedException) throw e
+      if (e is ControlFlowException) throw e // Control flow exceptions should never be logger, only rethrown. Related: IJPL-155938
       val message = "Exception at Workspace Model event handling"
       if (userWarningLoggingLevel) {
         log.warn(message, e)
