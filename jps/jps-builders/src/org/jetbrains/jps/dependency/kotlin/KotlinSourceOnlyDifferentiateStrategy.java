@@ -4,13 +4,13 @@ package org.jetbrains.jps.dependency.kotlin;
 import com.intellij.openapi.diagnostic.Logger;
 import kotlinx.metadata.KmClass;
 import kotlinx.metadata.KmDeclarationContainer;
-import kotlinx.metadata.KmPackage;
 import kotlinx.metadata.KmTypeAlias;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.*;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -25,8 +25,8 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     Graph graph = context.getGraph();
-    Utils present = new Utils(context, false);
     Set<NodeSource> baseSources = delta.getBaseSources();
+    Utils present = new Utils(context.getGraph(), context.getParams().belongsToCurrentCompilationChunk());
     Set<Usage> affectedUsages = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
 
@@ -41,34 +41,36 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
         }
       }
 
-      for (KotlinMeta meta : cls.getMetadata(KotlinMeta.class)) {
-        KmDeclarationContainer container = meta.getDeclarationContainer();
-        String ownerName;
+      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
+      if (container != null) {
         if (container instanceof KmClass) {
           baseNodes.add(cls.getReferenceID());
-          ownerName = ((KmClass)container).getName().replace('.', '/');
+          if (KJvmUtils.isSealed(container)) {
+            for (NodeSource src : filter(unique(flat(map(present.directSubclasses(cls.getReferenceID()), present::getNodeSources))), s -> !baseSources.contains(s))) {
+              LOG.debug("Sealed class is about to be recompiled => should be always compiled together with all its subclasses. Affecting  " + src);
+              context.affectNodeSource(src);
+            }
+          }
         }
-        else {
-          ownerName = container instanceof KmPackage? cls.getPackageName() : null;
-        }
-        if (ownerName != null) {
-          for (KmTypeAlias alias : container.getTypeAliases()) {
-            // there can be dependencies in the kotlin super classes on potentially changed type aliases
-            affectedUsages.add(new LookupNameUsage(ownerName, alias.getName()));
+        List<KmTypeAlias> typeAliases = container.getTypeAliases();
+        if (!typeAliases.isEmpty()) {
+          String ownerName = KJvmUtils.getKotlinName(cls);
+          if (ownerName != null) {
+            for (KmTypeAlias alias : typeAliases) {
+              // there can be dependencies in the kotlin super classes on potentially changed type aliases
+              affectedUsages.add(new LookupNameUsage(ownerName, alias.getName()));
+            }
           }
         }
       }
     }
 
     if (!affectedUsages.isEmpty()) {
-      Predicate<? super NodeSource> inCurrentChunk = context.getParams().belongsToCurrentCompilationChunk();
-      // unmodified Kotlin sources in the current chunk
-      BooleanFunction<NodeSource> srcFilter =
-        s -> !baseSources.contains(s) && inCurrentChunk.test(s) && !isEmpty(filter(graph.getNodes(s, JvmClass.class), cl -> !isEmpty(cl.getMetadata(KotlinMeta.class))));
+      BooleanFunction<NodeSource> unmodifiedKtSources = s -> !baseSources.contains(s) && !isEmpty(filter(graph.getNodes(s, JvmClass.class), KJvmUtils::isKotlinNode));
 
-      Iterable<NodeSource> supertypeSources = unique(flat(map(unique(filter(flat(map(baseNodes, id -> present.allSupertypes(id))), id -> !baseNodes.contains(id))), present::getNodeSources)));
-      
-      for (NodeSource src : filter(supertypeSources, srcFilter)) {
+      Iterable<NodeSource> supertypeSources = unique(flat(map(unique(filter(flat(map(baseNodes, present::allSupertypes)), id -> !baseNodes.contains(id))), present::getNodeSources)));
+
+      for (NodeSource src : filter(supertypeSources, unmodifiedKtSources)) {
         if (!isEmpty(filter(flat(map(graph.getNodes(src), Node::getUsages)), affectedUsages::contains))) {
           LOG.debug("Parent Kotlin class in a class hierarchy is not marked for compilation, while it may be using a potentially changed type alias or has compiler-inferred types based on potentially changed types. Affecting  " + src);
           context.affectNodeSource(src);
