@@ -70,14 +70,16 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
   }
 
   private class MyPainter(scaleContext: ScaleContext, private val rowHeight: Int) {
+    private val pixel = 1 / PaintUtil.devValue(1.0, scaleContext)
     private val rowCenter = PaintUtil.alignToInt(rowHeight / 2.0, scaleContext, FLOOR, ODD)
 
     private val elementWidth = PaintUtil.alignToInt(PaintParameters.getElementWidth(rowHeight), scaleContext, FLOOR, ODD)
     private val elementCenter = PaintUtil.alignToInt(PaintParameters.getElementWidth(rowHeight) / 2, scaleContext, FLOOR, null)
 
-    private val lineThickness = PaintUtil.alignToInt(PaintParameters.getLineThickness(rowHeight), scaleContext, FLOOR, ODD).toFloat()
-    private val selectedLineThickness = PaintUtil.alignToInt(PaintParameters.getSelectedLineThickness(rowHeight), scaleContext, FLOOR,
-                                                             ODD).toFloat()
+    private val lineThickness = PaintUtil.alignToInt(PaintParameters.getLineThickness(rowHeight), scaleContext, FLOOR, ODD)
+      .coerceAtLeast(pixel).toFloat()
+    private val selectedLineThickness = PaintUtil.alignToInt(PaintParameters.getSelectedLineThickness(rowHeight), scaleContext, FLOOR, ODD)
+      .coerceAtLeast(lineThickness + 2 * pixel).toFloat()
 
     private val circleDiameter = PaintUtil.alignToInt(2 * PaintParameters.getCircleRadius(rowHeight), scaleContext, FLOOR, ODD)
     private val selectedCircleDiameter = circleDiameter + selectedLineThickness - lineThickness
