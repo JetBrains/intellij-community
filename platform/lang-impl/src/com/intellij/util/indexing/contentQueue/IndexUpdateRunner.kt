@@ -100,16 +100,10 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
     val progressReporter = IndexingProgressReporter2(indicator, fileSet.size())
 
-    runConcurrently(project, progressReporter, contentLoader, fileSet, originalSuspender) { indexingJob ->
+    runConcurrently(project, progressReporter, contentLoader, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
       blockingContext {
-        LOG.assertTrue(ProgressManager.getGlobalProgressIndicator() == null,
-                       "There should be no global progress indicator, because it does not propagate implicitly through runConcurrently()")
-
-        // and since there is no progress indicator, we don't need "originalSuspender.executeNonSuspendableSection"
-        // (there is no way to access originalSuspender or indicator from inside indexOneFileOfJob)
-        if (indexOneFileOfJob(indexingJob)) {
-          progressReporter.oneMoreFileProcessed()
-        }
+        indexOneFileOfJob(indexingJob, fileIndexingJob)
+        progressReporter.oneMoreFileProcessed()
 
         if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
           // TODO: suspend, not block
@@ -125,7 +119,7 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     contentLoader: CachedFileContentLoader,
     fileSet: FileSet,
     originalSuspender: ProgressSuspender?,
-    task: suspend (IndexingJob) -> Unit
+    task: suspend (IndexingJob, FileIndexingJob) -> Unit
   ) {
     val indexingJob = IndexingJob(project, progressReporter, contentLoader, fileSet)
 
@@ -137,7 +131,10 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
             while (originalSuspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
 
             GLOBAL_INDEXING_SEMAPHORE.withPermit {
-              task(indexingJob)
+              val fileIndexingJob = indexingJob.poll()
+              if (fileIndexingJob != null) {
+                task(indexingJob, fileIndexingJob)
+              }
             }
           }
         }
@@ -146,13 +143,8 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   }
 
   @Throws(ProcessCanceledException::class)
-  private fun indexOneFileOfJob(indexingJob: IndexingJob): Boolean {
+  private fun indexOneFileOfJob(indexingJob: IndexingJob, fileIndexingJob: FileIndexingJob) {
     val startTime = System.nanoTime()
-
-    val fileIndexingJob = indexingJob.poll()
-    if (fileIndexingJob == null) {
-      return false
-    }
 
     try {
       indexingJob.setLocationBeingIndexed(fileIndexingJob)
@@ -191,8 +183,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
   To reindex this file IDEA has to be restarted
   """.trimIndent(), e)
     }
-
-    return true
   }
 
   @ApiStatus.Internal
