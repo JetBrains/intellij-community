@@ -102,8 +102,15 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
     runConcurrently(project, progressReporter, contentLoader, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
       blockingContext {
-        indexOneFileOfJob(indexingJob, fileIndexingJob)
-        progressReporter.oneMoreFileProcessed()
+        try {
+          indexingJob.setLocationBeingIndexed(fileIndexingJob)
+          indexOneFileOfJob(indexingJob, fileIndexingJob)
+          progressReporter.oneMoreFileProcessed()
+        }
+        catch (t: Throwable) {
+          indexingJob.pushBack(fileIndexingJob)
+          throw t
+        }
 
         if (IndexUpdateWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
           // TODO: suspend, not block
@@ -147,8 +154,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val startTime = System.nanoTime()
 
     try {
-      indexingJob.setLocationBeingIndexed(fileIndexingJob)
-
       val fileIndexingRequest = fileIndexingJob.fileIndexingRequest
 
       if (fileIndexingRequest.file.isDirectory) {
@@ -163,8 +168,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
       indexer.indexOneFile(fileIndexingRequest, parentDisposable, startTime, project, contentLoader, statistics)
     }
     catch (e: ProcessCanceledException) {
-      // Push back the file.
-      indexingJob.pushBack(fileIndexingJob)
       throw e
     }
     catch (e: TooLargeContentException) {
