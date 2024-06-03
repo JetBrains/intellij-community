@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -140,21 +140,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @Nullable Path getNioPath(@NotNull VirtualFile file) {
-    return file.getFileSystem() == this ? Paths.get(toIoPath(file)) : null;
+    return file.getFileSystem() == this ? Path.of(toIoPath(file)) : null;
   }
 
-  private @NotNull Path convertToNIOFileAndCheck(@NotNull VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
+  private Path convertToNioFileAndCheck(VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
     if (assertSlowOp) { // remove condition when writes are moved to BGT
       SlowOperations.assertSlowOperationsAreAllowed();
     }
-    Path path = getNioPath(file);
-    if (path == null) {
-      throw new FileNotFoundException(file.getPath());
+    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
+      throw new FileNotFoundException("Not a file: " + file);
     }
-    if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
-      throw new FileNotFoundException("Not a file: " + path + " (type=" + FileSystemUtil.getAttributes(path.toString()) + ')');
-    }
-
+    var path = getNioPath(file);
+    if (path == null) throw new FileNotFoundException(file.getPath());
     return path;
   }
 
@@ -428,13 +425,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    Path path = convertToNIOFileAndCheck(file, true);
+    Path path = convertToNioFileAndCheck(file, true);
     return new BufferedInputStream(Files.newInputStream(path));
   }
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    Path path = convertToNIOFileAndCheck(file, true);
+    Path path = convertToNioFileAndCheck(file, true);
     long l = file.getLength();
     if (FileUtilRt.isTooLarge(l)) throw new FileTooBigException(file.getPath());
     int length = (int)l;
@@ -473,7 +470,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
-    Path path = convertToNIOFileAndCheck(file, false);
+    Path path = convertToNioFileAndCheck(file, false);
     OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? Files.newOutputStream(path) :
                           requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(path) :
                           new SafeFileOutputStream(path);
@@ -625,17 +622,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
-    String path = FileUtilRt.toSystemDependentName(file.getPath());
-    boolean readOnlyFlag = !writableFlag;
-    try {
-      NioFiles.setReadOnly(Paths.get(path), readOnlyFlag);
-    }
-    catch (IOException e) {
-      LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
-    }
-    if (FileUtil.canWrite(path) != writableFlag) {
-      throw new IOException("Failed to change read-only flag for " + path);
-    }
+    NioFiles.setReadOnly(convertToNioFileAndCheck(file, false), !writableFlag);
   }
 
   @Override
