@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -25,7 +26,7 @@ class DialogAppender : Handler() {
   private val context = Dispatchers.IO.limitedParallelism(1) + CoroutineName("DialogAppender")
 
   override fun publish(event: LogRecord) {
-    if (event.level.intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
+    if (event.level.intValue() < Level.SEVERE.intValue() || (AppMode.isCommandLine() && !ApplicationManagerEx.isInIntegrationTest())) {
       // the dialog appender doesn't deal with non-critical errors
       // also, it makes no sense when there is no frame to show an error icon
       return
