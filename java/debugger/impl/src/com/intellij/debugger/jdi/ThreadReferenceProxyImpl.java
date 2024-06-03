@@ -6,6 +6,7 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebuggerDiagnosticsUtil;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -120,7 +121,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   @NonNls
   public String toString() {
     try {
-      return name() + ": " + DebuggerUtilsEx.getThreadStatusText(status());
+      String name = DebuggerDiagnosticsUtil.needAnonymizedReports() ? ("Thread(uniqueID=" + getThreadReference().uniqueID() + ")") : name();
+      return name + ": " + DebuggerUtilsEx.getThreadStatusText(status());
     }
     catch (ObjectCollectedException ignored) {
       return "[thread collected]";

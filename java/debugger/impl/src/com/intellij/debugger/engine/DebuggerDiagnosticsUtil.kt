@@ -4,9 +4,11 @@ package com.intellij.debugger.engine
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.toArray
+import com.sun.jdi.event.EventSet
 import com.sun.jdi.request.EventRequest
 
 private enum class ThreadModelState {
@@ -40,6 +42,9 @@ private enum class ThreadModelState {
 object DebuggerDiagnosticsUtil {
   @JvmStatic
   val recursionTracker = ThreadLocal<Boolean>()
+
+  @JvmStatic
+  fun needAnonymizedReports() = !ApplicationManager.getApplication().isInternal
 
   @JvmStatic
   fun checkThreadsConsistency(process: DebugProcessImpl, reportDiffWithRealCounter: Boolean) {
@@ -180,7 +185,7 @@ object DebuggerDiagnosticsUtil {
         recursionTracker.set(true)
         return listOf(getDebuggerStateOverview(process),
                       createThreadsAttachment(process),
-                      Attachment("VM thread dump", noErr { ThreadDumper.dumpThreadsToString() })) +
+                      Attachment("IDE thread dump", noErr { ThreadDumper.dumpThreadsToString() })) +
                process.suspendManager.eventContexts.map { it.toAttachment() }
       }
       finally {
@@ -206,7 +211,7 @@ object DebuggerDiagnosticsUtil {
         "old invocation watcher is using"
       }
     } else "no suspend-all invocation watcher is activated"
-    return Attachment("Threads state", "$vmModelCount\n$blockedThreadsInfo\n$threads")
+    return Attachment("Application threads state", "$vmModelCount\n$blockedThreadsInfo\n$threads")
   }
 
   @JvmStatic
@@ -236,4 +241,7 @@ object DebuggerDiagnosticsUtil {
       return e.toString()
     }
   }
+
+  @JvmStatic
+  fun getEventSetClasses(eventSet: EventSet): String = "[${eventSet.map { it.javaClass.simpleName }.joinToString(", ")}]"
 }

@@ -318,9 +318,26 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return "{" + myDebugId + "} " + "SP=" + getSuspendPolicyString() + " " + oldToString();
   }
 
+  private String eventSetAsString() {
+    if (myEventSet == null) {
+      return "null";
+    }
+    if (DebuggerDiagnosticsUtil.needAnonymizedReports()) {
+      return "EventSet" + DebuggerDiagnosticsUtil.getEventSetClasses(myEventSet) + " in " + myThread;
+    }
+    return myEventSet.toString();
+  }
+
+  private String getStackStr() {
+    if (myActiveExecutionStack == null) {
+      return "null";
+    }
+    return DebuggerDiagnosticsUtil.needAnonymizedReports() ? ("Stack in " + myThread) : myActiveExecutionStack.toString();
+  }
+
   private String oldToString() {
     if (myEventSet != null) {
-      return myEventSet.toString();
+      return eventSetAsString();
     }
     return myThread != null ? myThread.toString() : JavaDebuggerBundle.message("string.null.context");
   }
@@ -328,12 +345,13 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   Attachment toAttachment() {
     StringBuilder sb = new StringBuilder();
     sb.append("myDebugId = ").append(myDebugId).append("\n");
+    sb.append("myThread = ").append(myThread).append("\n");
     sb.append("Suspend policy = ").append(getSuspendPolicyString()).append("\n");
-    sb.append("myEventSet = ").append(myEventSet).append("\n");
+    sb.append("myEventSet = ").append(eventSetAsString()).append("\n");
     sb.append("myInProgress = ").append(myInProgress).append("\n");
     sb.append("myEvaluationContext = ").append(myEvaluationContext).append("\n");
     sb.append("myFrameCount = ").append(myFrameCount).append("\n");
-    sb.append("myActiveExecutionStack = ").append(myActiveExecutionStack).append("\n");
+    sb.append("myActiveExecutionStack = ").append(getStackStr()).append("\n");
 
     if (myResumedThreads != null && !myResumedThreads.isEmpty()) {
       sb.append("myResumedThreads:\n");

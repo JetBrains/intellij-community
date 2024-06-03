@@ -2778,10 +2778,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   String getStateForDiagnostics() {
+    String safeInfo = "myState = " + myState + "\n" +
+                      "myStashedVirtualMachines = " + myStashedVirtualMachines + "\n" +
+                      "myExecutionResult = " + myExecutionResult + "\n";
+    if (DebuggerDiagnosticsUtil.needAnonymizedReports()) {
+      return safeInfo;
+    }
     return "myProject = " + myProject + "\n" +
-           "myState = " + myState + "\n" +
-           "myStashedVirtualMachines = " + myStashedVirtualMachines + "\n" +
-           "myExecutionResult = " + myExecutionResult + "\n" +
+           safeInfo +
            "myConnection = " + myConnection + "\n" +
            "myArguments = " + myArguments + "\n";
   }
