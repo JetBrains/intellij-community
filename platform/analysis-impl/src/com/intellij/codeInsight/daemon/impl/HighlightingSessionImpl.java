@@ -295,6 +295,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : ReadAction.compute(() -> SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile));
   }
 
+  @Override
   public boolean isCanceled() {
     return myDaemonCancelEventCount.intValue() != myDaemonInitialCancelEventCount;
   }
