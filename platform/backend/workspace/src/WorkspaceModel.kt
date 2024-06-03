@@ -3,13 +3,13 @@ package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 
@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NonNls
  * * [update] schedules asynchronous update of the model; currently the actual update is performed with a write-lock in a blocking manner,
  * however, this will change in the future; this function is experimental for now, it can be used from suspending Kotlin functions.
  * 
- * In order to subscribe to changes in the workspace model, use [subscribe] to process changes in an asynchronous manner. If you need
- * to process them synchronously, you may subscribe to [WorkspaceModelTopics.CHANGED] topic.
+ * In order to subscribe to changes in the workspace model, use [eventLog] to process changes in an asynchronous manner.
  * 
  * Instance of this interface can be obtained via [workspaceModel] extension property.
  * 
@@ -67,20 +66,31 @@ public interface WorkspaceModel {
   public suspend fun update(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
-   * Subscription to the changes of the workspace model.
+   * Flow of workspace model changes.
    *
-   * [subscriber] function receives a current storage and the flow of updates starting from this state.
-   *
-   * This function can be used in two ways:
-   * - Perform incremental computation. Calculate information based on the initial storage and update this info according to the flow
-   *     of updates.
-   * - Receive events of the workspace model updates. For this only the flow of updates can be used.
+   * This flow can be used in two ways:
+   * - Perform incremental computation. Calculate information based on the initial storage and update this info according to the updates.
+   * - Receive events of the workspace model updates.
    *
    * **If the subscription should be set up after application start**, the [ProjectActivity][com.intellij.openapi.startup.ProjectActivity]
    *   can be used. This is also the way to migrate from [WorkspaceModelChangeListener] to this subscription. Keep in mind that
    *   such an approach may miss a few first updates of the model, what is normal.
    *
    * Keep in mind that since this listener is asynchronous, there is no guarantee that file index or jps bridges will be updated.
+   *
+   * # Incremental computation
+   *
+   * To make the incremental computations, you'll need the last known version of the storage and the event of updates. This can be
+   *   obtained by collecting indexed events. Let's assume we build some index and keep it updated.
+   *  ```kotlin
+   *  workspaceModel.eventLog.collectIndexed { index, event ->
+   *    if (index == 0) {
+   *      buildIndex(event.storageAfter)
+   *    } else {
+   *      updateIndex(event)
+   *    }
+   *  }
+   *  ```
    *
    * # Behavior details
    *
@@ -89,11 +99,11 @@ public interface WorkspaceModel {
    * The [EntityChange.Replaced] is generated in case if any of the fields of the entity changes the value in the newer
    *   version of storage.
    * This means that this event is generated in two cases: "primitive" field change (Int, String, data class, etc.) or
-   *   changes of the references to other entities. The change of references may happen interectly by modifying the referred entity.
+   *   changes of the references to other entities. The change of references may happen indirectly by modifying the referred entity.
    *   For example, if we remove child entity, we'll generate two events: remove for child and replace for parent.
    *                if we add a new child entity, we'll also generate two events: add for child and replace for parent.
    *
-   * # Examples
+   * ## Examples
    *
    * Assuming the following structure of entities: A --> B --> C
    * Where A is the root entity and B and C are the children.
@@ -109,9 +119,7 @@ public interface WorkspaceModel {
    *
    * Produced events: [Replace(A), Replace(B), Replace(C)]
    */
-  public suspend fun <R> subscribe(
-    subscriber: suspend CoroutineScope.(initial: ImmutableEntityStorage, changes: SharedFlow<VersionedStorageChange>) -> R
-  ): R
+  public val eventLog: Flow<VersionedStorageChange>
 
   /**
    * Returns the actual instance of VirtualFileUrlManager for URLs (in the Virtual File System format) of files that

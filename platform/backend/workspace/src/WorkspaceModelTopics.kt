@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
- * Obsolete listener for the workspace model. Use [WorkspaceModel.subscribe]
+ * Obsolete listener for the workspace model. Use [WorkspaceModel.eventLog]
  */
 @ApiStatus.Obsolete
 public interface WorkspaceModelChangeListener : EventListener {
@@ -48,7 +48,7 @@ public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
 public class WorkspaceModelTopics {
   public companion object {
     /**
-     * Obsolete topic for the workspace model. Use [WorkspaceModel.subscribe]
+     * Obsolete topic for the workspace model. Use [WorkspaceModel.eventLog]
      */
     @Topic.ProjectLevel
     @JvmField

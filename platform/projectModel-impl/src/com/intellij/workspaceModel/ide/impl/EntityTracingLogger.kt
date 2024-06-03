@@ -29,16 +29,14 @@ class EntityTracingLogger {
   fun subscribe(project: Project, cs: CoroutineScope) {
     if (entityToTrace != null) {
       cs.launch {
-        WorkspaceModel.getInstance(project).subscribe { _, changes ->
-          changes.collect { event ->
-            event.getAllChanges().forEach {
-              when (it) {
-                is EntityChange.Added -> printInfo("added", it.entity)
-                is EntityChange.Removed -> printInfo("removed", it.entity)
-                is EntityChange.Replaced -> {
-                  printInfo("replaced from", it.oldEntity)
-                  printInfo("replaced to", it.newEntity)
-                }
+        WorkspaceModel.getInstance(project).eventLog.collect { event ->
+          event.getAllChanges().forEach {
+            when (it) {
+              is EntityChange.Added -> printInfo("added", it.entity)
+              is EntityChange.Removed -> printInfo("removed", it.entity)
+              is EntityChange.Replaced -> {
+                printInfo("replaced from", it.oldEntity)
+                printInfo("replaced to", it.newEntity)
               }
             }
           }

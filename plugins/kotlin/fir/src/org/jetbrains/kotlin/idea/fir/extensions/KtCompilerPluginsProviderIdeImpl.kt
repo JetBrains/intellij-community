@@ -68,14 +68,12 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
     init {
         cs.launch {
-            WorkspaceModel.getInstance(project).subscribe { _, changes ->
-                changes.collect { event ->
-                    val hasChanges = event.getChanges<FacetEntity>().any { change ->
-                        change.facetTypes.any { it == KotlinFacetType.ID }
-                    }
-                    if (hasChanges) {
-                        resetPluginsCache()
-                    }
+            WorkspaceModel.getInstance(project).eventLog.collect { event ->
+                val hasChanges = event.getChanges<FacetEntity>().any { change ->
+                    change.facetTypes.any { it == KotlinFacetType.ID }
+                }
+                if (hasChanges) {
+                    resetPluginsCache()
                 }
             }
         }

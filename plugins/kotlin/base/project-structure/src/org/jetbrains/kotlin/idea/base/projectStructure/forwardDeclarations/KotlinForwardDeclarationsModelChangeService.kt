@@ -40,29 +40,27 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
     init {
         if (shouldRunForwardDeclarationServices()) {
             cs.launch {
-                WorkspaceModel.getInstance(project).subscribe { _, changes ->
-                    changes.collect { event ->
-                        val fwdDeclarationChanges = event.getChanges<KotlinForwardDeclarationsWorkspaceEntity>()
-                        cleanUp(fwdDeclarationChanges)
+                WorkspaceModel.getInstance(project).eventLog.collect { event ->
+                    val fwdDeclarationChanges = event.getChanges<KotlinForwardDeclarationsWorkspaceEntity>()
+                    cleanUp(fwdDeclarationChanges)
 
-                        val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return@collect }
+                    val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return@collect }
 
-                        val nativeKlibLibraryInfos: Map<LibraryEntity, NativeKlibLibraryInfo> =
-                            libraryChanges.toNativeKLibraryInfos(event.storageAfter).ifEmpty { return@collect }
-                        val workspaceModel = WorkspaceModel.getInstance(project)
-                        val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibLibraryInfos)
+                    val nativeKlibLibraryInfos: Map<LibraryEntity, NativeKlibLibraryInfo> =
+                        libraryChanges.toNativeKLibraryInfos(event.storageAfter).ifEmpty { return@collect }
+                    val workspaceModel = WorkspaceModel.getInstance(project)
+                    val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibLibraryInfos)
 
-                        cs.launch {
-                            workspaceModel.update("Kotlin Forward Declarations workspace model update") { storage ->
-                                createEntityStorageChanges.forEach { (libraryEntity, builder) ->
+                    cs.launch {
+                        workspaceModel.update("Kotlin Forward Declarations workspace model update") { storage ->
+                            createEntityStorageChanges.forEach { (libraryEntity, builder) ->
 
-                                    // a hack to bypass workspace model issues; without the extra check entity updates lead to recursion
-                                    if (libraryEntity.kotlinForwardDeclarationsWorkspaceEntity == null) {
-                                        storage.modifyLibraryEntity(libraryEntity) {
-                                            this.kotlinForwardDeclarationsWorkspaceEntity = builder
-                                        }
-                                        storage.addEntity(builder)
+                                // a hack to bypass workspace model issues; without the extra check entity updates lead to recursion
+                                if (libraryEntity.kotlinForwardDeclarationsWorkspaceEntity == null) {
+                                    storage.modifyLibraryEntity(libraryEntity) {
+                                        this.kotlinForwardDeclarationsWorkspaceEntity = builder
                                     }
+                                    storage.addEntity(builder)
                                 }
                             }
                         }

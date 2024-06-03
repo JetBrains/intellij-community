@@ -74,13 +74,11 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 
   init {
     cs.launch {
-      WorkspaceModel.getInstance(project).subscribe { _, changes ->
-        changes.collect { event ->
-          // listen content roots, source roots, excluded roots
-          if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
-              event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
-            updateNotificationState()
-          }
+      WorkspaceModel.getInstance(project).eventLog.collect { event ->
+        // listen content roots, source roots, excluded roots
+        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
+            event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+          updateNotificationState()
         }
       }
     }
