@@ -802,6 +802,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       if (path.isNotEmpty()) {
         val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
         val pointer = SmartPointerManager.createPointer(newElement)
+        cleanupWhitespaces(element)
         element.delete()
         PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
         var psiElement = pointer.element?.lastLeaf()
@@ -823,14 +824,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val property: JsonPropertyAdapter = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
                                           ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
       fakeProperty?.let {
-        // cleanup redundant whitespace
-        var next = it.nextSibling
-        while (next != null && next.text.isBlank()) {
-          val n = next
-          next = next.nextSibling
-          n.delete()
-        }
-        it.delete()
+        cleanupWhitespaces(it)
       }
       val value = property.values.singleOrNull()
       if (value == null) return null
@@ -846,12 +840,34 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       else {
         val movedElement =
           if (value.isObject) {
-            value.delegate.addAfter(element.copy(), value.asObject!!.propertyList.last().delegate)
+            val properties = value.asObject?.propertyList.orEmpty()
+            val firstProperty = properties.firstOrNull()
+            val lastProperty = properties.lastOrNull()
+            if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
+              val newElement = value.delegate.addAfter(element.copy(), lastProperty.delegate)
+              newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
+              newElement
+            }
+            else {
+              val newElement = value.delegate.addBefore(element.copy(), firstProperty?.delegate)
+              newElement.parent.addAfter(createLeaf("\n", newElement)!!, newElement)
+              newElement
+            }
           }
           else value.delegate.replace(element.copy())
-        movedElement.parent.addBefore(createLeaf("\n", movedElement)!!, movedElement)
         return movedElement
       }
+    }
+
+    private fun cleanupWhitespaces(it: PsiElement) {
+      // cleanup redundant whitespace
+      var next = it.nextSibling
+      while (next != null && next.text.isBlank()) {
+        val n = next
+        next = next.nextSibling
+        n.delete()
+      }
+      it.delete()
     }
 
     private fun createLeaf(content: String, context: PsiElement): LeafPsiElement? {
