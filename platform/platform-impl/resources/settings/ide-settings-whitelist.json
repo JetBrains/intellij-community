@@ -5,10 +5,10 @@
     "com.intellij:app:VcsApplicationSettings.*",
     "com.intellij:app:XmlEditorOptions.*",
     "com.intellij.css:app:CssEmmetOptions.*",
-    "com.intellij.css:app:JsxEmmetOptions.*",
     "Docker:app:DockerSettings.dockerComposePath",
     "Docker:app:DockerSettings.dockerPath",
     "Git4Idea:app:Git-Application-Settings.*",
+    "JavaScript:app:JsxEmmetOptions.*",
     "Pythonid:app:PyCondaPackageService.*"
   ]
 }
