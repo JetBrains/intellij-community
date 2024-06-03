@@ -78,7 +78,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 
-public class InspectionApplicationBase implements CommandLineInspectionProgressReporter, InspectionApplicationStart.Synchronous {
+public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
   public static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
