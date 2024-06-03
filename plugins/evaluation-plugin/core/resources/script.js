@@ -6,6 +6,234 @@ const LC_KEYS = {
   delimiter: prefix + "delimiter"
 }
 
+function Diff() {}
+
+Diff.prototype = {
+  diff(oldString, newString, options = {}) {
+    let self = this;
+
+    console.log("Old String:", oldString);
+    console.log("New String:", newString);
+
+    function done(value) {
+      value = self.postProcess(value, options);
+      console.log("Post Processed Value:", value);
+      return value;
+    }
+
+    oldString = this.castInput(oldString, options);
+    newString = this.castInput(newString, options);
+
+    oldString = this.removeEmpty(this.tokenize(oldString, options));
+    newString = this.removeEmpty(this.tokenize(newString, options));
+
+    console.log("Tokenized Old String:", oldString);
+    console.log("Tokenized New String:", newString);
+
+    let newLen = newString.length, oldLen = oldString.length;
+    let editLength = 1;
+    let maxEditLength = newLen + oldLen;
+    const maxExecutionTime = options.timeout ?? Infinity;
+    const abortAfterTimestamp = Date.now() + maxExecutionTime;
+
+    let bestPath = [{ oldPos: -1, lastComponent: undefined }];
+
+    let newPos = this.extractCommon(bestPath[0], newString, oldString, 0, options);
+    console.log("Best Path Initial:", bestPath);
+
+    if (bestPath[0].oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
+      return done(buildValues(self, bestPath[0].lastComponent, newString, oldString, self.useLongestToken));
+    }
+
+    let minDiagonalToConsider = -Infinity, maxDiagonalToConsider = Infinity;
+
+    function execEditLength() {
+      for (let diagonalPath = Math.max(minDiagonalToConsider, -editLength);
+           diagonalPath <= Math.min(maxDiagonalToConsider, editLength);
+           diagonalPath += 2) {
+        let basePath;
+        let removePath = bestPath[diagonalPath - 1],
+          addPath = bestPath[diagonalPath + 1];
+        if (removePath) {
+          bestPath[diagonalPath - 1] = undefined;
+        }
+
+        let canAdd = false;
+        if (addPath) {
+          const addPathNewPos = addPath.oldPos - diagonalPath;
+          canAdd = addPath && 0 <= addPathNewPos && addPathNewPos < newLen;
+        }
+
+        let canRemove = removePath && removePath.oldPos + 1 < oldLen;
+        if (!canAdd && !canRemove) {
+          bestPath[diagonalPath] = undefined;
+          continue;
+        }
+
+        if (!canRemove || (canAdd && removePath.oldPos < addPath.oldPos)) {
+          basePath = self.addToPath(addPath, true, false, 0, options);
+        } else {
+          basePath = self.addToPath(removePath, false, true, 1, options);
+        }
+
+        newPos = self.extractCommon(basePath, newString, oldString, diagonalPath, options);
+
+        if (basePath.oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
+          return done(buildValues(self, basePath.lastComponent, newString, oldString, self.useLongestToken));
+        } else {
+          bestPath[diagonalPath] = basePath;
+          if (basePath.oldPos + 1 >= oldLen) {
+            maxDiagonalToConsider = Math.min(maxDiagonalToConsider, diagonalPath - 1);
+          }
+          if (newPos + 1 >= newLen) {
+            minDiagonalToConsider = Math.max(minDiagonalToConsider, diagonalPath + 1);
+          }
+        }
+      }
+
+      editLength++;
+    }
+
+    while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
+      let ret = execEditLength();
+      if (ret) {
+        console.log("Exec Edit Length Result:", ret);
+        return ret;
+      }
+    }
+  },
+
+  addToPath(path, added, removed, oldPosInc, options) {
+    let last = path.lastComponent;
+    let result;
+    if (last && !options.oneChangePerToken && last.added === added && last.removed === removed) {
+      result = {
+        oldPos: path.oldPos + oldPosInc,
+        lastComponent: { count: last.count + 1, added: added, removed: removed, previousComponent: last.previousComponent }
+      };
+    } else {
+      result = {
+        oldPos: path.oldPos + oldPosInc,
+        lastComponent: { count: 1, added: added, removed: removed, previousComponent: last }
+      };
+    }
+    console.log("Add To Path Result:", result);
+    return result;
+  },
+
+  extractCommon(basePath, newString, oldString, diagonalPath, options) {
+    let newLen = newString.length,
+      oldLen = oldString.length,
+      oldPos = basePath.oldPos,
+      newPos = oldPos - diagonalPath,
+
+      commonCount = 0;
+    while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(oldString[oldPos + 1], newString[newPos + 1], options)) {
+      newPos++;
+      oldPos++;
+      commonCount++;
+      if (options.oneChangePerToken) {
+        basePath.lastComponent = { count: 1, previousComponent: basePath.lastComponent, added: false, removed: false };
+      }
+    }
+
+    if (commonCount && !options.oneChangePerToken) {
+      basePath.lastComponent = { count: commonCount, previousComponent: basePath.lastComponent, added: false, removed: false };
+    }
+
+    basePath.oldPos = oldPos;
+    console.log("Extract Common:", basePath);
+    return newPos;
+  },
+
+  equals(left, right, options) {
+    if (options.comparator) {
+      return options.comparator(left, right);
+    } else {
+      return left === right || (options.ignoreCase && left.toLowerCase() === right.toLowerCase());
+    }
+  },
+
+  removeEmpty(array) {
+    let ret = [];
+    for (let i = 0; i < array.length; i++) {
+      if (array[i]) {
+        ret.push(array[i]);
+      }
+    }
+    return ret;
+  },
+
+  castInput(value) {
+    return value;
+  },
+
+  tokenize(value) {
+    return Array.from(value);
+  },
+
+  join(chars) {
+    return chars.join('');
+  },
+
+  postProcess(changeObjects) {
+    return changeObjects;
+  }
+};
+
+function buildValues(diff, lastComponent, newString, oldString, useLongestToken) {
+  const components = [];
+  let nextComponent;
+  while (lastComponent) {
+    components.push(lastComponent);
+    nextComponent = lastComponent.previousComponent;
+    delete lastComponent.previousComponent;
+    lastComponent = nextComponent;
+  }
+  components.reverse();
+
+  let componentPos = 0,
+    componentLen = components.length,
+    newPos = 0,
+    oldPos = 0;
+
+  for (; componentPos < componentLen; componentPos++) {
+    let component = components[componentPos];
+    if (!component.removed) {
+      if (!component.added && useLongestToken) {
+        let value = newString.slice(newPos, newPos + component.count);
+        value = value.map(function(value, i) {
+          let oldValue = oldString[oldPos + i];
+          return oldValue.length > value.length ? oldValue : value;
+        });
+        component.value = diff.join(value);
+      } else {
+        component.value = diff.join(newString.slice(newPos, newPos + component.count));
+      }
+      newPos += component.count;
+      if (!component.added) {
+        oldPos += component.count;
+      }
+    } else {
+      component.value = diff.join(oldString.slice(oldPos, oldPos + component.count));
+      oldPos += component.count;
+    }
+  }
+  return components;
+}
+
+function diffArrays(oldArr, newArr, callback) {
+  const diffInstance = new Diff();
+  console.log("Old Array:", oldArr);
+  console.log("New Array:", newArr);
+  const result = diffInstance.diff(oldArr, newArr, { callback });
+  console.log("Diff Result:", result);
+  return result;
+}
+
+
+
+
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
     updateMultilinePopup(e)
@@ -43,10 +271,8 @@ function updateBackgrounds(e, elementClasses, bgClass) {
   addClassForElements(selected, bgClass, true)
 }
 
-document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,
-  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
-document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e,
-  ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
+document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
+document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e, ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
 
 function removeClassForElements(elementsClassName, classToAdd) {
   let tokens = document.getElementsByClassName(elementsClassName)
@@ -122,6 +348,7 @@ function updatePopup(sessionDiv) {
   popup.setAttribute("class", "autocomplete-items")
   const prefixDiv = document.createElement("DIV")
   prefixDiv.setAttribute("style", "background-color: lightgrey;")
+  const codeElement = document.querySelector('.code');
   if ("aia_user_prompt" in lookup["additionalInfo"]) {
     prefixDiv.innerHTML = `user prompt: &quot;${lookup["additionalInfo"]["aia_user_prompt"]}&quot;; latency: ${lookup["latency"]}`
   } else {
@@ -129,20 +356,108 @@ function updatePopup(sessionDiv) {
   }
   popup.appendChild(prefixDiv)
   // order: () -> suggestions -> features -> contexts
-  const needAddFeatures = sessionDiv.classList.contains("suggestions")
+  const needAddFeatures = sessionDiv.classList.contains("diffView")
   const needAddContext = sessionDiv.classList.contains("features")
+  const needAddSuggestions = sessionDiv.classList.contains("contexts")
   closeAllLists()
   if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup, lookup)
+  } else if (needAddContext) {
+    addContexts(sessionDiv, popup, lookup);
   }
-  else if (needAddContext) {
-    addContexts(sessionDiv, popup, lookup)
+  else if (needAddSuggestions) {
+    addSuggestions(sessionDiv, popup, lookup);
   }
   else {
-    addSuggestions(sessionDiv, popup, lookup)
+    addDiffView(sessionDiv, popup, lookup, codeElement.innerText);
   }
   sessionDiv.appendChild(popup)
 }
+
+// Function to add diff view
+function addDiffView(sessionDiv, popup, lookup, originalText) {
+  const diffDiv = document.createElement("DIV");
+  diffDiv.setAttribute("class", "diffView");
+
+  const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
+  console.log("Original Text:", originalText);
+  console.log("Suggestions Text:", suggestionsText);
+
+  const diffContent = createUnifiedDiffView(originalText, suggestionsText);
+
+  diffDiv.innerHTML = diffContent;
+  popup.appendChild(diffDiv);
+}
+
+function escapeHtml(str) {
+  if (!str) {
+    return '';
+  }
+  console.log("Escaping string:", str);
+  const escapedStr = str.replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+  console.log("Escaped string:", escapedStr);
+  return escapedStr;
+}
+
+
+function createUnifiedDiffView(originalText, modifiedText) {
+  const originalLines = originalText.split('\n');
+  const modifiedLines = modifiedText.split('\n');
+  const diff = diffArrays(originalLines, modifiedLines);
+
+  console.log("Generated Diff:", diff);
+
+  return renderDiff(diff);
+}
+
+function renderDiff(diff) {
+  let html = '<div class="diff-view">';
+
+  diff.forEach((chunk, index) => {
+    if (index === 0 || (diff[index - 1].type === 'context' && chunk.type !== 'context')) {
+      html += `<div class="diff-chunk-header">@@ -${chunk.oldLine || 0} +${chunk.newLine || 0} @@</div>`;
+    }
+
+    let lineClass = 'diff-line ';
+    if (chunk.type === 'added') {
+      lineClass += 'added';
+    } else if (chunk.type === 'removed') {
+      lineClass += 'removed';
+    } else {
+      lineClass += 'context';
+    }
+
+    let oldLineClass = chunk.removed ? 'removed-line' : 'line-number';
+    let newLineClass = chunk.added ? 'added-line' : 'line-number';
+
+    // Ensure chunk.value is a string before calling escapeHtml
+    let chunkValue = chunk.value ? escapeHtml(chunk.value) : '';
+    console.log("Chunk value before escaping:", chunk.value);
+    console.log("Chunk value after escaping:", chunkValue);
+
+    html += `<div class="${lineClass}">`;
+    html += `<span class="diff-line-number ${oldLineClass}">${chunk.oldLine || '&nbsp;'}</span>`;
+    html += `<span class="diff-line-number ${newLineClass}">${chunk.newLine || '&nbsp;'}</span>`;
+    html += `<span class="diff-line-content">${chunkValue}</span>`;
+    html += '</div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+// Usage example
+document.addEventListener("DOMContentLoaded", function () {
+  const originalText = "Your original text here...";
+  const suggestionsText = "Your suggestions text here...";
+  const diffContainer = document.getElementById("diff-container");
+  const diffContent = createUnifiedDiffView(originalText, suggestionsText);
+  diffContainer.innerHTML = diffContent;
+});
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
