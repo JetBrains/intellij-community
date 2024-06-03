@@ -1,15 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.registerExtension
 import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.net.Authenticator
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.ProxySelector
@@ -21,15 +16,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @TestApplication
-class PlatformProxyTest {
+class PlatformProxySelectorTest {
   @Test
-  fun testJdkProxySelectorIsOverriden() {
+  fun testJdkProxySelectorIsOverridden() {
     assertEquals(ProxySelector.getDefault(), JdkProxyProvider.getInstance().proxySelector)
-  }
-
-  @Test
-  fun testJdkAuthenticatorIsOverriden() {
-    assertEquals(Authenticator.getDefault(), JdkProxyProvider.getInstance().authenticator)
   }
 
   @Test
@@ -79,6 +69,7 @@ class PlatformProxyTest {
             else -> emptyList()
           }
         }
+
         override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) = Unit
       }) {
         assertEquals(listOf(Proxy(Proxy.Type.SOCKS, InetSocketAddress.createUnresolved("p1.domain.com", 502))), proxySelector.select(URI.create("http://sub.example.com")))
@@ -143,30 +134,6 @@ class PlatformProxyTest {
       }
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://example.com")))
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://sub.example.com")))
-    }
-  }
-
-  private fun <T> withCustomProxySelector(proxySelector: ProxySelector, body: () -> T): T {
-    JdkProxyCustomizer.getInstance().customizeProxySelector(proxySelector).use {
-      return body()
-    }
-  }
-
-  private fun <T> withProxySettingsOverride(proxySettingsOverrideProvider: ProxySettingsOverrideProvider, body: () -> T): T {
-    Disposer.newDisposable().use { disposable ->
-      ApplicationManager.getApplication().registerExtension(ProxySettingsOverrideProvider.EP_NAME, proxySettingsOverrideProvider, disposable)
-      return body()
-    }
-  }
-
-  private fun <T> withProxyConfiguration(proxyConf: ProxyConfiguration, body: () -> T): T {
-    val previous = ProxySettings.getInstance().getProxyConfiguration()
-    ProxySettings.getInstance().setProxyConfiguration(proxyConf)
-    assertEquals(ProxySettings.getInstance().getProxyConfiguration(), proxyConf)
-    try {
-      return body()
-    } finally {
-      ProxySettings.getInstance().setProxyConfiguration(previous)
     }
   }
 }
