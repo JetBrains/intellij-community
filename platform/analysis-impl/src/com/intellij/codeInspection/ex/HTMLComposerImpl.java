@@ -9,9 +9,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -102,37 +100,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         }
       });
     }
-  }
-
-  public void appendQualifiedName(@NotNull StringBuilder buf, RefEntity refEntity) {
-    if (refEntity == null) return;
-
-    StringBuilder qName = new StringBuilder();
-
-    while (!(refEntity instanceof RefProject)) {
-      if (!qName.isEmpty()) qName.insert(0, ".");
-
-      String name = null;
-      if (refEntity instanceof RefElement refElement) {
-        final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
-        if (extension != null) {
-          name = extension.getQualifiedName(refEntity);
-        }
-      }
-
-      if (name == null) {
-        name = refEntity.getName();
-      }
-
-      qName.insert(0, name);
-      if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
-        buf.append(StringUtil.escapeXmlEntities(qName.toString()));
-        return;
-      }
-      refEntity = refEntity.getOwner();
-    }
-
-    buf.append(StringUtil.escapeXmlEntities(qName.toString()));
   }
 
   @Override

@@ -2748,7 +2748,6 @@ a:com.intellij.codeInspection.ex.HTMLComposerImpl
 - appendElementReference(java.lang.StringBuilder,java.lang.String,java.lang.String,java.lang.String):V
 - appendListItem(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefElement):V
 - appendNoProblems(java.lang.StringBuilder):V
-- appendQualifiedName(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity):V
 - p:appendQuickFix(java.lang.StringBuilder,java.lang.String):V
 - p:appendResolution(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity,java.lang.String[]):V
 - a:compose(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity):V

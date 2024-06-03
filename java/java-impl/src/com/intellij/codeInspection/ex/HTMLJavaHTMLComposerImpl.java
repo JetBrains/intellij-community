@@ -5,13 +5,13 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UMethod;
 
 import java.util.List;
 
@@ -24,21 +24,26 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendClassOrInterface(@NotNull StringBuilder buf, @NotNull RefClass refClass, boolean capitalizeFirstLetter) {
-    if (refClass.isInterface()) {
-      buf.append(capitalizeFirstLetter
-                 ? AnalysisBundle.message("inspection.export.results.capitalized.interface")
-                 : AnalysisBundle.message("inspection.export.results.interface"));
+    String message;
+    if (refClass.isAnnotationType()) {
+      message = AnalysisBundle.message("inspection.export.results.annotation.type");
+    }
+    else if (refClass.isInterface()) {
+      message = AnalysisBundle.message("inspection.export.results.capitalized.interface");
     }
     else if (refClass.isAbstract()) {
-      buf.append(capitalizeFirstLetter
-                 ? AnalysisBundle.message("inspection.export.results.capitalized.abstract.class")
-                 : AnalysisBundle.message("inspection.export.results.abstract.class"));
+      message = AnalysisBundle.message("inspection.export.results.capitalized.abstract.class");
+    }
+    else if (refClass.isEnum()) {
+      message = AnalysisBundle.message("inspection.export.results.enum.class");
+    }
+    else if (refClass.isRecord()) {
+      message = AnalysisBundle.message("inspection.export.results.record.class");
     }
     else {
-      buf.append(capitalizeFirstLetter
-                 ? AnalysisBundle.message("inspection.export.results.capitalized.class")
-                 : AnalysisBundle.message("inspection.export.results.class"));
+      message = AnalysisBundle.message("inspection.export.results.capitalized.class");
     }
+    buf.append(capitalizeFirstLetter ? Strings.capitalize(message) : message);
   }
 
   @Override
@@ -116,7 +121,6 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
           buf.append(AnalysisBundle.message("inspection.export.results.field"));
           buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
-
           buf.append(XmlStringUtil.escapeString(psiField.getType().getPresentableText()));
           buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.B_OPENING);
           buf.append(psiField.getName());
@@ -175,25 +179,19 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       String name = RefJavaUtil.getInstance().getPackageName(entity);
       assert name != null;
       // name for default package: <default>
-      buf.append(StringUtil.escapeXmlEntities(name));
+      buf.append(XmlStringUtil.escapeString(name));
       buf.append(HTMLComposerImpl.CODE_CLOSING);
     }
     else if (owner instanceof RefMethod) {
-      buf.append(AnalysisBundle.message("inspection.export.results.method"));
-      buf.append(HTMLComposerImpl.NBSP);
-      myComposer.appendElementReference(buf, (RefElement)owner);
+      myComposer.appendElementReference(buf, (RefElement)owner, false);
     }
     else if (owner instanceof RefField) {
-      buf.append(AnalysisBundle.message("inspection.export.results.field"));
-      buf.append(HTMLComposerImpl.NBSP);
-      myComposer.appendElementReference(buf, (RefElement)owner);
+      myComposer.appendElementReference(buf, (RefElement)owner, false);
       buf.append(HTMLComposerImpl.NBSP);
       buf.append(AnalysisBundle.message("inspection.export.results.initializer"));
     }
     else if (owner instanceof RefClass) {
-      appendClassOrInterface(buf, (RefClass)owner, false);
-      buf.append(HTMLComposerImpl.NBSP);
-      myComposer.appendElementReference(buf, (RefElement)owner);
+      myComposer.appendElementReference(buf, (RefElement)owner, false);
     }
   }
 
@@ -215,89 +213,99 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendReferencePresentation(RefEntity refElement, @NotNull StringBuilder buf, final boolean isPackageIncluded) {
+  public void appendReferencePresentation(RefEntity refElement, @NotNull StringBuilder buf, boolean capitalize) {
+    String message;
     if (refElement instanceof RefImplicitConstructor) {
-      buf.append(JavaBundle.message("inspection.export.results.implicit.constructor"));
-      buf.append("&nbsp;");
+      message = JavaBundle.message("inspection.export.results.implicit.constructor");
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
-
-    buf.append(HTMLComposerImpl.CODE_OPENING);
-
-    if (refElement instanceof RefField field) {
-      UField psiField = field.getUastElement();
-      buf.append(XmlStringUtil.escapeString(psiField.getType().getPresentableText()));
-      buf.append(HTMLComposerImpl.NBSP);
+    else if (refElement instanceof RefParameter) {
+      message = AnalysisBundle.message("inspection.export.results.parameter");
+    }
+    else if (refElement instanceof RefField) {
+      message = AnalysisBundle.message("inspection.export.results.field");
     }
     else if (refElement instanceof RefMethod method) {
-      UMethod psiMethod = method.getUastElement();
-      PsiType returnType = psiMethod.getReturnType();
-
-      if (returnType != null) {
-        buf.append(XmlStringUtil.escapeString(returnType.getPresentableText()));
-        buf.append(HTMLComposerImpl.NBSP);
+      message = AnalysisBundle.message(
+        method.isConstructor() ? "inspection.export.results.constructor" : "inspection.export.results.method");
+    }
+    else if (refElement instanceof RefClass refClass) {
+      if (refClass.isInterface()) {
+        message = refClass.isAnnotationType()
+                  ? AnalysisBundle.message("inspection.export.results.annotation.type")
+                  : AnalysisBundle.message("inspection.export.results.interface");
+      }
+      else if (refClass.isEnum()) {
+        message = AnalysisBundle.message("inspection.export.results.enum.class");
+      }
+      else if (refClass.isRecord()) {
+        message = AnalysisBundle.message("inspection.export.results.record.class");
+      }
+      else if (refClass.isAbstract()) {
+        message = AnalysisBundle.message("inspection.export.results.abstract.class");
+      }
+      else {
+        message = AnalysisBundle.message("inspection.export.results.class");
       }
     }
-
-    buf.append(HTMLComposerImpl.A_HREF_OPENING);
-
-    buf.append(((RefElementImpl)refElement).getURL());
-
-    buf.append("\"");
-
-    if (isPackageIncluded) {
-      buf.append(" qualifiedname=\"");
-      buf.append(refElement.getQualifiedName());
-      buf.append("\"");
+    else if (refElement instanceof RefFunctionalExpression functionalExpression) {
+      message = functionalExpression.isMethodReference()
+                ? AnalysisBundle.message("inspection.export.results.method.reference")
+                : AnalysisBundle.message("inspection.export.results.lambda.expression");
     }
+    else {
+      message = "";
+    }
+    buf.append(capitalize ? Strings.capitalize(message) : message).append(HTMLComposerImpl.NBSP);
+    buf.append(HTMLComposerImpl.CODE_OPENING);
+    buf.append(HTMLComposerImpl.A_HREF_OPENING);
+    buf.append(((RefElementImpl)refElement).getURL());
+    if (refElement instanceof RefClass) {
+      buf.append("\" qualifiedname=\"").append(XmlStringUtil.escapeString(refElement.getQualifiedName()));
+    }
+    buf.append("\">");
 
-    buf.append(">");
-
-    if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
-      buf.append(AnalysisBundle.message("inspection.reference.anonymous"));
+    if (refElement instanceof RefClass refClass && refClass.isAnonymous() ||
+        refElement instanceof RefFunctionalExpression) {
+      buf.append(XmlStringUtil.escapeString(AnalysisBundle.message("inspection.reference.anonymous")));
     }
     else if (refElement instanceof RefJavaElement && ((RefJavaElement)refElement).isSyntheticJSP()) {
       buf.append(XmlStringUtil.escapeString(refElement.getName()));
     }
-    else if (refElement instanceof RefMethod) {
-      UMethod psiMethod = ((RefMethod)refElement).getUastElement();
-      buf.append(psiMethod.getName());
-    }
-    else if (refElement instanceof RefFunctionalExpression) {
-      UExpression functionalExpr = ((RefFunctionalExpression)refElement).getUastElement();
-      if (functionalExpr instanceof ULambdaExpression) {
-        buf.append(refElement.getName());
-      }
-      else if (functionalExpr instanceof UCallableReferenceExpression) {
-        buf.append(functionalExpr.asSourceString());
-      }
+    else if (refElement instanceof RefMethod refMethod) {
+      UMethod uMethod = refMethod.getUastElement();
+      buf.append(uMethod.getName());
+      appendMethodParameters(buf, uMethod.getJavaPsi(), false);
     }
     else {
       buf.append(refElement.getName());
     }
 
     buf.append(HTMLComposerImpl.A_CLOSING);
-
-    if (refElement instanceof RefMethod refMethod) {
-      PsiMethod psiMethod = refMethod.getUastElement().getJavaPsi();
-      appendMethodParameters(buf, psiMethod, false);
-    }
-
     buf.append(HTMLComposerImpl.CODE_CLOSING);
 
     final RefEntity owner = refElement.getOwner();
     if (owner != null) {
-      if ((refElement instanceof RefClass && ((RefClass)refElement).isAnonymous())) {
-        buf.append(" ");
-        buf.append(AnalysisBundle.message("inspection.export.results.anonymous.ref.in.owner"));
-        buf.append(" ");
-        myComposer.appendElementReference(buf, (RefElement) owner, isPackageIncluded);
+      if (refElement instanceof RefFunctionalExpression ||
+          refElement instanceof RefParameter ||
+          (refElement instanceof RefClass refClass && refClass.isAnonymous())) {
+        buf.append(" ").append(AnalysisBundle.message("inspection.export.results.anonymous.ref.in.owner")).append(" ");
+        myComposer.appendElementReference(buf, (RefElement) owner, false);
       }
-      else if (isPackageIncluded) {
-        buf.append(" ").append("<code class=\"package\">").append("(");
-        myComposer.appendQualifiedName(buf, owner);
-        //      buf.append(RefUtil.getPackageName(refElement));
-        buf.append(")").append(HTMLComposerImpl.CODE_CLOSING);
+      else {
+        buf.append(" ").append(AnalysisBundle.message("inspection.export.results.anonymous.ref.in.owner")).append(" ");
+        buf.append(HTMLComposerImpl.CODE_OPENING);
+        if (owner instanceof RefElementImpl) {
+          buf.append(HTMLComposerImpl.A_HREF_OPENING);
+          buf.append(((RefElementImpl)owner).getURL());
+          buf.append("\" qualifiedname=\"").append(XmlStringUtil.escapeString(owner.getQualifiedName()));
+          buf.append("\">");
+        }
+        buf.append(owner.getName());
+        if (owner instanceof RefElementImpl) {
+          buf.append(HTMLComposerImpl.A_CLOSING);
+        }
+        buf.append(HTMLComposerImpl.CODE_CLOSING);
       }
     }
   }
@@ -310,11 +318,9 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       PsiParameter param = params[i];
       buf.append(XmlStringUtil.escapeString(param.getType().getPresentableText()));
       if (showNames) {
-        buf.append(' ');
-        buf.append(param.getName());
+        buf.append(' ').append(param.getName());
       }
     }
     buf.append(')');
   }
-
 }
