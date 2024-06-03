@@ -53,6 +53,7 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
     hasher.putLong(appInfo.buildTime.toEpochSecond())
   }
   hasher.putString(appInfo.build.asString())
+  System.getProperty("idea.kotlin.plugin.use.k2")?.let { hasher.putString(it) } // IJPL-156028
 
   // loadedPlugins list is sorted
   val loadedPlugins = PluginManagerCore.loadedPlugins
