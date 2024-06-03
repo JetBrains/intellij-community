@@ -291,11 +291,9 @@ object UpdateChecker {
             }
             // collect latest plugins from custom repos
             val storedDescriptor = customRepoPlugins[id]
-            if (storedDescriptor == null
-                || VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) > 0 &&
-                allowedUpgrade(storedDescriptor, descriptor)
-                || (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) < 0 &&
-                    allowedDowngrade(storedDescriptor, descriptor))) {
+            if (storedDescriptor == null ||
+                (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) > 0 && allowedUpgrade(storedDescriptor, descriptor)) ||
+                (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) < 0 && allowedDowngrade(storedDescriptor, descriptor))) {
               customRepoPlugins[id] = descriptor
             }
           }
@@ -385,9 +383,8 @@ object UpdateChecker {
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
-      if (lastUpdate != null && (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version,
-                                                                                                                 descriptor,
-                                                                                                                 buildNumber) > 0)) {
+      if (lastUpdate != null &&
+          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure {
             if (!isNetworkError(it)) throw it
