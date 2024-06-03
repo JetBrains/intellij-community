@@ -39,5 +39,8 @@
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
   </component>
 </module>
