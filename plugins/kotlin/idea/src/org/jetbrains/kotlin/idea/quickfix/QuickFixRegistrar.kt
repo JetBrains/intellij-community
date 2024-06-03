@@ -592,7 +592,7 @@ class QuickFixRegistrar : QuickFixContributor {
         FINAL_UPPER_BOUND.registerFactory(InlineTypeParameterFix)
         FINAL_UPPER_BOUND.registerFactory(RemoveFinalUpperBoundFix)
 
-        TYPE_PARAMETER_AS_REIFIED.registerFactory(AddReifiedToTypeParameterOfFunctionFix)
+        TYPE_PARAMETER_AS_REIFIED.registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory)
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(MakeTypeParameterReifiedAndFunctionInlineFix)
 
