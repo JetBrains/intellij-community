@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -47,6 +45,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
     get() = if (app.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
   final override fun setPath(path: Path) {
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     storageManager.setMacros(java.util.List.of(
       // app config must be first, because collapseMacros collapse from fist to last, so,
       // at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
@@ -88,12 +87,12 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 @ApiStatus.Internal
 @VisibleForTesting
 class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
-  : StateStorageManagerImpl(rootTagName = "application", macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller = controller)
+  : StateStorageManagerImpl(rootTagName = "application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller)
 {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
     @Suppress("DEPRECATION")
-    return if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}" else StoragePathMacros.NON_ROAMABLE_FILE
-  }
+    if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}"
+    else StoragePathMacros.NON_ROAMABLE_FILE
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -106,23 +105,18 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
           Files.deleteIfExists(storage.file)
         }
         else {
-          writer.writeTo(file = storage.file, requestor = null, lineSeparator = LineSeparator.LF, useXmlProlog = isUseXmlProlog)
+          writer.writeTo(file = storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
         }
       }.getOrLogException(LOG)
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String): String =
+    removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
 
-  override fun expandMacro(collapsedPath: String): Path {
-    if (collapsedPath[0] == '$') {
-      return super.expandMacro(collapsedPath)
-    }
-    else {
-      // APP_CONFIG is the first macro
-      return macros.get(0).value.resolve(collapsedPath)
-    }
-  }
+  override fun expandMacro(collapsedPath: String): Path =
+    if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+    else macros[0].value.resolve(collapsedPath)  // APP_CONFIG is the first macro
 }
 
 private class ApplicationPathMacroManager : PathMacroManager(null)

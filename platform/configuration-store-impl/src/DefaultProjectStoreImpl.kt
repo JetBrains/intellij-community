@@ -72,19 +72,9 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun toString(): String = "default project"
 
-  private class DefaultProjectStorage(
-    file: Path,
-    fileSpec: String,
-    pathMacroManager: PathMacroManager,
-    streamProvider: StreamProvider,
-  ) : FileBasedStorage(
-    file = file,
-    fileSpec = fileSpec,
-    rootElementName = "defaultProject",
-    pathMacroManager = pathMacroManager.createTrackingSubstitutor(),
-    roamingType = RoamingType.DISABLED,
-    provider = streamProvider,
-  ) {
+  private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager, streamProvider: StreamProvider) :
+    FileBasedStorage(file, fileSpec, rootElementName = "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED, streamProvider)
+  {
     override val controller: SettingsController?
       get() = null
 
@@ -113,8 +103,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
             override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
               val lineSeparatorWithIndent = "${lineSeparator}    "
               writer.append("<application>").append(lineSeparator)
-              writer.append("""  <component name="ProjectManager">""")
-              writer.append(lineSeparatorWithIndent)
+              writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
               (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
               writer.append(lineSeparator)
               writer.append("  </component>").append(lineSeparator)

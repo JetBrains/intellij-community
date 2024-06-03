@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -16,7 +14,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.write
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.Dispatchers
@@ -62,11 +59,11 @@ class ApplicationStoreTest {
     componentStore.storageManager.removeStreamProvider(MyStreamProvider::class.java)
     componentStore.storageManager.addStreamProvider(streamProvider)
 
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    componentStore.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     component.foo = "newValue"
     componentStore.save()
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml"))
+    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"])
       .isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
@@ -82,7 +79,7 @@ class ApplicationStoreTest {
     val storageManager = componentStore.storageManager
     storageManager.removeStreamProvider(MyStreamProvider::class.java)
     storageManager.addStreamProvider(streamProvider)
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    componentStore.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("newValue")
 
     assertThat(storageManager.expandMacro(fileSpec)).doesNotExist()
@@ -517,9 +514,9 @@ class ApplicationStoreTest {
     class Component : FooComponent()
 
     val component = Component()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    componentStore.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
-    writeConfig("a.xml", "")
+    testAppConfig.resolve("a.xml").createParentDirectories().writeText("")
     componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
     assertEquals("defaultValue", component.foo)
     
@@ -544,13 +541,13 @@ class ApplicationStoreTest {
     class Component : SerializablePersistentStateComponent<TestState>(TestState())
 
     val component = Component()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    componentStore.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEmpty()
     assertThat(component.state.bar).isEmpty()
 
     component.state = TestState(bar = "42")
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    componentStore.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("42")
   }
 
@@ -561,11 +558,8 @@ class ApplicationStoreTest {
   @State(name = "A", storages = [Storage(value = "per-os.xml", roamingType = RoamingType.PER_OS)])
   private class PerOsComponent : FooComponent()
 
-  private fun writeConfig(fileName: String, @Language("XML") data: String): Path {
-    val file = testAppConfig.resolve(fileName)
-    file.write(data)
-    return file
-  }
+  private fun writeConfig(fileName: String, @Language("XML") data: String): Path =
+    testAppConfig.resolve(fileName).createParentDirectories().apply { writeText(data) }
 
   private class MyStreamProvider : StreamProvider {
     override val isExclusive = true
@@ -592,7 +586,7 @@ class ApplicationStoreTest {
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      data.get(roamingType)?.remove(fileSpec)
+      data[roamingType]?.remove(fileSpec)
       return true
     }
   }

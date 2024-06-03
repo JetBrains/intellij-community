@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * The IntelliJ Platform allows for persisting component states (see {@link State} and {@link Storage}).
  * It is possible to specify which file should hold persisting data.
@@ -22,7 +20,7 @@ public final class StoragePathMacros {
    * {@code 'Workspace file'} holds settings that are local to a particular environment
    * and should not be shared with other team members.
    */
-  public static final @NotNull String WORKSPACE_FILE = "$WORKSPACE_FILE$";
+  public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";
 
   /**
    * Storage file for cache-like data. Stored outside of project directory (if project level component)
@@ -33,9 +31,9 @@ public final class StoragePathMacros {
   /**
    * Same as {@link #WORKSPACE_FILE}, but stored per-product. Applicable only for project-level.
    */
-  public static final @NotNull String PRODUCT_WORKSPACE_FILE = "$PRODUCT_WORKSPACE_FILE$";
+  public static final String PRODUCT_WORKSPACE_FILE = "$PRODUCT_WORKSPACE_FILE$";
 
-  public static final @NotNull String MODULE_FILE = "$MODULE_FILE$";
+  public static final String MODULE_FILE = "$MODULE_FILE$";
 
   public static final String PROJECT_DEFAULT_FILE = "project.default.xml";
 
@@ -46,6 +44,5 @@ public final class StoragePathMacros {
 
   public static final String APP_INTERNAL_STATE_DB = "app-internal-state.db";
 
-  private StoragePathMacros() {
-  }
+  private StoragePathMacros() { }
 }
