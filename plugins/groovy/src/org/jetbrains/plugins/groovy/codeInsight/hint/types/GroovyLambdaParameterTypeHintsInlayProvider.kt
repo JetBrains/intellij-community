@@ -8,23 +8,46 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer
 
 class GroovyLambdaParameterTypeHintsInlayProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
     return object : SharedBypassCollector {
       override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
-        if (element !is GrParameter || element.typeElement != null || element.isVarArgs) return
-        val type: PsiType = getRepresentableType(element) ?: return
-        sink.addPresentation(InlineInlayPosition(element.textOffset, relatedToPrevious = true), hasBackground = true) {
+        collectNamedParameters(element, sink)
+        collectImplicitLambdaParameter(element, sink)
+      }
+
+      private fun collectImplicitLambdaParameter(element: PsiElement, sink: InlayTreeSink) {
+        if (element !is GrClosableBlock || !element.parameterList.isEmpty) return
+        val parameter = element.allParameters.singleOrNull() as? ClosureSyntheticParameter ?: return
+        if (!parameter.isStillValid) return
+        addPresentation(element.lBrace.endOffset, parameter, sink, " it -> ")
+      }
+
+      private fun addPresentation(
+        offset: Int,
+        parameter: GrParameter,
+        sink: InlayTreeSink,
+        suffixText: String) {
+        val type = getRepresentableType(parameter) ?: return
+        sink.addPresentation(InlineInlayPosition(offset, relatedToPrevious = true), hasBackground = true) {
           JavaTypeHintsFactory.typeHint(type, this)
-          text(" ")
+          text(suffixText)
         }
+      }
+
+      private fun collectNamedParameters(element: PsiElement, sink: InlayTreeSink) {
+        if (element !is GrParameter || element.typeElement != null || element.isVarArgs) return
+        addPresentation(element.textOffset, element, sink, " ")
       }
     }
   }
