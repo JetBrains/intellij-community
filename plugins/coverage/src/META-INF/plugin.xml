@@ -4,8 +4,11 @@
   <category>Code Coverage</category>
   <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
-  <depends>com.intellij.modules.coverage</depends>
-  <depends>com.intellij.modules.java</depends>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.platform.coverage"/>
+  </dependencies>
 
   <description>
       <![CDATA[

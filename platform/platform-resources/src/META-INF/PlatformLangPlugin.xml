@@ -9,9 +9,6 @@
 
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PlatformLangActionManager.xml"/>
-  <xi:include href="/META-INF/coverage-common-plugin.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/Core.xml"/>
   <xi:include href="/META-INF/CoreImpl.xml"/>

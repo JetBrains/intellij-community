@@ -8,6 +8,7 @@
   <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
   <content>
+    <module name="intellij.platform.coverage"/>
     <module name="intellij.notebooks.visualization"/>
     <module name="intellij.notebooks.ui"/>
     <module name="intellij.xml.xmlbeans"/>
