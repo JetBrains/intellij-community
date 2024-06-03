@@ -27,6 +27,7 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
@@ -142,7 +143,8 @@ public final class FileManagerImpl implements FileManager {
       return;
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    // write access is necessary only when the event system is enabled for the file.
+    ThreadingAssertions.assertWriteAccess();
 
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
@@ -314,8 +316,8 @@ public final class FileManagerImpl implements FileManager {
     });
   }
 
+  @RequiresWriteLock
   void possiblyInvalidatePhysicalPsi() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     removeInvalidDirs();
     for (FileViewProvider viewProvider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(viewProvider);
@@ -370,7 +372,6 @@ public final class FileManagerImpl implements FileManager {
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
@@ -381,9 +382,9 @@ public final class FileManagerImpl implements FileManager {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
+  @RequiresReadLock
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       throw new InvalidVirtualFileAccessException(vFile);
     }
@@ -398,6 +399,7 @@ public final class FileManagerImpl implements FileManager {
     return getCachedPsiFileInner(vFile);
   }
 
+  @RequiresReadLock
   @Override
   public @Nullable PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     Project project = myManager.getProject();
@@ -405,7 +407,6 @@ public final class FileManagerImpl implements FileManager {
       LOG.error("Access to psi files should not be performed after project disposal: " + project);
     }
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
@@ -571,9 +572,9 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
+  @RequiresWriteLock
   @Override
   public void reloadFromDisk(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = psiFile.getVirtualFile();
     assert vFile != null;
 
@@ -601,14 +602,14 @@ public final class FileManagerImpl implements FileManager {
    * Synchronized by read-write action. Calls from several threads in read action for the same virtual file are allowed.
    * @return if the file is still valid
    */
+  @RequiresReadLock(generateAssertion = false)
   public boolean evaluateValidity(@NotNull PsiFile file) {
     AbstractFileViewProvider viewProvider = (AbstractFileViewProvider)file.getViewProvider();
     return evaluateValidity(viewProvider) && viewProvider.getCachedPsiFiles().contains(file);
   }
 
+  @RequiresReadLock
   private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     VirtualFile file = viewProvider.getVirtualFile();
     if (getRawCachedViewProvider(file) != viewProvider) {
       return false;
