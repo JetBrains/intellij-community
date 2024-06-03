@@ -57,12 +57,33 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
    */
   class IndexingInterruptedException(cause: Throwable) : Exception(cause)
 
-  class FileSet(project: Project, val debugName: String, internal val files: PersistentSet<FileIndexingRequest>) {
-    constructor(project: Project, debugName: String, files: Collection<FileIndexingRequest>) : this(project, debugName, files.toPersistentSet())
+  class FileSet(project: Project, val debugName: String, internal val filesOriginal: PersistentSet<FileIndexingRequest>) {
+    private val filesToProcess: AtomicReference<PersistentSet<FileIndexingRequest>> = AtomicReference(filesOriginal)
     val statistics: IndexingFileSetStatistics = IndexingFileSetStatistics(project, debugName)
 
-    fun isEmpty(): Boolean = files.isEmpty()
-    fun size(): Int = files.size
+    constructor(project: Project, debugName: String, files: Collection<FileIndexingRequest>) : this(project, debugName, files.toPersistentSet())
+
+    fun isEmpty(): Boolean = filesOriginal.isEmpty()
+    fun size(): Int = filesOriginal.size
+
+    fun poll(): FileIndexingRequest? {
+      var first: FileIndexingRequest? = null
+      do {
+        val curr = filesToProcess.get()
+        first = curr.firstOrNull()
+        val replaced = (first == null || filesToProcess.compareAndSet(curr, curr.remove(first)))
+      }
+      while (!replaced)
+      return first
+    }
+
+    fun pushBack(request: FileIndexingRequest) {
+      filesToProcess.updateAndGet { it.add(request) }
+    }
+
+    fun areAllFilesProcessed(): Boolean {
+      return filesToProcess.get().isEmpty()
+    }
   }
 
   @Throws(IndexingInterruptedException::class)
@@ -100,16 +121,16 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     val originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator))
     val progressReporter = IndexingProgressReporter2(indicator, fileSet.size())
 
-    runConcurrently(project, fileSet, originalSuspender) { indexingJob, fileIndexingJob ->
+    runConcurrently(project, fileSet, originalSuspender) { fileIndexingRequest ->
       blockingContext {
         try {
-          val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingJob.fileIndexingRequest.file)
+          val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingRequest.file)
           progressReporter.setLocationBeingIndexed(presentableLocation)
-          indexOneFileHandleExceptions(fileIndexingJob, project, project, contentLoader, fileSet.statistics)
+          indexOneFileHandleExceptions(FileIndexingJob(fileIndexingRequest, fileSet), project, project, contentLoader, fileSet.statistics)
           progressReporter.oneMoreFileProcessed()
         }
         catch (t: Throwable) {
-          indexingJob.pushBack(fileIndexingJob)
+          fileSet.pushBack(fileIndexingRequest)
           throw t
         }
 
@@ -125,21 +146,19 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
     project: Project,
     fileSet: FileSet,
     originalSuspender: ProgressSuspender?,
-    task: suspend (IndexingJob, FileIndexingJob) -> Unit
+    task: suspend (FileIndexingRequest) -> Unit
   ) {
-    val indexingJob = IndexingJob(fileSet)
-
     runBlockingCancellable {
       repeat(INDEXING_THREADS_NUMBER) {
         launch(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash},$it)")) {
-          while (!indexingJob.areAllFilesProcessed()) {
+          while (!fileSet.areAllFilesProcessed()) {
             ensureActive()
             while (originalSuspender?.isSuspended == true) delay(1) // TODO: get rid of legacy suspender
 
             GLOBAL_INDEXING_SEMAPHORE.withPermit {
-              val fileIndexingJob = indexingJob.poll()
+              val fileIndexingJob = fileSet.poll()
               if (fileIndexingJob != null) {
-                task(indexingJob, fileIndexingJob)
+                task(fileIndexingJob)
               }
             }
           }
@@ -312,30 +331,6 @@ class IndexUpdateRunner(fileBasedIndex: FileBasedIndexImpl,
 
   @JvmRecord
   private data class FileIndexingJob(val fileIndexingRequest: FileIndexingRequest, val fileSet: FileSet)
-
-  private class IndexingJob(val fileSet: FileSet) {
-
-    private val files: AtomicReference<PersistentSet<FileIndexingRequest>> = AtomicReference(fileSet.files)
-
-    fun poll(): FileIndexingJob? {
-      var first: FileIndexingRequest? = null
-      do {
-        val curr = files.get()
-        first = curr.firstOrNull()
-        val replaced = (first == null || files.compareAndSet(curr, curr.remove(first)))
-      }
-      while (!replaced)
-      return if (first != null) FileIndexingJob(first, fileSet) else null
-    }
-
-    fun pushBack(job: FileIndexingJob) {
-      files.updateAndGet { it.add(job.fileIndexingRequest) }
-    }
-
-    fun areAllFilesProcessed(): Boolean {
-      return files.get().isEmpty()
-    }
-  }
 
   companion object {
     private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
