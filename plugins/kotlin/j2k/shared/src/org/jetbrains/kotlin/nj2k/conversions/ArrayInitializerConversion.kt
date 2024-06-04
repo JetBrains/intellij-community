@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.toArgumentList
@@ -50,7 +51,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
                 JKCallExpressionImpl(
                     symbolProvider.provideMethodSymbol("kotlin.arrayOfNulls"),
                     JKArgumentList(dimensions[0]),
-                    JKTypeArgumentList(type)
+                    JKTypeArgumentList(type.updateNullability(NotNull))
                 )
             } else {
                 JKNewExpression(
@@ -87,7 +88,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
         return JKCallExpressionImpl(
             symbolProvider.provideMethodSymbol("kotlin.arrayOfNulls"),
             JKArgumentList(dimensions[0]),
-            JKTypeArgumentList(resultType)
+            JKTypeArgumentList(resultType.updateNullability(NotNull))
         )
     }
 }
