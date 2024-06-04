@@ -15,6 +15,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.dsl.builder.Panel
@@ -143,8 +144,8 @@ internal class LanguageAndRegionConfigurable :
 }
 
 private class LanguageComboBoxRenderer(private val allLocales: kotlin.collections.List<Locale>) : GroupedComboBoxRenderer<Locale>() {
-  override fun getText(item: Locale): String {
-    return item.displayLanguage
+  override fun getText(item: Locale): @NlsSafe String {
+    return item.getDisplayLanguage(Locale.ENGLISH)
   }
 
   override fun separatorFor(value: Locale): ListSeparator? {
@@ -156,8 +157,16 @@ private class LanguageComboBoxRenderer(private val allLocales: kotlin.collection
 }
 
 private class RegionComboBoxRenderer : GroupedComboBoxRenderer<Region>() {
-  override fun getText(item: Region): String {
-    return IdeBundle.message("title.region.${item.name.lowercase(Locale.getDefault())}")
+  override fun getText(item: Region): @NlsSafe String {
+    when (item) {
+      Region.NOT_SET -> return "Not specified"
+      Region.AFRICA -> return "Africa"
+      Region.AMERICA -> return "America"
+      Region.ASIA -> return "Asia"
+      Region.CHINA -> return "China Mainland"
+      Region.EUROPE -> return "Europe"
+      Region.OTHER -> return "Rest of the world"
+    }
   }
 
   override fun separatorFor(value: Region): ListSeparator? {
