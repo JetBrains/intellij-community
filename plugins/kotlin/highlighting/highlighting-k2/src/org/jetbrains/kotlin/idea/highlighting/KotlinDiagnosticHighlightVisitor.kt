@@ -15,11 +15,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.containers.toArray
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.core.script.scriptConfigurationMissingForK2
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
@@ -69,6 +70,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         analyze(file) {
             val analysis = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             val diagnostics = analysis
+                .filterOutCodeFragmentVisibilityErrors(file)
                 .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
                 .groupByTo(HashMap(), { it.first }, { convertToBuilder(file, it.first, it.second) })
 
@@ -76,6 +78,14 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
                 analysis.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName), file
             )
             return diagnostics
+        }
+    }
+
+    private fun <PSI : PsiElement> Collection<KaDiagnosticWithPsi<PSI>>.filterOutCodeFragmentVisibilityErrors(file: KtFile): Collection<KaDiagnosticWithPsi<PSI>> {
+        if (file !is KtCodeFragment) return this
+        return filterNot { diagnostic ->
+            diagnostic.diagnosticClass == KaFirDiagnostic.InvisibleReference::class
+                    || diagnostic.diagnosticClass == KaFirDiagnostic.InvisibleSetter::class
         }
     }
 
