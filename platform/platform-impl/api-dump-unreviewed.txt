@@ -12767,7 +12767,7 @@ f:com.intellij.openapi.editor.FileDropManager
 - bs:openFilesInTab$default(com.intellij.openapi.editor.FileDropManager,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.fileEditor.impl.EditorWindow,I,java.lang.Object):V
 - f:scheduleDrop(java.awt.datatransfer.Transferable,com.intellij.openapi.editor.Editor,com.intellij.openapi.fileEditor.impl.EditorWindow):V
 f:com.intellij.openapi.editor.FileDropManagerKt
-- sf:containsFileDropTargets(java.awt.datatransfer.DataFlavor[]):Z
+- *sf:containsFileDropTargets(java.awt.datatransfer.DataFlavor[]):Z
 f:com.intellij.openapi.editor.LineExtensionInfo
 - <init>(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
 - <init>(java.lang.String,java.awt.Color,com.intellij.openapi.editor.markup.EffectType,java.awt.Color,I):V

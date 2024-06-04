@@ -6,6 +6,7 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,13 +22,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
 
+@ApiStatus.Experimental
 fun containsFileDropTargets(transferFlavors: Array<DataFlavor>): Boolean {
   return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
 }
+
+private val LOG = Logger.getInstance(FileDropManager::class.java)
 
 private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName.create("com.intellij.fileDropHandler")
 
@@ -55,8 +60,15 @@ class FileDropManager(private val project: Project,
                                  editorWindowCandidate: EditorWindow?,
                                  fileList: Collection<File>) {
     val event = FileDropEvent(project, t, fileList, editor)
-    val dropHandled = (listOf(CustomFileDropHandlerBridge()) + EP_NAME.extensionList)
-      .any { it.handleDrop(event) }
+    val dropHandled = (listOf(CustomFileDropHandlerBridge()) + EP_NAME.extensionList).any {
+      try {
+        it.handleDrop(event)
+      }
+      catch (e: Exception) {
+        LOG.error("Unable to handle drop event in $it", e)
+        false
+      }
+    }
 
     if (!dropHandled) {
       val editorWindow = editorWindowCandidate ?: readAction {
