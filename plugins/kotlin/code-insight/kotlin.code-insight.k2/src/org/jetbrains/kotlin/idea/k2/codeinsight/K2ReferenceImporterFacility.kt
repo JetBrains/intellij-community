@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
@@ -62,7 +62,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
             val quickFixService = KotlinQuickFixService.getInstance()
             val diagnostics = expression
                 .getDiagnostics(KtDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
-                .filter { it.severity == Severity.ERROR && expression.textRange in it.psi.textRange }
+                .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
 
             for (diagnostic in diagnostics) {
                 val importFixes = quickFixService.getImportQuickFixesFor(diagnostic)
