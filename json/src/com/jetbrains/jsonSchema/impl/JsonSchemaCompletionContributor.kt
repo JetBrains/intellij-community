@@ -517,7 +517,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val defaultValueAsString = when (val defaultValue = jsonSchemaObject.default) {
         null, is JsonSchemaObject -> null
         is String -> "\"" + defaultValue + "\""
-        else ->  defaultValue.toString()
+        else -> defaultValue.toString()
       }
       val finalType = JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject) ?: detectTypeByEnumValues(jsonSchemaObject.enum.orEmpty())
       return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, jsonSchemaObject.enum, psiWalker!!, insideStringLiteral, completionPath)
@@ -812,20 +812,30 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                       values != null && values.all { it !is String })
       val hasValues = !ContainerUtil.isEmpty(values)
       val hasDefaultValue = !StringUtil.isEmpty(value)
-      val hasQuotes = isNumber || !walker.requiresValueQuotes()
+      val requiresQuotes = !isNumber && walker.requiresValueQuotes()
       val offset = editor.caretModel.offset
       val charSequence = editor.document.charsSequence
       val ws = if (charSequence.length > offset && charSequence[offset] == ' ') "" else " "
       val colonWs = if (insertColon) propertyValueSeparator + ws else ws
-      val stringToInsert = colonWs + (if (hasDefaultValue) value else (if (hasQuotes) "" else "\"\"")) + comma
+      val stringToInsert = colonWs + when {
+        hasDefaultValue -> value
+        requiresQuotes -> "\"\""
+        else -> ""
+      } + comma
       EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
                                                  if (insertColon) propertyValueSeparator.length + 1 else 1)
-      if (!hasQuotes || hasDefaultValue) {
+      if (requiresQuotes || hasDefaultValue) {
         val model = editor.selectionModel
         val caretStart = model.selectionStart
-        var newOffset = caretStart + (if (hasDefaultValue) value!!.length else 1)
-        if (hasDefaultValue && !hasQuotes) newOffset--
-        model.setSelection(if (hasQuotes) caretStart else (caretStart + 1), newOffset)
+        // if we are already within the value quotes, then the shift is zero, if not yet - move inside
+        val quoteOffset = if (
+          caretStart - 1 >= 0
+          && editor.document.charsSequence[caretStart - 1].let {
+            it == '"' || it == '\''
+          }) 0 else 1
+        var newOffset = caretStart + (if (hasDefaultValue) value!!.length else quoteOffset)
+        if (hasDefaultValue && requiresQuotes) newOffset--
+        model.setSelection(if (requiresQuotes) (caretStart + quoteOffset) else caretStart, newOffset)
         editor.caretModel.moveToOffset(newOffset)
       }
 
