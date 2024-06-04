@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,11 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
 
   @Override
   public @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token, @Nullable String explicitSuper) {
     throw new UnsupportedOperationException();
   }
 

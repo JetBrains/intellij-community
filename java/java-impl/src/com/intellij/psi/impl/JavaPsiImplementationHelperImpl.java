@@ -43,9 +43,9 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
-import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -392,6 +392,101 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
         return List.of(
           new SnippetRegionSymbol(file,
                                   start.range().shiftRight(markupContext.getTextRange().getStartOffset())));
+      }
+    };
+  }
+
+  @Override
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token, @Nullable String explicitSuper) {
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return token;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return token.getTextRangeInParent().shiftLeft(1);
+      }
+
+      @Override
+      public @NotNull Collection<? extends Symbol> resolveReference() {
+        final PsiDocComment docComment = PsiTreeUtil.getParentOfType(token, PsiDocComment.class);
+        if (docComment == null) return List.of();
+        if (docComment.getOwner() instanceof PsiMethod method) {
+          final PsiDocTagImpl docTag = PsiTreeUtil.getParentOfType(token, PsiDocTagImpl.class);
+          var containingClass = method.getContainingClass();
+          if (containingClass == null) return List.of();
+
+          final var target = findTargetRecursively(containingClass, method, docTag, explicitSuper, false);
+          if (target != null) {
+            return List.of(new SnippetRegionSymbol(target.getContainingFile(), target.getTextRange()));
+          }
+        }
+
+        return List.of();
+      }
+
+      /**
+       * Performs Automatic Supertype Search as described in the JavaDoc Documentation Comment Specification.
+       */
+      private static @Nullable PsiElement findTargetRecursively(@NotNull PsiClass psiClass,
+                                                                @NotNull PsiMethod method,
+                                                                @Nullable PsiDocTag docTag,
+                                                                @Nullable String explicitSuper,
+                                                                boolean checkClass) {
+        if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
+
+        // Check class
+        PsiElement target = null;
+        if (checkClass) target = findTarget(psiClass, method, docTag, explicitSuper);
+        if (target != null) return target;
+
+        // Check super class
+        final PsiClass superClass = psiClass.getSuperClass();
+        if (superClass != null) {
+          target = findTargetRecursively(superClass, method, docTag, explicitSuper, true);
+          if (target != null) return target;
+        }
+
+        // Check interfaces
+        var targetInInterface = Stream.concat(Stream.of(psiClass.getImplementsListTypes()), Stream.of(psiClass.getExtendsListTypes()))
+          .map(type -> type.resolve())
+          .map(resolvedType -> findTarget(resolvedType, method, docTag, explicitSuper))
+          .filter(Objects::nonNull)
+          .findFirst();
+
+        return targetInInterface.orElse(null);
+      }
+
+      private static @Nullable PsiElement findTarget(@Nullable PsiClass psiClass,
+                                                     @NotNull PsiMethod method,
+                                                     @Nullable PsiDocTag docTag,
+                                                     @Nullable String explicitSuper) {
+        if (psiClass == null || explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
+          return null;
+        }
+
+        final var matchedMethod = psiClass.findMethodBySignature(method, false);
+        if (matchedMethod == null) return null;
+
+        PsiDocComment docComment = matchedMethod.getDocComment();
+        if (docComment == null) return null;
+
+        // inheritDoc is not in a tag -> the target is the PsiDocComment
+        if (docTag == null) return docComment;
+
+        // Searching for a matching tag
+        final PsiDocTagValue tagValue = docTag.getValueElement();
+        for (PsiDocTag tag : docComment.findTagsByName(docTag.getName())) {
+          final var matchedTagValueElement = tag.getValueElement();
+          if (tagValue != null && matchedTagValueElement == null) continue;
+          if (tagValue == null || tagValue.getText().equals(matchedTagValueElement.getText())) {
+            return tag;
+          }
+        }
+
+        return null;
       }
     };
   }
