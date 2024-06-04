@@ -2150,10 +2150,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       logThreads();
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
       myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
-      myDebuggerManagerThread.schedule(PrioritizedTask.Priority.LOWEST, () ->
-        // New events should not come after global pause
-        DebuggerDiagnosticsUtil.checkThreadsConsistency(DebugProcessImpl.this, true)
-      );
+
+      myDebuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          // New events should not come after global pause
+          DebuggerDiagnosticsUtil.checkThreadsConsistency(DebugProcessImpl.this, true);
+        }
+        @Override
+        public Priority getPriority() {
+          return Priority.LOWEST;
+        }
+      });
     }
   }
 
