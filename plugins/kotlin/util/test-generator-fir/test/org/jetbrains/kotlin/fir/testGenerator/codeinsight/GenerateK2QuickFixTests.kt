@@ -93,7 +93,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/canBeParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/canBePrimaryConstructorProperty", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/castDueToProgressionResolveChange", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/changeObjectToClass", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/changeObjectToClass", pattern = pattern)
             model("$idea/quickfix/changeSignature", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeToLabeledReturn", pattern = pattern)
