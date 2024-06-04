@@ -73,8 +73,21 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
   }
 
+  /**
+   * Represents the different modes for tests:
+   * <ul>
+   *     <li>NORMAL - uses to test mode when downloading and indexing are finished (indexes are available)</li>
+   *     <li>DUMB - uses to test dumb mode, indexing is in progress (all libraries are downloaded, indexes are not available)</li>
+   *     <li>INCOMPLETE - uses to test incomplete mode (libraries are being downloaded, indexes are available, but they don't contain all data)</li>
+   * </ul>
+   *
+   * @see DumbService
+   * @see IncompleteDependenciesService
+   */
   public enum ModeRunnerType {
-    INCOMPLETE, DUMB, NORMAL
+    INCOMPLETE,
+    DUMB,
+    NORMAL
   }
 
   protected boolean shouldCompareAnnotations() {
@@ -83,10 +96,24 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
   @Override
   protected final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return (myRunnerType == ModeRunnerType.INCOMPLETE) ? LombokTestUtil.WITHOUT_LOMBOK_DESCRIPTOR : getParsingDescriptor();
+    return (myRunnerType == ModeRunnerType.INCOMPLETE) ? getProjectDescriptorForIncompleteMode() : getProjectDescriptorForNormalMode();
   }
 
-  protected @NotNull LightProjectDescriptor getParsingDescriptor() {
+  /**
+   * @return the project descriptor for incomplete mode
+   *
+   * @see ModeRunnerType
+   */
+  protected @NotNull LightProjectDescriptor getProjectDescriptorForIncompleteMode() {
+    return LombokTestUtil.WITHOUT_LOMBOK_DESCRIPTOR;
+  }
+
+  /**
+   * @return the project descriptor for normal mode
+   *
+   * @see ModeRunnerType
+   */
+  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
     return super.getProjectDescriptor();
   }
 

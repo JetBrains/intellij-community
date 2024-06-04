@@ -82,12 +82,12 @@ public final class DumbIncompleteModeUtil {
   static boolean hasQualifiedNameInDumbOrIncompleteMode(PsiAnnotation annotation, @NotNull String fqn) {
     PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
     if (referenceElement == null) return false;
-    String qualifiedName = referenceElement.getReferenceName();
-    if (qualifiedName == null) return false;
-    if (qualifiedName.equals(fqn) || ("java.lang." + qualifiedName).equals(fqn)) return true;
+    String annotationReferenceName = referenceElement.getReferenceName();
+    if (annotationReferenceName == null) return false;
+    if (annotationReferenceName.equals(fqn) || ("java.lang." + annotationReferenceName).equals(fqn)) return true;
     String referenceElementText = referenceElement.getText();
+    if (!StringUtil.isShortNameOf(fqn, annotationReferenceName)) return false;
     if (referenceElementText != null && referenceElementText.equals(fqn)) return true;
-    if (!fqn.endsWith(qualifiedName)) return false;
     PsiFile containingFile = annotation.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile javaFile)) {
       return false;
@@ -95,11 +95,11 @@ public final class DumbIncompleteModeUtil {
     String packageName = StringUtil.getPackageName(fqn);
     PsiImportList importList = javaFile.getImportList();
     if (importList == null) return false;
-    int indexMayByOuterClass = fqn.length() - qualifiedName.length() - 1;
+    int indexMayByOuterClass = fqn.length() - annotationReferenceName.length() - 1;
     String mayBeOuterClass = indexMayByOuterClass > 0 ? fqn.substring(0, indexMayByOuterClass) : null;
     return importList.findOnDemandImportStatement(packageName) != null ||
            importList.findSingleClassImportStatement(fqn) != null ||
-           (mayBeOuterClass!=null && importList.findSingleClassImportStatement(mayBeOuterClass) != null);
+           (mayBeOuterClass != null && importList.findSingleClassImportStatement(mayBeOuterClass) != null);
   }
 
   /**
@@ -120,12 +120,11 @@ public final class DumbIncompleteModeUtil {
       return false;
     }
 
-    if (context instanceof PsiModifierList modifierList && hasAnyLombokAnnotation(modifierList.getAnnotations())) {
+    if (context instanceof PsiModifierList modifierList && hasAnyFullyQualifiedLombokAnnotation(modifierList.getAnnotations())) {
       return true;
     }
 
-    PsiClass psiClass = context instanceof PsiClass castedClass ? castedClass :
-                        PsiTreeUtil.getParentOfType(context, PsiClass.class);
+    PsiClass psiClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
 
     if (psiClass == null) return false;
 
@@ -140,9 +139,9 @@ public final class DumbIncompleteModeUtil {
       }
       while (psiElement != null) {
         if (psiElement instanceof PsiExtensibleClass extensibleClass &&
-            (hasAnyLombokAnnotation(extensibleClass.getAnnotations()) ||
-             ContainerUtil.exists(extensibleClass.getOwnFields(), field -> hasAnyLombokAnnotation(field.getAnnotations())) ||
-             ContainerUtil.exists(extensibleClass.getOwnMethods(), method -> hasAnyLombokAnnotation(method.getAnnotations())) ||
+            (hasAnyFullyQualifiedLombokAnnotation(extensibleClass.getAnnotations()) ||
+             ContainerUtil.exists(extensibleClass.getOwnFields(), field -> hasAnyFullyQualifiedLombokAnnotation(field.getAnnotations())) ||
+             ContainerUtil.exists(extensibleClass.getOwnMethods(), method -> hasAnyFullyQualifiedLombokAnnotation(method.getAnnotations())) ||
              (file.getImportList() != null && ContainerUtil.exists(file.getImportList().getAllImportStatements(), statement -> {
                return canBeLombokImport(statement);
              })))) {
@@ -160,13 +159,10 @@ public final class DumbIncompleteModeUtil {
   }
 
   /**
-   * Checks if the given PsiModifierListOwner has any Lombok annotation.
-   * It is used only for incomplete mode.
-   *
-   * @param annotations The annotations to check for Lombok annotations.
-   * @return true if the modifierListOwner has any Lombok annotation, otherwise false.
+   * @param annotations the array of annotations to check
+   * @return true if any of the annotations is a fully qualified Lombok annotation, false otherwise
    */
-  private static boolean hasAnyLombokAnnotation(PsiAnnotation @NotNull [] annotations) {
+  private static boolean hasAnyFullyQualifiedLombokAnnotation(PsiAnnotation @NotNull [] annotations) {
     return ContainerUtil.exists(annotations, annotation -> {
       if (annotation == null) {
         return false;

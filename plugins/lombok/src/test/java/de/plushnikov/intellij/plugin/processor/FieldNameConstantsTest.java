@@ -30,7 +30,7 @@ public class FieldNameConstantsTest extends AbstractLombokParsingTestCase {
 
   @NotNull
   @Override
-  protected LightProjectDescriptor getParsingDescriptor() {
+  protected LightProjectDescriptor getProjectDescriptorForNormalMode() {
     return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 

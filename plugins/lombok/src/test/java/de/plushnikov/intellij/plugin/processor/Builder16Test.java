@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public class Builder16Test extends AbstractLombokParsingTestCase {
 
   @Override
-  protected @NotNull LightProjectDescriptor getParsingDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
     return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 
