@@ -49,7 +49,7 @@ internal fun isUsedInAutoUnboxingContext(expr: PsiReferenceExpression): Boolean 
     return expectedType.isAssignableFrom(unboxedType)
 }
 
-internal fun getDfaNullability(expr: PsiReferenceExpression): DfaNullability? {
+internal fun getDfaNullability(expr: PsiExpression): DfaNullability? {
     val dataflowResult = CommonDataflow.getDataflowResult(expr) ?: return null
     val dfType = dataflowResult.getDfType(expr)
     if (dfType !is DfReferenceType) return null

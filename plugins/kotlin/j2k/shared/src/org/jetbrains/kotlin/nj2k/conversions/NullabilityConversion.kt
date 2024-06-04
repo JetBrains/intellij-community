@@ -1,10 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k.conversions
 
+import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.psi.PsiParenthesizedExpression
+import com.intellij.psi.PsiTypeCastExpression
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.getDfaNullability
+import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
@@ -28,11 +33,37 @@ class NullabilityConversion(context: NewJ2kConverterContext) : RecursiveConversi
         return recurse(element)
     }
 
+    // Try to update nullability of the cast's type to not-null in certain cases
+    // TODO migrate to J2KNullityInferrer
+    // TODO support the case of argument for not-null parameter
     private fun JKTypeCastExpression.updateNullability() {
-        val qualifiedExpression = (parent as? JKParenthesizedExpression)?.parent as? JKQualifiedExpression
-        if (qualifiedExpression != null) {
-            // In code such as `((String o)).length()`, the cast's type can be considered not-null
-            // (it is equivalent to Kotlin's unsafe cast)
+        var context = parent
+        if (context is JKParenthesizedExpression) context = context.parent
+
+        val psiCastedExpression = psi<PsiTypeCastExpression>()?.operand?.let {
+            if (it is PsiParenthesizedExpression) it.expression else it
+        }
+
+        val isNotNullContext = when {
+            // `((String o)).length()` is equivalent to Kotlin's unsafe cast
+            context is JKQualifiedExpression -> true
+
+            // `String s = (String obj);` when `s` is already inferred to be not-null
+            context is JKLocalVariable -> {
+                val variableType = context.type.type
+                variableType.nullability == NotNull
+            }
+
+            // If Java DFA knows that the cast expression is not null, it is safe to cast to the not-null type
+            psiCastedExpression != null -> {
+                val dfaNullability = getDfaNullability(psiCastedExpression)
+                dfaNullability == DfaNullability.NOT_NULL
+            }
+
+            else -> false
+        }
+
+        if (isNotNullContext) {
             type.type = type.type.updateNullability(NotNull)
         }
     }

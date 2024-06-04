@@ -5366,6 +5366,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/throw.java");
         }
 
+        @TestMetadata("typeCast.java")
+        public void testTypeCast() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/typeCast.java");
+        }
+
         @TestMetadata("VariableAssignedWithNull.java")
         public void testVariableAssignedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/VariableAssignedWithNull.java");
@@ -6513,11 +6518,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("beforeDot.java")
-        public void testBeforeDot() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/typeCastExpression/beforeDot.java");
         }
 
         @TestMetadata("byteCasts.java")
