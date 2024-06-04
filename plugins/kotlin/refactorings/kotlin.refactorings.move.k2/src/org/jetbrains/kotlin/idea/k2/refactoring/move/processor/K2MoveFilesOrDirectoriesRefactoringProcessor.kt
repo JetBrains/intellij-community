@@ -105,7 +105,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
-        @Suppress("UNCHECKED_CAST")
-        retargetUsagesAfterMove(usageInfos.toList(), oldToNewMap as Map<KtNamedDeclaration, KtNamedDeclaration>)
+        retargetUsagesAfterMove(usageInfos.toList(), oldToNewMap)
     }
 }

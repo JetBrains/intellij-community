@@ -66,7 +66,8 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
             val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
             val oldToNewMap = elementsToMove.moveInto(targetFile)
             descriptor.source.elements.forEach(PsiElement::deleteSingle)
-            retargetUsagesAfterMove(usages.toList(), oldToNewMap)
+            @Suppress("UNCHECKED_CAST")
+            retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
             for (sourceFile in sourceFiles) {
                 if (sourceFile.declarations.isEmpty()) sourceFile.delete()
             }

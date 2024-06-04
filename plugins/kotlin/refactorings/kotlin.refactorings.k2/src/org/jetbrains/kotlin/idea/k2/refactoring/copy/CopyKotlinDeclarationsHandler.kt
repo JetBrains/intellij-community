@@ -6,8 +6,11 @@ import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.*
-import com.intellij.psi.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -34,11 +37,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkVisibilityCo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createCopyTarget
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
-import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyKotlinDeclarationsHandler
-import org.jetbrains.kotlin.idea.refactoring.copy.CopyKotlinDeclarationDialog
-import org.jetbrains.kotlin.idea.refactoring.copy.copyCommandName
-import org.jetbrains.kotlin.idea.refactoring.copy.copyNewName
-import org.jetbrains.kotlin.idea.refactoring.copy.getCopyableElement
+import org.jetbrains.kotlin.idea.refactoring.copy.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -273,7 +272,8 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
                     .toMap(oldToNewElementsMapping)
             }
 
-            retargetInternalUsages(oldToNewElementsMapping, fromCopy = true)
+            @Suppress("UNCHECKED_CAST")
+            retargetInternalUsages(oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
 
             newElements.singleOrNull()
         }

@@ -4,5 +4,5 @@
   "sourceDir": "in/p1/p",
   "targetDir": "in/p2",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

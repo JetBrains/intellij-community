@@ -16,11 +16,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -288,7 +284,7 @@ sealed class K2MoveRenameUsageInfo(
                 }
         }
 
-        internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
+        internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
             retargetInternalUsages(oldToNewMap)
             retargetExternalUsages(usages, oldToNewMap)
         }
@@ -299,7 +295,7 @@ sealed class K2MoveRenameUsageInfo(
          */
         private fun restoreInternalUsages(
             containingDecl: KtNamedDeclaration,
-            oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
+            oldToNewMap: Map<PsiElement, PsiElement>,
             fromCopy: Boolean
         ): List<UsageInfo> {
             return containingDecl.collectDescendantsOfType<KtReferenceExpression>().mapNotNull { refExpr ->
@@ -339,8 +335,8 @@ sealed class K2MoveRenameUsageInfo(
             shortenUsages(retargetMoveUsages(mapOf(fileCopy to internalUsages), emptyMap()))
         }
 
-        fun retargetInternalUsages(oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>, fromCopy: Boolean = false) {
-            val newDeclarations = oldToNewMap.values.toList()
+        fun retargetInternalUsages(oldToNewMap: Map<PsiElement, PsiElement>, fromCopy: Boolean = false) {
+            val newDeclarations = oldToNewMap.values.toList().filterIsInstance<KtNamedDeclaration>()
             val internalUsages = newDeclarations
                 .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap, fromCopy) }
                 .filterIsInstance<K2MoveRenameUsageInfo>()
@@ -349,7 +345,7 @@ sealed class K2MoveRenameUsageInfo(
             shortenUsages(retargetMoveUsages(internalUsages, oldToNewMap))
         }
 
-        private fun retargetExternalUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
+        private fun retargetExternalUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
             val externalUsages = usages
                 .filter { it.element != null } // if the element is null, it means that this external usage was moved
                 .groupByFile()
@@ -359,7 +355,7 @@ sealed class K2MoveRenameUsageInfo(
 
         private fun retargetMoveUsages(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
-            oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>
+            oldToNewMap: Map<PsiElement, PsiElement>
         ): Map<PsiFile, Map<PsiElement, PsiNamedElement>> {
             return usageInfosByFile.map { (file, usageInfos) ->
                 file to usageInfos.mapNotNull { usageInfo ->

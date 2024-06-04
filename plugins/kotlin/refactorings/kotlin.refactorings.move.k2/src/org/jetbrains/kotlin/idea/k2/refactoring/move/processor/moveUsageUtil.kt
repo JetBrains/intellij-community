@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
@@ -163,7 +164,7 @@ internal fun List<UsageInfo>.filterUpdatable(movedElements: List<KtNamedDeclarat
 /**
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
  */
-internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
+internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
     K2MoveRenameUsageInfo.retargetUsages(usages.filterIsInstance<K2MoveRenameUsageInfo>(), oldToNewMap)
     val project = oldToNewMap.values.firstOrNull()?.project ?: return
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
