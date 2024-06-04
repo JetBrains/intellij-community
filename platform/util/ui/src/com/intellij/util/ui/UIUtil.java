@@ -1941,17 +1941,17 @@ public final class UIUtil {
       .filter(JScrollPane.class);
     for (JScrollPane scrollPane : scrollPanes) {
       Integer keepBorderSides = ClientProperty.get(scrollPane, KEEP_BORDER_SIDES);
-      if (keepBorderSides != null) {
-        if (scrollPane.getBorder() instanceof LineBorder) {
-          Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
-          scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
-        }
-        else {
-          scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
-        }
+      if (keepBorderSides == null) {
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
+      }
+      else if (scrollPane.getBorder() instanceof LineBorder lineBorder) {
+        Color color = lineBorder.getLineColor();
+        //noinspection MagicConstant
+        scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
       }
       else {
-        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
+        //noinspection MagicConstant
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
       }
     }
   }
@@ -2141,7 +2141,7 @@ public final class UIUtil {
       result = uiChildren(c);
     }
     if (c instanceof JComponent jc) {
-      Iterable<? extends Component> orphans = ClientProperty.get(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      Iterable<? extends Component> orphans = ClientProperty.get(jc, ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
       }

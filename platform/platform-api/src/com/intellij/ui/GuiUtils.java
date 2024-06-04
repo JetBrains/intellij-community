@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -138,7 +138,7 @@ public final class GuiUtils {
   }
 
   public static void iterateChildren(Component container, Consumer<? super Component> consumer, JComponent... excludeComponents) {
-    if (excludeComponents != null && ArrayUtil.find(excludeComponents, container) != -1) {
+    if (excludeComponents != null && ArrayUtilRt.find(excludeComponents, container) != -1) {
       return;
     }
 
@@ -151,14 +151,14 @@ public final class GuiUtils {
     }
   }
 
-  public static void enableChildren(final boolean enabled, Component... components) {
-    for (final Component component : components) {
+  public static void enableChildren(boolean enabled, Component... components) {
+    for (Component component : components) {
       enableChildren(component, enabled);
     }
   }
 
   public static void showComponents(final boolean visible, Component... components) {
-    for (final Component component : components) {
+    for (Component component : components) {
       component.setVisible(visible);
     }
   }

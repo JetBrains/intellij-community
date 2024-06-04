@@ -46,6 +46,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -54,10 +55,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import javax.swing.BoxLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 private val LOG = logger<EditorComposite>()
 
@@ -676,6 +674,14 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
 
   fun setComponent(newComponent: JComponent, focusComponent: () -> JComponent?) {
     removeAll()
+
+    val scrollPanes = UIUtil.uiTraverser(newComponent)
+      .expand { o -> o === newComponent || o is JPanel || o is JLayeredPane }
+      .filter(JScrollPane::class.java)
+    for (scrollPane in scrollPanes) {
+      scrollPane.border = SideBorder(JBColor.border(), SideBorder.NONE)
+    }
+
     add(newComponent, BorderLayout.CENTER)
     this.focusComponent = focusComponent
   }

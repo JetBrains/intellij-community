@@ -421,7 +421,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
     JBPopupMenu.showByEvent(e, this.tabs.getActivePopup());
   }
 
-  public void setText(final SimpleColoredText text) {
+  public void setText(@Nullable SimpleColoredText text) {
     label.change(() -> {
       label.clear();
       label.setIcon(hasIcons() ? icon : null);

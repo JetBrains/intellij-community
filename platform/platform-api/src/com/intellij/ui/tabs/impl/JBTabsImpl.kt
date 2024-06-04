@@ -1282,9 +1282,36 @@ open class JBTabsImpl @JvmOverloads constructor(
     return false
   }
 
+  @Internal
+  @RequiresEdt
+  fun setTabs(tabs: List<TabInfo>) {
+    for (tab in tabs) {
+      tab.changeSupport.addPropertyChangeListener(this)
+
+      val label = createTabLabel(tab)
+      label.setText(tab.coloredText)
+      label.toolTipText = tab.tooltipText
+      label.setIcon(tab.icon)
+      label.setTabActions(tab.tabLabelActions)
+
+      tab.tabLabel = label
+      infoToPage.put(tab, AccessibleTabPage(parent = this, tabInfo = tab))
+
+      updateSideComponent(tab)
+    }
+
+    for (tab in tabs) {
+      add(tab.tabLabel!!)
+    }
+
+    assert(visibleInfos.isEmpty())
+    visibleInfos.addAll(tabs)
+    resetTabsCache()
+  }
+
   protected open fun createTabLabel(info: TabInfo): TabLabel = TabLabel(this, info)
 
-  override fun addTab(info: TabInfo): TabInfo = addTab(info, -1)
+  override fun addTab(info: TabInfo): TabInfo = addTab(info = info, index = -1)
 
   override fun getTabLabel(info: TabInfo): TabLabel? = info.tabLabel
 

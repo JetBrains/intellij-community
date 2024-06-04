@@ -300,6 +300,13 @@ class EditorTabbedContainer internal constructor(
     }
   }
 
+  internal fun insertTab(tabs: List<TabInfo>) {
+    for (tab in tabs) {
+      tab.setDragOutDelegate(dragOutDelegate)
+    }
+    editorTabs.setTabs(tabs)
+  }
+
   val isEmptyVisible: Boolean
     get() = editorTabs.isEmptyVisible
   val tabs: JBTabs
@@ -516,7 +523,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
   }
 }
 
-private fun createTabInfo(
+internal fun createTabInfo(
   component: JComponent,
   file: VirtualFile,
   icon: Icon?,

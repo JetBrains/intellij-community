@@ -413,6 +413,26 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
   }
 
+  @RequiresEdt
+  internal fun postAddComposite(
+    composite: EditorComposite,
+    pin: Boolean,
+    selectAsCurrent: Boolean,
+  ) {
+    if (pin) {
+      composite.isPinned = true
+      if (composite.isPreview) {
+        composite.isPreview = false
+        owner.scheduleUpdateFileColor(composite.file)
+      }
+    }
+
+    if (selectAsCurrent) {
+      _currentCompositeFlow.value = composite
+      owner.setCurrentWindow(window = this)
+    }
+  }
+
   @JvmOverloads
   fun split(
     orientation: Int,
