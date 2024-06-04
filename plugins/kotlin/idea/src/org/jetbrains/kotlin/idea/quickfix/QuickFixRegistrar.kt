@@ -725,7 +725,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE.registerFactory(AddSemicolonBeforeLambdaExpressionFix.Factory)
 
-        CONSTRUCTOR_IN_OBJECT.registerFactory(ChangeObjectToClassFix)
+        CONSTRUCTOR_IN_OBJECT.registerFactory(ChangeObjectToClassFixFactory)
 
         REDUNDANT_LABEL_WARNING.registerFactory(RemoveRedundantLabelFix)
         NOT_A_FUNCTION_LABEL.registerFactory(RemoveReturnLabelFixFactory)
