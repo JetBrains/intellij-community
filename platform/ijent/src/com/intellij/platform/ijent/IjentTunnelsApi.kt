@@ -82,6 +82,16 @@ sealed interface IjentTunnelsApi {
       fun preferOSDefault(): Builder
 
       /**
+       * Sets timeout for connecting to remote host.
+       * If the connection could not be established before [timeout], then [IjentConnectionError.ConnectionTimeout] would be returned
+       * in [IjentTunnelsApi.getConnectionToRemotePort].
+       *
+       * Default value: 10 seconds.
+       * The recognizable granularity is milliseconds.
+       */
+      fun connectionTimeout(timeout: Duration): Builder
+
+      /**
        * Builds a remote host address object.
        */
       fun build(): HostAddress
@@ -229,10 +239,10 @@ interface IjentTunnelsWindowsApi : IjentTunnelsApi
  * @see com.intellij.platform.ijent.IjentTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
  */
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
-  host: String, port: UShort,
+  hostAddress: IjentTunnelsApi.HostAddress,
   errorHandler: suspend (IjentConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T): T =
-  when (val connectionResult = getConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build())) {
+  when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
     is IjentNetworkResult.Error -> errorHandler(connectionResult.error)
     is Ok -> try {
       coroutineScope { action(connectionResult.value) }
@@ -241,6 +251,11 @@ suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
       connectionResult.value.close()
     }
   }
+
+suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
+  host: String, port: UShort,
+  errorHandler: suspend (IjentConnectionError) -> T,
+  action: suspend CoroutineScope.(Connection) -> T): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
 
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
@@ -276,6 +291,10 @@ sealed interface IjentNetworkResult<out T, out E : IjentNetworkError> {
  */
 interface IjentConnectionError : IjentNetworkError {
   val message: @NlsSafe String
+
+  data object ConnectionTimeout : IjentConnectionError {
+    override val message: @NlsSafe String = "Connection could not be established because of timeout"
+  }
 
   /**
    * Returned when a hostname on the remote server was resolved to multiple different addresses.
