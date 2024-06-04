@@ -58,10 +58,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.Range;
@@ -78,6 +75,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
@@ -717,8 +715,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         JComponent component = getEditor().getComponent();
         RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, JBUIScale.scale(5)));
 
-        String message = DiffBundle.message("merge.all.changes.processed.message.text");
-        DiffUtil.showSuccessPopup(message, point, this, () -> {
+        String title = DiffBundle.message("merge.all.changes.processed.title.text");
+        @NlsSafe String message = XmlStringUtil.wrapInHtmlTag(DiffBundle.message("merge.all.changes.processed.message.text"), "a");
+        DiffBalloons.showSuccessPopup(title, message, point, this, () -> {
           if (isDisposed() || myLoadingPanel.isLoading()) return;
           destroyChangedBlocks();
           myMergeContext.finishMerge(MergeResult.RESOLVED);
