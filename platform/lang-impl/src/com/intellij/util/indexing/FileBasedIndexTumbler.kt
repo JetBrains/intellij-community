@@ -124,6 +124,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
             val indexesCleanupJob = scanAndIndexProjectAfterOpen(
               project = project,
               orphanQueue = registeredIndexes.orphanDirtyFilesQueue,
+              additionalOrphanDirtyFiles = emptySet(),
               projectDirtyFilesQueue = projectDirtyFilesQueue,
 
               allowSkippingFullScanning = allowSkippingFullScanning && !registeredIndexes.wasCorrupted,

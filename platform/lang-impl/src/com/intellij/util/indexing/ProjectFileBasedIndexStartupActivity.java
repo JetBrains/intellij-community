@@ -78,7 +78,14 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
     // schedule dumb mode start after the read action we're currently in
     OrphanDirtyFilesQueue orphanQueue = registeredIndexes.getOrphanDirtyFilesQueue();
-    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, !wasCorrupted, true, myCoroutineScope, "On project open");
+    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project,
+                                                         orphanQueue,
+                                                         fileBasedIndex.getAllDirtyFiles(null),
+                                                         projectDirtyFilesQueue,
+                                                         !wasCorrupted,
+                                                         true,
+                                                         myCoroutineScope,
+                                                         "On project open");
     forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 
