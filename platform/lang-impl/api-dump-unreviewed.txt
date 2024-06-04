@@ -20628,7 +20628,7 @@ c:com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- getFileTooltipText(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.EditorWindow):java.lang.String
+- getFileTooltipText(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.EditorComposite):java.lang.String
 - isProblem(com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.openapi.fileEditor.impl.TestEditorSplitter
 - <init>():V

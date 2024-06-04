@@ -747,13 +747,13 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
     return height - layoutInsets.top - layoutInsets.bottom
   }
 
-  override fun isShowTabActions(): Boolean = isPinned || UISettings.getInstance().showCloseButton
+  override val isShowTabActions: Boolean
+    get() = isPinned || UISettings.getInstance().showCloseButton
 
-  override fun isTabActionsOnTheRight(): Boolean = UISettings.getInstance().closeTabButtonOnTheRight
+  override val isTabActionsOnTheRight: Boolean
+    get() = UISettings.getInstance().closeTabButtonOnTheRight
 
-  override fun shouldPaintFadeout(): Boolean {
-    return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
-  }
+  override fun shouldPaintFadeout(): Boolean = super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
 
   override fun editLabelForeground(baseForeground: Color?): Color? {
     if (baseForeground != null && paintDimmed()) {

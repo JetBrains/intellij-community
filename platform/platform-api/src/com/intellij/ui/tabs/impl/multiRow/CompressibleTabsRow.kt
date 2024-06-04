@@ -6,8 +6,8 @@ package com.intellij.ui.tabs.impl.multiRow
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.UiDecorator
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
+import com.intellij.ui.tabs.impl.mergeUiDecorations
 import com.intellij.util.ui.JBUI
 import java.awt.Insets
 import java.util.*
@@ -15,9 +15,7 @@ import java.util.function.Function
 import kotlin.math.max
 import kotlin.math.round
 
-class CompressibleTabsRow(infos: List<TabInfo>,
-                          withTitle: Boolean,
-                          withEntryPointToolbar: Boolean
+internal class CompressibleTabsRow(infos: List<TabInfo>, withTitle: Boolean, withEntryPointToolbar: Boolean
 ) : TabsRow(infos, withTitle, withEntryPointToolbar) {
   override fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int) {
     val tabs = data.tabs
@@ -185,8 +183,10 @@ class CompressibleTabsRow(infos: List<TabInfo>,
   }
 
   private fun createTabInsets(tabs: JBTabsImpl, info: TabInfo): TabInsets {
-    val decoration = TabLabel.mergeUiDecorations(tabs.uiDecorator!!.getDecoration(),
-                                                 JBTabsImpl.defaultDecorator.getDecoration())
+    val decoration = mergeUiDecorations(
+      customDec = tabs.uiDecorator!!.getDecoration(),
+      defaultDec = JBTabsImpl.defaultDecorator.getDecoration(),
+    )
     val actionsPosition = tabs.getTabLabel(info)!!.actionsPosition
     val contentInsets = decoration.contentInsetsSupplier.apply(actionsPosition)
     val cornerToText = if (actionsPosition == ActionsPosition.RIGHT) {
@@ -217,7 +217,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
     val cornerToActions = insets.cornerToActions + if (actionsPosition == ActionsPosition.NONE && insets.actionsInset > 0) insets.actionsInset else 0
     val contentInsets = Insets(0, if (actionsPosition == ActionsPosition.LEFT) insets.actionsInset else 0,
                                0, if (actionsPosition == ActionsPosition.RIGHT) insets.actionsInset else 0)
-    val originalDec = TabLabel.mergeUiDecorations(tabs.uiDecorator!!.getDecoration(), JBTabsImpl.defaultDecorator.getDecoration())
+    val originalDec = mergeUiDecorations(customDec = tabs.uiDecorator!!.getDecoration(), defaultDec = JBTabsImpl.defaultDecorator.getDecoration())
     val labelInsets = Insets(originalDec.labelInsets.top,
                              if (actionsPosition == ActionsPosition.RIGHT) insets.cornerToText else cornerToActions,
                              originalDec.labelInsets.bottom,

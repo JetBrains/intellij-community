@@ -1078,7 +1078,6 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 a:com.intellij.openapi.actionSystem.ActionManager
 - a:addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener):V
 - addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener,com.intellij.openapi.Disposable):V
-- addTimerListener(I,com.intellij.openapi.actionSystem.TimerListener):V
 - a:addTimerListener(com.intellij.openapi.actionSystem.TimerListener):V
 - a:createActionPopupMenu(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionPopupMenu
 - a:createActionToolbar(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z):com.intellij.openapi.actionSystem.ActionToolbar
