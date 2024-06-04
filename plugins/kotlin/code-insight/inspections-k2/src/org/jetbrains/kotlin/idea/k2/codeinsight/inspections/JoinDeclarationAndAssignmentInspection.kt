@@ -276,7 +276,7 @@ internal class JoinDeclarationAndAssignmentInspection :
             return null
         }
 
-        val assignmentCall = firstAssignment.left?.resolveCall()?.singleVariableAccessCall()?.symbol ?: return null
+        val assignmentCall = firstAssignment.left?.resolveCallOld()?.singleVariableAccessCall()?.symbol ?: return null
         if (assignmentCall != property.getVariableSymbol()) return null
 
         if (propertyContainer !is KtClassBody) return firstAssignment

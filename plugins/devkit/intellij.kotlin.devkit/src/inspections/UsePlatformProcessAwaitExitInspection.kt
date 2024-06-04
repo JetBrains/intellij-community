@@ -37,7 +37,7 @@ internal class UsePlatformProcessAwaitExitInspection : LocalInspectionTool() {
           analyze(expression) {
             val callNameExpression = expression.getCallNameExpression()?.text ?: return false
             if (isNotForbidden(callNameExpression)) return false // optimization to avoid resolving
-            val calledSymbol = expression.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
+            val calledSymbol = expression.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
             if (calledSymbol !is KtNamedSymbol) return false
             val calledMethodName = calledSymbol.name.identifier
             if (isNotForbidden(calledMethodName)) return false

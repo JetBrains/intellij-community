@@ -104,7 +104,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
             }
 
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
-                val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
+                val call = expression.resolveCallOld()?.successfulCallOrNull<KtCall>() ?: return
                 if (call is KtSimpleFunctionCall) {
                     refHolder.registerLocalRef(call.symbol.psi, expression)
                 }
@@ -117,7 +117,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
 
             override fun visitCallExpression(expression: KtCallExpression) {
                 val callee = expression.calleeExpression ?: return
-                val call = expression.resolveCall()?.singleCallOrNull<KtCall>() ?: return
+                val call = expression.resolveCallOld()?.singleCallOrNull<KtCall>() ?: return
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
                 refHolder.registerLocalRef((call as? KtSimpleFunctionCall)?.symbol?.psi, expression)
             }

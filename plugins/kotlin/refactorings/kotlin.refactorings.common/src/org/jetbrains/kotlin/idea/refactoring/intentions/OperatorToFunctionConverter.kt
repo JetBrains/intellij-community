@@ -155,7 +155,7 @@ object OperatorToFunctionConverter {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(element) {
-                val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull()
+                val resolvedCall = element.resolveCallOld()?.singleFunctionCallOrNull()
                 val targetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol
 
                 (targetSymbol as? KtNamedSymbol)?.name

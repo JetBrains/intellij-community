@@ -59,7 +59,7 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
                 if (keyArgumentIndex < 0) return
 
                 analyze(callExpression) {
-                    val callable = callExpression.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return
+                    val callable = callExpression.resolveCallOld()?.singleFunctionCallOrNull()?.symbol ?: return
                     if (callable.valueParameters.size != keyArgumentIndex + 2) return
                     if (!callable.valueParameters.last().isVararg) return
                 }

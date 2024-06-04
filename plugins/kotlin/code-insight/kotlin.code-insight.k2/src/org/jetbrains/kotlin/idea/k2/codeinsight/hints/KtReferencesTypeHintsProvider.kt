@@ -353,7 +353,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
     val functionLiteral = lambdaExpression.getStrictParentOfType<KtFunctionLiteral>() ?: return
 
     analyze(lambdaExpression) {
-        val functionCall = functionLiteral.resolveCall()?.singleFunctionCallOrNull() ?: return
+        val functionCall = functionLiteral.resolveCallOld()?.singleFunctionCallOrNull() ?: return
         sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hasBackground = true) {
             text(": ")
             printKtType(functionCall.symbol.returnType)
@@ -365,7 +365,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 context(KtAnalysisSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
-    val resolveCall = initializer.resolveCall() ?: return false
+    val resolveCall = initializer.resolveCallOld() ?: return false
     val functionCall = resolveCall.singleFunctionCallOrNull()
     if (functionCall?.symbol is KtSamConstructorSymbol) {
         return true

@@ -51,7 +51,7 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
             ArrayFqNames.ARRAY_OF_FUNCTION +
             ArrayFqNames.EMPTY_ARRAY
 
-    val call = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId ?: return false
+    val call = resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId ?: return false
 
     return call.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             functionNames.contains(call.callableName)
@@ -65,7 +65,7 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
  */
 context(KtAnalysisSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
-    val functionCall = this.resolveCall()?.singleFunctionCallOrNull() ?: return null
+    val functionCall = this.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
 
     return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
 }

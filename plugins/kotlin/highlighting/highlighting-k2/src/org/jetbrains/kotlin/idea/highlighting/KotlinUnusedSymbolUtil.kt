@@ -437,7 +437,7 @@ object KotlinUnusedSymbolUtil {
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
               ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).any {
                   it.element.getStrictParentOfType<KtTypeAlias>() != null || it.element.getStrictParentOfType<KtCallExpression>()
-                      ?.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                      ?.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
               })
           ) {
               return true

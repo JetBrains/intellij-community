@@ -32,7 +32,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
-        val symbol = resolveCall()?.singleFunctionCallOrNull()?.symbol
+        val symbol = resolveCallOld()?.singleFunctionCallOrNull()?.symbol
         symbol?.callableId == CallableId(packageName, callableName)
     }
 

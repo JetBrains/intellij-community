@@ -834,7 +834,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val lambda = parentFunctionLiteral.parent as? KtLambdaExpression ?: return null
         val lambdaArg = lambda.parent as? KtValueArgument ?: return null
         val call = lambdaArg.parent as? KtCallExpression ?: return null
-        val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val functionCall: KtFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
         val functionName = target.name.asString()
         if (functionName != LET && functionName != RUN) return null
@@ -1430,7 +1430,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KtAnalysisSession)
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
-        val call: KtSuccessCallInfo? = expr.resolveCall() as? KtSuccessCallInfo
+        val call: KtSuccessCallInfo? = expr.resolveCallOld() as? KtSuccessCallInfo
         val updatedQualifierOnStack = if (!qualifierOnStack && call != null) {
             tryPushImplicitQualifier(call)
         } else {
@@ -1455,7 +1455,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KtAnalysisSession)
     private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KtValueParameterSymbol): EventOccurrencesRange {
-        val functionCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
+        val functionCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
         val callEffect = functionSymbol.contractEffects
             .singleOrNull { e -> e is KtContractCallsInPlaceContractEffectDeclaration && e.valueParameterReference.parameterSymbol == parameter }
@@ -1522,7 +1522,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
         // TODO: non-qualified methods (run, repeat)
         // TODO: collection methods (forEach, map, etc.)
-        val resolvedCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
+        val resolvedCall = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
         val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
         val packageName = symbol.callableId?.packageName ?: return false
         val bodyExpression = lambda.bodyExpression
@@ -1596,7 +1596,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KtAnalysisSession)
     private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
         if (argCount == 0 && qualifierOnStack) {
-            val functionCall: KtFunctionCall<*> = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
+            val functionCall: KtFunctionCall<*> = expr.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
             val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
             val name = target.name.asString()
             if (name == "isEmpty" || name == "isNotEmpty") {

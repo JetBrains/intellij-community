@@ -72,7 +72,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val argument = callExpression.singleArgumentExpression() ?: return null
 
         analyze(element) {
-            val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+            val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return null
             if (resolvedCall.symbol.valueParameters.size != 1) return null
             if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
             if (!element.isReceiverExpressionWithValue()) return null
@@ -155,7 +155,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val identifier = calleeExpression.getReferencedNameAsName()
         val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
         fun isOperatorOrCompatible(): Boolean {
-            val functionCall = calleeExpression.resolveCall()?.successfulFunctionCallOrNull()
+            val functionCall = calleeExpression.resolveCallOld()?.successfulFunctionCallOrNull()
             return (functionCall?.symbol as? KtFunctionSymbol)?.isOperator == true
         }
         return when (identifier) {
@@ -208,7 +208,7 @@ private fun KtCallableSymbol.isAnyEquals(): Boolean {
 
 context(KtAnalysisSession)
 private fun KtExpression.isAnyEquals(): Boolean {
-    val resolvedCall = resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return false
+    val resolvedCall = resolveCallOld()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return false
     return resolvedCall.symbol.isAnyEquals()
 }
 

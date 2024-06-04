@@ -387,7 +387,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val psiToCheck = referencesFromExpressionToExtract.flatMap { reference ->
                 // in case of an unresolved reference consider all containers applicable
                 val symbol = reference.mainReference.resolveToSymbol() ?: return@flatMap emptyList()
-                val implicitReceivers = reference.resolveCall()
+                val implicitReceivers = reference.resolveCallOld()
                     ?.singleCallOrNull<KtCallableMemberCall<*, *>>()
                     ?.getImplicitReceivers()
 

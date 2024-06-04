@@ -28,7 +28,7 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
     protected fun analyzeSurroundingCallExpression(element: PsiElement?) : CallableId? {
         val callExpression = element?.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java) ?: return null
         return analyze(callExpression) {
-            val singleFunctionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull()
+            val singleFunctionCallOrNull = callExpression.resolveCallOld()?.singleFunctionCallOrNull()
             singleFunctionCallOrNull?.symbol?.callableId
         }
     }

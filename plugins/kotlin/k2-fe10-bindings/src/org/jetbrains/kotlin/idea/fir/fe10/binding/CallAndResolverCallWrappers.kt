@@ -107,7 +107,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
     private fun getResolvedCall(call: Call): ResolvedCall<*>? {
         val ktElement = call.calleeExpression ?: call.callElement
 
-        val ktCallInfo = context.withAnalysisSession { ktElement.resolveCall() }
+        val ktCallInfo = context.withAnalysisSession { ktElement.resolveCallOld() }
         val diagnostic: KtDiagnostic?
         val ktCall: KtCall = when (ktCallInfo) {
             null -> return null
@@ -141,7 +141,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
         when (val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi) {
             is KtSecondaryConstructor -> {
                 val delegationCall = constructorPSI.getDelegationCall()
-                val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCall() }
+                val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCallOld() }
                 val diagnostic = ktCallInfo.safeAs<KtErrorCallInfo>()?.diagnostic
                 val constructorCall = ktCallInfo?.calls?.singleOrNull() ?: return null
 

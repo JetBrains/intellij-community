@@ -196,7 +196,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtNamedSymbol
+            val symbol = referenceExpression.resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KtDeclarationSymbol) {
                 val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol

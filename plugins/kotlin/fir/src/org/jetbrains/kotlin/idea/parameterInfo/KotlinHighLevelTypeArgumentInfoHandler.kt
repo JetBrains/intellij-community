@@ -55,7 +55,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
     context(KtAnalysisSession)
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>? {
         val callElement = argumentList.parentOfType<KtCallElement>() ?: return null
-        // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCall()`
+        // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCallOld()`
         // will NOT return a KtCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression

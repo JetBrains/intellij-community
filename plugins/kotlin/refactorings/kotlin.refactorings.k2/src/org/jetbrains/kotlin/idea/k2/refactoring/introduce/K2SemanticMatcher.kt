@@ -685,8 +685,8 @@ object K2SemanticMatcher {
     ): Boolean {
         if (areNonCallsMatchingByResolve(targetExpression, patternExpression, context)) return true
 
-        val targetCallInfo = targetExpression.resolveCall() ?: return false
-        val patternCallInfo = patternExpression.resolveCall() ?: return false
+        val targetCallInfo = targetExpression.resolveCallOld() ?: return false
+        val patternCallInfo = patternExpression.resolveCallOld() ?: return false
 
         if (targetCallInfo is KtErrorCallInfo && patternCallInfo is KtErrorCallInfo) {
             if (targetCallInfo.isUnresolvedCall() != patternCallInfo.isUnresolvedCall()) return false

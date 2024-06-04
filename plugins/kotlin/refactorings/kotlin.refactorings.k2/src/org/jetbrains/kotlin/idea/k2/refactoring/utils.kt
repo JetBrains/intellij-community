@@ -139,7 +139,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
     if (callee !is KtNameReferenceExpression) return true
 
     analyze(callee) {
-        val resolveCall = callee.resolveCall() ?: return false
+        val resolveCall = callee.resolveCallOld() ?: return false
         val call = resolveCall.successfulFunctionCallOrNull()
 
         fun KtType.isFunctionalType(): Boolean = this is KtTypeParameterType || isSuspendFunctionType || isFunctionType ||  isFunctionalInterfaceType

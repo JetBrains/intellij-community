@@ -319,7 +319,7 @@ class SmartStepTargetVisitor(
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
-                val resolvedCall = expression.resolveCall() as? KtSuccessCallInfo ?: return
+                val resolvedCall = expression.resolveCallOld() as? KtSuccessCallInfo ?: return
                 val variableAccessCall = resolvedCall.call as? KtVariableAccessCall ?: return
                 val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KtPropertySymbol ?: return
                 recordProperty(expression, symbol)
@@ -330,7 +330,7 @@ class SmartStepTargetVisitor(
 
     private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
         analyze(expression) {
-            val resolvedCall = expression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+            val resolvedCall = expression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
             val symbol = resolvedCall.partiallyAppliedSymbol.symbol
             if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
                 return

@@ -114,7 +114,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                             @OptIn(KaAllowAnalysisFromWriteAction::class)
                             allowAnalysisFromWriteAction {
                                 analyze(elt) {
-                                    val annotationSymbol = elt.resolveCall()?.singleConstructorCallOrNull()?.symbol
+                                    val annotationSymbol = elt.resolveCallOld()?.singleConstructorCallOrNull()?.symbol
                                         ?: return false
                                     val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
                                     val fqName = annotationType.classId.asFqNameString()

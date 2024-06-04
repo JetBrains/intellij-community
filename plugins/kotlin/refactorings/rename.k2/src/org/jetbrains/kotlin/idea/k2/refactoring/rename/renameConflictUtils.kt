@@ -115,7 +115,7 @@ fun checkCallableShadowing(
             //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
             val copyCallExpression =
                 PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
-            val resolveCall = copyCallExpression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+            val resolveCall = copyCallExpression?.resolveCallOld()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
             if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
                 val getter = resolvedSymbol.javaGetterSymbol.psi
@@ -124,7 +124,7 @@ fun checkCallableShadowing(
                 getter
             } else {
                 val element = resolvedSymbol?.psi
-                    //callable references are ignored now by resolveCall() in AA, thus they require separate treatment here
+                    //callable references are ignored now by resolveCallOld() in AA, thus they require separate treatment here
                     ?: (copyCallExpression as? KtCallableReferenceExpression)?.callableReference?.mainReference?.resolve()
                 externalDeclarations.addIfNotNull(element)
                 element
@@ -257,7 +257,7 @@ private data class QualifiedState(val expression: KtExpression?, val explicitlyQ
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
     val psiFactory = KtPsiFactory(callExpression.project)
     analyze(callExpression) {
-        val appliedSymbol = callExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        val appliedSymbol = callExpression.resolveCallOld()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
 
         fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {

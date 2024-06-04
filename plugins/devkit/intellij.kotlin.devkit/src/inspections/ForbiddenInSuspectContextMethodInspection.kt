@@ -106,7 +106,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val functionCall = expression.resolveCall()?.singleFunctionCallOrNull()
+        val functionCall = expression.resolveCallOld()?.singleFunctionCallOrNull()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KtNamedSymbol) return

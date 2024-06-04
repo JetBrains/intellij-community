@@ -45,7 +45,7 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
     override fun prepareContext(element: KtCallExpression): List<Replacement>? {
         val replacements = findReplacementCandidatesByPsi(element)
 
-        val javaMethodFqName = element.resolveCall()
+        val javaMethodFqName = element.resolveCallOld()
             ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName()
 
         return replacements.filter {

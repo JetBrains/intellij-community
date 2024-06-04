@@ -179,7 +179,7 @@ object WrapWithSafeLetCallFixFactories {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
-        val functionalVariableSymbol = (calleeExpression.resolveCall()?.singleCallOrNull<KaSimpleVariableAccessCall>())?.symbol ?: return false
+        val functionalVariableSymbol = (calleeExpression.resolveCallOld()?.singleCallOrNull<KaSimpleVariableAccessCall>())?.symbol ?: return false
         val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
@@ -254,7 +254,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
         val callExpression = argumentExpression.parentOfType<KtCallExpression>()
-        val successCallTarget = callExpression?.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val successCallTarget = callExpression?.resolveCallOld()?.singleFunctionCallOrNull()?.symbol ?: return null
 
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
@@ -282,7 +282,7 @@ object WrapWithSafeLetCallFixFactories {
                 // In the following logic, if call is missing, unresolved, or contains error, we just stop here so the wrapped call would be
                 // inserted here.
                 val functionCall = parent.getParentOfType<KtCallExpression>(strict = true) ?: return true
-                val resolvedCall = functionCall.resolveCall()?.singleFunctionCallOrNull() ?: return true
+                val resolvedCall = functionCall.resolveCallOld()?.singleFunctionCallOrNull() ?: return true
                 return doesFunctionAcceptNull(resolvedCall, parent.argumentIndex) ?: true
             }
             parent is KtBinaryExpression -> {
@@ -290,7 +290,7 @@ object WrapWithSafeLetCallFixFactories {
                     // If current expression is an l-value in an assignment, just keep going up because one cannot assign to a let call.
                     return false
                 }
-                val resolvedCall = parent.resolveCall()?.singleFunctionCallOrNull()
+                val resolvedCall = parent.resolveCallOld()?.singleFunctionCallOrNull()
                 when {
                     resolvedCall != null -> {
                         // The binary expression is a call to some function

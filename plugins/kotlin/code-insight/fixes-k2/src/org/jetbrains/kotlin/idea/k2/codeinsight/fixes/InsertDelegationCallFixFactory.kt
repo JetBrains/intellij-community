@@ -57,7 +57,7 @@ internal object InsertDelegationCallFixFactory {
             val newDelegationCall = element.replaceImplicitDelegationCallWithExplicit(isThis)
 
             analyze(newDelegationCall) {
-                val resolvedCall = newDelegationCall.resolveCall()
+                val resolvedCall = newDelegationCall.resolveCallOld()
 
                 // if the new delegation call contains errors, or if there's a cycle in the delegation call chain,
                 // move the caret inside the parentheses.

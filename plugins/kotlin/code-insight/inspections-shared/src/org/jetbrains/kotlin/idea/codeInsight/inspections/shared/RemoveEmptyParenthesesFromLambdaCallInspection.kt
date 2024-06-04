@@ -39,7 +39,7 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgumentList): Unit? =
         ((element.parent as? KtCallExpression)
-            ?.resolveCall() is KtSuccessCallInfo)
+            ?.resolveCallOld() is KtSuccessCallInfo)
             .asUnit
 
     override fun createQuickFix(

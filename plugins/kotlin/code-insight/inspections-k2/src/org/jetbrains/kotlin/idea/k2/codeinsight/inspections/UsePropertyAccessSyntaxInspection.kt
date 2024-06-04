@@ -118,7 +118,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val problemHighlightType = getProblemHighlightType(symbolPsi)
 
             val receiverType =
-                callableReferenceExpression.resolveCall()
+                callableReferenceExpression.resolveCallOld()
                     ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
                     ?: callableReferenceExpression.getReceiverKtType()?.lowerBoundIfFlexible() ?: return
 
@@ -181,7 +181,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         analyze(callExpression) {
-            val resolvedCall = callExpression.resolveCall() ?: return
+            val resolvedCall = callExpression.resolveCallOld() ?: return
             val resolvedFunctionCall = resolvedCall.successfulFunctionCallOrNull() ?: return
 
             val successfulFunctionCallSymbol = resolvedFunctionCall.symbol
@@ -530,7 +530,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         val codeFragment =
             KtPsiFactory(callExpression.project).createExpressionCodeFragment(newExpression.text, callExpression)
         val contentElement = codeFragment.getContentElement() ?: return null
-        val resolvedCall = contentElement.resolveCall() ?: return null
+        val resolvedCall = contentElement.resolveCallOld() ?: return null
         if (resolvedCall is KtErrorCallInfo) {
             return null
         }

@@ -49,7 +49,7 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
     context(KtAnalysisSession)
     private fun KtTypeProjection.resolveType(): KtType? {
         val typeArgumentList = parent as KtTypeArgumentList
-        val call = (typeArgumentList.parent as? KtCallExpression)?.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val call = (typeArgumentList.parent as? KtCallExpression)?.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         val argumentsTypes = call.typeArgumentsMapping.map { it.value }.toTypedArray()
         val resolvedElementIndex = typeArgumentList.arguments.indexOf(this)
         return argumentsTypes[resolvedElementIndex]

@@ -105,7 +105,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     private fun KtNamedFunction.isJvmStatic() = annotationEntries.any { annotation ->
         annotation.shortName?.asString() == JVM_STATIC_FQN.shortName().asString() && allowAnalysisOnEdt {
             analyze(annotation) {
-                annotation.resolveCall()
+                annotation.resolveCallOld()
                     ?.singleConstructorCallOrNull()
                     ?.partiallyAppliedSymbol
                     ?.symbol

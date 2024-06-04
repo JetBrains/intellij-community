@@ -24,7 +24,7 @@ class KtLastLambdaParameterFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSma
         val isFunctionType = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(callElement) {
-                    val functionCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
+                    val functionCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return
                     val valueParameters = functionCall.symbol.valueParameters
                     if (functionCall.argumentMapping.size != valueParameters.size - 1) return
                     valueParameters.lastOrNull()?.returnType is KtFunctionalType

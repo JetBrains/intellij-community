@@ -251,7 +251,7 @@ object DebuggerUtils {
         val callExpression = KtPsiUtil.getParentCallIfPresent(argumentExpression) ?: return false
 
         return analyze(callExpression) f@ {
-            val call = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return@f false
+            val call = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return@f false
             val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return@f false
             return@f parameter.isCrossinline
         }

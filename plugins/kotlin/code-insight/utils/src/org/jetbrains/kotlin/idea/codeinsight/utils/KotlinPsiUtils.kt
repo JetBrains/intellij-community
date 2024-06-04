@@ -355,7 +355,7 @@ fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 context(KtAnalysisSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
-        resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+        resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
     return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
@@ -365,7 +365,7 @@ fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
 
-    val fqName = resolveCall()
+    val fqName = resolveCallOld()
         ?.singleFunctionCallOrNull()
         ?.partiallyAppliedSymbol
         ?.symbol

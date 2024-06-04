@@ -30,7 +30,7 @@ private fun PsiElement.findParentSuspendingLambda(): KtLambdaExpression? {
     if (containingArgument != null) {
       val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return@getParentOfTypesAndPredicate false
       analyze(callExpression) {
-        val functionCall = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return@getParentOfTypesAndPredicate false
+        val functionCall = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return@getParentOfTypesAndPredicate false
         val lambdaArgumentType = functionCall.argumentMapping[it]?.returnType ?: return@getParentOfTypesAndPredicate false
         return@getParentOfTypesAndPredicate lambdaArgumentType.isSuspendFunctionType
       }

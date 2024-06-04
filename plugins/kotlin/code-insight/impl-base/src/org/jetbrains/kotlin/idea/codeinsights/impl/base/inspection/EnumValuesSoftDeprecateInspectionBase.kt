@@ -47,7 +47,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                     return
                 }
                 analyze(callExpression) {
-                    val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+                    val resolvedCall = callExpression.resolveCallOld()?.successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
                     val enumClassSymbol = (resolvedCallSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return
 
@@ -142,7 +142,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
 
     context(KtAnalysisSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
-        val resolvedCall = expression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+        val resolvedCall = expression?.resolveCallOld()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
         return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()
     }
 

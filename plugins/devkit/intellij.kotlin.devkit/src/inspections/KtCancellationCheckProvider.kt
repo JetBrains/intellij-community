@@ -30,7 +30,7 @@ internal class KtCancellationCheckProvider : CancellationCheckProvider {
     }
 
     analyze(callExpression) {
-      val functionCalledSymbol = callExpression.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return false
+      val functionCalledSymbol = callExpression.resolveCallOld()?.singleFunctionCallOrNull()?.symbol ?: return false
       return functionCalledSymbol.callableId?.asSingleFqName() == FqName(cancellationCheckFqn)
     }
   }

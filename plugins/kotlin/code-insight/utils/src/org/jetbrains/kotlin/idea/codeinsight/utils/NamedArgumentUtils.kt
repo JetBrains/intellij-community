@@ -45,7 +45,7 @@ object NamedArgumentUtils {
         call: KtCallElement,
         startArgument: KtValueArgument?
     ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
-        val resolvedCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) {
             return null
         }
@@ -65,7 +65,7 @@ object NamedArgumentUtils {
     context(KtAnalysisSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) return null
         return getNameForNameableArgument(argument, resolvedCall)
     }

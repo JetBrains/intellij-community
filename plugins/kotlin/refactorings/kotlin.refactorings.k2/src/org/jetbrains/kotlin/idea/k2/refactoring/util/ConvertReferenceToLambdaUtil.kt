@@ -41,7 +41,7 @@ object ConvertReferenceToLambdaUtil {
     ): String? {
         val valueArgumentParent = element.parent as? KtValueArgument
         val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
-        val resolvedCall = callGrandParent?.resolveCall()?.successfulFunctionCallOrNull()
+        val resolvedCall = callGrandParent?.resolveCallOld()?.successfulFunctionCallOrNull()
         val matchingParameterType = resolvedCall?.argumentMapping?.get(element)?.returnType
         val matchingParameterIsExtension = matchingParameterType is KtFunctionalType && matchingParameterType.receiverType != null
 

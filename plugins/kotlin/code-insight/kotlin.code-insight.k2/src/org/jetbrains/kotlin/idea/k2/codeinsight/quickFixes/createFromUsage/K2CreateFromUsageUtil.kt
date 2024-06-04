@@ -69,7 +69,7 @@ object K2CreateFromUsageUtil {
     context (KtAnalysisSession)
     internal fun KtExpression.resolveExpression(): KtSymbol? {
         mainReference?.resolveToSymbol()?.let { return it }
-        val call = resolveCall()?.calls?.singleOrNull() ?: return null
+        val call = resolveCallOld()?.calls?.singleOrNull() ?: return null
         return if (call is KtCallableMemberCall<*, *>) call.symbol else null
     }
 

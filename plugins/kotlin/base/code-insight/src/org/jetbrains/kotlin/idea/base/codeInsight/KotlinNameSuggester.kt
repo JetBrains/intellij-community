@@ -181,7 +181,7 @@ class KotlinNameSuggester(
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySequence()
+        val resolvedCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return emptySequence()
         val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
         return suggestNameByValidIdentifierName(parameter.name.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
     }

@@ -18,7 +18,7 @@ object TypeParameterUtils {
 
     context(KtAnalysisSession)
     fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtElement): Set<KtTypeParameterSymbol> {
-        val call = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySet()
+        val call = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return emptySet()
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
         val returnType = callSymbol.returnType

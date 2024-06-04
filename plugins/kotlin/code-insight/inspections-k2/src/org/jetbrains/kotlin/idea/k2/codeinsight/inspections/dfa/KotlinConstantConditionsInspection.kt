@@ -440,7 +440,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
         private fun isCallToBuiltInMethod(call: KtCallExpression, methodName: String): Boolean {
             return analyze(call) {
-                val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return@analyze false
+                val functionCall: KtFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return@analyze false
                 val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return@analyze false
                 if (target.name.asString() != methodName) return@analyze false
                 return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
@@ -480,7 +480,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     if (!value) return false
                     val valueArgList = parent.parent as? KtValueArgumentList ?: return false
                     val call = valueArgList.parent as? KtCallExpression ?: return false
-                    val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return false
+                    val functionCall: KtFunctionCall<*> = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
                     val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
                     val name = target.name.asString()
                     if (name != "assert" && name != "require" && name != "check") return false

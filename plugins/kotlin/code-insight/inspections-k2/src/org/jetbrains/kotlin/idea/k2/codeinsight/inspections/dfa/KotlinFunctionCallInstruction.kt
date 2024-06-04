@@ -82,7 +82,7 @@ class KotlinFunctionCallInstruction(
         result: MutableList<DfaInstructionState>
     ): DfaValue {
         val factory = resultValue.factory
-        val functionCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return resultValue
+        val functionCall = call.resolveCallOld()?.singleFunctionCallOrNull() ?: return resultValue
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return resultValue
         val callEffects = functionSymbol.contractEffects
         for (effect in callEffects) {
@@ -187,7 +187,7 @@ class KotlinFunctionCallInstruction(
                 }
             }
         }
-        val functionCall = call.resolveCall()?.singleFunctionCallOrNull()
+        val functionCall = call.resolveCallOld()?.singleFunctionCallOrNull()
         var dfType = getExpressionDfType(call)
         if (functionCall != null) {
             val type = fromKnownDescriptor(functionCall, arguments, stateBefore)
@@ -262,12 +262,12 @@ class KotlinFunctionCallInstruction(
 
     context(KtAnalysisSession)
     private fun getPsiMethod(): PsiMethod? {
-        return call.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
+        return call.resolveCallOld()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
     }
 
     context(KtAnalysisSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
-        val constructedClass = (((expr.resolveCall() as? KtSuccessCallInfo)
+        val constructedClass = (((expr.resolveCallOld() as? KtSuccessCallInfo)
             ?.call as? KtCallableMemberCall<*, *>)
             ?.partiallyAppliedSymbol?.symbol as? KtConstructorSymbol)
             ?.getContainingSymbol() as? KtClassOrObjectSymbol

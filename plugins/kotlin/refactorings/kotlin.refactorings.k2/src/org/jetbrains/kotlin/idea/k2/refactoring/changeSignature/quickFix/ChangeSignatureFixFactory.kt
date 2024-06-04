@@ -145,7 +145,7 @@ object ChangeSignatureFixFactory {
         }
         val callElement = psi.parentOfType<KtCallElement>(input.type == ChangeType.REMOVE) ?: return null
         val functionCall =
-            ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)
+            ((callElement.resolveCallOld() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)
                 ?: return null
 
         val ktCallableDeclaration = functionCall.partiallyAppliedSymbol.symbol.psi as? KtNamedDeclaration
@@ -372,7 +372,7 @@ object ChangeSignatureFixFactory {
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val functionLikeSymbol =
-            ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)?.symbol as? KtFunctionLikeSymbol
+            ((callElement.resolveCallOld() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)?.symbol as? KtFunctionLikeSymbol
                 ?: return emptyList()
 
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()

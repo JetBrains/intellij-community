@@ -54,7 +54,7 @@ object K2CreateParameterFromUsageBuilder {
         val expression = arg.getArgumentExpression()?: return null
         analyze (arg) {
             val callExpression = (arg.parent?.parent as? KtCallElement) ?: return null
-            val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return null
+            val call = callExpression.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
             val namedDeclaration = call.partiallyAppliedSymbol.symbol.psi as? KtNamedDeclaration ?: return null
             val namedDeclClass = if (namedDeclaration is KtConstructor<*>) namedDeclaration.getContainingClassOrObject() else namedDeclaration
             val valVar = if (namedDeclClass is KtClass && (namedDeclClass.isData() || namedDeclClass.isAnnotation()))

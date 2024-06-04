@@ -207,7 +207,7 @@ private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArgument
 
     if (valueArgument.getArgumentName() != null) return false
 
-    val call = callElement.resolveCall()?.singleCallOrNull<KtFunctionCall<*>>() ?: return false
+    val call = callElement.resolveCallOld()?.singleCallOrNull<KtFunctionCall<*>>() ?: return false
 
     if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
             call.partiallyAppliedSymbol.signature,

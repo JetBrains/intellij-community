@@ -51,7 +51,7 @@ class CodeInliner(
     codeToInline: CodeToInline
 ) : AbstractCodeInliner<KtElement, KtParameter, KtType, KtDeclaration>(call, codeToInline) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
-        call.resolveCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+        call.resolveCallOld()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
     }
 
     fun doInline(): KtElement? {
@@ -63,7 +63,7 @@ class CodeInliner(
         val assignment = (qualifiedElement as? KtExpression)
             ?.getAssignmentByLHS()
             ?.takeIf { it.operationToken == KtTokens.EQ }
-        val originalDeclaration = analyze(call) { call.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration } ?: return null
+        val originalDeclaration = analyze(call) { call.resolveCallOld()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
             originalDeclaration.setter?.takeIf { inlineSetter && it.hasBody() } ?: originalDeclaration
         else
@@ -93,7 +93,7 @@ class CodeInliner(
         if (receiver == null) {
             analyze(call) {
                 val partiallyAppliedSymbol =
-                    call.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                    call.resolveCallOld()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 val receiverValue = partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver
                 if (receiverValue is KtImplicitReceiverValue) {
                     val symbol = receiverValue.symbol
@@ -164,7 +164,7 @@ class CodeInliner(
             namer = { it.nameAsSafeName },
             typeRetriever = {
                 analyze(callableForParameters) {
-                    call.resolveCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.getSymbol())
+                    call.resolveCallOld()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.getSymbol())
                 }
             },
             renderType = {

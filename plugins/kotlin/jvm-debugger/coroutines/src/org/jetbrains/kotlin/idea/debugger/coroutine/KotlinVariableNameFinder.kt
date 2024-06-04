@@ -127,7 +127,7 @@ private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpre
     private fun isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
         val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
-        val call = parentCall.resolveCall()?.singleFunctionCallOrNull() ?: return false
+        val call = parentCall.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
         val valueArgument = parentCall.getContainingValueArgument(expression) ?: return false
         val argumentSymbol = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argumentSymbol.returnType.isSuspendFunctionType

@@ -25,7 +25,7 @@ internal object AddDataModifierFixFactory {
         val callableSymbol = if (element is KtParameter && element.firstChild is KtDestructuringDeclaration) {
             (element as? KtParameter)?.getParameterSymbol()
         } else {
-            element.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
+            element.resolveCallOld()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
         }
 
         val type = (callableSymbol?.returnType as? KtNonErrorClassType)?.ownTypeArguments?.firstOrNull()?.type

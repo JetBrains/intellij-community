@@ -52,7 +52,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
         val typeClassElement = allowAnalysisOnEdt {
           analyze(property) {
             // return if it's an explicit constructor call
-            val resolveSymbol = property.initializer?.resolveCall()?.singleFunctionCallOrNull()?.symbol
+            val resolveSymbol = property.initializer?.resolveCallOld()?.singleFunctionCallOrNull()?.symbol
             val isConstructorCall = resolveSymbol is KtSamConstructorSymbol || resolveSymbol is KtConstructorSymbol
             if (isConstructorCall) return
 

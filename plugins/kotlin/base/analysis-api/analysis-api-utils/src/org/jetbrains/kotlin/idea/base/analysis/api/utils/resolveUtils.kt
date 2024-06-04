@@ -167,7 +167,7 @@ private val ARRAY_OF_FUNCTION_NAMES: Set<Name> = setOf(ArrayFqNames.ARRAY_OF_FUN
 
 context(KtAnalysisSession)
 fun isArrayOfCall(callElement: KtCallElement): Boolean {
-    val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return false
+    val resolvedCall = callElement.resolveCallOld()?.singleFunctionCallOrNull() ?: return false
     val callableId = resolvedCall.partiallyAppliedSymbol.signature.callableId ?: return false
     return callableId.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && callableId.callableName in ARRAY_OF_FUNCTION_NAMES
 }

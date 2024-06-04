@@ -165,7 +165,7 @@ internal fun insertExplicitTypeArguments(codeToInline: MutableCodeToInline) {
 internal fun removeContracts(codeToInline: MutableCodeToInline) {
     for (statement in codeToInline.statementsBefore) {
         analyze(statement) {
-            if (statement.resolveCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()?.asString() == "kotlin.contracts.contract"
+            if (statement.resolveCallOld()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()?.asString() == "kotlin.contracts.contract"
             ) {
                 codeToInline.addPreCommitAction(statement) {
                     codeToInline.statementsBefore.remove(it)
@@ -239,7 +239,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val receiverExpression = expression.getReceiverExpression()
         if (receiverExpression == null) {
             val (receiverValue, isSameReceiverType) = analyze(expression) {
-                val resolveCall = expression.resolveCall()
+                val resolveCall = expression.resolveCallOld()
                 val partiallyAppliedSymbol =
                     (resolveCall?.singleFunctionCallOrNull() ?: resolveCall?.singleVariableAccessCall())?.partiallyAppliedSymbol
 

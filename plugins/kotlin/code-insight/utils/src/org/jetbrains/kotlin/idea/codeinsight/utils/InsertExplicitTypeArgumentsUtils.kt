@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.types.Variance
 
 context(KtAnalysisSession)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
-    val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull() ?: return null
+    val resolvedCall = element.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
     val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
     if (typeParameterSymbols.isEmpty()) return null
     val renderedTypeParameters = buildList {
