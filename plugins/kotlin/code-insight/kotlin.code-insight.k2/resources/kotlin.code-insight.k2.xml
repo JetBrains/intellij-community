@@ -133,6 +133,11 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.k2.kmp.wasm.enabled"
+                 description="Enable KMP support in the K2 mode for WASM platform"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <!-- inlay hints -->
     <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
@@ -232,5 +237,6 @@
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
 
     <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.MultiplatformSupportAvailability"/>
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
   </extensions>
 </idea-plugin>
