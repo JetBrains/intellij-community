@@ -2,6 +2,7 @@
 package com.intellij.platform.navbar.backend.compatibility
 
 import com.intellij.ide.impl.dataRules.GetDataRule
+import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys.*
 import com.intellij.openapi.actionSystem.DataContext
@@ -12,7 +13,6 @@ import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
-
 
 internal class DefaultNavBarItemDataRule : GetDataRule {
 
@@ -30,6 +30,10 @@ internal class DefaultNavBarItemDataRule : GetDataRule {
                         ?: return null
 
     if (leaf.isValid) {
+      if (PsiUtilCore.getVirtualFile(leaf)
+            ?.getUserData(NavBarModelExtension.IGNORE_IN_NAVBAR) == true) {
+        return null
+      }
       return PsiNavBarItem(leaf, owner)
     }
     else {

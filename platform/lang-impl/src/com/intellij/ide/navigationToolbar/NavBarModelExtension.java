@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
@@ -25,6 +26,9 @@ import java.util.Collection;
  */
 public interface NavBarModelExtension {
   ExtensionPointName<NavBarModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbar");
+
+  @ApiStatus.Internal
+  Key<Boolean> IGNORE_IN_NAVBAR = Key.create("IGNORE_IN_NAVBAR");
 
   @Nullable
   default Icon getIcon(Object object) { return null; }

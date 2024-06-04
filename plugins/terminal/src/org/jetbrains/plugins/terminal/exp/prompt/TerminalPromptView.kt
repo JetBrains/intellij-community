@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp.prompt
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -141,6 +142,7 @@ internal class TerminalPromptView(
 
     FileDocumentManager.getInstance().getFile(editor.document)?.let {
       editor.setFile(it)
+      it.putUserData(NavBarModelExtension.IGNORE_IN_NAVBAR, true)
     }
     if (Registry.`is`("terminal.new.ui.inline.completion")) {
       TerminalInlineCompletion.getInstance(project).install(editor)
