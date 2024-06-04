@@ -54,7 +54,11 @@ sealed class InlineCompletionEventType {
   /**
    * This event is triggered when an inline completion session is cleared for any reason (see [finishType]).
    */
-  class Hide @ApiStatus.Internal constructor(val finishType: FinishType, val isCurrentlyDisplaying: Boolean) : InlineCompletionEventType()
+  class Hide @ApiStatus.Internal constructor(
+    val finishType: FinishType,
+    @Deprecated("This value is incorrect sometimes. Use Show event to determine if completion was shown")
+    val isCurrentlyDisplaying: Boolean
+  ) : InlineCompletionEventType()
 
   /**
    * This event is triggered in one of the following cases:
