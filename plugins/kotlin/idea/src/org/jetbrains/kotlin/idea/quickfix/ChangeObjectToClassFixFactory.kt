@@ -2,16 +2,16 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal object ChangeObjectToClassFixFactory : KotlinSingleIntentionActionFactory() {
-    override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtObjectDeclaration>? {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement as? KtConstructor<*> ?: return null
         val containingObject = element.containingClassOrObject as? KtObjectDeclaration ?: return null
-        return ChangeObjectToClassFix(containingObject)
+        return ChangeObjectToClassFix(containingObject).asIntention()
     }
 }
