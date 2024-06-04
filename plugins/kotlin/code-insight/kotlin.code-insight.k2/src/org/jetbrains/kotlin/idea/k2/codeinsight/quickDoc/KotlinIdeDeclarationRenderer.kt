@@ -71,7 +71,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
@@ -445,15 +444,13 @@ internal class KotlinIdeDeclarationRenderer(
 
                     else -> FqName.topLevel(name)
                 }
-                val text = if (qName.parent() == FqName.topLevel(StandardNames.BUILT_INS_PACKAGE_NAME)) name.renderName() else {
-                    val pathSegments = qName.pathSegments()
-                    val qualifiedName = pathSegments.take(pathSegments.indexOf(name) + 1).joinToString(".")
-                    val buffer = StringBuilder()
-                    DocumentationManagerUtil.createHyperlink(buffer, qualifiedName, name.renderName(), true, false)
-                    buffer.toString()
-                }
 
-                printer.append(highlight(text) { if (owner is KtTypeParameterType) asTypeParameterName else asClassName })
+                val pathSegments = qName.pathSegments()
+                val qualifiedName = pathSegments.take(pathSegments.indexOf(name) + 1).joinToString(".")
+                val buffer = StringBuilder()
+                DocumentationManagerUtil.createHyperlink(buffer, qualifiedName, name.renderName(), true, false)
+
+                printer.append(highlight(buffer.toString()) { if (owner is KtTypeParameterType) asTypeParameterName else asClassName })
             }
         }
     }
