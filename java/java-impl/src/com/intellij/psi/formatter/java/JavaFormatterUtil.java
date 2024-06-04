@@ -464,10 +464,19 @@ public final class JavaFormatterUtil {
       String referenceNameText = referenceName.getText();
       return ContainerUtil.or(KNOWN_TYPE_ANNOTATIONS, fqn -> {
         if (!fqn.endsWith(referenceNameText)) return false;
-        String packageName = StringUtil.getPackageName(fqn);
-        return importList.findOnDemandImportStatement(packageName) != null || importList.findSingleClassImportStatement(fqn) != null;
+        return isAnnotationInImportList(fqn, importList);
       });
     }
+  }
+
+  private static boolean isAnnotationInImportList(String annotationFqn, PsiImportList importList) {
+    String packageName = StringUtil.getPackageName(annotationFqn);
+    return ContainerUtil.or(importList.getImportStatements(), statement -> {
+      PsiJavaCodeReferenceElement referenceElement = statement.getImportReference();
+      if (referenceElement == null) return false;
+      String referenceElementText = referenceElement.getText();
+      return referenceElementText.equals(annotationFqn) || statement.isOnDemand() && referenceElementText.startsWith(packageName);
+    });
   }
 
   private static void putPreferredWrapInParentBlock(@NotNull AbstractJavaBlock block, @NotNull Wrap preferredWrap) {
