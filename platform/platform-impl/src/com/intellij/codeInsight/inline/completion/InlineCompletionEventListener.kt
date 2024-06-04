@@ -57,7 +57,11 @@ sealed class InlineCompletionEventType {
    */
   class Hide @ApiStatus.Internal constructor(
     val finishType: FinishType,
-    @Deprecated("This value is incorrect sometimes. Use Show event to determine if completion was shown")
+    @Deprecated("""
+      This value delegates to InlineCompletionContext.isCurrentlyDisplaying(). 
+      In cases of invalidation (e.g., mismatched typing), the context is already cleared, causing the method to return false, 
+      which can be misleading. 
+      Please use other methods of the listener to determine whether completion is or was being shown.""")
     val isCurrentlyDisplaying: Boolean
   ) : InlineCompletionEventType()
 
