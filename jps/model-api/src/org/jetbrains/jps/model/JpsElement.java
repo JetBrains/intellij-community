@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface JpsElement {
   /**
-   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.platform.workspace.storage.WorkspaceEntityStorage the workspace model}.
+   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.platform.workspace.storage.EntityStorage the workspace model}.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
@@ -29,7 +29,7 @@ public interface JpsElement {
   }
 
   /**
-   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.platform.workspace.storage.WorkspaceEntityStorage the workspace model}.
+   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.platform.workspace.storage.EntityStorage the workspace model}.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
