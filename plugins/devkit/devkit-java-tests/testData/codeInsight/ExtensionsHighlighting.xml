@@ -88,7 +88,7 @@
                    canBeEmptyString=""/>
 
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
-        <completion.contributor/>
+        <completion.contributor language=""/>
         <custom.custom/>
         <indirect.indirect/>
 
