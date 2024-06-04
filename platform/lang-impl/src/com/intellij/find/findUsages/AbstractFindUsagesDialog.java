@@ -73,7 +73,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   @ApiStatus.Internal
-  public void waitWithModalProgressUntilInitialized() {
+  void waitWithModalProgressUntilInitialized() {
     if (myScopeCombo != null) { // some dialogs don't even initialize, consider initialization complete for them
       myScopeCombo.waitWithModalProgressUntilInitialized();
     }
@@ -151,7 +151,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     var noUserSelectedScope = myScopeCombo == null || myScopeCombo.getSelectedScope() == null;
     if (noUserSelectedScope) {
       // This happens when the dialog doesn't even have a scope combo box, e.g., when searching for usages of a private method.
-      // In this case we use the "All" scope, and we don't save it, as it doesn't make any sense.
+      // In this case, we use the "All" scope, and we don't save it, as it doesn't make any sense.
       options.searchScope = GlobalSearchScope.allScope(myProject);
     }
     else {
@@ -205,7 +205,8 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb != null && cb.getParent() != null && cb.isSelected();
   }
 
-  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, JPanel panel, boolean toUpdate) {
+  @NotNull
+  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, @NotNull JPanel panel, boolean toUpdate) {
     StateRestoringCheckBox cb = createCheckbox(name, toSelect, toUpdate);
     JComponent decoratedCheckbox = new ComponentPanelBuilder(cb).createPanel();
     decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -215,6 +216,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb;
   }
 
+  @NotNull
   protected StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
     cb.setSelected(toSelect);
@@ -268,7 +270,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return null;
   }
 
-  protected void addUsagesOptions(JPanel panel) {
+  protected void addUsagesOptions(@NotNull JPanel panel) {
     if (mySearchForTextOccurrencesAvailable) {
       myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurrences.checkbox"),
                                                          myFindUsagesOptions.isSearchForTextOccurrences, panel, false);

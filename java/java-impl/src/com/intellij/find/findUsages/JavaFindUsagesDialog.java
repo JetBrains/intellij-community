@@ -82,7 +82,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   }
 
   @Override
-  protected void addUsagesOptions(JPanel optionsPanel) {
+  protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
     super.addUsagesOptions(optionsPanel);
     if (myIncludeOverloadedMethodsAvailable) {
       myCbIncludeOverloadedMethods = addCheckboxToPanel(JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
