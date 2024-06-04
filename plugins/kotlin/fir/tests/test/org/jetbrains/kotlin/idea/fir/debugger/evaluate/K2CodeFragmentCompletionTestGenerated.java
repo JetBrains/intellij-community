@@ -117,6 +117,16 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
             runTest("../../completion/testData/basic/codeFragments/noDuplicatesForSyntheticProperties.kt");
         }
 
+        @TestMetadata("privateAndProtectedProperties.kt")
+        public void testPrivateAndProtectedProperties() throws Exception {
+            runTest("../../completion/testData/basic/codeFragments/privateAndProtectedProperties.kt");
+        }
+
+        @TestMetadata("privateAndProtectedPropertiesOuterClass.kt")
+        public void testPrivateAndProtectedPropertiesOuterClass() throws Exception {
+            runTest("../../completion/testData/basic/codeFragments/privateAndProtectedPropertiesOuterClass.kt");
+        }
+
         @TestMetadata("privatesInSecondPressCompletion.kt")
         public void testPrivatesInSecondPressCompletion() throws Exception {
             runTest("../../completion/testData/basic/codeFragments/privatesInSecondPressCompletion.kt");

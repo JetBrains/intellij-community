@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
@@ -46,6 +47,8 @@ internal fun interface CompletionVisibilityChecker {
                     val classId = (symbol as? KaClassLikeSymbol)?.classId
                     if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
                 }
+
+                if (basicContext.originalKtFile is KtCodeFragment) return true
 
                 return isVisible(
                     symbol,
