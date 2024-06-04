@@ -80,14 +80,14 @@ internal class GHAccountsDetailsProvider(
       return accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
       }?.let { token ->
-        service<GithubApiRequestExecutor.Factory>().create(token)
+        service<GithubApiRequestExecutor.Factory>().create(account.server, token)
       }
     }
 
     private suspend fun getExecutor(accountManager: GHAccountManager, account: GithubAccount)
       : GithubApiRequestExecutor? {
       return accountManager.findCredentials(account)?.let { token ->
-        service<GithubApiRequestExecutor.Factory>().create(token)
+        service<GithubApiRequestExecutor.Factory>().create(account.server, token)
       }
     }
   }

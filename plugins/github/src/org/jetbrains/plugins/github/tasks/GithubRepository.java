@@ -337,7 +337,7 @@ final class GithubRepository extends BaseRepository {
 
   @NotNull
   private GithubApiRequestExecutor getExecutor() {
-    return GithubApiRequestExecutor.Factory.getInstance().create(getPassword(), myUseProxy);
+    return GithubApiRequestExecutor.Factory.getInstance().create(myUseProxy, getServer(), getPassword());
   }
 
   @NotNull

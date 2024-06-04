@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.*
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Factory
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHCompatibilityUtil
 
@@ -25,6 +25,6 @@ class GithubApiRequestExecutorManager {
   @RequiresBackgroundThread
   fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
     val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return null
-    return Factory.getInstance().create(token)
+    return Factory.getInstance().create(account.server, token)
   }
 }

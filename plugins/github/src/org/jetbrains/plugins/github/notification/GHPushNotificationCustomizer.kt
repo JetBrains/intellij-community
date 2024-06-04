@@ -81,7 +81,7 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
 
   private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {
     val token = accountManager.findCredentials(account) ?: return false
-    val executor = GithubApiRequestExecutor.Factory.getInstance().create(token)
+    val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
     val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return false
     val pullRequest = getPullRequest(executor, projectMapping, prBranch)
 

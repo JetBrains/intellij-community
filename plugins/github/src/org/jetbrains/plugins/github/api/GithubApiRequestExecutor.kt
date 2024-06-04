@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -27,6 +28,7 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
+import java.net.URL
 import java.util.*
 import java.util.zip.GZIPInputStream
 
@@ -47,7 +49,7 @@ sealed class GithubApiRequestExecutor {
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
   internal class WithTokenAuth(githubSettings: GithubSettings,
-                               private val tokenSupplier: () -> String,
+                               private val tokenSupplier: (URL) -> String?,
                                private val useProxy: Boolean) : Base(githubSettings) {
 
     @Throws(IOException::class, ProcessCanceledException::class)
@@ -60,7 +62,10 @@ sealed class GithubApiRequestExecutor {
       return createRequestBuilder(request)
         .tuner { connection ->
           request.additionalHeaders.forEach(connection::addRequestProperty)
-          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Bearer ${tokenSupplier()}")
+          val token = tokenSupplier(connection.url)
+          if (token != null) {
+            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, HttpSecurityUtil.createBearerAuthHeaderValue(token))
+          }
         }
         .useProxy(useProxy)
         .execute(request, indicator)
@@ -135,7 +140,7 @@ sealed class GithubApiRequestExecutor {
         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
       }
         .connectTimeout(githubSettings.connectionTimeout)
-        .userAgent("Intellij IDEA Github Plugin")
+        .userAgent(HttpClientUtil.getUserAgentValue(PLUGIN_USER_AGENT_NAME))
         .throwStatusCodeException(false)
         .forceHttps(false)
         .accept(request.acceptMimeType)
@@ -213,13 +218,19 @@ sealed class GithubApiRequestExecutor {
 
   @Service
   class Factory {
-    fun create(token: String): GithubApiRequestExecutor = create(token, true)
+    @Deprecated("Server must be provided to match URL for authorization")
+    fun create(token: String): GithubApiRequestExecutor = create(true) { token }
 
-    fun create(token: String, useProxy: Boolean = true): GithubApiRequestExecutor = create(useProxy) { token }
+    fun create(serverPath: GithubServerPath, token: String): GithubApiRequestExecutor = create(true, serverPath, token)
 
-    fun create(tokenSupplier: () -> String): GithubApiRequestExecutor = create(true, tokenSupplier)
+    internal fun create(tokenSupplier: MutableTokenSupplier): GithubApiRequestExecutor = create(true, tokenSupplier)
 
-    fun create(useProxy: Boolean = true, tokenSupplier: () -> String): GithubApiRequestExecutor =
+    fun create(useProxy: Boolean = true, serverPath: GithubServerPath, token: String): GithubApiRequestExecutor =
+      create(useProxy) {
+        if (isAuthorizedUrl(serverPath, it)) token else null
+      }
+
+    private fun create(useProxy: Boolean = true, tokenSupplier: (URL) -> String?): GithubApiRequestExecutor =
       WithTokenAuth(GithubSettings.getInstance(), tokenSupplier, useProxy)
 
     fun create(): GithubApiRequestExecutor = NoAuth(GithubSettings.getInstance())
@@ -231,10 +242,27 @@ sealed class GithubApiRequestExecutor {
   }
 
   companion object {
+    private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitHub-Plugin"
     private val LOG = logger<GithubApiRequestExecutor>()
+
+    private fun isAuthorizedUrl(serverPath: GithubServerPath, url: URL): Boolean {
+      if (url.host != serverPath.host && url.host != serverPath.apiHost) {
+        LOG.debug("URL $url host does not match the server $serverPath. Authorization will not be granted")
+        return false
+      }
+      if (url.port != (serverPath.port ?: -1)) {
+        LOG.debug("URL $url port does not match the server $serverPath. Authorization will not be granted")
+        return false
+      }
+      if (url.protocol != null && url.protocol != serverPath.schema) {
+        LOG.debug("URL $url protocol does not match the server $serverPath. Authorization will not be granted")
+        return false
+      }
+      return true
+    }
   }
 
-  internal class MutableTokenSupplier(token: String) : () -> String {
+  internal class MutableTokenSupplier(private val serverPath: GithubServerPath, token: String) : (URL) -> String? {
     private val authDataChangedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
     @Volatile
@@ -246,7 +274,7 @@ sealed class GithubApiRequestExecutor {
         }
       }
 
-    override fun invoke(): String = token
+    override fun invoke(url: URL): String? = if (isAuthorizedUrl(serverPath, url)) token else null
 
     fun addListener(disposable: Disposable, listener: () -> Unit) =
       SimpleEventListener.addDisposableListener(authDataChangedEventDispatcher, disposable, listener)
