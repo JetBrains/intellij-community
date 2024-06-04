@@ -59,9 +59,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection groupKey="my.key" key="my.key"/>
-    <localInspection groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
-    <localInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+    <localInspection language="" groupKey="my.key" key="my.key"/>
+    <localInspection language="" groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
+    <localInspection language="" groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                      key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
 
@@ -181,9 +181,9 @@
   </extensions>
   
   <extensions defaultExtensionNs="custom">
-    <myCustomInspection groupKey="my.key" key="my.key"/>
-    <myCustomInspection groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
-    <myCustomInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+    <myCustomInspection language="" groupKey="my.key" key="my.key"/>
+    <myCustomInspection language="" groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
+    <myCustomInspection language="" groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                         key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
   </extensions>
 
