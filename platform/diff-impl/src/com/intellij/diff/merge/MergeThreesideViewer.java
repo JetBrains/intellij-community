@@ -1164,6 +1164,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   @RequiresEdt
   private void runBeforeExternalOperation() {
     myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, true);
+    enableResolveActions(false);
     getEditor().setViewer(true);
 
     for (TextMergeChange change : getAllChanges()) {
@@ -1174,11 +1175,18 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   @RequiresEdt
   private void runAfterExternalOperation() {
     myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, null);
+    enableResolveActions(true);
     getEditor().setViewer(false);
 
     for (TextMergeChange change : getAllChanges()) {
       change.reinstallHighlighters();
     }
+  }
+
+  private void enableResolveActions(boolean enable) {
+    myLeftResolveAction.setEnabled(enable);
+    myRightResolveAction.setEnabled(enable);
+    myAcceptResolveAction.setEnabled(enable);
   }
 
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
