@@ -353,7 +353,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       }
 
       val template = AllIcons.FileTypes.Text
-      tabbedPane.insertTab(
+      val tab = tabbedPane.insertTab(
         file = file,
         icon = EmptyIcon.create(template.iconWidth, template.iconHeight),
         component = composite.component,
@@ -363,6 +363,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         parentDisposable = composite,
         isOpenedInBulk = isOpenedInBulk,
       )
+
+      composite.coroutineScope.launch {
+        composite.selectedEditorWithProvider.collect {
+          tab.setTabPaneActions(it?.fileEditor?.tabActions)
+        }
+      }
+
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
       if (hash != null && System.identityHashCode(tabbedPane.tabs) == hash) {
@@ -414,23 +421,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   @RequiresEdt
-  internal fun postAddComposite(
-    composite: EditorComposite,
-    pin: Boolean,
-    selectAsCurrent: Boolean,
-  ) {
-    if (pin) {
-      composite.isPinned = true
-      if (composite.isPreview) {
-        composite.isPreview = false
-        owner.scheduleUpdateFileColor(composite.file)
-      }
-    }
-
-    if (selectAsCurrent) {
-      _currentCompositeFlow.value = composite
-      owner.setCurrentWindow(window = this)
-    }
+  internal fun selectTabOnStartup(composite: EditorComposite, tabToSelect: TabInfo) {
+    tabbedPane.editorTabs.selectTabSilently(tabToSelect)
+    _currentCompositeFlow.value = composite
+    owner.setCurrentWindow(window = this)
   }
 
   @JvmOverloads

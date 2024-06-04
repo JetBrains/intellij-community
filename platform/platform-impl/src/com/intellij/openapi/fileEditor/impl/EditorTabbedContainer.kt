@@ -81,7 +81,8 @@ class EditorTabbedContainer internal constructor(
   private val window: EditorWindow,
   private val coroutineScope: CoroutineScope,
 ) : CloseTarget {
-  private val editorTabs: EditorTabs
+  @JvmField
+  internal val editorTabs: JBEditorTabs
   private val dragOutDelegate: DragOutDelegate
 
   init {
@@ -274,9 +275,9 @@ class EditorTabbedContainer internal constructor(
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
     isOpenedInBulk: Boolean,
-  ) {
+  ): TabInfo {
     editorTabs.findInfo(file)?.let {
-      return
+      return it
     }
 
     val tab = createTabInfo(
@@ -298,13 +299,14 @@ class EditorTabbedContainer internal constructor(
     else {
       editorTabs.addTabSilently(info = tab, index = indexToInsert)
     }
+    return tab
   }
 
-  internal fun insertTab(tabs: List<TabInfo>) {
+  internal fun setTabs(tabs: List<TabInfo>) {
+    editorTabs.setTabs(tabs)
     for (tab in tabs) {
       tab.setDragOutDelegate(dragOutDelegate)
     }
-    editorTabs.setTabs(tabs)
   }
 
   val isEmptyVisible: Boolean

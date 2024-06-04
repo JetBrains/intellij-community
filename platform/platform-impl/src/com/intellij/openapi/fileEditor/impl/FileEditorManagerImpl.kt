@@ -491,9 +491,8 @@ open class FileEditorManagerImpl(
         }
       }
 
-      for (each in getAllSplitters()) {
-        each.updateFileBackgroundColorAsync(file)
-        each.updateTabPaneActions(file)
+      for (splitters in getAllSplitters()) {
+        splitters.updateFileBackgroundColorAsync(file)
       }
     }
   }
@@ -2273,26 +2272,42 @@ open class FileEditorManagerImpl(
         }) {
         composite.isPreview = true
       }
+      if (fileEntry.pinned) {
+        composite.isPinned = true
+        if (composite.isPreview) {
+          composite.isPreview = false
+          composite.coroutineScope.launch {
+            splitters.updateFileColor(composite.file, compositeAndTab = composite to tab)
+          }
+        }
+      }
 
       tabs.add(tab)
-
-      openFileSetModificationCount.increment()
     }
 
-    window.tabbedPane.insertTab(tabs)
+    openFileSetModificationCount.increment()
+
+    window.tabbedPane.setTabs(tabs)
 
     for ((index, fileEntry) in fileEntries.withIndex()) {
-      val composite = tabs.get(index).composite
-      window.postAddComposite(
-        pin = fileEntry.pinned,
-        selectAsCurrent = fileEntry.currentInTab,
-        composite = composite,
-      )
+      val tab = tabs.get(index)
+      val composite = tab.composite
 
-      if (requestFocus && fileEntry.currentInTab) {
-        composite.coroutineScope.launch {
-          focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)
-          splitters.updateFrameTitle()
+      if (fileEntry.currentInTab) {
+        window.selectTabOnStartup(tabToSelect = tab, composite = composite)
+
+        if (requestFocus) {
+          composite.coroutineScope.launch {
+            if (focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)) {
+              // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
+              splitters.updateFrameTitle()
+            }
+          }
+          composite.coroutineScope.launch {
+            composite.selectedEditorWithProvider.collect {
+              tab.setTabPaneActions(it?.fileEditor?.tabActions)
+            }
+          }
         }
       }
 

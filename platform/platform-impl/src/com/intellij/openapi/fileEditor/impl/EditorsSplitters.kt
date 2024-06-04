@@ -498,14 +498,6 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  internal fun updateTabPaneActions(file: VirtualFile) {
-    for (window in windows) {
-      val (composite, tab) = window.findCompositeAndTab(file) ?: continue
-      tab.setTabPaneActions(composite.selectedEditor?.tabActions)
-      (window.tabbedPane.tabs as JBTabsImpl).updateEntryPointToolbar()
-    }
-  }
-
   internal val splitCount: Int
     get() = if (componentCount > 0) getSplitCount(getComponent(0) as JComponent) else 0
 

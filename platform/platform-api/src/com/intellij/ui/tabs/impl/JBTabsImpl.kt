@@ -1435,6 +1435,23 @@ open class JBTabsImpl @JvmOverloads constructor(
     }
   }
 
+  @Internal
+  @RequiresEdt
+  fun selectTabSilently(tab: TabInfo) {
+    setSelectedInfo(tab)
+    setComponentZOrder(tab.tabLabel!!, 0)
+    setComponentZOrder(scrollBar, 0)
+    val oldValue = isMouseInsideTabsArea
+    try {
+      val component = tab.component
+      assert(component.parent == null)
+      add(component)
+    }
+    finally {
+      isMouseInsideTabsArea = oldValue
+    }
+  }
+
   protected open val focusOwnerToStore: JComponent?
     get() {
       val owner = getFocusOwner() ?: return null
@@ -2503,7 +2520,6 @@ open class JBTabsImpl @JvmOverloads constructor(
       remove(it.component)
     }
 
-    val selectedInfo = selectedInfo
     val tabActionGroup = selectedInfo?.tabPaneActions
     val entryPointActionGroup = entryPointActionGroup
     if (tabActionGroup == null && entryPointActionGroup == null) {

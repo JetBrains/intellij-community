@@ -817,26 +817,29 @@ private fun isDumbAware(editor: FileEditor): Boolean {
 internal suspend fun focusEditorOnCompositeOpenComplete(
   composite: EditorComposite,
   splitters: EditorsSplitters,
-) {
-  doOnCompositeOpenComplete(composite = composite) { _ ->
-    withContext(Dispatchers.EDT) {
-      val currentSelectedComposite = splitters.currentCompositeFlow.value
-      // while the editor was loading, the user switched to another editor - don't steal focus
-      if (currentSelectedComposite === composite) {
-        val preferredFocusedComponent = composite.preferredFocusedComponent
-        if (preferredFocusedComponent == null) {
-          LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
-        }
-        else {
-          preferredFocusedComponent.requestFocusInWindow()
-          IdeFocusManager.getGlobalInstance().toFront(splitters)
-        }
+): Boolean {
+  // wait for the file editor
+  composite.selectedEditorWithProvider.filterNotNull().first()
+  return withContext(Dispatchers.EDT) {
+    val currentSelectedComposite = splitters.currentCompositeFlow.value
+    // while the editor was loading, the user switched to another editor - don't steal focus
+    if (currentSelectedComposite === composite) {
+      val preferredFocusedComponent = composite.preferredFocusedComponent
+      if (preferredFocusedComponent == null) {
+        LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
+        false
       }
       else {
-        LOG.warn("Cannot focus editor (splitters=$splitters, " +
-                 "composite=$composite, currentComposite=$currentSelectedComposite, " +
-                 "reason=selection changed)")
+        preferredFocusedComponent.requestFocusInWindow()
+        IdeFocusManager.getGlobalInstance().toFront(splitters)
+        true
       }
+    }
+    else {
+      LOG.warn("Cannot focus editor (splitters=$splitters, " +
+               "composite=$composite, currentComposite=$currentSelectedComposite, " +
+               "reason=selection changed)")
+      false
     }
   }
 }
