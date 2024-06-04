@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
@@ -126,8 +125,7 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                         ide.dependenciesSources(JvmDependency(script.sourcePath.map { File(it) }))
                     }.adjustByDefinition(definition)
 
-                val updatedConfiguration =
-                    project.runReadActionInSmartMode { refineScriptCompilationConfiguration(sourceCode, definition, project, configuration) }
+                val updatedConfiguration = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
                 configurationsByFile[script.virtualFile] = updatedConfiguration
 
                 val configurationWrapper = updatedConfiguration.valueOrNull() ?: continue
