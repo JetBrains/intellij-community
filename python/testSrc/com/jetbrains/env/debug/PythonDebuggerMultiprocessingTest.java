@@ -123,6 +123,43 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testSubprocess() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_subprocess.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForTerminate();
+        outputContains("The subprocess finished with the return code 0.");
+      }
+    });
+  }
+
+  @Test
+  public void testSubprocessModule() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_module.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
+        setWaitForTermination(false);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Module returned code 0");
+      }
+    });
+  }
+
+  @Test
   public void testMultiprocessProcess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_process.py") {
       @Override
@@ -142,24 +179,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
-      }
-    });
-  }
-
-  @Test
-  public void testSubprocess() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_subprocess.py") {
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 8);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        resume();
-        waitForTerminate();
-        outputContains("The subprocess finished with the return code 0.");
       }
     });
   }
@@ -191,25 +210,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Collections.singleton("python3.8");
-      }
-    });
-  }
-
-  @Test
-  public void testSubprocessModule() {
-    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_module.py") {
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
-        setWaitForTermination(false);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        eval("x").hasValue("42");
-        resume();
-        waitForOutput("Module returned code 0");
       }
     });
   }
