@@ -851,11 +851,7 @@ open class FileEditorManagerImpl(
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
 
-    val composite = doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
-    if (composite is EditorComposite) {
-      blockingWaitForCompositeFileOpen(composite)
-    }
-    return composite
+    return doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
   }
 
   private fun doOpenFile(file: VirtualFile, windowToOpenIn: EditorWindow, options: FileEditorOpenOptions): FileEditorComposite {
@@ -2559,11 +2555,8 @@ private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
     runBlocking {
       val mainJob = coroutineContext.job
       val loopJob = launch {
-        attachAsChildTo(composite.coroutineScope)
-
-        val queue = IdeEventQueue.getInstance()
         ThreadingAssertions.assertEventDispatchThread()
-
+        val queue = IdeEventQueue.getInstance()
         while (true) {
           val event = queue.getNextEvent()
           queue.dispatchEvent(event)

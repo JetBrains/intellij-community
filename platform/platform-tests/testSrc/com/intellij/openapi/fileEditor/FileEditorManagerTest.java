@@ -97,7 +97,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
-    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), null, new FileEditorOpenOptions().withRequestFocus());
     // the limit is still 1, but a pinned flag prevents closing the tab, and the actual tab number may exceed the limit
     assertOpenFiles("foo.xml", "3.txt");
 

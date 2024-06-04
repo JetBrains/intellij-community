@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.EdtDataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -111,15 +112,19 @@ open class EditorComposite internal constructor(
   internal var selfBorder: Boolean = false
     private set
 
-
   @JvmField
   internal val shownDeferred = CompletableDeferred<Unit>()
 
   init {
     EDT.assertIsEdt()
 
-    UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       shownDeferred.complete(Unit)
+    }
+    else {
+      UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
+        shownDeferred.complete(Unit)
+      }
     }
 
     coroutineScope.launch(ModalityState.any().asContextElement()) {
