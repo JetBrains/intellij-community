@@ -60,7 +60,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
         val fileSymbol = callElement.containingKtFile.getFileSymbol()
-        val symbols = callElement.collectCallCandidates()
+        val symbols = callElement.collectCallCandidatesOld()
             .mapNotNull { (it.candidate as? KtCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KtFunctionLikeSignature<*>>()
             .filter { candidate ->

@@ -191,7 +191,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         val candidates = analyzeForUast(ktExpression) {
             buildList {
-                ktExpression.collectCallCandidates().forEach { candidateInfo ->
+                ktExpression.collectCallCandidatesOld().forEach { candidateInfo ->
                     when (val candidate = candidateInfo.candidate) {
                         is KtFunctionCall<*> -> {
                             add(candidate.partiallyAppliedSymbol.symbol)
