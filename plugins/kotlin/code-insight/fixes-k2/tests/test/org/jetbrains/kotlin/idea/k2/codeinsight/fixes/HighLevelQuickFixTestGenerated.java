@@ -6121,7 +6121,34 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeDefaultParameterValue")
+    public static class RemoveDefaultParameterValue extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actualFunctionWithDefaultArguments.kt")
+        public void testActualFunctionWithDefaultArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDefaultParameterValue/actualFunctionWithDefaultArguments.kt");
+        }
+
+        @TestMetadata("defaultValueNotAllowedInOverride.kt")
+        public void testDefaultValueNotAllowedInOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDefaultParameterValue/defaultValueNotAllowedInOverride.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeDefaultParameterValue/hasComment.kt");
+        }
+    }
 
 
 

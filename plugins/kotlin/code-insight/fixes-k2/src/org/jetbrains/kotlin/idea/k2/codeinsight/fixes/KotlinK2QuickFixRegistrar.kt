@@ -107,6 +107,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConvertLateinitPropertyToNotNullDelegateFixFactory.convertLateinitPropertyToNotNullDelegateFixFactory)
         registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory.addReifiedToTypeParameterOfFunctionFixFactory)
         registerFactory(ChangeObjectToClassFixFactory.changeObjectToClassFixFactory)
+        registerFactory(RemoveDefaultParameterValueFixFactory.removeDefaultParameterValueFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
