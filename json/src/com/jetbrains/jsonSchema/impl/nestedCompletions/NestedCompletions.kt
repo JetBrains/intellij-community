@@ -88,7 +88,7 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
     cleanupWhitespacesAndDelete(element)
     PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
     var psiElement = pointer.element?.lastLeaf()
-    while (psiElement is PsiWhiteSpace || psiElement is PsiComment) {
+    while (psiElement is PsiWhiteSpace || psiElement is PsiErrorElement) {
       psiElement = psiElement.prevLeaf()
     }
     if (psiElement != null) {
