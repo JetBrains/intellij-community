@@ -37,14 +37,11 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.*
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
-import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
-import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_ORDER_SENSITIVE
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
-import com.jetbrains.jsonSchema.impl.light.nodes.isNotBlank
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
 import one.util.streamex.StreamEx
 import java.util.*
@@ -792,159 +789,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma, walker, insertColon)
         }
       }
-    }
-
-    private fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPath: SchemaPath?) {
-      if (completionPath == null) return
-      val element = context.file.findElementAt(context.startOffset)?.parent ?: return
-      val walker = JsonLikePsiWalker.getWalker(element) ?: return
-      val container = element.parent ?: return
-      val path = completionPath.accessor()
-      if (path.isNotEmpty()) {
-        val parentObject = walker.createValueAdapter(container)?.asObject.let {
-          it ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
-            walker.createValueAdapter(it)?.asObject
-          }
-        } ?: return
-        val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
-        val pointer = SmartPointerManager.createPointer(newElement)
-        cleanupWhitespacesAndDelete(element)
-        PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
-        var psiElement = pointer.element?.lastLeaf()
-        while (psiElement is PsiWhiteSpace || psiElement is PsiComment) {
-          psiElement = psiElement.prevLeaf()
-        }
-        if (psiElement != null) {
-          context.editor.caretModel.moveToOffset(psiElement.endOffset)
-        }
-      }
-    }
-
-    private fun replaceAtCaretAndGetParentObject(element: PsiElement,
-                           walker: JsonLikePsiWalker,
-                           context: InsertionContext,
-                           path: List<String>): PsiElement {
-      val newProperty = walker.getSyntaxAdapter(context.project).createProperty(path.first(), "foo", context.project)
-      walker.getParentPropertyAdapter(newProperty)!!.values.single().delegate.replace(element.copy())
-
-      val parentAdapter = element.parent?.let { walker.getParentPropertyAdapter(it) }
-      if (parentAdapter != null && parentAdapter.nameValueAdapter?.delegate == element) {
-        return element.parent.replace(newProperty).parent
-      }
-
-      return element.replace(newProperty.parent)
-    }
-
-    private fun doExpand(parentObject: JsonObjectValueAdapter,
-                         completionPath: List<String>,
-                         walker: JsonLikePsiWalker,
-                         element: PsiElement,
-                         index: Int,
-                         fakeProperty: PsiElement?): PsiElement? {
-      val property: JsonPropertyAdapter = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
-                                          ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
-      fakeProperty?.let {
-        cleanupWhitespacesAndDelete(it)
-      }
-      val value = property.values.singleOrNull()
-      if (value == null) return null
-      if (index + 1 < completionPath.size) {
-        val project = parentObject.delegate.project
-        val fake = walker.getSyntaxAdapter(project).createProperty("f", "f", project)
-        val newValue = if (value.isObject) value.delegate else value.delegate.replace(fake.parent)
-        val newValueAsObject = walker.createValueAdapter(newValue)!!.asObject!!
-        return doExpand(newValueAsObject, completionPath, walker, element, index + 1,
-                        if (value.isObject) null
-                        else newValueAsObject.propertyList.single().delegate)
-      }
-      else {
-        val movedElement =
-          if (value.isObject) {
-            addBeforeOrAfter(value, element.copy(), element)
-          }
-          else {
-            val newElement = replaceValueForNesting(walker, value, element)
-            newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
-            newElement
-          }
-        return movedElement
-      }
-    }
-
-    private fun replaceValueForNesting(walker: JsonLikePsiWalker,
-                                       value: JsonValueAdapter,
-                                       element: PsiElement): PsiElement {
-      return if (walker.defaultObjectValue.isNotBlank()) {
-        value.delegate.replace(
-          walker.getSyntaxAdapter(value.delegate.project).createProperty("f", "f",
-                                                                         value.delegate.project).parent.also {
-            walker.createValueAdapter(it)!!.asObject!!.propertyList.single().let {
-              it.nameValueAdapter!!.delegate.replace(element.copy())
-            }
-          }
-        ).let {
-          walker.createValueAdapter(it)!!.asObject!!.propertyList.single().values.single().delegate
-        }
-      }
-      else if (value.delegate.text == element.text) value.delegate else value.delegate.replace(element.copy())
-                                       }
-
-    private fun addBeforeOrAfter(value: JsonValueAdapter,
-                                 elementToAdd: PsiElement,
-                           element: PsiElement): PsiElement {
-      val properties = value.asObject?.propertyList.orEmpty()
-      val firstProperty = properties.firstOrNull()
-      val lastProperty = properties.lastOrNull()
-      return if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
-        val newElement = value.delegate.addAfter(elementToAdd, lastProperty.delegate)
-        newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
-        newElement
-      }
-      else {
-        val newElement = value.delegate.addBefore(elementToAdd, firstProperty?.delegate)
-        newElement.parent.addAfter(createLeaf("\n", newElement)!!, newElement)
-        newElement
-      }
-    }
-
-    private fun cleanupWhitespacesAndDelete(it: PsiElement) {
-      // cleanup redundant whitespace
-      var next = it.nextSibling
-      while (next != null && next.text.isBlank()) {
-        val n = next
-        next = next.nextSibling
-        n.delete()
-      }
-      var prev = it.prevSibling
-      while (prev != null && prev.text.isBlank()) {
-        val n = prev
-        prev = prev.prevSibling
-        n.delete()
-      }
-      it.delete()
-    }
-
-    private fun createLeaf(content: String, context: PsiElement): LeafPsiElement? {
-      val psiFileFactory = PsiFileFactory.getInstance(context.project)
-      return psiFileFactory.createFileFromText("dummy." + context.containingFile.virtualFile.extension,
-                                               context.containingFile.fileType, content)
-        .descendantsOfType<LeafPsiElement>().firstOrNull { it.text == content }
-    }
-
-    private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, propertyName: String, walker: JsonLikePsiWalker, element: PsiElement): JsonPropertyAdapter {
-      val project = parentObject.delegate.project
-      val syntaxAdapter = walker.getSyntaxAdapter(project)
-      return syntaxAdapter.createProperty(propertyName, "f", project).also {
-        walker.getParentPropertyAdapter(it)!!.values.single().delegate.replace(element)
-      }.let {
-        if (element.parent == parentObject.delegate) {
-          parentObject.delegate.addAfter(it, element)
-        }
-        else {
-          addBeforeOrAfter(parentObject, it, element)
-          //parentObject.delegate.addAfter(it, parentObject.propertyList.lastOrNull()?.delegate)
-        }
-      }.let { walker.getParentPropertyAdapter(it)!! }
     }
 
     private fun insertPropertyWithEnum(context: InsertionContext,
