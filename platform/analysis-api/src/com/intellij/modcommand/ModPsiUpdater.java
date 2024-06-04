@@ -5,10 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +43,14 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    */
   @Contract("null -> null; !null -> !null")
   <E extends PsiElement> E getWritable(E element) throws IllegalStateException;
-  
+
+  /**
+   * @param copyFile writable copy of a file
+   * @return an original physical file that corresponds to the supplied copy; 
+   * @throws IllegalArgumentException if the supplied file does not found among tracked copy-files of this updater.
+   */
+  @NotNull PsiFile getOriginalFile(@NotNull PsiFile copyFile) throws IllegalArgumentException;
+
   /**
    * Highlights the given element as a search result. Does nothing when executed non-interactively.
    * The current file may be changed if the element is located in a different file.

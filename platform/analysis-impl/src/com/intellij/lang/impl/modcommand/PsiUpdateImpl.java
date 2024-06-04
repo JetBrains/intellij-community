@@ -303,6 +303,15 @@ final class PsiUpdateImpl {
         return tracker;
       });
     }
+    
+    @Override
+    public @NotNull PsiFile getOriginalFile(@NotNull PsiFile copyFile) throws IllegalArgumentException {
+      Map.Entry<PsiFile, FileTracker> entry = ContainerUtil.find(myChangedFiles.entrySet(), e -> e.getValue().myCopyFile == copyFile);
+      if (entry == null) {
+        throw new IllegalArgumentException("Supplied file is not a writable copy tracked by this tracker: " + copyFile);
+      }
+      return entry.getKey();
+    }
 
     @Override
     public <E extends PsiElement> E getWritable(E element) {
