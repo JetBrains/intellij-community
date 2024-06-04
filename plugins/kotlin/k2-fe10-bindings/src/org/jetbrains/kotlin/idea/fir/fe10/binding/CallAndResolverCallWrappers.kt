@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.lang.ASTNode
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -109,27 +109,27 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
 
         val ktCallInfo = context.withAnalysisSession { ktElement.resolveCallOld() }
         val diagnostic: KtDiagnostic?
-        val ktCall: KtCall = when (ktCallInfo) {
+        val ktCall: KaCall = when (ktCallInfo) {
             null -> return null
-            is KtSuccessCallInfo -> {
+            is KaSuccessCallInfo -> {
                 diagnostic = null
                 ktCallInfo.call
             }
-            is KtErrorCallInfo -> {
+            is KaErrorCallInfo -> {
                 diagnostic = ktCallInfo.diagnostic
                 ktCallInfo.candidateCalls.singleOrNull() ?: return null
             }
         }
 
         when (ktCall) {
-            is KtFunctionCall<*> -> {
-                if (ktCall.safeAs<KtSimpleFunctionCall>()?.isImplicitInvoke == true) {
+            is KaFunctionCall<*> -> {
+                if (ktCall.safeAs<KaSimpleFunctionCall>()?.isImplicitInvoke == true) {
                     context.implementationPostponed("Variable + invoke resolved call")
                 }
                 return FunctionFe10WrapperResolvedCall(call, ktCall, diagnostic, context)
             }
 
-            is KtVariableAccessCall -> {
+            is KaVariableAccessCall -> {
                 return VariableFe10WrapperResolvedCall(call, ktCall, diagnostic, context)
             }
 
@@ -142,10 +142,10 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
             is KtSecondaryConstructor -> {
                 val delegationCall = constructorPSI.getDelegationCall()
                 val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCallOld() }
-                val diagnostic = ktCallInfo.safeAs<KtErrorCallInfo>()?.diagnostic
+                val diagnostic = ktCallInfo.safeAs<KaErrorCallInfo>()?.diagnostic
                 val constructorCall = ktCallInfo?.calls?.singleOrNull() ?: return null
 
-                if (constructorCall !is KtFunctionCall<*>) context.errorHandling(constructorCall::class.toString())
+                if (constructorCall !is KaFunctionCall<*>) context.errorHandling(constructorCall::class.toString())
                 val psiCall = CallMaker.makeCall(null, null, delegationCall)
 
                 @Suppress("UNCHECKED_CAST")

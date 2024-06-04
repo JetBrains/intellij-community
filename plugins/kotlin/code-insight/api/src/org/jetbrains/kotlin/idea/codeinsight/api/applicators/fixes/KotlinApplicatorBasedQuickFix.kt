@@ -25,7 +25,7 @@ abstract class KotlinApplicatorBasedQuickFix<T : PsiElement, in I : KotlinApplic
      * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like :
      *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol] consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer] instead
      *      - [org.jetbrains.kotlin.analysis.api.types.KtType]
-     *      - [org.jetbrains.kotlin.analysis.api.calls.KtCall]
+     *      - [org.jetbrains.kotlin.analysis.api.resolution.KaCall]
      * - [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] instance itself
      * - [PsiElement] consider using [com.intellij.psi.SmartPsiElementPointer] instead
      *

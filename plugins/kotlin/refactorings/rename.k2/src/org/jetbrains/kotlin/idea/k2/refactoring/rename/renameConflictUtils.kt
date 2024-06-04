@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -115,7 +115,7 @@ fun checkCallableShadowing(
             //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
             val copyCallExpression =
                 PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
-            val resolveCall = copyCallExpression?.resolveCallOld()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+            val resolveCall = copyCallExpression?.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
             if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
                 val getter = resolvedSymbol.javaGetterSymbol.psi
@@ -257,10 +257,10 @@ private data class QualifiedState(val expression: KtExpression?, val explicitlyQ
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
     val psiFactory = KtPsiFactory(callExpression.project)
     analyze(callExpression) {
-        val appliedSymbol = callExpression.resolveCallOld()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        val appliedSymbol = callExpression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
 
-        fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
+        fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
             val symbol = receiverValue.symbol
             return if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
                 //specify companion name to avoid clashes with enum entries
@@ -274,7 +274,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
             }
         }
 
-        fun getExplicitQualifier(receiverValue: KtExplicitReceiverValue): String? {
+        fun getExplicitQualifier(receiverValue: KaExplicitReceiverValue): String? {
             val containingSymbol = appliedSymbol?.symbol?.getContainingSymbol()
             val enumClassSymbol = containingSymbol?.getContainingSymbol()
             //add companion qualifier to avoid clashes with enum entries
@@ -289,16 +289,16 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         }
 
         val qualifierText = when (receiver) {
-            is KtImplicitReceiverValue -> getThisQualifier(receiver)
+            is KaImplicitReceiverValue -> getThisQualifier(receiver)
 
-            is KtExplicitReceiverValue -> {
+            is KaExplicitReceiverValue -> {
                 getExplicitQualifier(receiver) ?: return QualifiedState(null, true)
             }
 
-            is KtSmartCastedReceiverValue -> {
+            is KaSmartCastedReceiverValue -> {
                 when (val receiverValue = receiver.original) {
-                    is KtImplicitReceiverValue -> getThisQualifier(receiverValue)
-                    is KtExplicitReceiverValue -> getExplicitQualifier(receiverValue)
+                    is KaImplicitReceiverValue -> getThisQualifier(receiverValue)
+                    is KaExplicitReceiverValue -> getExplicitQualifier(receiverValue)
                     else -> null
                 }
             }
@@ -318,7 +318,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
 
         val qualifiedExpression = psiFactory.createExpressionByPattern("$qualifierText.$0", callExpression)
         getNewCallee(qualifiedExpression)?.getReferencedNameElement()?.replace(psiFactory.createNameIdentifier(newName))
-        return QualifiedState(qualifiedExpression, receiver is KtExplicitReceiverValue)
+        return QualifiedState(qualifiedExpression, receiver is KaExplicitReceiverValue)
     }
 }
 

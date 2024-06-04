@@ -9,7 +9,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -61,8 +61,8 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     }
 
     context(KtAnalysisSession)
-    private fun callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
-        if (call !is KtCallableMemberCall<*, *>) return false
+    private fun callReceiverRefersToCompanionObject(call: KaCall, companionObject: KtObjectDeclaration): Boolean {
+        if (call !is KaCallableMemberCall<*, *>) return false
         val implicitReceivers = call.getImplicitReceivers()
         val companionObjectSymbol = companionObject.getSymbol()
         return companionObjectSymbol in implicitReceivers.map { it.symbol }
@@ -104,7 +104,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
 
         return withResolvedCall(psiToResolve) { call ->
             when (call) {
-                is KtFunctionCall<*> -> {
+                is KaFunctionCall<*> -> {
                     val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
                     val constructedClassSymbol =
                         constructorSymbol.getContainingSymbol() as? KtClassLikeSymbol ?: return@withResolvedCall false

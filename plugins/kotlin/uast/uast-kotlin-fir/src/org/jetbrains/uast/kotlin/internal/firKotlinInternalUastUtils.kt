@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -285,7 +285,7 @@ internal fun toPsiType(
 
 context(KtAnalysisSession)
 internal fun receiverType(
-    ktCall: KtCallableMemberCall<*, *>,
+    ktCall: KaCallableMemberCall<*, *>,
     source: UElement,
     context: KtElement,
 ): PsiType? {

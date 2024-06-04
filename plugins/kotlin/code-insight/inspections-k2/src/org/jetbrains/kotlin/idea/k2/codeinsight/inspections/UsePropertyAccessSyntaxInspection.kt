@@ -25,7 +25,7 @@ import com.intellij.psi.util.startOffset
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
@@ -526,12 +526,12 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     }
 
     context(KtAnalysisSession)
-    private fun getSuccessfullyResolvedCall(callExpression: KtExpression, newExpression: KtExpression): KtCallInfo? {
+    private fun getSuccessfullyResolvedCall(callExpression: KtExpression, newExpression: KtExpression): KaCallInfo? {
         val codeFragment =
             KtPsiFactory(callExpression.project).createExpressionCodeFragment(newExpression.text, callExpression)
         val contentElement = codeFragment.getContentElement() ?: return null
         val resolvedCall = contentElement.resolveCallOld() ?: return null
-        if (resolvedCall is KtErrorCallInfo) {
+        if (resolvedCall is KaErrorCallInfo) {
             return null
         }
         return resolvedCall

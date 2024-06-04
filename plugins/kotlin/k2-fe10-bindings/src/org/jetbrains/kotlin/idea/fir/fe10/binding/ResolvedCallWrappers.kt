@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-internal abstract class Fe10WrapperResolvedCall<C : KtCallableMemberCall<*, *>>(
+internal abstract class Fe10WrapperResolvedCall<C : KaCallableMemberCall<*, *>>(
     private val psiCall: Call,
     protected val ktCall: C,
     private val diagnostic: KtDiagnostic?,
@@ -90,8 +90,8 @@ internal abstract class Fe10WrapperResolvedCall<C : KtCallableMemberCall<*, *>>(
     override fun getSmartCastDispatchReceiverType(): KotlinType? = context.noImplementation()
 }
 
-internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCall<*>, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
-    Fe10WrapperResolvedCall<KtFunctionCall<*>>(psiCall, call, diagnostic, context) {
+internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KaFunctionCall<*>, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
+    Fe10WrapperResolvedCall<KaFunctionCall<*>>(psiCall, call, diagnostic, context) {
     private val ktFunctionSymbol: KtFunctionLikeSymbol = ktCall.partiallyAppliedSymbol.symbol
 
     private val argumentsMap: Map<ValueParameterDescriptor, ResolvedValueArgument> by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -147,8 +147,8 @@ internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCa
     }
 }
 
-internal class VariableFe10WrapperResolvedCall(psiCall: Call, call: KtVariableAccessCall, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
-    Fe10WrapperResolvedCall<KtVariableAccessCall>(psiCall, call, diagnostic, context) {
+internal class VariableFe10WrapperResolvedCall(psiCall: Call, call: KaVariableAccessCall, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
+    Fe10WrapperResolvedCall<KaVariableAccessCall>(psiCall, call, diagnostic, context) {
 
     private val ktVariableSymbol: KtVariableLikeSymbol = ktCall.partiallyAppliedSymbol.symbol
 
@@ -163,16 +163,16 @@ internal class VariableFe10WrapperResolvedCall(psiCall: Call, call: KtVariableAc
         error("Variable call has no arguments. ktVariableSymbol: $ktVariableSymbol, valueArgument = $valueArgument")
 }
 
-private fun KtReceiverValue.asFe10ReceiverValue(context: Fe10WrapperContext, smartCastType: KotlinType? = null): ReceiverValue {
+private fun KaReceiverValue.asFe10ReceiverValue(context: Fe10WrapperContext, smartCastType: KotlinType? = null): ReceiverValue {
     return when (this) {
-        is KtSmartCastedReceiverValue -> original.asFe10ReceiverValue(context, this.type.toKotlinType(context))
-        is KtExplicitReceiverValue -> ExpressionReceiver.create(
+        is KaSmartCastedReceiverValue -> original.asFe10ReceiverValue(context, this.type.toKotlinType(context))
+        is KaExplicitReceiverValue -> ExpressionReceiver.create(
             expression,
             smartCastType ?: this.type.toKotlinType(context),
             context.bindingContext
         )
 
-        is KtImplicitReceiverValue -> {
+        is KaImplicitReceiverValue -> {
             val ktDeclaration = symbol.safeAs<KtReceiverParameterSymbol>()?.owningCallableSymbol ?: symbol
             when (val descriptor = ktDeclaration.toDeclarationDescriptor(context)) {
                 is ClassDescriptor ->

@@ -16,9 +16,9 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.calls
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -70,7 +70,7 @@ object K2CreateFromUsageUtil {
     internal fun KtExpression.resolveExpression(): KtSymbol? {
         mainReference?.resolveToSymbol()?.let { return it }
         val call = resolveCallOld()?.calls?.singleOrNull() ?: return null
-        return if (call is KtCallableMemberCall<*, *>) call.symbol else null
+        return if (call is KaCallableMemberCall<*, *>) call.symbol else null
     }
 
     context (KtAnalysisSession)

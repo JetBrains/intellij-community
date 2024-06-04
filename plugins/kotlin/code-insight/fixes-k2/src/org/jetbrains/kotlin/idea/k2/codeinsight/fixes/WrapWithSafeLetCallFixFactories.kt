@@ -9,7 +9,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -329,8 +329,8 @@ object WrapWithSafeLetCallFixFactories {
      * function or the function doesn't have a parameter at the given index. Then caller can do whatever needed to cover such cases.
      */
     context(KtAnalysisSession)
-    private fun doesFunctionAcceptNull(call: KtCall, index: Int): Boolean? {
-        val symbol = (call as? KtFunctionCall<*>)?.symbol ?: return null
+    private fun doesFunctionAcceptNull(call: KaCall, index: Int): Boolean? {
+        val symbol = (call as? KaFunctionCall<*>)?.symbol ?: return null
         if (index == -1) {
             // Null extension receiver means the function does not accept extension receiver and hence cannot be invoked on a nullable
             // value.

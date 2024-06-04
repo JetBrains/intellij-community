@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -92,7 +92,7 @@ class KotlinFirExtractFunctionHandler(
             val name = file.viewProvider.document.getText(variableRange)
             return if (!name.isIdentifier()) {
                 JavaRefactoringBundle.message("template.error.invalid.identifier.name")
-            } else if (analyzeInModalWindow(file, KotlinBundle.message("fix.change.signature.prepare")) { call.resolveCallOld() is KtErrorCallInfo }) {
+            } else if (analyzeInModalWindow(file, KotlinBundle.message("fix.change.signature.prepare")) { call.resolveCallOld() is KaErrorCallInfo }) {
                 JavaRefactoringBundle.message("extract.method.error.method.conflict")
             } else {
                 null

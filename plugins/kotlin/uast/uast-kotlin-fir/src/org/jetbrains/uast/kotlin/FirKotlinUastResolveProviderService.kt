@@ -9,7 +9,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
@@ -82,7 +82,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression? {
         val annotationEntry = uAnnotation.sourcePsi
         analyzeForUast(annotationEntry) {
-            val resolvedAnnotationCall = annotationEntry.resolveCallOld()?.singleCallOrNull<KtAnnotationCall>() ?: return null
+            val resolvedAnnotationCall = annotationEntry.resolveCallOld()?.singleCallOrNull<KaAnnotationCall>() ?: return null
             val parameter = resolvedAnnotationCall.argumentMapping[arg.getArgumentExpression()]?.symbol ?: return null
             val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
             return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
@@ -193,11 +193,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             buildList {
                 ktExpression.collectCallCandidatesOld().forEach { candidateInfo ->
                     when (val candidate = candidateInfo.candidate) {
-                        is KtFunctionCall<*> -> {
+                        is KaFunctionCall<*> -> {
                             add(candidate.partiallyAppliedSymbol.symbol)
                         }
 
-                        is KtCompoundVariableAccessCall -> {
+                        is KaCompoundVariableAccessCall -> {
                             val variableSymbol = candidate.partiallyAppliedSymbol.symbol
                             if (variableSymbol is KtSyntheticJavaPropertySymbol) {
                                 add(variableSymbol.getter)
@@ -208,7 +208,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                             add(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol)
                         }
 
-                        is KtCompoundArrayAccessCall -> {
+                        is KaCompoundArrayAccessCall -> {
                             add(candidate.getPartiallyAppliedSymbol.symbol)
                             add(candidate.setPartiallyAppliedSymbol.symbol)
                             add(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol)
@@ -253,7 +253,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 is KtBinaryExpression,
                 is KtPrefixExpression,
                 is KtPostfixExpression -> {
-                    ktCallInfo.singleCallOrNull<KtCompoundVariableAccessCall>()
+                    ktCallInfo.singleCallOrNull<KaCompoundVariableAccessCall>()
                         ?.compoundAccess
                         ?.operationPartiallyAppliedSymbol
                         ?.signature
@@ -352,7 +352,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass? {
         analyzeForUast(ktAnnotationEntry) {
-            val resolvedAnnotationCall = ktAnnotationEntry.resolveCallOld()?.singleCallOrNull<KtAnnotationCall>() ?: return null
+            val resolvedAnnotationCall = ktAnnotationEntry.resolveCallOld()?.singleCallOrNull<KaAnnotationCall>() ?: return null
             val resolvedAnnotationConstructorSymbol = resolvedAnnotationCall.symbol
             val ktType = resolvedAnnotationConstructorSymbol.returnType
             val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktAnnotationEntry
@@ -575,7 +575,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyzeForUast(ktSimpleNameExpression) {
-            val ktCall = ktSimpleNameExpression.resolveCallOld()?.singleCallOrNull<KtVariableAccessCall>() ?: return null
+            val ktCall = ktSimpleNameExpression.resolveCallOld()?.singleCallOrNull<KaVariableAccessCall>() ?: return null
             return receiverType(ktCall, source, ktSimpleNameExpression)
         }
     }

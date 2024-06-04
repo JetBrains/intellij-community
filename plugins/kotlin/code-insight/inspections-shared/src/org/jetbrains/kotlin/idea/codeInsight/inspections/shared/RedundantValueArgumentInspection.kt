@@ -9,9 +9,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -71,7 +71,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
     })
 
     context(KtAnalysisSession)
-    private fun findTargetParameter(argumentExpression: KtExpression, call: KtFunctionCall<*>): KtValueParameterSymbol? {
+    private fun findTargetParameter(argumentExpression: KtExpression, call: KaFunctionCall<*>): KtValueParameterSymbol? {
         val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
 
         val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol

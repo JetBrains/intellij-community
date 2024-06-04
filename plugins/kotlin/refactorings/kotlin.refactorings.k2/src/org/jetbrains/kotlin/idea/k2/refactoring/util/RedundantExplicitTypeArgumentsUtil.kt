@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
@@ -59,7 +59,7 @@ fun areTypeArgumentsRedundant(element: KtTypeArgumentList): Boolean {
 
 
 context(KtAnalysisSession)
-private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): Set<KtTypeParameterSymbol>? {
+private fun collectTypesInferredFromArguments(resolvedCall: KaFunctionCall<*>): Set<KtTypeParameterSymbol>? {
     val result = mutableSetOf<KtTypeParameterSymbol>()
     for ((argumentExpression, sig) in resolvedCall.argumentMapping) {
         if (argumentExpression is KtLambdaExpression && argumentExpression.isExplicitTypeArgumentsNeededForTypeInference(sig)) {
@@ -86,7 +86,7 @@ private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): 
 }
 
 context(KtAnalysisSession)
-private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KtFunctionCall<*>): Set<KtTypeParameterSymbol> {
+private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KaFunctionCall<*>): Set<KtTypeParameterSymbol> {
     val receiverParameterType = resolvedCall.partiallyAppliedSymbol.symbol.receiverParameter?.type ?: return emptySet()
     val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return emptySet()
     val typeArgumentsMapping = resolvedCall.typeArgumentsMapping
@@ -210,7 +210,7 @@ private fun canTypesInferredFromOuterCall(outerCallExpression: KtCallExpression,
 context(KtAnalysisSession)
 private fun canTypesInferredFromAnotherArguments(
     argumentExpression: KtCallExpression,
-    resolvedCall: KtFunctionCall<*>,
+    resolvedCall: KaFunctionCall<*>,
 ): Boolean {
     val argumentMapping = resolvedCall.argumentMapping
     val typeArgumentsMapping = resolvedCall.typeArgumentsMapping

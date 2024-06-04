@@ -6,13 +6,13 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KtCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -63,7 +63,7 @@ private fun filterCandidate(
     explicitReceiver: KtExpression?
 ): Boolean {
     val candidateCall = candidateInfo.candidate
-    if (candidateCall !is KtFunctionCall<*>) return false
+    if (candidateCall !is KaFunctionCall<*>) return false
     val signature = candidateCall.partiallyAppliedSymbol.signature
     return filterCandidateByReceiverTypeAndVisibility(signature, callElement, fileSymbol, explicitReceiver)
 }
@@ -79,7 +79,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val candidateSymbol = signature.symbol
     if (callElement is KtConstructorDelegationCall) {
         // Exclude caller from candidates for `this(...)` delegated constructor calls.
-        // The parent of KtDelegatedConstructorCall should be the KtConstructor. We don't need to get the symbol for the constructor
+        // The parent of KaDelegatedConstructorCall should be the KtConstructor. We don't need to get the symbol for the constructor
         // to determine if it's a self-call; we can just compare the candidate's PSI.
         val candidatePsi = candidateSymbol.psi
         if (candidatePsi != null && candidatePsi == callElement.parent) {
@@ -190,14 +190,14 @@ fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolv
 }
 
 /**
- * @return implicit receivers of [this], including implicit receivers with smart casts, which are unwrapped to [KtImplicitReceiverValue]
+ * @return implicit receivers of [this], including implicit receivers with smart casts, which are unwrapped to [KaImplicitReceiverValue]
  */
-fun KtCallableMemberCall<*, *>.getImplicitReceivers(): List<KtImplicitReceiverValue> = partiallyAppliedSymbol
+fun KaCallableMemberCall<*, *>.getImplicitReceivers(): List<KaImplicitReceiverValue> = partiallyAppliedSymbol
     .let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
     .map { it.unwrapSmartCasts() }
-    .filterIsInstance<KtImplicitReceiverValue>()
+    .filterIsInstance<KaImplicitReceiverValue>()
 
-private tailrec fun KtReceiverValue.unwrapSmartCasts(): KtReceiverValue = when (this) {
-    is KtSmartCastedReceiverValue -> original.unwrapSmartCasts()
+private tailrec fun KaReceiverValue.unwrapSmartCasts(): KaReceiverValue = when (this) {
+    is KaSmartCastedReceiverValue -> original.unwrapSmartCasts()
     else -> this
 }

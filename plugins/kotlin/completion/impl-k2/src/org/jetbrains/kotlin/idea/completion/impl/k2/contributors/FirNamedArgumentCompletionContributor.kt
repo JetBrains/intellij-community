@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -44,7 +44,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         if (valueArgument.getArgumentName() != null) return
 
         val candidates = collectCallCandidates(callElement)
-            .mapNotNull { it.candidate as? KtFunctionCall<*> }
+            .mapNotNull { it.candidate as? KaFunctionCall<*> }
             .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
 
         val namedArgumentInfos = buildList {
@@ -92,7 +92,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
     context(KtAnalysisSession)
     private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
-        candidates: List<KtFunctionCall<*>>,
+        candidates: List<KaFunctionCall<*>>,
         currentArgumentIndex: Int
     ): List<NamedArgumentInfo> {
         val argumentsBeforeCurrent = callElement.valueArgumentList?.arguments?.take(currentArgumentIndex) ?: return emptyList()
@@ -110,7 +110,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
     context(KtAnalysisSession)
     private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
-        candidate: KtFunctionCall<*>,
+        candidate: KaFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>
     ): List<IndexedValue<KtVariableLikeSignature<KtValueParameterSymbol>>> {
         val signature = candidate.partiallyAppliedSymbol.signature

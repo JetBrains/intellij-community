@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -117,11 +117,11 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         }
     }
 
-    private fun processCall(callInfo: KtCallInfo?) {
-        val call = (callInfo as? KtSuccessCallInfo)?.call ?: return
+    private fun processCall(callInfo: KaCallInfo?) {
+        val call = (callInfo as? KaSuccessCallInfo)?.call ?: return
 
         when (call) {
-            is KtSimpleFunctionCall -> processCallable(call.symbol)
+            is KaSimpleFunctionCall -> processCallable(call.symbol)
             is KaSimpleVariableAccessCall -> {
                 val symbol = call.symbol
                 if (symbol is KtPropertySymbol) {
@@ -132,8 +132,8 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
                     }
                 }
             }
-            is KtCompoundVariableAccessCall -> processCallable(call.compoundAccess.operationPartiallyAppliedSymbol.symbol)
-            is KtCompoundArrayAccessCall -> {
+            is KaCompoundVariableAccessCall -> processCallable(call.compoundAccess.operationPartiallyAppliedSymbol.symbol)
+            is KaCompoundArrayAccessCall -> {
                 processCallable(call.getPartiallyAppliedSymbol.symbol)
                 processCallable(call.setPartiallyAppliedSymbol.symbol)
             }

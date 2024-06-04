@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
@@ -74,13 +74,13 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     context(KtAnalysisSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = target.partiallyAppliedSymbol.dispatchReceiver ?: return true
-        while (dispatchReceiver is KtSmartCastedReceiverValue) {
+        while (dispatchReceiver is KaSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original
         }
 
         val containingClass = target.symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return true
 
-        if (dispatchReceiver is KtExplicitReceiverValue) {
+        if (dispatchReceiver is KaExplicitReceiverValue) {
             if (dispatchReceiver.isSafeNavigation) {
                 return false
             }
@@ -104,7 +104,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             }
         }
 
-        if (dispatchReceiver is KtImplicitReceiverValue) {
+        if (dispatchReceiver is KaImplicitReceiverValue) {
             return dispatchReceiver.symbol == containingClass
         }
 

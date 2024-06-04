@@ -19,7 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConstantValue
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
@@ -114,7 +114,7 @@ class KotlinFunctionCallInstruction(
     context(KtAnalysisSession)
     private fun KtContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
-        callDescriptor: KtFunctionCall<*>,
+        callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaCondition? {
         return when (this) {
@@ -135,7 +135,7 @@ class KotlinFunctionCallInstruction(
     }
 
     private fun KtParameterSymbol.findDfaValue(
-        callDescriptor: KtFunctionCall<*>,
+        callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaValue? {
         if (this is KtReceiverParameterSymbol) {
@@ -201,7 +201,7 @@ class KotlinFunctionCallInstruction(
         return MethodEffect(factory.fromDfType(dfType), pure)
     }
 
-    private fun fromKnownDescriptor(call: KtFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
+    private fun fromKnownDescriptor(call: KaFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
         val functionSymbol = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
         val name = functionSymbol.name.asString()
         val containingPackage = functionSymbol.callableId?.packageName?.asString() ?: return null
@@ -267,8 +267,8 @@ class KotlinFunctionCallInstruction(
 
     context(KtAnalysisSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
-        val constructedClass = (((expr.resolveCallOld() as? KtSuccessCallInfo)
-            ?.call as? KtCallableMemberCall<*, *>)
+        val constructedClass = (((expr.resolveCallOld() as? KaSuccessCallInfo)
+            ?.call as? KaCallableMemberCall<*, *>)
             ?.partiallyAppliedSymbol?.symbol as? KtConstructorSymbol)
             ?.getContainingSymbol() as? KtClassOrObjectSymbol
         if (constructedClass != null) {

@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.completion
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -207,7 +207,7 @@ private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArgument
 
     if (valueArgument.getArgumentName() != null) return false
 
-    val call = callElement.resolveCallOld()?.singleCallOrNull<KtFunctionCall<*>>() ?: return false
+    val call = callElement.resolveCallOld()?.singleCallOrNull<KaFunctionCall<*>>() ?: return false
 
     if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
             call.partiallyAppliedSymbol.signature,

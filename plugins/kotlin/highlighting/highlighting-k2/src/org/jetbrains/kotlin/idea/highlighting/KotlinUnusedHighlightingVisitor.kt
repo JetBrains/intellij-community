@@ -25,7 +25,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.highlighters.isCalleeExpression
@@ -104,8 +104,8 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
             }
 
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
-                val call = expression.resolveCallOld()?.successfulCallOrNull<KtCall>() ?: return
-                if (call is KtSimpleFunctionCall) {
+                val call = expression.resolveCallOld()?.successfulCallOrNull<KaCall>() ?: return
+                if (call is KaSimpleFunctionCall) {
                     refHolder.registerLocalRef(call.symbol.psi, expression)
                 }
             }
@@ -117,9 +117,9 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
 
             override fun visitCallExpression(expression: KtCallExpression) {
                 val callee = expression.calleeExpression ?: return
-                val call = expression.resolveCallOld()?.singleCallOrNull<KtCall>() ?: return
+                val call = expression.resolveCallOld()?.singleCallOrNull<KaCall>() ?: return
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
-                refHolder.registerLocalRef((call as? KtSimpleFunctionCall)?.symbol?.psi, expression)
+                refHolder.registerLocalRef((call as? KaSimpleFunctionCall)?.symbol?.psi, expression)
             }
         }
         for (declaration in elements) {

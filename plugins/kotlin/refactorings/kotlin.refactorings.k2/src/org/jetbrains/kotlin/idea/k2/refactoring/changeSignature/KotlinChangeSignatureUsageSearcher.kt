@@ -5,7 +5,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -96,8 +96,8 @@ internal object KotlinChangeSignatureUsageSearcher {
                         val symbol = partiallyAppliedSymbol.symbol
                         val containingSymbol = symbol.getContainingSymbol()
                         if (receiverValue != null) {
-                            val receiverExpression = (receiverValue as? KtExplicitReceiverValue)?.expression
-                                ?: ((receiverValue as? KtSmartCastedReceiverValue)?.original as? KtExplicitReceiverValue)?.expression
+                            val receiverExpression = (receiverValue as? KaExplicitReceiverValue)?.expression
+                                ?: ((receiverValue as? KaSmartCastedReceiverValue)?.original as? KaExplicitReceiverValue)?.expression
                                 ?: expression
                             if (originalReceiverType != null) {
                                 if (receiverValue.type.isSubTypeOf(originalReceiverType)) {
@@ -113,7 +113,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                 if (name != null) {
                                     if (receiverExpression is KtThisExpression) {
                                         result.add(KotlinNonQualifiedOuterThisUsage(receiverExpression, name))
-                                    } else if (receiverValue is KtImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
+                                    } else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
                                         result.add(KotlinImplicitThisUsage(receiverExpression, name))
                                     }
                                 }

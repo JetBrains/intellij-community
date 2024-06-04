@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import org.jetbrains.idea.devkit.util.REQUIRES_BLOCKING_CONTEXT_ANNOTATION
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -21,7 +21,7 @@ internal abstract class BlockingContextFunctionBodyVisitor : KtTreeVisitorVoid()
     }
   }
 
-  protected fun checkInlineLambdaArguments(call: KtFunctionCall<*>) {
+  protected fun checkInlineLambdaArguments(call: KaFunctionCall<*>) {
     for ((psi, descriptor) in call.argumentMapping) {
       if (
         descriptor.returnType is KtFunctionalType &&

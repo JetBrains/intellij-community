@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -67,6 +67,6 @@ context(KtAnalysisSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
     val functionCall = this.resolveCallOld()?.singleFunctionCallOrNull() ?: return null
 
-    return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
+    return functionCall is KaSimpleFunctionCall && functionCall.isImplicitInvoke
 }
 
