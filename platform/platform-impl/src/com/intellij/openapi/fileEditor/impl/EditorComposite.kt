@@ -817,6 +817,7 @@ private fun isDumbAware(editor: FileEditor): Boolean {
 internal suspend fun focusEditorOnCompositeOpenComplete(
   composite: EditorComposite,
   splitters: EditorsSplitters,
+  toFront: Boolean = true,
 ): Boolean {
   // wait for the file editor
   composite.selectedEditorWithProvider.filterNotNull().first()
@@ -831,7 +832,9 @@ internal suspend fun focusEditorOnCompositeOpenComplete(
       }
       else {
         preferredFocusedComponent.requestFocusInWindow()
-        IdeFocusManager.getGlobalInstance().toFront(splitters)
+        if (toFront) {
+          IdeFocusManager.getGlobalInstance().toFront(splitters)
+        }
         true
       }
     }

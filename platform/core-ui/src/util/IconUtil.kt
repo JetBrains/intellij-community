@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.FileIconUtil
 import com.intellij.ide.TypePresentationService
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.fileTypes.DirectoryFileType
@@ -42,22 +43,6 @@ import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
-
-private val PROJECT_WAS_EVER_INITIALIZED = Key.create<Boolean>("iconDeferrer:projectWasEverInitialized")
-
-private fun wasEverInitialized(project: Project): Boolean {
-  var was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED)
-  if (was == null) {
-    if (project.isInitialized) {
-      was = true
-      project.putUserData(PROJECT_WAS_EVER_INITIALIZED, true)
-    }
-    else {
-      was = false
-    }
-  }
-  return was
-}
 
 private val ICON_NULLABLE_FUNCTION = { key: FileIconKey ->
   IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
@@ -139,15 +124,20 @@ object IconUtil {
   }
 
   /**
-   * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
+   * @return a deferred icon for the file,
+   * taking into account [com.intellij.ide.FileIconProvider] and [com.intellij.ide.FileIconPatcher] extensions.
    */
   @JvmStatic
   fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+    if (!file.isValid || (project != null && project.isDisposed)) {
+      return AllIcons.FileTypes.Unknown
+    }
     return computeFileIconImpl(file = BackedVirtualFile.getOriginFileIfBacked(file), project = project, flags = flags)
   }
 
   /**
-   * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
+   * @return a deferred icon for the file,
+   * taking into account [com.intellij.ide.FileIconProvider] and [com.intellij.ide.FileIconPatcher] extensions.
    * Use [computeFileIcon] where possible (e.g., in background threads) to get a non-deferred icon.
    */
   @JvmStatic
@@ -346,7 +336,7 @@ object IconUtil {
    * ... the result of the assertion depends on `MyIcon` implementation.
    * When `scaledIcon` is an instance of [ScalableIcon], then `anotherScaledIcon` should be scaled according to the [ScalableIcon] docs,
    * and the assertion should pass.
-   * Otherwise, `anotherScaledIcon` should be 2 times bigger than `scaledIcon`, and 4 times bigger than `myIcon`.
+   * Otherwise, `anotherScaledIcon` should be two times bigger than `scaledIcon`, and four times bigger than `myIcon`.
    * So, prior to scaling the icon recursively, the returned icon should be inspected for its type to understand the result.
    * But recursive scaling should better be avoided.
    *
@@ -563,16 +553,18 @@ object IconUtil {
   }
 }
 
-private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
-  if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
-    return AllIcons.FileTypes.Unknown
-  }
-
+@Internal
+fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
   @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
   val providerIcon = FileIconUtil.getIconFromProviders(file, flags, project)
   var icon = providerIcon ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
   // render without a locked icon patch since we are going to apply it later anyway
-  icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
+  icon = FileIconUtil.patchIconByIconPatchers(
+    icon = icon,
+    file = file,
+    flags = flags and Iconable.ICON_FLAG_READ_STATUS.inv(),
+    project = project,
+  )
   if (file.`is`(VFileProperty.SYMLINK)) {
     icon = PredefinedIconOverlayService.getInstanceOrNull()?.createSymlinkIcon(icon) ?: icon
   }

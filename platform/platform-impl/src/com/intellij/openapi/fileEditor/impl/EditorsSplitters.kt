@@ -62,6 +62,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
@@ -876,15 +877,12 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         }
       }
 
-      coroutineScope {
-        processFiles(
-          fileEntries = trimmedFiles,
-          tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE,
-          addChild = addChild,
-          requestFocus = requestFocus,
-          coroutineScope = this,
-        )
-      }
+      processFiles(
+        fileEntries = trimmedFiles,
+        tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE,
+        addChild = addChild,
+        requestFocus = requestFocus,
+      )
     }
     else {
       val splitter = withContext(Dispatchers.EDT) {
@@ -904,12 +902,12 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun processFiles(
     fileEntries: List<FileEntry>,
     tabSizeLimit: Int,
     addChild: (child: JComponent) -> Unit,
     requestFocus: Boolean,
-    coroutineScope: CoroutineScope,
   ) {
     val fileEditorManager = splitters.manager
     val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
@@ -932,52 +930,53 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
 
     val windowCoroutineScope = splitters.coroutineScope.childScope("EditorWindow")
 
-    val windowDeferred = coroutineScope.async(Dispatchers.EDT) {
+    val windowDeferred = windowCoroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       splitters.insideChange++
       val editorWindow = EditorWindow(owner = splitters, coroutineScope = windowCoroutineScope)
-      splitters.addWindow(editorWindow)
       editorWindow.component.isFocusable = false
       if (tabSizeLimit != 1) {
         editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
       }
-      addChild(editorWindow.component)
       editorWindow
     }
 
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     // resolve virtual files
-    val items = fileEntries.map { fileEntry ->
-      coroutineScope.async {
-        val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@async null
-        val compositeCoroutineScope = windowCoroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
-        val model = fileEditorManager.createEditorCompositeModel(
-          compositeCoroutineScope = compositeCoroutineScope,
-          fileProvider = { file },
-          fileEntry = fileEntry,
-          isLazy = !fileEntry.currentInTab && isLazyComposite,
-        )
+    val items = coroutineScope {
+      fileEntries.map { fileEntry ->
+        async {
+          val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@async null
+          val compositeCoroutineScope = windowCoroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
+          val model = fileEditorManager.createEditorCompositeModel(
+            compositeCoroutineScope = compositeCoroutineScope,
+            fileProvider = { file },
+            fileEntry = fileEntry,
+            isLazy = !fileEntry.currentInTab && isLazyComposite,
+          )
 
-        FileToOpen(
-          fileEntry = fileEntry,
-          scope = compositeCoroutineScope,
-          file = file,
-          model = model,
-          icon = compositeCoroutineScope.async {
-            readAction {
-              IconUtil.computeFileIcon(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = splitters.manager.project)
+          FileToOpen(
+            fileEntry = fileEntry,
+            scope = compositeCoroutineScope,
+            file = file,
+            model = model,
+            icon = compositeCoroutineScope.async {
+              readAction {
+                computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = splitters.manager.project)
+              }
+            },
+            tabTitle = compositeCoroutineScope.async {
+              readAction {
+                EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, file)
+              }
             }
-          },
-          tabTitle = compositeCoroutineScope.async {
-            readAction {
-              EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, file)
-            }
-          }
-        )
+          )
+        }
       }
-    }.awaitAll()
+    }.map { it.getCompleted() }
 
     span("file opening in EDT", Dispatchers.EDT) {
       var window: EditorWindow? = null
+      val windowAddedDeferred = CompletableDeferred<Unit>()
       try {
         window = windowDeferred.await()
         fileEditorManager.openFilesOnStartup(
@@ -985,14 +984,21 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           window = window,
           requestFocus = requestFocus,
           isLazyComposite = isLazyComposite,
+          windowAdded = suspend { windowAddedDeferred.await() },
         )
       }
       finally {
         splitters.insideChange--
         if (window != null) {
           window.updateTabsVisibility(uiSettings = UISettings.getInstance())
+
+          addChild(window.component)
+          windowAddedDeferred.complete(Unit)
+
+          splitters.addWindow(window)
+          window.tabbedPane.editorTabs.revalidateAndRepaint(layoutNow = true)
           splitters.validate()
-          window.tabbedPane.editorTabs.revalidateAndRepaint()
+
           window.tabbedPane.editorTabs.updateListeners()
         }
       }

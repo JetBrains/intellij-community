@@ -60,7 +60,7 @@ interface IconManager {
   /**
    * Path must be specified without a leading slash, in a format for [ClassLoader.getResourceAsStream]
    */
-  @ApiStatus.Internal
+  @Internal
   fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
   fun createEmptyIcon(icon: Icon): Icon = icon
@@ -98,7 +98,7 @@ interface IconManager {
   @ApiStatus.Experimental
   fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon = baseIcon
 
-  @ApiStatus.Internal
+  @Internal
   fun hashClass(aClass: Class<*>): Long = aClass.hashCode().toLong()
 
   fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> = "com.intellij" to null

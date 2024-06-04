@@ -11296,7 +11296,6 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - <init>(com.intellij.ui.tabs.impl.JBTabsImpl,com.intellij.ui.tabs.TabInfo):V
 - f:apply(com.intellij.ui.tabs.UiDecorator$UiDecoration):V
 - pf:createLayeredIcon():com.intellij.ui.LayeredIcon
-- editIcon(javax.swing.Icon):javax.swing.Icon
 - editLabelForeground(java.awt.Color):java.awt.Color
 - enableCompressionMode(Z):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
@@ -11308,7 +11307,7 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - getPreferredSize():java.awt.Dimension
 - f:getToolTipText(java.awt.event.MouseEvent):java.lang.String
 - p:handlePopup(java.awt.event.MouseEvent):V
-- f:isFocusable():Z
+- isFocusable():Z
 - f:isForcePaintBorders():Z
 - isHovered():Z
 - f:isLastInRow():Z

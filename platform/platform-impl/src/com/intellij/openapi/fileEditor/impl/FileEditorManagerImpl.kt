@@ -2224,6 +2224,7 @@ open class FileEditorManagerImpl(
     window: EditorWindow,
     requestFocus: Boolean,
     isLazyComposite: Boolean,
+    windowAdded: suspend () -> Unit
   ) {
     val template = AllIcons.FileTypes.Text
     val placeholderIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
@@ -2308,15 +2309,17 @@ open class FileEditorManagerImpl(
 
         if (requestFocus) {
           composite.coroutineScope.launch {
-            if (focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)) {
+            // well, we cannot focus if component is not added
+            windowAdded()
+            if (focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters, toFront = false)) {
               // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
               splitters.updateFrameTitle()
             }
           }
-          composite.coroutineScope.launch {
-            composite.selectedEditorWithProvider.collect {
-              tab.setTabPaneActions(it?.fileEditor?.tabActions)
-            }
+        }
+        composite.coroutineScope.launch {
+          composite.selectedEditorWithProvider.collect {
+            tab.setTabPaneActions(it?.fileEditor?.tabActions)
           }
         }
       }

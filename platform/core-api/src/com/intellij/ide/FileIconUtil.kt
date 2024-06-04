@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util
+package com.intellij.ide
 
-import com.intellij.ide.FileIconPatcher
-import com.intellij.ide.FileIconProvider
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -19,12 +18,12 @@ private val LOG: Logger
 @Internal
 object FileIconUtil {
   fun getIconFromProviders(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
-    for (provider in FileIconProvider.EP_NAME.extensionList) {
-      val icon = kotlin.runCatching {
-        provider.getIcon(file, flags, project)
+    for (extension in FileIconProvider.EP_NAME.filterableLazySequence()) {
+      val icon = runCatching {
+        extension.instance?.getIcon(file, flags, project)
       }.getOrLogException {
         if (it !is IndexNotReadyException) {
-          LOG.warn("FileIconProvider $provider threw an exception", it)
+          LOG.warn(PluginException("FileIconProvider $extension threw an exception", it, extension.pluginDescriptor.pluginId))
         }
       }
       if (icon != null) {
@@ -36,12 +35,12 @@ object FileIconUtil {
 
   fun patchIconByIconPatchers(icon: Icon, file: VirtualFile, flags: Int, project: Project?): Icon {
     var patched = icon
-    for (patcher in FileIconPatcher.EP_NAME.extensionList) {
+    for (extension in FileIconPatcher.EP_NAME.filterableLazySequence()) {
       patched = kotlin.runCatching {
-        patcher.patchIcon(patched, file, flags, project)
+        extension.instance?.patchIcon(patched, file, flags, project)
       }.getOrLogException {
         if (it !is IndexNotReadyException) {
-          LOG.warn("FileIconPatcher $patcher threw an exception", it)
+          LOG.warn(PluginException("FileIconPatcher $extension threw an exception", it, extension.pluginDescriptor.pluginId))
         }
       } ?: patched
     }

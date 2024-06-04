@@ -10,10 +10,8 @@ import javax.swing.Icon
 @Internal
 interface PredefinedIconOverlayService {
   companion object {
-    @JvmStatic
     fun getInstance(): PredefinedIconOverlayService = ApplicationManager.getApplication().service()
 
-    @JvmStatic
     fun getInstanceOrNull(): PredefinedIconOverlayService? = ApplicationManager.getApplication().serviceOrNull()
   }
 
