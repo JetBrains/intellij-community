@@ -257,6 +257,7 @@ f:com.intellij.openapi.components.StoragePathMacros
 - sf:MODULE_FILE:java.lang.String
 - sf:NON_ROAMABLE_FILE:java.lang.String
 - sf:PRODUCT_WORKSPACE_FILE:java.lang.String
+- sf:PROJECT_DEFAULT_FILE:java.lang.String
 - sf:WORKSPACE_FILE:java.lang.String
 e:com.intellij.openapi.components.StorageScheme
 - java.lang.Enum
