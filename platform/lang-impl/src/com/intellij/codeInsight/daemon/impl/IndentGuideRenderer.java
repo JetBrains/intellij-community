@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService;
+import com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -66,7 +66,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
             @NotNull Graphics g
     ) {
         int indentColumn = lineStartPosition.column;
-        if (indentColumn <= 0) return;
+        if (indentColumn < 0) return; // 0 is possible in Rider virtual formatting, and it is logically sound
 
         FoldingModel foldingModel = editor.getFoldingModel();
         if (foldingModel.isOffsetCollapsed(startOffset)) return;
@@ -76,13 +76,18 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
         if (tailRegion != null && tailRegion == headerRegion) return;
 
-        int vfmtRightShift = 0;
-        if (VisualFormattingLayerService.isEnabledForEditor(editor)) {
-          vfmtRightShift = VisualFormattingLayerService
-            .getVisualFormattingInlineInlays(editor, doc.getLineStartOffset(doc.getLineNumber(startOffset)), startOffset)
-            .stream()
-            .map(inlay -> inlay.getWidthInPixels())
-            .reduce(0, Integer::sum);
+        final var virtualGuideInfo = VirtualFormattingIndentGuideInfo.getInstance();
+        final var isVirtualFormattingEnabled = virtualGuideInfo.isVirtualFormattingEnabled(editor);
+
+        if (!isVirtualFormattingEnabled && indentColumn == 0) return; // 0 is impossible outside Rider virtual formatting context
+
+        var vfmtRightShift = 0;
+        if (virtualGuideInfo.isVirtualFormattingEnabled(editor)) {
+            vfmtRightShift = virtualGuideInfo
+                .getVisualFormattingInlineInlays(editor, doc.getLineStartOffset(doc.getLineNumber(startOffset)), doc.getLineEndOffset(doc.getLineNumber(startOffset)))
+                .stream()
+                .map(inlay -> inlay.getWidthInPixels())
+                .reduce(0, Integer::sum);
         }
 
         boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);

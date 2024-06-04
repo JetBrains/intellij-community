@@ -144,7 +144,11 @@
 
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
-      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
+      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
+
+    <applicationService
+      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo"
+      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo" />
 
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
