@@ -385,6 +385,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/PropertiesInConstructor.kt");
     }
 
+    @TestMetadata("QualifiedNameDocLink.kt")
+    public void testQualifiedNameDocLink() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/QualifiedNameDocLink.kt");
+    }
+
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
     public void testRenderAnnotatedExtensionFunctionType() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");

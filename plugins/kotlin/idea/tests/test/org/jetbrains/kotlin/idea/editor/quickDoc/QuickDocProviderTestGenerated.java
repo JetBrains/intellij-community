@@ -385,6 +385,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/PropertiesInConstructor.kt");
     }
 
+    @TestMetadata("QualifiedNameDocLink.kt")
+    public void testQualifiedNameDocLink() throws Exception {
+        runTest("testData/editor/quickDoc/QualifiedNameDocLink.kt");
+    }
+
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
     public void testRenderAnnotatedExtensionFunctionType() throws Exception {
         runTest("testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");

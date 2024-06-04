@@ -446,8 +446,10 @@ internal class KotlinIdeDeclarationRenderer(
                     else -> FqName.topLevel(name)
                 }
                 val text = if (qName.parent() == FqName.topLevel(StandardNames.BUILT_INS_PACKAGE_NAME)) name.renderName() else {
+                    val pathSegments = qName.pathSegments()
+                    val qualifiedName = pathSegments.take(pathSegments.indexOf(name) + 1).joinToString(".")
                     val buffer = StringBuilder()
-                    DocumentationManagerUtil.createHyperlink(buffer, qName.asString(), name.renderName(), true, false)
+                    DocumentationManagerUtil.createHyperlink(buffer, qualifiedName, name.renderName(), true, false)
                     buffer.toString()
                 }
 
