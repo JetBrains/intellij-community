@@ -29,7 +29,8 @@ class InlineCompletionRequest(
   val endOffset: Int,
   val lookupElement: LookupElement? = null,
 ) : UserDataHolderBase() {
-  val requestId = Random.nextLong()
+  @ApiStatus.Internal
+  val requestId: Long = Random.nextLong()
 }
 
 sealed interface TypingEvent {
