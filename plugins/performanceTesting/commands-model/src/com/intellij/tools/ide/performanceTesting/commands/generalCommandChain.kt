@@ -430,7 +430,8 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
                                           textToInsert: String = "",
                                           textToType: String = "",
                                           close: Boolean = false,
-                                          selectFirst: Boolean = false): T = apply {
+                                          selectFirst: Boolean = false,
+                                          warmup: Boolean = false): T = apply {
   val closeOnOpenArgument = when {
     close -> "-close"
     else -> ""
@@ -443,10 +444,11 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
     textToType.isNotEmpty() -> "-type $textToType"
     else -> ""
   }
+  val warmupText = if(warmup) "|WARMUP" else ""
   if (selectFirstArgument.isNotEmpty() && closeOnOpenArgument.isNotEmpty()) {
     throw Exception("selectFirst=true argument will be ignored since close=true and SE will be closed first")
   }
-  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert")
+  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert$warmupText")
 }
 
 fun <T : CommandChain> T.selectFileInProjectView(relativePath: String): T = apply {

@@ -57,6 +57,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
     getArgs();
   }
 
+  private Boolean isWarmupMode() {
+    return extractCommandArgument(CMD_PREFIX).contains("WARMUP");
+  }
+
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   @Override
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
@@ -66,6 +70,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
     String[] args = getArgs();
     final String tab = myOptions.tab;
     final String insertText = args.length > 1 ? args[1] : "";
+
+    boolean warmup = isWarmupMode();
 
     Ref<String> tabId = new Ref<>();
     switch (tab) {
@@ -88,7 +94,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       numberOfPermits = 0; //we wait till one operation is finished
     }
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
-    TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere", globalSpan -> {
+    TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere", globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
           TypingTarget target = findTarget(context);
@@ -101,7 +107,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
           }
           DataContext dataContext = DataManager.getInstance().getDataContext(component);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
+          TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere_dialog_shown", dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
             manager.show(tabId.get(), "", new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(), 0) {
               @Override
@@ -112,10 +118,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
             attachSearchListeners(manager.getCurrentlyShownUI());
           });
           if (!insertText.isEmpty()) {
-            insertText(context.getProject(), insertText, typingSemaphore);
+            insertText(context.getProject(), insertText, typingSemaphore, warmup);
           }
           if (!myOptions.typingText.isEmpty()) {
-            typeText(context.getProject(), myOptions.typingText, typingSemaphore);
+            typeText(context.getProject(), myOptions.typingText, typingSemaphore, warmup);
           }
         }
         catch (Exception e) {
@@ -159,10 +165,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void insertText(Project project, String insertText, Semaphore typingSemaphore) {
+  private void insertText(Project project, String insertText, Semaphore typingSemaphore, boolean warmup) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
-    Span insertSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
-    Span firstBatchAddedSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan();
+    Span insertSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan();
+    Span firstBatchAddedSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan();
     ui.addSearchListener(new SearchAdapter(){
       @Override
       public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
@@ -184,7 +190,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void typeText(Project project, String typingText, Semaphore typingSemaphore) {
+  private void typeText(Project project, String typingText, Semaphore typingSemaphore, boolean warmup) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Document document = ui.getSearchField().getDocument();
     Semaphore oneLetterLock = new Semaphore(1);
@@ -224,9 +230,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
           try {
             char currentChar = typingText.charAt(index);
             oneLetterSpan.set(
-              PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan()
+              PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan()
                 .setAttribute("text", String.valueOf(currentChar)));
-            firstBatchAddedSpan.set(PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan());
+            firstBatchAddedSpan.set(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan());
             document.insertString(document.getLength(), String.valueOf(currentChar), null);
             if (index == typingText.length() - 1) {
               isTypingFinished.set(true);
