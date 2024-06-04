@@ -9,6 +9,7 @@ import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -31,7 +32,8 @@ public final class JsonPsiImplUtils {
   static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
 
   public static @NotNull String getName(@NotNull JsonProperty property) {
-    return JsonTextLiteralService.getInstance().unquoteAndUnescape(property.getNameElement().getText());
+    String text = InjectedLanguageManager.getInstance(property.getProject()).getUnescapedText(property.getNameElement());
+    return JsonTextLiteralService.getInstance().unquoteAndUnescape(text);
   }
 
   /**
