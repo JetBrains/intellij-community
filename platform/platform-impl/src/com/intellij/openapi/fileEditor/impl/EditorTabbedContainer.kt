@@ -33,7 +33,10 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LO
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -765,14 +768,7 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
     }
   }
 
-  override fun editIcon(baseIcon: Icon): Icon {
-    if (paintDimmed()) {
-      return IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
-    }
-    else {
-      return baseIcon
-    }
-  }
+  override fun getIconAlpha(): Float = if (paintDimmed()) JBUI.CurrentTheme.EditorTabs.unselectedAlpha() else 1f
 
   private fun paintDimmed(): Boolean {
     return ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredTab(this)

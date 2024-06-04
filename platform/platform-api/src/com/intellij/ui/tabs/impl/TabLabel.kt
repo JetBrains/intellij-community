@@ -21,11 +21,8 @@ import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.JBTabsImpl.Companion.isSelectionClick
 import com.intellij.ui.tabs.impl.TabLabel.MergedUiDecoration
 import com.intellij.util.MathUtil
-import com.intellij.util.ui.Centerizer
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import com.intellij.util.ui.StartupUiUtil.labelFont
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.*
 import java.awt.BorderLayout.NORTH
@@ -61,7 +58,7 @@ open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo)
   private val labelPlaceholder = Wrapper(/* isDoubleBuffered = */ false)
 
   init {
-    label = createLabel(tabs, info)
+    label = createLabel(tabs = tabs, info = info)
 
     // Allow focus so that user can TAB into the selected TabLabel and then
     // navigate through the other tabs using the LEFT/RIGHT keys.
@@ -195,11 +192,11 @@ open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo)
     val label: SimpleColoredComponent = object : SimpleColoredComponent() {
       override fun getFont(): Font {
         val font = super.getFont()
-        return if (isFontSet || !tabs.useSmallLabels()) {
-          font
+        if (isFontSet || !tabs.useSmallLabels()) {
+          return font
         }
         else {
-          RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2, scale(11f)).derive(labelFont)
+          return RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2, scale(11f)).derive(labelFont)
         }
       }
 
@@ -216,8 +213,15 @@ open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo)
       }
 
       override fun paintIcon(g: Graphics, icon: Icon, offset: Int) {
-        val editedIcon = editIcon(icon)
-        super.paintIcon(g, editedIcon, offset)
+        val iconAlpha = getIconAlpha()
+        if (iconAlpha == 1f) {
+          super.paintIcon(g, icon, offset)
+        }
+        else {
+          GraphicsUtil.paintWithAlpha(g, iconAlpha) {
+            super.paintIcon(g, icon, offset)
+          }
+        }
       }
     }
     label.isOpaque = false
@@ -232,7 +236,7 @@ open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo)
   open fun editLabelForeground(baseForeground: Color?): Color? = baseForeground
 
   // allows editing the icon right before painting
-  open fun editIcon(baseIcon: Icon): Icon = baseIcon
+  open fun getIconAlpha(): Float = 1f
 
   val isPinned: Boolean
     get() = info.isPinned
