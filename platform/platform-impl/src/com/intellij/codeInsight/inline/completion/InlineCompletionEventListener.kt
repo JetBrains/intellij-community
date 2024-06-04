@@ -27,7 +27,8 @@ sealed class InlineCompletionEventType {
     val request: InlineCompletionRequest,
     val provider: Class<out InlineCompletionProvider>,
   ) : InlineCompletionEventType() {
-    val requestId: Long = request.requestId
+    val requestId: Long
+      get() = request.requestId
   }
 
   /**
