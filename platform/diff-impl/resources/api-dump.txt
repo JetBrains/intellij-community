@@ -1451,10 +1451,11 @@ a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - pf:myFoldingModel:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyFoldingModel
 - pf:myInitialScrollHelper:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyInitialScrollHelper
-- pf:myStatusPanel:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyStatusPanel
+- pf:myStatusPanel:com.intellij.diff.tools.util.StatusPanel
 - <init>(com.intellij.diff.DiffContext,com.intellij.diff.requests.ContentDiffRequest):V
 - p:applyNotification(javax.swing.JComponent):java.lang.Runnable
 - p:clearDiffPresentation():V
+- p:createStatusPanel():com.intellij.diff.tools.util.StatusPanel
 - p:destroyChangedBlocks():V
 - p:doScrollToChange(com.intellij.diff.tools.simple.ThreesideDiffChangeBase,Z):V
 - p:doScrollToChange(com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):Z
@@ -1705,6 +1706,8 @@ c:com.intellij.diff.tools.util.StatusPanel
 - javax.swing.JPanel
 - <init>():V
 - p:getMessage():java.lang.String
+- p:getStatusForeground():java.awt.Color
+- p:getStatusIcon():javax.swing.Icon
 - setBusy(Z):V
 - update():V
 f:com.intellij.diff.tools.util.SyncScrollSupport
@@ -2498,6 +2501,10 @@ f:com.intellij.diff.util.BlankDiffWindowUtil
 - a:setCombinedDiffEnabled(Z):V
 *f:com.intellij.diff.util.CombinedDiffToggle$Companion
 - f:getDEFAULT():com.intellij.diff.util.CombinedDiffToggle
+f:com.intellij.diff.util.DiffBalloons
+- sf:INSTANCE:com.intellij.diff.util.DiffBalloons
+- sf:showSuccessPopup(java.lang.String,java.lang.String,com.intellij.ui.awt.RelativePoint,com.intellij.openapi.Disposable,java.lang.Runnable):V
+- sf:showWarningPopup(java.lang.String,java.lang.String,com.intellij.ui.awt.RelativePoint,com.intellij.openapi.Disposable):V
 f:com.intellij.diff.util.DiffDividerDrawUtil
 - sf:BOLD_DOTTED_STROKE:java.awt.BasicStroke
 - <init>():V
@@ -2819,7 +2826,6 @@ f:com.intellij.diff.util.DiffUtil
 - s:setEditorCodeStyle(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ex.EditorEx,com.intellij.diff.contents.DocumentContent):V
 - s:setEditorHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ex.EditorEx,com.intellij.diff.contents.DocumentContent):V
 - s:setFoldingModelSupport(com.intellij.openapi.editor.ex.EditorEx):V
-- s:showSuccessPopup(java.lang.String,com.intellij.ui.awt.RelativePoint,com.intellij.openapi.Disposable,java.lang.Runnable):V
 - s:trimDefaultValues(java.util.TreeMap,com.intellij.util.containers.Convertor):java.util.TreeMap
 - s:updateRangeOnModification(I,I,I,I,I):com.intellij.diff.util.DiffUtil$UpdatedLineRange
 - s:updateRangeOnModification(I,I,I,I,I,Z):com.intellij.diff.util.DiffUtil$UpdatedLineRange
