@@ -699,8 +699,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFix)
 
-        DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFix)
-        ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFix)
+        DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFixFactory)
+        ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFixFactory)
 
         RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix, AddFunModifierFix)
 
