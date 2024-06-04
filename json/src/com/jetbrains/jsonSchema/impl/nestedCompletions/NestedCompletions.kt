@@ -87,14 +87,19 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
     val pointer = SmartPointerManager.createPointer(newElement)
     cleanupWhitespacesAndDelete(element)
     PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
-    var psiElement = pointer.element?.lastLeaf()
-    while (psiElement is PsiWhiteSpace || psiElement is PsiErrorElement) {
-      psiElement = psiElement.prevLeaf()
-    }
+    val psiElement = rewindToMeaningfulLeaf(pointer.element)
     if (psiElement != null) {
       context.editor.caretModel.moveToOffset(psiElement.endOffset)
     }
   }
+}
+
+fun rewindToMeaningfulLeaf(element: PsiElement?): PsiElement? {
+  var meaningfulLeaf = element?.lastLeaf()
+  while (meaningfulLeaf is PsiWhiteSpace || meaningfulLeaf is PsiErrorElement) {
+    meaningfulLeaf = meaningfulLeaf.prevLeaf()
+  }
+  return meaningfulLeaf
 }
 
 private fun replaceAtCaretAndGetParentObject(element: PsiElement,

@@ -700,8 +700,10 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
         val propertyValueSeparator = walker.getPropertyValueSeparator(finalType)
 
-        val element = context.file.findElementAt(editor.caretModel.offset)
-        val insertColon = element == null || propertyValueSeparator != element.text
+        val leafAtCaret = context.file.findElementAt(editor.caretModel.offset)?.let {
+          rewindToMeaningfulLeaf(it)
+        }
+        val insertColon = propertyValueSeparator != leafAtCaret?.text
         if (!insertColon) {
           editor.caretModel.moveToOffset(editor.caretModel.offset + propertyValueSeparator.length)
         }
