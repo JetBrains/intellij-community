@@ -6,6 +6,7 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
+import org.intellij.lang.annotations.Language;
 
 import java.util.function.Predicate;
 
@@ -26,7 +27,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
       JsonLanguage.INSTANCE);
   }
 
-  public void testAddMissingProperty() throws Exception {
+  public void testAddMissingProperty() {
     doTest("""
              {
                "properties": {
@@ -43,7 +44,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
              }""");
   }
 
-  public void testAddMissingNonStringProperties() throws Exception {
+  public void testAddMissingNonStringProperties() {
     doTest("""
              {
                "required": ["x", "y"],
@@ -64,15 +65,19 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
              }""");
   }
 
-  public void testRemoveProhibitedProperty() throws Exception {
-    doTest("""
-             {
-               "properties": {
-                 "a": {},
-                 "c": {}
-               },
-               "additionalProperties": false
-             }""", "{\"a\": 5, <warning><caret>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
-                                                                                                                 "  \"c\": 7}");
+  public void testRemoveProhibitedProperty() {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "a": {},
+          "c": {}
+        },
+        "additionalProperties": false
+      }""";
+    String fixName = "Remove prohibited property 'b'";
+    doTest(schema, "{\"a\": 5, <warning><caret>\"b\": 6</warning>, \"c\": 7}", fixName, "{\"a\": 5,\n  \"c\": 7}");
+    doTest(schema, "{\"a\": 5, \"c\": 7, <warning><caret>\"b\": 6</warning>}", fixName, "{\"a\": 5, \"c\": 7}");
+    doTest(schema, "{<warning><caret>\"b\": 6</warning>, \"a\": 5, \"c\": 7}", fixName, "{\n  \"a\": 5, \"c\": 7}");
+    doTest(schema, "{<warning><caret>\"b\": 6</warning>}", fixName, "{}");
   }
 }
