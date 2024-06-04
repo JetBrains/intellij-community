@@ -67,9 +67,6 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveJavaInnerClassKotlinUsagesHandler"/>
     <refactoring.moveClassHandler
             order="first"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinClassHandler"/>
-    <refactoring.moveClassHandler
-            order="first"
             implementation="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinAliasClassHandler"/>
   </extensions>
 
