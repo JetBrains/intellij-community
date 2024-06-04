@@ -169,5 +169,16 @@ public interface Logger {
            LoggingEventBuilder atTrace();
         }
       """.trimIndent())
+    fixture.addClass("""
+        package net.logstash.logback.argument;
+        public final class StructuredArguments {
+          public static StructuredArgument kv(Object... object){
+            return new StructuredArgument();}
+        }
+      """.trimIndent())
+    fixture.addClass("""
+        package net.logstash.logback.argument;
+        public class StructuredArgument{}
+      """.trimIndent())
   }
 }
