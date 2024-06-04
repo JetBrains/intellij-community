@@ -1,26 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 class AddIsToWhenConditionFix(
-    expression: KtWhenConditionWithExpression,
+    element: KtWhenConditionWithExpression,
     private val referenceText: String
-) : KotlinQuickFixAction<KtWhenConditionWithExpression>(expression) {
-    override fun getText(): String = KotlinBundle.message("fix.add.is.to.when", referenceText)
-    override fun getFamilyName(): String = text
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtWhenConditionWithExpression, Unit>(element, Unit) {
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val expression = element ?: return
-        val replaced = expression.replaced(KtPsiFactory(project).createWhenCondition("is ${expression.text}"))
-        editor?.caretModel?.moveToOffset(replaced.endOffset)
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.is.to.when", referenceText)
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtWhenConditionWithExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater
+    ) {
+        val psiFactory = KtPsiFactory(actionContext.project)
+        val replaced = element.replaced(psiFactory.createWhenCondition("is ${element.text}"))
+        updater.moveCaretTo(replaced.endOffset)
     }
 }

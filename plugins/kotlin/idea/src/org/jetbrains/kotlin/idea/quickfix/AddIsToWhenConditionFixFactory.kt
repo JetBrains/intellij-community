@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 
 internal object AddIsToWhenConditionFixFactory : KotlinSingleIntentionActionFactory() {
-    override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtWhenConditionWithExpression>? {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement.parent as? KtWhenConditionWithExpression ?: return null
-        return AddIsToWhenConditionFix(element, element.text)
+        return AddIsToWhenConditionFix(element, element.text).asIntention()
     }
 }
