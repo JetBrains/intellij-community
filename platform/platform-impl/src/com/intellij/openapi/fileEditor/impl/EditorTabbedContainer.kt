@@ -37,7 +37,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
@@ -155,7 +154,7 @@ class EditorTabbedContainer internal constructor(
     editorTabs.presentation.setRequestFocusOnLastFocusedComponent(true)
     editorTabs.component.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
-        if (editorTabs.findInfo(e) != null || isFloating) {
+        if (editorTabs.findInfo(e) != null || window.owner.isFloating) {
           return
         }
         if (!e.isPopupTrigger && SwingUtilities.isLeftMouseButton(e) && e.clickCount == 2) {
@@ -309,22 +308,13 @@ class EditorTabbedContainer internal constructor(
     }
   }
 
-  val isEmptyVisible: Boolean
-    get() = editorTabs.isEmptyVisible
   val tabs: JBTabs
     get() = editorTabs
-
-  internal fun requestFocus(forced: Boolean) {
-    IdeFocusManager.getGlobalInstance().requestFocus(editorTabs.component, forced)
-  }
 
   override fun close() {
     val selected = editorTabs.targetInfo ?: return
     window.manager.closeFile((selected.`object` as VirtualFile), window)
   }
-
-  private val isFloating: Boolean
-    get() = window.owner.isFloating
 
   private inner class TabMouseListener : MouseAdapter() {
     private var actionClickCount = 0

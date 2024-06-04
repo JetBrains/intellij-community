@@ -130,7 +130,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   val isEmptyVisible: Boolean
-    get() = tabbedPane.isEmptyVisible
+    get() = tabbedPane.editorTabs.isEmptyVisible
   val size: Dimension
     get() = component.size
 
@@ -595,7 +595,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   }
 
   fun requestFocus(forced: Boolean) {
-    tabbedPane.requestFocus(forced)
+    IdeFocusManager.getGlobalInstance().requestFocus(tabbedPane.editorTabs.component, forced)
   }
 
   fun toFront() {

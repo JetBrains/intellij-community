@@ -636,7 +636,7 @@ open class EditorsSplitters internal constructor(
     require(window == null || windows.contains(window)) { "$window is not a member of this container" }
     setCurrentWindow(window)
     if (window != null && requestFocus) {
-      window.tabbedPane.requestFocus(forced = true)
+      window.requestFocus(forced = true)
     }
   }
 
