@@ -142,6 +142,8 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
       )
       mutableEntityStorage.mutableLibraryMap.addMapping(libraryEntity, libraryBridge as LibraryBridge)
     }
+
+    assert(tmpEntityStorage == null) { "Temporary storage has to be null. Possibly, it's the second call of the method" }
     tmpEntityStorage = mutableEntityStorage
 
     val runnable: () -> Unit = {
