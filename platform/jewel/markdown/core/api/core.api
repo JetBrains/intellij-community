@@ -583,6 +583,7 @@ public final class org/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$F
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getBorderColor-0d7_KjU ()J
 	public final fun getBorderWidth-D9Ej5fM ()F
+	public final fun getEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getFillWidth ()Z
 	public final fun getInfoPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getInfoPosition ()Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced$InfoPosition;
@@ -590,7 +591,6 @@ public final class org/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$F
 	public final fun getPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getScrollsHorizontally ()Z
 	public final fun getShape ()Landroidx/compose/ui/graphics/Shape;
-	public final fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -618,11 +618,11 @@ public final class org/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$I
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getBorderColor-0d7_KjU ()J
 	public final fun getBorderWidth-D9Ej5fM ()F
+	public final fun getEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getFillWidth ()Z
 	public final fun getPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getScrollsHorizontally ()Z
 	public final fun getShape ()Landroidx/compose/ui/graphics/Shape;
-	public final fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

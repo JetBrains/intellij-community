@@ -188,7 +188,7 @@ public class MarkdownStyling(
 
         @GenerateDataFunctions
         public class Indented(
-            public val textStyle: TextStyle,
+            public val editorTextStyle: TextStyle,
             public val padding: PaddingValues,
             public val shape: Shape,
             public val background: Color,
@@ -203,7 +203,7 @@ public class MarkdownStyling(
 
         @GenerateDataFunctions
         public class Fenced(
-            public val textStyle: TextStyle,
+            public val editorTextStyle: TextStyle,
             public val padding: PaddingValues,
             public val shape: Shape,
             public val background: Color,

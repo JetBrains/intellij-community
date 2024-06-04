@@ -49,6 +49,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 
 public fun MarkdownStyling.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
     inlinesStyling: InlinesStyling = InlinesStyling.create(baseTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.create(inlinesStyling),
@@ -58,12 +59,7 @@ public fun MarkdownStyling.Companion.create(
     list: List = List.create(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.create(),
-    htmlBlock: HtmlBlock = HtmlBlock.create(
-        baseTextStyle.copy(
-            color = blockContentColor,
-            fontFamily = editorFontFamily,
-        ),
-    ),
+    htmlBlock: HtmlBlock = HtmlBlock.create(editorTextStyle),
 ): MarkdownStyling =
     MarkdownStyling(
         blockVerticalSpacing,
@@ -281,23 +277,9 @@ public fun Unordered.Companion.create(
     )
 
 public fun Code.Companion.create(
-    baseTextStyle: TextStyle = defaultTextStyle,
-    indented: Indented = Indented.create(
-        baseTextStyle.copy(
-            color = blockContentColor,
-            fontFamily = editorFontFamily,
-            fontSize = baseTextStyle.fontSize * .85,
-            lineHeight = baseTextStyle.fontSize * .85 * 1.45,
-        ),
-    ),
-    fenced: Fenced = Fenced.create(
-        baseTextStyle.copy(
-            color = blockContentColor,
-            fontFamily = editorFontFamily,
-            fontSize = baseTextStyle.fontSize * .85,
-            lineHeight = baseTextStyle.fontSize * .85 * 1.45,
-        ),
-    ),
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
+    indented: Indented = Indented.create(editorTextStyle),
+    fenced: Fenced = Fenced.create(editorTextStyle),
 ): Code = Code(indented, fenced)
 
 public fun Indented.Companion.create(
@@ -424,11 +406,17 @@ private val defaultTextSize
 private val defaultTextStyle
     get() = retrieveDefaultTextStyle().copy(color = Color.Unspecified)
 
+private val defaultEditorTextStyle
+    get() = defaultTextStyle.copy(
+        color = blockContentColor,
+        fontFamily = editorFontFamily,
+    )
+
 private val dividerColor
     get() = retrieveColorOrUnspecified("Group.separatorColor")
 
 private val blockBackgroundColor
-    get() = retrieveColorOrUnspecified("Group.separatorColor")
+    get() = retrieveEditorColorScheme().defaultBackground.toComposeColor()
 
 private val blockContentColor
     get() = retrieveEditorColorScheme().defaultForeground.toComposeColor()

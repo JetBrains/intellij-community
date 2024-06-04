@@ -357,8 +357,8 @@ public open class DefaultMarkdownBlockRenderer(
         ) {
             Text(
                 text = block.content,
-                style = styling.textStyle,
-                color = styling.textStyle.color.takeOrElse { LocalContentColor.current },
+                style = styling.editorTextStyle,
+                color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
                 modifier = Modifier.padding(styling.padding)
                     .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
             )
@@ -386,8 +386,8 @@ public open class DefaultMarkdownBlockRenderer(
 
                 Text(
                     text = block.content,
-                    style = styling.textStyle,
-                    color = styling.textStyle.color.takeOrElse { LocalContentColor.current },
+                    style = styling.editorTextStyle,
+                    color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
                     modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                 )
 
