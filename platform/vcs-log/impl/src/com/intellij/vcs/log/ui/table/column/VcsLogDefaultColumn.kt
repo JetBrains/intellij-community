@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
@@ -92,7 +93,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String = commit.subject
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
-    val graphCellPainter: GraphCellPainter = object : SimpleGraphCellPainter(DefaultColorGenerator()) {
+    val graphCellPainter: GraphCellPainter = object : SimpleGraphCellPainter(service<DefaultColorGenerator>()) {
       override val rowHeight: Int get() = table.rowHeight
     }
 

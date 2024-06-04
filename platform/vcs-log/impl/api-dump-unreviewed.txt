@@ -366,7 +366,7 @@ com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 f:com.intellij.vcs.log.graph.DefaultColorGenerator
 - com.intellij.vcs.log.paint.ColorGenerator
 - sf:Companion:com.intellij.vcs.log.graph.DefaultColorGenerator$Companion
-- <init>():V
+- <init>(kotlinx.coroutines.CoroutineScope):V
 - getColor(I):com.intellij.ui.JBColor
 f:com.intellij.vcs.log.graph.DefaultColorGenerator$Companion
 f:com.intellij.vcs.log.graph.HeadCommitsComparator

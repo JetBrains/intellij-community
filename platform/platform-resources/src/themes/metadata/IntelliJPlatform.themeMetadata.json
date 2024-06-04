@@ -2151,6 +2151,16 @@
       "since": "2023.1"
     },
     {
+      "key": "VersionControl.Log.Graph.saturation",
+      "description": "Saturation of the graph in the Version Control | Log tab (a floating point number between 0 and 1)",
+      "since": "2024.2"
+    },
+    {
+      "key": "VersionControl.Log.Graph.brightness",
+      "description": "Brightness of the graph in the Version Control | Log tab (a floating point number between 0 and 1)",
+      "since": "2024.2"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"
