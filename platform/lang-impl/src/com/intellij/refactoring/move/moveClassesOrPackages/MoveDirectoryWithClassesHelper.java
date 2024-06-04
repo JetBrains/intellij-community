@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -37,6 +37,8 @@ public abstract class MoveDirectoryWithClassesHelper {
                                Map<PsiElement, PsiElement> oldToNewElementsMapping,
                                List<? super PsiFile> movedFiles,
                                RefactoringElementListener listener);
+
+  public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) { }
 
   public abstract void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper);
 
@@ -77,6 +79,11 @@ public abstract class MoveDirectoryWithClassesHelper {
     }
 
     @Override
+    public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+      CommonMoveUtil.retargetUsages(usages.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
+    }
+
+    @Override
     public void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper) {
       for (UsageInfo usage : usages) {
         if (usage instanceof MoveDirectoryUsageInfo) {
@@ -113,6 +120,8 @@ public abstract class MoveDirectoryWithClassesHelper {
       listener.elementMoved(psiFile);
       return true;
     }
+
+
 
     @Override
     public void beforeMove(PsiFile psiFile) {

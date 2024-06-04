@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
@@ -122,6 +123,22 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       listener.elementMoved(newClass);
     }
     return true;
+  }
+
+  @Override
+  public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+    List<UsageInfo> usageInfosToProcess = ContainerUtil.filter(usages, usageInfo -> {
+      if (usageInfo instanceof MoveRenameUsageInfo moveRenameUsageInfo) {
+        final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
+        if (referencedElement == null) return false;
+        return referencedElement.getContainingFile() instanceof PsiJavaFile;
+      }
+      else {
+        return false;
+      }
+    });
+    CommonMoveUtil.retargetUsages(usageInfosToProcess.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
+    usages.removeAll(usageInfosToProcess);
   }
 
   @Override
