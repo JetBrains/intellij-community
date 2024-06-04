@@ -18,3 +18,10 @@ interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
 }
 
+@Remote("java.awt.Rectangle")
+interface RectangleRef {
+  fun contains(p: Point): Boolean
+  fun getX(): Double
+  fun getY(): Double
+  fun getWidth(): Double
+}
