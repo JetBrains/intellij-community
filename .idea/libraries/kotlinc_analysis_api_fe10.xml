@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="kotlinc.high-level-api-fe10" type="repository">
+  <library name="kotlinc.analysis-api-fe10" type="repository">
     <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-fe10-for-ide:2.0.20-dev-5135">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.0.20-dev-5135/analysis-api-fe10-for-ide-2.0.20-dev-5135.jar">

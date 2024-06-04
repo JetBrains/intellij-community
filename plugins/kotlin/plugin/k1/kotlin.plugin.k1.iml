@@ -11,9 +11,9 @@
     <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-fe10" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api-impl-base" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api-fe10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api-fe10" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />

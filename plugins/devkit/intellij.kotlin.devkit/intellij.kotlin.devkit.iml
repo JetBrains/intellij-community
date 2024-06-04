@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.java.analysis" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
