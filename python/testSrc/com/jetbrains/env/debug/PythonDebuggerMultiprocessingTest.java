@@ -2,7 +2,6 @@
 package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.env.EnvTestTagsRequired;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,6 +31,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     }
   }
 
+  @EnvTestTagsRequired(tags = "python3")
   @Test
   public void testMultiprocess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess.py") {
@@ -50,12 +49,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
 
         waitForOutput("Result:OK");
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Sets.newHashSet("python3");
       }
     });
   }
@@ -81,6 +74,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = "-iron")
   @Test
   public void testMultiprocessPool() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_pool.py") {
@@ -89,15 +83,10 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         waitForOutput("Done");
         assertFalse(output().contains("KeyboardInterrupt"));
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-iron");
-      }
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-iron", "-jython"})
   @Test
   public void testPythonSubprocessWithCParameter() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_python_subprocess_with_c_parameter.py") {
@@ -159,6 +148,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-iron", "-jython"})
   @Test
   public void testMultiprocessProcess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_process.py") {
@@ -174,15 +164,10 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         eval("name").hasValue("'subprocess'");
         resume();
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
-      }
     });
   }
 
+  @EnvTestTagsRequired(tags = "python3.8")
   @Test
   public void testPosixSpawn() {
 
@@ -205,15 +190,10 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForOutput("Process finished with exit code 0");
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("python3.8");
-      }
     });
   }
 
+  @EnvTestTagsRequired(tags = "python3")
   @Test
   public void testSubprocessIsolated() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_isolated.py") {
@@ -230,15 +210,10 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForOutput("Module returned code 0");
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("python3");
-      }
     });
   }
 
+  @EnvTestTagsRequired(tags = "python2.7")
   @Test
   public void testCallExecWithPythonArg() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_call_exec_with_python_arg.py") {
@@ -254,11 +229,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForOutput("3");
       }
-
-      @Override
-      public @NotNull Set<String> getTags() {
-        return Collections.singleton("python2.7");
-      }
     });
 
     runPythonTest(new PyDebuggerTask("/debug", "test_call_python_version.py") {
@@ -266,11 +236,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForTerminate();
         outputContains("Python");
-      }
-
-      @Override
-      public @NotNull Set<String> getTags() {
-        return Collections.singleton("python2.7");
       }
     });
   }
@@ -332,6 +297,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = "joblib")
   @Test
   @TestFor(issues = "PY-36882")
   public void testNoErrorMessagesWithJoblib() {
@@ -351,11 +317,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
         assertFalse(output().contains("Traceback"));
-      }
-
-      @Override
-      public @NotNull Set<String> getTags() {
-        return Collections.singleton("joblib");
       }
     });
   }
