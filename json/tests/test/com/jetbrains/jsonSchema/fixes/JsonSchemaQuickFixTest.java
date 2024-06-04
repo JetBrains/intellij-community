@@ -80,4 +80,78 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
     doTest(schema, "{<warning><caret>\"b\": 6</warning>, \"a\": 5, \"c\": 7}", fixName, "{\n  \"a\": 5, \"c\": 7}");
     doTest(schema, "{<warning><caret>\"b\": 6</warning>}", fixName, "{}");
   }
+
+  public void testRemoveProhibitedPropertyInjection() {
+    myFixture.setCaresAboutInjection(false);
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "inner": {
+            "properties": {"x": {}},
+            "additionalProperties": false
+          },
+          "outer": {
+            "x-intellij-language-injection": "JSON"
+          }
+        }
+      }""";
+    doTest(schema, """
+             {"outer": "{\\"inner\\": \
+             {\\"x\\": 1, <warning descr="Property 'y' is not allowed"><caret>\\"</warning><warning descr="Property 'y' is not allowed">y</warning>\
+             <warning descr="Property 'y' is not allowed">\\"</warning><warning descr="Property 'y' is not allowed">: 2</warning>}}"}""",
+           "Remove prohibited property 'y'", """
+             {"outer": "{\\"inner\\": {\\"x\\": 1}}"}""");
+  }
+
+  public void testSuggestEnumValuesFix() {
+    @Language("JSON") String schema = """
+      {
+        "required": ["x", "y"],
+        "properties": {
+          "x": {
+            "enum": ["xxx", "yyy", "zzz"]
+          },
+          "y": {
+            "enum": [1, 2, 3, 4, 5]
+          }
+        }
+      }""";
+    doTest(schema, """
+      {
+       "x": <warning descr="Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\"">"<caret>oops"</warning>,
+       "y": <warning descr="Value should be one of: 1, 2, 3, 4, 5">123</warning>
+      }""", "Replace with allowed value", """
+      {
+       "x": "xxx",
+       "y": 123
+      }""");
+    doTest(schema, """
+      {
+       "x": <warning descr="Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\"">"oops"</warning>,
+       "y": <warning descr="Value should be one of: 1, 2, 3, 4, 5"><caret>123</warning>
+      }""", "Replace with allowed value", """
+      {
+       "x": "oops",
+       "y": 1
+      }""");
+  }
+
+  public void testSuggestEnumValuesFixInjection() {
+    myFixture.setCaresAboutInjection(false);
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "inner": {
+            "enum": [10, 20, 30]
+          },
+          "outer": {
+            "x-intellij-language-injection": "JSON"
+          }
+        }
+      }""";
+    doTest(schema, """
+      {"outer": "{\\"inner\\": <warning descr="Value should be one of: 10, 20, 30"><caret>123</warning>}"}""",
+           "Replace with allowed value", """
+             {"outer": "{\\"inner\\": 10}"}""");
+  }
 }

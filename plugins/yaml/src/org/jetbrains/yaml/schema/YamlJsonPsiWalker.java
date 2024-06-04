@@ -319,7 +319,20 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     private static final YamlJsonLikeSyntaxAdapter INSTANCE = new YamlJsonLikeSyntaxAdapter();
     @Override
     public @NotNull PsiElement adjustValue(@NotNull PsiElement value) {
-      if (!(value instanceof YAMLValue)) return value;
+      if (!(value instanceof YAMLValue)) {
+        YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(value);
+        if (keyValue == null) {
+          keyValue = ObjectUtils.tryCast(value.getParent(), YAMLKeyValue.class);
+        }
+        if (keyValue != null) {
+          YAMLValue adjustedValue = keyValue.getValue();
+          if (adjustedValue != null) return adjustedValue;
+          YAMLElementGenerator generator = YAMLElementGenerator.getInstance(keyValue.getProject());
+          YAMLValue newValue = Objects.requireNonNull(generator.createYamlKeyValue("a", "\"\"").getValue());
+          return keyValue.add(newValue);
+        }
+        return value;
+      }
       YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(value, YAMLAnchor.class);
       if (anchors == null || anchors.length == 0) return value;
       PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchors[anchors.length - 1]);
@@ -327,12 +340,10 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
 
     private static YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
-      if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
-        PsiElement prev = element.getPrevSibling();
-        prev = prev == null ? null : PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
-        if (prev instanceof YAMLKeyValue && ((YAMLKeyValue)prev).getValue() == null) {
-          return (YAMLKeyValue)prev;
-        }
+      PsiElement prev = PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT ? element.getPrevSibling() : element;
+      prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
+      if (prev instanceof YAMLKeyValue keyValue && (keyValue).getValue() == null) {
+        return keyValue;
       }
       return null;
     }

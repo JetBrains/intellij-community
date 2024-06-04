@@ -2,6 +2,7 @@
 package com.intellij.json.psi;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +17,10 @@ public final class JsonStringLiteralManipulator extends AbstractElementManipulat
     final String originalContent = element.getText();
     final TextRange withoutQuotes = getRangeInElement(element);
     final JsonElementGenerator generator = new JsonElementGenerator(element.getProject());
-    final String replacement = originalContent.substring(withoutQuotes.getStartOffset(), range.getStartOffset()) +
-                               newContent +
-                               originalContent.substring(range.getEndOffset(), withoutQuotes.getEndOffset());
+    final String replacement =
+      StringUtil.unescapeStringCharacters(originalContent.substring(withoutQuotes.getStartOffset(), range.getStartOffset())) +
+      newContent +
+      StringUtil.unescapeStringCharacters(originalContent.substring(range.getEndOffset(), withoutQuotes.getEndOffset()));
     return (JsonStringLiteral)element.replace(generator.createStringLiteral(replacement));
   }
 

@@ -237,6 +237,48 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                                                                                            "  tag: ");
   }
 
+  public void testSuggestEnumValuesFix() {
+    @Language("JSON") String schema = """
+      {
+        "required": ["x", "y"],
+        "properties": {
+          "x": {
+            "enum": ["xxx", "yyy", "zzz"]
+          },
+          "y": {
+            "enum": [1, 2, 3, 4, 5]
+          }
+        }
+      }""";
+    doTest(schema, """
+      "x"<warning descr="Schema validation: Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\""><caret>:</warning>
+      """, "Replace with allowed value", "\"x\": xxx\n");
+    doTest(schema, """
+      "y": <warning descr="Schema validation: Value should be one of: 1, 2, 3, 4, 5"><caret>no</warning>
+      """, "Replace with allowed value", "\"y\": 1\n");
+  }
+  
+  public void testSuggestEnumValuesFixInjection() {
+    myFixture.setCaresAboutInjection(false);
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "inner": {
+            "enum": ["xxx", "yyy", "zzz"]
+          },
+          "outer": {
+            "x-intellij-language-injection": "yaml"
+          }
+        }
+      }""";
+    doTest(schema, """
+      "outer": |
+        "inner": <warning descr="Schema validation: Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\""><caret>"oops"</warning>""",
+           "Replace with allowed value", """
+             "outer": |
+               "inner": xxx""");
+  }
+
   @Language("JSON") private static final String SCHEMA_WITH_NESTING = """
     {
       "properties": {

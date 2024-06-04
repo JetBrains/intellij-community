@@ -49,7 +49,6 @@ import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
 
 private const val BUILTIN_USAGE_KEY = "builtin"
@@ -608,7 +607,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     @JvmStatic
-    @TestOnly
     fun getCompletionVariants(schema: JsonSchemaObject,
                               position: PsiElement, originalPosition: PsiElement): List<LookupElement> {
       val result: MutableList<LookupElement> = ArrayList()
