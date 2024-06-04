@@ -47,7 +47,7 @@ internal class ManageWorkspaceDialog(private val project: Project) : DialogWrapp
           .component
       }
       row {
-        cell(subprojectList.createDecorator().createPanel()).align(Align.FILL)
+        cell(subprojectList.decoratorPanel).align(Align.FILL)
       }
     }
   }

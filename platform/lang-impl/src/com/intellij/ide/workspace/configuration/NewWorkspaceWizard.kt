@@ -42,7 +42,7 @@ class NewWorkspaceWizard: GeneratorNewProjectWizard {
 
     override fun setupUI(builder: Panel) {
       builder.row {
-        cell(subprojectList.createDecorator().createPanel()).align(Align.FILL)
+        cell(subprojectList.decoratorPanel).align(Align.FILL)
       }
     }
 

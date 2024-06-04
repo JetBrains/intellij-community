@@ -12,12 +12,14 @@ import com.intellij.util.SystemProperties
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JList
+import javax.swing.JPanel
 import kotlin.io.path.pathString
 
 internal class SubprojectList(private val currentProject: Project?) {
 
   private val listModel: CollectionListModel<Item>
   private val projectList: JBList<Item>
+  val decoratorPanel: JPanel
 
   init {
     val subprojects = currentProject?.let { getAllSubprojects(currentProject) } ?: emptyList()
@@ -25,13 +27,20 @@ internal class SubprojectList(private val currentProject: Project?) {
     projectList = JBList(listModel).apply {
       cellRenderer = Renderer().apply { iconTextGap = 3 }
     }
-  }
+    @Suppress("DialogTitleCapitalization") val actionText = LangBundle.message("action.add.projects.text")
+    val toolbarDecorator = ToolbarDecorator.createDecorator(projectList)
+      .setPanelBorder(IdeBorderFactory.createTitledBorder(LangBundle.message("border.title.linked.projects"), false))
+      .disableUpDownActions()
+      .setAddActionName(actionText)
+      .setAddAction { addProjects() }
+    decoratorPanel = toolbarDecorator.createPanel()
 
-  fun createDecorator(): ToolbarDecorator = ToolbarDecorator.createDecorator(projectList)
-    .setPanelBorder(IdeBorderFactory.createTitledBorder(LangBundle.message("border.title.linked.projects")))
-    .disableUpDownActions()
-    .setAddActionName(LangBundle.message("action.add.projects.text"))
-    .setAddAction { addProjects() }
+    projectList.emptyText
+      .appendText(LangBundle.message("status.text.no.projects.added"))
+      .appendLine(actionText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+        addProjects()
+      }
+  }
 
   val projectPaths: List<String>
     get()  = listModel.items.map { it.path }
