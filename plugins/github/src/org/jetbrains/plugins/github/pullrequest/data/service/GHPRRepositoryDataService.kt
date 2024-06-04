@@ -27,6 +27,11 @@ interface GHPRRepositoryDataService {
 
   suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer>
 
+  /**
+   * Find a pull request description template
+   */
+  suspend fun loadTemplate(): String?
+
   fun resetData()
 
   fun getDefaultRemoteBranch(): GitRemoteBranch?

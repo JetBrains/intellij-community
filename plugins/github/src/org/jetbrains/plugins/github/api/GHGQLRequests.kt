@@ -63,6 +63,14 @@ object GHGQLRequests {
                                               "repository")
     }
 
+    fun loadPullRequestTemplates(repository: GHRepositoryCoordinates): GQLQuery<List<GHRepositoryPullRequestTemplate>?> {
+      return GQLQuery.OptionalTraversedParsedList(repository.serverPath.toGraphQLUrl(), GHGQLQueries.getPullRequestTemplates,
+                                                  mapOf("repoOwner" to repository.repositoryPath.owner,
+                                                        "repoName" to repository.repositoryPath.repository),
+                                                  GHRepositoryPullRequestTemplate::class.java,
+                                                  "repository", "pullRequestTemplates")
+    }
+
     fun getProtectionRules(repository: GHRepositoryCoordinates,
                            pagination: GraphQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHBranchProtectionRule>> {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.getProtectionRules,

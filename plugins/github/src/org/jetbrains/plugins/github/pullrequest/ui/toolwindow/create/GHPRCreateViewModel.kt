@@ -130,7 +130,7 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
   override val titleText: MutableStateFlow<String> = MutableStateFlow("")
   override val descriptionText: MutableStateFlow<String> = MutableStateFlow("")
   override val templateLoadingState: StateFlow<ComputedResult<String?>> = computationStateFlow(flowOf(Unit)) {
-    GHPRTemplateLoader.loadTemplate(project)
+    dataContext.repositoryDataService.loadTemplate()
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val assigneesVm: LabeledListPanelViewModel<GHUser> = MetadataListViewModel(cs) {

@@ -187,9 +187,28 @@ sealed class GithubApiRequest<out T>(val url: String) {
         }
       }
 
-      internal fun <T> parseResponse(response: GithubApiResponse,
-                                     clazz: Class<T>,
-                                     pathFromData: Array<out String>): T? {
+      class OptionalTraversedParsedList<T>(url: String,
+                                           requestFilePath: String,
+                                           variablesObject: Any,
+                                           private val clazz: Class<T>,
+                                           private vararg val pathFromData: String)
+        : GQLQuery<List<T>?>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GithubApiResponse): List<T>? =
+          parseResponse(response, pathFromData) {
+            GithubApiContentHelper.readJsonList(it.toString().reader(), clazz)
+          }
+      }
+
+      protected fun <T> parseResponse(response: GithubApiResponse,
+                                      clazz: Class<T>,
+                                      pathFromData: Array<out String>): T? =
+        parseResponse(response, pathFromData) {
+          GithubApiContentHelper.fromJson(it.toString(), clazz, true)
+        }
+
+      protected fun <T> parseResponse(response: GithubApiResponse,
+                                      pathFromData: Array<out String>,
+                                      deserialize: (JsonNode) -> T): T? {
         val result: GraphQLResponseDTO<out JsonNode, GHGQLError> = parseGQLResponse(response, JsonNode::class.java)
         val data = result.data
         if (data != null && !data.isNull) {
@@ -197,7 +216,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
           for (path in pathFromData) {
             node = node[path] ?: break
           }
-          if (!node.isNull) return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
+          if (!node.isNull) return deserialize(node)
         }
         val errors = result.errors
         if (errors == null) return null

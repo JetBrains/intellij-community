@@ -9,14 +9,12 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.*
-import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
-import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
@@ -118,6 +116,14 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer> = potentialReviewersRequest.awaitCompleted()
+
+  private val templatesRequest: Deferred<List<GHRepositoryPullRequestTemplate>> = cs.async(start = CoroutineStart.LAZY) {
+    requestExecutor.executeSuspend(GHGQLRequests.Repo.loadPullRequestTemplates(repositoryCoordinates)).orEmpty()
+  }
+
+  override suspend fun loadTemplate(): String? {
+    return templatesRequest.await().find { it.body.isNotBlank() }?.body
+  }
 
   override fun resetData() {
     collaboratorsRequest.restart(doLoadCollaboratorsAsync())
