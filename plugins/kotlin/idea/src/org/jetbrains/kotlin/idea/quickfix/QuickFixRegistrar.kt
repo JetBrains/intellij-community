@@ -697,7 +697,7 @@ class QuickFixRegistrar : QuickFixContributor {
             RemoveModifierFixBase.removeNonRedundantModifier
         )
 
-        NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFix)
+        NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFixFactory)
 
         DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFixFactory)
         ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFixFactory)
