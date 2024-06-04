@@ -78,11 +78,14 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
   val container = element.parent ?: return
   val path = completionPath.accessor()
   if (path.isNotEmpty()) {
-    val parentObject = walker.createValueAdapter(container)?.asObject.let {
-      it ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
-        walker.createValueAdapter(it)?.asObject
+    val parentObject = walker.createValueAdapter(container)?.asObject
+      ?: walker.createValueAdapter(container.parent)?.asObject?.takeIf {
+        // the first condition is a hack for yaml, we need to invent a better solution here
+        walker.defaultObjectValue.isNotBlank() && walker.getParentPropertyAdapter(container) != null
       }
-    } ?: return
+      ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
+        walker.createValueAdapter(it)?.asObject
+      } ?: return
     val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
     val pointer = SmartPointerManager.createPointer(newElement)
     cleanupWhitespacesAndDelete(element)
