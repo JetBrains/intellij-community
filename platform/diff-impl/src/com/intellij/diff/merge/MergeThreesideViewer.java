@@ -1138,15 +1138,20 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   @ApiStatus.Internal
   @RequiresEdt
   public <T> void runExternalResolver(CompletableFuture<? extends T> operation,
-                                      Consumer<T> resultHandler) {
+                                      Consumer<T> resultHandler,
+                                      Consumer<? super Throwable> errorHandler) {
     runBeforeExternalOperation();
 
     operation.whenComplete((result, throwable) -> {
 
       Runnable runnable = () -> {
-        // todo: add error handling
         if (isDisposed()) return;
         runAfterExternalOperation();
+
+        if (throwable != null) {
+          errorHandler.accept(throwable);
+          return;
+        }
 
         if (result != null) {
           resultHandler.accept(result);
