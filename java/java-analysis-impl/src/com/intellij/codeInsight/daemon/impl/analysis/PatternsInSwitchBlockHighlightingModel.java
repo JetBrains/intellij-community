@@ -38,6 +38,13 @@ import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBloc
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static com.intellij.psi.PsiModifier.SEALED;
 
+/**
+ * This class represents the model for highlighting patterns in a switch block.
+ * It provides methods for checking the type of switch selector, the values of switch labels,
+ * compatibility between labels and selectors, and dominance and completeness rules for switch blocks.
+ *
+ * @see SwitchBlockHighlightingModel
+ */
 public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
   private final Object myUnconditionalPattern = new Object();
   @Nullable
@@ -343,6 +350,14 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     return result;
   }
 
+  /**
+   * Determines if the given case label element is dominated by another case label element according to JEP 440-441
+   *
+   * @param overWhom The case label element that may dominate.
+   * @param who The case label element that may be dominated.
+   * @param selectorType The type used to select the case label element.
+   * @return {@code true} if the 'overWhom' case label element dominates the 'who' case label element, {@code false} otherwise.
+   */
   public static boolean isDominated(@NotNull PsiCaseLabelElement overWhom,
                                     @NotNull PsiElement who,
                                     @NotNull PsiType selectorType) {
