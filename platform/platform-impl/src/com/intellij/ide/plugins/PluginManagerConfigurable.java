@@ -12,7 +12,9 @@ import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.enums.SortBy;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultFeatureProvider;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -224,6 +226,8 @@ public final class PluginManagerConfigurable
 
     createMarketplaceTab();
     createInstalledTab();
+
+    PluginManagerUsageCollector.sessionStarted();
 
     myCardPanel = new MultiPanel() {
       @Override
@@ -772,8 +776,11 @@ public final class PluginManagerConfigurable
           new SearchResultPanel(marketplaceController, panel, true, 0, 0) {
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+              int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
               try {
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
+
+                Map<IdeaPluginDescriptor, Double> pluginToScore = null;
 
                 if (parser.internal) {
                   PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
@@ -841,6 +848,11 @@ public final class PluginManagerConfigurable
 
                   ContainerUtil.removeDuplicates(result.descriptors);
 
+                  final var localRanker = MarketplaceLocalRanker.getInstanceIfEnabled();
+                  if (localRanker != null) {
+                    pluginToScore = localRanker.rankPlugins(parser, result.descriptors);
+                  }
+
                   if (!result.descriptors.isEmpty()) {
                     String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
@@ -868,7 +880,8 @@ public final class PluginManagerConfigurable
                   }
                 }
 
-                PluginManagerUsageCollector.performMarketplaceSearch(ProjectUtil.getActiveProject(), parser, result.descriptors);
+                PluginManagerUsageCollector.performMarketplaceSearch(
+                  ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, pluginToScore);
               }
               catch (IOException e) {
                 LOG.info(e);
@@ -1164,6 +1177,7 @@ public final class PluginManagerConfigurable
 
           @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+            int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
             myPluginModel.setInvalidFixCallback(null);
 
             SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
@@ -1224,7 +1238,8 @@ public final class PluginManagerConfigurable
             }
 
             result.descriptors.addAll(descriptors);
-            PluginManagerUsageCollector.performInstalledTabSearch(ProjectUtil.getActiveProject(), parser, result.descriptors);
+            PluginManagerUsageCollector.performInstalledTabSearch(
+              ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, null);
 
             if (!result.descriptors.isEmpty()) {
               if (parser.invalid) {
@@ -1988,6 +2003,7 @@ public final class PluginManagerConfigurable
       return () -> {
       };
     }
+
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
     }

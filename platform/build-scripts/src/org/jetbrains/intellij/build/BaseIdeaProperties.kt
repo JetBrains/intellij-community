@@ -84,6 +84,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.grazie",
   "intellij.featuresTrainer",
   "intellij.searchEverywhereMl",
+  "intellij.marketplaceMl",
   "intellij.platform.tracing.ide",
   "intellij.toml",
   KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,

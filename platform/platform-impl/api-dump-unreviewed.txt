@@ -8172,20 +8172,22 @@ f:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerMarketpl
 f:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultFeatureProvider
 - sf:INSTANCE:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultFeatureProvider
 - f:getFeaturesDefinition():com.intellij.internal.statistic.eventLog.events.EventField[]
-- f:getSearchStateFeatures(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor):java.util.List
+- f:getSearchStateFeatures(java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor,java.util.Map):java.util.List
+- bs:getSearchStateFeatures$default(com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultFeatureProvider,java.lang.String,com.intellij.ide.plugins.IdeaPluginDescriptor,java.util.Map,I,java.lang.Object):java.util.List
 f:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultMarketplaceFeatureProvider
 - sf:INSTANCE:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultMarketplaceFeatureProvider
 - f:getFeaturesDefinition():com.intellij.internal.statistic.eventLog.events.EventField[]
-- f:getSearchStateFeatures(com.intellij.ide.plugins.PluginNode):com.intellij.internal.statistic.eventLog.events.ObjectEventData
+- f:getSearchStateFeatures(com.intellij.ide.plugins.PluginNode):java.util.List
 f:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultsFeatureProvider
 - sf:INSTANCE:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultsFeatureProvider
+- f:getCommonFeatures(java.lang.String,java.util.List):java.util.ArrayList
 - f:getFeaturesDefinition():com.intellij.internal.statistic.eventLog.events.EventField[]
-- f:getSearchStateFeatures(java.lang.String,java.util.List):java.util.ArrayList
+- f:getSearchStateFeatures(java.lang.String,java.util.List,java.util.Map):java.util.List
 f:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerUserQueryFeatureProvider
 - sf:INSTANCE:com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerUserQueryFeatureProvider
 - f:getFeaturesDefinition():com.intellij.internal.statistic.eventLog.events.EventField[]
 - f:getSearchStateFeatures(java.lang.String):java.util.List
-f:com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator
+f:com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagValidator
 - com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 - com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
 - com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule

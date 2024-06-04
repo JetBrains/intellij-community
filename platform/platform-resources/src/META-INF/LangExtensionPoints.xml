@@ -697,5 +697,9 @@
     <extensionPoint name="editorSearchAreaProvider" interface="com.intellij.find.impl.livePreview.EditorSearchAreaProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.intentionPopupProvider" dynamic="true"
                     interface="com.intellij.codeInsight.intention.impl.IntentionPopupProvider"/>
+    <extensionPoint qualifiedName="com.intellij.marketplaceLocalRanker" dynamic="true"
+                    interface="com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker"/>
+    <extensionPoint qualifiedName="com.intellij.marketplaceTextualFeaturesProvider" dynamic="true"
+                    interface="com.intellij.ide.plugins.marketplace.statistics.features.MarketplaceTextualFeaturesProvider"/>
   </extensionPoints>
 </idea-plugin>
