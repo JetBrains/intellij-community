@@ -141,7 +141,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/moveReceiverAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveToConstructorParameters", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveToSealedParent", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/moveTypeAliasToTopLevel", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/moveTypeAliasToTopLevel", pattern = pattern)
             model("$idea/quickfix/obsoleteKotlinJsPackages", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/optIn", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/optimizeImports", pattern = pattern, isIgnored = true)

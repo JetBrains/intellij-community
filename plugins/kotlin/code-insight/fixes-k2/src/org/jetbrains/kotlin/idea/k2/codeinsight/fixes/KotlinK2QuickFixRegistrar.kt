@@ -109,6 +109,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeObjectToClassFixFactory.changeObjectToClassFixFactory)
         registerFactory(RemoveDefaultParameterValueFixFactory.removeDefaultParameterValueFixFactory)
         registerFactory(AddIsToWhenConditionFixFactory.addIsToWhenConditionFixFactory)
+        registerFactory(MoveTypeAliasToTopLevelFixFactory.moveTypeAliasToTopLevelFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
