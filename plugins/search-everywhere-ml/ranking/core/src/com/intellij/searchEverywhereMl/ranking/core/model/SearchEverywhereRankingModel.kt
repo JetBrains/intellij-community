@@ -27,6 +27,9 @@ internal class SimpleSearchEverywhereRankingModel(model: DecisionFunction) : Sea
 }
 
 internal class ExactMatchSearchEverywhereRankingModel(model: DecisionFunction) : SearchEverywhereRankingModel(model) {
+  private val MINIMUM_EM_WITH_EXTENSION_VALUE = 0.99
+  private val MINIMUM_EXACT_MATCH_VALUE = 0.9
+  private val EPSILON = 1e-5
   private val simpleModel = SimpleSearchEverywhereRankingModel(model)
 
   /**
@@ -72,9 +75,12 @@ internal class ExactMatchSearchEverywhereRankingModel(model: DecisionFunction) :
     val isNameOnlyMatch = isExactMatch && !isExtensionMatch
 
     return when {
-      isNameAndExtensionMatch -> 0.99 + mlPrediction * 0.01 // return preference is > 0.99
-      isNameOnlyMatch -> 0.9 + mlPrediction * 0.09 // 0.9 < return preference < 0.99
-      else -> 0.0 + mlPrediction * 0.9 // return preference < 0.9
+      // return preference is > 0.99 = MINIMUM_EM_WITH_EXTENSION_VALUE
+      isNameAndExtensionMatch -> MINIMUM_EM_WITH_EXTENSION_VALUE + mlPrediction * (1 - MINIMUM_EM_WITH_EXTENSION_VALUE)
+      // MINIMUM_EXACT_MATCH_VALUE = 0.9 < return preference < 0.99 = MINIMUM_EM_WITH_EXTENSION_VALUE
+      isNameOnlyMatch -> MINIMUM_EXACT_MATCH_VALUE + mlPrediction * (MINIMUM_EM_WITH_EXTENSION_VALUE - MINIMUM_EXACT_MATCH_VALUE - EPSILON)
+      // return preference < 0.9 = MINIMUM_EXACT_MATCH_VALUE
+      else -> 0.0 + mlPrediction * (MINIMUM_EXACT_MATCH_VALUE - EPSILON)
     }
   }
 }

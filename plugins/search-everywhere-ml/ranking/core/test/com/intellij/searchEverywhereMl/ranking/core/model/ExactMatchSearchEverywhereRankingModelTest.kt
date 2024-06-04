@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereRankingModelTest
 import com.intellij.testFramework.VfsTestUtil
+import org.junit.Assert
 
 internal class ExactMatchSearchEverywhereRankingModelTest : SearchEverywhereRankingModelTest() {
   private val nonExactMatchValue = 0.9
@@ -68,7 +69,10 @@ internal class ExactMatchSearchEverywhereRankingModelTest : SearchEverywhereRank
     // Now let's check the predictions for each file.
     rankedElements.entries.forEach {
       val fileName = (it.key.item as PsiFile).name
-      assertEquals("Prediction for $fileName doesn't match expected value for query $searchQuery.", expected[fileName], it.value)
+      Assert.assertEquals("Prediction for $fileName doesn't match expected value for query $searchQuery.",
+                          expected[fileName]!!,
+                          it.value,
+                          1e-4)
     }
   }
 
