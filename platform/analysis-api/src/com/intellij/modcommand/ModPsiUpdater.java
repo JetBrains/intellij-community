@@ -26,7 +26,6 @@ import java.util.function.Consumer;
  * @see ModCommand#psiUpdate(PsiElement, BiConsumer)
  * @see ModCommand#psiUpdate(ActionContext, Consumer) 
  */
-@ApiStatus.Experimental
 public interface ModPsiUpdater extends ModPsiNavigator {
   /**
    * Returns a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command.
