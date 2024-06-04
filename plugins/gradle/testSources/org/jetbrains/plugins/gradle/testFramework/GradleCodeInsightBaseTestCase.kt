@@ -10,8 +10,10 @@ import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.groovy.util.BaseTest
 
+@GradleProjectTestApplication
 abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest {
 
   private var _codeInsightFixture: JavaCodeInsightTestFixture? = null

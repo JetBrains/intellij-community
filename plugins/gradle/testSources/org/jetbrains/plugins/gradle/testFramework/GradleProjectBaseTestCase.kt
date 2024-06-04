@@ -5,10 +5,8 @@ import com.intellij.openapi.observable.operation.core.onFailureCatching
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.AfterAll
 
-@GradleProjectTestApplication
 abstract class GradleProjectBaseTestCase {
 
   private var _gradleFixture: GradleProjectTestFixture? = null
