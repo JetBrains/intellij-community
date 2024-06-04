@@ -1,1 +1,1 @@
-<caret>expect class Test
+expect class Test

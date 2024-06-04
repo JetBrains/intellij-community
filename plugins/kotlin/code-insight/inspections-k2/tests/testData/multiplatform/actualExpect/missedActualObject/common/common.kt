@@ -1,1 +1,1 @@
-<caret>expect object Test
+expect object Test

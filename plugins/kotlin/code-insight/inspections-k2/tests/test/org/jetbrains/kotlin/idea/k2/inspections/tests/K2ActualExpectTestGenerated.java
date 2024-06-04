@@ -84,4 +84,9 @@ public class K2ActualExpectTestGenerated extends AbstractK2ActualExpectTest {
     public void testOnlyListMissingLeaves() throws Exception {
         runTest("testData/multiplatform/actualExpect/onlyListMissingLeaves/");
     }
+
+    @TestMetadata("optionalExpectation")
+    public void testOptionalExpectation() throws Exception {
+        runTest("testData/multiplatform/actualExpect/optionalExpectation/");
+    }
 }

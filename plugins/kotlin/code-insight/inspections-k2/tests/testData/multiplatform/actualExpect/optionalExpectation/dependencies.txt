@@ -1,0 +1,7 @@
+MODULE a { platform=[JVM] }
+MODULE b { platform=[JVM] }
+MODULE common { platform=[JVM] }
+
+common -> STDLIB_COMMON, STDLIB_JVM, KOTLIN_SDK { kind=DEPENDENCY }
+a -> common { kind=DEPENDS_ON }
+b -> common { kind=DEPENDS_ON }

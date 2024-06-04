@@ -1,1 +1,1 @@
-<caret>expect fun test(): Unit
+expect fun test(): Unit

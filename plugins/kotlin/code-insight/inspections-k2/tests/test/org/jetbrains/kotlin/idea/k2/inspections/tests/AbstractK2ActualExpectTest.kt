@@ -7,10 +7,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NoActualForExpectIns
 import java.io.File
 
 abstract class AbstractK2ActualExpectTest : AbstractK2MultiplatformTest() {
-    override fun setUp() {
-        super.setUp()
-    }
-
     override fun doTest(testPath: String) {
         super.doTest(testPath)
         val configFile = File(testPath, "missing_actuals.txt")
@@ -33,7 +29,7 @@ abstract class AbstractK2ActualExpectTest : AbstractK2MultiplatformTest() {
         } else {
             problemDescriptor.substringAfter(":").trim().split(",").map { it.trim() }.filter { !it.isBlank() }
         }
-        assertSameElements(expectedMissingActualModules, missingActuals)
+        assertSameElements(missingActuals, expectedMissingActualModules)
     }
 
     override fun tearDown() {

@@ -6,6 +6,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -13,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -27,6 +31,20 @@ class NoActualForExpectInspection : AbstractKotlinInspection() {
 
     private fun Module.hasActualInParentOrSelf(allModulesWithActual: Set<Module>): Boolean {
         return this in allModulesWithActual || implementedModules.any { it in allModulesWithActual }
+    }
+
+    private fun KtDeclaration.hasOptionalExpectationAnnotation(): Boolean {
+        if (annotationEntries.isEmpty()) return false
+        analyze(this) {
+            for (entry in annotationEntries) {
+                val constructorCall = entry.resolveCall()?.singleConstructorCallOrNull() ?: continue
+                val classId = constructorCall.symbol.containingClassId ?: continue
+                if (classId == StandardClassIds.Annotations.OptionalExpectation) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     override fun buildVisitor(
@@ -48,7 +66,8 @@ class NoActualForExpectInspection : AbstractKotlinInspection() {
                     !module.hasActualInParentOrSelf(foundActuals)
                 }
 
-                if (missingActuals.isEmpty()) return
+                if (missingActuals.isEmpty() || parentDeclaration.hasOptionalExpectationAnnotation()) return
+
                 val missingModulesWithActuals = missingActuals.joinToString { it.name.substringAfterLast('.') }
                 holder.registerProblem(
                     expectModifier,
