@@ -6,3 +6,8 @@ import com.intellij.driver.client.Remote
 interface DatabaseCoreUiServiceRef {
   fun extractExtensionScripts()
 }
+
+@Remote("com.intellij.database.view.DbTestingService", plugin = "com.intellij.database")
+interface DbTestingServiceRef {
+  fun openAndWaitDataLoaded(path: String)
+}
