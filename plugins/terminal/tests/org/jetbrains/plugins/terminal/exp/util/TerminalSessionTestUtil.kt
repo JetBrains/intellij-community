@@ -39,6 +39,7 @@ internal object TerminalSessionTestUtil {
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY).setValue(true, parentDisposable)
+    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_UNIX_REGISTRY).setValue(true, parentDisposable)
     val runner = LocalBlockTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath)).initialTermSize(initialTermSize)
       .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true"))

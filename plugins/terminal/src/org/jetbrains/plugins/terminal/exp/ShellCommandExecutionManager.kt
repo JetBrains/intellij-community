@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.containers.nullize
@@ -265,14 +266,22 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   private fun createClearPromptShortcut(terminal: Terminal): String {
-    return when (session.shellIntegration.shellType) {
+    return  when (session.shellIntegration.shellType) {
       ShellType.POWERSHELL -> {
-        // Simulate pressing Ctrl+Home to delete all the characters from
-        // the cursor's position to the beginning of a line.
-        terminal.getCodeForKey(VK_HOME, CTRL_MASK)!!.toString(Charsets.UTF_8)
+        // TODO SystemInfo will not work for SSH and WSL sessions.
+        when {
+          SystemInfo.isUnix -> {
+            SHORTCUT_CTRL_U
+          }
+          else -> {
+            // Simulate pressing Ctrl+Home to delete all the characters from
+            // the cursor's position to the beginning of a line.
+            terminal.getCodeForKey(VK_HOME, CTRL_MASK)!!.toString(Charsets.UTF_8)
+          }
+        }
       }
       // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
-      else -> "\u0015"
+      else -> SHORTCUT_CTRL_U
     }
   }
 
@@ -331,6 +340,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   companion object {
     private val NEXT_REQUEST_ID = AtomicInteger(0)
     private const val GENERATOR_COMMAND = "__jetbrains_intellij_run_generator"
+    private const val SHORTCUT_CTRL_U = "\u0015"
 
     @Suppress("SpellCheckingInspection")
     private val pwshCharsToEscape: Map<Char, String> = mapOf(
