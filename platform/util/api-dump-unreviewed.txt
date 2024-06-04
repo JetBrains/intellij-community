@@ -1606,6 +1606,15 @@ f:com.intellij.openapi.util.io.NioFiles
 - s:setExecutable(java.nio.file.Path):V
 - s:setReadOnly(java.nio.file.Path,Z):V
 - s:toPath(java.lang.String):java.nio.file.Path
+a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
+- java.nio.file.SimpleFileVisitor
+- <init>():V
+- pa:countDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
+- pa:countFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
+- postVisitDirectory(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
+- preVisitDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
 f:com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 - com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 - sf:INSTANCE:com.intellij.openapi.util.io.NioPathPrefixTreeFactory
