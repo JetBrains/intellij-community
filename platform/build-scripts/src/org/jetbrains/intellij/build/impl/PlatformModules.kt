@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Files
 import java.nio.file.Path
@@ -102,34 +101,6 @@ internal fun collectPlatformModules(to: MutableCollection<String>) {
   to.addAll(PLATFORM_IMPLEMENTATION_MODULES)
 }
 
-internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
-  val modules = HashSet<String>()
-  collectIncludedPluginModules(enabledPluginModules = enabledPluginModules, product = productLayout, result = modules, context = context)
-  modules.addAll(productLayout.productApiModules)
-  modules.addAll(productLayout.productImplementationModules)
-
-  val coverageModuleName = "intellij.platform.coverage"
-  if (modules.contains(coverageModuleName)) {
-    return true
-  }
-
-  val javaExtensionService = JpsJavaExtensionService.getInstance()
-  for (moduleName in modules) {
-    for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
-      if (element !is JpsModuleDependency ||
-          javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-        continue
-      }
-
-      if (element.moduleReference.moduleName == coverageModuleName) {
-        return true
-      }
-    }
-  }
-
-  return false
-}
-
 private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(moduleNames.asSequence()
                        .filter { !productLayout.excludedModuleNames.contains(it) }
@@ -138,17 +109,14 @@ private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, 
 }
 
 suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
-  val productLayout = context.productProperties.productLayout
   val enabledPluginModules = context.bundledPluginModules.toHashSet()
   return createPlatformLayout(
-    addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context),
     projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
     context = context,
   )
 }
 
-internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
+internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val jetBrainsClientModuleFilter = context.jetBrainsClientModuleFilter
   val productLayout = context.productProperties.productLayout
   val layout = PlatformLayout()
@@ -274,9 +242,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
   explicit.addAll(toModuleItemSequence(list = PLATFORM_API_MODULES, productLayout = productLayout, reason = "PLATFORM_API_MODULES", context = context))
   explicit.addAll(toModuleItemSequence(list = PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES", context = context))
   explicit.addAll(toModuleItemSequence(list = productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules", context = context))
-  if (addPlatformCoverage) {
-    explicit.add(ModuleItem(moduleName = "intellij.platform.coverage", relativeOutputFile = APP_JAR, reason = "coverage"))
-  }
 
   val explicitModuleNames = explicit.map { it.moduleName }.toList()
 

@@ -392,8 +392,6 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
-  val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                            hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context)
 
   if (context.shouldBuildDistributions()) {
     if (context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -438,7 +436,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     }
   }
 
-  val platform = createPlatformLayout(addPlatformCoverage = addPlatformCoverage, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
+  val platform = createPlatformLayout(projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   distState.getModulesForPluginsToPublish().let {
     compilationTasks.compileModules(moduleNames = it)
