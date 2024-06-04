@@ -48,7 +48,7 @@ public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
   /**
    * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void saveExtension(@NotNull E e, @NotNull Element componentTag) {
   }
 }
