@@ -44,6 +44,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_ORDER_SENSITIVE
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
+import com.jetbrains.jsonSchema.impl.light.nodes.isNotBlank
 import com.jetbrains.jsonSchema.impl.nestedCompletions.*
 import one.util.streamex.StreamEx
 import java.util.*
@@ -801,10 +802,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       val path = completionPath.accessor()
       if (path.isNotEmpty()) {
         val parentObject = walker.createValueAdapter(container)?.asObject.let {
-          it ?: element.replace(walker.getSyntaxAdapter(context.project).createProperty(path.first(), "foo", context.project).parent).let {
+          it ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
             walker.createValueAdapter(it)?.asObject
-          }?.also {
-            it.propertyList.single().values.single().delegate.replace(element.copy())
           }
         } ?: return
         val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
@@ -819,6 +818,21 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           context.editor.caretModel.moveToOffset(psiElement.endOffset)
         }
       }
+    }
+
+    private fun replaceAtCaretAndGetParentObject(element: PsiElement,
+                           walker: JsonLikePsiWalker,
+                           context: InsertionContext,
+                           path: List<String>): PsiElement {
+      val newProperty = walker.getSyntaxAdapter(context.project).createProperty(path.first(), "foo", context.project)
+      walker.getParentPropertyAdapter(newProperty)!!.values.single().delegate.replace(element.copy())
+
+      val parentAdapter = element.parent?.let { walker.getParentPropertyAdapter(it) }
+      if (parentAdapter != null && parentAdapter.nameValueAdapter?.delegate == element) {
+        return element.parent.replace(newProperty).parent
+      }
+
+      return element.replace(newProperty.parent)
     }
 
     private fun doExpand(parentObject: JsonObjectValueAdapter,
@@ -849,13 +863,31 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             addBeforeOrAfter(value, element.copy(), element)
           }
           else {
-            val newElement = if (value.delegate.text == element.text) value.delegate else value.delegate.replace(element.copy())
+            val newElement = replaceValueForNesting(walker, value, element)
             newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
             newElement
           }
         return movedElement
       }
     }
+
+    private fun replaceValueForNesting(walker: JsonLikePsiWalker,
+                                       value: JsonValueAdapter,
+                                       element: PsiElement): PsiElement {
+      return if (walker.defaultObjectValue.isNotBlank()) {
+        value.delegate.replace(
+          walker.getSyntaxAdapter(value.delegate.project).createProperty("f", "f",
+                                                                         value.delegate.project).parent.also {
+            walker.createValueAdapter(it)!!.asObject!!.propertyList.single().let {
+              it.nameValueAdapter!!.delegate.replace(element.copy())
+            }
+          }
+        ).let {
+          walker.createValueAdapter(it)!!.asObject!!.propertyList.single().values.single().delegate
+        }
+      }
+      else if (value.delegate.text == element.text) value.delegate else value.delegate.replace(element.copy())
+                                       }
 
     private fun addBeforeOrAfter(value: JsonValueAdapter,
                                  elementToAdd: PsiElement,
