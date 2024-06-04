@@ -34,7 +34,7 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
     project: Project?,
     parentDisposable: Disposable,
     coroutineScope: CoroutineScope?,
-  ) : super(project, parentDisposable, coroutineScope) {
+  ) : super(project = project, parentDisposable = parentDisposable, coroutineScope = coroutineScope) {
     setSupportsCompression(value = true)
   }
 

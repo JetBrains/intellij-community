@@ -504,7 +504,7 @@ open class EditorComposite internal constructor(
 
   val isModified: Boolean
     /**
-     * @return `true` if the composite contains at least one modified myEditor
+     * @return `true` if the composite contains at least one modified editor
      */
     get() = allEditors.any { it.isModified }
 

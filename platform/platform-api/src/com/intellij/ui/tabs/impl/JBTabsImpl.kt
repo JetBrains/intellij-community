@@ -12,10 +12,14 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionCopiedShortcutsTracker
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -60,8 +64,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.lazyUiDisposable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -92,11 +95,11 @@ private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @DirtyUI
-open class JBTabsImpl @JvmOverloads constructor(
+open class JBTabsImpl internal constructor(
   private var project: Project?,
   private val parentDisposable: Disposable,
   coroutineScope: CoroutineScope? = null,
-) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, EdtCompatibleDataProvider,
+) : JComponent(), JBTabsEx, PropertyChangeListener, EdtCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
   companion object {
@@ -212,12 +215,15 @@ open class JBTabsImpl @JvmOverloads constructor(
   internal var forcedRelayout: Boolean = false
     private set
 
-  @JvmField
   internal var uiDecorator: UiDecorator? = null
+    private set
+
   private var paintFocus = false
   private var hideTabs = false
   private var isRequestFocusOnLastFocusedComponent = false
-  private var listenerAdded = false
+
+  private var listener: Job? = null
+
   var isRecentlyActive: Boolean = false
     private set
 
@@ -296,7 +302,26 @@ open class JBTabsImpl @JvmOverloads constructor(
   private val scrollBarChangeListener: ChangeListener
   private var scrollBarOn = false
 
-  constructor(project: Project) : this(project, project)
+  constructor(project: Project) : this(project = project, parentDisposable = project)
+
+  constructor(project: Project?, parentDisposable: Disposable) : this(
+    project = project,
+    parentDisposable = parentDisposable,
+    coroutineScope = null,
+  )
+
+  // we expect that every production usage of JBTabsImpl passes scope
+  private val coroutineScope: CoroutineScope = if (coroutineScope == null) {
+    @Suppress("SSBasedInspection")
+    val orphanScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("JBTabsImpl"))
+    Disposer.register(parentDisposable) {
+      orphanScope.coroutineContext.job.cancel("disposed")
+    }
+    orphanScope
+  }
+  else {
+    coroutineScope
+  }
 
   init {
     isOpaque = true
@@ -642,7 +667,9 @@ open class JBTabsImpl @JvmOverloads constructor(
 
   override fun addNotify() {
     super.addNotify()
+
     addTimerUpdate()
+
     scrollBarModel.addChangeListener(scrollBarChangeListener)
     if (deferredFocusRequest != null) {
       val request = deferredFocusRequest!!
@@ -688,16 +715,25 @@ open class JBTabsImpl @JvmOverloads constructor(
   }
 
   private fun addTimerUpdate() {
-    if (!listenerAdded) {
-      ActionManager.getInstance().addTimerListener(this)
-      listenerAdded = true
+    if (listener == null) {
+      listener = coroutineScope.launch {
+        val anyModality = ModalityState.any().asContextElement()
+        (serviceAsync<ActionManager>() as ActionManagerEx).timerEvents.collect {
+          withContext(Dispatchers.EDT + anyModality) {
+            val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
+            if (!ModalityState.current().dominates(modalityState)) {
+              updateTabActions(validateNow = false)
+            }
+          }
+        }
+      }
     }
   }
 
   private fun removeTimerUpdate() {
-    if (listenerAdded) {
-      ActionManager.getInstance().removeTimerListener(this)
-      listenerAdded = false
+    listener?.let {
+      it.cancel("removed")
+      listener = null
     }
   }
 
@@ -818,14 +854,11 @@ open class JBTabsImpl @JvmOverloads constructor(
     }
   }
 
-  override fun getModalityState(): ModalityState = ModalityState.stateForComponent(this)
-
-  override fun run() {
-    updateTabActions(false)
-  }
-
   override fun updateTabActions(validateNow: Boolean) {
-    if (isHideTabs) return
+    if (isHideTabs) {
+      return
+    }
+
     var changed = false
     for (tab in visibleInfos) {
       val changes = tab.tabLabel?.updateTabActions() ?: continue
@@ -1661,7 +1694,7 @@ open class JBTabsImpl @JvmOverloads constructor(
   }
 
   fun revalidateAndRepaint() {
-    revalidateAndRepaint(true)
+    revalidateAndRepaint(layoutNow = true)
   }
 
   override fun isOpaque(): Boolean = super.isOpaque() && !visibleInfos.isEmpty()
@@ -1672,6 +1705,7 @@ open class JBTabsImpl @JvmOverloads constructor(
       val toRepaint = SwingUtilities.convertRectangle(parent, bounds, nonOpaque)
       nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height)
     }
+
     if (layoutNow) {
       validate()
     }
@@ -2699,16 +2733,18 @@ open class JBTabsImpl @JvmOverloads constructor(
     }
 
   final override fun setActiveTabFillIn(color: Color?): JBTabsPresentation {
-    if (!isChanged(activeTabFillIn, color)) return this
+    if (!isChanged(activeTabFillIn, color)) {
+      return this
+    }
     activeTabFillIn = color
-    revalidateAndRepaint(false)
+    revalidateAndRepaint(layoutNow = false)
     return this
   }
 
   override fun setTabLabelActionsAutoHide(autoHide: Boolean): JBTabsPresentation {
     if (tabLabelActionsAutoHide != autoHide) {
       tabLabelActionsAutoHide = autoHide
-      revalidateAndRepaint(false)
+      revalidateAndRepaint(layoutNow = false)
     }
     return this
   }
@@ -2950,6 +2986,10 @@ open class JBTabsImpl @JvmOverloads constructor(
     return this
   }
 
+  protected fun setUiDecoratorWithoutApply(value: UiDecorator?) {
+    uiDecorator = value
+  }
+
   override fun setUI(newUI: ComponentUI) {
     super.setUI(newUI)
     applyDecoration()
@@ -3064,7 +3104,7 @@ open class JBTabsImpl @JvmOverloads constructor(
     return this
   }
 
-  override fun setTabsPosition(position: JBTabsPosition): JBTabsPresentation {
+  final override fun setTabsPosition(position: JBTabsPosition): JBTabsPresentation {
     this.position = position
     val divider = splitter.divider
     if (position.isSide && divider.parent == null) {
@@ -3078,9 +3118,9 @@ open class JBTabsImpl @JvmOverloads constructor(
     return this
   }
 
-  override fun getTabsPosition(): JBTabsPosition = position
+  final override fun getTabsPosition(): JBTabsPosition = position
 
-  override fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation {
+  final override fun setTabDraggingEnabled(enabled: Boolean): JBTabsPresentation {
     isTabDraggingEnabled = enabled
     return this
   }

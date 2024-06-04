@@ -15936,14 +15936,12 @@ f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager$Companion
 f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - com.intellij.ide.actions.CloseAction$CloseTarget
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer$Companion
-- sf:HELP_ID:java.lang.String
 - close():V
 - f:getComponent():javax.swing.JComponent
 - f:getSelectedComponent(Z):java.lang.Object
 - f:getSelectedIndex():I
 - f:getTabCount():I
 - f:getTabs():com.intellij.ui.tabs.JBTabs
-- f:isEmptyVisible():Z
 - f:removeTabAt(I,I):V
 - f:setForegroundAt(I,java.awt.Color):V
 - f:setSelectedIndex(I):com.intellij.openapi.util.ActionCallback

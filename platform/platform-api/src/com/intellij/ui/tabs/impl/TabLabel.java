@@ -435,15 +435,17 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
   }
 
   private void invalidateIfNeeded() {
-    if (getLabelComponent().getRootPane() == null) return;
+    if (label.getRootPane() == null) {
+      return;
+    }
 
-    Dimension d = getLabelComponent().getSize();
-    Dimension pref = getLabelComponent().getPreferredSize();
+    Dimension d = label.getSize();
+    Dimension pref = label.getPreferredSize();
     if (d != null && d.equals(pref)) {
       return;
     }
 
-    getLabelComponent().invalidate();
+    label.invalidate();
 
     if (actionPanel != null) {
       actionPanel.invalidate();
@@ -457,7 +459,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
   }
 
   private boolean hasIcons() {
-    for (Icon layer1 : getLayeredIcon().getAllLayers()) {
+    for (Icon layer1 : icon.getAllLayers()) {
       if (layer1 != null) {
         return true;
       }
@@ -466,7 +468,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
   }
 
   private void setIcon(@Nullable Icon icon, int layer) {
-    LayeredIcon layeredIcon = getLayeredIcon();
+    LayeredIcon layeredIcon = this.icon;
     layeredIcon.setIcon(icon, layer);
     if (hasIcons()) {
       label.setIcon(layeredIcon);
@@ -504,10 +506,6 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
         }
       }
     };
-  }
-
-  private LayeredIcon getLayeredIcon() {
-    return icon;
   }
 
   public TabInfo getInfo() {
@@ -558,11 +556,16 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
 
   public void setTabActions(ActionGroup group) {
     removeOldActionPanel();
-    if (group == null) return;
+    if (group == null) {
+      return;
+    }
 
-    actionPanel = new ActionPanel(tabs, info,
-                                    e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
-                                    value -> setHovered(value));
+    actionPanel = new ActionPanel(
+      tabs,
+      info,
+      e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
+      value -> setHovered(value)
+    );
     toggleShowActions(false);
     add(actionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
 
@@ -611,8 +614,8 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
 
   public boolean repaintAttraction() {
     if (!tabs.attractions.contains(info)) {
-      if (getLayeredIcon().isLayerEnabled(1)) {
-        getLayeredIcon().setLayerEnabled(1, false);
+      if (icon.isLayerEnabled(1)) {
+        icon.setLayerEnabled(1, false);
         setAttractionIcon(null);
         invalidateIfNeeded();
         return true;
@@ -622,7 +625,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
 
     boolean needsUpdate = false;
 
-    if (getLayeredIcon().getIcon(1) != info.getAlertIcon()) {
+    if (icon.getIcon(1) != info.getAlertIcon()) {
       setAttractionIcon(info.getAlertIcon());
       needsUpdate = true;
     }
@@ -630,7 +633,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
     int maxInitialBlinkCount = 5;
     int maxRefireBlinkCount = maxInitialBlinkCount + 2;
     if (info.getBlinkCount() < maxInitialBlinkCount && info.isAlertRequested()) {
-      getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
+      icon.setLayerEnabled(1, !icon.isLayerEnabled(1));
       if (info.getBlinkCount() == 0) {
         needsUpdate = true;
       }
@@ -644,7 +647,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
     }
     else {
       if (info.getBlinkCount() < maxRefireBlinkCount && info.isAlertRequested()) {
-        getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
+        icon.setLayerEnabled(1, !icon.isLayerEnabled(1));
         info.setBlinkCount(info.getBlinkCount() + 1);
 
         if (info.getBlinkCount() == maxRefireBlinkCount) {
@@ -655,8 +658,8 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
         repaint();
       }
       else {
-        needsUpdate = !getLayeredIcon().isLayerEnabled(1);
-        getLayeredIcon().setLayerEnabled(1, true);
+        needsUpdate = !icon.isLayerEnabled(1);
+        icon.setLayerEnabled(1, true);
       }
     }
 
@@ -702,7 +705,7 @@ public class TabLabel extends JPanel implements Accessible, EdtCompatibleDataPro
       return;
     }
 
-    if (getLayeredIcon().isLayerEnabled(1)) {
+    if (icon.isLayerEnabled(1)) {
 
       final int top = (getSize().height - overlayedIcon.getIconHeight()) / 2;
 

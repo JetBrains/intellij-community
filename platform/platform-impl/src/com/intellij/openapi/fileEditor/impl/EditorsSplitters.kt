@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -948,8 +949,6 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     val items = fileEntries.map { fileEntry ->
       coroutineScope.async {
         val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@async null
-        splitters.scheduleUpdateFileIcon(file = file)
-
         val compositeCoroutineScope = windowCoroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
         val model = fileEditorManager.createEditorCompositeModel(
           compositeCoroutineScope = compositeCoroutineScope,
@@ -957,15 +956,31 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           fileEntry = fileEntry,
           isLazy = !fileEntry.currentInTab && isLazyComposite,
         )
-        FileToOpen(scope = compositeCoroutineScope, file = file, model = model)
+
+        FileToOpen(
+          fileEntry = fileEntry,
+          scope = compositeCoroutineScope,
+          file = file,
+          model = model,
+          icon = compositeCoroutineScope.async {
+            readAction {
+              IconUtil.computeFileIcon(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = splitters.manager.project)
+            }
+          },
+          tabTitle = compositeCoroutineScope.async {
+            readAction {
+              EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, file)
+            }
+          }
+        )
       }
     }.awaitAll()
 
     span("file opening in EDT", Dispatchers.EDT) {
+      var window: EditorWindow? = null
       try {
-        val window = windowDeferred.await()
+        window = windowDeferred.await()
         fileEditorManager.openFilesOnStartup(
-          fileEntries = fileEntries,
           items = items,
           window = window,
           requestFocus = requestFocus,
@@ -974,6 +989,12 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       }
       finally {
         splitters.insideChange--
+        if (window != null) {
+          window.updateTabsVisibility(uiSettings = UISettings.getInstance())
+          splitters.validate()
+          window.tabbedPane.editorTabs.revalidateAndRepaint()
+          window.tabbedPane.editorTabs.updateListeners()
+        }
       }
     }
   }
@@ -983,6 +1004,9 @@ internal data class FileToOpen(
   @JvmField val scope: CoroutineScope,
   @JvmField val file: VirtualFile,
   @JvmField val model: Flow<EditorCompositeModel>,
+  @JvmField val icon: Deferred<Icon>,
+  @JvmField val tabTitle: Deferred<@NlsSafe String>,
+  @JvmField val fileEntry: FileEntry,
 )
 
 private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEntry: FileEntry): VirtualFile? {
@@ -1091,16 +1115,15 @@ internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Flo
   }
 }
 
-private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon, uiSettings: UISettings): Icon? {
-  val showAsterisk = uiSettings.markModifiedTabsWithAsterisk && composite.isModified
-  val showFileIconInTabs = uiSettings.showFileIconInTabs
+internal fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon, uiSettings: UISettings): Icon? {
+  val showAsterisk = composite.isModified && uiSettings.markModifiedTabsWithAsterisk
   if (!showAsterisk || ExperimentalUI.isNewUI()) {
-    return if (showFileIconInTabs) baseIcon else null
+    return if (uiSettings.showFileIconInTabs) baseIcon else null
   }
 
   val modifiedIcon = IconUtil.cropIcon(icon = AllIcons.General.Modified, area = JBRectangle(3, 3, 7, 7))
   val result = LayeredIcon(2)
-  if (showFileIconInTabs) {
+  if (uiSettings.showFileIconInTabs) {
     result.setIcon(baseIcon, 0)
     result.setIcon(modifiedIcon, 1, -modifiedIcon.iconWidth / 2, 0)
   }

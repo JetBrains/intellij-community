@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.PowerSaveMode
@@ -38,7 +38,7 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
 
   override fun isProblem(file: VirtualFile): Boolean = problemSolver.isProblemFile(file)
 
-  override fun getFileTooltipText(file: VirtualFile, window: EditorWindow?): String {
+  override fun getFileTooltipText(file: VirtualFile, composite: EditorComposite?): String {
     val tooltipText: @NlsSafe StringBuilder = StringBuilder()
     if (Registry.`is`("ide.tab.tooltip.module", false)) {
       val module = ModuleUtilCore.findModuleForFile(file, project)
@@ -48,7 +48,7 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
         tooltipText.append("] ")
       }
     }
-    tooltipText.append(super.getFileTooltipText(file, window))
+    tooltipText.append(super.getFileTooltipText(file, composite))
     return tooltipText.toString()
   }
 

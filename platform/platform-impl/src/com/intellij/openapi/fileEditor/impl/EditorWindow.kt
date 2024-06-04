@@ -602,10 +602,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     UIUtil.toFront(ComponentUtil.getWindow(tabbedPane.component))
   }
 
-  internal fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
+  internal fun updateTabsVisibility(uiSettings: UISettings = UISettings.getInstance()) {
     tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && tabCount == 1 && shouldHideTabs(selectedComposite)) ||
-                                              settings.editorTabPlacement == UISettings.TABS_NONE ||
-                                              (settings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
+                                              uiSettings.editorTabPlacement == UISettings.TABS_NONE ||
+                                              (uiSettings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
 
   fun closeAllExcept(selectedFile: VirtualFile?) {

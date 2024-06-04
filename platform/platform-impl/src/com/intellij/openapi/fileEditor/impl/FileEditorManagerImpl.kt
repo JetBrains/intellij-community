@@ -21,6 +21,7 @@ import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCou
 import com.intellij.lang.LangBundle
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -55,10 +56,10 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.project.lazyDumbAwareExtensions
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -573,14 +574,15 @@ open class FileEditorManagerImpl(
 
   open fun isProblem(file: VirtualFile): Boolean = false
 
-  open fun getFileTooltipText(file: VirtualFile, window: EditorWindow?): @NlsContexts.Tooltip String {
-    val composite = window?.getComposite(file)
+  open fun getFileTooltipText(file: VirtualFile, composite: EditorComposite?): @NlsContexts.Tooltip String {
     val prefix = if (composite != null && composite.isPreview) "${LangBundle.message("preview.editor.tab.tooltip.text")} " else ""
-    for (provider in EditorTabTitleProvider.EP_NAME.lazyDumbAwareExtensions(project)) {
-      val text = provider.getEditorTabTooltipText(project, file)
-      if (text != null) {
-        return prefix + text
+    for (provider in EditorTabTitleProvider.EP_NAME.lazySequence()) {
+      val text = try {
+        provider.getEditorTabTooltipText(project, file) ?: continue
       }
+      catch (ignore: IndexNotReadyException) {
+      }
+      return prefix + text
     }
     return prefix + FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
   }
@@ -622,12 +624,12 @@ open class FileEditorManagerImpl(
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
   protected fun updateFileIcon(file: VirtualFile, immediately: Boolean = false) {
-    for (each in getAllSplitters()) {
+    for (splitters in getAllSplitters()) {
       if (immediately) {
-        each.updateFileIconImmediately(file = file, icon = IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, project))
+        splitters.updateFileIconImmediately(file = file, icon = IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, project))
       }
       else {
-        each.scheduleUpdateFileIcon(file)
+        splitters.scheduleUpdateFileIcon(file)
       }
     }
   }
@@ -2218,7 +2220,6 @@ open class FileEditorManagerImpl(
   }
 
   internal fun openFilesOnStartup(
-    fileEntries: List<FileEntry>,
     items: List<FileToOpen?>,
     window: EditorWindow,
     requestFocus: Boolean,
@@ -2228,8 +2229,9 @@ open class FileEditorManagerImpl(
     val placeholderIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
     val tabs = mutableListOf<TabInfo>()
     val uiSettings = UISettings.getInstance()
-    for ((index, fileEntry) in fileEntries.withIndex()) {
-      val item = items.get(index) ?: continue
+    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
+    for (item in items) {
+      val fileEntry = (item ?: continue).fileEntry
       val file = item.file
       val composite = createCompositeByEditorWithModel(
         file = file,
@@ -2241,7 +2243,19 @@ open class FileEditorManagerImpl(
         composite.shownDeferred.complete(Unit)
       }
 
-      openedComposites.add(element = composite)
+      if (fileEntry.pinned) {
+        composite.isPinned = true
+      }
+      else {
+        if (when {
+            !uiSettings.openInPreviewTabIfPossible -> false
+            fileEntry.isPreview -> true
+            !fileEntry.currentInTab -> false
+            else -> false
+          }) {
+          composite.isPreview = true
+        }
+      }
 
       val tab = createTabInfo(
         component = composite.component,
@@ -2252,48 +2266,44 @@ open class FileEditorManagerImpl(
         selectedEditor = null,
         coroutineScope = composite.coroutineScope,
         window = window,
+        editorActionGroup = editorActionGroup,
       )
+
+      composite.coroutineScope.launch {
+        val icon = item.icon.await()
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          tab.setIcon(decorateFileIcon(composite = composite, baseIcon = icon, uiSettings = uiSettings))
+        }
+      }
       composite.coroutineScope.launch(ModalityState.any().asContextElement()) {
-        val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
+        val title = item.tabTitle.await()
         withContext(Dispatchers.EDT) {
           tab.setText(title)
-          tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) getFileTooltipText(composite.file, window) else null)
+          tab.setTooltipText(if (uiSettings.showTabsTooltips) getFileTooltipText(composite.file, composite) else null)
         }
       }
       composite.coroutineScope.launch(ModalityState.any().asContextElement()) {
         splitters.updateFileColor(file = file, compositeAndTab = composite to tab)
       }
 
-      if (when {
-          !uiSettings.openInPreviewTabIfPossible -> false
-          fileEntry.isPreview -> true
-          !fileEntry.currentInTab -> false
-          else -> false
-        }) {
-        composite.isPreview = true
-      }
-      if (fileEntry.pinned) {
-        composite.isPinned = true
-        if (composite.isPreview) {
-          composite.isPreview = false
-          composite.coroutineScope.launch {
-            splitters.updateFileColor(composite.file, compositeAndTab = composite to tab)
-          }
-        }
-      }
-
       tabs.add(tab)
+
+      openedComposites.add(element = composite)
     }
 
     openFileSetModificationCount.increment()
 
     window.tabbedPane.setTabs(tabs)
 
-    for ((index, fileEntry) in fileEntries.withIndex()) {
+    for ((index, item) in items.withIndex()) {
+      if (item == null) {
+        continue
+      }
+
       val tab = tabs.get(index)
       val composite = tab.composite
 
-      if (fileEntry.currentInTab) {
+      if (item.fileEntry.currentInTab) {
         window.selectTabOnStartup(tabToSelect = tab, composite = composite)
 
         if (requestFocus) {
@@ -2313,10 +2323,6 @@ open class FileEditorManagerImpl(
 
       splitters.afterFileOpen(file = composite.file)
     }
-
-    splitters.validate()
-    window.updateTabsVisibility()
-    (window.tabbedPane.tabs as JBTabsImpl).updateListeners()
   }
 
   @Internal
@@ -2477,7 +2483,7 @@ private inline fun <T> runBulkTabChangeInEdt(splitters: EditorsSplitters, task: 
     if (!splitters.isInsideChange) {
       splitters.validate()
       for (window in splitters.windows()) {
-        (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+        window.tabbedPane.editorTabs.revalidateAndRepaint()
       }
     }
   }
@@ -2592,7 +2598,7 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
         withContext(Dispatchers.EDT) {
           val tab = window.findTabByComposite(composite) ?: return@withContext
           tab.setText(title)
-          tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) splitters.manager.getFileTooltipText(composite.file, window) else null)
+          tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) splitters.manager.getFileTooltipText(composite.file, composite) else null)
         }
       }
     }

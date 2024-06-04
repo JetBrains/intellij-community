@@ -64,14 +64,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.lang.Runnable
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.swing.*
@@ -124,7 +122,7 @@ class EditorTabbedContainer internal constructor(
         /* place = */ ActionPlaces.EDITOR_TAB_POPUP,
         /* addNavigationGroup = */ false
       )
-      .addTabMouseListener(TabMouseListener()).presentation
+      .addTabMouseListener(TabMouseListener(window = window, editorTabs = editorTabs)).presentation
       .setTabDraggingEnabled(true)
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false).jbTabs
@@ -146,7 +144,7 @@ class EditorTabbedContainer internal constructor(
         }
         val result = ActionCallback()
         CommandProcessor.getInstance().executeCommand(project, {
-          (IdeDocumentHistory.getInstance(project) as IdeDocumentHistoryImpl).onSelectionChanged()
+          IdeDocumentHistory.getInstance(project).onSelectionChanged()
           result.notify(doChangeSelection.run())
         }, "EditorChange", null)
         result
@@ -158,7 +156,7 @@ class EditorTabbedContainer internal constructor(
           return
         }
         if (!e.isPopupTrigger && SwingUtilities.isLeftMouseButton(e) && e.clickCount == 2) {
-          doProcessDoubleClick(e)
+          doProcessDoubleClick(e = e, editorTabs = editorTabs, window = window)
         }
       }
     })
@@ -166,7 +164,6 @@ class EditorTabbedContainer internal constructor(
   }
 
   companion object {
-    const val HELP_ID: @NonNls String = "ideaInterface.editor"
 
     internal fun createDockableEditor(
       image: Image?,
@@ -183,23 +180,6 @@ class EditorTabbedContainer internal constructor(
         isPinned = window.isFilePinned(file),
         isNorthPanelAvailable = isNorthPanelAvailable,
       )
-    }
-
-    private fun createKeepMousePositionRunnable(event: MouseEvent): Runnable {
-      return Runnable {
-        EdtScheduledExecutorService.getInstance().schedule({
-                                                             val component = event.component
-                                                             if (component != null && component.isShowing) {
-                                                               val p = component.locationOnScreen
-                                                               p.translate(event.x, event.y)
-                                                               try {
-                                                                 Robot().mouseMove(p.x, p.y)
-                                                               }
-                                                               catch (ignored: AWTException) {
-                                                               }
-                                                             }
-                                                           }, 50, TimeUnit.MILLISECONDS)
-      }
     }
   }
 
@@ -288,7 +268,15 @@ class EditorTabbedContainer internal constructor(
       selectedEditor = selectedEditor,
       coroutineScope = coroutineScope,
       window = window,
+      editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup"),
     )
+
+    coroutineScope.launch {
+      val title = EditorTabPresentationUtil.getEditorTabTitle(window.manager.project, file)
+      withContext(Dispatchers.EDT) {
+        tab.setText(title)
+      }
+    }
 
     tab.setDragOutDelegate(dragOutDelegate)
 
@@ -314,106 +302,6 @@ class EditorTabbedContainer internal constructor(
   override fun close() {
     val selected = editorTabs.targetInfo ?: return
     window.manager.closeFile((selected.`object` as VirtualFile), window)
-  }
-
-  private inner class TabMouseListener : MouseAdapter() {
-    private var actionClickCount = 0
-
-    override fun mouseReleased(e: MouseEvent) {
-      if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
-        return
-      }
-
-      val info = editorTabs.findInfo(e) ?: return
-      IdeEventQueue.getInstance().blockNextEvents(e)
-      if (e.isAltDown && e.button == MouseEvent.BUTTON1) { //close others
-        val allTabInfos = editorTabs.tabs
-        for (tabInfo in allTabInfos) {
-          if (tabInfo == info) {
-            continue
-          }
-          window.manager.closeFile((tabInfo.`object` as VirtualFile), window)
-        }
-      }
-      else {
-        window.manager.closeFile((info.`object` as VirtualFile), window)
-      }
-    }
-
-    override fun mousePressed(e: MouseEvent) {
-      if (UIUtil.isActionClick(e)) {
-        if (e.clickCount == 1) {
-          actionClickCount = 0
-        }
-        // clicks on the close window button don't count in determining whether we have a double click on the tab (IDEA-70403)
-        val deepestComponent = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
-        if (deepestComponent !is InplaceButton) {
-          actionClickCount++
-        }
-        if (actionClickCount > 1 && actionClickCount % 2 == 0) {
-          doProcessDoubleClick(e)
-        }
-      }
-    }
-
-    override fun mouseClicked(e: MouseEvent) {
-      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown)) {
-        val o = editorTabs.findInfo(e)?.`object`
-        if (o is VirtualFile) {
-          ShowFilePathAction.show((o as VirtualFile?)!!, e)
-        }
-      }
-    }
-  }
-
-  private fun doProcessDoubleClick(e: MouseEvent) {
-    val info = editorTabs.findInfo(e)
-    if (info != null) {
-      val composite = (info.component as EditorCompositePanel).composite
-      if (composite.isPreview) {
-        composite.isPreview = false
-        window.owner.scheduleUpdateFileColor(composite.file)
-        return
-      }
-    }
-
-    if (!AdvancedSettings.getBoolean("editor.maximize.on.double.click") &&
-        !AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) {
-      return
-    }
-
-    val actionManager = ActionManager.getInstance()
-    @Suppress("DEPRECATION")
-    val context = DataManager.getInstance().dataContext
-    var isEditorMaximized: Boolean? = null
-    var areAllToolWindowsHidden: Boolean? = null
-    if (AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) {
-      val maximizeEditorInSplit = actionManager.getAction("MaximizeEditorInSplit")
-      if (maximizeEditorInSplit != null) {
-        val event = AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, Presentation(), actionManager, e.modifiersEx)
-        maximizeEditorInSplit.update(event)
-        isEditorMaximized = event.presentation.getClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY)
-      }
-    }
-
-    if (AdvancedSettings.getBoolean("editor.maximize.on.double.click")) {
-      val hideAllToolWindows = actionManager.getAction("HideAllWindows")
-      if (hideAllToolWindows != null) {
-        val event = AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, Presentation(), actionManager, e.modifiersEx)
-        hideAllToolWindows.update(event)
-        areAllToolWindowsHidden = event.presentation.getClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY)
-      }
-    }
-
-    @Suppress("SpellCheckingInspection")
-    val runnable = if (Registry.`is`("editor.position.mouse.cursor.on.doubleclicked.tab")) createKeepMousePositionRunnable(e) else null
-    if (areAllToolWindowsHidden != null && (isEditorMaximized == null || isEditorMaximized === areAllToolWindowsHidden)) {
-      actionManager.tryToExecute(actionManager.getAction("HideAllWindows"), e, null, ActionPlaces.EDITOR_TAB, true)
-    }
-    if (isEditorMaximized != null) {
-      actionManager.tryToExecute(actionManager.getAction("MaximizeEditorInSplit"), e, null, ActionPlaces.EDITOR_TAB, true)
-    }
-    runnable?.run()
   }
 
   class DockableEditor(
@@ -450,6 +338,123 @@ class EditorTabbedContainer internal constructor(
     override fun getPresentation(): Presentation = presentation
 
     override fun close() {}
+  }
+}
+
+private fun doProcessDoubleClick(e: MouseEvent, editorTabs: JBTabsImpl, window: EditorWindow) {
+  val info = editorTabs.findInfo(e)
+  if (info != null) {
+    val composite = (info.component as EditorCompositePanel).composite
+    if (composite.isPreview) {
+      composite.isPreview = false
+      window.owner.scheduleUpdateFileColor(composite.file)
+      return
+    }
+  }
+
+  if (!AdvancedSettings.getBoolean("editor.maximize.on.double.click") &&
+      !AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) {
+    return
+  }
+
+  val actionManager = ActionManager.getInstance()
+  @Suppress("DEPRECATION")
+  val context = DataManager.getInstance().dataContext
+  var isEditorMaximized: Boolean? = null
+  var areAllToolWindowsHidden: Boolean? = null
+  if (AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) {
+    val maximizeEditorInSplit = actionManager.getAction("MaximizeEditorInSplit")
+    if (maximizeEditorInSplit != null) {
+      val event = AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, Presentation(), actionManager, e.modifiersEx)
+      maximizeEditorInSplit.update(event)
+      isEditorMaximized = event.presentation.getClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY)
+    }
+  }
+
+  if (AdvancedSettings.getBoolean("editor.maximize.on.double.click")) {
+    val hideAllToolWindows = actionManager.getAction("HideAllWindows")
+    if (hideAllToolWindows != null) {
+      val event = AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, Presentation(), actionManager, e.modifiersEx)
+      hideAllToolWindows.update(event)
+      areAllToolWindowsHidden = event.presentation.getClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY)
+    }
+  }
+
+  @Suppress("SpellCheckingInspection")
+  val runnable = if (Registry.`is`("editor.position.mouse.cursor.on.doubleclicked.tab")) createKeepMousePositionRunnable(e) else null
+  if (areAllToolWindowsHidden != null && (isEditorMaximized == null || isEditorMaximized === areAllToolWindowsHidden)) {
+    actionManager.tryToExecute(actionManager.getAction("HideAllWindows"), e, null, ActionPlaces.EDITOR_TAB, true)
+  }
+  if (isEditorMaximized != null) {
+    actionManager.tryToExecute(actionManager.getAction("MaximizeEditorInSplit"), e, null, ActionPlaces.EDITOR_TAB, true)
+  }
+  runnable?.invoke()
+}
+
+private fun createKeepMousePositionRunnable(event: MouseEvent): () -> Unit {
+  return {
+    EdtScheduledExecutorService.getInstance().schedule({
+                                                         val component = event.component
+                                                         if (component != null && component.isShowing) {
+                                                           val p = component.locationOnScreen
+                                                           p.translate(event.x, event.y)
+                                                           try {
+                                                             Robot().mouseMove(p.x, p.y)
+                                                           }
+                                                           catch (ignored: AWTException) {
+                                                           }
+                                                         }
+                                                       }, 50, TimeUnit.MILLISECONDS)
+  }
+}
+
+private class TabMouseListener(private val window: EditorWindow, private val editorTabs: JBTabsImpl) : MouseAdapter() {
+  private var actionClickCount = 0
+
+  override fun mouseReleased(e: MouseEvent) {
+    if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
+      return
+    }
+
+    val info = editorTabs.findInfo(e) ?: return
+    IdeEventQueue.getInstance().blockNextEvents(e)
+    if (e.isAltDown && e.button == MouseEvent.BUTTON1) { //close others
+      val allTabInfos = editorTabs.tabs
+      for (tabInfo in allTabInfos) {
+        if (tabInfo == info) {
+          continue
+        }
+        window.manager.closeFile((tabInfo.`object` as VirtualFile), window)
+      }
+    }
+    else {
+      window.manager.closeFile((info.`object` as VirtualFile), window)
+    }
+  }
+
+  override fun mousePressed(e: MouseEvent) {
+    if (UIUtil.isActionClick(e)) {
+      if (e.clickCount == 1) {
+        actionClickCount = 0
+      }
+      // clicks on the close window button don't count in determining whether we have a double click on the tab (IDEA-70403)
+      val deepestComponent = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
+      if (deepestComponent !is InplaceButton) {
+        actionClickCount++
+      }
+      if (actionClickCount > 1 && actionClickCount % 2 == 0) {
+        doProcessDoubleClick(e = e, editorTabs = editorTabs, window = window)
+      }
+    }
+  }
+
+  override fun mouseClicked(e: MouseEvent) {
+    if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown)) {
+      val o = editorTabs.findInfo(e)?.`object`
+      if (o is VirtualFile) {
+        ShowFilePathAction.show((o as VirtualFile?)!!, e)
+      }
+    }
   }
 }
 
@@ -524,6 +529,7 @@ internal fun createTabInfo(
   selectedEditor: FileEditor?,
   coroutineScope: CoroutineScope,
   window: EditorWindow,
+  editorActionGroup: AnAction,
 ): TabInfo {
   val tab = TabInfo(component)
     .setText(file.presentableName)
@@ -534,12 +540,6 @@ internal fun createTabInfo(
 
   val project = window.manager.project
   coroutineScope.launch {
-    val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
-    withContext(Dispatchers.EDT) {
-      tab.setText(title)
-    }
-  }
-  coroutineScope.launch {
     val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
     withContext(Dispatchers.EDT) {
       tab.setTabColor(color)
@@ -547,7 +547,6 @@ internal fun createTabInfo(
   }
 
   val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
-  val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
   val group = DefaultActionGroup(editorActionGroup, closeTab)
   tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
   selectedEditor?.tabActions?.let {
@@ -586,17 +585,16 @@ private class EditorTabs(
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
-    setUiDecorator(object : UiDecorator {
+    setUiDecoratorWithoutApply(object : UiDecorator {
       override fun getDecoration(): UiDecoration {
         return UiDecoration(
           labelInsets = getTabLabelInsets(),
-          contentInsetsSupplier = Function { pos ->
-            val actionsOnTheRight: Boolean? = when (pos) {
-              ActionsPosition.RIGHT -> true
-              ActionsPosition.LEFT -> false
-              ActionsPosition.NONE -> null
-            }
-            JBUI.CurrentTheme.EditorTabs.tabContentInsets(actionsOnTheRight)
+          contentInsetsSupplier = Function { position ->
+            JBUI.CurrentTheme.EditorTabs.tabContentInsets(when (position) {
+                                                            ActionsPosition.RIGHT -> true
+                                                            ActionsPosition.LEFT -> false
+                                                            ActionsPosition.NONE -> null
+                                                          })
           },
           iconTextGap = JBUI.scale(4)
         )
@@ -630,8 +628,11 @@ private class EditorTabs(
   override fun createMultiRowLayout(): MultiRowLayout {
     return when {
       !isSingleRow -> WrapMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
-      UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(this, showPinnedTabsSeparately = true,
-                                                                            ExperimentalUI.isEditorTabsWithScrollBar)
+      UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(
+        tabs = this,
+        showPinnedTabsSeparately = true,
+        isWithScrollBar = ExperimentalUI.isEditorTabsWithScrollBar,
+      )
       else -> CompressibleMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
     }
   }
