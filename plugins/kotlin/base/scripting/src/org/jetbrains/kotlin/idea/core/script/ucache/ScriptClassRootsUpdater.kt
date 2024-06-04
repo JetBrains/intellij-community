@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -62,7 +61,6 @@ abstract class ScriptClassRootsUpdater(
     private var lastSeen: ScriptClassRootsCache? = null
     private var invalidated: Boolean = false
     private var syncUpdateRequired: Boolean = false
-    private val concurrentUpdates = AtomicInteger()
     private val invalidationLock = ReentrantLock()
     private val updateState = AtomicReference(UpdateState.NONE)
 
@@ -75,7 +73,8 @@ abstract class ScriptClassRootsUpdater(
         // update process is scheduled for the future
         SCHEDULED,
         // update process runs right now
-        RUNNING }
+        RUNNING
+    }
 
     abstract fun gatherRoots(builder: ScriptClassRootsBuilder)
 
@@ -126,7 +125,6 @@ abstract class ScriptClassRootsUpdater(
      */
     fun invalidate(synchronous: Boolean = false) {
         invalidationLock.withLock {
-            checkHasTransactionToHappen()
             invalidated = true
             if (synchronous) {
                 syncUpdateRequired = true
@@ -148,15 +146,10 @@ abstract class ScriptClassRootsUpdater(
      * @see performUpdate
      */
     fun isTransactionAboutToHappen(): Boolean {
-        return concurrentUpdates.get() > 0
-    }
-
-    fun checkHasTransactionToHappen() {
-        check(isTransactionAboutToHappen())
+        return updateState.get() != UpdateState.NONE
     }
 
     inline fun <T> update(body: () -> T): T {
-        beginUpdating()
         return try {
             body()
         } finally {
@@ -164,13 +157,7 @@ abstract class ScriptClassRootsUpdater(
         }
     }
 
-    fun beginUpdating() {
-        concurrentUpdates.incrementAndGet()
-    }
-
     fun commit() {
-        concurrentUpdates.decrementAndGet()
-
         // run update even in inner transaction
         // (outer transaction may be async, so it would be better to not wait it)
         scheduleUpdateIfInvalid()
@@ -204,7 +191,6 @@ abstract class ScriptClassRootsUpdater(
         val disposable = KotlinPluginDisposable.getInstance(project)
         if (disposable.disposed) return
 
-        beginUpdating()
         when {
             synchronous -> updateSynchronously()
             else -> ensureUpdateScheduled(disposable)
@@ -219,6 +205,8 @@ abstract class ScriptClassRootsUpdater(
                     doUpdate()
                 }
             }
+        } else {
+            LOG.debug("Will not schedule update, state: ${updateState.get()}")
         }
     }
 
@@ -235,7 +223,10 @@ abstract class ScriptClassRootsUpdater(
         try {
             val updates = recreateRootsCacheAndDiff()
 
-            if (!updates.changed) return
+            if (!updates.changed) {
+                LOG.debug("Does not have any new updates, aborting")
+                return
+            }
 
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
@@ -291,7 +282,6 @@ abstract class ScriptClassRootsUpdater(
         } finally {
             scheduledUpdate = null
             updateState.set(UpdateState.NONE)
-            concurrentUpdates.decrementAndGet()
         }
     }
 
@@ -327,6 +317,9 @@ abstract class ScriptClassRootsUpdater(
             if (!replaced) {
                 // initiate update once again
                 applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
+            } else {
+                // notify after changes are applied
+                afterUpdate()
             }
         }
     }
@@ -336,7 +329,6 @@ abstract class ScriptClassRootsUpdater(
             val old = cache.get()
             val new = recreateRootsCache()
             if (cache.compareAndSet(old, new)) {
-                afterUpdate()
                 return new.diff(lastSeen)
             }
         }

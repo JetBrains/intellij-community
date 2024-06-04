@@ -140,7 +140,6 @@ internal class DefaultBackgroundExecutor(
     private fun ensureInTransaction() {
         if (inTransaction) return
         inTransaction = true
-        rootsManager.beginUpdating()
     }
 
     @Synchronized
