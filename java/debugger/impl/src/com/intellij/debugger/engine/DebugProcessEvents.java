@@ -338,7 +338,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (oldThread == null) {
       switch (suspendContext.getSuspendPolicy()) {
         case EventRequest.SUSPEND_ALL -> suspendContext.getDebugProcess().getVirtualMachineProxy().addedSuspendAllContext();
-        case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(suspendContext.getEventThread()).suspendedThreadContext();
+        case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(suspendContext.getEventThread()).threadWasSuspended();
       }
       //this is the first event in the eventSet that we process
       suspendContext.getDebugProcess().beforeSuspend(suspendContext);

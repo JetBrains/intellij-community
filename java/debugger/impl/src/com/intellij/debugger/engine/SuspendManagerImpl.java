@@ -96,7 +96,7 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         switch (getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL -> myDebugProcess.getVirtualMachineProxy().resumedSuspendAllContext();
-          case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(getEventThread()).resumedSuspendThreadContext();
+          case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(getEventThread()).threadWasResumed();
         }
         DebuggerUtilsAsync.resume(set);
         LOG.debug("Set resumed ");

@@ -46,6 +46,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   private volatile boolean myIsEvaluating = false;
 
+  // This counter can go negative value if the engine stops the whole JVM, but resumed this particular thread
   public int myModelSuspendCount = 0;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
@@ -113,6 +114,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     myListeners.getMulticaster().threadSuspended();
   }
 
+  @ApiStatus.Internal
   public void suspendImpl() {
     myModelSuspendCount++;
     getThreadReference().suspend();
@@ -140,6 +142,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     myListeners.getMulticaster().threadResumed();
   }
 
+  @ApiStatus.Internal
   public void resumeImpl() {
     myModelSuspendCount--;
     DebuggerUtilsAsync.resume(getThreadReference());
@@ -466,11 +469,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myModelSuspendCount + getVirtualMachine().getModelSuspendCount();
   }
 
-  public void suspendedThreadContext() {
+  @ApiStatus.Internal
+  public void threadWasSuspended() {
     myModelSuspendCount++;
   }
 
-  public void resumedSuspendThreadContext() {
+  @ApiStatus.Internal
+  public void threadWasResumed() {
     myModelSuspendCount--;
   }
 
@@ -491,6 +496,12 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   @ApiStatus.Internal
   public void setEvaluating(boolean evaluating) {
     myIsEvaluating = evaluating;
+    if (evaluating) {
+      threadWasResumed();
+    }
+    else {
+      threadWasSuspended();
+    }
   }
 
   public interface ThreadListener extends EventListener{
