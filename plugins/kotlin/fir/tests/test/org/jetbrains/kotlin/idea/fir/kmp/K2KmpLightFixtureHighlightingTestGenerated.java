@@ -50,6 +50,11 @@ public class K2KmpLightFixtureHighlightingTestGenerated extends AbstractK2KmpLig
         runTest("testData/kmp/highlighting/expectActualFunctions.kt");
     }
 
+    @TestMetadata("initializerTypeMismatch.kt")
+    public void testInitializerTypeMismatch() throws Exception {
+        runTest("testData/kmp/highlighting/initializerTypeMismatch.kt");
+    }
+
     @TestMetadata("literals.kt")
     public void testLiterals() throws Exception {
         runTest("testData/kmp/highlighting/literals.kt");
