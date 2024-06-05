@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
@@ -109,7 +109,7 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
     val typeConstructor: TypeConstructor = when (this) {
         is KtTypeParameterType -> KtSymbolBasedTypeParameterDescriptor(this.symbol, context).typeConstructor
         is KtNonErrorClassType -> when (val classLikeSymbol = classSymbol) {
-            is KtTypeAliasSymbol -> return classLikeSymbol.toExpandedKotlinType(context, ownTypeArguments, annotations)
+            is KaTypeAliasSymbol -> return classLikeSymbol.toExpandedKotlinType(context, ownTypeArguments, annotations)
             is KaNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(classLikeSymbol, context).typeConstructor
             is KaAnonymousObjectSymbol -> context.implementationPostponed()
         }
@@ -146,7 +146,7 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
     )
 }
 
-fun KtTypeAliasSymbol.toExpandedKotlinType(
+fun KaTypeAliasSymbol.toExpandedKotlinType(
     context: Fe10WrapperContext,
     arguments: List<KtTypeProjection>,
     annotations: Annotations

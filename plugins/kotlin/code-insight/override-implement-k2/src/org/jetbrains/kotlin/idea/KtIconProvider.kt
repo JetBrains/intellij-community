@@ -93,7 +93,7 @@ object KtIconProvider {
                 else -> KotlinIcons.FIELD_VAR
             }
             is KtTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
-            is KtTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
+            is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
 
             else -> {
                 LOG.warn("No icon for symbol: $symbol")

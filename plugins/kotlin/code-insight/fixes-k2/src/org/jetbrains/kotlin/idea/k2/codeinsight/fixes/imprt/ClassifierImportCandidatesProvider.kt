@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
@@ -28,7 +28,7 @@ internal open class ClassifierImportCandidatesProvider(
 
     context(KtAnalysisSession)
     protected fun KtClassLikeSymbol.getExpandedClassSymbol(): KaClassOrObjectSymbol? = when (this) {
-        is KtTypeAliasSymbol -> expandedType.expandedClassSymbol
+        is KaTypeAliasSymbol -> expandedType.expandedClassSymbol
         is KaClassOrObjectSymbol -> this
     }
 

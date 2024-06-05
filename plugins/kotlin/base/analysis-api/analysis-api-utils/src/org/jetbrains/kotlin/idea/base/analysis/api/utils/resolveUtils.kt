@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -185,7 +185,7 @@ fun getJvmName(symbol: KtAnnotatedSymbol): String? {
 
 context(KtAnalysisSession)
 fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
-    is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
+    is KaTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
     else -> symbol
 }
 

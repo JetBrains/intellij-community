@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -37,7 +37,7 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
                 ktType.candidateClassSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KaClassOrObjectSymbol -> candidateSymbol
-                        is KtTypeAliasSymbol -> candidateSymbol.expandedType.expandedClassSymbol
+                        is KaTypeAliasSymbol -> candidateSymbol.expandedType.expandedClassSymbol
                         else -> null
                     } as? KaNamedClassOrObjectSymbol
                 }

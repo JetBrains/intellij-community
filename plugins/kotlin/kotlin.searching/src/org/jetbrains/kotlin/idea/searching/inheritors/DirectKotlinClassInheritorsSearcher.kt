@@ -11,7 +11,7 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
@@ -96,7 +96,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                     }
 
                     fun KtUsualClassType.classIdWithExpandedTypeAlias(): ClassId? =
-                        ((classSymbol as? KtTypeAliasSymbol)?.expandedType as? KtUsualClassType)?.classId ?: classId
+                        ((classSymbol as? KaTypeAliasSymbol)?.expandedType as? KtUsualClassType)?.classId ?: classId
 
                     return ktSymbol.superTypes.any { it is KtUsualClassType && (it.classSymbol == baseSymbol || it.classIdWithExpandedTypeAlias() == baseSymbol.classId) }
                 }

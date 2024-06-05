@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 
 /**
  * Resolves [reference] to symbol and returns static scope for the obtained symbol.
- * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol], `null` is returned.
+ * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol], `null` is returned.
  * See KT-34281 for more details.
  */
 context(KtAnalysisSession)

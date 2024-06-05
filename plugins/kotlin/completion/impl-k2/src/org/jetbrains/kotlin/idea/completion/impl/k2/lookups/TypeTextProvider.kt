@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
 import org.jetbrains.kotlin.idea.completion.lookups.renderNonErrorOrUnsubstituted
@@ -18,7 +18,7 @@ internal object TypeTextProvider {
      */
     context(KtAnalysisSession)
 fun getTypeTextForClassifier(symbol: KtClassifierSymbol): String? = when (symbol) {
-        is KtTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
+        is KaTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
         else -> null
     }
 

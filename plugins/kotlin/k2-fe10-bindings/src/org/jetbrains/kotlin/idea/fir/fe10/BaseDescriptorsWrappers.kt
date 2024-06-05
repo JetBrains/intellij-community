@@ -880,7 +880,7 @@ class KtSymbolBasedPackageFragmentDescriptor(
 }
 
 class KtSymbolBasedTypeAliasDescriptor(
-    override val ktSymbol: KtTypeAliasSymbol,
+    override val ktSymbol: KaTypeAliasSymbol,
     context: Fe10WrapperContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeAliasDescriptor {
     override val classDescriptor: ClassDescriptor?

@@ -63,7 +63,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -692,7 +692,7 @@ internal class KotlinIdeDeclarationRenderer(
                         is KtParameterSymbol -> asParameter
                         is KtPackageSymbol -> asPackageName
                         is KtTypeParameterSymbol -> asTypeParameterName
-                        is KtTypeAliasSymbol -> asTypeAlias
+                        is KaTypeAliasSymbol -> asTypeAlias
                         is KtPropertySymbol -> asInstanceProperty
                         else -> asFunDeclaration
                     }

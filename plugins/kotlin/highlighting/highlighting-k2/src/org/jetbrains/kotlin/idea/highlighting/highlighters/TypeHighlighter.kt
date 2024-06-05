@@ -53,7 +53,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
                 KtClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
             }
 
-            is KtTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
+            is KaTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
             is KtTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
         }
 

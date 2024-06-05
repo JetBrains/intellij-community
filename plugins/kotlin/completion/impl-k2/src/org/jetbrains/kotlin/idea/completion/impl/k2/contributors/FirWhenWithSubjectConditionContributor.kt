@@ -147,7 +147,7 @@ internal class FirWhenWithSubjectConditionContributor(
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
             is KaNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
-            is KtTypeAliasSymbol -> {
+            is KaTypeAliasSymbol -> {
                 (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
             }
 
