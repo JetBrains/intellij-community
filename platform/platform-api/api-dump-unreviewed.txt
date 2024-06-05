@@ -10953,7 +10953,6 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - javax.swing.JComponent
 - com.intellij.ide.ui.UISettingsListener
 - com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
-- com.intellij.openapi.actionSystem.TimerListener
 - com.intellij.openapi.ui.Queryable
 - com.intellij.ui.switcher.QuickActionProvider
 - com.intellij.ui.tabs.JBTabsEx
@@ -11288,7 +11287,7 @@ c:com.intellij.ui.tabs.impl.SingleHeightTabs$SingleHeightLabel
 - getPreferredSize():java.awt.Dimension
 c:com.intellij.ui.tabs.impl.TabLabel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.EdtCompatibleDataProvider
+- com.intellij.openapi.actionSystem.DataProvider
 - javax.accessibility.Accessible
 - p:actionPanel:com.intellij.ui.tabs.impl.ActionPanel
 - pf:label:com.intellij.ui.SimpleColoredComponent
@@ -11297,13 +11296,15 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - f:apply(com.intellij.ui.tabs.UiDecorator$UiDecoration):V
 - pf:createLayeredIcon():com.intellij.ui.LayeredIcon
 - editLabelForeground(java.awt.Color):java.awt.Color
-- enableCompressionMode(Z):V
-- getAccessibleContext():javax.accessibility.AccessibleContext
-- getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
-- p:getEffectiveBackground():java.awt.Color
-- getInfo():com.intellij.ui.tabs.TabInfo
-- getLabelComponent():javax.swing.JComponent
-- getNotStrictPreferredSize():java.awt.Dimension
+- f:enableCompressionMode(Z):V
+- f:getAccessibleContext():javax.accessibility.AccessibleContext
+- f:getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
+- f:getData(java.lang.String):java.lang.Object
+- pf:getEffectiveBackground():java.awt.Color
+- getIconAlpha():F
+- f:getInfo():com.intellij.ui.tabs.TabInfo
+- f:getLabelComponent():javax.swing.JComponent
+- f:getNotStrictPreferredSize():java.awt.Dimension
 - getPreferredSize():java.awt.Dimension
 - f:getToolTipText(java.awt.event.MouseEvent):java.lang.String
 - p:handlePopup(java.awt.event.MouseEvent):V
@@ -11332,10 +11333,9 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - f:setTabEnabled(Z):V
 - f:setText(com.intellij.ui.SimpleColoredText):V
 - p:shouldPaintFadeout():Z
-- toggleShowActions(Z):V
-- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-- updateTabActions():Z
-pc:com.intellij.ui.tabs.impl.TabLabel$AccessibleTabLabel
+- f:toggleShowActions(Z):V
+- f:updateTabActions():Z
+pf:com.intellij.ui.tabs.impl.TabLabel$AccessibleTabLabel
 - javax.swing.JPanel$AccessibleJPanel
 - <init>(com.intellij.ui.tabs.impl.TabLabel):V
 - getAccessibleDescription():java.lang.String

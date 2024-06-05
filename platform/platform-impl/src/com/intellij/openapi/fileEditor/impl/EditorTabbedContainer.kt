@@ -116,7 +116,7 @@ class EditorTabbedContainer internal constructor(
         sink[CommonDataKeys.VIRTUAL_FILE] = window.selectedComposite?.file
         sink[EditorWindow.DATA_KEY] = window
         sink[PlatformCoreDataKeys.FILE_EDITOR] = window.selectedComposite?.selectedEditor
-        sink[PlatformCoreDataKeys.HELP_ID] = HELP_ID
+        sink[PlatformCoreDataKeys.HELP_ID] = "ideaInterface.editor"
         sink[CloseTarget.KEY] = if (editorTabs.selectedInfo == null) null else this@EditorTabbedContainer
       }
     })
@@ -131,7 +131,7 @@ class EditorTabbedContainer internal constructor(
       .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false).jbTabs
       .addListener(object : TabsListener {
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          val oldEditor = if (oldSelection == null) null else window.manager.getSelectedEditor((oldSelection.`object` as VirtualFile))
+          val oldEditor = oldSelection?.let { window.manager.getSelectedEditor((it.`object` as VirtualFile)) }
           oldEditor?.deselectNotify()
           val newFile = (newSelection ?: return).`object` as VirtualFile
           val newEditor = newFile.let { window.manager.getSelectedEditor(newFile) }
