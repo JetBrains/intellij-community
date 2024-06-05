@@ -7,7 +7,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
@@ -121,7 +121,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                     }
                                 }
                             }
-                        } else if (symbol !is KtValueParameterSymbol && originalReceiverType == null) {
+                        } else if (symbol !is KaValueParameterSymbol && originalReceiverType == null) {
                             val declaration = symbol.psi
                             val receiverParameterInfo = changeInfo.receiverParameterInfo
                             require(receiverParameterInfo != null)

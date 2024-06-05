@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -51,7 +51,7 @@ object ConvertReferenceToLambdaUtil {
         val symbol = element.callableReference.mainReference.resolveToSymbol() ?: return null
 
         val callableSymbol = (symbol as? KaCallableSymbol)?.let {
-            (it as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: it
+            (it as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: it
         }
 
         val receiverSymbol = receiverExpression?.getQualifiedElementSelector()?.mainReference?.resolveToSymbol()

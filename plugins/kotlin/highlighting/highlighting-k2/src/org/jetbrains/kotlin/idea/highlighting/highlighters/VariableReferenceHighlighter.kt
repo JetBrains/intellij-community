@@ -41,7 +41,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
                 addIfNotNull(HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY))
                 addIfNotNull(symbol.getHighlightingForMutableVar(expression))
             }
-            is KtValueParameterSymbol -> listOfNotNull(highlightValueParameter (symbol, expression))
+            is KaValueParameterSymbol -> listOfNotNull(highlightValueParameter (symbol, expression))
             is KaEnumEntrySymbol -> listOfNotNull(HighlightingFactory.highlightName (expression, KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY))
             is KtJavaFieldSymbol -> buildList {
                 if (symbol.isStatic) {
@@ -63,7 +63,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
         }
     }
 
-    private fun highlightValueParameter(symbol: KtValueParameterSymbol, expression: KtSimpleNameExpression): HighlightInfo.Builder? {
+    private fun highlightValueParameter(symbol: KaValueParameterSymbol, expression: KtSimpleNameExpression): HighlightInfo.Builder? {
         return when {
             symbol.isImplicitLambdaParameter -> {
                 HighlightingFactory.highlightName(

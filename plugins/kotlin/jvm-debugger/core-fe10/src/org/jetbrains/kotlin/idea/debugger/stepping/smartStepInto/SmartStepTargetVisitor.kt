@@ -220,7 +220,7 @@ class SmartStepTargetVisitor(
     private fun createJavaLambdaInfo(
         declaration: PsiMethod,
         methodSymbol: KaFunctionLikeSymbol,
-        argumentSymbol: KtValueParameterSymbol,
+        argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
         return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
@@ -230,7 +230,7 @@ class SmartStepTargetVisitor(
     private fun createKotlinLambdaInfo(
         declaration: KtDeclaration,
         methodSymbol: KaFunctionLikeSymbol,
-        argumentSymbol: KtValueParameterSymbol,
+        argumentSymbol: KaValueParameterSymbol,
     ): KotlinLambdaInfo? {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
         return if (argumentSymbol.returnType.isFunctionalInterfaceType) {

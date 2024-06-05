@@ -41,7 +41,7 @@ object K2StatisticsInfoProvider {
                 printer: PrettyPrinter
             ) {
                 return when (symbol) {
-                    is KtValueParameterSymbol -> {
+                    is KaValueParameterSymbol -> {
                         returnTypeRenderer.renderReturnType(analysisSession, symbol, declarationRenderer, printer)
                     }
                     else -> {

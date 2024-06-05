@@ -157,7 +157,7 @@ fun generateMember(
                         if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                     }
 
-                    if (s is KtValueParameterSymbol) {
+                    if (s is KaValueParameterSymbol) {
                         if (s.isVararg) add(KtTokens.VARARG_KEYWORD)
                         if (s.isCrossinline) add(KtTokens.CROSSINLINE_KEYWORD)
                         if (s.isNoinline) add(KtTokens.NOINLINE_KEYWORD)

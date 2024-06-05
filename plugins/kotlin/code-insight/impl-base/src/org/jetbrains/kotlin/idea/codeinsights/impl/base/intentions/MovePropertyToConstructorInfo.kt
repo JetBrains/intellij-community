@@ -6,7 +6,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -110,7 +110,7 @@ sealed interface MovePropertyToConstructorInfo {
 
         context(KaSession)
         private fun KtExpression.findConstructorParameter(): KtParameter? {
-            val constructorParam = mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return null
+            val constructorParam = mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
             return constructorParam.psi as? KtParameter
         }
     }

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.psi.KtExpression
 
 context(KaSession)
@@ -27,7 +27,7 @@ internal val KtCallCandidateInfo.withMapping: CandidateWithMapping
 
 internal data class CandidateWithMapping(
     val candidate: KtFunctionLikeSignature<KaFunctionLikeSymbol>,
-    val argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+    val argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KaValueParameterSymbol>>,
     val isApplicableBestCandidate: Boolean,
     override val token: KtLifetimeToken,
 ) : KtLifetimeOwner

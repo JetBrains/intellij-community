@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsIn
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -1454,7 +1454,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     context(KaSession)
-    private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KtValueParameterSymbol): EventOccurrencesRange {
+    private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): EventOccurrencesRange {
         val functionCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
         val callEffect = functionSymbol.contractEffects

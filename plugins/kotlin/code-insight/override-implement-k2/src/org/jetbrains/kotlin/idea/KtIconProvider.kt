@@ -83,7 +83,7 @@ object KtIconProvider {
                     KaClassKind.ANONYMOUS_OBJECT, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 }
             }
-            is KtValueParameterSymbol -> KotlinIcons.PARAMETER
+            is KaValueParameterSymbol -> KotlinIcons.PARAMETER
             is KtLocalVariableSymbol -> when {
                 symbol.isVal -> KotlinIcons.VAL
                 else -> KotlinIcons.VAR

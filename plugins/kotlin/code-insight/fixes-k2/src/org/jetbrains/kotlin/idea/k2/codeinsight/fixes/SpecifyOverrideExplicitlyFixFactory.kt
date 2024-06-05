@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -44,7 +44,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
                 if (specifier is KtDelegatedSuperTypeEntry) {
                     val delegateTargetSymbol = specifier.getSymbol() ?: return@ModCommandBased emptyList()
 
-                    if (delegateTargetSymbol is KtValueParameterSymbol &&
+                    if (delegateTargetSymbol is KaValueParameterSymbol &&
                         delegateTargetSymbol.getContainingSymbol().let {
                             it is KaConstructorSymbol &&
                                     it.isPrimary &&

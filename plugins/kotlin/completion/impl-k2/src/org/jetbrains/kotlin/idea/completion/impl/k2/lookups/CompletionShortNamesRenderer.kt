@@ -38,7 +38,7 @@ internal object CompletionShortNamesRenderer {
     }
 
     context(KaSession)
-    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
+    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KaValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
         }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"

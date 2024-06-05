@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
@@ -66,7 +66,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                     is KtReferenceExpression -> {
                         val symbol = element.mainReference.resolveToSymbol()
                         when {
-                          symbol is KtValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
+                          symbol is KaValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
                           symbol is KaConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
                           else -> symbol
                         }

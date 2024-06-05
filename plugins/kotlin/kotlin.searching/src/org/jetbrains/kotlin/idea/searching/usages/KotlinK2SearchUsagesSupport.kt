@@ -195,7 +195,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     }
 
                     when (val elementSymbol = psiElement.getSymbol()) {
-                        is KtValueParameterSymbol -> {
+                        is KaValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
                             val ktClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java) ?: return@analyze null
@@ -345,7 +345,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     private fun isOverridableBySymbol(declaration: KtDeclaration) = analyze(declaration) {
         var declarationSymbol : KtSymbol? = declaration.getSymbol()
-        if (declarationSymbol is KtValueParameterSymbol) {
+        if (declarationSymbol is KaValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }
         val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyze false

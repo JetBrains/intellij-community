@@ -212,7 +212,7 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
                 is KtNameReferenceExpression -> {
                     val receiverSymbol = receiver.resolveCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol ?: return null
                     val lambdaValueParameters = lambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
-                    if (receiverSymbol is KtValueParameterSymbol && receiverSymbol == lambdaValueParameters.firstOrNull()) {
+                    if (receiverSymbol is KaValueParameterSymbol && receiverSymbol == lambdaValueParameters.firstOrNull()) {
                         val originalReceiverType = receiverSymbol.returnType
                         val receiverText = originalReceiverType.render(position = Variance.IN_VARIANCE)
                         buildReferenceText(receiverText, selectorReferenceName, resolvedCall)
@@ -346,7 +346,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     val explicitReceiverSymbol = (explicitReceiver as? KtNameReferenceExpression)?.resolveCall()
         ?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol
 
-    if (explicitReceiverSymbol is KtValueParameterSymbol &&
+    if (explicitReceiverSymbol is KaValueParameterSymbol &&
         explicitReceiverSymbol in lambdaValueParameterSymbols && explicitReceiver.isObject()
     ) {
         // Avoid the problem with object's callable references: KT-33885
@@ -362,7 +362,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     val lambdaParametersCount = lambdaValueParameterSymbols.size
     if (lambdaParametersCount != callableArgumentsCount + explicitReceiverShift) return false
 
-    if (explicitReceiver != null && explicitReceiverSymbol is KtValueParameterSymbol && lambdaParameterAsExplicitReceiver) {
+    if (explicitReceiver != null && explicitReceiverSymbol is KaValueParameterSymbol && lambdaParameterAsExplicitReceiver) {
         val receiverType = explicitReceiverSymbol.returnType
         // No exotic receiver types
         if (receiverType is KtTypeParameter || receiverType is KtErrorType || receiverType is KtDynamicType || receiverType is KtFunctionalType) return false

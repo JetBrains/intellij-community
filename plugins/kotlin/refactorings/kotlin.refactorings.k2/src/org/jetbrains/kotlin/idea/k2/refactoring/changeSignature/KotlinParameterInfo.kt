@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
@@ -207,7 +207,7 @@ class KotlinParameterInfo(
             analyze(expression) {
                 val target = ref.resolveToSymbol()
                 val declarationSymbol = callableDeclaration.getSymbol() as? KaCallableSymbol ?: return null
-                if (target is KtValueParameterSymbol) {
+                if (target is KaValueParameterSymbol) {
                     if (declarationSymbol is KaFunctionLikeSymbol && target.getContainingSymbol() == declarationSymbol) {
                         return declarationSymbol.valueParameters.indexOf(target) + (if ((callableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
                     }

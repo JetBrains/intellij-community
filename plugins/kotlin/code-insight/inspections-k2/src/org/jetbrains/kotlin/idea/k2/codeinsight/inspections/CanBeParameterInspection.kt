@@ -14,7 +14,7 @@ import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtLocalVariableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.psi.isPartOfQualifiedExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -116,7 +116,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
 
         analyze(klass) {
             val constructorPropertySymbol =
-                (parameter.getSymbol() as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: return true
+                (parameter.getSymbol() as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: return true
 
             for (element in initializersAndDelegates) {
                 val nameReferenceExpressions = element.collectDescendantsOfType<KtNameReferenceExpression> {

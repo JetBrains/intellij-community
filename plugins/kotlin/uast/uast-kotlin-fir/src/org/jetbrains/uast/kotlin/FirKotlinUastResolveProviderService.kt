@@ -55,7 +55,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyzeForUast(ktCallElement) {
             val argumentMapping = ktCallElement.resolveCall()?.singleFunctionCallOrNull()?.argumentMapping ?: return null
-            val handledParameters = mutableSetOf<KtValueParameterSymbol>()
+            val handledParameters = mutableSetOf<KaValueParameterSymbol>()
             val valueArguments = SmartList<UNamedExpression>()
             // NB: we need a loop over call element's value arguments to preserve their order.
             ktCallElement.valueArguments.forEach {
@@ -515,7 +515,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
                 is KtFunctionLiteral -> {
                     // Implicit lambda parameter `it`
-                    if ((resolvedTargetSymbol as? KtValueParameterSymbol)?.isImplicitLambdaParameter == true) {
+                    if ((resolvedTargetSymbol as? KaValueParameterSymbol)?.isImplicitLambdaParameter == true) {
                         // From its containing lambda (of function literal), build ULambdaExpression
                         val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
                         // and return javaPsi of the corresponding lambda implicit parameter
@@ -755,7 +755,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             is KtCallableDeclaration -> {
                 // NB: We should not use [KtDeclaration.getReturnKtType]; see its comment:
                 // IMPORTANT: For `vararg foo: T` parameter returns full `Array<out T>` type
-                // (unlike [KtValueParameterSymbol.returnType] which returns `T`).
+                // (unlike [KaValueParameterSymbol.returnType] which returns `T`).
                 analyzeForUast(psiElement) {
                     typeConsumer(getKtType(psiElement))
                 }

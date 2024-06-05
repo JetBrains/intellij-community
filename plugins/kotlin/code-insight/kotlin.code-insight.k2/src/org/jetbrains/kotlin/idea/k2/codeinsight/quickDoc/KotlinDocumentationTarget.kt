@@ -306,7 +306,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
         }
     }
 
-    if (symbol is KtValueParameterSymbol) {
+    if (symbol is KaValueParameterSymbol) {
         val containingSymbol = symbol.getContainingSymbol() as? KaFunctionSymbol
         if (containingSymbol != null) {
             val idx = containingSymbol.valueParameters.indexOf(symbol)

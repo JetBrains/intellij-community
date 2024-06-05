@@ -17,7 +17,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -197,7 +197,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         val containingClass = constructor.getContainingClassOrObject()
         if (containingClass.isData()) return false
 
-        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return false
+        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return false
         if (element.nameAsName != paramSymbol.name) return false
 
         val parameter = paramSymbol.psi as? KtParameter ?: return false

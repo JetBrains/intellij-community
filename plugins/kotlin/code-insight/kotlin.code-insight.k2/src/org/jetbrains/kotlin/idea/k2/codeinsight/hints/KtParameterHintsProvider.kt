@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.name.Name
@@ -67,7 +67,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         val functionCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
         val functionSymbol: KaFunctionLikeSymbol = functionCall.symbol
-        val valueParameters: List<KtValueParameterSymbol> = functionSymbol.valueParameters
+        val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
         val blackListed = functionSymbol.isBlackListed(valueParameters)
         // TODO: IDEA-347315 has to be fixed
@@ -83,7 +83,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     context(KaSession)
-    private fun KaFunctionLikeSymbol.isBlackListed(valueParameters: List<KtValueParameterSymbol>): Boolean {
+    private fun KaFunctionLikeSymbol.isBlackListed(valueParameters: List<KaValueParameterSymbol>): Boolean {
         val blackListed = callableId?.let {
             val callableId = it.asSingleFqName().toString()
             val parameterNames = valueParameters.map { it.name.asString() }
@@ -94,7 +94,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
     context(KaSession)
     private fun KaFunctionLikeSymbol.collectFromParameters(
-        valueParameters: List<KtValueParameterSymbol>,
+        valueParameters: List<KaValueParameterSymbol>,
         arguments: MutableList<KtValueArgument>,
         sink: InlayTreeSink
     ) {
@@ -129,7 +129,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun KtValueArgument.isArgumentNamed(symbol: KtValueParameterSymbol): Boolean {
+    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
         // avoid cases like "`value:` value"
         if (this.text == symbol.name.asString()) return true
 

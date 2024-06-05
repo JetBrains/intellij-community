@@ -33,7 +33,7 @@ class KtVariableDescriptor(
     val stable: Boolean by lazy {
         when (val result = analyze(module) {
             when (val symbol = pointer.restoreSymbol()) {
-                is KtValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
+                is KaValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
                 is KtPropertySymbol -> return@analyze symbol.isVal
                 is KtLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
@@ -134,7 +134,7 @@ class KtVariableDescriptor(
             val varFactory = factory.varFactory
             if (expr !is KtSimpleNameExpression) return null
             val symbol: KtVariableLikeSymbol = expr.mainReference.resolveToSymbol() as? KtVariableLikeSymbol ?: return null
-            if (symbol is KtValueParameterSymbol || symbol is KtLocalVariableSymbol) {
+            if (symbol is KaValueParameterSymbol || symbol is KtLocalVariableSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }
             if (!isTrackableProperty(symbol)) return null

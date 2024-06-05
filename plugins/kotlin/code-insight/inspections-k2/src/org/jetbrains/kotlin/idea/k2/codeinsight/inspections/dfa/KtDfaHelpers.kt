@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
@@ -233,4 +233,4 @@ internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     return LambdaAndParameter(lambdaExpression, parameterSymbol)
 }
 
-internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: KtValueParameterSymbol)
+internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: KaValueParameterSymbol)

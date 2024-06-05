@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -396,7 +396,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                     if (symbol.origin == KtSymbolOrigin.SOURCE) {
                         addIfNotNull(symbol.psi)
-                    } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                    } else if (symbol is KaValueParameterSymbol && symbol.isImplicitLambdaParameter) {
                         addIfNotNull(symbol.getFunctionLiteralByImplicitLambdaParameterSymbol())
                     }
                 }

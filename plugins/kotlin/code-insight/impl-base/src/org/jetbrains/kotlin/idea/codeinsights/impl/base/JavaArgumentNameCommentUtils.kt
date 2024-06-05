@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -38,7 +38,7 @@ fun KtValueArgument.getBlockCommentWithName(): PsiComment? =
 @ApiStatus.Internal
 class ArgumentNameCommentInfo(val argumentName: Name, val comment: String) {
     @ApiStatus.Internal
-    constructor(symbol: KtValueParameterSymbol): this(symbol.name, symbol.toArgumentNameComment())
+    constructor(symbol: KaValueParameterSymbol): this(symbol.name, symbol.toArgumentNameComment())
 }
 
 typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, ArgumentNameCommentInfo>
@@ -74,7 +74,7 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
 private fun KtCallElement.getNonLambdaArguments(): List<KtValueArgument> =
     valueArguments.filterIsInstance<KtValueArgument>().filterNot { it is KtLambdaArgument }
 
-private fun KtValueParameterSymbol.toArgumentNameComment(): String =
+private fun KaValueParameterSymbol.toArgumentNameComment(): String =
     canonicalArgumentNameComment(if (isVararg) "...$name" else name.toString())
 
 @ApiStatus.Internal

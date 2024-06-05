@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
@@ -113,7 +113,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
                     val declarationSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return false
 
                     val callableSymbol = when (declarationSymbol) {
-                        is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                        is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
                         else -> declarationSymbol
                     }
                     return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
@@ -151,7 +151,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         analyseOnEdt(propertyOrParameter) {
             val propertySymbol = when (val symbol = propertyOrParameter.getSymbol()) {
                 is KtKotlinPropertySymbol -> symbol
-                is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
+                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
                 else -> null
             }
 

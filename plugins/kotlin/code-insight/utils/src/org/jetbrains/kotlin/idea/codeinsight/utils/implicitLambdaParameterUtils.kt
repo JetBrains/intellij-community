@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -34,14 +34,14 @@ fun KtNameReferenceExpression.getFunctionLiteralByImplicitLambdaParameter(): KtF
 
 
 context(KaSession)
-fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KtValueParameterSymbol? {
-    val parameterSymbol = mainReference.resolveToSymbol() as? KtValueParameterSymbol ?: return null
+fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParameterSymbol? {
+    val parameterSymbol = mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
     if (!parameterSymbol.isImplicitLambdaParameter) return null
     return parameterSymbol
 }
 
 context(KaSession)
-fun KtValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
+fun KaValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
     if (!isImplicitLambdaParameter) return null
     val lambda = getContainingSymbol() as? KaAnonymousFunctionSymbol ?: return null
     return lambda.psi as? KtFunctionLiteral

@@ -290,7 +290,7 @@ object K2SemanticMatcher {
         }
 
         context(KaSession)
-        private fun getSingleParameterSymbolForAnonymousFunctionOrNull(function: KtFunction): KtValueParameterSymbol? {
+        private fun getSingleParameterSymbolForAnonymousFunctionOrNull(function: KtFunction): KaValueParameterSymbol? {
             val anonymousFunction = when (function) {
                 is KtNamedFunction -> function.getAnonymousFunctionSymbol()
                 is KtFunctionLiteral -> function.getAnonymousFunctionSymbol()

@@ -176,7 +176,7 @@ internal class CallExpressionImportWeigher(
             //  - functional references, e.g. `::foo`
 
             val valueParametersFromImportIterator = symbolValueParameters.iterator()
-            var valueParameterFromImport: KtValueParameterSymbol? = null
+            var valueParameterFromImport: KaValueParameterSymbol? = null
 
             // update weight each time argument type matches the type of parameter from import; break once a mismatch appears
             for (valueArgumentType in presentValueArgumentTypes) {

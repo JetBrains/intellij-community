@@ -534,7 +534,7 @@ private class KtSymbolStubDispatchReceiverParameterDescriptor(
 }
 
 class KtSymbolBasedValueParameterDescriptor(
-    override val ktSymbol: KtValueParameterSymbol,
+    override val ktSymbol: KaValueParameterSymbol,
     context: Fe10WrapperContext,
     val containingDeclaration: KtSymbolBasedFunctionLikeDescriptor,
     index: Int = -1,

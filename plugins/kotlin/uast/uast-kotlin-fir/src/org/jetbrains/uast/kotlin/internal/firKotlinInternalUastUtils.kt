@@ -151,7 +151,7 @@ private fun toPsiMethodForDeserialized(
 
     fun equalSignatures(psiMethod: PsiMethod): Boolean {
         val methodParameters: Array<PsiParameter> = psiMethod.parameterList.parameters
-        val symbolParameters: List<KtValueParameterSymbol> = functionSymbol.valueParameters
+        val symbolParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
         if (methodParameters.size != symbolParameters.size) {
             return false
         }

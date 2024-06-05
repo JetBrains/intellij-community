@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
@@ -112,7 +112,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         callElement: KtCallElement,
         candidate: KtFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>
-    ): List<IndexedValue<KtVariableLikeSignature<KtValueParameterSymbol>>> {
+    ): List<IndexedValue<KtVariableLikeSignature<KaValueParameterSymbol>>> {
         val signature = candidate.partiallyAppliedSymbol.signature
         val argumentMapping = candidate.argumentMapping
 

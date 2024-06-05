@@ -18,7 +18,7 @@ import com.intellij.util.Function
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -102,7 +102,7 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
 
         analyze(declaration) {
             var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return
-            if (callableSymbol is KtValueParameterSymbol) {
+            if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return
             }
             val allOverriddenSymbols = callableSymbol.getAllOverriddenSymbols()
@@ -238,7 +238,7 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
         analyze(declaration) {
             var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return null
-            if (callableSymbol is KtValueParameterSymbol) {
+            if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return null
             }
             val allOverriddenSymbols = callableSymbol.getDirectlyOverriddenSymbols()

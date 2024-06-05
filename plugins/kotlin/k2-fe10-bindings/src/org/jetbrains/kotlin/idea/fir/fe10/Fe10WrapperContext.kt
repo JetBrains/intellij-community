@@ -92,7 +92,7 @@ fun KaFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         else -> error("Unexpected kind of KaFunctionLikeSymbol: ${this.javaClass}")
     }
 
-fun KtValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedValueParameterDescriptor {
+fun KaValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedValueParameterDescriptor {
     val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
     check(containingSymbol is KaFunctionLikeSymbol) {
         "Unexpected containing symbol = $containingSymbol"
@@ -103,7 +103,7 @@ fun KtValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext):
 
 fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): VariableDescriptor =
     when (this) {
-        is KtValueParameterSymbol -> toDeclarationDescriptor(context)
+        is KaValueParameterSymbol -> toDeclarationDescriptor(context)
         is KtPropertySymbol -> KtSymbolBasedPropertyDescriptor(this, context)
         is KtJavaFieldSymbol -> KtSymbolBasedJavaPropertyDescriptor(this, context)
         is KtLocalVariableSymbol ->  KtSymbolBasedLocalVariableDescriptor(this, context)

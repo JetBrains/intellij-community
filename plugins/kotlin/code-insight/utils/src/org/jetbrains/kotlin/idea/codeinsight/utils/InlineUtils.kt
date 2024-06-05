@@ -19,7 +19,7 @@ fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(a
 
 context(KaSession)
 @ApiStatus.Internal
-fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
+fun getInlineArgumentSymbol(argument: KtExpression): KaValueParameterSymbol? {
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
 
     val (symbol, argumentSymbol) = getCallExpressionSymbol(argument)
@@ -45,20 +45,20 @@ fun getFunctionSymbol(argument: KtExpression): KaFunctionLikeSymbol? = getCallEx
     ?: getDefaultArgumentSymbol(argument)?.first
 
 context(KaSession)
-private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KtValueParameterSymbol>? {
+private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KaValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parameter = argument.parentOfType<KtParameter>() ?: return null
     val lambdaExpression = argument.parent as? KtLambdaExpression ?: return null
     if (parameter.defaultValue != lambdaExpression) return null
     val function = parameter.parentOfType<KtNamedFunction>() ?: return null
     val symbol = function.getFunctionLikeSymbol()
-    val argumentSymbol = parameter.getParameterSymbol() as? KtValueParameterSymbol ?: return null
+    val argumentSymbol = parameter.getParameterSymbol() as? KaValueParameterSymbol ?: return null
     return symbol to argumentSymbol
 }
 
 context(KaSession)
 @ApiStatus.Internal
-fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KtValueParameterSymbol>? {
+fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KaValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
     val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null

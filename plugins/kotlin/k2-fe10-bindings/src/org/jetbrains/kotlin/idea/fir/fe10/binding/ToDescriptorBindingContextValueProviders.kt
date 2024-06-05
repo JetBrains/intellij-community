@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.fir.fe10.*
 import org.jetbrains.kotlin.idea.references.FE10_BINDING_RESOLVE_TO_DESCRIPTORS
@@ -87,14 +87,14 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
     }
 
     private fun getValueParameter(key: KtParameter): VariableDescriptor? {
-        val symbol = context.withAnalysisSession { key.getParameterSymbol() }.safeAs<KtValueParameterSymbol>() ?: return null
+        val symbol = context.withAnalysisSession { key.getParameterSymbol() }.safeAs<KaValueParameterSymbol>() ?: return null
         return symbol.toDeclarationDescriptor(context)
     }
 
     private fun getPrimaryConstructorParameter(key: PsiElement): PropertyDescriptor? {
         val parameter = key.safeAs<KtParameter>() ?: return null
         val parameterSymbol = context.withAnalysisSession { parameter.getParameterSymbol() }
-        val propertySymbol = parameterSymbol.safeAs<KtValueParameterSymbol>()?.generatedPrimaryConstructorProperty ?: return null
+        val propertySymbol = parameterSymbol.safeAs<KaValueParameterSymbol>()?.generatedPrimaryConstructorProperty ?: return null
         return KtSymbolBasedPropertyDescriptor(propertySymbol, context)
     }
 

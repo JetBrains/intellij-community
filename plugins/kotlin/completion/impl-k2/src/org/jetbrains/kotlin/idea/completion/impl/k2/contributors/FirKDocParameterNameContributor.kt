@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -48,7 +48,7 @@ internal open class FirKDocParameterNameContributor(
         val origin = symbolWithOrigin.origin
         when (symbol) {
             is KaTypeParameterSymbol -> addClassifierSymbolToCompletion(symbol, weighingContext, origin, ImportStrategy.DoNothing)
-            is KtValueParameterSymbol -> addCallableSymbolToCompletion(
+            is KaValueParameterSymbol -> addCallableSymbolToCompletion(
                 weighingContext,
                 symbol.asSignature(),
                 CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),

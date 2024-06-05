@@ -105,7 +105,7 @@ fun checkDeclarationNewNameConflicts(
     fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val containingSymbol = symbol.getContainingSymbol() ?: getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)
 
-        if (symbol is KtValueParameterSymbol) {
+        if (symbol is KaValueParameterSymbol) {
             val functionLikeSymbol = containingSymbol as KaFunctionLikeSymbol
             val locals = functionLikeSymbol.psi?.descendantsOfType<KtVariableDeclaration>()?.filter { it.nameAsName == newName }
                 ?.mapNotNull { it.getSymbol() }?.asSequence() ?: emptySequence()
@@ -170,11 +170,11 @@ fun checkDeclarationNewNameConflicts(
     fun getPotentialConflictCandidates(declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val declarationSymbol = declaration.getSymbol()
         val symbol = declarationSymbol.let {
-            (it as? KtValueParameterSymbol?)?.generatedPrimaryConstructorProperty ?: it
+            (it as? KaValueParameterSymbol?)?.generatedPrimaryConstructorProperty ?: it
         }
 
         var potentialCandidates = getPotentialConflictCandidates(symbol, declaration, newName)
-        if (declarationSymbol is KtValueParameterSymbol && symbol is KtPropertySymbol) {
+        if (declarationSymbol is KaValueParameterSymbol && symbol is KtPropertySymbol) {
             val functionLikeSymbol = declarationSymbol.getContainingSymbol() as? KaFunctionLikeSymbol
             val conflictingParameters = functionLikeSymbol?.valueParameters?.filter { it.name == newName && it != declarationSymbol }?.takeIf { it.isNotEmpty() }
             if (conflictingParameters != null) {

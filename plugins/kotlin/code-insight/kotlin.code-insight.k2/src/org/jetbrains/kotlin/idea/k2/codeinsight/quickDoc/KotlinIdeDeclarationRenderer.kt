@@ -65,7 +65,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -113,7 +113,7 @@ internal class KotlinIdeDeclarationRenderer(
         propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
         parameterDefaultValueRenderer = object : KtParameterDefaultValueRenderer {
-            override fun renderDefaultValue(analysisSession: KaSession, symbol: KtValueParameterSymbol, printer: PrettyPrinter) {
+            override fun renderDefaultValue(analysisSession: KaSession, symbol: KaValueParameterSymbol, printer: PrettyPrinter) {
                 val defaultValue = with(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
                     with(highlightingManager) {
@@ -128,7 +128,7 @@ internal class KotlinIdeDeclarationRenderer(
         valueParameterRenderer = object : KaValueParameterSymbolRenderer {
             override fun renderSymbol(
                 analysisSession: KaSession,
-                symbol: KtValueParameterSymbol,
+                symbol: KaValueParameterSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
@@ -201,7 +201,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }.ifEmpty { return }
                 printer.printCollection(
                     annotations, separator = when (owner) {
-                        is KtValueParameterSymbol -> " "
+                        is KaValueParameterSymbol -> " "
                         is KaDeclarationSymbol -> "\n"
                         else -> " "
                     }
@@ -465,10 +465,10 @@ internal class KotlinIdeDeclarationRenderer(
                 printer: PrettyPrinter
             ) = with(analysisSession) {
                 printer {
-                    val callableSymbol = (symbol as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol
+                    val callableSymbol = (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol
                     " ".separated(
                         {
-                            if (symbol is KtValueParameterSymbol && symbol == rootSymbol && callableSymbol == symbol) {
+                            if (symbol is KaValueParameterSymbol && symbol == rootSymbol && callableSymbol == symbol) {
                                 printer.append(highlight("value-parameter") { asKeyword })
                             }
                         },

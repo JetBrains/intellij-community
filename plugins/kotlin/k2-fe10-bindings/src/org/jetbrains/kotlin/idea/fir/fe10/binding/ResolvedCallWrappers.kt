@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -96,10 +96,10 @@ internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCa
 
     private val argumentsMap: Map<ValueParameterDescriptor, ResolvedValueArgument> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val allArguments: List<ValueArgument> = psiCall.valueArguments + psiCall.functionLiteralArguments
-        val ktParameterToResolvedValueArgument = hashMapOf<KtValueParameterSymbol, MutableList<ValueArgument>>()
+        val ktParameterToResolvedValueArgument = hashMapOf<KaValueParameterSymbol, MutableList<ValueArgument>>()
 
         for (argument in allArguments) {
-            val parameter: KtValueParameterSymbol =
+            val parameter: KaValueParameterSymbol =
                 ktCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: context.errorHandling()
 
             ktParameterToResolvedValueArgument.getOrPut(parameter) { arrayListOf() }.add(argument)

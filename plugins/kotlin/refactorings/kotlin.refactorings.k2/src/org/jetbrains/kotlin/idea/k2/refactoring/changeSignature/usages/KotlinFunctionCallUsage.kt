@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
@@ -67,7 +67,7 @@ internal class KotlinFunctionCallUsage(
                 val receiverOffset = if (callee is KtCallableDeclaration && callee.receiverTypeReference != null) 1 else 0
                 val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
 
-                val oldIdxMap: Map<KtValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
+                val oldIdxMap: Map<KaValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
                 functionCall.argumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
                 }
