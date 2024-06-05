@@ -255,7 +255,10 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   }
 
   public void testPreInitTools() throws Exception {
-    InspectionExtensionsFactory.EP_NAME.getPoint().registerExtension(new GICTestExtensionFactory(), getTestRootDisposable());
+    AtomicBoolean preInitCalled = new AtomicBoolean();
+    AtomicBoolean preRunCalled = new AtomicBoolean();
+    InspectionExtensionsFactory.EP_NAME.getPoint()
+      .registerExtension(new GICTestExtensionFactory(preInitCalled, preRunCalled), getTestRootDisposable());
     try {
       InspectionProfileImpl profile = new InspectionProfileImpl("Foo", new InspectionToolsSupplier() {
         @Override
@@ -276,6 +279,8 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
       AnalysisScope scope = new AnalysisScope(getFile());
       context.doInspections(scope);
       UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invokeLater
+      assertTrue(preInitCalled.get());
+      assertTrue(preRunCalled.get());
     }
     finally {
       InspectionExtensionsFactory.EP_NAME.getPoint().unregisterExtension(GICTestExtensionFactory.class);
@@ -302,13 +307,22 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   }
 
   private static class GICTestExtension implements GlobalInspectionContextExtension<GICTestExtension> {
+    private final @NotNull AtomicBoolean myPreInitCalled;
+    private final @NotNull AtomicBoolean myPreRunCalled;
     private static final Key<GICTestExtension> ID = Key.create("GICTestExtension");
+
+    private GICTestExtension(@NotNull AtomicBoolean preInitCalled, @NotNull AtomicBoolean preRunCalled) {
+      myPreInitCalled = preInitCalled;
+      myPreRunCalled = preRunCalled;
+    }
+
     @Override
     public @NotNull Key<GICTestExtension> getID() {
       return ID;
     }
     @Override
     public void performPreInitToolsActivities(@NotNull List<Tools> usedTools, @NotNull GlobalInspectionContext context) {
+      myPreInitCalled.set(true);
       assertExpectedTools(usedTools, JavaDummyTestInspection.class);
       assertFalse(areGlobalInspectionToolsInitialized((GlobalInspectionContextBase)context));
     }
@@ -316,6 +330,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
     public void performPreRunActivities(@NotNull List<Tools> globalTools,
                                         @NotNull List<Tools> localTools,
                                         @NotNull GlobalInspectionContext context) {
+      myPreRunCalled.set(true);
       assertExpectedTools(localTools, JavaDummyTestInspection.class, JavaDummyPairedTestInspection.class);
       assertTrue(areGlobalInspectionToolsInitialized((GlobalInspectionContextBase)context));
     }
@@ -335,9 +350,17 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   }
 
   private static class GICTestExtensionFactory extends InspectionExtensionsFactory {
+    private final @NotNull AtomicBoolean myPreInitCalled;
+    private final @NotNull AtomicBoolean myPreRunCalled;
+
+    private GICTestExtensionFactory(@NotNull AtomicBoolean preInitCalled, @NotNull AtomicBoolean preRunCalled) {
+      myPreInitCalled = preInitCalled;
+      myPreRunCalled = preRunCalled;
+    }
+
     @Override
     public GICTestExtension createGlobalInspectionContextExtension() {
-      return new GICTestExtension();
+      return new GICTestExtension(myPreInitCalled, myPreRunCalled);
     }
     @Override
     public @Nullable RefManagerExtension createRefManagerExtension(RefManager refManager) {
