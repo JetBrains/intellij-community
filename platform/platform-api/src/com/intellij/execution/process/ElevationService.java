@@ -3,7 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.SudoCommandProvider;
+import com.intellij.execution.sudo.SudoCommandProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

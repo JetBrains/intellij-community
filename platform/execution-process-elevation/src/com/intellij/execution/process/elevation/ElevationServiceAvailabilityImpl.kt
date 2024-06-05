@@ -2,7 +2,7 @@
 package com.intellij.execution.process.elevation
 
 import com.intellij.execution.process.ElevationServiceAvailability
-import com.intellij.execution.util.SudoCommandProvider
+import com.intellij.execution.sudo.SudoCommandProvider
 
 @Suppress("DEPRECATION")
 class ElevationServiceAvailabilityImpl : ElevationServiceAvailability {
