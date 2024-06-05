@@ -832,7 +832,7 @@ class KtSymbolBasedPropertyGetterDescriptor(
 }
 
 class KtSymbolBasedPropertySetterDescriptor(
-    override val ktSymbol: KtPropertySetterSymbol,
+    override val ktSymbol: KaPropertySetterSymbol,
     propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedVariableAccessorDescriptor(propertyDescriptor), PropertySetterDescriptor {
     override fun getReturnType(): KotlinType = propertyDescriptor.returnType

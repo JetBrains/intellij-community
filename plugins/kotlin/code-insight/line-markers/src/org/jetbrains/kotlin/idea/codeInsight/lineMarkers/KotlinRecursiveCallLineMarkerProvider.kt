@@ -42,7 +42,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
                     is KtVariableLikeSymbol -> symbol.name.asString()
                     is KaFunctionSymbol -> symbol.name.asString() + "()"
                     is KaPropertyGetterSymbol -> "get()"
-                    is KtPropertySetterSymbol -> "set()"
+                    is KaPropertySetterSymbol -> "set()"
                     is KaConstructorSymbol -> "constructor()"
                     else -> return@process
                 }
