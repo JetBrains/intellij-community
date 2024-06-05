@@ -34,7 +34,7 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
         val callee = element.calleeExpression ?: return emptyList()
 
         return Holder.REPLACEMENTS[callee.text]?.filter {
-            it.isApplicableByPsi(element) && it.transformation.isApplicableByPsi(element)
+            it.transformation.isApplicableByPsi(element)
         } ?: emptyList()
     }
 
@@ -43,7 +43,9 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): List<Replacement>? {
-        val replacements = findReplacementCandidatesByPsi(element)
+        val replacements = findReplacementCandidatesByPsi(element).filter {
+            it.isApplicable(element)
+        }
 
         val javaMethodFqName = element.resolveCall()
             ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName()
@@ -261,7 +263,7 @@ data class Replacement(
     val kotlinFunctionFqName: String,
     val transformation: Transformation = WithoutAdditionalTransformation,
     val mayChangeSemantics: Boolean = false,
-    val isApplicableByPsi: (KtCallExpression) -> Boolean = { true }
+    val isApplicable: (KtCallExpression) -> Boolean = { true }
 ) {
     private fun String.shortName() = takeLastWhile { it != '.' }
 
