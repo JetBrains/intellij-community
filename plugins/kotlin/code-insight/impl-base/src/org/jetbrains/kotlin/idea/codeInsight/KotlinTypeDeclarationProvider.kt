@@ -45,7 +45,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
 
     private fun getFunctionalLiteralTarget(symbol: KtFunctionLiteral): Array<PsiElement> {
         return symbol.getTypeDeclarationFromCallable { callableSymbol ->
-            (callableSymbol as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull()?.returnType ?: callableSymbol.receiverType
+            (callableSymbol as? KaFunctionLikeSymbol)?.valueParameters?.firstOrNull()?.returnType ?: callableSymbol.receiverType
         }
     }
 

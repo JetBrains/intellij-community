@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -237,7 +237,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                         append(receiverType.render(renderer, position = Variance.INVARIANT))
                         append('.')
                     }
-                    if (symbol is KtFunctionLikeSymbol) {
+                    if (symbol is KaFunctionLikeSymbol) {
                         symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
                     }
                 }

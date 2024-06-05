@@ -77,7 +77,7 @@ internal fun toPsiClass(
 
 context(KtAnalysisSession)
 internal fun toPsiMethod(
-    functionSymbol: KtFunctionLikeSymbol,
+    functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
@@ -144,7 +144,7 @@ internal fun toPsiMethod(
 
 context(KtAnalysisSession)
 private fun toPsiMethodForDeserialized(
-    functionSymbol: KtFunctionLikeSymbol,
+    functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
     psi: KtFunction?,
 ): PsiMethod? {

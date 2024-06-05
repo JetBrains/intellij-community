@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -73,7 +73,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
             }
         }
 
-        return copyFunction.safeAs<KtFunctionLikeSymbol>()?.toDeclarationDescriptor(context)
+        return copyFunction.safeAs<KaFunctionLikeSymbol>()?.toDeclarationDescriptor(context)
     }
 
     private fun getExpectedExpressionType(ktExpression: KtExpression): KotlinType? =

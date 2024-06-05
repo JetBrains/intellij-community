@@ -327,7 +327,7 @@ class KtSymbolBasedTypeParameterDescriptor(
 
 abstract class KtSymbolBasedFunctionLikeDescriptor(context: Fe10WrapperContext) :
     KtSymbolBasedDeclarationDescriptor(context), FunctionDescriptor {
-    abstract override val ktSymbol: KtFunctionLikeSymbol
+    abstract override val ktSymbol: KaFunctionLikeSymbol
 
     override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
 

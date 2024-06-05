@@ -226,7 +226,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
                     val psi = when (candidate) {
                         is KtVariableLikeSymbol -> psiForUast(candidate, ktExpression.project)
-                        is KtFunctionLikeSymbol -> toPsiMethod(candidate, ktExpression)
+                        is KaFunctionLikeSymbol -> toPsiMethod(candidate, ktExpression)
                     }?: return@forEach
                     yield(psi)
                 }
@@ -492,7 +492,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     if (resolvedTargetSymbol is KtReceiverParameterSymbol) {
                         // Explicit `this` resolved to type reference if it belongs to an extension callable
                         when (val callable = resolvedTargetSymbol.owningCallableSymbol) {
-                            is KtFunctionLikeSymbol -> {
+                            is KaFunctionLikeSymbol -> {
                                 val psiMethod = toPsiMethod(callable, ktExpression)
                                 psiMethod?.parameterList?.parameters?.firstOrNull()?.let { return it }
                             }
@@ -680,7 +680,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val symbol = ktDeclaration.getSymbol() as? KtCallableSymbol ?: return false
             if (symbol.returnType.typeForValueClass) return true
             if (symbol.receiverType?.typeForValueClass == true) return true
-            if (symbol is KtFunctionLikeSymbol) {
+            if (symbol is KaFunctionLikeSymbol) {
                 return symbol.valueParameters.any { it.returnType.typeForValueClass }
             }
             return false

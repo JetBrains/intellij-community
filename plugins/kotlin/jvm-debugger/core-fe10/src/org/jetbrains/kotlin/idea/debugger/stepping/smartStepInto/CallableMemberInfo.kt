@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -27,7 +27,7 @@ data class CallableMemberInfo(
 
 context(KtAnalysisSession)
 internal fun CallableMemberInfo(
-    symbol: KtFunctionLikeSymbol,
+    symbol: KaFunctionLikeSymbol,
     ordinal: Int = 0,
     name: String = symbol.methodName()
 ): CallableMemberInfo {
@@ -48,14 +48,14 @@ internal fun CallableMemberInfo(
 }
 
 context(KtAnalysisSession)
-internal fun KtFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean =
+internal fun KaFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean =
     valueParameters.any { it.returnType.expandedClassSymbol?.isInlineClass() == true }
 
-private fun KtFunctionLikeSymbol.methodName() = when (this) {
+private fun KaFunctionLikeSymbol.methodName() = when (this) {
     is KtFunctionSymbol -> getByteCodeMethodName()
     is KtConstructorSymbol -> "<init>"
     else -> ""
 }
 
 context(KtAnalysisSession)
-internal fun KtFunctionLikeSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true
+internal fun KaFunctionLikeSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true

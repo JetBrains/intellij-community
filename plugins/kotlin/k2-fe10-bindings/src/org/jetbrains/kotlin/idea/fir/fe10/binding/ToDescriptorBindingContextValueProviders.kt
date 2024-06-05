@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.descriptors.*
@@ -61,7 +61,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
     }
 
     private fun getFunction(key: PsiElement): SimpleFunctionDescriptor? {
-        val ktFunctionLikeSymbol = key.getKtSymbolOfTypeOrNull<KtFunctionLikeSymbol>() ?: return null
+        val ktFunctionLikeSymbol = key.getKtSymbolOfTypeOrNull<KaFunctionLikeSymbol>() ?: return null
         return ktFunctionLikeSymbol.toDeclarationDescriptor(context) as? SimpleFunctionDescriptor
     }
 

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -28,7 +28,7 @@ fun addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
             is KtVariableLikeSymbol -> {
                 lookupElement.variableOrFunction = Weight.VARIABLE
             }
-            is KtFunctionLikeSymbol -> {
+            is KaFunctionLikeSymbol -> {
                 lookupElement.variableOrFunction = Weight.FUNCTION
             }
             else -> {

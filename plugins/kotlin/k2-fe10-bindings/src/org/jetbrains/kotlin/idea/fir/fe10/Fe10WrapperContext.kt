@@ -61,7 +61,7 @@ interface Fe10WrapperContext {
 fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
     when (this) {
         is KaNamedClassOrObjectSymbol -> toDeclarationDescriptor(context)
-        is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
+        is KaFunctionLikeSymbol -> toDeclarationDescriptor(context)
         is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
         is KtReceiverParameterSymbol -> toDeclarationDescriptor(context)
         is KaTypeAliasSymbol -> toDeclarationDescriptor(context)
@@ -80,7 +80,7 @@ fun KaClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): 
         is KaAnonymousObjectSymbol -> context.implementationPlanned("KaAnonymousObjectSymbol")
     }
 
-fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
+fun KaFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
     when (this) {
         is KtFunctionSymbol -> KtSymbolBasedFunctionDescriptor(this, context)
         is KtAnonymousFunctionSymbol -> KtSymbolBasedAnonymousFunctionDescriptor(this, context)
@@ -89,12 +89,12 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
             val ktClassOrObject = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() as KaNamedClassOrObjectSymbol }
             KtSymbolBasedConstructorDescriptor(ktConstructorSymbol, KtSymbolBasedClassDescriptor(ktClassOrObject, context))
         }
-        else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")
+        else -> error("Unexpected kind of KaFunctionLikeSymbol: ${this.javaClass}")
     }
 
 fun KtValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedValueParameterDescriptor {
     val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
-    check(containingSymbol is KtFunctionLikeSymbol) {
+    check(containingSymbol is KaFunctionLikeSymbol) {
         "Unexpected containing symbol = $containingSymbol"
     }
     return KtSymbolBasedValueParameterDescriptor(this, context, containingSymbol.toDeclarationDescriptor(context))

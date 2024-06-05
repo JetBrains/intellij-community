@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -92,7 +92,7 @@ internal abstract class Fe10WrapperResolvedCall<C : KtCallableMemberCall<*, *>>(
 
 internal class FunctionFe10WrapperResolvedCall(psiCall: Call, call: KtFunctionCall<*>, diagnostic: KtDiagnostic?, context: Fe10WrapperContext) :
     Fe10WrapperResolvedCall<KtFunctionCall<*>>(psiCall, call, diagnostic, context) {
-    private val ktFunctionSymbol: KtFunctionLikeSymbol = ktCall.partiallyAppliedSymbol.symbol
+    private val ktFunctionSymbol: KaFunctionLikeSymbol = ktCall.partiallyAppliedSymbol.symbol
 
     private val argumentsMap: Map<ValueParameterDescriptor, ResolvedValueArgument> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val allArguments: List<ValueArgument> = psiCall.valueArguments + psiCall.functionLiteralArguments

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -87,7 +87,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
         analyze(declaration) {
-            val symbol = declaration.getSymbol() as? KtFunctionLikeSymbol ?: return false
+            val symbol = declaration.getSymbol() as? KaFunctionLikeSymbol ?: return false
             return owner == symbol.getJvmInternalClassName() && signature == symbol.getJvmSignature()
         }
     }
@@ -127,7 +127,7 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
 }
 
 context(KtAnalysisSession)
-private fun KtFunctionLikeSymbol.getJvmSignature(): String? {
+private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
     val receiver = receiverType?.jvmName(element) ?: ""
     val parameterTypes = valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")

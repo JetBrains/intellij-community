@@ -208,7 +208,7 @@ object K2SemanticMatcher {
      */
     private data class MatchingContext(
         val symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
-        val blockBodyOwners: MutableMap<KtFunctionLikeSymbol, KtFunctionLikeSymbol> = mutableMapOf(),
+        val blockBodyOwners: MutableMap<KaFunctionLikeSymbol, KaFunctionLikeSymbol> = mutableMapOf(),
         val parameterSubstitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
     ) {
         context(KtAnalysisSession)
@@ -232,7 +232,7 @@ object K2SemanticMatcher {
         }
 
         context(KtAnalysisSession)
-        fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KtFunctionLikeSymbol, patternFunction: KtFunctionLikeSymbol): Boolean =
+        fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KaFunctionLikeSymbol, patternFunction: KaFunctionLikeSymbol): Boolean =
             targetFunction == patternFunction || blockBodyOwners[targetFunction] == patternFunction
 
         // TODO: current approach doesn't work on pairs of types such as `List<U>` and `List<T>`, where `U` and `T` are associated
@@ -832,8 +832,8 @@ object K2SemanticMatcher {
         patternExpression: KtReturnExpression,
         context: MatchingContext,
     ): Boolean {
-        val targetReturnTargetSymbol = targetExpression.getReturnTargetSymbol() as? KtFunctionLikeSymbol ?: return false
-        val patternReturnTargetSymbol = patternExpression.getReturnTargetSymbol() as? KtFunctionLikeSymbol ?: return false
+        val targetReturnTargetSymbol = targetExpression.getReturnTargetSymbol() as? KaFunctionLikeSymbol ?: return false
+        val patternReturnTargetSymbol = patternExpression.getReturnTargetSymbol() as? KaFunctionLikeSymbol ?: return false
 
         return context.areBlockBodyOwnersEqualOrAssociated(targetReturnTargetSymbol, patternReturnTargetSymbol)
     }
@@ -893,7 +893,7 @@ object K2SemanticMatcher {
     ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.getKtType(), patternTypeReference.getKtType())
 
     context(KtAnalysisSession)
-    private fun KtFunction.getFunctionLikeSymbol(): KtFunctionLikeSymbol = getSymbolOfType<KtFunctionLikeSymbol>()
+    private fun KtFunction.getFunctionLikeSymbol(): KaFunctionLikeSymbol = getSymbolOfType<KaFunctionLikeSymbol>()
 
     context(KtAnalysisSession)
     private fun KtCallableDeclaration.getCallableSymbol(): KtCallableSymbol = getSymbolOfType<KtCallableSymbol>()

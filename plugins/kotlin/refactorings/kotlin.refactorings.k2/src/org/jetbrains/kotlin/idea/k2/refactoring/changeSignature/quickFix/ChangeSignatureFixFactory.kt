@@ -313,7 +313,7 @@ object ChangeSignatureFixFactory {
         ktCallableSymbol: KtCallableSymbol,
         element: PsiElement,
     ): List<ParameterQuickFix> {
-        if (ktCallableSymbol !is KtFunctionLikeSymbol) return emptyList()
+        if (ktCallableSymbol !is KaFunctionLikeSymbol) return emptyList()
         val name = getDeclarationName(ktCallableSymbol) ?: return emptyList()
         val valueArgument = element.parentOfType<KtValueArgument>(true) ?: return emptyList()
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
@@ -341,7 +341,7 @@ object ChangeSignatureFixFactory {
         element: PsiElement,
     ): List<ParameterQuickFix> {
         if (symbol !is KtParameterSymbol) return emptyList()
-        val containingSymbol = symbol.getContainingSymbol() as? KtFunctionLikeSymbol ?: return emptyList()
+        val containingSymbol = symbol.getContainingSymbol() as? KaFunctionLikeSymbol ?: return emptyList()
         if (containingSymbol is KtFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
             containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
             containingSymbol.origin == KtSymbolOrigin.LIBRARY
@@ -372,7 +372,7 @@ object ChangeSignatureFixFactory {
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val functionLikeSymbol =
-            ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)?.symbol as? KtFunctionLikeSymbol
+            ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)?.symbol as? KaFunctionLikeSymbol
                 ?: return emptyList()
 
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()
@@ -406,7 +406,7 @@ object ChangeSignatureFixFactory {
 }
 
 context(KtAnalysisSession)
-internal fun getDeclarationName(functionLikeSymbol: KtFunctionLikeSymbol): String? {
+internal fun getDeclarationName(functionLikeSymbol: KaFunctionLikeSymbol): String? {
     return when(functionLikeSymbol) {
         is KtConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol

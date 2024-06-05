@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
@@ -66,7 +66,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val arguments = valueArgumentList.arguments
 
         val functionCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return
-        val functionSymbol: KtFunctionLikeSymbol = functionCall.symbol
+        val functionSymbol: KaFunctionLikeSymbol = functionCall.symbol
         val valueParameters: List<KtValueParameterSymbol> = functionSymbol.valueParameters
 
         val blackListed = functionSymbol.isBlackListed(valueParameters)
@@ -83,7 +83,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     context(KtAnalysisSession)
-    private fun KtFunctionLikeSymbol.isBlackListed(valueParameters: List<KtValueParameterSymbol>): Boolean {
+    private fun KaFunctionLikeSymbol.isBlackListed(valueParameters: List<KtValueParameterSymbol>): Boolean {
         val blackListed = callableId?.let {
             val callableId = it.asSingleFqName().toString()
             val parameterNames = valueParameters.map { it.name.asString() }
@@ -93,7 +93,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     context(KtAnalysisSession)
-    private fun KtFunctionLikeSymbol.collectFromParameters(
+    private fun KaFunctionLikeSymbol.collectFromParameters(
         valueParameters: List<KtValueParameterSymbol>,
         arguments: MutableList<KtValueArgument>,
         sink: InlayTreeSink

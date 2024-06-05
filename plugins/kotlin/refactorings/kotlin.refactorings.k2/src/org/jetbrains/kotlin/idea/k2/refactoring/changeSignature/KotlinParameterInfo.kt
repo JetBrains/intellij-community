@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -208,7 +208,7 @@ class KotlinParameterInfo(
                 val target = ref.resolveToSymbol()
                 val declarationSymbol = callableDeclaration.getSymbol() as? KtCallableSymbol ?: return null
                 if (target is KtValueParameterSymbol) {
-                    if (declarationSymbol is KtFunctionLikeSymbol && target.getContainingSymbol() == declarationSymbol) {
+                    if (declarationSymbol is KaFunctionLikeSymbol && target.getContainingSymbol() == declarationSymbol) {
                         return declarationSymbol.valueParameters.indexOf(target) + (if ((callableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
                     }
 

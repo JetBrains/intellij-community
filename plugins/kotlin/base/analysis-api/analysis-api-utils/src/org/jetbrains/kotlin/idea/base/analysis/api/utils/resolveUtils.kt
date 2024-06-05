@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -70,7 +70,7 @@ private fun filterCandidate(
 
 context(KtAnalysisSession)
 fun filterCandidateByReceiverTypeAndVisibility(
-    signature: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
+    signature: KtFunctionLikeSignature<KaFunctionLikeSymbol>,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
     explicitReceiver: KtExpression?,

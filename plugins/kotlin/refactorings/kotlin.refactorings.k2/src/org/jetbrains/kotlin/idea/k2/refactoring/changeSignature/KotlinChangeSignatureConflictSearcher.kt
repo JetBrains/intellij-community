@@ -14,7 +14,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -154,13 +154,13 @@ class KotlinChangeSignatureConflictSearcher(
                 factory.createContextType(it, function)
             }
         }
-        return candidateSymbol is KtFunctionLikeSymbol &&
+        return candidateSymbol is KaFunctionLikeSymbol &&
                 areSameSignatures(
                     newReceiverType,
                     candidateSymbol.receiverType,
                     newParameterTypes,
                     candidateSymbol.valueParameters.map { it.returnType }, //todo currently context receiver can't be changed
-                    (function.getSymbol() as? KtFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
+                    (function.getSymbol() as? KaFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
                     candidateSymbol.contextReceivers
                 )
     }

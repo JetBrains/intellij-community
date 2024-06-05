@@ -26,7 +26,7 @@ fun isSoftDeprecatedEnumValuesMethod(
     return KaClassKind.ENUM_CLASS == enumClassSymbol.classKind &&
             StandardNames.ENUM_VALUES == valuesMethodSymbol.callableId?.callableName &&
             // Don't touch user-declared methods with the name "values"
-            valuesMethodSymbol is KtFunctionLikeSymbol && valuesMethodSymbol.valueParameters.isEmpty()
+            valuesMethodSymbol is KaFunctionLikeSymbol && valuesMethodSymbol.valueParameters.isEmpty()
 }
 
 context(KtAnalysisSession)

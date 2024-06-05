@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -64,7 +64,7 @@ internal open class FirKDocParameterNameContributor(
         yieldAll(ownerDeclarationSymbol.typeParameters)
 
         val valueParameters = when (ownerDeclarationSymbol) {
-            is KtFunctionLikeSymbol -> ownerDeclarationSymbol.valueParameters
+            is KaFunctionLikeSymbol -> ownerDeclarationSymbol.valueParameters
 
             is KaNamedClassOrObjectSymbol -> {
                 val primaryConstructor = ownerDeclarationSymbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }

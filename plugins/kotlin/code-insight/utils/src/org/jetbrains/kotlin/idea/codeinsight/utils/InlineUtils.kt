@@ -41,11 +41,11 @@ fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getFunctionSymbol(argument: KtExpression): KtFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
+fun getFunctionSymbol(argument: KtExpression): KaFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
     ?: getDefaultArgumentSymbol(argument)?.first
 
 context(KtAnalysisSession)
-private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KtValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parameter = argument.parentOfType<KtParameter>() ?: return null
     val lambdaExpression = argument.parent as? KtLambdaExpression ?: return null
@@ -58,7 +58,7 @@ private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KtFunctionLik
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getCallExpressionSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KtValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
     val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
@@ -69,8 +69,8 @@ fun getCallExpressionSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, 
 }
 
 context(KtAnalysisSession)
-private fun isArrayGeneratorConstructorCall(symbol: KtFunctionLikeSymbol): Boolean {
-    fun checkParameters(symbol: KtFunctionLikeSymbol): Boolean {
+private fun isArrayGeneratorConstructorCall(symbol: KaFunctionLikeSymbol): Boolean {
+    fun checkParameters(symbol: KaFunctionLikeSymbol): Boolean {
         return symbol.valueParameters.size == 2
                 && symbol.valueParameters[0].returnType.isInt
                 && symbol.valueParameters[1].returnType.isFunctionType

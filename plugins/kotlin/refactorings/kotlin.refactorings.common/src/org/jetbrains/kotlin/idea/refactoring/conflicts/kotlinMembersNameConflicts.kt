@@ -62,7 +62,7 @@ fun KtScope.findSiblingsByName(
     }
 
     val classifierSymbols = getClassifierSymbols(newName)
-    if (symbol is KtFunctionLikeSymbol) {
+    if (symbol is KaFunctionLikeSymbol) {
         return (classifierSymbols.flatMap { (it as? KaClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables)
     }
 
@@ -71,9 +71,9 @@ fun KtScope.findSiblingsByName(
 
 context(KtAnalysisSession)
 fun filterCandidates(symbol: KtDeclarationSymbol, candidateSymbol: KtDeclarationSymbol): Boolean {
-    if (candidateSymbol is KtFunctionLikeSymbol) {
+    if (candidateSymbol is KaFunctionLikeSymbol) {
         val skipCandidate = when (symbol) {
-            is KtFunctionLikeSymbol -> !areSameSignatures(candidateSymbol, symbol)
+            is KaFunctionLikeSymbol -> !areSameSignatures(candidateSymbol, symbol)
             is KtPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
             is KaClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, candidateSymbol) }
             else -> false
@@ -82,11 +82,11 @@ fun filterCandidates(symbol: KtDeclarationSymbol, candidateSymbol: KtDeclaration
         return !skipCandidate
     }
 
-    if (candidateSymbol is KtPropertySymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
+    if (candidateSymbol is KtPropertySymbol && symbol is KaFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
         return false
     }
 
-    if (candidateSymbol is KaClassOrObjectSymbol && symbol is KtFunctionLikeSymbol) {
+    if (candidateSymbol is KaClassOrObjectSymbol && symbol is KaFunctionLikeSymbol) {
         if (candidateSymbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, symbol) }) {
             return false
         }
@@ -106,7 +106,7 @@ fun checkDeclarationNewNameConflicts(
         val containingSymbol = symbol.getContainingSymbol() ?: getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)
 
         if (symbol is KtValueParameterSymbol) {
-            val functionLikeSymbol = containingSymbol as KtFunctionLikeSymbol
+            val functionLikeSymbol = containingSymbol as KaFunctionLikeSymbol
             val locals = functionLikeSymbol.psi?.descendantsOfType<KtVariableDeclaration>()?.filter { it.nameAsName == newName }
                 ?.mapNotNull { it.getSymbol() }?.asSequence() ?: emptySequence()
             return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals
@@ -151,13 +151,13 @@ fun checkDeclarationNewNameConflicts(
             }
             else -> {
                 val block = declaration.parent as? KtBlockExpression ?: return emptySequence()
-                val functionParameters = (declaration.getParentOfType<KtFunction>(true)?.getSymbol() as? KtFunctionLikeSymbol)?.valueParameters?.filter { it.name == newName } ?: emptyList()
+                val functionParameters = (declaration.getParentOfType<KtFunction>(true)?.getSymbol() as? KaFunctionLikeSymbol)?.valueParameters?.filter { it.name == newName } ?: emptyList()
                 (block.statements.mapNotNull {
                     if (it.name != newName.asString()) return@mapNotNull null
                     val isAccepted = when (symbol) {
                         is KaClassOrObjectSymbol -> it is KtClassOrObject
                         is KtVariableSymbol -> it is KtProperty
-                        is KtFunctionLikeSymbol -> it is KtNamedFunction
+                        is KaFunctionLikeSymbol -> it is KtNamedFunction
                         else -> false
                     }
                     if (!isAccepted) return@mapNotNull null
@@ -175,7 +175,7 @@ fun checkDeclarationNewNameConflicts(
 
         var potentialCandidates = getPotentialConflictCandidates(symbol, declaration, newName)
         if (declarationSymbol is KtValueParameterSymbol && symbol is KtPropertySymbol) {
-            val functionLikeSymbol = declarationSymbol.getContainingSymbol() as? KtFunctionLikeSymbol
+            val functionLikeSymbol = declarationSymbol.getContainingSymbol() as? KaFunctionLikeSymbol
             val conflictingParameters = functionLikeSymbol?.valueParameters?.filter { it.name == newName && it != declarationSymbol }?.takeIf { it.isNotEmpty() }
             if (conflictingParameters != null) {
                 potentialCandidates = potentialCandidates + conflictingParameters
@@ -200,7 +200,7 @@ fun checkNewPropertyConflicts(
         var potentialCandidates = containingSymbol
             .getCombinedMemberScope()
             .findSiblingsByName(containingSymbol, Name.identifier(newName), containingSymbol)
-            .filter { candidateSymbol -> candidateSymbol !is KtFunctionLikeSymbol }
+            .filter { candidateSymbol -> candidateSymbol !is KaFunctionLikeSymbol }
         for (candidateSymbol in potentialCandidates) {
             registerAlreadyDeclaredConflict(candidateSymbol, result)
         }
@@ -217,12 +217,12 @@ fun registerAlreadyDeclaredConflict(candidateSymbol: KtDeclarationSymbol, result
 }
 
 context(KtAnalysisSession)
-private fun areSameSignatures(candidateSymbol: KtFunctionLikeSymbol, symbol: KtFunctionLikeSymbol) : Boolean {
+private fun areSameSignatures(candidateSymbol: KaFunctionLikeSymbol, symbol: KaFunctionLikeSymbol) : Boolean {
     return areSameSignatures(candidateSymbol.receiverType, symbol.receiverType, candidateSymbol.valueParameters.map { it.returnType }, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)
 }
 
 context(KtAnalysisSession)
-private fun areSameSignatures(candidateSymbol: KtPropertySymbol, symbol: KtFunctionLikeSymbol) : Boolean {
+private fun areSameSignatures(candidateSymbol: KtPropertySymbol, symbol: KaFunctionLikeSymbol) : Boolean {
     val type = candidateSymbol.returnType
     if (type is KtFunctionalType &&
         areSameSignatures(type.receiverType, symbol.receiverType, type.parameterTypes, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)) {
@@ -327,14 +327,14 @@ fun registerRetargetJobOnPotentialCandidates(
         var classOrObjectSymbol = declarationSymbol.getContainingSymbol()
         val block = declaration.parent as? KtBlockExpression
         if (block != null) {
-            classOrObjectSymbol = declaration.getParentOfType<KtFunction>(true)?.getSymbol() as? KtFunctionLikeSymbol
+            classOrObjectSymbol = declaration.getParentOfType<KtFunction>(true)?.getSymbol() as? KaFunctionLikeSymbol
             classOrObjectSymbol?.valueParameters?.filter { it.name.asString() == name }?.filter { filterCandidate(it) }?.forEach(retargetJob)
             block.statements.mapNotNull {
                 if (it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
                     is KaClassOrObjectSymbol -> it is KtClassOrObject
                     is KtVariableSymbol -> it is KtProperty
-                    is KtFunctionLikeSymbol -> it is KtNamedFunction
+                    is KaFunctionLikeSymbol -> it is KtNamedFunction
                     else -> false
                 }
                 if (!isAccepted) return@mapNotNull null

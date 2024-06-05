@@ -564,7 +564,7 @@ internal open class FirCallableCompletionContributor(
             for (callableWithMetadata in this@filterOutShadowedCallables) {
                 val callableFqName = callableWithMetadata.signature.callableId?.asSingleFqName()
                 val isAlreadyImported = with(importStrategyDetector) { callableFqName?.isAlreadyImported() == true }
-                val typeArgumentsAreRequired = (callableWithMetadata.signature.symbol as? KtFunctionLikeSymbol)?.let {
+                val typeArgumentsAreRequired = (callableWithMetadata.signature.symbol as? KaFunctionLikeSymbol)?.let {
                     FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
                 } == false
 

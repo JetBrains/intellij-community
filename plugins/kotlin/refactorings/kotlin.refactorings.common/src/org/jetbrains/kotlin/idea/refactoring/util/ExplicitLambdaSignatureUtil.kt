@@ -3,14 +3,14 @@ package org.jetbrains.kotlin.idea.refactoring.util
 
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
 fun KtAnalysisSession.getExplicitLambdaSignature(element: KtLambdaExpression): String? {
-    val lambdaSymbol = element.functionLiteral.getSymbol() as KtFunctionLikeSymbol
+    val lambdaSymbol = element.functionLiteral.getSymbol() as KaFunctionLikeSymbol
     val valueParameters = lambdaSymbol.valueParameters
     if (valueParameters.any { it.returnType is KtErrorType } ) return null
     return valueParameters.joinToString { param ->

@@ -37,13 +37,13 @@ fun KtDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassOrObjectS
 @ApiStatus.Internal
 @RequiresReadLock
 fun KtDeclaration.getClassName(): String? = analyze(this) {
-    val symbol = getSymbol() as? KtFunctionLikeSymbol ?: return@analyze null
+    val symbol = getSymbol() as? KaFunctionLikeSymbol ?: return@analyze null
     symbol.getJvmInternalClassName()?.internalNameToFqn()
 }
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
+fun KaFunctionLikeSymbol.getJvmInternalClassName(): String? {
     val classOrObject = getContainingClassOrObjectSymbol()
     return if (classOrObject == null) {
         val fileSymbol = getContainingFileSymbol() ?: return null
@@ -57,7 +57,7 @@ fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KaClassOrObjectSymbol? {
+fun KaFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KaClassOrObjectSymbol? {
     var symbol = getContainingSymbol()
     while (symbol != null) {
         if (symbol is KaClassOrObjectSymbol) return symbol
