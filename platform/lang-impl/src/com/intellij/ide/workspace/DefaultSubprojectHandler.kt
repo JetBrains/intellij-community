@@ -3,14 +3,18 @@ package com.intellij.ide.workspace
 
 import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.stateStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -57,7 +61,9 @@ private class DefaultImportedSettings(project: Project): ImportedProjectSettings
   }
 
   override suspend fun applyTo(workspace: Project): Boolean {
-    if (moduleImlPaths.isEmpty()) return false
+    if (moduleImlPaths.isEmpty()) {
+      return importFolder(workspace)
+    }
     withContext(Dispatchers.EDT) {
       workspace.modifyModules {
         moduleImlPaths.removeAll(modules.map { it.moduleFilePath }.toSet())
@@ -71,6 +77,22 @@ private class DefaultImportedSettings(project: Project): ImportedProjectSettings
       }
     }
     getWorkspaceSettings(workspace).subprojects.add(SubprojectSettings(projectName, projectDir))
+    return true
+  }
+
+  private suspend fun importFolder(workspace: Project): Boolean {
+    val virtualFile = LocalFileSystem.getInstance().findFileByPath(projectDir) ?: return false
+    val dotIdeaPath = workspace.stateStore.directoryStorePath ?: return false
+    val imlPath = dotIdeaPath.resolve("$projectName.iml")
+    withContext(Dispatchers.EDT) {
+      workspace.modifyModules {
+        val module = newModule(imlPath, GeneralModuleType.TYPE_ID)
+        ModuleRootManager.getInstance(module).modifiableModel.apply {
+          addContentEntry(virtualFile)
+          commit()
+        }
+      }
+    }
     return true
   }
 }
