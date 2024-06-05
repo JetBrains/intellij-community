@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.system.OS
@@ -20,29 +19,15 @@ import javax.swing.JPanel
 
 internal class IntentionPreviewComponent(parent: Disposable) :
   JBLoadingPanel(BorderLayout(), { panel -> IntentionPreviewLoadingDecorator(panel, parent) }) {
-  private var NO_PREVIEW_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.no.available.text")))
-  private var LOADING_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.loading.preview")))
-
-  var editors: List<EditorEx> = emptyList()
-  var html: IntentionPreviewInfo.Html? = null
+  var previewComponent: JComponent? = null
 
   val multiPanel: MultiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent {
       return when (key) {
-        NO_PREVIEW -> NO_PREVIEW_LABEL
         LOADING_PREVIEW -> LOADING_LABEL
-        else -> {
-          val htmlInfo = html
-          if (htmlInfo != null) {
-            return createHtmlPanel(htmlInfo)
-          }
-          if (editors.isEmpty()) return NO_PREVIEW_LABEL
-
-          IntentionPreviewEditorsPanel(mutableListOf<EditorEx>().apply { addAll<EditorEx>(editors) })
-        }
+        else -> previewComponent!!
       }
     }
-
   }
 
   init {
@@ -54,9 +39,11 @@ internal class IntentionPreviewComponent(parent: Disposable) :
   companion object {
     const val NO_PREVIEW: Int = -1
     const val LOADING_PREVIEW: Int = -2
-    val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
+    private val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
+    internal var NO_PREVIEW_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.no.available.text")))
+    private var LOADING_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.loading.preview")))
 
-    private fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {
+    internal fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {
       val targetSize = IntentionPreviewPopupUpdateProcessor.MIN_WIDTH * UIUtil.getLabelFont().size.coerceAtMost(24) / 12
       val editor = object : JEditorPane() {
         var prefHeight: Int? = null
