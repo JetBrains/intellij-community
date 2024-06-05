@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.platform.fileEditor
 
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.platform.ide.IdeFingerprint
-import kotlinx.collections.immutable.persistentMapOf
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
@@ -28,10 +29,11 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
 
   var selectedProvider: String? = null
   // ordered
-  var providers = persistentMapOf<String, Element?>()
-  for (providerElement in historyElement.getChildren(PROVIDER_ELEMENT)) {
+  val providerListElement = historyElement.getChildren(PROVIDER_ELEMENT)
+  val providers = LinkedHashMap<String, Element?>(providerListElement.size)
+  for (providerElement in providerListElement) {
     val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
-    providers = providers.put(typeId, providerElement.getChild(STATE_ELEMENT))
+    providers.put(typeId, providerElement.getChild(STATE_ELEMENT))
     if (providerElement.getAttributeValue(SELECTED_ATTRIBUTE_VALUE).toBoolean()) {
       selectedProvider = typeId
     }
@@ -49,12 +51,20 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
   )
 }
 
-internal fun writeWindow(result: Element, window: EditorWindow) {
+internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: Map<EditorComposite, FileEntry>) {
   val selectedComposite = window.selectedComposite
   for (tab in window.tabbedPane.tabs.tabs) {
     val composite = tab.composite
     val fileElement = Element("file")
-    fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project = window.manager.project))
+
+    val delayedState = delayedStates.get(composite)
+    if (delayedState == null) {
+      fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(window.manager.project))
+    }
+    else {
+      fileElement.addContent(composite.writeDelayedStateAsHistoryEntry(delayedState))
+    }
+
     if (composite.isPinned) {
       fileElement.setAttribute(PINNED, "true")
     }

@@ -192,8 +192,19 @@ open class FileEditorManagerImpl(
   @JvmField
   internal val editorPropertyChangeListener: PropertyChangeListener = MyEditorPropertyChangeListener()
 
+  private data class EditorCompositeEntry(
+    @JvmField val composite: EditorComposite,
+    // non-volatile - that's ok
+    @JvmField var delayedState: FileEntry?,
+  )
+
   private var contentFactory: DockableEditorContainerFactory? = null
-  private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
+
+  private val openedCompositeEntries = CopyOnWriteArrayList<EditorCompositeEntry>()
+
+  private val openedComposites: Sequence<EditorComposite>
+    get() = openedCompositeEntries.asSequence().map { it.composite }
+
   private val listenerList = MessageListenerList(project.messageBus, FileEditorManagerListener.FILE_EDITOR_MANAGER)
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
@@ -1139,7 +1150,7 @@ open class FileEditorManagerImpl(
     val isNewEditor = composite == null
     if (composite == null) {
       composite = createCompositeAndModel(file = file, window = window) ?: return null
-      openedComposites.add(composite)
+      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
     }
 
     window.addComposite(
@@ -1538,7 +1549,7 @@ open class FileEditorManagerImpl(
       return clientFileEditorManager?.getAllComposites()?.isNotEmpty() ?: false
     }
 
-    return !openedComposites.isEmpty()
+    return !openedCompositeEntries.isEmpty()
   }
 
   override fun getSelectedFiles(): Array<VirtualFile> {
@@ -1659,7 +1670,7 @@ open class FileEditorManagerImpl(
       return clientFileEditorManager?.getComposite(originalFile)
     }
 
-    if (openedComposites.isEmpty()) {
+    if (openedCompositeEntries.isEmpty()) {
       return null
     }
 
@@ -1744,7 +1755,10 @@ open class FileEditorManagerImpl(
     }
 
     val state = Element("state")
-    mainSplitters.writeExternal(state)
+    mainSplitters.writeExternal(
+      element = state,
+      delayedStates = openedCompositeEntries.asSequence().filter { it.delayedState != null }.associateBy(keySelector = { it.composite }, valueTransform = { it.delayedState!! }),
+    )
     return state
   }
 
@@ -1800,7 +1814,7 @@ open class FileEditorManagerImpl(
       return
     }
 
-    openedComposites.remove(composite)
+    openedCompositeEntries.removeIf { it.composite == composite }
     composite.selectedEditorWithProvider.value?.fileEditor?.deselectNotify()
     splitters.onDisposeComposite(composite)
 
@@ -1971,9 +1985,9 @@ open class FileEditorManagerImpl(
       check(rootChangedRequests.tryEmit(Unit))
     }
 
-    private fun computeEditorReplacements(composites: List<EditorComposite>): Map<EditorComposite, kotlin.Pair<VirtualFile, Int?>> {
+    private fun computeEditorReplacements(composites: Sequence<EditorComposite>): Map<EditorComposite, kotlin.Pair<VirtualFile, Int?>> {
       val swappers = EDITOR_FILE_SWAPPER_EP_NAME.extensionList
-      return composites.asSequence().mapNotNull { composite ->
+      return composites.mapNotNull { composite ->
         if (composite.file.isValid) {
           for (swapper in swappers) {
             val fileAndOffset = swapper.getFileToSwapTo(fileEditorManager.project, composite) ?: continue
@@ -2192,7 +2206,7 @@ open class FileEditorManagerImpl(
     isOpenedInBulk: Boolean,
   ) {
     if (isNewEditor) {
-      openedComposites.add(element = composite)
+      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
     }
 
     window.addComposite(
@@ -2284,7 +2298,13 @@ open class FileEditorManagerImpl(
 
       tabs.add(tab)
 
-      openedComposites.add(element = composite)
+      val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
+      openedCompositeEntries.add(editorCompositeEntry)
+      composite.coroutineScope.launch {
+        // remove delayed state as soon as composite can provide state
+        composite.selectedEditorWithProvider.filterNotNull().first()
+        editorCompositeEntry.delayedState = null
+      }
     }
 
     openFileSetModificationCount.increment()

@@ -8,14 +8,9 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.impl.DataValidators
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.EdtDataProvider
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -642,6 +637,28 @@ open class EditorComposite internal constructor(
         if (!stateElement.isEmpty) {
           providerElement.addContent(stateElement)
         }
+      }
+
+      element.addContent(providerElement)
+    }
+    if (isPreview) {
+      element.setAttribute(PREVIEW_ATTRIBUTE, "true")
+    }
+    return element
+  }
+
+  internal fun writeDelayedStateAsHistoryEntry(entry: FileEntry): Element {
+    val element = Element(TAG)
+    element.setAttribute(FILE_ATTRIBUTE, entry.url)
+    for ((typeId, stateElement) in entry.providers) {
+      val providerElement = Element(PROVIDER_ELEMENT)
+      providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, typeId)
+      if (entry.selectedProvider == typeId) {
+        providerElement.setAttribute(SELECTED_ATTRIBUTE_VALUE, "true")
+      }
+
+      if (stateElement != null) {
+        providerElement.addContent(stateElement.clone())
       }
 
       element.addContent(providerElement)

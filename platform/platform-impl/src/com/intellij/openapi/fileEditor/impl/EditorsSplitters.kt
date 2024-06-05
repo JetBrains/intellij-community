@@ -248,6 +248,10 @@ open class EditorsSplitters internal constructor(
   }
 
   fun writeExternal(element: Element) {
+    writeExternal(element = element, delayedStates = emptyMap())
+  }
+
+  internal fun writeExternal(element: Element, delayedStates: Map<EditorComposite, FileEntry>) {
     val componentCount = componentCount
     if (componentCount == 0) {
       return
@@ -255,7 +259,7 @@ open class EditorsSplitters internal constructor(
 
     val component = getComponent(0)
     try {
-      element.addContent(writePanel(component))
+      element.addContent(writePanel(component, delayedStates))
     }
     catch (e: Throwable) {
       LOG.error(e)
@@ -744,16 +748,16 @@ open class EditorsSplitters internal constructor(
   }
 }
 
-private fun writePanel(component: Component): Element {
+private fun writePanel(component: Component, delayedStates: Map<EditorComposite, FileEntry>): Element {
   return when (component) {
     is Splitter -> {
       val result = Element("splitter")
       result.setAttribute("split-orientation", if (component.orientation) "vertical" else "horizontal")
       result.setAttribute("split-proportion", component.proportion.toString())
       val first = Element("split-first")
-      first.addContent(writePanel(component.firstComponent))
+      first.addContent(writePanel(component.firstComponent, delayedStates))
       val second = Element("split-second")
-      second.addContent(writePanel(component.secondComponent))
+      second.addContent(writePanel(component.secondComponent, delayedStates))
       result.addContent(first)
       result.addContent(second)
       result
@@ -766,7 +770,7 @@ private fun writePanel(component: Component): Element {
       ClientProperty.get(window.tabbedPane.component, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY)?.let { limit ->
         result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), limit.toString())
       }
-      writeWindow(result = result, window = window)
+      writeWindow(result = result, window = window, delayedStates = delayedStates)
       result
     }
     else -> throw IllegalArgumentException(component.javaClass.name)
