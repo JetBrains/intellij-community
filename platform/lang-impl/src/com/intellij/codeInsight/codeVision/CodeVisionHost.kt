@@ -11,6 +11,7 @@ import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
@@ -430,7 +431,9 @@ open class CodeVisionHost(val project: Project) {
     }
     val context = editor.lensContext
     // dropping all lenses if CV disabled
-    if (lifeSettingModel.isEnabled.value.not() || context == null) {
+    if (context == null
+        || !lifeSettingModel.isEnabled.value
+        || !CodeVisionProjectSettings.getInstance(project).isEnabledForProject()) {
       consumer(emptyList(), providers.map { it.id })
       return
     }

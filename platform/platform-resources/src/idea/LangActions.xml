@@ -658,6 +658,7 @@
     </group>
 
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
+    <action id="CodeVisionToggleAction" class="com.intellij.codeInsight.hints.codeVision.CodeVisionToggleAction" />
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">

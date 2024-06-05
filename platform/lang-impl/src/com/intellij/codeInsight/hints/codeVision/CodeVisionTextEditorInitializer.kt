@@ -27,7 +27,8 @@ internal class CodeVisionTextEditorInitializer : TextEditorInitializer {
                                         editorSupplier: suspend () -> EditorEx,
                                         highlighterReady: suspend () -> Unit) {
     if (!Registry.`is`("editor.codeVision.new", true) ||
-        !CodeVisionSettings.getInstance().codeVisionEnabled) {
+        !CodeVisionSettings.getInstance().codeVisionEnabled ||
+        !CodeVisionProjectSettings.getInstance(project).isEnabledForProject()) {
       return
     }
 
