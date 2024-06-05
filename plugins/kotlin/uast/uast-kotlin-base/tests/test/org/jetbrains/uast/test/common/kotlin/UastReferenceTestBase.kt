@@ -12,14 +12,10 @@ import com.intellij.psi.util.PropertyUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UPolyadicExpression
-import org.jetbrains.uast.evaluateString
-import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.*
 import kotlin.test.fail
 
-interface UastReferenceTestBase : UastPluginSelection {
+interface UastReferenceTestBase {
     fun `check original getter is visible when reference is under renaming`(myFixture: JavaCodeInsightTestFixture) {
         class GetterReference(
             val className: String,
