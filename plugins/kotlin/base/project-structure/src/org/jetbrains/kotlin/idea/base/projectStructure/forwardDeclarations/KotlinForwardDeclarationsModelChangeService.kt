@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
@@ -11,10 +10,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import java.io.File
@@ -141,4 +141,4 @@ internal class KotlinForwardDeclarationsStartupActivity : ProjectActivity {
 // This is why the switch is disabled in the test environment.
 // Since changing the property requires an IDE reload, this problem doesn't exist in the production environment.
 private fun shouldRunForwardDeclarationServices(): Boolean =
-    Registry.`is`("kotlin.k2.kmp.enabled") || ApplicationManager.getApplication().isUnitTestMode
+    Registry.`is`("kotlin.k2.kmp.enabled") || isUnitTestMode()
