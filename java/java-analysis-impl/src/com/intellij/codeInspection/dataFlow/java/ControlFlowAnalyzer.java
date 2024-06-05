@@ -2249,7 +2249,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
       }
       DfType arrayValue = TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT);
-      addInstruction(new WrapDerivedVariableInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
+      addInstruction(new WrapDerivedVariableInstruction(arrayValue, SpecialField.ARRAY_LENGTH, new JavaExpressionAnchor(expression)));
 
       initializeSmallArray((PsiArrayType)type, dimensions);
     }

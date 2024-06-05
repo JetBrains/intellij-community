@@ -2210,6 +2210,7 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.UnwrapDerivedVariableInstruction
 c:com.intellij.codeInspection.dataFlow.lang.ir.WrapDerivedVariableInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
 - <init>(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor):V
+- <init>(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor,com.intellij.codeInspection.dataFlow.lang.DfaAnchor):V
 - eval(com.intellij.codeInspection.dataFlow.value.DfaValueFactory,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.value.DfaValue[]):com.intellij.codeInspection.dataFlow.value.DfaValue
 - getDerivedVariableDescriptor():com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor
 com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
