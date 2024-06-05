@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -38,7 +37,7 @@ internal object ConvertLateinitPropertyToNotNullDelegateFixFactory {
     ) : ConvertLateinitPropertyToNotNullDelegateFixBase(element, type) {
 
         override fun shortenReferences(element: KtProperty) {
-            analyze(element) { shortenReferencesInRange(element) }
+            shortenReferencesInRange(element)
         }
     }
 }
