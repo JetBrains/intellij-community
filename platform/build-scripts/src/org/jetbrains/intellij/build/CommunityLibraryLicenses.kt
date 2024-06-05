@@ -452,7 +452,10 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Joe Walnes", "Nat Pryce", "Steve Freeman"),
     LibraryLicense(libraryName = "hash4j", url = "https://github.com/dynatrace-oss/hash4j")
       .apache("https://github.com/dynatrace-oss/hash4j/blob/main/LICENSE"),
-
+    LibraryLicense(name = "HashiCorp Syntax", attachedTo = "intellij.textmate", version = "0.6.0",
+                   url = "https://github.com/asciidoctor/asciidoctor-vscode",
+                   license = "MPL-2.0",
+                   licenseUrl = "https://github.com/hashicorp/syntax/blob/main/LICENSE"),
     LibraryLicense(name = "HDR Histogram", libraryName = "HdrHistogram", license = "CC0 1.0 Universal",
                    url = "https://github.com/HdrHistogram/HdrHistogram",
                    licenseUrl = "https://github.com/HdrHistogram/HdrHistogram/blob/master/LICENSE.txt")
