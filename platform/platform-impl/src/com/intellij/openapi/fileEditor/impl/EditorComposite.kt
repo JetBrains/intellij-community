@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -598,14 +599,19 @@ open class EditorComposite internal constructor(
       return null
     }
 
-    val states = fileEditorWithProviderList.map { it.fileEditor.getState(FileEditorStateLevel.FULL) }
-    val providers = allProviders
-    return HistoryEntry.createLight(
-      file = file,
-      providers = providers,
-      states = states,
-      selectedProvider = (selectedWithProvider ?: fileEditorWithProviderList.first()).provider,
+    val pointer = LightFilePointer(file = file)
+    val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
+    for (fileEditorWithProvider in fileEditorWithProviderList) {
+      val state = fileEditorWithProvider.fileEditor.getState(FileEditorStateLevel.FULL).takeIf { it != FileEditorState.INSTANCE }
+                  ?: continue
+      stateMap.put(fileEditorWithProvider.provider, state)
+    }
+    return HistoryEntry(
+      filePointer = pointer,
+      selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider,
       isPreview = isPreview,
+      disposable = null,
+      providerToState = stateMap,
     )
   }
 

@@ -201,8 +201,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     if (!changeEntryOrderOnly) {
       // update entry state
-      for (i in editors.indices.reversed()) {
-        val editor = editors[i]
+      for ((i, editor) in editors.withIndex().reversed()) {
         val provider = providers[i]
         // can happen if fileEditorProvider is null
         if (!editor.isValid) {
@@ -218,6 +217,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         }
       }
     }
+
     val selectedEditorWithProvider = fileEditorManager.getSelectedEditorWithProvider(file)
     if (selectedEditorWithProvider != null) {
       entry.selectedProvider = selectedEditorWithProvider.provider

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -9,32 +9,30 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
 /**
  * `Heavy` entries should be disposed with [.destroy] to prevent leak of VirtualFilePointer
  */
-internal class HistoryEntry private constructor(
+internal class HistoryEntry(
   @JvmField val filePointer: VirtualFilePointer,
   /**
    * can be null when read from XML
    */
   @JvmField var selectedProvider: FileEditorProvider?,
   @JvmField var isPreview: Boolean,
+  // ordered
+  private var providerToState: Map<FileEditorProvider, FileEditorState>,
   private val disposable: Disposable?,
 ) {
-  // ordered
-  private var providerToState = persistentMapOf<FileEditorProvider, FileEditorState>()
-
   val providers: List<FileEditorProvider>
     get() = java.util.List.copyOf(providerToState.keys)
 
@@ -42,34 +40,20 @@ internal class HistoryEntry private constructor(
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
 
-    fun createLight(
-      file: VirtualFile,
-      providers: List<FileEditorProvider?>,
-      states: List<FileEditorState?>,
-      selectedProvider: FileEditorProvider,
-      isPreview: Boolean,
-    ): HistoryEntry {
-      val pointer = LightFilePointer(file)
-      val entry = HistoryEntry(filePointer = pointer, selectedProvider = selectedProvider, isPreview = isPreview, disposable = null)
-      for (i in providers.indices) {
-        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
-      }
-      return entry
-    }
-
     private fun createLight(project: Project, element: Element, fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
       val entryData = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
       val pointer = LightFilePointer(entryData.url)
-      val entry = HistoryEntry(
+      val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
+      for (state in entryData.providerStates) {
+        stateMap.put(state.first, state.second)
+      }
+      return HistoryEntry(
         filePointer = pointer,
         selectedProvider = entryData.selectedProvider,
         isPreview = entryData.preview,
         disposable = null,
+        providerToState = stateMap,
       )
-      for (state in entryData.providerStates) {
-        entry.putState(state.first, state.second)
-      }
-      return entry
     }
 
     fun createHeavy(project: Project,
@@ -79,23 +63,35 @@ internal class HistoryEntry private constructor(
                     selectedProvider: FileEditorProvider,
                     preview: Boolean): HistoryEntry {
       if (project.isDisposed) {
-        return createLight(file = file, providers = providers, states = states, selectedProvider = selectedProvider, isPreview = preview)
+        val pointer = LightFilePointer(file = file)
+        val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
+        for ((index, provider) in providers.withIndex()) {
+          stateMap.put(provider ?: continue, states.get(index) ?: continue)
+        }
+        return HistoryEntry(
+          filePointer = pointer,
+          selectedProvider = selectedProvider,
+          isPreview = preview,
+          disposable = null,
+          providerToState = stateMap,
+        )
       }
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
-
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = selectedProvider,
-                               isPreview = preview,
-                               disposable = disposable)
+      val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
       for (i in providers.indices) {
-        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
+        stateMap.put(providers.get(i) ?: continue, states.get(i) ?: continue)
       }
-      return entry
+      return HistoryEntry(
+        filePointer = pointer,
+        selectedProvider = selectedProvider,
+        isPreview = preview,
+        disposable = disposable,
+        providerToState = stateMap,
+      )
     }
 
-    @Throws(InvalidDataException::class)
     fun createHeavy(project: Project, e: Element): HistoryEntry {
       if (project.isDisposed) {
         return createLight(project, e, FileEditorProviderManager.getInstance())
@@ -105,14 +101,17 @@ internal class HistoryEntry private constructor(
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
-      val entry = HistoryEntry(filePointer = pointer,
-                               selectedProvider = entryData.selectedProvider,
-                               isPreview = entryData.preview,
-                               disposable = disposable)
+      val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
       for (state in entryData.providerStates) {
-        entry.putState(state.first, state.second)
+        stateMap.put(state.first, state.second)
       }
-      return entry
+      return HistoryEntry(
+        filePointer = pointer,
+        selectedProvider = entryData.selectedProvider,
+        isPreview = entryData.preview,
+        disposable = disposable,
+        providerToState = stateMap,
+      )
     }
   }
 
@@ -122,7 +121,7 @@ internal class HistoryEntry private constructor(
   fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
 
   fun putState(provider: FileEditorProvider, state: FileEditorState) {
-    providerToState = providerToState.put(provider, state)
+    providerToState = providerToState.toPersistentMap().put(provider, state)
   }
 
   fun destroy() {
@@ -164,7 +163,7 @@ internal class HistoryEntry private constructor(
     if (selectedProvider === provider) {
       selectedProvider = null
     }
-    providerToState = providerToState.remove(provider)
+    providerToState = providerToState.toPersistentMap().remove(provider)
   }
 }
 
@@ -176,9 +175,11 @@ internal const val PREVIEW_ATTRIBUTE: @NonNls String = "preview"
 
 private val EMPTY_ELEMENT = Element("state")
 
-private fun parseEntry(project: Project,
-                       element: Element,
-                       fileEditorProviderManager: FileEditorProviderManager): EntryData {
+private fun parseEntry(
+  project: Project,
+  element: Element,
+  fileEditorProviderManager: FileEditorProviderManager,
+): EntryData {
   if (element.name != HistoryEntry.TAG) {
     throw IllegalArgumentException("unexpected tag: $element")
   }
