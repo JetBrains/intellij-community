@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -43,7 +43,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
      * See KTIJ-16225 and KTIJ-15232 for the details about why we have
      * special treatment for enums.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectShortenings(declaration: KtElement): ShortenCommand =
         collectPossibleReferenceShorteningsInElement(
             declaration,
@@ -92,7 +92,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
     }
 }
 
-context (KtAnalysisSession)
+context (KaSession)
 private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassOrObjectSymbol? {
     if (this !is KaClassOrObjectSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
 
@@ -105,7 +105,7 @@ private fun KaDeclarationSymbol?.isEnumClass(): Boolean {
     return classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
-context (KtAnalysisSession)
+context (KaSession)
 private fun KaDeclarationSymbol?.isEnumCompanionObject(): Boolean =
   this?.getContainingClassForCompanionObject().isEnumClass()
 

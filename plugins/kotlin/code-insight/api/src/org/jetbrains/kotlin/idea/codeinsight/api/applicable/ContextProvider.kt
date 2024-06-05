@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -16,16 +16,16 @@ interface ContextProvider<E : KtElement, C> {
      * be executed from a read action.
      *
      * The context should not store:
-     * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like:
+     * - Everything that came from [org.jetbrains.kotlin.analysis.api.KaSession] like:
      *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol], consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer] instead.
      *      - [org.jetbrains.kotlin.analysis.api.types.KtType]
      *      - [org.jetbrains.kotlin.analysis.api.calls.KtCall]
-     * - The [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] instance itself.
+     * - The [org.jetbrains.kotlin.analysis.api.KaSession] instance itself.
      * - [com.intellij.psi.PsiElement], consider using [com.intellij.psi.SmartPsiElementPointer] instead.
      *
      * @param element a physical PSI
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun prepareContext(element: E): C?
 }
 

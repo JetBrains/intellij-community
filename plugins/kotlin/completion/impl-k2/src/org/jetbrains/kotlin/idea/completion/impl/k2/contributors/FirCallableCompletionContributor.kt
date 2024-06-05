@@ -8,7 +8,7 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
 import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -56,7 +56,7 @@ internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
         if (isImportDefinitelyNotRequired) {
             ImportStrategy.DoNothing
@@ -64,14 +64,14 @@ internal open class FirCallableCompletionContributor(
             importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol)
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
         when (signature) {
             is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
             else -> CallableInsertionStrategy.AsIdentifier
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -81,7 +81,7 @@ internal open class FirCallableCompletionContributor(
         else -> null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getOptions(
         signature: KtCallableSignature<*>,
         isImportDefinitelyNotRequired: Boolean = false
@@ -90,7 +90,7 @@ internal open class FirCallableCompletionContributor(
         getInsertionStrategy(signature)
     )
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getExtensionOptions(
         signature: KtCallableSignature<*>,
         applicability: KaExtensionApplicabilityResult?
@@ -101,7 +101,7 @@ internal open class FirCallableCompletionContributor(
         return CallableInsertionOptions(importStrategy, insertionStrategy)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
         sessionParameters.allowExpectedDeclarations || !(symbol is KtPossibleMultiplatformSymbol && symbol.isExpect)
 
@@ -120,7 +120,7 @@ internal open class FirCallableCompletionContributor(
         val explicitReceiverTypeHint: KtType? get() = withValidityAssertion { _explicitReceiverTypeHint }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -161,7 +161,7 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeWithoutReceiver(
         scopeContext: KtScopeContext,
         extensionChecker: KtCompletionExtensionCandidateChecker?,
@@ -233,7 +233,7 @@ internal open class FirCallableCompletionContributor(
             }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
@@ -274,7 +274,7 @@ internal open class FirCallableCompletionContributor(
     private val KaNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean
         get() = classKind.isObject || companionObject != null
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectDotCompletionForPackageReceiver(
         packageSymbol: KtPackageSymbol,
         visibilityChecker: CompletionVisibilityChecker,
@@ -295,7 +295,7 @@ internal open class FirCallableCompletionContributor(
             }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun collectDotCompletionForCallableReceiver(
         scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
@@ -329,7 +329,7 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun collectDotCompletionForCallableReceiver(
         typesOfPossibleReceiver: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
@@ -396,7 +396,7 @@ internal open class FirCallableCompletionContributor(
             }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun collectDotCompletionFromStaticScope(
         symbol: KaNamedClassOrObjectSymbol,
         withCompanionScope: Boolean,
@@ -419,7 +419,7 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
         receiverTypes: List<KtType>,
         extensionChecker: KtCompletionExtensionCandidateChecker?,
@@ -440,7 +440,7 @@ internal open class FirCallableCompletionContributor(
             .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectSuitableExtensions(
         scopeContext: KtScopeContext,
         extensionChecker: KtCompletionExtensionCandidateChecker?,
@@ -456,7 +456,7 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectSuitableExtensions(
         scope: KtScope,
         receiverTypes: List<KtType>,
@@ -475,7 +475,7 @@ internal open class FirCallableCompletionContributor(
      * If [callableSymbol] is applicable returns substituted signature and insertion options, otherwise, null.
      * When [extensionChecker] is null, no check is carried and applicability result is null.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun checkApplicabilityAndSubstitute(
         callableSymbol: KaCallableSymbol,
         extensionChecker: KtCompletionExtensionCandidateChecker?
@@ -497,7 +497,7 @@ internal open class FirCallableCompletionContributor(
      * Note, that [isImportDefinitelyNotRequired] should be set to true only if the callable is available without import, and it doesn't
      * require import or fully-qualified name to be resolved unambiguously.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
         scopeKind: KaScopeKind,
@@ -509,7 +509,7 @@ internal open class FirCallableCompletionContributor(
         return CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
@@ -517,7 +517,7 @@ internal open class FirCallableCompletionContributor(
         explicitReceiverTypeHint: KtType? = null,
     ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterOutUninitializedCallables(
         position: PsiElement
     ): Sequence<CallableWithMetadataForCompletion> {
@@ -525,7 +525,7 @@ internal open class FirCallableCompletionContributor(
         return filterNot { it.signature.symbol.psi in uninitializedCallablesForPosition }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectUninitializedCallablesForPosition(position: PsiElement): Set<KtCallableDeclaration> = buildSet {
         for (parent in position.parents(withSelf = false)) {
             when (val grandParent = parent.parent) {
@@ -554,7 +554,7 @@ internal open class FirCallableCompletionContributor(
 
     private fun KtParameter.getNextParametersWithSelf(): Sequence<KtParameter> = generateSequence({ this }, { it.nextSiblingOfSameType() })
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterOutShadowedCallables(
         expectedType: KtType?,
     ): Sequence<CallableWithMetadataForCompletion> =
@@ -581,7 +581,7 @@ internal open class FirCallableCompletionContributor(
             }
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterIfInsideAnnotationEntryArgument(
         position: PsiElement,
         expectedType: KtType?,
@@ -608,15 +608,15 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
         (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isString
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KaCallableSymbol.hasConstEvaluationAnnotation(): Boolean =
         annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun KaNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KtScope = buildList {
         if (withCompanionScope) {
             addIfNotNull(companionObject?.getMemberScope())
@@ -629,18 +629,18 @@ internal class FirCallableReferenceCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
         if (isImportDefinitelyNotRequired) return ImportStrategy.DoNothing
 
         return signature.callableId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -650,7 +650,7 @@ internal class FirCallableReferenceCompletionContributor(
         else -> null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean = when {
         // References to elements which are members and extensions at the same time are not allowed
         symbol.isExtension && symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> false
@@ -665,7 +665,7 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
@@ -710,11 +710,11 @@ internal class FirInfixCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
         infixCallableInsertionStrategy
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
@@ -724,7 +724,7 @@ internal class FirInfixCallableCompletionContributor(
         else -> null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean {
         return symbol is KaFunctionSymbol && symbol.isInfix && super.filter(symbol, sessionParameters)
     }
@@ -744,17 +744,17 @@ internal class FirKDocCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getInsertionStrategyForExtensionFunction(
         signature: KtCallableSignature<*>,
         applicabilityResult: KaExtensionApplicabilityResult?
     ): CallableInsertionStrategy = CallableInsertionStrategy.AsIdentifier
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,

@@ -3,14 +3,14 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KaCallableSymbol): Boolean {
     val enumClassSymbol = (symbol.getContainingSymbol() as? KaClassOrObjectSymbol) ?: return false
@@ -29,7 +29,7 @@ fun isSoftDeprecatedEnumValuesMethod(
             valuesMethodSymbol is KaFunctionLikeSymbol && valuesMethodSymbol.valueParameters.isEmpty()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun getEntriesPropertyOfEnumClass(enumClassSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
     enumClassSymbol.getStaticMemberScope().getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()

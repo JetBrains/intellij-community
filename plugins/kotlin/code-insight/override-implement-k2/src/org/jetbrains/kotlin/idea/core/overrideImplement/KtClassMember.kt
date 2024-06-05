@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -48,7 +48,7 @@ data class KtClassMemberInfo internal constructor(
     val isProperty: Boolean,
 ) {
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun create(
             symbol: KaCallableSymbol,
             memberText: @NlsSafe String? = null,
@@ -95,7 +95,7 @@ internal fun createKtClassMember(
     preferConstructorParameter: Boolean
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun generateMember(
     project: Project,
@@ -136,7 +136,7 @@ fun generateMember(
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
-                    analysisSession: KtAnalysisSession,
+                    analysisSession: KaSession,
                     s: KaDeclarationSymbol
                 ): List<KtModifierKeywordToken> = buildList {
                     if (mode == MemberGenerateMode.OVERRIDE && s is KtPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
@@ -238,7 +238,7 @@ fun generateMember(
 /**
  * Returns true if the annotation itself is marked with @RequiresOptIn (or the old @Experimental), or if an extension wants to keep it.
  */
-context(KtAnalysisSession)
+context(KaSession)
 private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): Boolean {
     val classId = annotation.classId ?: return false
     val symbol = getClassOrObjectSymbolByClassId(classId)
@@ -248,12 +248,12 @@ private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): 
     return file?.let { OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(classId.asFqNameString(), it) } == true
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
     isRequiresOptInFqName(annotation.classId?.asSingleFqName())
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun generateConstructorParameter(
     project: Project,
     symbol: KaCallableSymbol,
@@ -262,7 +262,7 @@ private fun generateConstructorParameter(
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun generateFunction(
     project: Project,
     symbol: KaFunctionSymbol,
@@ -284,7 +284,7 @@ private fun generateFunction(
     return factory.createFunction(functionText)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
@@ -307,7 +307,7 @@ private fun generateProperty(
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
-private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
+private fun <T> KaSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
 ): String where T : KtNamedSymbol, T : KaCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {

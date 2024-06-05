@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -61,7 +61,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
                   && HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     internal fun collectHighlights(holder: HighlightInfoHolder) {
         if (!enabled) return
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
@@ -74,7 +74,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
@@ -145,7 +145,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun handleDeclaration(declaration: KtNamedDeclaration,
                                   deadCodeInspection: LocalInspectionTool,
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,

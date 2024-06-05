@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -61,7 +61,7 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
         when (singleStatement) {
@@ -178,7 +178,7 @@ internal class ConvertLambdaToReferenceIntention :
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
     val lambdaParameterType = lambdaExpression.lambdaParameterType()
     return when (val singleStatement = lambdaExpression.singleStatementOrNull()) {
@@ -257,7 +257,7 @@ private fun getCalleeReferenceExpression(callableExpression: KtExpression): KtNa
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtLambdaExpression.lambdaParameterType(): KtType? {
     val argument = parentValueArgument() ?: return null
     val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
@@ -272,21 +272,21 @@ private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
     } as? KtValueArgument
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     val partiallyAppliedSymbol = this.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
     val receiverType = (partiallyAppliedSymbol?.dispatchReceiver ?: partiallyAppliedSymbol?.extensionReceiver)?.type ?: return ""
     return receiverType.render(position = Variance.IN_VARIANCE)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.isReferenceToPackage(): Boolean {
     val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
     val symbols = selectorOrThis.mainReference?.resolveToSymbols() ?: return false
     return symbols.any { it is KtPackageSymbol }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isConvertibleCallInLambdaByAnalyze(
     callableExpression: KtExpression,
     explicitReceiver: KtExpression? = null,
@@ -371,7 +371,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     return true
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.isObject(): Boolean {
     return getKtType()?.expandedClassSymbol?.classKind?.isObject == true
 }
@@ -381,7 +381,7 @@ private fun isExtensionFunctionType(type: KtType): Boolean {
     return functionalType.hasReceiver
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KaFunctionSymbol> {
     val scope = when (val containingSymbol = this.getContainingSymbol()) {
         is KaClassOrObjectSymbol -> containingSymbol.getMemberScope()
@@ -390,7 +390,7 @@ private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpress
     return scope.getCallableSymbols(name).filterIsInstance<KaFunctionSymbol>().toList()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtCallExpression.addTypeArgumentsIfNeeded(lambda: KtLambdaExpression): String? {
     val resolvedCall = lambda.singleStatementOrNull()?.resolveCall()?.successfulFunctionCallOrNull() ?: return null
     val calledFunctionInLambda = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null

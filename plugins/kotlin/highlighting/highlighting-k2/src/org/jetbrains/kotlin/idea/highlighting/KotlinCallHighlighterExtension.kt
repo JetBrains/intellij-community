@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCall
 import org.jetbrains.kotlin.idea.highlighting.highlighters.FunctionCallHighlighter
 
@@ -24,7 +24,7 @@ interface KotlinCallHighlighterExtension {
      * Note that this function is used by [FunctionCallHighlighter]. When this function returns a non-null [HighlightInfoType],
      * [FunctionCallHighlighter] uses it instead of the default one to highlight [call].
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun highlightCall(elementToHighlight: PsiElement, call: KtCall): HighlightInfoType?
 
     companion object {

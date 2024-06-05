@@ -5,7 +5,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.types.Variance
 
-context(KtAnalysisSession)
+context(KaSession)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
     val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull() ?: return null
     val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
@@ -43,7 +43,7 @@ fun addTypeArguments(element: KtCallElement, context: String, project: Project) 
     ShortenReferencesFacility.getInstance().shorten(newArgumentList)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.containsErrorType(): Boolean = when (this) {
     is KtClassErrorType -> true
     is KtTypeErrorType -> true

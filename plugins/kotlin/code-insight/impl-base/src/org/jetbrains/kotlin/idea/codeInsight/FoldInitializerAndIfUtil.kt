@@ -5,7 +5,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -31,7 +31,7 @@ data class FoldInitializerAndIfExpressionData(
     val variableTypeString: String?
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null
 
@@ -120,7 +120,7 @@ fun joinLines(
     return positionedElvis
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun calculateType(
     declaration: KtVariableDeclaration,
     element: KtIfExpression,

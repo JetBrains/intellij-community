@@ -7,7 +7,7 @@ import com.intellij.psi.impl.compiled.ClsMemberImpl
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
@@ -743,7 +743,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     private inline fun <R> getTargetType(
         psiElement: PsiElement,
         defaultValue: R,
-        typeConsumer: KtAnalysisSession.(KtType?) -> R,
+        typeConsumer: KaSession.(KtType?) -> R,
     ): R {
         return when (psiElement) {
             is KtTypeReference -> {

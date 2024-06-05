@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -55,7 +55,7 @@ internal object AddStarProjectionsFixFactory {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getTargetClasses(
     typeReference: KtTypeReference,
     classSymbol: KaClassOrObjectSymbol,
@@ -79,7 +79,7 @@ private fun getTargetClasses(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private val KaDeclarationSymbol.parentsWithSelf: Sequence<KaDeclarationSymbol>
     get() = generateSequence(this) {
         it.getContainingSymbol()

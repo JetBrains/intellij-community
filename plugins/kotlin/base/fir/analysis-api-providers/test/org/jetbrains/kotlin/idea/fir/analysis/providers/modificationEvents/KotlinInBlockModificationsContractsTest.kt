@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runUndoTransparentWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -21,7 +21,7 @@ class KotlinInBlockModificationsContractsTest : KotlinLightCodeInsightFixtureTes
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtFile.diagnostics() = collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
 
     fun `test isolated`() {
@@ -61,8 +61,8 @@ class KotlinInBlockModificationsContractsTest : KotlinLightCodeInsightFixtureTes
     }
 
     private fun doTest(
-        insideWriteActionBefore: KtAnalysisSession.(KtFile) -> Unit = {},
-        insideWriteActionAfter: KtAnalysisSession.(KtFile) -> Unit = {},
+        insideWriteActionBefore: KaSession.(KtFile) -> Unit = {},
+        insideWriteActionAfter: KaSession.(KtFile) -> Unit = {},
         isolatedAnalyzeInsideWrite: Boolean,
     ) {
         val ktFile = myFixture.configureByText(

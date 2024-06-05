@@ -37,7 +37,7 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
     useSiteKtElement: KtElement,
-    action: KtAnalysisSession.() -> R
+    action: KaSession.() -> R
 ): R = allowAnalysisOnEdt {
     @OptIn(KaAllowAnalysisFromWriteAction::class)
     allowAnalysisFromWriteAction {
@@ -45,7 +45,7 @@ internal inline fun <R> analyzeForUast(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun containingKtClass(
     ktConstructorSymbol: KaConstructorSymbol,
 ): KtClass? {
@@ -56,7 +56,7 @@ internal fun containingKtClass(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiClass(
     ktType: KtType,
     source: UElement?,
@@ -75,7 +75,7 @@ internal fun toPsiClass(
     )
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiMethod(
     functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
@@ -142,7 +142,7 @@ internal fun toPsiMethod(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun toPsiMethodForDeserialized(
     functionSymbol: KaFunctionLikeSymbol,
     context: KtElement,
@@ -236,7 +236,7 @@ private fun toPsiMethodForDeserialized(
     } else null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiType(
     ktType: KtType,
     source: UElement?,
@@ -250,7 +250,7 @@ internal fun toPsiType(
         config
     )
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun toPsiType(
     ktType: KtType,
     containingLightDeclaration: PsiModifierListOwner?,
@@ -283,7 +283,7 @@ internal fun toPsiType(
     ) ?: UastErrorType
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun receiverType(
     ktCall: KtCallableMemberCall<*, *>,
     source: UElement,
@@ -304,14 +304,14 @@ internal fun receiverType(
     )
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal val KtType.typeForValueClass: Boolean
     get() {
         val symbol = expandedClassSymbol as? KaNamedClassOrObjectSymbol ?: return false
         return symbol.isInline
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun isInheritedGenericType(ktType: KtType?): Boolean {
     if (ktType == null) return false
     return ktType is KtTypeParameterType &&
@@ -321,7 +321,7 @@ internal fun isInheritedGenericType(ktType: KtType?): Boolean {
         nullability(ktType) != KtTypeNullability.NON_NULLABLE
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
@@ -331,7 +331,7 @@ internal fun nullability(ktType: KtType?): KtTypeNullability? {
         KtTypeNullability.NON_NULLABLE
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
     return (ktCallableDeclaration.getSymbol() as? KaCallableSymbol)?.returnType
 }
@@ -339,7 +339,7 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
-context(KtAnalysisSession)
+context(KaSession)
 internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
         // UAST/Lint CLI: use [DecompiledPsiDeclarationProvider] / [KotlinStaticPsiDeclarationFromBinaryModuleProvider]

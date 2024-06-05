@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
@@ -49,7 +49,7 @@ internal class InvertIfConditionIntention :
         return element.condition != null && element.then != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtIfExpression): Context {
         val rBrace = parentBlockRBrace(element)
         val commentSavingRange = if (rBrace != null)
@@ -219,7 +219,7 @@ internal class InvertIfConditionIntention :
         return null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areAllOperandsBoolean(expression: KtBinaryExpression): Boolean {
         return getOperandsIfAllBoolean(expression) != null
     }

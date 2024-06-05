@@ -12,7 +12,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -57,7 +57,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectFromParameters(
         valueArgumentList: KtValueArgumentList,
         callElement: KtCallElement,
@@ -82,7 +82,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KaFunctionLikeSymbol.isBlackListed(valueParameters: List<KtValueParameterSymbol>): Boolean {
         val blackListed = callableId?.let {
             val callableId = it.asSingleFqName().toString()
@@ -92,7 +92,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         return blackListed == true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KaFunctionLikeSymbol.collectFromParameters(
         valueParameters: List<KtValueParameterSymbol>,
         arguments: MutableList<KtValueArgument>,

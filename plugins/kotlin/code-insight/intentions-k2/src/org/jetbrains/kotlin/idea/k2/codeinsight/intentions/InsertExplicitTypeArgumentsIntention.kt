@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -22,7 +22,7 @@ internal class InsertExplicitTypeArgumentsIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("add.explicit.type.arguments")
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallExpression): String? = getRenderedTypeArguments(element)
 
     override fun invoke(

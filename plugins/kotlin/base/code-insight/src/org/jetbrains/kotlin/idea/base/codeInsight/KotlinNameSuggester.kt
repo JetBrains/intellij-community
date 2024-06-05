@@ -7,7 +7,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
@@ -130,7 +130,7 @@ class KotlinNameSuggester(
      *  - `print(<selection>intArrayOf(5)</selection>)` -> {message, intArrayOf, ints}
      *  - `print(<selection>listOf(User("Mary"), User("John"))</selection>)` -> {message, listOf, users}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
                 suggestNameBySimpleExpression(expression, validator) +
@@ -162,7 +162,7 @@ class KotlinNameSuggester(
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun suggestNamesByType(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val type = expression.getKtType() ?: return emptySequence()
         return suggestTypeNames(type).map { name -> suggestNameByName(name, validator) }
@@ -176,7 +176,7 @@ class KotlinNameSuggester(
      *  - `listOf(<selection>5</selection>)` -> {element}
      *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun suggestNamesByValueArgument(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
@@ -193,7 +193,7 @@ class KotlinNameSuggester(
      *  - `IntArray` -> {ints}
      *  - `List<User>` -> {users}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun suggestTypeNames(type: KtType): Sequence<String> {
         return sequence {
             val presentableType = getPresentableType(type)
@@ -271,7 +271,7 @@ class KotlinNameSuggester(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getPresentableType(type: KtType): KtType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
 
     /**
@@ -281,7 +281,7 @@ class KotlinNameSuggester(
      *  - `Int?` -> NullableInt
      *  - `(String) -> Boolean` -> StringPredicate
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun suggestTypeAliasName(type: KtTypeElement): String {
         var isExactMatch = true
 
@@ -568,7 +568,7 @@ class KotlinNameSuggester(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getPrimitiveType(type: KtType): PrimitiveType? {
     return when {
         type.isBoolean -> PrimitiveType.BOOLEAN
@@ -587,7 +587,7 @@ private val ITERABLE_LIKE_CLASS_IDS =
     listOf(FqNames.iterable, FqNames.array.toSafe())
         .map { ClassId.topLevel(it) }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getIterableElementType(type: KtType): KtType? {
     if (type is KtNonErrorClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
         return type.ownTypeArguments.singleOrNull()?.type

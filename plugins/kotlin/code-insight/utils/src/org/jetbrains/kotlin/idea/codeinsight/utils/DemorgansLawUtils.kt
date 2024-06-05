@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 object DemorgansLawUtils {
     data class Context(val pointers: List<SmartPsiElementPointer<KtExpression>>)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     @OptIn(UnsafeCastFunction::class)
     fun prepareContext(operands: List<KtExpression>): Context {
         val pointers = operands.asReversed().map { operand ->
@@ -70,19 +70,19 @@ object DemorgansLawUtils {
         return result
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
         return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private val KtExpression?.isBoolean: Boolean
         get() = this != null && this.getKtType()?.isBoolean == true
 
     fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
         parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getOperandsIfAllBoolean(expression: KtBinaryExpression): List<KtExpression>? {
         val topmostBinaryExpression = expression.topmostBinaryExpression()
         return splitBooleanSequence(topmostBinaryExpression)

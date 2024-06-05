@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
@@ -85,7 +85,7 @@ sealed class ChangeVisibilityModifierIntention(
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDeclaration): Unit? {
         val symbol = element.getSymbolOfTypeSafe<KaSymbolWithVisibility>()
         val targetVisibility = modifier.toVisibility()

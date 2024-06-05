@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -39,7 +39,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         return extractTargetExpressionFromPsi(element) != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
         val target = extractTargetExpressionFromPsi(element) ?: return null
         return getReplacementIfApplicable(target)
@@ -71,7 +71,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         fun fixMessage(): String = expressionString(null)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? {
         val resolvedCall = target.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return null
         val replaceableCall = resolvedCall.findReplaceableOverride() ?: return null
@@ -85,7 +85,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
         val partiallyAppliedSymbol = this.partiallyAppliedSymbol
         val receiverType = (partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver)

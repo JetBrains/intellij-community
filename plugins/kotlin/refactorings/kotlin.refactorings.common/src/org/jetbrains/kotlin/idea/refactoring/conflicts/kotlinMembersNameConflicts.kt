@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -47,7 +47,7 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
     checkRedeclarationConflictsInInheritors(declaration, newName, result)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtScope.findSiblingsByName(
     symbol: KaDeclarationSymbol,
     newName: Name,
@@ -69,7 +69,7 @@ fun KtScope.findSiblingsByName(
     return (classifierSymbols + callables)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclarationSymbol): Boolean {
     if (candidateSymbol is KaFunctionLikeSymbol) {
         val skipCandidate = when (symbol) {
@@ -95,7 +95,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
     return true
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun checkDeclarationNewNameConflicts(
     declaration: KtNamedDeclaration,
     newName: Name,
@@ -216,12 +216,12 @@ fun registerAlreadyDeclaredConflict(candidateSymbol: KaDeclarationSymbol, result
     result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun areSameSignatures(candidateSymbol: KaFunctionLikeSymbol, symbol: KaFunctionLikeSymbol) : Boolean {
     return areSameSignatures(candidateSymbol.receiverType, symbol.receiverType, candidateSymbol.valueParameters.map { it.returnType }, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun areSameSignatures(candidateSymbol: KtPropertySymbol, symbol: KaFunctionLikeSymbol) : Boolean {
     val type = candidateSymbol.returnType
     if (type is KtFunctionalType &&
@@ -231,7 +231,7 @@ private fun areSameSignatures(candidateSymbol: KtPropertySymbol, symbol: KaFunct
     return false
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun areSameSignatures(
     receiverType1: KtType?,
     receiverType2: KtType?,
@@ -245,7 +245,7 @@ fun areSameSignatures(
           c1.size == c2.size && c1.zip(c2).all { (c1, c2) -> c1.type.isEqualTo(c2.type) }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun areTypesTheSame(t1: KtType?, t2: KtType?): Boolean {
   if (t1 === t2) return true
   if (t2 == null) return false

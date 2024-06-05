@@ -11,7 +11,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -98,7 +98,7 @@ object K2CreateParameterFromUsageBuilder {
         }
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getExpectedType(expression: KtExpression): KtType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.getReturnKtType()

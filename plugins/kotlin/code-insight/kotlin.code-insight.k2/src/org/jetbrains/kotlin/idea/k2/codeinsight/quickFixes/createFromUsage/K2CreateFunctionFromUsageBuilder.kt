@@ -7,7 +7,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
@@ -127,7 +127,7 @@ object K2CreateFunctionFromUsageBuilder {
         return requests
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun shouldCreateCompanionClass(calleeExpression: KtSimpleNameExpression): Boolean {
         val receiverExpression = calleeExpression.getReceiverExpression()
         val receiverResolved =
@@ -143,7 +143,7 @@ object K2CreateFunctionFromUsageBuilder {
         KtTokens.PUBLIC_KEYWORD to JvmModifier.PUBLIC
     )
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun computeModifiers(
         container: PsiElement,
         calleeExpression: KtSimpleNameExpression,
@@ -183,7 +183,7 @@ object K2CreateFunctionFromUsageBuilder {
         return listOf(JvmModifier.PUBLIC)
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun samePackage(
         calleeExpression: KtSimpleNameExpression,
         callExpression: KtCallExpression
@@ -196,7 +196,7 @@ object K2CreateFunctionFromUsageBuilder {
     /**
      * Returns the type of the class containing this [KtSimpleNameExpression] if the class is abstract. Otherwise, returns null.
      */
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtSimpleNameExpression.getAbstractTypeOfContainingClass(): KtType? {
         val containingClass = getStrictParentOfType<KtClassOrObject>() as? KtClass ?: return null
         if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
@@ -214,7 +214,7 @@ object K2CreateFunctionFromUsageBuilder {
         return classType.getAbstractSuperType()
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtType.getAbstractSuperType(): KtType? {
         fun List<KtType>.firstAbstractEditableType() = firstOrNull { it.hasAbstractDeclaration() && it.canRefactor() }
         return getDirectSuperTypes().firstAbstractEditableType() ?: getAllSuperTypes().firstAbstractEditableType()
@@ -223,7 +223,7 @@ object K2CreateFunctionFromUsageBuilder {
     /**
      * Returns class or superclass of the express's type if the class or the super class is abstract. Otherwise, returns null.
      */
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtExpression.getTypeOfAbstractSuperClass(): KtType? {
         val type = getKtType() ?: return null
         if (type.hasAbstractDeclaration()) return type
@@ -233,18 +233,18 @@ object K2CreateFunctionFromUsageBuilder {
     /**
      * Returns the receiver's type if it is abstract, or it has an abstract superclass. Otherwise, returns null.
      */
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtSimpleNameExpression.getAbstractTypeOfReceiver(): KtType? {
         // If no explicit receiver exists, the containing class can be an implicit receiver.
         val receiver = getReceiverExpression() ?: return getAbstractTypeOfContainingClass()
         return receiver.getTypeOfAbstractSuperClass()
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     fun computeImplicitReceiverClass(calleeExpression: KtSimpleNameExpression): KtClass? {
         return computeImplicitReceiverType(calleeExpression)?.convertToClass()
     }
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun computeImplicitReceiverType(calleeExpression: KtSimpleNameExpression): KtType? {
         val implicitReceiver = calleeExpression.containingKtFile.getScopeContextForPosition(calleeExpression).implicitReceivers.firstOrNull()
         if (implicitReceiver != null) {

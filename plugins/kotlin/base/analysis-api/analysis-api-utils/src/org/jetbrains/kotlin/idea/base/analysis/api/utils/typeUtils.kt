@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
  * This check only approximates the possibility of the subtyping relation.
  * An accurate estimation requires the use of the constraint system, which can lead to a loss in performance.
  */
-context(KtAnalysisSession)
+context(KaSession)
 infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
     if (this is KtTypeParameterType) return this.hasCommonSubTypeWith(superType)
 
@@ -29,7 +29,7 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
     return superTypeWithReplacedTypeArguments != null && isSubTypeOf(superTypeWithReplacedTypeArguments)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun buildClassTypeWithStarProjections(symbol: KaClassOrObjectSymbol, nullability: KtTypeNullability): KtType =
     buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {

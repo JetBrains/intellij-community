@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
@@ -58,7 +58,7 @@ data class ExtractableCodeDescriptor(
                 val filteredRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer.with {
                     annotationFilter = annotationFilter.and(object : KaRendererAnnotationsFilter {
                         override fun filter(
-                            analysisSession: KtAnalysisSession,
+                            analysisSession: KaSession,
                             annotation: KtAnnotationApplication,
                             owner: KtAnnotated
                         ): Boolean {

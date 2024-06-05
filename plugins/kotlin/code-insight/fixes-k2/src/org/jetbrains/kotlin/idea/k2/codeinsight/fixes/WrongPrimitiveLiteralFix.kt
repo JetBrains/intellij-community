@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -33,7 +33,7 @@ data class PrimitiveLiteralData(
     val fixedExpression: String
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 fun preparePrimitiveLiteral(element: KtExpression, type: KtType): PrimitiveLiteralData {
     val typeName = type.expandedClassSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloat

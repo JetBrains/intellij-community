@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookup(
         name: Name,
         signature: KtFunctionLikeSignature<*>,
@@ -93,7 +93,7 @@ internal class FunctionLookupElementFactory {
 }
 
 object FunctionInsertionHelper {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
         symbol: KaFunctionLikeSymbol,
         expectedType: KtType?

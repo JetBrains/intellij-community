@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.*
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun withClassifierSymbolInfo(
     symbol: KaClassifierSymbol,
     elementBuilder: LookupElementBuilder
@@ -36,7 +36,7 @@ internal fun withClassifierSymbolInfo(
     .withIcon(getIconFor(symbol))
     .withTypeText(getTypeTextForClassifier(symbol))
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun withCallableSignatureInfo(
     signature: KtCallableSignature<*>,
     elementBuilder: LookupElementBuilder
@@ -98,6 +98,6 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
     (typeReference.nextLeaf { it.elementType == KtTokens.GT } ?: typeReference).endOffset
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KaCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
     isExtension || isFunctionalVariableCall && (returnType as? KtFunctionalType)?.hasReceiver == true

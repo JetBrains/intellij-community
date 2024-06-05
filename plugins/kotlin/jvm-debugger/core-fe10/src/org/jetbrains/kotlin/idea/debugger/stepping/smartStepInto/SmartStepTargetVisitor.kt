@@ -10,7 +10,7 @@ import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
@@ -85,7 +85,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol): Boolean {
         val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
         if (symbol is KtSyntheticJavaPropertySymbol) {
@@ -150,7 +150,7 @@ class SmartStepTargetVisitor(
             .singleOrNull()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun propertyAccessLabel(symbol: KtPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
         "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
 
@@ -216,7 +216,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createJavaLambdaInfo(
         declaration: PsiMethod,
         methodSymbol: KaFunctionLikeSymbol,
@@ -226,7 +226,7 @@ class SmartStepTargetVisitor(
         return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createKotlinLambdaInfo(
         declaration: KtDeclaration,
         methodSymbol: KaFunctionLikeSymbol,
@@ -381,7 +381,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getFunctionDeclaration(symbol: KaFunctionLikeSymbol): PsiElement? {
         if (symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
         symbol.psi?.let { return it }

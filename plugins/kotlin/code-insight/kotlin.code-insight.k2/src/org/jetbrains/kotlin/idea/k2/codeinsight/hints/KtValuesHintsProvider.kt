@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -48,7 +48,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isApplicable(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
         val functionCallOrNull = binaryExpression.resolveCall()?.singleFunctionCallOrNull()
         functionCallOrNull?.symbol?.takeIf {
@@ -59,7 +59,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         return leftExp.isComparable() && rightExp.isComparable()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.isComparable(): Boolean =
         when (this) {
             is KtConstantExpression -> true

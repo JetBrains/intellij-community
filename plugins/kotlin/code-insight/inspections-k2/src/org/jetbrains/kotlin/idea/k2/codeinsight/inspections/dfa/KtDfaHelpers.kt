@@ -14,7 +14,7 @@ import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType?.toDfType(): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
@@ -53,7 +53,7 @@ internal fun KtType?.toDfType(): DfType {
     return toDfTypeNotNullable()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.toDfTypeNotNullable(): DfType {
     return when (this) {
         is KtNonErrorClassType -> {
@@ -109,7 +109,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtExpression.getKotlinType(): KtType? {
     var parent = this.parent
     if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
@@ -138,7 +138,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
     return getKtType()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.getJvmAwareArrayElementType(): KtType? {
     if (!isArrayOrPrimitiveArray()) return null
     val type = getArrayElementType() ?: return null
@@ -185,7 +185,7 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     else -> null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KtNonErrorClassType)?.classId) {
     DefaultTypeClassIds.BOOLEAN -> PsiTypes.booleanType()
     DefaultTypeClassIds.BYTE -> PsiTypes.byteType()
@@ -198,10 +198,10 @@ internal fun KtType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KtN
     else -> throw IllegalArgumentException("Not a primitive analog: $this")
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KtType.canBeNull() = isMarkedNullable || hasFlexibleNullability
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val type = expr.getKtType()
     val constant: KaConstantValue? = if (type == null) null else expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
@@ -219,7 +219,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
     val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null

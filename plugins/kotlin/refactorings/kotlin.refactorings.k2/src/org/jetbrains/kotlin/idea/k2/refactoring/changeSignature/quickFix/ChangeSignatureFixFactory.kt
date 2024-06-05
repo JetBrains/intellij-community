@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -138,7 +138,7 @@ object ChangeSignatureFixFactory {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun prepareChangeInfo(psi: PsiElement, input: Input): KotlinChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
             return prepareFunctionalLiteralChangeInfo(psi as KtLambdaExpression, input)
@@ -210,7 +210,7 @@ object ChangeSignatureFixFactory {
         return changeInfo
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun prepareFunctionalLiteralChangeInfo(psi: KtLambdaExpression, input: Input): KotlinChangeInfo? {
         val callable = psi.functionLiteral
         val descriptor = KotlinMethodDescriptor(callable)
@@ -244,7 +244,7 @@ object ChangeSignatureFixFactory {
         return changeInfo
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getNameValidator(
         callable: KtNamedDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
     ): (String) -> Boolean {
@@ -256,7 +256,7 @@ object ChangeSignatureFixFactory {
         return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getKtType(argumentExpression: KtExpression?): KtType? {
         var ktType = argumentExpression?.getKtType()
         val typeKind = ktType?.functionTypeKind
@@ -276,7 +276,7 @@ object ChangeSignatureFixFactory {
         return ktType
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getNewArgumentName(argument: ValueArgument, validator: (String) -> Boolean): String {
         val expression = KtPsiUtil.deparenthesize(argument.getArgumentExpression())
         val argumentName = argument.getArgumentName()?.asName?.asString() ?: (expression as? KtNameReferenceExpression)?.getReferencedName()
@@ -308,7 +308,7 @@ object ChangeSignatureFixFactory {
         return name == IMPLICIT_LAMBDA_PARAMETER_NAME.identifier || name == "field"
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createAddParameterFix(
         ktCallableSymbol: KaCallableSymbol,
         element: PsiElement,
@@ -335,7 +335,7 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createRemoveParameterFix(
         symbol: KtSymbol,
         element: PsiElement,
@@ -362,7 +362,7 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,
         expectedType: KtType
@@ -405,7 +405,7 @@ object ChangeSignatureFixFactory {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getDeclarationName(functionLikeSymbol: KaFunctionLikeSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {

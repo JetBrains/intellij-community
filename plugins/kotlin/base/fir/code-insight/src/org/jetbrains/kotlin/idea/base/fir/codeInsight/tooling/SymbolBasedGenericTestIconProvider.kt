@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -27,7 +27,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isTestDeclaration(symbol: KtAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
@@ -38,7 +38,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private tailrec fun isIgnored(symbol: KtAnnotatedSymbol): Boolean {
         if (symbol.hasAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
             return true

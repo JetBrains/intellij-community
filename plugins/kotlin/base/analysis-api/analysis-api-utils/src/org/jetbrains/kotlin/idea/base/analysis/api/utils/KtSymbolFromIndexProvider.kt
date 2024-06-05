@@ -9,7 +9,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
@@ -32,7 +32,7 @@ class KtSymbolFromIndexProvider private constructor(
 ) {
     private val project: Project = useSiteFile.project
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun useSiteFilter(element: PsiElement): Boolean {
         if (element.kotlinFqName?.isExcludedFromAutoImport(project, useSiteFile) == true) return false
 
@@ -40,7 +40,7 @@ class KtSymbolFromIndexProvider private constructor(
         return isCommon || (element as? KtDeclaration)?.isExpectDeclaration() != true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getKotlinClassesByName(
         name: Name,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
@@ -57,7 +57,7 @@ class KtSymbolFromIndexProvider private constructor(
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getKotlinClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
@@ -75,7 +75,7 @@ class KtSymbolFromIndexProvider private constructor(
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getClassLikeSymbols(
         classDeclarations: List<KtClassOrObject>,
         typeAliasDeclarations: List<KtTypeAlias>,
@@ -90,7 +90,7 @@ class KtSymbolFromIndexProvider private constructor(
         yieldAll(declarationsFromExtension)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getJavaClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (PsiClass) -> Boolean = { true }
@@ -114,7 +114,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getJavaClassesByName(
         name: Name,
         psiFilter: (PsiClass) -> Boolean = { true }
@@ -130,7 +130,7 @@ class KtSymbolFromIndexProvider private constructor(
             .mapNotNull { it.getNamedClassSymbol() }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getKotlinCallableSymbolsByName(
         name: Name,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
@@ -154,7 +154,7 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getJavaCallableSymbolsByName(
         name: Name,
         psiFilter: (PsiMember) -> Boolean = { true }
@@ -174,7 +174,7 @@ class KtSymbolFromIndexProvider private constructor(
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getTopLevelExtensionCallableSymbolsByNameFilter].
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getTopLevelCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
@@ -198,7 +198,7 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getTopLevelExtensionCallableSymbolsByName(
         name: Name,
         receiverTypes: List<KtType>,
@@ -206,7 +206,7 @@ class KtSymbolFromIndexProvider private constructor(
     ): Sequence<KaCallableSymbol> =
         getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinTopLevelExtensionsByReceiverTypeIndex)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getDeclaredInObjectExtensionCallableSymbolsByName(
         name: Name,
         receiverTypes: List<KtType>,
@@ -214,7 +214,7 @@ class KtSymbolFromIndexProvider private constructor(
     ): Sequence<KaCallableSymbol> =
         getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinExtensionsInObjectsByReceiverTypeIndex)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getExtensionCallableSymbolsByName(
         name: Name,
         receiverTypes: List<KtType>,
@@ -237,7 +237,7 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getTopLevelExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         receiverTypes: List<KtType>,
@@ -263,7 +263,7 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<KaCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KtType>): Sequence<KaCallableSymbol> {
         val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }
 
@@ -284,7 +284,7 @@ class KtSymbolFromIndexProvider private constructor(
 
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findAllNamesForType(type: KtType): Set<String> = buildSet {
         if (type is KtFlexibleType) {
             return findAllNamesForType(type.lowerBound)

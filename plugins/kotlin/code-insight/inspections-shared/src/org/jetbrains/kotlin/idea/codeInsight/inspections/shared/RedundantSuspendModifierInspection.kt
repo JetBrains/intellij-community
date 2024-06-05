@@ -5,7 +5,7 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -51,7 +51,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
 
     private val coroutineContextFqName = StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KaCallableSymbol.isSuspendSymbol(): Boolean {
         // Currently, Kotlin does not support suspending properties except for accessing the coroutineContext
         if (this is KtKotlinPropertySymbol && getFqNameIfPackageOrNonLocal() == coroutineContextFqName) {
@@ -65,7 +65,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
         val containingFunction = this
 
         KotlinCallProcessor.processExpressionsRecursively(this, object : KotlinCallTargetProcessor {
-            override fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean {
+            override fun KaSession.processCallTarget(target: CallTarget): Boolean {
                 if (target.symbol.isSuspendSymbol() && target.symbol.psi != containingFunction) {
                     hasSuspendOrUnresolvedCall = true
                     return false
@@ -73,7 +73,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 return true
             }
 
-            override fun KtAnalysisSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
+            override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
                 if (callInfo != null) {
                     // A callInfo of null means that the element could not be resolved at all, so it is not even unresolved.
                     // For example, if the element is not an expression, so we ignore those cases.

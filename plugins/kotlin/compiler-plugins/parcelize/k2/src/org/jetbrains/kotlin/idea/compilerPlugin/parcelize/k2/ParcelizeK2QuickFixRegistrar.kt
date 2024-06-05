@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
 import com.intellij.codeInsight.intention.IntentionAction
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtCompilerPluginDiagnostic0
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtCompilerPluginDiagnostic1
@@ -98,7 +98,7 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
 
 private inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> createApplicatorForFactory(
     factory: AbstractKtDiagnosticFactory,
-    crossinline createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
+    crossinline createQuickFixes: context(KaSession)(DIAGNOSTIC) -> List<IntentionAction>
 ) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
     if (diagnostic.factoryName == factory.name) {
         createQuickFixes(analysisSession, diagnostic)

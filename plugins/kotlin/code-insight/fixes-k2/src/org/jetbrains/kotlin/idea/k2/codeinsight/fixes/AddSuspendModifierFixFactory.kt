@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -49,7 +49,7 @@ internal object AddSuspendModifierFixFactory {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtElement.containingFunction(): KtNamedFunction? {
     return when (val containingFunction = getParentOfTypes2<KtFunctionLiteral, KtNamedFunction>()) {
         is KtFunctionLiteral -> {
@@ -67,10 +67,10 @@ private fun KtElement.containingFunction(): KtNamedFunction? {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCallSiteVisibility() != null
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
     var declaration: KaDeclarationSymbol? = this
     var result: Visibility? = null

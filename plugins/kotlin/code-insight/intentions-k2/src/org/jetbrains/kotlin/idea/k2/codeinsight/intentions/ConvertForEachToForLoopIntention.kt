@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -70,7 +70,7 @@ internal class ConvertForEachToForLoopIntention
     private fun KtCallExpression.getSingleLambdaArgument(): KtLambdaExpression? =
         valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
         if (element.isUsedAsExpression()) return null
@@ -85,14 +85,14 @@ internal class ConvertForEachToForLoopIntention
         return Context(returnsToReplace, implicitReceiverInfo)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
         val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return false
         val callableId = symbol.callableId
         return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? {
         val lambda = element.getSingleLambdaArgument() ?: return null
         val lambdaBody = lambda.bodyExpression ?: return null

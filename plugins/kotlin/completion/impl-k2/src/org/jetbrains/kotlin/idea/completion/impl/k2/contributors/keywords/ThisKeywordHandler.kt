@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.types.Variance
 
 internal class ThisKeywordHandler(
     private val basicContext: FirBasicCompletionContext
-) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.THIS_KEYWORD) {
-    context(KtAnalysisSession)
+) : CompletionKeywordHandler<KaSession>(KtTokens.THIS_KEYWORD) {
+    context(KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -56,7 +56,7 @@ internal class ThisKeywordHandler(
         return result
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KtSymbol): Boolean {
         if (symbol !is KaClassOrObjectSymbol) return true
         if (symbol.classKind != KaClassKind.COMPANION_OBJECT) return true
@@ -64,13 +64,13 @@ internal class ThisKeywordHandler(
         return parameters.offset in companionPsi.textRange
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createThisLookupElement(receiver: KtImplicitReceiver, labelName: Name?): LookupElement {
         return createKeywordElement("this", labelName.labelNameToTail(), lookupObject = KeywordLookupObject())
             .withTypeText(receiver.type.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT))
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getThisLabelBySymbol(symbol: KtSymbol): Name? = when {
         symbol is KtNamedSymbol && !symbol.name.isSpecial -> symbol.name
         symbol is KaAnonymousFunctionSymbol -> {

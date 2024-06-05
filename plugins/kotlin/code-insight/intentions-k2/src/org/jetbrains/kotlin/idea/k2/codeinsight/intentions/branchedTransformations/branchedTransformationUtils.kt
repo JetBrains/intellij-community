@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
@@ -96,7 +96,7 @@ fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subje
  *  }
  * ```
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?, context: PsiElement = this): KtWhenExpression {
     subject ?: return this
 
@@ -134,7 +134,7 @@ fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?, context:
 /**
  * Returns [KtExpression] as potential subject for [KtWhenExpression].
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtExpression? {
     if (subjectExpression != null) return null
 
@@ -157,7 +157,7 @@ fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtEx
     return lastCandidate
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(conditionExpression: KtExpression?, subject: KtExpression) {
     when (conditionExpression) {
         is KtIsExpression -> {
@@ -190,7 +190,7 @@ private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(con
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtExpression? {
     fun KtExpression?.getCandidate(): KtExpression? = when (this) {
         is KtIsExpression -> leftHandSide
@@ -230,7 +230,7 @@ fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boolean): B
     return !(resolved is KtObjectDeclaration || (resolved as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtExpression?.matches(right: KtExpression?): Boolean {
     if (this == null && right == null) return true
 

@@ -11,7 +11,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -58,7 +58,7 @@ open class KotlinMethodFilter(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun declarationMatches(currentDeclaration: KtDeclaration): Boolean {
         val currentSymbol = currentDeclaration.getSymbol()
         // callable or constructor

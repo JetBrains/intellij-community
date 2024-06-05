@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
@@ -50,7 +50,7 @@ internal class FirWhenWithSubjectConditionContributor(
 
     override val prefixMatcher: PrefixMatcher = if (onTypingIsKeyword) basicContext.prefixMatcher.cloneWithPrefix("") else super.prefixMatcher
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinWithSubjectEntryPositionContext,
         weighingContext: WeighingContext,
@@ -86,14 +86,14 @@ internal class FirWhenWithSubjectConditionContributor(
         addElseBranchIfSingleConditionInEntry(weighingContext, whenCondition)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getClassSymbol(subjectType: KtType): KaNamedClassOrObjectSymbol? {
         val classType = subjectType as? KtNonErrorClassType
         return classType?.classSymbol as? KaNamedClassOrObjectSymbol
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addNullIfWhenExpressionCanReturnNull(context: WeighingContext, type: KtType?) {
         if (type?.canBeNull == true) {
             val lookupElement = createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
@@ -101,7 +101,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeAllTypes(
         context: WeighingContext,
         whenCondition: KtWhenCondition,
@@ -142,7 +142,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isPrefixNeeded(symbol: KtNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
@@ -156,7 +156,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeSubClassesOfSealedClass(
         context: WeighingContext,
         classSymbol: KaNamedClassOrObjectSymbol,
@@ -190,7 +190,7 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
         conditions.mapNotNullTo(hashSetOf()) { condition ->
             val reference = when (condition) {
@@ -202,7 +202,7 @@ internal class FirWhenWithSubjectConditionContributor(
             resolvesTo?.classId
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getAllSealedInheritors(classSymbol: KaNamedClassOrObjectSymbol): Collection<KaNamedClassOrObjectSymbol> {
 
         fun getAllSealedInheritorsTo(
@@ -221,7 +221,7 @@ internal class FirWhenWithSubjectConditionContributor(
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addElseBranchIfSingleConditionInEntry(context: WeighingContext, whenCondition: KtWhenCondition) {
         val whenEntry = whenCondition.parent as? KtWhenEntry ?: return
         if (whenEntry.conditions.size > 1) return
@@ -231,7 +231,7 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeEnumEntries(
         context: WeighingContext,
         classSymbol: KaNamedClassOrObjectSymbol,
@@ -266,7 +266,7 @@ internal class FirWhenWithSubjectConditionContributor(
         return entry.conditions.size == 1
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addLookupElement(
         context: WeighingContext,
         lookupString: String,
@@ -288,7 +288,7 @@ internal class FirWhenWithSubjectConditionContributor(
             .let { applyWeighsAndAddElementToSink(context, it, KtSymbolWithOrigin(symbol, origin)) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun applyWeighsAndAddElementToSink(context: WeighingContext, element: LookupElement, symbolWithOrigin: KtSymbolWithOrigin?) {
         applyWeighsToLookupElement(context, element, symbolWithOrigin)
         sink.addElement(element)

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -41,7 +41,7 @@ internal class ImportMemberIntention :
         // Ignore simple name expressions or already imported names.
         element.getQualifiedElement() != element && !element.isInImportDirective()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
         val symbol = element.mainReference.resolveToSymbol() ?: return null
         return computeContext(element, symbol)
@@ -57,7 +57,7 @@ internal class ImportMemberIntention :
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KaConstructorSymbol,
@@ -106,7 +106,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun canBeImported(symbol: KaCallableSymbol): Boolean {
     if (symbol is KaEnumEntrySymbol) return true
     if (symbol.origin == KtSymbolOrigin.JAVA) {

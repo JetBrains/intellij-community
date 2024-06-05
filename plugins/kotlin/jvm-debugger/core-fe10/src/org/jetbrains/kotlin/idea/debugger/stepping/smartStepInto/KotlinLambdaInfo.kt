@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -23,7 +23,7 @@ data class KotlinLambdaInfo(
         "${callerMethodInfo.name}: $parameterName.$methodName()"
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KotlinLambdaInfo(
     methodSymbol: KaFunctionLikeSymbol,
     argumentSymbol: KtValueParameterSymbol,
@@ -44,7 +44,7 @@ internal fun KotlinLambdaInfo(
     isSamSuspendMethod = isSamSuspendMethod,
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun countParameterIndex(methodSymbol: KaFunctionLikeSymbol, argumentSymbol: KtValueParameterSymbol): Int {
     var resultIndex = methodSymbol.valueParameters.indexOf(argumentSymbol)
 

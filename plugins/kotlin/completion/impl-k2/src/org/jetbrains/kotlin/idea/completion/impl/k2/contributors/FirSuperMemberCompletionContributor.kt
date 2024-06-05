@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -48,7 +48,7 @@ internal class FirSuperMemberCompletionContributor(
         val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -69,7 +69,7 @@ internal class FirSuperMemberCompletionContributor(
 
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
         superTypes: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
@@ -106,7 +106,7 @@ internal class FirSuperMemberCompletionContributor(
         return Pair(allSymbols, nameNeedDisambiguation)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getNonExtensionsMemberSymbols(
         receiverType: KtType,
         visibilityChecker: CompletionVisibilityChecker,
@@ -116,7 +116,7 @@ internal class FirSuperMemberCompletionContributor(
             .map { CallableInfo(receiverType, it.signature, it.scopeKind) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectCallToSuperMember(
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
@@ -142,13 +142,13 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy = when (signature) {
         is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectDelegateCallToSuperMember(
         context: WeighingContext,
         superReceiver: KtSuperExpression,
@@ -219,7 +219,7 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
         superType: KtType,

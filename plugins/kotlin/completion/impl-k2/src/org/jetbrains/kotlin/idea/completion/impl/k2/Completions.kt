@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun complete(
         factory: FirCompletionContributorFactory,
         positionContext: KotlinRawPositionContext,
@@ -139,7 +139,7 @@ internal object Completions {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createWeighingContext(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext
@@ -168,7 +168,7 @@ internal object Completions {
         else -> WeighingContext.createEmptyWeighingContext(basicContext, positionContext.position)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createWeighingContextForNameReference(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinNameReferencePositionContext,
@@ -197,7 +197,7 @@ internal object Completions {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
     if (explicitReceiver != null) return false
 

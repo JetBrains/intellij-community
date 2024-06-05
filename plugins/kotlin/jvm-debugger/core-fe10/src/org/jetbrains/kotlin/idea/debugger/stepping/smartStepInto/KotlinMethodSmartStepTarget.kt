@@ -10,7 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
@@ -65,7 +65,7 @@ class KotlinMethodSmartStepTarget(
             callableReceiverRenderer = NO_CALLABLE_RECEIVER
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun calcLabel(symbol: KaDeclarationSymbol): String {
             return symbol.render(renderer)
         }
@@ -116,12 +116,12 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
 
 
 private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
-    override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KaCallableSymbol): Boolean = false
+    override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean = false
 }
 
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
     override fun renderReceiver(
-        analysisSession: KtAnalysisSession,
+        analysisSession: KaSession,
         symbol: KaReceiverParameterSymbol,
         declarationRenderer: KtDeclarationRenderer,
         printer: PrettyPrinter
@@ -130,7 +130,7 @@ private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
 
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
     override fun renderModifiers(
-        analysisSession: KtAnalysisSession,
+        analysisSession: KaSession,
         symbol: KaDeclarationSymbol,
         declarationModifiersRenderer: KtDeclarationModifiersRenderer,
         printer: PrettyPrinter

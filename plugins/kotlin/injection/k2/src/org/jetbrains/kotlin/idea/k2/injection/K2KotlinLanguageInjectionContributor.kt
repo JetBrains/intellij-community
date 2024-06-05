@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
@@ -71,7 +71,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun injectionInfoByAnnotation(injectAnnotation: KtAnnotationApplicationWithArgumentsInfo): InjectionInfo? {
         val languageId = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::value.name) ?: return null
         val prefix = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::prefix.name)
@@ -80,11 +80,11 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private inline fun <reified T : Annotation> KtAnnotatedSymbol.findAnnotation(): KtAnnotationApplicationWithArgumentsInfo? =
     annotations.find { it.classId?.asFqNameString() == T::class.java.name }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtAnnotationApplicationWithArgumentsInfo.getStringValueOfArgument(argumentName: String): String? {
     val argumentValueExpression =
         arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KtConstantAnnotationValue ?: return null

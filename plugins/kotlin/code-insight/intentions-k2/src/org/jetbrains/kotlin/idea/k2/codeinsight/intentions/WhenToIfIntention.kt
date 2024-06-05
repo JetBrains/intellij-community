@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -39,7 +39,7 @@ internal class WhenToIfIntention :
         val nameCandidatesForWhenSubject: List<String> = emptyList(),
     )
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtWhenExpression.hasNoElseButUsedAsExpression(): Boolean {
         val lastEntry = entries.last()
         return !lastEntry.isElse && isUsedAsExpression()
@@ -61,7 +61,7 @@ internal class WhenToIfIntention :
         return entries.size <= 1
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtWhenExpression): Context? {
         if (element.hasNoElseButUsedAsExpression()) return null
 
@@ -170,9 +170,9 @@ internal class WhenToIfIntention :
     }
 
     /**
-     * Note that [KotlinNameSuggester.suggestExpressionNames] has [KtAnalysisSession] as a receiver.
+     * Note that [KotlinNameSuggester.suggestExpressionNames] has [KaSession] as a receiver.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getNewNameForExpression(expression: KtExpression): List<String> {
         return with(KotlinNameSuggester()) {
             suggestExpressionNames(expression).toList()

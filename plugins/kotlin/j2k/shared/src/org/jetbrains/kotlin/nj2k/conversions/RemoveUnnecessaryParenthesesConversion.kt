@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
  */
 class RemoveUnnecessaryParenthesesConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKParenthesizedExpression) return recurse(element)
         if (areParenthesesNecessary(element)) return recurse(element)

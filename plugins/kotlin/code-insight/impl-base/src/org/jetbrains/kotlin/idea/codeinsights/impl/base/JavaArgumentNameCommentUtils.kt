@@ -8,7 +8,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -48,7 +48,7 @@ typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, 
  * is indexed by [KtValueArgument], though the [SmartPsiElementPointer]s need to be dereferenced first. The [SmartPsiElementPointer] allows
  * the map to be stored in applicable intention contexts.
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
     val arguments = element.getNonLambdaArguments()
     val resolvedCall = element.resolveCall()?.successfulFunctionCallOrNull() ?: return null

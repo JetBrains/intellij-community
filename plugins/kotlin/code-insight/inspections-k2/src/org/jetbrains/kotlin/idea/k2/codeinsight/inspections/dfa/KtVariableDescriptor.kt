@@ -8,7 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
@@ -70,21 +70,21 @@ class KtVariableDescriptor(
     }
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun getSingleLambdaParameter(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
             val parameterSymbol = lambda.functionLiteral.getAnonymousFunctionSymbol().valueParameters.singleOrNull() ?: return null
             if ((parameterSymbol.psi as? KtParameter)?.destructuringDeclaration != null) return null
             return factory.varFactory.createVariableValue(parameterSymbol.variableDescriptor())
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun getLambdaReceiver(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
             val receiverType = (lambda.functionLiteral.getFunctionalType() as? KtFunctionalType)?.receiverType ?: return null
             val descriptor = KtLambdaThisVariableDescriptor(lambda.functionLiteral, receiverType.toDfType())
             return factory.varFactory.createVariableValue(descriptor)
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun createFromQualified(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             var selector = expr
             while (selector is KtQualifiedExpression) {
@@ -93,7 +93,7 @@ class KtVariableDescriptor(
             return createFromSimpleName(factory, selector)
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         internal fun KtVariableLikeSymbol.variableDescriptor(): KtVariableDescriptor {
             return KtVariableDescriptor(useSiteModule, this.createPointer(), this.returnType.toDfType(), this.name.hashCode())
         }
@@ -129,7 +129,7 @@ class KtVariableDescriptor(
                 return@getProjectPsiDependentCache result
             }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
             if (expr !is KtSimpleNameExpression) return null

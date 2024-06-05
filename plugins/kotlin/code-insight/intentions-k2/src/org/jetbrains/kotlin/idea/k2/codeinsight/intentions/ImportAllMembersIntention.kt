@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -50,7 +50,7 @@ internal class ImportAllMembersIntention :
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
         val target = actualReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol ?: return null
@@ -143,7 +143,7 @@ private val KtExpression.actualReference: KtReference?
         else -> mainReference
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
     val referencedSymbol = when (selectorExpression) {
@@ -163,7 +163,7 @@ private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassOrObj
 private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirectives.any { importDirective ->
     if (importDirective.importPath?.isAllUnder != true) return false
     val importedEnumFqName = importDirective.importedFqName ?: return false

@@ -17,7 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.toArray
 import com.intellij.xml.util.XmlStringUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
@@ -79,7 +79,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun convertToBuilder(file: KtFile, range: TextRange, diagnostic: KtDiagnosticWithPsi<*>) : HighlightInfo.Builder{
         val isWarning = diagnostic.severity == Severity.WARNING
         val psiElement = diagnostic.psi
@@ -132,7 +132,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtDiagnosticWithPsi<*>.getHighlightInfoType(): HighlightInfoType {
        return when {
             isUnresolvedDiagnostic() -> HighlightInfoType.WRONG_REF
@@ -145,7 +145,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtDiagnosticWithPsi<*>.isUnresolvedDiagnostic() = when (this) {
         is KaFirDiagnostic.UnresolvedReference -> true
         is KaFirDiagnostic.UnresolvedLabel -> true
@@ -155,7 +155,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         else -> false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtDiagnosticWithPsi<*>.isDeprecatedDiagnostic() = when (this) {
         is KaFirDiagnostic.Deprecation -> true
         else -> false

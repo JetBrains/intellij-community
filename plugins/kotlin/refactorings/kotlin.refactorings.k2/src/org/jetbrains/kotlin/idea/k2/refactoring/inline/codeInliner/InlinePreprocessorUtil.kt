@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -301,7 +301,7 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
     return if ((symbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {

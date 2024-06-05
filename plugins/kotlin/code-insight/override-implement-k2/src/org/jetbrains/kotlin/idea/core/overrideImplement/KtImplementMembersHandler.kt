@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -37,12 +37,12 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     }
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .mapToKtClassMemberInfo()
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KaCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
@@ -128,7 +128,7 @@ object MemberNotImplementedQuickfixFactories {
             listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true
@@ -149,7 +149,7 @@ object MemberNotImplementedQuickfixFactories {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
     return map { unimplementedMemberSymbol ->
         val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride

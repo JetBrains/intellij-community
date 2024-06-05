@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.psi.PsiParenthesizedExpression
 import com.intellij.psi.PsiTypeCastExpression
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.nj2k.types.updateNullability
  * See also [org.jetbrains.kotlin.nj2k.JavaToJKTreeBuilder.collectNullabilityInfo]
  */
 class NullabilityConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKTypeCastExpression -> element.updateNullability()

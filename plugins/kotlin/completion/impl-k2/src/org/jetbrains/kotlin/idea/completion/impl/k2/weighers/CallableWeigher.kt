@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
@@ -64,7 +64,7 @@ internal object CallableWeigher {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun addWeight(
         context: WeighingContext,
         lookupElement: LookupElement,

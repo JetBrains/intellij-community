@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -76,7 +76,7 @@ internal object AddDataModifierFixFactory {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaSymbolWithVisibility.isVisible(position: KtElement): Boolean {
     val file = position.containingKtFile.getFileSymbol()
     return isVisible(this, file, position = position)

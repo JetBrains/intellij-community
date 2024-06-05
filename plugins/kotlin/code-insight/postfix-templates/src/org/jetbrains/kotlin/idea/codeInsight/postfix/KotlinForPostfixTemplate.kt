@@ -7,7 +7,7 @@ import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedSuggestVariableNameMacro
@@ -149,7 +149,7 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
     DefaultTypeClassIds.CHAR_SEQUENCE
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun canBeIterated(type: KtType, checkNullability: Boolean = true): Boolean {
     return when (type) {
         is KtFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())

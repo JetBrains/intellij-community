@@ -8,7 +8,7 @@ import com.intellij.psi.*
 import com.intellij.util.containers.toArray
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -193,7 +193,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       return callingElement?.let { arrayOf(NavigateToCallInSuspendFunction(it)) } ?: LocalQuickFix.EMPTY_ARRAY
     }
 
-    private fun KtAnalysisSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
+    private fun KaSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
       callingElement?.let { return arrayOf(NavigateToCallInSuspendFunction(it)) }
 
       return buildList<LocalQuickFix> {
@@ -359,7 +359,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   }
 }
 
-private fun KtAnalysisSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
+private fun KaSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
   val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedClassSymbol

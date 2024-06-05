@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -86,7 +86,7 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createMemberEntries(
         editor: Editor,
         currentClass: KtClassOrObject,
@@ -164,7 +164,7 @@ abstract class KtGenerateMembersHandler(
      * callable symbol for an overridable member that the user has picked to override (or implement), and the value is the stub
      * implementation for the chosen symbol.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
         newMemberSymbolsAndGeneratedPsi: Map<KaCallableSymbol, KtCallableDeclaration>

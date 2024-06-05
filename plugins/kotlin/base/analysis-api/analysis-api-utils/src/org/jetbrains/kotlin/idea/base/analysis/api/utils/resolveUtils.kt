@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
-context(KtAnalysisSession)
+context(KaSession)
 fun collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
@@ -55,7 +55,7 @@ fun collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
     return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun filterCandidate(
     candidateInfo: KtCallCandidateInfo,
     callElement: KtElement,
@@ -68,7 +68,7 @@ private fun filterCandidate(
     return filterCandidateByReceiverTypeAndVisibility(signature, callElement, fileSymbol, explicitReceiver)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun filterCandidateByReceiverTypeAndVisibility(
     signature: KtFunctionLikeSignature<KaFunctionLikeSymbol>,
     callElement: KtElement,
@@ -113,7 +113,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
  * If there is no explicit receiver, obtains scope context for [callElement] and returns implicit types from the context.
  * If explicit receiver is present and can be resolved, returns its type. Otherwise, returns empty list.
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtExpression?): List<KtType> {
     return if (explicitReceiver != null) {
         collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
@@ -123,7 +123,7 @@ fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtE
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KtType> {
     explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
@@ -146,7 +146,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
     return listOf(adjustedType)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KtType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
@@ -165,7 +165,7 @@ private val ARRAY_OF_FUNCTION_NAMES: Set<Name> = setOf(ArrayFqNames.ARRAY_OF_FUN
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values +
         ArrayFqNames.EMPTY_ARRAY
 
-context(KtAnalysisSession)
+context(KaSession)
 fun isArrayOfCall(callElement: KtCallElement): Boolean {
     val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return false
     val callableId = resolvedCall.partiallyAppliedSymbol.signature.callableId ?: return false
@@ -175,7 +175,7 @@ fun isArrayOfCall(callElement: KtCallElement): Boolean {
 /**
  * @return value of the [JvmName] annotation on [symbol] declaration if present, and `null` otherwise
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun getJvmName(symbol: KtAnnotatedSymbol): String? {
     val jvmNameAnnotation = symbol.annotationsByClassId(JvmStandardClassIds.Annotations.JvmName).firstOrNull() ?: return null
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KtConstantAnnotationValue ?: return null
@@ -183,7 +183,7 @@ fun getJvmName(symbol: KtAnnotatedSymbol): String? {
     return stringValue.value
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
     is KaTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
     else -> symbol

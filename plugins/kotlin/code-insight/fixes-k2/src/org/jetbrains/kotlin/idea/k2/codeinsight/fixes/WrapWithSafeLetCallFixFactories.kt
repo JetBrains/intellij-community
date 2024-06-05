@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -174,7 +174,7 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
@@ -201,7 +201,7 @@ object WrapWithSafeLetCallFixFactories {
         else emptyList()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
@@ -225,7 +225,7 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createWrapWithSafeLetCallInputForNullableExpression(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
@@ -250,7 +250,7 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
         val callExpression = argumentExpression.parentOfType<KtCallExpression>()
@@ -259,7 +259,7 @@ object WrapWithSafeLetCallFixFactories {
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findParentExpressionAtNullablePosition(expression: KtExpression?): KtExpression? {
         if (expression == null) return null
         var current = expression.surroundingExpression
@@ -269,7 +269,7 @@ object WrapWithSafeLetCallFixFactories {
         return current
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isExpressionAtNullablePosition(expression: KtExpression): Boolean {
         val parent = expression.parent
         return when {
@@ -328,7 +328,7 @@ object WrapWithSafeLetCallFixFactories {
      * type. The function returns null if any necessary assumptions are not met. For example, if the call is not resolved to a unique
      * function or the function doesn't have a parameter at the given index. Then caller can do whatever needed to cover such cases.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun doesFunctionAcceptNull(call: KtCall, index: Int): Boolean? {
         val symbol = (call as? KtFunctionCall<*>)?.symbol ?: return null
         if (index == -1) {

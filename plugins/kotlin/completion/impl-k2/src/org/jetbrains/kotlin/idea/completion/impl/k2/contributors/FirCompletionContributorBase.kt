@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -69,7 +69,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
 
@@ -78,7 +78,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             .let(sink::addElement)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun addClassifierSymbolToCompletion(
         symbol: KaClassifierSymbol,
         context: WeighingContext,
@@ -98,7 +98,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         sink.addElement(lookup)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun addCallableSymbolToCompletion(
         context: WeighingContext,
         signature: KtCallableSignature<*>,
@@ -167,7 +167,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     }
 }
 
-internal fun <C : KotlinRawPositionContext> KtAnalysisSession.complete(
+internal fun <C : KotlinRawPositionContext> KaSession.complete(
     contextContributor: FirCompletionContributor<C>,
     positionContext: C,
     weighingContext: WeighingContext,

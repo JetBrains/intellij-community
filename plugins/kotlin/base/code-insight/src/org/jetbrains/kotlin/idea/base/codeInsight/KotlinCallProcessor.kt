@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
@@ -67,24 +67,24 @@ interface KotlinCallTargetProcessor {
      * Processes a successfully resolved [CallTarget].
      * If false is returned from this function, no further elements will be processed.
      */
-    fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean
+    fun KaSession.processCallTarget(target: CallTarget): Boolean
 
     /**
      * Processes a call that resolved as an error.
      * If false is returned from this function, no further elements will be processed.
      */
-    fun KtAnalysisSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean
+    fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean
 }
 
-private fun (KtAnalysisSession.(CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
+private fun (KaSession.(CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
     val processor = this
     return object : KotlinCallTargetProcessor {
-        override fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean {
+        override fun KaSession.processCallTarget(target: CallTarget): Boolean {
             processor(target)
             return true
         }
 
-        override fun KtAnalysisSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
+        override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
             return true
         }
     }
@@ -100,7 +100,7 @@ object KotlinCallProcessor {
         KDoc::class.java
     )
 
-    fun process(element: PsiElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+    fun process(element: PsiElement, processor: KaSession.(CallTarget) -> Unit) {
         process(element, processor.toCallTargetProcessor())
     }
 
@@ -229,7 +229,7 @@ object KotlinCallProcessor {
     }
 }
 
-fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KaSession.(CallTarget) -> Unit) {
     process(elements, processor.toCallTargetProcessor())
 }
 
@@ -242,7 +242,7 @@ fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: Kot
     }
 }
 
-fun KotlinCallProcessor.processExpressionsRecursively(element: PsiElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+fun KotlinCallProcessor.processExpressionsRecursively(element: PsiElement, processor: KaSession.(CallTarget) -> Unit) {
     processExpressionsRecursively(element, processor.toCallTargetProcessor())
 }
 

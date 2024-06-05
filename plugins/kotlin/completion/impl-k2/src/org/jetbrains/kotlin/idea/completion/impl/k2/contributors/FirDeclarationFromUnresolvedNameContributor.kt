@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -33,7 +33,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
@@ -50,7 +50,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processReference(
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
@@ -74,7 +74,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun shouldOfferCompletion(unresolvedRef: KtNameReferenceExpression, currentDeclaration: KtNamedDeclaration): Boolean {
         val refExprParent = unresolvedRef.parent
         val receiver = if (refExprParent is KtCallExpression) {
@@ -119,7 +119,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         return qualifiedExpression.receiverExpression
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getReceiverType(symbol: KaCallableSymbol): KtType? {
         return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.getDispatchReceiverType()
     }

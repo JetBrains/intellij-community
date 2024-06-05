@@ -10,7 +10,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -74,7 +74,7 @@ class KotlinPsiElementMemberChooserObject(
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getChooserText(symbol: KtSymbol): @NlsSafe String {
             if (symbol is KaClassOrObjectSymbol) {
                 val classId = symbol.classId
@@ -90,7 +90,7 @@ class KotlinPsiElementMemberChooserObject(
             return ""
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getChooserIcon(element: PsiElement, symbol: KtSymbol): Icon? {
             val isClass = element is KtClass || element is PsiClass
             val flags = if (isClass) 0 else Iconable.ICON_FLAG_VISIBILITY

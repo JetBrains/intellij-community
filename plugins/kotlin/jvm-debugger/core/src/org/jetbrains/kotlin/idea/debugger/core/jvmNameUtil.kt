@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
@@ -30,7 +30,7 @@ fun KaFunctionSymbol.getByteCodeMethodName(): String {
     return name.asString()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun KaDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassOrObjectSymbol && this.isInline
 
@@ -41,7 +41,7 @@ fun KtDeclaration.getClassName(): String? = analyze(this) {
     symbol.getJvmInternalClassName()?.internalNameToFqn()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun KaFunctionLikeSymbol.getJvmInternalClassName(): String? {
     val classOrObject = getContainingClassOrObjectSymbol()
@@ -55,7 +55,7 @@ fun KaFunctionLikeSymbol.getJvmInternalClassName(): String? {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun KaFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KaClassOrObjectSymbol? {
     var symbol = getContainingSymbol()

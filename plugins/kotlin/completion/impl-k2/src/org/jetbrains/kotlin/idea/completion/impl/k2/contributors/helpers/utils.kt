@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.util.applyIf
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
@@ -40,7 +40,7 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
         ""
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
@@ -74,7 +74,7 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
@@ -91,7 +91,7 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
 /**
  * @param indexInTower index of implicit receiver's scope in scope tower if it is known, otherwise null.
  */
-context(KtAnalysisSession)
+context(KaSession)
 internal fun collectNonExtensionsForType(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
@@ -120,11 +120,11 @@ internal fun collectNonExtensionsForType(
         .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private val KtSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSymbol>
     get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
@@ -145,7 +145,7 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
  * Returns non-extensions from [KtScope]. Resulting callables do not include synthetic Java properties and constructors of inner classes.
  * To get them use [collectNonExtensionsForType].
  */
-context(KtAnalysisSession)
+context(KaSession)
 internal fun collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,
@@ -157,7 +157,7 @@ internal fun collectNonExtensionsFromScope(
     .filterNonExtensions(visibilityChecker, symbolFilter)
     .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun Sequence<KtCallableSignature<*>>.filterNonExtensions(
     visibilityChecker: CompletionVisibilityChecker,
     symbolFilter: (KaCallableSymbol) -> Boolean,
@@ -189,7 +189,7 @@ internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
     return symbol is KtPropertySymbol &&
             symbol.isStatic &&

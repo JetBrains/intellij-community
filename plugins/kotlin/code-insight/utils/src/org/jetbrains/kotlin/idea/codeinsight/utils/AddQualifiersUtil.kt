@@ -6,7 +6,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -50,7 +50,7 @@ object AddQualifiersUtil {
         return root
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KtSymbol): Boolean {
         if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 

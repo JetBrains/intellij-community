@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
@@ -249,7 +249,7 @@ class CodeInliner(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun arrayOfFunctionName(elementType: KtType): String {
         return when {
             elementType.isInt -> "kotlin.intArrayOf"

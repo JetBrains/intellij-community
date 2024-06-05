@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -84,7 +84,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             listOf(SpecifyOverrideExplicitlyFix(ktClass, elementContext))
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtDelegatedSuperTypeEntry.getSymbol(): KtNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null
         return nameReferenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol

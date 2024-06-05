@@ -10,7 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -82,7 +82,7 @@ internal class WhenWithOnlyElseInspection
      *   - whether the `when` expression itself is used as an expression
      *   - for the subject variable, if present, whether the initializer is pure.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
@@ -220,7 +220,7 @@ internal class WhenWithOnlyElseInspection
      *
      * @return `true` if `this` is _definitely_ pure.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.isPure(): Boolean = when (this) {
         is KtStringTemplateExpression -> !hasInterpolation()
         is KtConstantExpression -> true

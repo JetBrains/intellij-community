@@ -6,7 +6,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
@@ -107,7 +107,7 @@ private class ParameterWithReference(val parameterOrigin: PsiNamedElement, val r
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
     modifiedVariables: Set<String>,
@@ -202,7 +202,7 @@ internal fun ExtractionData.inferParametersInfo(
     return info
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun ExtractionData.registerParameter(
     info: ParametersInfo<KtType, MutableParameter>,
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>,
@@ -359,7 +359,7 @@ private fun ExtractionData.calculateArgumentText(
 /**
  * Register replacements which expand locally available types to FQ names if possible.
  */
-context(KtAnalysisSession)
+context(KaSession)
 private fun ExtractionData.registerQualifierReplacements(
     referencedClassifierSymbol: KaClassifierSymbol,
     parametersInfo: ParametersInfo<KtType, MutableParameter>,
@@ -389,7 +389,7 @@ private fun ExtractionData.registerQualifierReplacements(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getReferencedClassifierSymbol(
     thisSymbol: KtSymbol?,
     originalDeclaration: PsiNamedElement,
@@ -413,7 +413,7 @@ private fun getReferencedClassifierSymbol(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun createOriginalType(
     extractFunctionRef: Boolean,
     originalDeclaration: PsiNamedElement,

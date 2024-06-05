@@ -6,7 +6,7 @@ import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
@@ -106,7 +106,7 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
  * when they are called from the functions, annotated the same way.
  */
 private class MockAutoImportCallableWeigher : KotlinAutoImportCallableWeigher {
-    override fun KtAnalysisSession.weigh(
+    override fun KaSession.weigh(
         symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int {

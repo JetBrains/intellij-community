@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -461,7 +461,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return isCallToBuiltInMethod(call, "also")
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
             return when (parent) {
                 is KtBinaryExpression ->
@@ -528,7 +528,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
@@ -662,7 +662,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return !expression.isUsedAsExpression()
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun isZero(expression: KtExpression?): Boolean {
             expression ?: return false
             val constantValue = expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)?.value
@@ -670,7 +670,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
 
         // x || return y
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
             val type = expression.right?.getKtType()

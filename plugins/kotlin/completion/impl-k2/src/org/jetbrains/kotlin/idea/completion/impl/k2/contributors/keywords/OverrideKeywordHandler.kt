@@ -8,7 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -33,9 +33,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
-) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.OVERRIDE_KEYWORD) {
+) : CompletionKeywordHandler<KaSession>(KtTokens.OVERRIDE_KEYWORD) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -43,7 +43,7 @@ internal class OverrideKeywordHandler(
         project: Project
     ): Collection<LookupElement> = createOverrideMemberLookups(parameters, declaration = null, project) + lookup
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createOverrideMemberLookups(
         parameters: CompletionParameters,
         declaration: KtCallableDeclaration?,
@@ -78,7 +78,7 @@ internal class OverrideKeywordHandler(
         } else allMembers.toList()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canCompleteDeclarationWithMember(
         declaration: KtCallableDeclaration,
         symbolToOverride: KaCallableSymbol
@@ -96,7 +96,7 @@ internal class OverrideKeywordHandler(
         else -> false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         declaration: KtCallableDeclaration?,
@@ -143,7 +143,7 @@ internal class OverrideKeywordHandler(
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getSymbolTextForLookupElement(memberSymbol: KaCallableSymbol): String = buildString {
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")

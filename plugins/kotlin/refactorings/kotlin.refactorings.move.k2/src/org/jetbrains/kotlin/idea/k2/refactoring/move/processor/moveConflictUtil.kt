@@ -15,7 +15,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -178,7 +178,7 @@ private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.getFileSymbol() ?: return false
     val symbol = getSymbol()

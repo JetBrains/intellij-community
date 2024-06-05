@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -36,7 +36,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
         element.operationToken == KtTokens.EXCL
                 && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtPrefixExpression): Unit? =
         element.getKtType()
             ?.isBoolean

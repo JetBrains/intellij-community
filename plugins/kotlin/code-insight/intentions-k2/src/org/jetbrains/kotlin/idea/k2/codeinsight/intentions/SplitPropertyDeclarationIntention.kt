@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,7 +35,7 @@ internal class SplitPropertyDeclarationIntention :
         return element.initializer != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtProperty): Context? {
         val ktType = element.initializer?.getKtType() ?: return null
         return Context(if (ktType is KtErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))

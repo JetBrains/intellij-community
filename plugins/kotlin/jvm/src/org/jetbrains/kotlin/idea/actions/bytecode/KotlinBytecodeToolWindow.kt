@@ -21,7 +21,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
@@ -370,7 +370,7 @@ class KotlinBytecodeToolWindow(
         }
 
         @ApiStatus.Internal
-        fun KtAnalysisSession.compileSingleFile(
+        fun KaSession.compileSingleFile(
             ktFile: KtFile,
             configuration: CompilerConfiguration
         ): Pair<KaCompilationResult, ClassFileOrigins>? {

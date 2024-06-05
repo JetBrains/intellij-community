@@ -22,11 +22,11 @@ abstract class KotlinApplicatorBasedQuickFix<T : PsiElement, in I : KotlinApplic
      * Data needed to perform the fix
      *
      * Should not store inside
-     * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like :
+     * - Everything that came from [org.jetbrains.kotlin.analysis.api.KaSession] like :
      *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol] consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer] instead
      *      - [org.jetbrains.kotlin.analysis.api.types.KtType]
      *      - [org.jetbrains.kotlin.analysis.api.calls.KtCall]
-     * - [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] instance itself
+     * - [org.jetbrains.kotlin.analysis.api.KaSession] instance itself
      * - [PsiElement] consider using [com.intellij.psi.SmartPsiElementPointer] instead
      *
      */

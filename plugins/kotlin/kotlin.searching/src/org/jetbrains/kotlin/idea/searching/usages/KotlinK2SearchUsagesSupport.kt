@@ -252,7 +252,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getContainingClassType(symbol: KaCallableSymbol): KtType? {
         val containingSymbol = symbol.getContainingSymbol() ?: return null
         val classSymbol = containingSymbol as? KaNamedClassOrObjectSymbol ?: return null

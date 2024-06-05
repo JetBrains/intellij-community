@@ -5,7 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
@@ -59,18 +59,18 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtProperty.hasPrimitiveOrStringType(): Boolean {
         val type = this.getReturnKtType()
         return type.isPrimitive || type.isString
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.getConstantValue(): KaConstantValue? {
         return evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.usesNonConstValAsConstant(): Boolean {
         val diagnostics = getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         return diagnostics.find { it is KaFirDiagnostic.NonConstValUsedInConstantExpression } != null

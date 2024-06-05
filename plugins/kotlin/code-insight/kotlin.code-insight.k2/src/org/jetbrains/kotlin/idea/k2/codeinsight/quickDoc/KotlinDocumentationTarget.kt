@@ -16,7 +16,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -146,7 +146,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
     return null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
     val fqName = (containingSymbol as? KaClassLikeSymbol)?.classId?.asFqNameString()
@@ -241,7 +241,7 @@ internal fun PsiElement?.isModifier() =
 private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     declaration: KtDeclaration,
     onlyDefinition: Boolean,
-    symbolFinder: KtAnalysisSession.(KtSymbol) -> KtSymbol? = { it },
+    symbolFinder: KaSession.(KtSymbol) -> KtSymbol? = { it },
     preBuild: KDocTemplate.() -> Unit = {}
 ) {
     analyze(declaration) {
@@ -265,7 +265,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun renderKDoc(
     symbol: KtSymbol,
     stringBuilder: StringBuilder,
@@ -291,7 +291,7 @@ private fun renderKDoc(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun findKDoc(symbol: KtSymbol): KDocContent? {
     val ktElement = symbol.psi?.navigationElement as? KtElement
     ktElement?.findKDocByPsi()?.let {
@@ -319,7 +319,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     return (symbol as? KaDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
                                                            declaration: KtDeclaration,
                                                            onlyDefinition: Boolean,

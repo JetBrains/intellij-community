@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -46,7 +46,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.isLambdaReturningNotNull(): Boolean {
         val expression = if (this is KtLabeledExpression) this.baseExpression else this
         if (expression !is KtLambdaExpression) return false
@@ -61,13 +61,13 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         return !labelledReturnReturnsNullable && expression.bodyExpression?.getKtType()?.canBeNull == false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.isMethodReferenceReturningNotNull(): Boolean {
         val type = getKtType() as? KtFunctionalType ?: return false
         return !type.returnType.canBeNull
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
@@ -135,6 +135,6 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType.isList() = this.fullyExpandedType.isClassTypeWithClassId(ClassId.topLevel(StandardNames.FqNames.list))
 }

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -79,7 +79,7 @@ object ChangeVisibilityFixFactories {
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createFixForNoExplicitVisibilityInApiMode(
         element: KtDeclaration,
     ): List<ChangeVisibilityModCommandAction> {

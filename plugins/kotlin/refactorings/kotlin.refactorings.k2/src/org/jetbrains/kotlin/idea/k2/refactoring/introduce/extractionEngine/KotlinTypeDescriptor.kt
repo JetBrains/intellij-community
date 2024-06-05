@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -124,7 +124,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  *
  * @return true if [typeToCheck] doesn't contain unresolved components in the scope of [scope] and is "denotable"
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
     require(scope.containingFile is KtFile)
     ((typeToCheck as? KtTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
@@ -170,7 +170,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 fun approximateWithResolvableType(type: KtType?, scope: PsiElement): KtType? {
     if (type == null) return null
     if (!(type is KtNonErrorClassType && type.classSymbol is KaAnonymousObjectSymbol)

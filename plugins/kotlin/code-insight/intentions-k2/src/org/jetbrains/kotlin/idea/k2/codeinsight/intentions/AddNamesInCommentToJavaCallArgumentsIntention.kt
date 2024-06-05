@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
@@ -31,7 +31,7 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention :
 
     override fun isApplicableByPsi(element: KtCallElement): Boolean = element.canAddArgumentNameCommentsByPsi()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallElement): Context? = getArgumentNameComments(element)?.let { Context(it) }
 
     override fun invoke(

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
@@ -79,7 +79,7 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
@@ -90,7 +90,7 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun KtType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KtType? {
         if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (classSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.INTERFACE) return this
         return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
@@ -100,7 +100,7 @@ object CreateKotlinCallableActionTextBuilder {
     private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KtTypeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 type: KtClassType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter

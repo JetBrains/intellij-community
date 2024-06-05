@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
@@ -39,7 +39,7 @@ interface Fe10WrapperContext {
     // This property used to disable some logic used locally for debug purposes
     val enableLogging: Boolean get() = false
 
-    fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R
+    fun <R> withAnalysisSession(f: KaSession.() -> R): R
 
     /**
      * Legend:
@@ -119,7 +119,7 @@ class Fe10WrapperContextImpl(
     private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
+    override fun <R> withAnalysisSession(f: KaSession.() -> R): R {
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(ktElement, f)

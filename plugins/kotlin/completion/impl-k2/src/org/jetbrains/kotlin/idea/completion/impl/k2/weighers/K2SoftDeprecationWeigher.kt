@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -18,7 +18,7 @@ internal object K2SoftDeprecationWeigher {
     private var LookupElement.isSoftDeprecated: Boolean
             by NotNullableUserDataProperty(Key("KOTLIN_SOFT_DEPRECATED"), false)
 
-    context(KtAnalysisSession)
+    context(KaSession)
 fun addWeight(
         lookupElement: LookupElement,
         symbol: KtSymbol,
@@ -39,7 +39,7 @@ fun addWeight(
      * Lower soft-deprecated `Enum.values()` method in completion.
      * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
      */
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun isEnumValuesSoftDeprecatedMethod(
         symbol: KaCallableSymbol,
         languageVersionSettings: LanguageVersionSettings

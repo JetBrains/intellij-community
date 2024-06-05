@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -33,7 +33,7 @@ class KotlinDeclarationNameValidator(
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun validate(name: String): Boolean {
         val identifier = Name.identifier(name)
 
@@ -47,7 +47,7 @@ class KotlinDeclarationNameValidator(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun hasConflict(identifier: Name): Boolean {
         return when(target) {
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER, KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION -> {

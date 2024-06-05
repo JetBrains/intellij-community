@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
@@ -71,7 +71,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
             })
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isOptInRequired(
         enumEntriesPropertySymbol: KaCallableSymbol,
         moduleApiVersion: ApiVersion,
@@ -87,10 +87,10 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return EXPERIMENTAL_ANNOTATION_CLASS_ID in necessaryOptIns
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected abstract fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionLikeSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
         val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
@@ -101,7 +101,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFix(fixType, enumClassQualifiedName)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
         val qualifiedOrSimpleCall = callExpression.qualifiedOrSimpleValuesCall()
         val parent = qualifiedOrSimpleCall.parent
@@ -140,7 +140,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFixType.WITH_CAST
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
         val resolvedCall = expression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
         return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()

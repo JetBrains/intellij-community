@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -13,11 +13,11 @@ import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(argument) != null
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
@@ -39,12 +39,12 @@ fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun getFunctionSymbol(argument: KtExpression): KaFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
     ?: getDefaultArgumentSymbol(argument)?.first
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KtValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parameter = argument.parentOfType<KtParameter>() ?: return null
@@ -56,7 +56,7 @@ private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionLik
     return symbol to argumentSymbol
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, KtValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
@@ -68,7 +68,7 @@ fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionLikeSymbol, 
     return symbol to argumentSymbol
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isArrayGeneratorConstructorCall(symbol: KaFunctionLikeSymbol): Boolean {
     fun checkParameters(symbol: KaFunctionLikeSymbol): Boolean {
         return symbol.valueParameters.size == 2

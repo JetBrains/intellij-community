@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -64,7 +64,7 @@ class CyclicDependenciesSymbolResolutionTest : AbstractMultiModuleTest() {
 
     private fun KtNamedFunction.getBodyCallExpression(): KtCallExpression = bodyExpression!! as KtCallExpression
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtCallExpression.assertCalleeNameAndType(file: KtFile, expectedName: String, expectedType: KtType) {
         val ktFunction = file.declarations.first() as KtNamedFunction
         val ktCall = ktFunction.bodyExpression!! as KtCallExpression

@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -15,7 +15,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object KotlinIconProvider {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getIconFor(symbol: KtSymbol): Icon? {
         symbol.psi?.let { referencedPsi ->
             if (referencedPsi !is KtElement) {

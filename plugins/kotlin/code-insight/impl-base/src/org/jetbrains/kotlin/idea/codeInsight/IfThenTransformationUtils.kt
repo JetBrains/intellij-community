@@ -5,7 +5,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
@@ -182,7 +182,7 @@ sealed class IfThenTransformationStrategy {
     }
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun create(data: IfThenTransformationData): IfThenTransformationStrategy? {
             val newReceiverIsSafeCast = data.condition is KtIsExpression
 
@@ -203,7 +203,7 @@ sealed class IfThenTransformationStrategy {
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtExpression.hasImplicitReceiverMatchingThisExpression(thisExpression: KtThisExpression): Boolean {
             val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return false
             // we need to resolve callee instead of call, because in case of variable call, call is resolved to `invoke`
@@ -212,10 +212,10 @@ sealed class IfThenTransformationStrategy {
             return callableMemberCall.getImplicitReceivers().any { it.symbol == thisExpressionSymbol }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtExpression.resolveCallableMemberCall(): KtCallableMemberCall<*, *>? = this.resolveCall()?.successfulCallOrNull()
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this
             .parentsOfType<KtExpression>(withSelf = true)
             .mapNotNull { it.getSelectorOrThis() as? KtCallExpression }

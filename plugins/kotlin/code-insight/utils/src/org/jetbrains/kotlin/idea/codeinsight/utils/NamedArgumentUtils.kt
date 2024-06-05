@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -40,7 +40,7 @@ object NamedArgumentUtils {
      * Associates each argument of [call] with its argument name if `argumentName = argument` is valid for all arguments. Optionally,
      * starts at [startArgument] if it's not `null`.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun associateArgumentNamesStartingAt(
         call: KtCallElement,
         startArgument: KtValueArgument?
@@ -62,7 +62,7 @@ object NamedArgumentUtils {
      * The method also works for [argument] that is [KtLambdaArgument], since
      * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
         val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null

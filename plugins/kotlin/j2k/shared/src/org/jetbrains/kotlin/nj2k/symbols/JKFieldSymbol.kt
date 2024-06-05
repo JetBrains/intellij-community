@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 
 import com.intellij.psi.PsiVariable
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.tree.JKVariable
 import org.jetbrains.kotlin.nj2k.types.JKClassType
@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 sealed class JKFieldSymbol : JKSymbol {
-    context(KtAnalysisSession)
+    context(KaSession)
     abstract val fieldType: JKType?
 }
 
 class JKUniverseFieldSymbol(override val typeFactory: JKTypeFactory) : JKFieldSymbol(), JKUniverseSymbol<JKVariable> {
-    context(KtAnalysisSession)
+    context(KaSession)
     override val fieldType: JKType
         get() = target.type.type
 
@@ -32,7 +32,7 @@ class JKMultiverseFieldSymbol(
     override val target: PsiVariable,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseSymbol<PsiVariable> {
-    context(KtAnalysisSession)
+    context(KaSession)
     override val fieldType: JKType
         get() = typeFactory.fromPsiType(target.type)
 }
@@ -41,7 +41,7 @@ class JKMultiversePropertySymbol(
     override val target: KtCallableDeclaration,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseKtSymbol<KtCallableDeclaration> {
-    context(KtAnalysisSession)
+    context(KaSession)
     override val fieldType: JKType?
         get() = target.typeReference?.toJK(typeFactory)
 }
@@ -50,7 +50,7 @@ class JKMultiverseKtEnumEntrySymbol(
     override val target: KtEnumEntry,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseKtSymbol<KtEnumEntry> {
-    context(KtAnalysisSession)
+    context(KaSession)
     override val fieldType: JKType?
         get() = target.containingClass()?.let { klass ->
             JKClassType(
@@ -64,7 +64,7 @@ class JKUnresolvedField(
     override val target: String,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKUnresolvedSymbol {
-    context(KtAnalysisSession)
+    context(KaSession)
     override val fieldType: JKType
         get() = typeFactory.types.nullableAny
 }

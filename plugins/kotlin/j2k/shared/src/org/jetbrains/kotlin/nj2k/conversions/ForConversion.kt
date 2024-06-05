@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.*
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.hasWriteAccesses
 import org.jetbrains.kotlin.lexer.KtTokens.*
@@ -24,7 +24,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveConversion(conte
     private val forToWhile = ForToWhileConverter(context, symbolProvider)
     private val forToForeach = ForToForeachConverter(context, symbolProvider, typeFactory)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKJavaForLoopStatement) return recurse(element)
         val resultLoop = forToForeach.convert(element) ?: forToWhile.convert(element)
@@ -40,7 +40,7 @@ private class ForToForeachConverter(
     private val referenceSearcher: ReferenceSearcher
         get() = context.converter.referenceSearcher
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun convert(loop: JKJavaForLoopStatement): JKForInStatement? {
         val initializer = loop.initializers.singleOrNull() ?: return null
         val loopVar = (initializer as? JKDeclarationStatement)?.declaredStatements?.singleOrNull() as? JKLocalVariable ?: return null
@@ -117,7 +117,7 @@ private class ForToForeachConverter(
         return pair.first
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun forIterationRange(
         start: JKExpression,
         bound: JKExpression,
@@ -252,7 +252,7 @@ private class ForToForeachConverter(
 }
 
 private class ForToWhileConverter(private val context: NewJ2kConverterContext, private val symbolProvider: JKSymbolProvider) {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun convert(loop: JKJavaForLoopStatement): JKStatement {
         val whileBody = createWhileBody(loop)
         val condition =
@@ -287,11 +287,11 @@ private class ForToWhileConverter(private val context: NewJ2kConverterContext, p
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createWhileBody(loop: JKJavaForLoopStatement): JKStatement {
         if (loop.updaters.singleOrNull() is JKEmptyStatement) return loop::body.detached()
         val continueStatementConverter = object : RecursiveConversion(context) {
-            context(KtAnalysisSession)
+            context(KaSession)
             override fun applyToElement(element: JKTreeElement): JKTreeElement {
                 if (element !is JKContinueStatement) return recurse(element)
                 val elementPsi = element.psi<PsiContinueStatement>()!!

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
@@ -26,13 +26,13 @@ abstract class KotlinDiagnosticBasedInspectionBase<
      *
      * @param element a physical PSI
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     abstract fun prepareContextByDiagnostic(
         element: E,
         diagnostic: D,
     ): C?
 
-    context(KtAnalysisSession)
+    context(KaSession)
     final override fun prepareContext(element: E): C? =
         element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }

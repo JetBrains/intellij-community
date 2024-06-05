@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
@@ -45,7 +45,7 @@ class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<
 
     // copied from org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFixFactories.getPropertyInitializerType
     // TODO remove this code after porting to a JK conversion or make it a common utility
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtProperty.getPropertyInitializerType(): KtType? {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {

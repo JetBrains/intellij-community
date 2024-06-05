@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
@@ -31,7 +31,7 @@ class KotlinFirLookupElementFactory {
     private val namedArgumentLookupElementFactory = NamedArgumentLookupElementFactory()
     private val typeLookupElementFactory = TypeLookupElementFactory()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookupElement(
         symbol: KtNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
@@ -54,7 +54,7 @@ class KotlinFirLookupElementFactory {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createCallableLookupElement(
         name: Name,
         signature: KtCallableSignature<*>,
@@ -70,22 +70,22 @@ class KotlinFirLookupElementFactory {
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         packagePartLookupElementFactory.createPackagePartLookupElement(packagePartFqName)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createNamedArgumentLookupElement(name: Name, types: List<KtType>): LookupElement =
         namedArgumentLookupElementFactory.createNamedArgumentLookup(name, types)
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
         namedArgumentLookupElementFactory.createNamedArgumentWithValueLookup(name, value)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createTypeLookupElement(type: KtType): LookupElement? =
         typeLookupElementFactory.createLookup(type)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         typeLookupElementFactory.createLookup(classSymbol)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookupElementForClassLikeSymbol(
         symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.name.FqName
@@ -41,7 +41,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun provideDirectSymbol(symbol: KaDeclarationSymbol): JKSymbol {
         val psi = symbol.psi ?: return JKUnresolvedClassSymbol(NO_NAME_PROVIDED, typeFactory)
         return provideDirectSymbol(psi)
@@ -144,7 +144,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     fun provideMethodSymbol(fqName: String): JKMethodSymbol =
         provideMethodSymbol(fqName.asSafeFqName())
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun provideMethodSymbolWithExactSignature(methodFqName: String, parameterTypesFqNames: List<String>): JKMethodSymbol {
         return symbolsByFqNameWithExactSignature.getOrPutIfNotNull(listOf(methodFqName) + parameterTypesFqNames) {
             resolver.resolveMethodWithExactSignature(

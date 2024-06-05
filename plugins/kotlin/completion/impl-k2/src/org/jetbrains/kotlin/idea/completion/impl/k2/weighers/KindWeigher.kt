@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
@@ -39,7 +39,7 @@ internal object KindWeigher {
 
     private var LookupElement.isSymbolToSkip: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_SYMBOL_TO_SKIP"), false)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun addWeight(lookupElement: LookupElement, symbol: KtSymbol?, context: WeighingContext) {
         lookupElement.isSymbolToSkip = symbol in context.symbolsToSkip
         lookupElement.isEnumEntry = symbol is KaEnumEntrySymbol

@@ -9,7 +9,7 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.annotations.*
@@ -263,7 +263,7 @@ private data class ExperimentalMarkers(
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     fun KtAnnotationApplicationWithArgumentsInfo.isExperimentalMarker(): Boolean {
         val id = classId
@@ -355,7 +355,7 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun ExtractableCodeDescriptor.validateTempResult(
     result: ExtractionResult,
 ): ExtractableCodeDescriptorWithConflicts {

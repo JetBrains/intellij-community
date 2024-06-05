@@ -17,7 +17,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractConditionalContractEffectDeclaration
@@ -73,7 +73,7 @@ class KotlinFunctionCallInstruction(
         return result.toTypedArray()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processContracts(
         interpreter: DataFlowInterpreter,
         stateBefore: DfaMemoryState,
@@ -111,7 +111,7 @@ class KotlinFunctionCallInstruction(
         return resultValue
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
         callDescriptor: KtFunctionCall<*>,
@@ -165,7 +165,7 @@ class KotlinFunctionCallInstruction(
 
     data class MethodEffect(val dfaValue: DfaValue, val pure: Boolean)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getMethodReturnValue(
         factory: DfaValueFactory,
         stateBefore: DfaMemoryState,
@@ -260,12 +260,12 @@ class KotlinFunctionCallInstruction(
         return DfaCallArguments(qualifier, args.toTypedArray(), MutationSignature.unknown())
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getPsiMethod(): PsiMethod? {
         return call.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
         val constructedClass = (((expr.resolveCall() as? KtSuccessCallInfo)
             ?.call as? KtCallableMemberCall<*, *>)

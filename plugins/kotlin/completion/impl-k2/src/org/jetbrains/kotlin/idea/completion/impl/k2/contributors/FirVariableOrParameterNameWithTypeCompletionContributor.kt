@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -48,7 +48,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
@@ -73,7 +73,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         completeClassesFromIndices(variableOrParameter, visibilityChecker, lookupNamesAdded, weighingContext)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeFromParametersInFile(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
@@ -128,7 +128,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeClassesFromScopeContext(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
@@ -146,7 +146,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeClassesFromIndices(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
@@ -161,7 +161,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addSuggestions(
         variableOrParameter: KtCallableDeclaration,
         symbol: KaClassifierSymbol,
@@ -262,7 +262,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getAvailableTypeParameters(scopes: KtScope): Sequence<KaTypeParameterSymbol> =
         scopes.getClassifierSymbols().filterIsInstance<KaTypeParameterSymbol>()
 
@@ -270,7 +270,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun typeIsVisible(
         type: KtType,
         visibilityChecker: CompletionVisibilityChecker,

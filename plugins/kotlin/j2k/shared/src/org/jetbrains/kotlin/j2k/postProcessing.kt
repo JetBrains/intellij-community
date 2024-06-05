@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -23,7 +23,7 @@ interface PostProcessing {
 
     // For K2: separate analysis stage and application stage
     // to avoid reanalyzing the changed files
-    context(KtAnalysisSession)
+    context(KaSession)
     fun computeAppliers(target: PostProcessingTarget, converterContext: NewJ2kConverterContext): List<PostProcessingApplier>
 }
 
@@ -53,7 +53,7 @@ abstract class FileBasedPostProcessing : PostProcessing {
 
     abstract fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     final override fun computeAppliers(
         target: PostProcessingTarget,
         converterContext: NewJ2kConverterContext
@@ -68,7 +68,7 @@ abstract class FileBasedPostProcessing : PostProcessing {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     abstract fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
@@ -84,13 +84,13 @@ abstract class ElementsBasedPostProcessing : PostProcessing {
 
     abstract fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     final override fun computeAppliers(
         target: PostProcessingTarget,
         converterContext: NewJ2kConverterContext
     ): List<PostProcessingApplier> = listOf(computeApplier(target.elements(), converterContext))
 
-    context(KtAnalysisSession)
+    context(KaSession)
     abstract fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier
 }
 

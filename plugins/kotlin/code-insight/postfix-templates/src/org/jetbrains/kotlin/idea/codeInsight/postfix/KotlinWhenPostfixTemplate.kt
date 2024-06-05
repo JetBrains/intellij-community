@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -91,7 +91,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         return emptyList()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectEnumBranches(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
         val enumEntries = klass.getStaticDeclaredMemberScope()
             .getCallableSymbols()
@@ -105,12 +105,12 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectSealedClassInheritors(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
         return mutableListOf<CaseBranch>().also { processSealedClassInheritor(klass, it) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processSealedClassInheritor(klass: KaNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
         val classId = klass.classId ?: return false
 

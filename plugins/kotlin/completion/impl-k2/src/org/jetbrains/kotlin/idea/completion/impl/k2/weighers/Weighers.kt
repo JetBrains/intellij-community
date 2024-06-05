@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -53,7 +53,7 @@ internal class WeighingContext private constructor(
      */
     class ContextualSymbolsCache(private val symbolsContainingPosition: Map<Name, List<KaCallableSymbol>>) {
         private val contextualOverriddenSymbols: MutableMap<Name, Set<KaCallableSymbol>> = mutableMapOf()
-        context(KtAnalysisSession)
+        context(KaSession)
         fun symbolIsPresentInContext(symbol: KaCallableSymbol): Boolean = withValidityAssertion {
             if (symbol !is KtNamedSymbol) return false
 
@@ -67,7 +67,7 @@ internal class WeighingContext private constructor(
             return symbol.unwrapFakeOverrides in overriddenSymbols
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         operator fun contains(name: Name): Boolean = withValidityAssertion { name in symbolsContainingPosition }
     }
 
@@ -108,7 +108,7 @@ internal class WeighingContext private constructor(
     }
 
     companion object {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun createWeighingContext(
             basicContext: FirBasicCompletionContext,
             receiver: KtElement?,
@@ -133,7 +133,7 @@ internal class WeighingContext private constructor(
             )
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun createEmptyWeighingContext(
             basicContext: FirBasicCompletionContext,
             positionInFakeCompletionFile: PsiElement,
@@ -154,7 +154,7 @@ internal class WeighingContext private constructor(
             return ImportPath(name, false) in this || ImportPath(name.parent(), true) in this
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getContextualSymbolsCache(basicContext: FirBasicCompletionContext, element: PsiElement): ContextualSymbolsCache {
             if (element.parent !is KtSimpleNameExpression) {
                 return ContextualSymbolsCache(emptyMap())
@@ -172,7 +172,7 @@ internal class WeighingContext private constructor(
 }
 
 internal object Weighers {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun applyWeighsToLookupElement(
         context: WeighingContext,
         lookupElement: LookupElement,
@@ -199,7 +199,7 @@ internal object Weighers {
         PreferFewerParametersWeigher. addWeight(lookupElement, symbol)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun applyWeighsToLookupElementForCallable(
         context: WeighingContext,
         lookupElement: LookupElement,

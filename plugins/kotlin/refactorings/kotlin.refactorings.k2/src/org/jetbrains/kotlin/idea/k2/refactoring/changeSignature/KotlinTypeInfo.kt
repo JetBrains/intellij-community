@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
@@ -32,7 +32,7 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement) {
 private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
     typeErrorTypeRenderer = object : KtTypeErrorTypeRenderer {
         override fun renderType(
-            analysisSession: KtAnalysisSession,
+            analysisSession: KaSession,
             type: KtTypeErrorType,
             typeRenderer: KtTypeRenderer,
             printer: PrettyPrinter
@@ -91,7 +91,7 @@ internal fun KtPsiFactory.createType(
     return createType(typeText)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction: PsiElement): KaSubstitutor? {
     val inheritorCallable = inheritorDeclaration.getSymbol()
     val baseCallable = (baseFunction as? KtCallableDeclaration)?.getSymbol()

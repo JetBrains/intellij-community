@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.jdk2k
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -20,7 +20,7 @@ interface Transformation {
     operator fun invoke(callExpression: KtCallExpression, replacement: Replacement)
     fun isApplicableByPsi(callExpression: KtCallExpression): Boolean = true
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean = true
 }
 
@@ -40,7 +40,7 @@ object ToKotlinPrint : Transformation {
         WithoutAdditionalTransformation.invoke(callExpression, replacement)
     }
 
-    context(KtAnalysisSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
+    context(KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveCall()
             ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
 }
@@ -74,7 +74,7 @@ object ToExtensionFunctionWithNonNullableReceiver : Transformation {
     override fun isApplicableByPsi(callExpression: KtCallExpression): Boolean =
         callExpression.valueArguments.isNotEmpty()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         callExpression
             .valueArguments.firstOrNull()
@@ -98,14 +98,14 @@ object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformat
     override fun isApplicableByPsi(callExpression: KtCallExpression): Boolean =
         ToExtensionFunctionWithNonNullableReceiver.isApplicableByPsi(callExpression)
 
-    context(KtAnalysisSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
+    context(KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         callExpression.valueArguments.firstOrNull()?.getArgumentExpression()?.getKtType()?.isMutableListOrSubtype() == true
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType?.isMutableList(): Boolean =
         this?.expandedClassSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType?.isMutableListOrSubtype(): Boolean =
         isMutableList() || this?.expandedClassSymbol?.superTypes?.reversed()?.any { it.isMutableList() } == true
 }

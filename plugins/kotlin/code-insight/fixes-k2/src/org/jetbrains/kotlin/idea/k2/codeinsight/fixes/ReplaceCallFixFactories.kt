@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -101,7 +101,7 @@ object ReplaceCallFixFactories {
             } else emptyList()
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun shouldHaveNotNullType(expression: KtExpression): Boolean {
         // This function is used to determine if we may need to add an elvis operator after the safe call. For example, to replace
         // `s.length` in `val x: Int = s.length` with a safe call, it should be replaced with `s.length ?: <caret>`.
@@ -109,7 +109,7 @@ object ReplaceCallFixFactories {
         return expectedType.nullability == KtTypeNullability.NON_NULLABLE && !expectedType.isUnit
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtType.isMap(): Boolean {
         val symbol = this.expandedClassSymbol ?: return false
         if (symbol.name?.asString()?.endsWith("Map") != true) return false

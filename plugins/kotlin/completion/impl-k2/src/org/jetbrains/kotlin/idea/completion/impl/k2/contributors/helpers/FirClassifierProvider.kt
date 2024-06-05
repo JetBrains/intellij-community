@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 
 internal object FirClassifierProvider {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getAvailableClassifiersCurrentScope(
         originalKtFile: KtFile,
         position: KtElement,
@@ -27,7 +27,7 @@ internal object FirClassifierProvider {
             classifiers
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,
         scopeNameFilter: KtScopeNameFilter,

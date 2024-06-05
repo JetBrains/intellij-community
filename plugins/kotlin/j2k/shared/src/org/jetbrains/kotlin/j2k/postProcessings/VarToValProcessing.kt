@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -55,7 +55,7 @@ class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProp
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isApplicableToByAnalyze(element: KtProperty): Boolean {
         val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
 

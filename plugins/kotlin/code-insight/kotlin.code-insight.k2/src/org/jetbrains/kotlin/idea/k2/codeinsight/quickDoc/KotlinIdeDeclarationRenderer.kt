@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
@@ -92,7 +92,7 @@ internal class KotlinIdeDeclarationRenderer(
     private var highlightingManager: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> = KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING,
     private val rootSymbol: KaDeclarationSymbol? = null
 ) {
-    context(KtAnalysisSession)
+    context(KaSession)
     internal fun renderFunctionTypeParameter(parameter: KtParameter): String? = prettyPrint {
         parameter.nameAsName?.let { name -> withSuffix(highlight(": ") { asColon }) { append(highlight(name.renderName()) { asParameter }) } }
         parameter.typeReference?.getKtType()?.let { type ->
@@ -113,7 +113,7 @@ internal class KotlinIdeDeclarationRenderer(
         propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
         parameterDefaultValueRenderer = object : KtParameterDefaultValueRenderer {
-            override fun renderDefaultValue(analysisSession: KtAnalysisSession, symbol: KtValueParameterSymbol, printer: PrettyPrinter) {
+            override fun renderDefaultValue(analysisSession: KaSession, symbol: KtValueParameterSymbol, printer: PrettyPrinter) {
                 val defaultValue = with(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
                     with(highlightingManager) {
@@ -127,7 +127,7 @@ internal class KotlinIdeDeclarationRenderer(
 
         valueParameterRenderer = object : KaValueParameterSymbolRenderer {
             override fun renderSymbol(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KtValueParameterSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -174,7 +174,7 @@ internal class KotlinIdeDeclarationRenderer(
     private fun KtKeywordsRenderer.keywordsRenderer(): KtKeywordsRenderer = with {
         keywordRenderer = object : KtKeywordRenderer {
             override fun renderKeyword(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 keyword: KtKeywordToken,
                 owner: KtAnnotated,
                 keywordsRenderer: KtKeywordsRenderer,
@@ -190,7 +190,7 @@ internal class KotlinIdeDeclarationRenderer(
     private fun KtAnnotationRenderer.annotationRenderer(): KtAnnotationRenderer = with {
         annotationListRenderer = object : KtAnnotationListRenderer {
             override fun renderAnnotations(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 owner: KtAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
@@ -218,7 +218,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
         annotationArgumentsRenderer = object : KtAnnotationArgumentsRenderer {
             override fun renderAnnotationArguments(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 annotation: KtAnnotationApplication,
                 owner: KtAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
@@ -237,7 +237,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
         annotationsQualifiedNameRenderer = object : KtAnnotationQualifierRenderer {
             override fun renderQualifier(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 annotation: KtAnnotationApplication,
                 owner: KtAnnotated,
                 annotationRenderer: KtAnnotationRenderer,
@@ -278,7 +278,7 @@ internal class KotlinIdeDeclarationRenderer(
         fun KaDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassOrObjectSymbol && isInline
 
         val valueModifierRenderer = object : KtRendererOtherModifiersProvider {
-            override fun getOtherModifiers(analysisSession: KtAnalysisSession, symbol: KaDeclarationSymbol): List<KtModifierKeywordToken> {
+            override fun getOtherModifiers(analysisSession: KaSession, symbol: KaDeclarationSymbol): List<KtModifierKeywordToken> {
                 if (symbol.isInlineClassOrObject()) {
                     (symbol.psi as? KtClass)?.let { klass ->
                         if (klass.hasModifier(KtTokens.INLINE_KEYWORD)) {
@@ -301,7 +301,7 @@ internal class KotlinIdeDeclarationRenderer(
     private fun createFunctionalTypeRenderer(): KtFunctionalTypeRenderer {
         return object : KtFunctionalTypeRenderer {
             override fun renderType(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 type: KtFunctionalType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
@@ -359,7 +359,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createTypeParameterTypeRenderer(): KtTypeParameterTypeRenderer {
         return object : KtTypeParameterTypeRenderer {
             override fun renderType(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 type: KtTypeParameterType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
@@ -378,7 +378,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createUsualClassTypeRenderer(): KtUsualClassTypeRenderer {
         return object : KtUsualClassTypeRenderer {
             override fun renderType(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 type: KtUsualClassType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
@@ -399,7 +399,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createClassIdRenderer(): KtClassTypeQualifierRenderer {
         return object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 type: KtClassType,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
@@ -419,7 +419,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createTypeNameRenderer(): KtTypeNameRenderer {
         return object : KtTypeNameRenderer {
             override fun renderName(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 name: Name,
                 owner: KtType,
                 typeRenderer: KtTypeRenderer,
@@ -458,7 +458,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createCallableSignatureRenderer(): KtCallableSignatureRenderer {
         return object : KtCallableSignatureRenderer {
             override fun renderCallableSignature(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaCallableSymbol,
                 keyword: KtKeywordToken?,
                 declarationRenderer: KtDeclarationRenderer,
@@ -531,7 +531,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createSingleTypeParameterRenderer(): KtSingleTypeParameterSymbolRenderer {
         return object : KtSingleTypeParameterSymbolRenderer {
             override fun renderSymbol(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaTypeParameterSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -563,7 +563,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createTypeParametersRenderer(): KtTypeParametersRenderer {
         return object : KtTypeParametersRenderer {
             override fun renderTypeParameters(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaDeclarationSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -592,7 +592,7 @@ internal class KotlinIdeDeclarationRenderer(
             }
 
             override fun renderWhereClause(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaDeclarationSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -634,7 +634,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createValueParametersRenderer(): KtCallableParameterRenderer {
         return object : KtCallableParameterRenderer {
             override fun renderValueParameters(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaCallableSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -659,7 +659,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createNameRenderer(): KtDeclarationNameRenderer {
         return object : KtDeclarationNameRenderer {
             override fun renderName(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 name: Name,
                 symbol: KtNamedSymbol?,
                 declarationRenderer: KtDeclarationRenderer,
@@ -716,7 +716,7 @@ internal class KotlinIdeDeclarationRenderer(
     fun createReturnTypeRenderer(): KtCallableReturnTypeRenderer {
         return object : KtCallableReturnTypeRenderer {
             override fun renderReturnType(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaCallableSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter

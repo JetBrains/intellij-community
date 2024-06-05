@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.checkers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -15,15 +15,15 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferenceP
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun isVisible(symbol: KaSymbolWithVisibility): Boolean
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun isVisible(symbol: KaCallableSymbol): Boolean {
         return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun isVisible(symbol: KaClassifierSymbol): Boolean {
         return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
     }
@@ -33,7 +33,7 @@ internal fun interface CompletionVisibilityChecker {
             basicContext: FirBasicCompletionContext,
             positionContext: KotlinRawPositionContext
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
-            context(KtAnalysisSession)
+            context(KaSession)
             override fun isVisible(symbol: KaSymbolWithVisibility): Boolean {
                 if (positionContext is KDocNameReferencePositionContext) return true
 

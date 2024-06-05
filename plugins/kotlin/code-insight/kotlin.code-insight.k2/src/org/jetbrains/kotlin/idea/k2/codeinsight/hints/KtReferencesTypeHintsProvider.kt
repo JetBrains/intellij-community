@@ -7,7 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -285,7 +285,7 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
     return false
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KtType? =
     calculateAllTypes<KtType>(element) { declarationType, allTypes, cannotBeNull ->
         if (declarationType is KtErrorType) return@calculateAllTypes null
@@ -319,7 +319,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
         }
     }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isUnclearType(type: KtType, element: KtCallableDeclaration): Boolean {
     if (element !is KtProperty) return true
 
@@ -362,7 +362,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
     val resolveCall = initializer.resolveCall() ?: return false
@@ -375,7 +375,7 @@ private fun isConstructorCall(initializer: KtExpression?): Boolean {
     return constructorCall != null && (constructorCall.symbol.typeParameters.isEmpty() || callExpression.typeArgumentList != null)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.isClassOrPackageReference(): Boolean =
     when (this) {
         is KtNameReferenceExpression ->

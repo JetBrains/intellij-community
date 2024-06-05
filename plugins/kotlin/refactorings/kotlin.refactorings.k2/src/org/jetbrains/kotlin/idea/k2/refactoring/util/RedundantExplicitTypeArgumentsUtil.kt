@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-context(KtAnalysisSession)
+context(KaSession)
 fun areTypeArgumentsRedundant(element: KtTypeArgumentList): Boolean {
     val callExpression = element.parent as? KtCallExpression ?: return false
     val resolvedCall = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return false
@@ -58,7 +58,7 @@ fun areTypeArgumentsRedundant(element: KtTypeArgumentList): Boolean {
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): Set<KaTypeParameterSymbol>? {
     val result = mutableSetOf<KaTypeParameterSymbol>()
     for ((argumentExpression, sig) in resolvedCall.argumentMapping) {
@@ -85,7 +85,7 @@ private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): 
     return result
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KtFunctionCall<*>): Set<KaTypeParameterSymbol> {
     val receiverParameterType = resolvedCall.partiallyAppliedSymbol.symbol.receiverParameter?.type ?: return emptySet()
     val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return emptySet()
@@ -101,7 +101,7 @@ private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KtFunctionCa
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSymbol, KtType>): KtType? {
     return when (type) {
         is KtTypeParameterType -> typeArgumentsMapping[type.symbol]
@@ -117,13 +117,13 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSym
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun isApplicableType(type: KtType, expectedType: KtType): Boolean {
     return type.isEqualTo(expectedType) ||
             (expectedType.isMarkedNullable && type.withNullability(KtTypeNullability.NULLABLE).isEqualTo(expectedType))
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun findExpectedType(callExpression: KtCallExpression): KtType? {
     for (element in callExpression.parentsWithSelf) {
         if (element !is KtExpression) continue
@@ -187,7 +187,7 @@ private fun extractReturnExpressions(expression: KtExpression): Set<KtExpression
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun canTypesInferredFromOuterCall(outerCallExpression: KtCallExpression, argumentExpression: KtCallExpression): Boolean {
     val argumentType = argumentExpression.getKtType() ?: return false
     val resolvedCall = outerCallExpression.resolveCall()?.singleFunctionCallOrNull() ?: return false
@@ -207,7 +207,7 @@ private fun canTypesInferredFromOuterCall(outerCallExpression: KtCallExpression,
     return canTypesInferredFromAnotherArguments(argumentExpression, resolvedCall)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun canTypesInferredFromAnotherArguments(
     argumentExpression: KtCallExpression,
     resolvedCall: KtFunctionCall<*>,
@@ -236,7 +236,7 @@ private fun canTypesInferredFromAnotherArguments(
     return collectTypeParameterTypes.isEmpty()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun collectTypeParameterTypes(type: KtType): Set<KtTypeParameterType> {
     val result = mutableSetOf<KtTypeParameterType>()
 
@@ -255,7 +255,7 @@ private fun collectTypeParameterTypes(type: KtType): Set<KtTypeParameterType> {
 /**
  * See [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.RemoveExplicitTypeArguments.testInapplicableTypeThatIsAFunItCannotBeInferred]
  */
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtLambdaExpression.isExplicitTypeArgumentsNeededForTypeInference(
     parameter: KtVariableLikeSignature<KtValueParameterSymbol>
 ): Boolean {

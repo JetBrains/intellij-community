@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 
 internal class ClassLookupElementFactory {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookup(
         symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,

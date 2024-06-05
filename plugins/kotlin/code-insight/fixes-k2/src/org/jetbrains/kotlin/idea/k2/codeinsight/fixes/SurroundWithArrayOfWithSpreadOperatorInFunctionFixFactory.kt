@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
@@ -72,7 +72,7 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createFix(
         expectedArrayType: KtType,
         element: KtExpression,

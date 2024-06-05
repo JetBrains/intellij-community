@@ -14,7 +14,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -68,7 +68,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
@@ -112,7 +112,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<PsiElement>.anyHasSmartCast(element: KtProperty): Boolean {
         val declarationName = element.name ?: return false
 
@@ -187,7 +187,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {
         if (element.isLocal) return false
         if (element.getter != null || element.setter != null || element.delegate != null) return false
@@ -259,7 +259,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     private fun List<PsiElement>.hasComments(): Boolean = any { it is PsiComment }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findFirstAssignment(property: KtProperty): KtBinaryExpression? {
         if (property.typeReference == null) return null
 
@@ -344,10 +344,10 @@ internal class JoinDeclarationAndAssignmentInspection :
             .asSequence()
             .map { it.resolve() }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<PsiElement>.anyOfHasReference(element: KtProperty) = any { it.hasReference(element) }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
         val declarationName = (element.getSymbol() as? KtPossiblyNamedSymbol)?.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
@@ -355,7 +355,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isSubtype(type: KtType?, superType: KtType?): Boolean {
         if (type == null || superType == null) return false
         return type.isPossiblySubTypeOf(superType)
@@ -365,7 +365,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     private fun PsiElement.nextSiblings(): Sequence<PsiElement> = siblings(forward = true, withItself = false)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun equalNullableTypes(type1: KtType?, type2: KtType?): Boolean {
         if (type1 == null) return type2 == null
         if (type2 == null) return false

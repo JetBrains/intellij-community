@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)
@@ -32,7 +32,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
         return recurse(element)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun JKField.initializationState(): InitializationState {
         val containingClass = parentOfType<JKClass>() ?: return NON_INITIALIZED
         val constructors = containingClass.declarationList.filterIsInstance<JKConstructor>()
@@ -78,7 +78,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun JKClass.findDeclarationsWithInitializersFor(field: JKField): Set<JKDeclaration> {
         val fieldSymbol = symbolProvider.provideUniverseSymbol(field)
         val usages = field.findUsages(scope = this, context)

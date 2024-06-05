@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -26,7 +26,7 @@ internal object ExpectedTypeWeigher {
             element.matchesExpectedType ?: MatchesExpectedType.NON_TYPABLE
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol?) {
         val expectedType = context.expectedType
 
@@ -50,7 +50,7 @@ internal object ExpectedTypeWeigher {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun matchesExpectedType(
         symbol: KtSymbol,
         expectedType: KtType?
@@ -78,7 +78,7 @@ internal object ExpectedTypeWeigher {
         ;
 
         companion object {
-            context(KtAnalysisSession)
+            context(KaSession)
             fun matches(actualType: KtType, expectedType: KtType): MatchesExpectedType = when {
                 actualType isPossiblySubTypeOf expectedType -> MATCHES
                 actualType.withNullability(KtTypeNullability.NON_NULLABLE) isPossiblySubTypeOf expectedType -> MATCHES_WITHOUT_NULLABILITY

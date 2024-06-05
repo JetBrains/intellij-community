@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -26,7 +26,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         error("Not supported in K2 J2K")
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
@@ -48,7 +48,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         return Applier(processingDataList)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processDiagnostic(diagnostic: KtDiagnosticWithPsi<*>, file: KtFile, rangeMarker: RangeMarker?): ProcessingData? {
         val processing = diagnosticToProcessing[diagnostic.diagnosticClass] ?: return null
         val element = diagnostic.psi
@@ -78,7 +78,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
 internal interface K2DiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
     val diagnosticClass: KClass<DIAGNOSTIC>
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createFix(diagnostic: DIAGNOSTIC) : K2DiagnosticFix?
 }
 
@@ -87,7 +87,7 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWith
     private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
         val quickfix = fixFactory.createQuickFixes(diagnostic).singleOrNull() ?: return null
         return object : K2DiagnosticFix {
@@ -103,7 +103,7 @@ internal class K2CustomDiagnosticBasedProcessing<DIAGNOSTIC : KtDiagnosticWithPs
     private val customFixFactory: (diagnostic: DIAGNOSTIC) -> K2DiagnosticFix?
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
         return customFixFactory(diagnostic)
     }

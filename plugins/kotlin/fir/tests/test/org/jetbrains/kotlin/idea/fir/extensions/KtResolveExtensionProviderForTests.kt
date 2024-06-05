@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -96,7 +96,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
 
     override fun createNavigationTargetsProvider(): KtResolveExtensionNavigationTargetsProvider {
         return object : KtResolveExtensionNavigationTargetsProvider() {
-            override fun KtAnalysisSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
+            override fun KaSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
                 element.parentsWithSelf
                     .filterIsInstance<KtDeclaration>()
                     .firstNotNullOfOrNull { declaration ->

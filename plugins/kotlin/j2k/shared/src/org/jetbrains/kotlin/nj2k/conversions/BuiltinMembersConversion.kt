@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
@@ -24,13 +24,13 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     private val conversions: Map<String, List<Conversion>> =
         ConversionsHolder(symbolProvider, typeFactory).getConversions()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKExpression) return recurse(element)
         return recurse(element.convert() ?: element)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun JKExpression.convert(): JKExpression? {
         val selector = when (this) {
             is JKQualifiedExpression -> selector
@@ -99,7 +99,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     }
 
     private interface ResultBuilder {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun build(from: JKExpression): JKExpression
     }
 
@@ -109,7 +109,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
         private val argumentsProvider: (JKArgumentList) -> JKArgumentList,
         private val canMoveLambdaOutsideParentheses: Boolean = false
     ) : ResultBuilder {
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun build(from: JKExpression): JKExpression {
             val methodSymbol = if (parameterTypesFqNames == null) {
                 symbolProvider.provideMethodSymbol(fqName)
@@ -148,7 +148,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     }
 
     private inner class FieldBuilder(private val fqName: String) : ResultBuilder {
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun build(from: JKExpression): JKExpression =
             when (from) {
                 is JKCallExpression ->
@@ -166,7 +166,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     }
 
     private inner class ExtensionMethodBuilder(private val fqName: String) : ResultBuilder {
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun build(from: JKExpression): JKExpression =
             when (from) {
                 is JKCallExpression -> {
@@ -186,7 +186,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     }
 
     private inner class CustomExpressionBuilder(val builder: (JKExpression) -> JKExpression) : ResultBuilder {
-        context(KtAnalysisSession)
+        context(KaSession)
         override fun build(from: JKExpression): JKExpression = builder(from)
     }
 

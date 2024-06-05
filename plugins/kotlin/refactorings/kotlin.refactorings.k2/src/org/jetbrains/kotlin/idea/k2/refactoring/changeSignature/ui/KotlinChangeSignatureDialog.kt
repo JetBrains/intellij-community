@@ -16,7 +16,7 @@ import com.intellij.refactoring.ui.VisibilityPanelBase
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -284,5 +284,5 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.getPresentableText(): String = render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)

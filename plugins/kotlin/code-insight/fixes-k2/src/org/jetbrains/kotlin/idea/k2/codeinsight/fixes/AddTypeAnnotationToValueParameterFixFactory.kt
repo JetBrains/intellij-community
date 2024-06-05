@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -31,7 +31,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
             )
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
         val type = defaultValue.getKtType() ?: return null
 
@@ -51,7 +51,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
         return getTypeName(type)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getTypeName(type: KtType): String {
         val typeName = type.render(
             KtTypeRendererForSource.WITH_SHORT_NAMES,

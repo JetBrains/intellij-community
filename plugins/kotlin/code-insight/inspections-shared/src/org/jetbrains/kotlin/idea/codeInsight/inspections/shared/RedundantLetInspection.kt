@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
@@ -45,7 +45,7 @@ internal sealed class RedundantLetInspection :
     final override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallExpression): Unit? {
         if (!element.isCalling(sequenceOf(KOTLIN_LET_FQ_NAME))) return null
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return null
@@ -60,7 +60,7 @@ internal sealed class RedundantLetInspection :
         ).asUnit
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected abstract fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,
@@ -104,7 +104,7 @@ internal sealed class RedundantLetInspection :
 
 internal class SimpleRedundantLetInspection : RedundantLetInspection() {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,
@@ -119,7 +119,7 @@ internal class SimpleRedundantLetInspection : RedundantLetInspection() {
 
 internal class ComplexRedundantLetInspection : RedundantLetInspection() {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun isApplicable(
         element: KtCallExpression,
         bodyExpression: PsiElement,
@@ -228,7 +228,7 @@ private fun KtCallExpression.applyTo(
     updater.moveCaretTo(replaced)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtBinaryExpression.isApplicable(parameterName: String, isTopLevel: Boolean = true): Boolean {
     val left = left ?: return false
     if (isTopLevel) {
@@ -245,7 +245,7 @@ private fun KtBinaryExpression.isApplicable(parameterName: String, isTopLevel: B
     return right.isApplicable(parameterName)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtExpression.isApplicable(parameterName: String): Boolean = when (this) {
     is KtNameReferenceExpression -> text != parameterName
     is KtDotQualifiedExpression -> !hasLambdaExpression() && !nameUsed(parameterName)
@@ -255,7 +255,7 @@ private fun KtExpression.isApplicable(parameterName: String): Boolean = when (th
     else -> false
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
     if (valueArguments.isEmpty()) return false
     return valueArguments.all {
@@ -264,7 +264,7 @@ private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtDotQualifiedExpression.isApplicable(parameterName: String): Boolean {
     return !hasLambdaExpression()
             && getLeftMostReceiverExpression().let { receiver ->
@@ -278,7 +278,7 @@ private fun KtDotQualifiedExpression.isApplicable(parameterName: String): Boolea
             && !getHasNullableReceiverExtensionCall()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtDotQualifiedExpression.getHasNullableReceiverExtensionCall(): Boolean {
     val hasNullableType = selectorExpression
         ?.resolveCall()
@@ -303,7 +303,7 @@ private fun KtLambdaExpression.getParameterName(): String? {
 private fun KtExpression.nameUsed(name: String, except: KtNameReferenceExpression? = null): Boolean =
     anyDescendantOfType<KtNameReferenceExpression> { it != except && it.getReferencedName() == name }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExpression): List<KtNameReferenceExpression> {
     val valueParameterSymbol = getAnonymousFunctionSymbol().valueParameters
         .singleOrNull()

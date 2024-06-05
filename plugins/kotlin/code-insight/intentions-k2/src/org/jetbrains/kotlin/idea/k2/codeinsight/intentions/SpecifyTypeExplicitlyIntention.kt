@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -28,7 +28,7 @@ internal class SpecifyTypeExplicitlyIntention:
         return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun skip(element: KtCallableDeclaration): Boolean =
         element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .any { diagnostic ->
@@ -48,7 +48,7 @@ internal class SpecifyTypeExplicitlyIntention:
         else -> KotlinBundle.message("specify.type.explicitly")
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtCallableDeclaration): TypeInfo? =
         if (skip(element)) null
         else getTypeInfo(element).takeUnless { it.defaultType.isError }

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -352,14 +352,14 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
         resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
     return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
@@ -384,7 +384,7 @@ private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf
     "enumValueOf",
 ).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
@@ -400,13 +400,13 @@ fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     val calleeExpression = this.calleeExpression ?: return false
     return (calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName() in ENUM_STATIC_METHOD_NAMES && calleeExpression.isSynthesizedFunction()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
 }

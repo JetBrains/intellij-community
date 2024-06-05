@@ -8,7 +8,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
@@ -22,7 +22,7 @@ import javax.swing.Icon
 object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getIcon(ktSymbol: KtSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
@@ -42,7 +42,7 @@ object KtIconProvider {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getIcon(symbol: KtSymbol, flags: Int): Icon? {
         var result: Icon = getBaseIcon(symbol) ?: return null
 
@@ -55,7 +55,7 @@ object KtIconProvider {
         return result
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getBaseIcon(symbol: KtSymbol): Icon? {
         val isAbstract = (symbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
@@ -102,7 +102,7 @@ object KtIconProvider {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getVisibilityIcon(symbol: KtSymbol): Icon? {
         return when ((symbol as? KaSymbolWithVisibility)?.visibility?.normalize()) {
             Visibilities.Public -> PlatformIcons.PUBLIC_ICON

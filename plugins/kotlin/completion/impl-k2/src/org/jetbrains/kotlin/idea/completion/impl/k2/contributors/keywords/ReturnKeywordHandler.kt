@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
@@ -27,8 +27,8 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 /**
  * Implementation in K1: [org.jetbrains.kotlin.idea.completion.returnExpressionItems]
  */
-internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.RETURN_KEYWORD) {
-    context(KtAnalysisSession)
+internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTokens.RETURN_KEYWORD) {
+    context(KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -66,7 +66,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         return result
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addAllReturnVariants(
         result: MutableList<LookupElement>,
         returnType: KtType,
@@ -88,7 +88,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getExpressionsToReturnByType(returnType: KtType): List<ExpressionTarget> = buildList {
         if (returnType.canBeNull) {
             add(ExpressionTarget("null", addToLookupElementTail = false))

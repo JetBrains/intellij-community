@@ -5,7 +5,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 
 object K2SemanticMatcher {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun findMatches(patternElement: KtElement, scopeElement: KtElement): List<KtElement> {
         val matches = mutableListOf<KtElement>()
 
@@ -81,7 +81,7 @@ object K2SemanticMatcher {
      * @param parameters The list of parameters which are used in [pattern].
      * @return null if match fails
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun matchRanges(
         target: KotlinPsiRange,
         pattern: KotlinPsiRange,
@@ -131,16 +131,16 @@ object K2SemanticMatcher {
         return prepareResult(target, substitution)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun KtElement.isSemanticMatch(patternElement: KtElement): Boolean = isSemanticMatch(patternElement, MatchingContext())
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtElement.isSemanticMatch(
         patternElement: KtElement,
         context: MatchingContext,
-    ): Boolean = this == patternElement || accept(VisitingMatcher(this@KtAnalysisSession, context), patternElement)
+    ): Boolean = this == patternElement || accept(VisitingMatcher(this@KaSession, context), patternElement)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getMatchedStringFragmentsOrNull(
         target: KtStringTemplateExpression, patternInfo: K2ExtractableSubstringInfo, matchingContext: MatchingContext
     ): K2ExtractableSubstringInfo? {
@@ -211,7 +211,7 @@ object K2SemanticMatcher {
         val blockBodyOwners: MutableMap<KaFunctionLikeSymbol, KaFunctionLikeSymbol> = mutableMapOf(),
         val parameterSubstitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
     ) {
-        context(KtAnalysisSession)
+        context(KaSession)
         fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean {
             if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
 
@@ -231,12 +231,12 @@ object K2SemanticMatcher {
             return targetSymbol == patternSymbol || symbols[targetSymbol] == patternSymbol
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KaFunctionLikeSymbol, patternFunction: KaFunctionLikeSymbol): Boolean =
             targetFunction == patternFunction || blockBodyOwners[targetFunction] == patternFunction
 
         // TODO: current approach doesn't work on pairs of types such as `List<U>` and `List<T>`, where `U` and `T` are associated
-        context(KtAnalysisSession)
+        context(KaSession)
         fun areTypesEqualOrAssociated(targetType: KtType?, patternType: KtType?): Boolean {
             if (targetType == null || patternType == null) return targetType == null && patternType == null
 
@@ -246,7 +246,7 @@ object K2SemanticMatcher {
                     symbols[targetType.symbol] == patternType.symbol
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun associateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) {
             val targetSymbol = targetDeclaration.getSymbol()
             val patternSymbol = patternDeclaration.getSymbol()
@@ -260,14 +260,14 @@ object K2SemanticMatcher {
             }
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun associateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) {
             check(targetFunction.bodyExpression is KtBlockExpression && patternFunction.bodyExpression is KtBlockExpression)
 
             blockBodyOwners[targetFunction.getFunctionLikeSymbol()] = patternFunction.getFunctionLikeSymbol()
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun associateSingleParameterSymbolsForAnonymousFunctions(
             targetFunction: KtFunction,
             patternFunction: KtFunction,
@@ -278,7 +278,7 @@ object K2SemanticMatcher {
             symbols[targetSymbol] = patternSymbol
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun associateReceiverParameterSymbolsForCallables(
             targetDeclaration: KtCallableDeclaration,
             patternDeclaration: KtCallableDeclaration,
@@ -289,7 +289,7 @@ object K2SemanticMatcher {
             symbols[targetSymbol] = patternSymbol
         }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         private fun getSingleParameterSymbolForAnonymousFunctionOrNull(function: KtFunction): KtValueParameterSymbol? {
             val anonymousFunction = when (function) {
                 is KtNamedFunction -> function.getAnonymousFunctionSymbol()
@@ -300,7 +300,7 @@ object K2SemanticMatcher {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
         if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
         if (patternElement is KtSimpleNameExpression) {
@@ -314,7 +314,7 @@ object K2SemanticMatcher {
     }
 
     private class VisitingMatcher(
-        private val analysisSession: KtAnalysisSession,
+        private val analysisSession: KaSession,
         private val context: MatchingContext,
     ) : KtVisitor<Boolean, KtElement>() {
         private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?): Boolean {
@@ -677,7 +677,7 @@ object K2SemanticMatcher {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areCallsMatchingByResolve(
         targetExpression: KtExpression,
         patternExpression: KtExpression,
@@ -724,7 +724,7 @@ object K2SemanticMatcher {
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areNonCallsMatchingByResolve(
         targetExpression: KtExpression,
         patternExpression: KtExpression,
@@ -738,7 +738,7 @@ object K2SemanticMatcher {
         return context.areSymbolsEqualOrAssociated(targetSymbol, patternSymbol)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.getArgumentsAndSortThemIfCallIsPresent(call: KtFunctionCall<*>?): List<KtExpression?> {
         val allArguments = getArgumentOrIndexExpressions(sourceElement = this)
 
@@ -755,7 +755,7 @@ object K2SemanticMatcher {
         return sortedMappedArguments + allArguments.filterNot { it?.safeDeparenthesize() in mappedArguments }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areUnresolvedCallsMatchingByResolve(
         targetExpression: KtExpression,
         patternExpression: KtExpression,
@@ -777,7 +777,7 @@ object K2SemanticMatcher {
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areReceiversMatching(
         targetReceiver: KtReceiverValue?,
         patternReceiver: KtReceiverValue?,
@@ -812,21 +812,21 @@ object K2SemanticMatcher {
         null -> patternReceiver == null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtCallableMemberCall<*, *>.getTypeArguments(): List<KtType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KtSymbol? =
         (expression as? KtThisExpression)?.mainReference?.resolveToSymbol()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areReferencesMatchingByResolve(
         targetReference: KtReference,
         patternReference: KtReference,
         context: MatchingContext,
     ): Boolean = context.areSymbolsEqualOrAssociated(targetReference.resolveToSymbol(), patternReference.resolveToSymbol())
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areReturnTargetsMatchingByResolve(
         targetExpression: KtReturnExpression,
         patternExpression: KtReturnExpression,
@@ -838,14 +838,14 @@ object K2SemanticMatcher {
         return context.areBlockBodyOwnersEqualOrAssociated(targetReturnTargetSymbol, patternReturnTargetSymbol)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areReturnTypesOfDeclarationsMatchingByResolve(
         targetDeclaration: KtCallableDeclaration,
         patternDeclaration: KtCallableDeclaration,
         context: MatchingContext,
     ): Boolean = context.areTypesEqualOrAssociated(targetDeclaration.getReturnKtType(), patternDeclaration.getReturnKtType())
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areReceiverParametersMatchingByResolve(
         targetDeclaration: KtCallableDeclaration,
         patternDeclaration: KtCallableDeclaration,
@@ -855,7 +855,7 @@ object K2SemanticMatcher {
         patternDeclaration.getCallableSymbol().receiverType,
     )
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areFunctionsWithZeroOrOneParametersMatchingByResolve(
         targetFunction: KtFunction,
         patternFunction: KtFunction,
@@ -868,7 +868,7 @@ object K2SemanticMatcher {
         return context.areTypesEqualOrAssociated(targetParameters.singleOrNull()?.returnType, patternParameters.singleOrNull()?.returnType)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areTypeParametersMatchingByResolve(
         targetParameter: KtTypeParameter,
         patternParameter: KtTypeParameter,
@@ -885,17 +885,17 @@ object K2SemanticMatcher {
         return true
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun areTypeReferencesMatchingByResolve(
         targetTypeReference: KtTypeReference,
         patternTypeReference: KtTypeReference,
         context: MatchingContext
     ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.getKtType(), patternTypeReference.getKtType())
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtFunction.getFunctionLikeSymbol(): KaFunctionLikeSymbol = getSymbolOfType<KaFunctionLikeSymbol>()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtCallableDeclaration.getCallableSymbol(): KaCallableSymbol = getSymbolOfType<KaCallableSymbol>()
 
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference

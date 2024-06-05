@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -64,7 +64,7 @@ internal class ReplaceGetOrSetInspection :
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         ReplaceGetOrSetInspectionUtils.looksLikeGetOrSetOperatorCall(element)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         // `resolveCall()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
         val call = element.resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return null
@@ -106,7 +106,7 @@ internal class ReplaceGetOrSetInspection :
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KaFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
         return hasOperatorKeyword() || getAllOverriddenSymbols().any { it.hasOperatorKeyword() }

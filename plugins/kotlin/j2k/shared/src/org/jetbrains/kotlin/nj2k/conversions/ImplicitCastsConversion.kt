@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiNewExpression
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKVariable -> convertVariable(element)
@@ -152,14 +152,14 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun convertNewExpression(expression: JKNewExpression) {
         val constructor = expression.psi.safeAs<PsiNewExpression>()?.resolveConstructor() ?: return
         val methodSymbol = context.symbolProvider.provideDirectSymbol(constructor) as? JKMethodSymbol ?: return
         convertArguments(methodSymbol, expression.arguments.arguments)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun convertMethodCallExpression(expression: JKCallExpression) {
         convertArguments(expression.identifier, expression.arguments.arguments)
     }
@@ -182,7 +182,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun convertArguments(methodSymbol: JKMethodSymbol, arguments: List<JKArgument>) {
         if (methodSymbol.isUnresolved) return
         val parameterTypes = methodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg() ?: return
@@ -207,7 +207,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
         return null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun JKMethodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg(): List<JKType>? {
         val realParameterTypes = parameterTypes ?: return null
         if (realParameterTypes.isEmpty()) return null

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -32,7 +32,7 @@ internal object ChangeToLabeledReturnFixFactory {
         getQuickFix(returnExpression)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getQuickFix(returnExpression: KtReturnExpression): List<ChangeToLabeledReturnFix> {
         val candidates = findAccessibleLabels(returnExpression)
         return candidates.map {
@@ -40,7 +40,7 @@ internal object ChangeToLabeledReturnFixFactory {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findAccessibleLabels(position: KtReturnExpression): List<Name> {
         val result = mutableListOf<Name>()
         for (parent in position.parentsWithSelf) {
@@ -64,7 +64,7 @@ internal object ChangeToLabeledReturnFixFactory {
         return result
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getLambdaReturnExpression(element: PsiElement): KtReturnExpression? {
         val returnExpression = element.getStrictParentOfType<KtReturnExpression>() ?: return null
         val lambda = returnExpression.getStrictParentOfType<KtLambdaExpression>() ?: return null

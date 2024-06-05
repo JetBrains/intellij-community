@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -28,7 +28,7 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtDeclaration.isFinalizeMethod(): Boolean {
     if (containingClass() == null) return false
     val function = this as? KtNamedFunction ?: return false
@@ -37,7 +37,7 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
             && function.getReturnKtType().isUnit
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KtPackageSymbol -> fqName
     is KaCallableSymbol -> callableId?.asSingleFqName()
@@ -45,7 +45,7 @@ fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     else -> null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isArrayOfFunction(): Boolean {
     val functionNames = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
             ArrayFqNames.ARRAY_OF_FUNCTION +
@@ -63,7 +63,7 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
  * @return `true` if the expression is an implicit `invoke` call, `false` if it is not,
  * and `null` if the function resolve was unsuccessful.
  */
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
     val functionCall = this.resolveCall()?.singleFunctionCallOrNull() ?: return null
 

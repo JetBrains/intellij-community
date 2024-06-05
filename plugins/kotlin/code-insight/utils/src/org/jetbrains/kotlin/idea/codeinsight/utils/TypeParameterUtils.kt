@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.psi.KtElement
 
 object TypeParameterUtils {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun returnTypeOfCallDependsOnTypeParameters(callElement: KtElement): Boolean {
         return collectTypeParametersOnWhichReturnTypeDepends(callElement).isNotEmpty()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtElement): Set<KaTypeParameterSymbol> {
         val call = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySet()
         val callSymbol = call.partiallyAppliedSymbol.symbol
@@ -25,7 +25,7 @@ object TypeParameterUtils {
         return typeParameters.filter { typeReferencesTypeParameter(it, returnType) }.toSet()
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun typeReferencesTypeParameter(typeParameter: KaTypeParameterSymbol, type: KtType): Boolean {
         return when (type) {
             is KtTypeParameterType -> type.symbol == typeParameter

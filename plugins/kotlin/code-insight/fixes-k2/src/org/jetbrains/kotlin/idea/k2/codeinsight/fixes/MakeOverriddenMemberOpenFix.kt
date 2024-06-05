@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -59,7 +59,7 @@ internal object MakeOverriddenMemberOpenFixFactory {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun computeElementContext(element: KtNamedDeclaration): ElementContext? {
     val overriddenNonOverridableMembers = mutableListOf<DeclarationPointer>()
     val containingDeclarationNames = mutableListOf<String>()
@@ -86,7 +86,7 @@ private data class ElementContext(
     val containingDeclarationNames: List<String>,
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun retainNonOverridableMembers(
     callableMemberSymbols: Collection<KaCallableSymbol>,
 ): Collection<KaCallableSymbol> {

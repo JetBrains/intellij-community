@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.calls.KtCall
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
@@ -20,7 +20,7 @@ object KotlinCallHighlighterExtensionForTest : KotlinCallHighlighterExtension {
         EXTENSION("MyExtension"),
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun highlightCall(elementToHighlight: PsiElement, call: KtCall): HighlightInfoType? {
         if (call !is KtCallableMemberCall<*, *>) return null
         val highlightType = call.partiallyAppliedSymbol.symbol.annotations.firstNotNullOfOrNull { annotation ->

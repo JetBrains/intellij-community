@@ -6,7 +6,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -126,7 +126,7 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
     return newValue
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
     val receiver = receiverType?.jvmName(element) ?: ""
@@ -135,7 +135,7 @@ private fun KaFunctionLikeSymbol.getJvmSignature(): String? {
     return "($receiver$parameterTypes)$returnType"
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KtType.jvmName(element: PsiElement): String? {
     if (this !is KtNonErrorClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null

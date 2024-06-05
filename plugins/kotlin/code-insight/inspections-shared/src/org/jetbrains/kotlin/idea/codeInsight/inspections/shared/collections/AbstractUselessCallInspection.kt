@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -25,7 +25,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
     protected abstract val uselessNames: Set<String>
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected abstract fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
@@ -92,7 +92,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
         fun Set<CallableId>.toShortNames() = mapTo(mutableSetOf()) { it.callableName.asString() }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
             return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
         }

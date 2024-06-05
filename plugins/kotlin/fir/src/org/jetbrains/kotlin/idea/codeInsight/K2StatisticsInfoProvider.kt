@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.statistics.StatisticsInfo
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
@@ -27,14 +27,14 @@ object K2StatisticsInfoProvider {
         modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KtKeywordsRenderer.NONE }
 
         returnTypeFilter = object : KaCallableReturnTypeFilter {
-            override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KaCallableSymbol): Boolean {
+            override fun shouldRenderReturnType(analysisSession: KaSession, type: KtType, symbol: KaCallableSymbol): Boolean {
                 return symbol !is KaFunctionLikeSymbol
             }
         }
 
         callableSignatureRenderer = object : KaCallableSignatureRenderer {
             override fun renderCallableSignature(
-                analysisSession: KtAnalysisSession,
+                analysisSession: KaSession,
                 symbol: KaCallableSymbol,
                 keyword: KtKeywordToken?,
                 declarationRenderer: KtDeclarationRenderer,
@@ -53,7 +53,7 @@ object K2StatisticsInfoProvider {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun forDeclarationSymbol(symbol: KaDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
         is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }
         is KaCallableSymbol -> symbol.callableId?.let { callableId ->

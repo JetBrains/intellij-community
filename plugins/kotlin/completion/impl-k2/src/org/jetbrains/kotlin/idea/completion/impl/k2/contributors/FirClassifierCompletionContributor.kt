@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -23,14 +23,14 @@ internal open class FirClassifierCompletionContributor(
     priority: Int,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected open fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -49,7 +49,7 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeWithReceiver(
         receiver: KtElement,
         visibilityChecker: CompletionVisibilityChecker,
@@ -68,7 +68,7 @@ internal open class FirClassifierCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
         visibilityChecker: CompletionVisibilityChecker,
@@ -109,7 +109,7 @@ internal class FirAnnotationCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
         is KaAnonymousObjectSymbol -> false
         is KaTypeParameterSymbol -> false
@@ -136,7 +136,7 @@ internal class FirClassifierReferenceCompletionContributor(
     priority: Int
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {
         is KaTypeParameterSymbol -> ImportStrategy.DoNothing
         is KaClassLikeSymbol -> {

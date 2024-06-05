@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -26,7 +26,7 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,

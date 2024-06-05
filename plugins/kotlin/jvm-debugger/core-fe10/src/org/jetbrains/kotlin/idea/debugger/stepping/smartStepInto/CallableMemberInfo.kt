@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -25,7 +25,7 @@ data class CallableMemberInfo(
     val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInValueParameters
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun CallableMemberInfo(
     symbol: KaFunctionLikeSymbol,
     ordinal: Int = 0,
@@ -47,7 +47,7 @@ internal fun CallableMemberInfo(
     )
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KaFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean =
     valueParameters.any { it.returnType.expandedClassSymbol?.isInlineClass() == true }
 
@@ -57,5 +57,5 @@ private fun KaFunctionLikeSymbol.methodName() = when (this) {
     else -> ""
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun KaFunctionLikeSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true

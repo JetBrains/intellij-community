@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix
@@ -33,7 +33,7 @@ internal object OptInFileLevelFixFactories {
         createQuickFix(diagnostic)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createQuickFix(
         diagnostic: KaFirDiagnostic<PsiElement>,
     ): List<UseOptInFileAnnotationFix> {
@@ -63,7 +63,7 @@ internal object OptInFileLevelFixFactories {
     }
 
     // Find the existing file-level annotation of the specified class if it exists
-    context (KtAnalysisSession)
+    context (KaSession)
     private fun findFileAnnotation(file: KtFile, optInFqName: FqName): KtAnnotationEntry? =
         file.fileAnnotationList?.findAnnotation(ClassId.topLevel(optInFqName))
 }

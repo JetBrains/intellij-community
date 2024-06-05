@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
@@ -23,7 +23,7 @@ internal open class FirKDocParameterNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<KDocParameterNamePositionContext>(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KDocParameterNamePositionContext,
         weighingContext: WeighingContext,
@@ -42,7 +42,7 @@ internal open class FirKDocParameterNameContributor(
             .forEach { addSymbolToCompletion(weighingContext, it) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun addSymbolToCompletion(weighingContext: WeighingContext, symbolWithOrigin: KtSymbolWithOrigin) {
         val symbol = symbolWithOrigin.symbol
         val origin = symbolWithOrigin.origin
@@ -57,7 +57,7 @@ internal open class FirKDocParameterNameContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getParametersForKDoc(
         ownerDeclarationSymbol: KaDeclarationSymbol
     ): Sequence<KtSymbolWithOrigin> = sequence {

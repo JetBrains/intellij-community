@@ -9,7 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -69,7 +69,7 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatement = element.findValueStatement() ?: return null
         val requireType = valueStatement.getKtType()?.isNothing == true
@@ -81,7 +81,7 @@ internal class UseExpressionBodyInspection :
         }.copy(requireType = requireType)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtDeclarationWithBody.findValueStatement(): KtExpression? {
         val statements = bodyBlockExpression?.statements
         if (statements == null || statements.isEmpty()) {

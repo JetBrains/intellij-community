@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.lang.jvm.JvmModifier.STATIC
 import com.intellij.psi.PsiModifier
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.nullIfStubExpression
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 private const val RECEIVER_NAME: String = "obj"
 
 class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKMethodReferenceExpression) return recurse(element)
 
@@ -102,7 +102,7 @@ class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : Recur
         } else null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun JKClassType.singleFunctionParameterTypes(): List<JKType>? {
         return when (val reference = classReference) {
             is JKMultiverseClassSymbol -> {

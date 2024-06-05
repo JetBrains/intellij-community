@@ -3,7 +3,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
@@ -28,7 +28,7 @@ fun getParameterNames(expression: KtExpression): List<String>? {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
     if (type.nullability != KtTypeNullability.NON_NULLABLE) return null
     val classSymbol = type.expandedClassSymbol
@@ -43,7 +43,7 @@ private fun getParameterNames(type: KtNonErrorClassType): List<String>? {
     } else null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getClassType(declaration: KtDestructuringDeclaration): KtNonErrorClassType? {
     val initializer = declaration.initializer
     val type = if (initializer != null) {

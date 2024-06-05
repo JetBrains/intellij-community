@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -14,7 +14,7 @@ data class ImplicitReceiverInfo(
     val isUnambiguousLabel: Boolean
 )
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
     val reference = when (this) {
         is KtSimpleNameExpression -> this
@@ -32,7 +32,7 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
     return getImplicitReceiverInfoOfClass(allImplicitReceivers, declarationAssociatedClass)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getAssociatedClass(symbol: KtSymbol): KaClassOrObjectSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
     if (symbol !is KaCallableSymbol) return null
@@ -47,7 +47,7 @@ private fun getAssociatedClass(symbol: KtSymbol): KaClassOrObjectSymbol? {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getImplicitReceiverInfoOfClass(
     implicitReceivers: List<KtImplicitReceiver>, associatedClass: KaClassOrObjectSymbol
 ): ImplicitReceiverInfo? {
@@ -72,7 +72,7 @@ private fun getImplicitReceiverInfoOfClass(
     return null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KaClassOrObjectSymbol, Name?>? {
     val associatedClass = receiver.type.expandedClassSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
