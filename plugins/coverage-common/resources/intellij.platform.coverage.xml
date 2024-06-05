@@ -1,6 +1,10 @@
 <idea-plugin>
   <module value="com.intellij.modules.coverage"/>
 
+  <dependencies>
+    <module name="intellij.platform.coverage.agent"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.coverageEngine" interface="com.intellij.coverage.CoverageEngine" dynamic="true"/>
