@@ -149,7 +149,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
-  protected final Disposable myDisposable = Disposer.newDisposable();
+  protected final CheckedDisposable myDisposable = Disposer.newCheckedDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
@@ -2754,6 +2754,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void showNotification(int number) {
+    if (myDisposable.isDisposed()) {
+      return;
+    }
     String content = JavaDebuggerBundle.message("message.other.threads.reached.breakpoints", number);
     MessageType messageType = MessageType.INFO;
 
