@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context
 
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -50,7 +50,8 @@ private class OpenEditorsContextProvider : WorkingContextProvider() {
       if (c is EditorsSplitters) return true
       c = c.parent
     }
-    return true // if editor was focused, but was closed by `clearContext` call, we'll get here
+    // if the editor was focused, but was closed by `clearContext` call, we'll get here
+    return true
   }
 
   override fun clearContext(project: Project) {

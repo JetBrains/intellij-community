@@ -37,7 +37,7 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
   return FileEntry(
     pinned = fileElement.getAttributeBooleanValue(PINNED),
     currentInTab = fileElement.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
-    isPreview = historyElement.getAttributeValue(PREVIEW_ATTRIBUTE) != null,
+    isPreview = historyElement.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
     url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE),
     selectedProvider = selectedProvider,
     providers = providers,
@@ -46,13 +46,14 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
 }
 
 internal fun writeWindow(result: Element, window: EditorWindow) {
+  val selectedComposite = window.selectedComposite
   for (composite in window.composites()) {
     val fileElement = Element("file")
     fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project = window.manager.project))
     if (composite.isPinned) {
       fileElement.setAttribute(PINNED, "true")
     }
-    if (composite != window.selectedComposite) {
+    if (composite !== selectedComposite) {
       fileElement.setAttribute(CURRENT_IN_TAB, "false")
     }
     result.addContent(fileElement)

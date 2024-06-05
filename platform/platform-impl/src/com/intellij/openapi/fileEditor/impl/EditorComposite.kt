@@ -619,7 +619,7 @@ open class EditorComposite internal constructor(
 
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, provider.editorTypeId)
 
-      if (fileEditorWithProvider == selectedEditorWithProvider) {
+      if (fileEditorWithProvider === selectedEditorWithProvider) {
         providerElement.setAttribute(SELECTED_ATTRIBUTE_VALUE, "true")
       }
 

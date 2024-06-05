@@ -202,12 +202,11 @@ private fun parseEntry(project: Project,
     }
   }
 
-  val preview = element.getAttributeValue(PREVIEW_ATTRIBUTE) != null
   return EntryData(
     url = url,
     providerStates = providerStates,
     selectedProvider = selectedProvider,
-    preview = preview,
+    preview = element.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
   )
 }
 
