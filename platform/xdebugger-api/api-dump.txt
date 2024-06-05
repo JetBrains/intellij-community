@@ -526,7 +526,7 @@ c:com.intellij.xdebugger.frame.XFullValueEvaluator$LinkAttributes
 com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
 - com.intellij.xdebugger.Obsolescent
 - com.intellij.xdebugger.frame.XValueCallback
-- a:evaluated(java.lang.String):V
+- evaluated(java.lang.String):V
 - a:evaluated(java.lang.String,java.awt.Font):V
 a:com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
 - <init>():V

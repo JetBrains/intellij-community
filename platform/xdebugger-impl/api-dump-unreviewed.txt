@@ -2378,7 +2378,6 @@ com.intellij.xdebugger.impl.ui.BreakpointEditor$Delegate
 - com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
 - <init>(javax.swing.JComponent,com.intellij.xdebugger.impl.ui.CustomComponentEvaluator,com.intellij.openapi.project.Project):V
 - errorOccurred(java.lang.String):V
-- evaluated(java.lang.String):V
 - evaluated(java.lang.String,java.awt.Font):V
 - isObsolete():Z
 - f:setObsolete():V
@@ -3427,7 +3426,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallbackBase
 - com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
 - <init>(com.intellij.openapi.project.Project):V
 - errorOccurred(java.lang.String):V
-- evaluated(java.lang.String):V
 - evaluated(java.lang.String,java.awt.Font):V
 - p:evaluationComplete(java.lang.String,com.intellij.openapi.project.Project):V
 - isObsolete():Z

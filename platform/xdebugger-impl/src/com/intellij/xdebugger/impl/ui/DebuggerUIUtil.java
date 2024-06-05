@@ -202,8 +202,8 @@ public final class DebuggerUIUtil {
                                                                  @Nullable Runnable afterFullValueEvaluation) {
     FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textViewer) {
       @Override
-      public void evaluated(@NotNull String fullValue) {
-        super.evaluated(fullValue);
+      public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+        super.evaluated(fullValue, font);
         AppUIUtil.invokeOnEdt(() -> {
           if (afterFullValueEvaluation != null) {
             afterFullValueEvaluation.run();
@@ -420,11 +420,6 @@ public final class DebuggerUIUtil {
 
     FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue) {
-      evaluated(fullValue, null);
     }
 
     @Override

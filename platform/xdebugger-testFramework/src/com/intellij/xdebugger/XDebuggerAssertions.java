@@ -328,11 +328,6 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     CompletableFuture<String> result = new CompletableFuture<>();
     node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
       @Override
-      public void evaluated(@NotNull String fullValue) {
-        result.complete(fullValue);
-      }
-
-      @Override
       public void evaluated(@NotNull String fullValue, @Nullable Font font) {
         result.complete(fullValue);
       }

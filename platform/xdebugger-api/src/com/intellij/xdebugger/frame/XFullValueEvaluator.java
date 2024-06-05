@@ -76,7 +76,9 @@ public abstract class XFullValueEvaluator {
   public @Nullable LinkAttributes getLinkAttributes() { return myLinkAttributes; }
 
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
-    void evaluated(@NotNull String fullValue);
+    default void evaluated(@NotNull String fullValue) {
+      evaluated(fullValue, null);
+    }
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
   }

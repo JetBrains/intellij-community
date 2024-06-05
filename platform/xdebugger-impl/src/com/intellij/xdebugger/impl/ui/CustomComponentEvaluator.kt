@@ -38,9 +38,6 @@ abstract class CustomComponentEvaluator(name: String) : XFullValueEvaluator() {
                                      private val myEvaluator: CustomComponentEvaluator,
                                      private val myProject: Project) : XFullValueEvaluationCallback {
     private val myObsolete = AtomicBoolean(false)
-    override fun evaluated(fullValue: String) {
-      evaluated(fullValue, null)
-    }
 
     override fun evaluated(fullValue: String, font: Font?) {
       invokeOnEdt {

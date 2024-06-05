@@ -34,13 +34,8 @@ public class HeadlessValueEvaluationCallbackBase implements XFullValueEvaluator.
   }
 
   @Override
-  public void evaluated(@NotNull String fullValue) {
-    evaluationComplete(fullValue);
-  }
-
-  @Override
   public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-    evaluated(fullValue);
+    evaluationComplete(fullValue);
   }
 
   @Override
