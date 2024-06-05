@@ -11,7 +11,7 @@ abstract class SharedEventsTest {
   fun abstractBeforeEach() {
     try {
       System.setProperty("eventbus.debug", "true")
-      EventsBus.startServerProcess()
+      EventsBus.startServerProcess(false)
     }
     catch (t: Throwable) {
       Assumptions.abort("Can't start event bus server")
