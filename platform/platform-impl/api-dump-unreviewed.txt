@@ -5890,10 +5890,15 @@ a:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$A
 - <init>():V
 - isEnabledForProject(com.intellij.openapi.project.Project):Z
 - processDocuments(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document[]):V
+a:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$DocumentUpdatingActionOnSave
+- com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave
+- <init>():V
+- a:getPresentableName():java.lang.String
+- f:processDocuments(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document[]):V
+- a:updateDocument(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - *f:awaitPendingActions(kotlin.coroutines.Continuation):java.lang.Object
-- f:getCoroutineScope():kotlinx.coroutines.CoroutineScope
 - *f:hasPendingActions():Z
 - f:waitForTasks():V
 c:com.intellij.ide.browsers.BrowserSelector
