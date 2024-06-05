@@ -40,22 +40,6 @@ internal class HistoryEntry(
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
 
-    private fun createLight(project: Project, element: Element, fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
-      val entryData = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
-      val pointer = LightFilePointer(entryData.url)
-      val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
-      for (state in entryData.providerStates) {
-        stateMap.put(state.first, state.second)
-      }
-      return HistoryEntry(
-        filePointer = pointer,
-        selectedProvider = entryData.selectedProvider,
-        isPreview = entryData.preview,
-        disposable = null,
-        providerToState = stateMap,
-      )
-    }
-
     fun createHeavy(
       project: Project,
       file: VirtualFile,

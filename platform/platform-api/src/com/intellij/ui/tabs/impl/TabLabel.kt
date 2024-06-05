@@ -2,7 +2,7 @@
 package com.intellij.ui.tabs.impl
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
@@ -679,14 +679,12 @@ open class TabLabel(@JvmField protected val tabs: JBTabsImpl, val info: TabInfo)
   val labelComponent: JComponent
     get() = label
 
-  final override fun getToolTipText(event: MouseEvent): String {
-    val pointInLabel = RelativePoint(event).getPoint(label)
-    val icon = label.icon
-    val iconWidth = (icon?.iconWidth ?: JBUI.scale(16))
-    if (((label.visibleRect.width >= iconWidth * 2 || !getInstance().showTabsTooltips)
-         && label.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON)
+  final override fun getToolTipText(event: MouseEvent): String? {
+    val iconWidth = label.icon?.iconWidth ?: JBUI.scale(16)
+    if (((label.visibleRect.width >= iconWidth * 2 || !UISettings.getInstance().showTabsTooltips)
+         && label.findFragmentAt(RelativePoint(event).getPoint(label).x) == SimpleColoredComponent.FRAGMENT_ICON)
     ) {
-      this.icon.getToolTip(false)?.let {
+      icon.getToolTip(false)?.let {
         return Strings.capitalize(it)
       }
     }
