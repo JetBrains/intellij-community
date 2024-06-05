@@ -163,6 +163,13 @@ internal class EditorCompositeModelManager(
     flowCollector.emit(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = null))
   }
 
+  fun blockingFileEditorWithProviderFlow(
+    editorsWithProviders: List<FileEditorWithProvider>,
+  ): PrecomputedFlow {
+    postProcessFileEditorWithProviderList(editorsWithProviders)
+    return PrecomputedFlow(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = null))
+  }
+
   private fun postProcessFileEditorWithProviderList(editorsWithProviders: List<FileEditorWithProvider>) {
     for (editorWithProvider in editorsWithProviders) {
       val editor = editorWithProvider.fileEditor

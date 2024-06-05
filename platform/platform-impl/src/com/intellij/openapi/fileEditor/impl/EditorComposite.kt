@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
@@ -43,7 +42,6 @@ import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -134,12 +132,7 @@ open class EditorComposite internal constructor(
     EDT.assertIsEdt()
 
     if (model is PrecomputedFlow) {
-      val context = ClientId.coroutineContext()
-      runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
-        withContext(context) {
-          handleModel(model.model)
-        }
-      }
+      blockingHandleModel(model.model)
     }
     else {
       if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
@@ -246,6 +239,79 @@ open class EditorComposite internal constructor(
         }
       }
     }
+  }
+
+  // for remote dev - we don't care about performance for now
+  @RequiresEdt
+  private fun blockingHandleModel(model: EditorCompositeModel) {
+    val fileEditorWithProviders = model.fileEditorAndProviderList
+
+    for (editorWithProvider in fileEditorWithProviders) {
+      val editor = editorWithProvider.fileEditor
+      FileEditor.FILE_KEY.set(editor, file)
+      if (!clientId.isLocal) {
+        assignClientId(editor, clientId)
+      }
+    }
+
+    // TODO comment this and log a warning or log something
+    if (fileEditorWithProviders.isEmpty()) {
+      compositePanel.removeAll()
+      _selectedEditorWithProvider.value = null
+      return
+    }
+
+    val startTime = System.nanoTime()
+    val messageBus = project.messageBus
+    val deferredPublishers = messageBus.syncAndPreloadPublisher(FileOpenedSyncListener.TOPIC) to
+      messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+
+    val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+
+    val selectedFileEditor = if (model.state == null) {
+      (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).getSelectedFileEditorProvider(
+        file = file,
+        fileEditorWithProviders = fileEditorWithProviders,
+        editorHistoryManager = EditorHistoryManager.getInstance(project),
+      )
+    }
+    else {
+      model.state.selectedProvider?.let { selectedProvider ->
+        fileEditorWithProviders.firstOrNull { it.provider.editorTypeId == selectedProvider }?.provider
+      }
+    }
+
+    val fileEditorManager = FileEditorManager.getInstance(project)
+
+    beforePublisher!!.beforeFileOpened(fileEditorManager, file)
+
+    applyFileEditorsInEdt(
+      fileEditorWithProviders = fileEditorWithProviders,
+      model = model,
+      selectedFileEditorProvider = selectedFileEditor,
+    )
+
+    // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
+    // For example, see EditorHistoryManager -
+    // we will get assertion if we return a non-empty list of editors but do not set selected file editor.
+    fileEditorWithProviderList.clear()
+    fileEditorWithProviderList.addAll(fileEditorWithProviders)
+
+    val (goodPublisher, deprecatedPublisher) = deferredPublishers
+    goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+    @Suppress("DEPRECATION")
+    deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+
+    triggerStatOpen(
+      project = project,
+      file = file,
+      start = startTime,
+      composite = this@EditorComposite,
+      coroutineScope = coroutineScope,
+    )
+
+    val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+    publisher.fileOpened(fileEditorManager, file)
   }
 
   @RequiresEdt

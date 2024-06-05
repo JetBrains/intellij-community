@@ -1277,12 +1277,9 @@ open class FileEditorManagerImpl(
 
   // only for remote dev
   protected fun createCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
-    return flow {
-      EditorCompositeModelManager(editorPropertyChangeListener, coroutineScope).fileEditorWithProviderFlow(
-        editorsWithProviders = editorsWithProviders,
-        flowCollector = this@flow,
-      )
-    }
+    return EditorCompositeModelManager(editorPropertyChangeListener, coroutineScope).blockingFileEditorWithProviderFlow(
+      editorsWithProviders = editorsWithProviders,
+    )
   }
 
   protected open fun createComposite(
