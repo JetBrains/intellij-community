@@ -25,6 +25,7 @@ import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSession;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
+import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -571,6 +572,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     try {
       MavenSession mavenSession = createMavenSession(request, maven);
       sessionScope.seed(MavenSession.class, mavenSession);
+      sessionScope.seed(Session.class, mavenSession.getSession());
+      sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(mavenSession.getSession()));
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession oldSession = legacySupport.getSession();
       legacySupport.setSession(mavenSession);
@@ -653,7 +656,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private MavenSession createMavenSession(MavenExecutionRequest request, DefaultMaven maven) {
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
     request.getProjectBuildingRequest().setRepositorySession(repositorySession);
-    return new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
+    MavenSession session = new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
+    DefaultSessionFactory defaultSessionFactory = getComponent(DefaultSessionFactory.class);
+    session.setSession(defaultSessionFactory.newSession(session));
+    return session;
   }
 
 
@@ -1084,7 +1090,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     request.setRemoteRepositories(convertRepositories(remoteRepositories));
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     MavenSession mavenSession = createMavenSession(request, maven);
-    Session session = sessionFactory.getSession(mavenSession);
+    Session session = mavenSession.getSession();
 
     Map<org.apache.maven.api.Artifact, Path> resolvedArtifactMap = new HashMap<>();
     SessionScope sessionScope = getComponent(SessionScope.class);
