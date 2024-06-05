@@ -93,20 +93,20 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
 }
 
 context (KtAnalysisSession)
-private fun KtDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassOrObjectSymbol? {
+private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassOrObjectSymbol? {
     if (this !is KaClassOrObjectSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
 
     val containingClass = getContainingSymbol() as? KaNamedClassOrObjectSymbol
     return containingClass?.takeIf { it.companionObject == this }
 }
 
-private fun KtDeclarationSymbol?.isEnumClass(): Boolean {
+private fun KaDeclarationSymbol?.isEnumClass(): Boolean {
     val classSymbol = this as? KaClassOrObjectSymbol ?: return false
     return classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
 context (KtAnalysisSession)
-private fun KtDeclarationSymbol?.isEnumCompanionObject(): Boolean =
+private fun KaDeclarationSymbol?.isEnumCompanionObject(): Boolean =
   this?.getContainingClassForCompanionObject().isEnumClass()
 
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {

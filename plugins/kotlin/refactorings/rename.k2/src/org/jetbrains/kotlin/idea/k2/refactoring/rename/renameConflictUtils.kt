@@ -338,7 +338,7 @@ private fun reportShadowing(
 }
 
 context(KtAnalysisSession)
-private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KtDeclarationSymbol) -> Unit) {
+private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KaDeclarationSymbol) -> Unit) {
     val declarationSymbol = declaration.getSymbol()
     registerRetargetJobOnPotentialCandidates(declaration, name, { filterCandidates(declarationSymbol, it) }, retargetJob)
 }

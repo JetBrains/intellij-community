@@ -151,7 +151,7 @@ class SmartStepTargetVisitor(
     }
 
     context(KtAnalysisSession)
-    private fun propertyAccessLabel(symbol: KtPropertySymbol, propertyAccessSymbol: KtDeclarationSymbol) =
+    private fun propertyAccessLabel(symbol: KtPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
         "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
 
     private fun KtNameReferenceExpression.computeTargetType(): KtNameReferenceExpressionUsage {

@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
  */
 interface ExpressionImportWeigher {
     context(KtAnalysisSession)
-    fun weigh(symbol: KtDeclarationSymbol): Int
+    fun weigh(symbol: KaDeclarationSymbol): Int
 
     companion object {
         context(KtAnalysisSession)
@@ -83,14 +83,14 @@ interface ExpressionImportWeigher {
 
         object Empty : ExpressionImportWeigher {
             context(KtAnalysisSession)
-            override fun weigh(symbol: KtDeclarationSymbol): Int = 0
+            override fun weigh(symbol: KaDeclarationSymbol): Int = 0
         }
     }
 }
 
 internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeigher {
     context(KtAnalysisSession)
-    override fun weigh(symbol: KtDeclarationSymbol): Int {
+    override fun weigh(symbol: KaDeclarationSymbol): Int {
         val fqName = symbol.getFqNameIfPackageOrNonLocal()
         val baseWeight = fqName?.let { ImportFixHelper.calculateWeightBasedOnFqName(it, symbol.sourcePsi<PsiElement>()) } ?: 0
 
@@ -98,7 +98,7 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
     }
 
     context(KtAnalysisSession)
-    protected abstract fun ownWeigh(symbol: KtDeclarationSymbol): Int
+    protected abstract fun ownWeigh(symbol: KaDeclarationSymbol): Int
 
     context(KtAnalysisSession)
     protected fun weighType(presentType: KtType, typeFromImport: KtType, baseWeight: Int): Int? {
@@ -129,7 +129,7 @@ internal class CallExpressionImportWeigher(
 ) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
 
     context(KtAnalysisSession)
-    override fun ownWeigh(symbol: KtDeclarationSymbol): Int = withValidityAssertion {
+    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
         when {
             symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
@@ -216,14 +216,14 @@ internal class OperatorExpressionImportWeigher(
 ) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
 
     context(KtAnalysisSession)
-    override fun weigh(symbol: KtDeclarationSymbol): Int {
+    override fun weigh(symbol: KaDeclarationSymbol): Int {
         val functionSymbol = (symbol as? KaFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
 
         return super.weigh(functionSymbol)
     }
 
     context(KtAnalysisSession)
-    override fun ownWeigh(symbol: KtDeclarationSymbol): Int = withValidityAssertion {
+    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
         symbol as KaFunctionSymbol
 
         val name = symbol.name

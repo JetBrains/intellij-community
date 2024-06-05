@@ -261,7 +261,7 @@ class ImportQuickFix(
 
 
         context(KtAnalysisSession)
-        private fun renderSymbol(symbol: KtDeclarationSymbol): String = prettyPrint {
+        private fun renderSymbol(symbol: KaDeclarationSymbol): String = prettyPrint {
             val fqName = symbol.getFqName()
             if (symbol is KaNamedClassOrObjectSymbol) {
                 append("class $fqName")
@@ -282,7 +282,7 @@ class ImportQuickFix(
         context(KtAnalysisSession)
         private fun createImportFix(
             position: KtElement,
-            importCandidateSymbols: List<KtDeclarationSymbol>,
+            importCandidateSymbols: List<KaDeclarationSymbol>,
         ): ImportQuickFix? {
             if (importCandidateSymbols.isEmpty()) return null
 
@@ -331,7 +331,7 @@ class ImportQuickFix(
         }
 
         context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
+        private fun KaDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
             // don't import nested class on the fly because it will probably add qualification and confuse the user
             is KaNamedClassOrObjectSymbol -> isNested()
             is KaCallableSymbol -> doNotImportCallablesOnFly
@@ -342,7 +342,7 @@ class ImportQuickFix(
         private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KaNamedClassOrObjectSymbol
 
         context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
+        private fun KaDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
             this is KtPropertySymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_PROPERTY
             this is KtPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
             this is KtJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
@@ -359,7 +359,7 @@ class ImportQuickFix(
         }
 
         context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.getImportName(): String = buildString {
+        private fun KaDeclarationSymbol.getImportName(): String = buildString {
             if (this@getImportName !is KtNamedSymbol) error("Unexpected anonymous declaration")
 
             if (this@getImportName is KaCallableSymbol) {
@@ -372,14 +372,14 @@ class ImportQuickFix(
         }
 
         context(KtAnalysisSession)
-        private fun KtDeclarationSymbol.getFqName(): FqName =
+        private fun KaDeclarationSymbol.getFqName(): FqName =
             getFqNameIfPackageOrNonLocal() ?: error("Unexpected null for fully-qualified name of importable symbol")
 
         context(KtAnalysisSession)
         private fun createPriorityForImportableSymbol(
             prioritizer: ImportPrioritizer,
             expressionImportWeigher: ExpressionImportWeigher,
-            symbol: KtDeclarationSymbol
+            symbol: KaDeclarationSymbol
         ): ImportPrioritizer.Priority =
             prioritizer.Priority(
                 declaration = symbol.psi,

@@ -55,7 +55,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -90,7 +90,7 @@ import org.jetbrains.kotlin.renderer.render as renderName
 
 internal class KotlinIdeDeclarationRenderer(
     private var highlightingManager: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> = KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING,
-    private val rootSymbol: KtDeclarationSymbol? = null
+    private val rootSymbol: KaDeclarationSymbol? = null
 ) {
     context(KtAnalysisSession)
     internal fun renderFunctionTypeParameter(parameter: KtParameter): String? = prettyPrint {
@@ -202,7 +202,7 @@ internal class KotlinIdeDeclarationRenderer(
                 printer.printCollection(
                     annotations, separator = when (owner) {
                         is KtValueParameterSymbol -> " "
-                        is KtDeclarationSymbol -> "\n"
+                        is KaDeclarationSymbol -> "\n"
                         else -> " "
                     }
                 ) { annotation ->
@@ -275,10 +275,10 @@ internal class KotlinIdeDeclarationRenderer(
             }
         }
 
-        fun KtDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassOrObjectSymbol && isInline
+        fun KaDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassOrObjectSymbol && isInline
 
         val valueModifierRenderer = object : KtRendererOtherModifiersProvider {
-            override fun getOtherModifiers(analysisSession: KtAnalysisSession, symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> {
+            override fun getOtherModifiers(analysisSession: KtAnalysisSession, symbol: KaDeclarationSymbol): List<KtModifierKeywordToken> {
                 if (symbol.isInlineClassOrObject()) {
                     (symbol.psi as? KtClass)?.let { klass ->
                         if (klass.hasModifier(KtTokens.INLINE_KEYWORD)) {
@@ -564,7 +564,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtTypeParametersRenderer {
             override fun renderTypeParameters(
                 analysisSession: KtAnalysisSession,
-                symbol: KtDeclarationSymbol,
+                symbol: KaDeclarationSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
@@ -593,7 +593,7 @@ internal class KotlinIdeDeclarationRenderer(
 
             override fun renderWhereClause(
                 analysisSession: KtAnalysisSession,
-                symbol: KtDeclarationSymbol,
+                symbol: KaDeclarationSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {

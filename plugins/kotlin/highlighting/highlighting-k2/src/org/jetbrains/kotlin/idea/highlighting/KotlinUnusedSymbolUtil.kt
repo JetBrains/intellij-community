@@ -299,7 +299,7 @@ object KotlinUnusedSymbolUtil {
   private fun hasNonTrivialUsages(
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
-      symbol: KtDeclarationSymbol? = null
+      symbol: KaDeclarationSymbol? = null
   ): Boolean {
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) { isCheapEnoughToSearchUsages(declaration) }
       return hasNonTrivialUsages(declaration, declarationContainingClass, isCheapEnough, symbol)
@@ -310,7 +310,7 @@ object KotlinUnusedSymbolUtil {
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
       isCheapEnough: Lazy<PsiSearchHelper.SearchCostResult>,
-      symbol: KtDeclarationSymbol? = null
+      symbol: KaDeclarationSymbol? = null
   ): Boolean {
       val project = declaration.project
       val psiSearchHelper = PsiSearchHelper.getInstance(project)
@@ -420,7 +420,7 @@ object KotlinUnusedSymbolUtil {
   private fun hasReferences(
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
-      symbol: KtDeclarationSymbol?,
+      symbol: KaDeclarationSymbol?,
       useScope: SearchScope
   ): Boolean {
       val searchOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = declaration.hasActualModifier())
@@ -490,7 +490,7 @@ object KotlinUnusedSymbolUtil {
   context(KtAnalysisSession)
   private fun checkPrivateDeclaration(
       declaration: KtNamedDeclaration,
-      symbol: KtDeclarationSymbol?,
+      symbol: KaDeclarationSymbol?,
       originalDeclaration: KtNamedDeclaration?
   ): Boolean {
       if (symbol == null || !declaration.isPrivateNestedClassOrObject) return false
@@ -629,7 +629,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KtDeclarationSymbol?): Boolean {
+  private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KaDeclarationSymbol?): Boolean {
       return when {
           symbol is KaConstructorSymbol -> {
               val classSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return false
@@ -654,7 +654,7 @@ object KotlinUnusedSymbolUtil {
       DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null
 
   context(KtAnalysisSession)
-  private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope, symbol: KtDeclarationSymbol?): Boolean {
+  private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope, symbol: KaDeclarationSymbol?): Boolean {
       val ownerClass = declaration.containingClassOrObject as? KtClass ?: return false
       if (!ownerClass.isInheritable()) return false
       val callableSymbol = symbol as? KaCallableSymbol ?: return false

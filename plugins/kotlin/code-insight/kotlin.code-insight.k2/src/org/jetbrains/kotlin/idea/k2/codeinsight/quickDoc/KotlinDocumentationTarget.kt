@@ -198,7 +198,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         analyze(referenceExpression) {
             val symbol = referenceExpression.resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtNamedSymbol
             val name = symbol?.name?.asString()
-            if (name != null && symbol is KtDeclarationSymbol) {
+            if (name != null && symbol is KaDeclarationSymbol) {
                 val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
@@ -259,7 +259,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
         }
 
         val symbol = symbolFinder(declaration.getSymbol())
-        if (symbol !is KtDeclarationSymbol) return
+        if (symbol !is KaDeclarationSymbol) return
 
         renderKotlinSymbol(symbol, declaration, onlyDefinition, true, preBuild)
     }
@@ -316,11 +316,11 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
         }
     }
 
-    return (symbol as? KtDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
+    return (symbol as? KaDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
 }
 
 context(KtAnalysisSession)
-private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KtDeclarationSymbol,
+private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
                                                            declaration: KtDeclaration,
                                                            onlyDefinition: Boolean,
                                                            passContainerInfo: Boolean = true,

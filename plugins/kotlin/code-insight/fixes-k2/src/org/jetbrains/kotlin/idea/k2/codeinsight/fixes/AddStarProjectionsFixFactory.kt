@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -80,7 +80,7 @@ private fun getTargetClasses(
 }
 
 context(KtAnalysisSession)
-private val KtDeclarationSymbol.parentsWithSelf: Sequence<KtDeclarationSymbol>
+private val KaDeclarationSymbol.parentsWithSelf: Sequence<KaDeclarationSymbol>
     get() = generateSequence(this) {
         it.getContainingSymbol()
     }

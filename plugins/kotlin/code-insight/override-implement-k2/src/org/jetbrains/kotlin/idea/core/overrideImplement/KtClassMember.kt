@@ -137,7 +137,7 @@ fun generateMember(
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
                     analysisSession: KtAnalysisSession,
-                    s: KtDeclarationSymbol
+                    s: KaDeclarationSymbol
                 ): List<KtModifierKeywordToken> = buildList {
                     if (mode == MemberGenerateMode.OVERRIDE && s is KtPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
                         //include actual modifier explicitly when containing class has modifier

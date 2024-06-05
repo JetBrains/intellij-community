@@ -54,7 +54,7 @@ object K2StatisticsInfoProvider {
     }
 
     context(KtAnalysisSession)
-    fun forDeclarationSymbol(symbol: KtDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
+    fun forDeclarationSymbol(symbol: KaDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
         is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }
         is KaCallableSymbol -> symbol.callableId?.let { callableId ->
             val containerFqName = callableId.classId?.asFqNameString() ?: callableId.packageName

@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -66,7 +66,7 @@ class KotlinMethodSmartStepTarget(
         }
 
         context(KtAnalysisSession)
-        fun calcLabel(symbol: KtDeclarationSymbol): String {
+        fun calcLabel(symbol: KaDeclarationSymbol): String {
             return symbol.render(renderer)
         }
     }
@@ -131,7 +131,7 @@ private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
     override fun renderModifiers(
         analysisSession: KtAnalysisSession,
-        symbol: KtDeclarationSymbol,
+        symbol: KaDeclarationSymbol,
         declarationModifiersRenderer: KtDeclarationModifiersRenderer,
         printer: PrettyPrinter
     ) {}

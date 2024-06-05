@@ -7,7 +7,7 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -63,5 +63,5 @@ internal abstract class ImportCandidatesProvider(
         this is KotlinTypeNameReferencePositionContext || this is KDocLinkNamePositionContext
 
     context(KtAnalysisSession)
-    abstract fun collectCandidates(): List<KtDeclarationSymbol>
+    abstract fun collectCandidates(): List<KaDeclarationSymbol>
 }

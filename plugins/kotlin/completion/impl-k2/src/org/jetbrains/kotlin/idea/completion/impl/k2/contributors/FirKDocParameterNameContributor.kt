@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -59,7 +59,7 @@ internal open class FirKDocParameterNameContributor(
 
     context(KtAnalysisSession)
     private fun getParametersForKDoc(
-        ownerDeclarationSymbol: KtDeclarationSymbol
+        ownerDeclarationSymbol: KaDeclarationSymbol
     ): Sequence<KtSymbolWithOrigin> = sequence {
         yieldAll(ownerDeclarationSymbol.typeParameters)
 

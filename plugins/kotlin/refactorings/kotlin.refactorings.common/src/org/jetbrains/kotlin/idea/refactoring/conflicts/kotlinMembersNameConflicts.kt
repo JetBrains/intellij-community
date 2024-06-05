@@ -49,10 +49,10 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
 
 context(KtAnalysisSession)
 fun KtScope.findSiblingsByName(
-    symbol: KtDeclarationSymbol,
+    symbol: KaDeclarationSymbol,
     newName: Name,
-    containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()
-): Sequence<KtDeclarationSymbol> {
+    containingSymbol: KaDeclarationSymbol? = symbol.getContainingSymbol()
+): Sequence<KaDeclarationSymbol> {
     if (symbol is KaConstructorSymbol) {
         return getConstructors().filter { symbol != it }
     }
@@ -70,7 +70,7 @@ fun KtScope.findSiblingsByName(
 }
 
 context(KtAnalysisSession)
-fun filterCandidates(symbol: KtDeclarationSymbol, candidateSymbol: KtDeclarationSymbol): Boolean {
+fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclarationSymbol): Boolean {
     if (candidateSymbol is KaFunctionLikeSymbol) {
         val skipCandidate = when (symbol) {
             is KaFunctionLikeSymbol -> !areSameSignatures(candidateSymbol, symbol)
@@ -100,9 +100,9 @@ fun checkDeclarationNewNameConflicts(
     declaration: KtNamedDeclaration,
     newName: Name,
     result: MutableList<UsageInfo>,
-    filterCandidate: (KtDeclarationSymbol) -> Boolean
+    filterCandidate: (KaDeclarationSymbol) -> Boolean
 ) {
-    fun getPotentialConflictCandidates(symbol: KtDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KtDeclarationSymbol> {
+    fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val containingSymbol = symbol.getContainingSymbol() ?: getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)
 
         if (symbol is KtValueParameterSymbol) {
@@ -141,9 +141,9 @@ fun checkDeclarationNewNameConflicts(
             }
 
             is KtPackageSymbol -> {
-                fun KtDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KtSymbolWithVisibility)?.visibility == Visibilities.Private && (this as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL
+                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KtSymbolWithVisibility)?.visibility == Visibilities.Private && (this as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL
 
-                fun isInSameFile(s1: KtDeclarationSymbol, s2: KtDeclarationSymbol): Boolean = s1.psi?.containingFile == s2.psi?.containingFile
+                fun isInSameFile(s1: KaDeclarationSymbol, s2: KaDeclarationSymbol): Boolean = s1.psi?.containingFile == s2.psi?.containingFile
 
                 containingSymbol.getPackageScope().findSiblingsByName(symbol, newName).filter {
                     !symbol.isTopLevelPrivate() && !it.isTopLevelPrivate() || isInSameFile(symbol, it)
@@ -167,7 +167,7 @@ fun checkDeclarationNewNameConflicts(
         }
     }
 
-    fun getPotentialConflictCandidates(declaration: KtNamedDeclaration, newName: Name): Sequence<KtDeclarationSymbol> {
+    fun getPotentialConflictCandidates(declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val declarationSymbol = declaration.getSymbol()
         val symbol = declarationSymbol.let {
             (it as? KtValueParameterSymbol?)?.generatedPrimaryConstructorProperty ?: it
@@ -207,7 +207,7 @@ fun checkNewPropertyConflicts(
     }
 }
 
-fun registerAlreadyDeclaredConflict(candidateSymbol: KtDeclarationSymbol, result: MutableList<UsageInfo>) {
+fun registerAlreadyDeclaredConflict(candidateSymbol: KaDeclarationSymbol, result: MutableList<UsageInfo>) {
     val candidate = candidateSymbol.psi as? PsiNamedElement ?: return
 
     val what = candidate.renderDescription()
@@ -313,14 +313,14 @@ private fun checkRedeclarationConflictsInInheritors(declaration: KtNamedDeclarat
 fun registerRetargetJobOnPotentialCandidates(
     declaration: KtNamedDeclaration,
     name: String,
-    filterCandidate: (KtDeclarationSymbol) -> Boolean,
-    retargetJob: (KtDeclarationSymbol) -> Unit
+    filterCandidate: (KaDeclarationSymbol) -> Boolean,
+    retargetJob: (KaDeclarationSymbol) -> Unit
 ) {
     analyze(declaration) {
         val declarationSymbol = declaration.getSymbol()
 
         val nameAsName = Name.identifier(name)
-        fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
+        fun KtScope.processScope(containingSymbol: KaDeclarationSymbol?) {
             findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).filter { filterCandidate(it) }.forEach(retargetJob)
         }
 

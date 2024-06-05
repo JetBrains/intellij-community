@@ -13,7 +13,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -144,7 +144,7 @@ class KotlinChangeSignatureConflictSearcher(
         return createTypeCodeFragment(text, context).getContentElement()?.getKtType()
     }
     context(KtAnalysisSession)
-    private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KtDeclarationSymbol): Boolean {
+    private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KaDeclarationSymbol): Boolean {
         val factory = KtPsiFactory(function.project)
         val newReceiverType = originalInfo.receiverParameterInfo?.currentType?.text?.let {
             factory.createContextType(it, function)
