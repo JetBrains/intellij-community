@@ -44,7 +44,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -113,7 +112,7 @@ public final class DebuggerUIUtil {
       popup.addListener(new JBPopupListener() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          Window window = popup.isDisposed()  ? null : ComponentUtil.getWindow(popup.getContent());
+          Window window = popup.isDisposed() ? null : ComponentUtil.getWindow(popup.getContent());
           if (window != null) {
             Point expected = point.getScreenPoint();
             Rectangle screen = ScreenUtil.getScreenRectangle(expected);
@@ -150,11 +149,11 @@ public final class DebuggerUIUtil {
     }
   }
 
-   static void showValuePopup(@NotNull MouseEvent event,
-                                    @NotNull Project project,
-                                    @Nullable Editor editor,
-                                    JComponent component,
-                                    @Nullable Runnable cancelCallback) {
+  static void showValuePopup(@NotNull MouseEvent event,
+                             @NotNull Project project,
+                             @Nullable Editor editor,
+                             JComponent component,
+                             @Nullable Runnable cancelCallback) {
 
     Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
     if (size == null) {
@@ -242,10 +241,10 @@ public final class DebuggerUIUtil {
   }
 
   private static ComponentPopupBuilder createCancelablePopupBuilder(Project project,
-                                               JComponent component,
-                                               JComponent preferableFocusComponent,
-                                               @Nullable Runnable cancelCallback,
-                                               @Nullable String dimensionKey) {
+                                                                    JComponent component,
+                                                                    JComponent preferableFocusComponent,
+                                                                    @Nullable Runnable cancelCallback,
+                                                                    @Nullable String dimensionKey) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, preferableFocusComponent);
     builder.setResizable(true)
       .setMovable(true)
@@ -346,7 +345,7 @@ public final class DebuggerUIUtil {
       .setBlockClicksThroughBalloon(true);
 
     Color borderColor = UIManager.getColor("DebuggerPopup.borderColor");
-    if (borderColor != null ) {
+    if (borderColor != null) {
       builder.setBorderColor(borderColor);
     }
 

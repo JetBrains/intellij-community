@@ -115,20 +115,6 @@ f:com.intellij.xdebugger.impl.ConfigurationState
 - f:getExpressionStates():java.util.List
 - f:getName():java.lang.String
 - f:setName(java.lang.String):V
-*a:com.intellij.xdebugger.impl.CustomComponentEvaluator
-- com.intellij.xdebugger.frame.XFullValueEvaluator
-- <init>(java.lang.String):V
-- createComponent(java.lang.String):javax.swing.JComponent
-- show(java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
-- p:showValuePopup(java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,javax.swing.JComponent,java.lang.Runnable):V
-*pf:com.intellij.xdebugger.impl.CustomComponentEvaluator$EvaluationCallback
-- com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
-- <init>(javax.swing.JComponent,com.intellij.xdebugger.impl.CustomComponentEvaluator,com.intellij.openapi.project.Project):V
-- errorOccurred(java.lang.String):V
-- evaluated(java.lang.String):V
-- evaluated(java.lang.String,java.awt.Font):V
-- isObsolete():Z
-- f:setObsolete():V
 a:com.intellij.xdebugger.impl.DebuggerSupport
 - psf:DISABLED_EDIT:com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
 - psf:DISABLED_MARK_HANDLER:com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
@@ -2382,6 +2368,20 @@ c:com.intellij.xdebugger.impl.ui.BreakpointEditor
 com.intellij.xdebugger.impl.ui.BreakpointEditor$Delegate
 - a:done():V
 - a:more():V
+*a:com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
+- com.intellij.xdebugger.frame.XFullValueEvaluator
+- <init>(java.lang.String):V
+- createComponent(java.lang.String):javax.swing.JComponent
+- show(java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
+- p:showValuePopup(java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,javax.swing.JComponent,java.lang.Runnable):V
+*pf:com.intellij.xdebugger.impl.ui.CustomComponentEvaluator$EvaluationCallback
+- com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
+- <init>(javax.swing.JComponent,com.intellij.xdebugger.impl.ui.CustomComponentEvaluator,com.intellij.openapi.project.Project):V
+- errorOccurred(java.lang.String):V
+- evaluated(java.lang.String):V
+- evaluated(java.lang.String,java.awt.Font):V
+- isObsolete():Z
+- f:setObsolete():V
 c:com.intellij.xdebugger.impl.ui.DebuggerColorsPage
 - com.intellij.openapi.options.colors.ColorSettingsPage
 - com.intellij.psi.codeStyle.DisplayPrioritySortable
