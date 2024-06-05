@@ -809,7 +809,7 @@ abstract class KtSymbolBasedVariableAccessorDescriptor(
 }
 
 class KtSymbolBasedPropertyGetterDescriptor(
-    override val ktSymbol: KtPropertyGetterSymbol,
+    override val ktSymbol: KaPropertyGetterSymbol,
     propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedVariableAccessorDescriptor(propertyDescriptor), PropertyGetterDescriptor {
     override fun getReturnType(): KotlinType = propertyDescriptor.returnType

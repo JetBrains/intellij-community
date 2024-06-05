@@ -41,7 +41,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
                 @NlsSafe val declarationName = when (symbol) {
                     is KtVariableLikeSymbol -> symbol.name.asString()
                     is KaFunctionSymbol -> symbol.name.asString() + "()"
-                    is KtPropertyGetterSymbol -> "get()"
+                    is KaPropertyGetterSymbol -> "get()"
                     is KtPropertySetterSymbol -> "set()"
                     is KaConstructorSymbol -> "constructor()"
                     else -> return@process
