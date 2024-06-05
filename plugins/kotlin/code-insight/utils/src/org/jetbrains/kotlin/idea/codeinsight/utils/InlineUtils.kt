@@ -76,7 +76,7 @@ private fun isArrayGeneratorConstructorCall(symbol: KaFunctionLikeSymbol): Boole
                 && symbol.valueParameters[1].returnType.isFunctionType
     }
 
-    if (symbol is KtConstructorSymbol) {
+    if (symbol is KaConstructorSymbol) {
         val classId = symbol.containingClassId
         val isArrayClass = classId == StandardClassIds.Array
                 || classId in StandardClassIds.elementTypeByPrimitiveArrayType

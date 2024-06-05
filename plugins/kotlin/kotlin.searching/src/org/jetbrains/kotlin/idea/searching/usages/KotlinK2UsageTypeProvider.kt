@@ -34,11 +34,11 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
             return when {
                 refExpr.getParentOfTypeAndBranch<KtSuperTypeListEntry> { typeReference } != null -> SUPER_TYPE
 
-                functionSymbol is KtConstructorSymbol && refExpr.getParentOfTypeAndBranch<KtAnnotationEntry> { typeReference } != null -> ANNOTATION
+                functionSymbol is KaConstructorSymbol && refExpr.getParentOfTypeAndBranch<KtAnnotationEntry> { typeReference } != null -> ANNOTATION
 
                 with(refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }) {
                     this?.calleeExpression is KtSimpleNameExpression
-                } -> if (functionSymbol is KtConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL
+                } -> if (functionSymbol is KaConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL
 
                 refExpr.getParentOfTypeAndBranch<KtBinaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtUnaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtWhenConditionInRange> { operationReference } != null -> FUNCTION_CALL
 

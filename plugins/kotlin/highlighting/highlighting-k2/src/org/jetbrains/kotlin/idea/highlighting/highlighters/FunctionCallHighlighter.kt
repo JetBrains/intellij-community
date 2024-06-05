@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -60,7 +60,7 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
     private fun getDefaultHighlightInfoTypeForCall(call: KtCall): HighlightInfoType? {
         if (call !is KtSimpleFunctionCall) return null
         return when (val function = call.symbol) {
-            is KtConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
+            is KaConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
             is KaAnonymousFunctionSymbol -> null
             is KaFunctionSymbol -> when {
                 function.isSuspend -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL

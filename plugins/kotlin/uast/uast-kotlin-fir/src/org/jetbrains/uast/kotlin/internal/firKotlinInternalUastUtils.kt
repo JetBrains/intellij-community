@@ -47,7 +47,7 @@ internal inline fun <R> analyzeForUast(
 
 context(KtAnalysisSession)
 internal fun containingKtClass(
-    ktConstructorSymbol: KtConstructorSymbol,
+    ktConstructorSymbol: KaConstructorSymbol,
 ): KtClass? {
     return when (val psi = ktConstructorSymbol.psi) {
         is KtClass -> psi
@@ -186,7 +186,7 @@ private fun toPsiMethodForDeserialized(
 
     fun PsiClass.lookup(): PsiMethod? {
         val candidates =
-            if (functionSymbol is KtConstructorSymbol)
+            if (functionSymbol is KaConstructorSymbol)
                 constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
             else
                 methods.filter { it.name == psi?.name }

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -160,7 +160,7 @@ sealed class K2MoveRenameUsageInfo(
             analyze(this) {
                 val resolvedSymbol = mainReference.resolveToSymbol()
                 if (resolvedSymbol is KaClassOrObjectSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
-                if (resolvedSymbol is KtConstructorSymbol) return true
+                if (resolvedSymbol is KaConstructorSymbol) return true
                 val containingSymbol = resolvedSymbol?.getContainingSymbol()
                 if (containingSymbol == null) return true // top levels are static
                 if (containingSymbol is KaClassOrObjectSymbol) {

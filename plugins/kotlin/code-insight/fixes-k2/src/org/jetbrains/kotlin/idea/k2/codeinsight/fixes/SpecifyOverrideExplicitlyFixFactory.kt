@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnT
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -46,7 +46,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
 
                     if (delegateTargetSymbol is KtValueParameterSymbol &&
                         delegateTargetSymbol.getContainingSymbol().let {
-                            it is KtConstructorSymbol &&
+                            it is KaConstructorSymbol &&
                                     it.isPrimary &&
                                     it.getContainingSymbol() == delegatedDeclaration.getContainingSymbol()
                         }

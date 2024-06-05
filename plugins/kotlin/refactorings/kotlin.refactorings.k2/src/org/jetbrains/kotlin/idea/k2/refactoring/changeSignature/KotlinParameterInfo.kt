@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
@@ -213,14 +213,14 @@ class KotlinParameterInfo(
                     }
 
                     if (declarationSymbol.receiverParameter != null &&
-                        (target.getContainingSymbol() as? KtConstructorSymbol)?.getContainingSymbol() == declarationSymbol.receiverParameter?.type?.expandedClassSymbol
+                        (target.getContainingSymbol() as? KaConstructorSymbol)?.getContainingSymbol() == declarationSymbol.receiverParameter?.type?.expandedClassSymbol
                     ) {
                         return Int.MAX_VALUE
                     }
                     return null
                 }
 
-                if (target is KtPropertySymbol && declarationSymbol is KtConstructorSymbol) {
+                if (target is KtPropertySymbol && declarationSymbol is KaConstructorSymbol) {
                     val parameterIndex = declarationSymbol.valueParameters.indexOfFirst { it.generatedPrimaryConstructorProperty == target }
                     if (parameterIndex >= 0) {
                         return parameterIndex

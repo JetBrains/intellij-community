@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
@@ -64,7 +64,7 @@ object AddQualifiersUtil {
         if (prevElement.elementType == KtTokens.COLONCOLON) {
 
             fun isTopLevelCallable(callableSymbol: KtSymbol): Boolean {
-                if (callableSymbol is KtConstructorSymbol) {
+                if (callableSymbol is KaConstructorSymbol) {
                     val containingClassSymbol = callableSymbol.getContainingSymbol()
                     if (containingClassSymbol?.getContainingSymbol() == null) {
                         return true
@@ -104,7 +104,7 @@ object AddQualifiersUtil {
     fun getFqName(symbol: KtSymbol): FqName? {
         return when (symbol) {
             is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
-            is KtConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
+            is KaConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
             is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null
         }

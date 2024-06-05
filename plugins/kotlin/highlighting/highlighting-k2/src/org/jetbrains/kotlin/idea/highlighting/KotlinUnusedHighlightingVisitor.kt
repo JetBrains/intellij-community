@@ -95,7 +95,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
                         return
                     }
                     if (expression.isConstructorCallReference()) {
-                        refHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KtConstructorSymbol)?.psi, expression)
+                        refHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KaConstructorSymbol)?.psi, expression)
                     }
                     else if (symbol is KaClassifierSymbol) {
                         refHolder.registerLocalRef(symbol.psi, expression)

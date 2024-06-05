@@ -269,7 +269,7 @@ class KotlinFunctionCallInstruction(
     private fun getExpressionDfType(expr: KtExpression): DfType {
         val constructedClass = (((expr.resolveCall() as? KtSuccessCallInfo)
             ?.call as? KtCallableMemberCall<*, *>)
-            ?.partiallyAppliedSymbol?.symbol as? KtConstructorSymbol)
+            ?.partiallyAppliedSymbol?.symbol as? KaConstructorSymbol)
             ?.getContainingSymbol() as? KaClassOrObjectSymbol
         if (constructedClass != null) {
             // Set exact class type for constructor

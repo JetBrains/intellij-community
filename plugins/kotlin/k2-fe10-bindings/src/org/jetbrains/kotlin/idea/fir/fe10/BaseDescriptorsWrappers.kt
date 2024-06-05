@@ -408,7 +408,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KaFunctionSymbol, c
 }
 
 class KtSymbolBasedConstructorDescriptor(
-    override val ktSymbol: KtConstructorSymbol,
+    override val ktSymbol: KaConstructorSymbol,
     private val ktSBClassDescriptor: KtSymbolBasedClassDescriptor
 ) : KtSymbolBasedFunctionLikeDescriptor(ktSBClassDescriptor.context),
     ClassConstructorDescriptor {

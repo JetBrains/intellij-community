@@ -54,7 +54,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
@@ -503,7 +503,7 @@ internal class KotlinIdeDeclarationRenderer(
 
                             if (callableSymbol is KtNamedSymbol) {
                                 declarationRenderer.nameRenderer.renderName(analysisSession, callableSymbol, declarationRenderer, printer)
-                            } else if (callableSymbol is KtConstructorSymbol) {
+                            } else if (callableSymbol is KaConstructorSymbol) {
                                 (callableSymbol.getContainingSymbol() as? KtNamedSymbol)?.let {
                                     printer.append(highlight(it.name.renderName()) {
                                         asClassName
@@ -721,7 +721,7 @@ internal class KotlinIdeDeclarationRenderer(
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
-                if (symbol is KtConstructorSymbol) return
+                if (symbol is KaConstructorSymbol) return
                 declarationRenderer.typeRenderer.renderType(analysisSession, symbol.returnType, printer)
             }
         }

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -57,7 +57,7 @@ object ChangeParameterTypeFixFactory {
             parameter,
             typePresentation,
             typeFQNPresentation,
-            functionLikeSymbol is KtConstructorSymbol && functionLikeSymbol.isPrimary,
+            functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary,
             functionName
         ))
     }

@@ -61,7 +61,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
     }
 
     private fun isAnnotationCall(expression: KtSimpleNameExpression, target: KtSymbol): Boolean {
-        val isKotlinAnnotation = target is KtConstructorSymbol
+        val isKotlinAnnotation = target is KaConstructorSymbol
                 && target.isPrimary
                 && (target.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS
 

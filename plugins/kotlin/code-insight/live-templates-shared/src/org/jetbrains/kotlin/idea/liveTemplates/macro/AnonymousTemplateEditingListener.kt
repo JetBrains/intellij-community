@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -58,7 +58,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
             for (symbol in referenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol is KaNamedClassOrObjectSymbol) {
                     yield(symbol)
-                } else if (symbol is KtConstructorSymbol) {
+                } else if (symbol is KaConstructorSymbol) {
                     val containingClassSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol
                     if (containingClassSymbol != null) {
                         yield(containingClassSymbol)

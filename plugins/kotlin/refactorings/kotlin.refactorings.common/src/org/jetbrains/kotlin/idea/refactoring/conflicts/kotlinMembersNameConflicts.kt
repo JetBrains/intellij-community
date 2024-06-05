@@ -53,7 +53,7 @@ fun KtScope.findSiblingsByName(
     newName: Name,
     containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()
 ): Sequence<KtDeclarationSymbol> {
-    if (symbol is KtConstructorSymbol) {
+    if (symbol is KaConstructorSymbol) {
         return getConstructors().filter { symbol != it }
     }
     val callables = getCallableSymbols(newName).filter { callable ->

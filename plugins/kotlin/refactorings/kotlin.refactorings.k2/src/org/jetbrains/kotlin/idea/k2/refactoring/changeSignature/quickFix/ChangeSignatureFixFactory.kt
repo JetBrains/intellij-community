@@ -326,7 +326,7 @@ object ChangeSignatureFixFactory {
         val input = Input(
             type = if (hasTypeMismatch) ChangeType.TOO_MANY_ARGUMENTS_WITH_TYPE_MISMATCH else ChangeType.ADD,
             name = name,
-            isConstructor = ktCallableSymbol is KtConstructorSymbol,
+            isConstructor = ktCallableSymbol is KaConstructorSymbol,
             idx = idx,
             parameterCount = ktCallableSymbol.valueParameters.size,
         )
@@ -353,7 +353,7 @@ object ChangeSignatureFixFactory {
         val input = Input(
             type = ChangeType.REMOVE,
             name = name,
-            isConstructor = containingSymbol is KtConstructorSymbol,
+            isConstructor = containingSymbol is KaConstructorSymbol,
             idx = containingSymbol.valueParameters.indexOf<Any>(symbol),
             parameterCount = containingSymbol.valueParameters.size,
         )
@@ -393,7 +393,7 @@ object ChangeSignatureFixFactory {
         val input = Input(
             type = if (element is KtLambdaExpression) ChangeType.CHANGE_FUNCTIONAL else ChangeType.TYPE_MISMATCH,
             name = name,
-            isConstructor = functionLikeSymbol is KtConstructorSymbol,
+            isConstructor = functionLikeSymbol is KaConstructorSymbol,
             idx = callElement.valueArguments.indexOf(valueArgument),
             parameterCount = functionLikeSymbol.valueParameters.size,
             expectedParameterTypes = expectedParameterTypes,
@@ -408,7 +408,7 @@ object ChangeSignatureFixFactory {
 context(KtAnalysisSession)
 internal fun getDeclarationName(functionLikeSymbol: KaFunctionLikeSymbol): String? {
     return when(functionLikeSymbol) {
-        is KtConstructorSymbol -> {
+        is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
             if ((constructorSymbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isInline == true) {
                 null

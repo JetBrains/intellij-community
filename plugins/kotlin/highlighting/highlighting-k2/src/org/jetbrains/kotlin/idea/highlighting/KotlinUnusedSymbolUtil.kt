@@ -271,7 +271,7 @@ object KotlinUnusedSymbolUtil {
       val annotationsPresent = declaration.annotationEntries.mapNotNull {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
           val symbol = reference.resolveToSymbol() ?: return@mapNotNull null
-          val constructorSymbol = symbol as? KtConstructorSymbol ?: return@mapNotNull null
+          val constructorSymbol = symbol as? KaConstructorSymbol ?: return@mapNotNull null
           constructorSymbol.containingClassId?.asSingleFqName()?.asString()
       }
       if (annotationsPresent.isEmpty()) return false
@@ -631,7 +631,7 @@ object KotlinUnusedSymbolUtil {
   context(KtAnalysisSession)
   private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KtDeclarationSymbol?): Boolean {
       return when {
-          symbol is KtConstructorSymbol -> {
+          symbol is KaConstructorSymbol -> {
               val classSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return false
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }

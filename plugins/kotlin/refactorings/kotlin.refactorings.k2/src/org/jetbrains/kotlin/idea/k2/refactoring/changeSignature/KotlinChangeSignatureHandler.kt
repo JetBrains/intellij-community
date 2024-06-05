@@ -12,7 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -67,7 +67,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                         val symbol = element.mainReference.resolveToSymbol()
                         when {
                           symbol is KtValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
-                          symbol is KtConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
+                          symbol is KaConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
                           else -> symbol
                         }
                     }

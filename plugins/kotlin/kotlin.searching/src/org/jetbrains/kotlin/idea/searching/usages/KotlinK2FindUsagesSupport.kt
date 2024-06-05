@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -105,7 +105,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         return withResolvedCall(psiToResolve) { call ->
             when (call) {
                 is KtFunctionCall<*> -> {
-                    val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
+                    val constructorSymbol = call.symbol as? KaConstructorSymbol ?: return@withResolvedCall false
                     val constructedClassSymbol =
                         constructorSymbol.getContainingSymbol() as? KaClassLikeSymbol ?: return@withResolvedCall false
                     val classOrObjectSymbol = ktClassOrObject.getClassOrObjectSymbol()

@@ -77,7 +77,7 @@ internal class ImportAllMembersIntention :
             },
             callableShortenStrategy = {
                 if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
-                val containingClassId = if (it is KtConstructorSymbol) {
+                val containingClassId = if (it is KaConstructorSymbol) {
                     it.containingClassId?.outerClassId
                 } else {
                     it.callableId?.classId
@@ -151,7 +151,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
         is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
         else -> return false
     } as? KtSymbolWithKind ?: return true
-    if (referencedSymbol is KtConstructorSymbol) return false
+    if (referencedSymbol is KaConstructorSymbol) return false
     return (referencedSymbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
 

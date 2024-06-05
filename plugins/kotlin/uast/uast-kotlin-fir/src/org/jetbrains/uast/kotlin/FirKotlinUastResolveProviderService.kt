@@ -292,7 +292,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return null
             return (resolvedFunctionLikeSymbol as? KtNamedSymbol)?.name?.identifierOrNullIfSpecial
-                ?: (resolvedFunctionLikeSymbol as? KtConstructorSymbol)?.let { SpecialNames.INIT.asString() }
+                ?: (resolvedFunctionLikeSymbol as? KaConstructorSymbol)?.let { SpecialNames.INIT.asString() }
         }
     }
 
@@ -313,7 +313,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val fqName = resolvedFunctionLikeSymbol.callableId?.asSingleFqName()
             return when {
                 resolvedFunctionLikeSymbol is KtSamConstructorSymbol ||
-                        resolvedFunctionLikeSymbol is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
+                        resolvedFunctionLikeSymbol is KaConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
 
                 fqName != null && isAnnotationArgumentArrayInitializer(ktCallElement, fqName) -> UastCallKind.NESTED_ARRAY_INITIALIZER
                 else -> UastCallKind.METHOD_CALL
@@ -336,7 +336,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return null
             return when (resolvedFunctionLikeSymbol) {
-                is KtConstructorSymbol -> {
+                is KaConstructorSymbol -> {
                     val context = containingKtClass(resolvedFunctionLikeSymbol) ?: ktCallElement
                     toPsiClass(resolvedFunctionLikeSymbol.returnType, source, context, ktCallElement.typeOwnerKind)
                 }

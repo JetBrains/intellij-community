@@ -163,7 +163,7 @@ internal object CallableMetadataProvider {
     context(KtAnalysisSession)
     private fun getExpectedNonExtensionReceiver(symbol: KtCallableSymbol): KaClassOrObjectSymbol? {
         val containingClass = symbol.originalContainingClassForOverride
-        return if (symbol is KtConstructorSymbol && (containingClass as? KaNamedClassOrObjectSymbol)?.isInner == true) {
+        return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassOrObjectSymbol)?.isInner == true) {
             containingClass.getContainingSymbol() as? KaClassOrObjectSymbol
         } else {
             containingClass

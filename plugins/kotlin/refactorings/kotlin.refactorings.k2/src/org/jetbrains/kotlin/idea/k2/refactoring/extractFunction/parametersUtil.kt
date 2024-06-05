@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -402,12 +402,12 @@ private fun getReferencedClassifierSymbol(
         is KaClassOrObjectSymbol -> when (referencedSymbol.classKind) {
             KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ENUM_CLASS -> referencedSymbol
             //if type reference or call to implicit constructor, then type expansion might be required
-            else -> if (refInfo.refExpr.getNonStrictParentOfType<KtTypeReference>() != null || partiallyAppliedSymbol?.symbol is KtConstructorSymbol) referencedSymbol else null
+            else -> if (refInfo.refExpr.getNonStrictParentOfType<KtTypeReference>() != null || partiallyAppliedSymbol?.symbol is KaConstructorSymbol) referencedSymbol else null
         }
 
         is KaTypeParameterSymbol -> referencedSymbol
 
-        is KtConstructorSymbol -> referencedSymbol.getContainingSymbol() as? KaClassifierSymbol
+        is KaConstructorSymbol -> referencedSymbol.getContainingSymbol() as? KaClassifierSymbol
 
         else -> null
     }

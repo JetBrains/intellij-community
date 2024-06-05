@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -66,7 +66,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
     }
 
     private fun getConstructor(key: PsiElement): ConstructorDescriptor? {
-        val ktConstructorSymbol = key.getKtSymbolOfTypeOrNull<KtConstructorSymbol>() ?: return null
+        val ktConstructorSymbol = key.getKtSymbolOfTypeOrNull<KaConstructorSymbol>() ?: return null
         val containerClass = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() }
         check(containerClass is KaNamedClassOrObjectSymbol) {
             "Unexpected contained for Constructor symbol: $containerClass, ktConstructorSymbol = $ktConstructorSymbol"

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -53,7 +53,7 @@ internal fun KaFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean
 
 private fun KaFunctionLikeSymbol.methodName() = when (this) {
     is KaFunctionSymbol -> getByteCodeMethodName()
-    is KtConstructorSymbol -> "<init>"
+    is KaConstructorSymbol -> "<init>"
     else -> ""
 }
 

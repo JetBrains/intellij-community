@@ -110,7 +110,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         val symbol = signature.symbol
         val name = when (symbol) {
             is KtNamedSymbol -> symbol.name
-            is KtConstructorSymbol -> (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.name
+            is KaConstructorSymbol -> (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.name
             else -> null
         } ?: return
 

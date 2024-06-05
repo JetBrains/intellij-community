@@ -60,12 +60,12 @@ internal class ImportMemberIntention :
 context(KtAnalysisSession)
 private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
-        is KtConstructorSymbol,
+        is KaConstructorSymbol,
         is KaClassOrObjectSymbol -> {
             val classId = if (symbol is KaClassOrObjectSymbol) {
                 symbol.classId
             } else {
-                (symbol as KtConstructorSymbol).containingClassId
+                (symbol as KaConstructorSymbol).containingClassId
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
@@ -75,7 +75,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
                     else
                         ShortenStrategy.DO_NOT_SHORTEN
                 }, callableShortenStrategy = {
-                    if (it is KtConstructorSymbol && it.containingClassId == classId)
+                    if (it is KaConstructorSymbol && it.containingClassId == classId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
                     else
                         ShortenStrategy.DO_NOT_SHORTEN
