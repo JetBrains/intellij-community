@@ -35,6 +35,11 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
     myContainer.setChild(PARENT_REFERENCE_ROLE, parentReference);
   }
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   protected JpsNamedElementReferenceBase(JpsNamedElementReferenceBase<S, T, Self> original) {
     super(original);
     myElementName = original.myElementName;

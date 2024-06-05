@@ -24,6 +24,11 @@ public abstract class JpsComplexPackagingElementBase<Self extends JpsComplexPack
   protected JpsComplexPackagingElementBase() {
   }
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   protected JpsComplexPackagingElementBase(JpsComplexPackagingElementBase<Self> original) {
     super(original);
   }
