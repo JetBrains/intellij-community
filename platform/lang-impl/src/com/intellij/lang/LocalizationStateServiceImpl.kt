@@ -2,7 +2,9 @@
 package com.intellij.lang
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -29,6 +31,7 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
   override fun setSelectedLocale(locale: String) {
     localizationState.lastSelectedLocale = localizationState.selectedLocale
     localizationState.selectedLocale = locale
+    ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).run()
   }
 }
 

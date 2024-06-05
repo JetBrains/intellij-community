@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
-import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.InlayHintsSwitch
@@ -19,8 +18,9 @@ internal class CodeVisionSwitch : InlayHintsSwitch {
   }
 
   private fun setCodeVisionEnabled(project: Project, value: Boolean) {
-    CodeVisionSettings.instance().codeVisionEnabled = value
+    CodeVisionSettings.getInstance().codeVisionEnabled = value
+    ModificationStampUtil.clearModificationStamp()
     InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
-    CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
+    project.getService(CodeVisionHost::class.java).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
   }
 }

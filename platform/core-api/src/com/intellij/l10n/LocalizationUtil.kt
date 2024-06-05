@@ -182,4 +182,13 @@ object LocalizationUtil {
       return emptyList()
     }
   }
+
+  fun getAllAvailableLocales(): List<Locale> {
+    return buildList {
+      add(Locale.ENGLISH)
+      for (bundleEP in getAllLanguageBundleExtensions()) {
+        add(Locale.forLanguageTag(bundleEP.locale))
+      }
+    }
+  }
 }

@@ -15,13 +15,13 @@ import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol

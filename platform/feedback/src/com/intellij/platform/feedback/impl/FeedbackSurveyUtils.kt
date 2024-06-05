@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.*
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -54,7 +55,7 @@ internal fun showNotification(feedbackSurveyType: FeedbackSurveyType<*>, project
   }
 }
 
-
+@RequiresBackgroundThread
 internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, project: Project): Boolean {
   val commonConditionsForAllSurveys = if (Registry.`is`("platform.feedback.ignore.common.conditions.for.all.surveys", false)) {
     true
@@ -66,8 +67,12 @@ internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, projec
     feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
     checkNumberShowsNotExceeded(feedbackSurveyConfig)
   }
-  val extraConditionsForSurvey = feedbackSurveyConfig.checkExtraConditionSatisfied(project)
-  return commonConditionsForAllSurveys && extraConditionsForSurvey
+
+  if (!commonConditionsForAllSurveys) {
+    return false
+  }
+
+  return feedbackSurveyConfig.checkExtraConditionSatisfied(project)
 }
 
 private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyType<*>, project: Project, forTest: Boolean) {

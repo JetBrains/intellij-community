@@ -6,11 +6,17 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import org.jetbrains.annotations.Contract
+import java.io.InputStream
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.absolute
+import kotlin.io.path.inputStream
 import kotlin.system.exitProcess
 
 /**
@@ -34,11 +40,13 @@ fun main(args: Array<String>) {
 
   startupTimings.add("loading runtime module repository")
   startupTimings.add(System.nanoTime())
-  val moduleRepository = RuntimeModuleRepository.create(Path.of(repositoryPathString).toAbsolutePath())
+  val moduleRepositoryPath = Path.of(repositoryPathString).toAbsolutePath()
+  val moduleRepository = RuntimeModuleRepository.create(moduleRepositoryPath)
 
   startupTimings.add("loading product modules")
   startupTimings.add(System.nanoTime())
-  val productModules = loadProductModules(moduleRepository)
+  val projectHome = locateProjectHome(moduleRepositoryPath)
+  val productModules = loadProductModules(moduleRepository, projectHome)
 
   startupTimings.add("building required modules")
   startupTimings.add(System.nanoTime())
@@ -47,25 +55,46 @@ fun main(args: Array<String>) {
   IntellijLoader.launch(args, moduleRepository, startupTimings, startTimeUnixNano)
 }
 
-private fun loadProductModules(moduleRepository: RuntimeModuleRepository): ProductModules {
+private fun loadProductModules(moduleRepository: RuntimeModuleRepository, projectHome: Path): ProductModules {
   val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
   val currentMode = ProductMode.entries.find { it.id == currentModeId }
   if (currentMode == null) {
     reportError("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
   }
 
-  val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
-  if (rootModuleName == null) {
-    error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
+  val resourceFileFinder = ModuleResourceFileFinder(projectHome)
+  val resourceFileResolver = object : ResourceFileResolver {
+    override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
+      return resourceFileFinder.findResourceFile(moduleId.stringId, relativePath)?.inputStream()
+    }
   }
-
-  val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleName))
   val productModulesPath = "META-INF/$rootModuleName/product-modules.xml"
-  val productModulesXmlStream = rootModule.readFile(productModulesPath)
+  val productModulesXmlStream = resourceFileResolver.readResourceFile(RuntimeModuleId.module(rootModuleName), productModulesPath)
   if (productModulesXmlStream == null) {
     error("$productModulesPath is not found in '$rootModuleName' module")
   }
-  return ProductModulesSerialization.loadProductModules(productModulesXmlStream, productModulesPath, currentMode, moduleRepository)
+  return ProductModulesSerialization.loadProductModules(productModulesXmlStream, productModulesPath, currentMode, moduleRepository, resourceFileResolver)
+}
+
+private fun locateProjectHome(moduleRepositoryPath: Path): Path {
+  val explicitHomePath = System.getProperty("idea.home.path")
+  if (explicitHomePath != null) {
+    return Path(explicitHomePath)
+  }
+
+  var currentPath: Path? = moduleRepositoryPath
+  while (currentPath != null && !isProjectHome(currentPath)) {
+    currentPath = currentPath.parent
+  }
+  require(currentPath != null) { "Cannot find project home directory for $moduleRepositoryPath" }
+  return currentPath.toAbsolutePath()
+}
+
+private fun isProjectHome(path: Path): Boolean {
+  return Files.isDirectory(path.resolve(".idea")) &&
+         ((Files.exists(path.resolve("intellij.idea.ultimate.main.iml"))
+           || Files.exists(path.resolve("intellij.idea.community.main.iml"))
+           || Files.exists(path.resolve(".ultimate.root.marker"))))
 }
 
 private fun buildRequiredModules(productModules: ProductModules) {
@@ -77,10 +106,10 @@ private fun buildRequiredModules(productModules: ProductModules) {
     allProductModuleDescriptors.addAll(serviceModuleMapping.getAdditionalModules(pluginModuleGroup))
   }
   
-  val moduleNames = allProductModuleDescriptors.asSequence()
+  val moduleNames = mutableListOf(rootModuleName) 
+  allProductModuleDescriptors.asSequence()
     .map { it.moduleId.stringId }
-    .filterNot { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
-    .toList()
+    .filterNotTo(moduleNames) { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
   if (!sendRequestToCompileModules(moduleNames)) {
     reportError("Failed to build modules")
   }
@@ -92,5 +121,7 @@ private fun reportError(message: String): Nothing {
   exitProcess(3) //com.intellij.idea.AppExitCodes.STARTUP_EXCEPTION
 }
 
+private val rootModuleName: String
+  get() = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY) ?: error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"
 private const val PLATFORM_PRODUCT_MODE_PROPERTY = "intellij.platform.product.mode"

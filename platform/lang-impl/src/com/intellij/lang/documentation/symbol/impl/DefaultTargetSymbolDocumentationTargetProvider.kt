@@ -26,20 +26,23 @@ private fun symbolDocumentationTargets(file: PsiFile, offset: Int): List<Documen
 }
 
 internal fun symbolDocumentationTargets(project: Project, targetSymbols: Collection<Symbol>): List<DocumentationTarget> {
-  return targetSymbols.mapNotNullTo(LinkedHashSet()) {
-    symbolDocumentationTarget(project, it)
+  return targetSymbols.flatMapTo(LinkedHashSet()) {
+    symbolDocumentationTargets(project, it)
   }.toList()
 }
 
-internal fun symbolDocumentationTarget(project: Project, symbol: Symbol): DocumentationTarget? {
+internal fun symbolDocumentationTargets(project: Project, symbol: Symbol): List<DocumentationTarget> {
   for (ext in SymbolDocumentationTargetProvider.EP_NAME.extensionList) {
-    return ext.documentationTarget(project, symbol) ?: continue
+    val targets = ext.documentationTargets(project, symbol)
+    if (!targets.isEmpty()) {
+      return targets
+    }
   }
   if (symbol is DocumentationSymbol) {
-    return symbol.documentationTarget
+    return listOf(symbol.documentationTarget)
   }
   if (symbol is DocumentationTarget) {
-    return symbol
+    return listOf(symbol)
   }
-  return null
+  return emptyList()
 }

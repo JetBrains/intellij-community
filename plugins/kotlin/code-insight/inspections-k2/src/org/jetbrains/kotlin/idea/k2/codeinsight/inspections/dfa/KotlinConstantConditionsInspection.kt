@@ -443,7 +443,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return@analyze false
                 val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return@analyze false
                 if (target.name.asString() != methodName) return@analyze false
-                return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableIdIfNonLocal?.packageName
+                return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
             }
         }
 
@@ -484,7 +484,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
                     val name = target.name.asString()
                     if (name != "assert" && name != "require" && name != "check") return false
-                    StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableIdIfNonLocal?.packageName
+                    StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
                 }
 
                 else -> false

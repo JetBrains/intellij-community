@@ -46,5 +46,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

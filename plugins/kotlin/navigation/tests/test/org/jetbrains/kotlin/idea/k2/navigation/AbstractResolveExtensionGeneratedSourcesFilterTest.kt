@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.navigation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlFile
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
 import org.jetbrains.kotlin.idea.navigation.KotlinResolveExtensionGeneratedSourcesFilter

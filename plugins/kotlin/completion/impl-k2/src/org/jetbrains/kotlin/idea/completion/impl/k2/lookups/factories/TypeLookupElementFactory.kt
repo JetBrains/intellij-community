@@ -52,7 +52,7 @@ class TypeLookupElementFactory {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
 
-            is KtClassLikeSymbol -> when (val classId = symbol.classIdIfNonLocal) {
+            is KtClassLikeSymbol -> when (val classId = symbol.classId) {
                 null -> symbol.name?.asString()?.let { it to it }
                 else -> classId.relativeClassName.asString() to classId.asFqNameString()
             }

@@ -19,6 +19,8 @@ class SyncStateAction : ChooseProductActionButton() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
+    if (!settingsService.isSyncEnabled)
+      return
     when (syncService.syncState.value) {
       SyncService.SYNC_STATE.UNLOGGED -> {
         syncService.tryToLogin()
@@ -29,7 +31,7 @@ class SyncStateAction : ChooseProductActionButton() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = !settingsService.isSyncEnabled.value
+    e.presentation.isVisible = settingsService.isSyncEnabled && !settingsService.hasDataToSync.value
     if(!e.presentation.isVisible) {
       return
     }

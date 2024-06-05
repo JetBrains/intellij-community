@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -31,7 +30,8 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
+import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
+import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
@@ -73,8 +73,9 @@ public final class SwitchStatementsWithoutDefaultInspection extends AbstractBase
           infoMode = true;
         }
         else {
-          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement, true);
-          if (completenessResult == CompletenessResult.UNEVALUATED || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL) return;
+          CompletenessResult completenessResult = evaluateSwitchCompleteness(statement, true);
+          if (completenessResult == CompletenessResult.UNEVALUATED ||
+              completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL) return;
           if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL) {
             if (!isOnTheFly) return;
             infoMode = true;

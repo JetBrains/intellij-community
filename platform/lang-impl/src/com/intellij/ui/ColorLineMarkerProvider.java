@@ -17,8 +17,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.ColorsIcon;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,9 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
     @Override
     public Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
-      return JBUIScale.scaleIcon(new ColorsIcon(12, infos.stream().map(_info -> ((MyInfo)_info).myColor).toArray(Color[]::new)));
+      // reverse because ColorsIcon(int, java.awt.Color...) does reverse again for some reason
+      Color[] colors = ArrayUtil.reverseArray(ContainerUtil.map2Array(infos, new Color[0], info -> ((MyInfo)info).myColor));
+      return JBUIScale.scaleIcon(new ColorsIcon(12, colors));
     }
 
     @NotNull

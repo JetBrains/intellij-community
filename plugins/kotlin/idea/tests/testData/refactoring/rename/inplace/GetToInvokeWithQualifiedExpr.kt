@@ -1,6 +1,5 @@
 // NEW_NAME: invoke
 // RENAME: member
-// IGNORE_K2
 
 class WInvoke {
     operator fun <caret>get(body: () -> Unit) { }

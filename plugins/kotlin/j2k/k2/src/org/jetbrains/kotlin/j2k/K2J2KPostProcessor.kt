@@ -6,11 +6,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -63,7 +63,7 @@ internal class K2J2KPostProcessor : PostProcessor {
             }
 
             // Step 2: apply them
-            KtAnalysisAllowanceManager.forbidAnalysisInside("Apply J2K post-processings") {
+            forbidAnalysis("Apply J2K post-processings") {
                 runUndoTransparentActionInEdt(inWriteAction = true) {
                     for (applier in appliers) {
                         ProgressManager.checkCanceled()

@@ -14,10 +14,10 @@ import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGeneratorCommandsRunner
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.getCommandResultFuture
@@ -77,7 +77,7 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
 
     // fileSuggestionsGenerator is using 'typedPrefix' property of ShellRuntimeContext to determine the location
     val typedPrefix = testDirectory.toString() + File.separatorChar
-    val suggestions = runGenerator(session, fileSuggestionsGenerator(), typedPrefix)
+    val suggestions = runGenerator(session, fileSuggestionsGenerator(), typedPrefix).filter { !it.isHidden }
     val actualNames = suggestions.map { it.name }.filter { it.isNotEmpty() }
     val expectedNames = expected.map { it.toString() }
     UsefulTestCase.assertSameElements(actualNames, expectedNames)

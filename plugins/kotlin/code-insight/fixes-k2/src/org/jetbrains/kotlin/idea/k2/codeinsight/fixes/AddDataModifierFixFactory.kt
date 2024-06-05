@@ -48,7 +48,7 @@ internal object AddDataModifierFixFactory {
         ) return@ModCommandBased emptyList()
 
         val ktClass = classSymbol.psi as? KtClass ?: return@ModCommandBased emptyList()
-        val fqName = classSymbol.classIdIfNonLocal?.asSingleFqName()?.asString() ?: return@ModCommandBased emptyList()
+        val fqName = classSymbol.classId?.asSingleFqName()?.asString() ?: return@ModCommandBased emptyList()
         listOfNotNull(AddDataModifierFix(ktClass, ElementContext(fqName)))
     }
 

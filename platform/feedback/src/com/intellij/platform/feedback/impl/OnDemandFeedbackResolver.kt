@@ -1,16 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.FeedbackSurvey
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
 @Service(Service.Level.APP)
-class OnDemandFeedbackResolver {
+class OnDemandFeedbackResolver(private val cs: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(): OnDemandFeedbackResolver = service()
@@ -25,15 +30,25 @@ class OnDemandFeedbackResolver {
   }
 
   /**
-   * Shows [survey] if it's suitable and user allows showing surveys.
+   * Shows [surveyClass] if it's suitable and user allows showing surveys.
    *
-   * @return `true` if a survey notification was shown, `false` otherwise
+   * @param onShowAction Callback action that is executed after the show operation is attempted.
+   * Accepts a boolean where true indicates the notification was shown and false indicates it was not.
+   * Invokes in the background.
+   *
    */
-  fun <S : FeedbackSurvey> showFeedbackNotification(surveyClass: KClass<S>, project: Project): Boolean {
+  fun <S : FeedbackSurvey> showFeedbackNotification(surveyClass: KClass<S>, project: Project, onShowAction: (Boolean) -> Unit) {
     val survey = getJbOnDemandFeedbackSurveyExtension(surveyClass)
-    if (!canShowFeedbackNotification()) return false
-    if (!survey.isSuitableToShow(project)) return false
-    survey.showNotification(project)
-    return true
+
+    cs.launch {
+      if (!canShowFeedbackNotification() || !survey.isSuitableToShow(project)) {
+        onShowAction.invoke(false)
+      }
+
+      withContext(Dispatchers.EDT) {
+        survey.showNotification(project)
+      }
+      onShowAction.invoke(true)
+    }
   }
 }

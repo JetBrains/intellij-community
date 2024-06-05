@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
@@ -134,10 +135,12 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
 
       for (key in keys) {
         dictCompletion.addElement(
-          LookupElementBuilder
-            .create("$quote$key$quote")
-            .withTypeText("dict key")
-            .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter))
+          MLRankingIgnorable.wrap(
+            LookupElementBuilder
+              .create("$quote$key$quote")
+              .withTypeText("dict key")
+              .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter))
+          )
         )
       }
     }

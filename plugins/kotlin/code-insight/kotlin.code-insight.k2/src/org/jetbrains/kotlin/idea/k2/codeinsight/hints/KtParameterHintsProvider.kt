@@ -84,7 +84,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
     context(KtAnalysisSession)
     private fun KtFunctionLikeSymbol.isBlackListed(valueParameters: List<KtValueParameterSymbol>): Boolean {
-        val blackListed = callableIdIfNonLocal?.let {
+        val blackListed = callableId?.let {
             val callableId = it.asSingleFqName().toString()
             val parameterNames = valueParameters.map { it.name.asString() }
             blackListMatchers.any { it.isMatching(callableId, parameterNames) }

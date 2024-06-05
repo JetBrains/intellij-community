@@ -717,6 +717,10 @@
                              key="configurable.CertificateConfigurable.display.name"
                              id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.ui.LanguageAndRegionConfigurable"
+                             id="preferences.language.and.region"
+                             key="title.language.and.region" bundle="messages.IdeBundle"/>
+
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
               extensions="ane;apk;ear;egg;jar;swc;war;zip"/>
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"

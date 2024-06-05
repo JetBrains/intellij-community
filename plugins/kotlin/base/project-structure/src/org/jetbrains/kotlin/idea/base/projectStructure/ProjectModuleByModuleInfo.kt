@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.kotlinForwardDeclarationsWorkspaceEntity
+import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.kotlinForwardDeclarationsWorkspaceEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.idea.base.util.minus
@@ -198,13 +198,13 @@ class KtNativeKlibLibraryModuleByModuleInfo(
 ) : KtLibraryModuleByModuleInfo(nativeLibraryInfo) {
     override val contentScope: GlobalSearchScope
         get() = GlobalSearchScope.union(
-            listOf(mainScope, fwdDeclarationsScope)
+            listOf(mainScope, forwardDeclarationsScope)
         )
 
     val mainScope: GlobalSearchScope
         get() = nativeLibraryInfo.contentScope
 
-    val fwdDeclarationsScope: GlobalSearchScope
+    val forwardDeclarationsScope: GlobalSearchScope
         get() {
             val rootDirectories = getGeneratedFwdDeclarationRoots(nativeLibraryInfo)
 

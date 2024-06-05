@@ -113,8 +113,9 @@ class EditorCellInput(
     _component.dispose()
   }
 
-  fun update() {
-    _component = componentFactory(_component)
+  fun update(force: Boolean = false) {
+    val oldComponent = if (force) null else _component
+    _component = componentFactory(oldComponent)
     updateGutterIcons()
   }
 

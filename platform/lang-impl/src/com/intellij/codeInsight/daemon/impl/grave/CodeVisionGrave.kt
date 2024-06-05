@@ -54,9 +54,6 @@ internal class CodeVisionGrave(project: Project, private val scope: CoroutineSco
       .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
       .map { CodeVisionEntryState.create(it) }
       .toList()
-    if (stateList.isEmpty()) {
-      return
-    }
     val contentHash = editor.document.contentHash()
     val state = CodeVisionState(contentHash, stateList)
     scope.launch(Dispatchers.IO) {

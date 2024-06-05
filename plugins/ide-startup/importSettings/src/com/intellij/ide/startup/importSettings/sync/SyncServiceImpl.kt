@@ -47,10 +47,6 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
 
   override val syncState = Property(SyncService.SYNC_STATE.UNLOGGED)
 
-  init {
-    loadAmbientSyncState()
-  }
-
   private val accountInfoService: JBAccountInfoService?
     get() = JBAccountInfoService.getInstance()
 

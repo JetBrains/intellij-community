@@ -5164,6 +5164,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayAccess.java")
+        public void testArrayAccess() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/arrayAccess.java");
+        }
+
         @TestMetadata("autoNotNull.java")
         public void testAutoNotNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/autoNotNull.java");
@@ -5352,6 +5357,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("ParameterComparedWithNull.java")
         public void testParameterComparedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/ParameterComparedWithNull.java");
+        }
+
+        @TestMetadata("synchronized.java")
+        public void testSynchronized() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/synchronized.java");
+        }
+
+        @TestMetadata("throw.java")
+        public void testThrow() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/throw.java");
         }
 
         @TestMetadata("VariableAssignedWithNull.java")

@@ -11,6 +11,7 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
+import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinStringStubIndexHelper
@@ -130,6 +131,7 @@ class StubBasedPackageMemberDeclarationProvider(
             KotlinFullClassNameIndex.Helper.processAllKeys(searchScope, null, processor)
             val everyObjects = KotlinFullClassNameIndex.Helper.get(childName, project, GlobalSearchScope.everythingScope(project))
             if (processor.isFound || everyObjects.isNotEmpty()) {
+                project.let { KotlinFailureCollector.recordIndexInconsistency(it) }
                 project.messageBus.syncPublisher(KotlinCorruptedIndexListener.TOPIC).corruptionDetected()
                 StubInconsistencyReporter.getInstance().reportKotlinMissingClassName(project, processor.isFound, !everyObjects.isEmpty())
                 throw IllegalStateException(

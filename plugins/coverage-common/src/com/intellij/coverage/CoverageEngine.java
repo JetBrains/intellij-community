@@ -345,9 +345,18 @@ public abstract class CoverageEngine {
     return CoverageBundle.message("coverage.tab.title");
   }
 
+  /**
+   * @deprecated Use {@link #createCoverageViewExtension(Project, CoverageSuitesBundle)}
+   */
+  @Deprecated
   public CoverageViewExtension createCoverageViewExtension(Project project,
                                                            CoverageSuitesBundle suiteBundle,
-                                                           CoverageViewManager.StateBean stateBean) {
+                                                           @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    return createCoverageViewExtension(project, suiteBundle);
+  }
+
+  public CoverageViewExtension createCoverageViewExtension(Project project,
+                                                           CoverageSuitesBundle suiteBundle) {
     return null;
   }
 

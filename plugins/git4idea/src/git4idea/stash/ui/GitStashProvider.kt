@@ -209,7 +209,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     }
 
     override fun createDiffWithLocalRequestProducer(project: Project?, useBeforeVersion: Boolean): ChangeDiffRequestChain.Producer? {
-      val changeWithLocal = ShowDiffWithLocalAction.getChangeWithLocal(change, useBeforeVersion) ?: return null
+      val changeWithLocal = ShowDiffWithLocalAction.getChangeWithLocal(change, useBeforeVersion, useBeforeVersion) ?: return null
       return ChangeDiffRequestProducer.create(project, changeWithLocal, prepareChangeContext())
     }
 

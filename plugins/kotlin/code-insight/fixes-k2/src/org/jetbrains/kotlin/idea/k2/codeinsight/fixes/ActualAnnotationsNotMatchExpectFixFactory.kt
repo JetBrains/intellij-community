@@ -51,6 +51,6 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
     context (KtAnalysisSession)
     private fun KtAnnotationEntry.getAnnotationClassId(): ClassId? {
         val resolvedExpectAnnotationCall = resolveCall()?.singleConstructorCallOrNull() ?: return null
-        return resolvedExpectAnnotationCall.symbol.containingClassIdIfNonLocal
+        return resolvedExpectAnnotationCall.symbol.containingClassId
     }
 }

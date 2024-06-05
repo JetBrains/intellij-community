@@ -38,14 +38,21 @@ public final class ProductModulesSerialization {
   public static ProductModules loadProductModules(@NotNull InputStream inputStream, @NotNull String filePath,
                                                   @NotNull ProductMode currentMode,
                                                   @NotNull RuntimeModuleRepository repository) {
-    RawProductModules rawProductModules = readProductModulesAndMergeIncluded(inputStream, filePath, moduleId ->
-      repository.getModule(moduleId).readFile("META-INF/" + moduleId.getStringId() + "/product-modules.xml")
-    );
-    return loadProductModules(rawProductModules, filePath, currentMode, repository);
+    ResourceFileResolver resolver = (moduleId, relativePath) -> repository.getModule(moduleId).readFile(relativePath);
+    return loadProductModules(inputStream, filePath, currentMode, repository, resolver);
+  }
+
+  public static @NotNull ProductModules loadProductModules(@NotNull InputStream inputStream,
+                                                           @NotNull String filePath,
+                                                           @NotNull ProductMode currentMode,
+                                                           @NotNull RuntimeModuleRepository repository,
+                                                           @NotNull ResourceFileResolver resourceFileResolver) {
+    RawProductModules rawProductModules = readProductModulesAndMergeIncluded(inputStream, filePath, resourceFileResolver);
+    return loadProductModules(rawProductModules, filePath, currentMode, repository, resourceFileResolver);
   }
 
   public static @NotNull RawProductModules readProductModulesAndMergeIncluded(@NotNull InputStream inputStream, @NotNull String filePath,
-                                                                              @NotNull IncludedProductModulesResolver resolver) {
+                                                                              @NotNull ResourceFileResolver resolver) {
     try {
       RawProductModules rawProductModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);
       if (rawProductModules.getIncludedFrom().isEmpty()) {
@@ -63,10 +70,11 @@ public final class ProductModulesSerialization {
     }
   }
 
-  private static @NotNull ProductModulesImpl loadProductModules(@NotNull RawProductModules rawProductModules, 
+  private static @NotNull ProductModulesImpl loadProductModules(@NotNull RawProductModules rawProductModules,
                                                                 @NotNull String debugName,
                                                                 @NotNull ProductMode currentMode,
-                                                                @NotNull RuntimeModuleRepository repository) {
+                                                                @NotNull RuntimeModuleRepository repository,
+                                                                @NotNull ResourceFileResolver resourceFileResolver) {
 
     MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rawProductModules.getMainGroupModules(), currentMode, repository);
     List<PluginModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
@@ -76,7 +84,7 @@ public final class ProductModulesSerialization {
          It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
          Plugins should define which modules from them should be included into JetBrains Client instead. */
       if (module != null) {
-        bundledPluginModuleGroups.add(new PluginModuleGroupImpl(module, currentMode, repository));
+        bundledPluginModuleGroups.add(new PluginModuleGroupImpl(module, currentMode, repository, resourceFileResolver));
       }
     }
     return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
@@ -84,12 +92,12 @@ public final class ProductModulesSerialization {
 
   private static void mergeIncludedFiles(@NotNull RawProductModules rawProductModules,
                                          @NotNull String debugName,
-                                         @NotNull IncludedProductModulesResolver resolver,
+                                         @NotNull ResourceFileResolver resolver,
                                          @NotNull Set<RawIncludedRuntimeModule> mainGroupModules,
                                          @NotNull Set<RuntimeModuleId> bundledPluginMainModules) throws IOException, XMLStreamException {
     for (RawIncludedFromData includedFromData : rawProductModules.getIncludedFrom()) {
       RuntimeModuleId includedId = includedFromData.getFromModule();
-      InputStream inputStream = resolver.readProductModules(includedId);
+      InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getStringId() + "/product-modules.xml");
       if (inputStream == null) {
         throw new MalformedRepositoryException("'" + includedId.getStringId() + "' included in " +
                                                debugName + " doesn't contain product-modules.xml");

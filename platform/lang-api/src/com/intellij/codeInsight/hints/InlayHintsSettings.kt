@@ -41,6 +41,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
 
     var lastViewedProviderKeyId: String? = null
 
+    // toggle inlay hints globally
     var isEnabled: Boolean = true
 
     var disabledLanguages: TreeSet<String> = sortedSetOf()

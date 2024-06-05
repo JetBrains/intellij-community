@@ -6,14 +6,16 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.testFramework.junit5" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.testFramework.junit5" />
+      <sourceFolder url="file://$MODULE_DIR$/test-resources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit5Jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />

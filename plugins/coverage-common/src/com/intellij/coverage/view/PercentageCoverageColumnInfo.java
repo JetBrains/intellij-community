@@ -16,12 +16,21 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
   private final int myColumnIdx;
   private final Comparator<NodeDescriptor<?>> myComparator;
   private final CoverageSuitesBundle mySuitesBundle;
-  private final CoverageViewManager.StateBean myStateBean;
 
+  /**
+   * @deprecated Use {@link PercentageCoverageColumnInfo#PercentageCoverageColumnInfo(int, String, CoverageSuitesBundle)}
+   */
+  @Deprecated
   public PercentageCoverageColumnInfo(int columnIdx,
                                       @NlsContexts.ColumnName String name,
                                       final CoverageSuitesBundle suitesBundle,
-                                      CoverageViewManager.StateBean stateBean) {
+                                      @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    this(columnIdx, name, suitesBundle);
+  }
+
+  public PercentageCoverageColumnInfo(int columnIdx,
+                                      @NlsContexts.ColumnName String name,
+                                      final CoverageSuitesBundle suitesBundle) {
     super(name);
     this.myColumnIdx = columnIdx;
     myComparator = (o1, o2) -> {
@@ -31,14 +40,13 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
       return PercentageParser.parse(val1).compareTo(PercentageParser.parse(val2));
     };
     mySuitesBundle = suitesBundle;
-    myStateBean = stateBean;
   }
 
   @Override
   public String valueOf(NodeDescriptor node) {
     final CoverageEngine coverageEngine = mySuitesBundle.getCoverageEngine();
     final Project project = node.getProject();
-    return coverageEngine.createCoverageViewExtension(project, mySuitesBundle, myStateBean).getPercentage(myColumnIdx, (AbstractTreeNode<?>)node);
+    return coverageEngine.createCoverageViewExtension(project, mySuitesBundle).getPercentage(myColumnIdx, (AbstractTreeNode<?>)node);
   }
 
   @Override

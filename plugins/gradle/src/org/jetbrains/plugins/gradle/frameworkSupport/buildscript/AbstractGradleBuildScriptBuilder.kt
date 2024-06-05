@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import kotlin.apply as applyKt
 
 @ApiStatus.NonExtendable
 @Suppress("MemberVisibilityCanBePrivate")
@@ -78,14 +80,10 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withBuildScriptDependency { call("classpath", dependency) }
 
   override fun withBuildScriptMavenCentral() =
-    withBuildScriptRepository {
-      call("mavenCentral")
-    }
+    withBuildScriptRepository { mavenCentral() }
 
   override fun withMavenCentral() =
-    withRepository {
-      call("mavenCentral")
-    }
+    withRepository { mavenCentral() }
 
   override fun applyPlugin(plugin: String) =
     withPrefix {
@@ -224,4 +222,8 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
 
   override fun project(name: String, configuration: String): Expression =
     call("project", "path" to name, "configuration" to configuration)
+
+  override fun ScriptTreeBuilder.mavenCentral() = applyKt {
+    call("mavenCentral")
+  }
 }

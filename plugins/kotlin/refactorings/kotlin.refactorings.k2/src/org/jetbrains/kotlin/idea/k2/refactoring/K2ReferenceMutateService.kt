@@ -5,12 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
+import org.jetbrains.kotlin.analysis.api.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -23,10 +23,7 @@ import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
-import org.jetbrains.kotlin.idea.references.KDocReference
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.KtSimpleReference
+import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -47,8 +44,20 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             when (ktReference) {
                 is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
                 is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+                is KtInvokeFunctionReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.INVOKE)
+                is KtArrayAccessReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.GET)
                 else -> throw IncorrectOperationException()
             }
+        }
+    }
+
+    private fun bindUnnamedReference(reference: KtReference, targetElement: PsiElement?, resolvedName: Name): PsiElement {
+        val expression = reference.element
+        if (targetElement !is KtNamedFunction) return expression
+        if (targetElement.nameAsName != resolvedName) return expression
+        val fqName = targetElement.kotlinFqName ?: return targetElement
+        return modifyPsiWithOptimizedImports(expression.containingKtFile) {
+            expression.containingKtFile.addImport(fqName)
         }
     }
 
@@ -86,7 +95,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
             } else {
-                // Here we assume that the passed fqName uniquely identifiers the new target element
+                // Here we assume that the passed fqName uniquely identifies the new target element
                 val oldTarget = simpleNameReference.resolve()
                 if (oldTarget?.kotlinFqName == fqName) return expression
             }
@@ -249,10 +258,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
-        allowAnalysisFromWriteAction {
-            if (ktReference is KtSymbolBasedReference) {
-                @OptIn(KaAllowAnalysisOnEdt::class)
-                allowAnalysisOnEdt {
+        return allowAnalysisFromWriteAction {
+            @OptIn(KaAllowAnalysisOnEdt::class)
+            allowAnalysisOnEdt {
+                if (ktReference is KaSymbolBasedReference) {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()
                         if (symbol is KtSyntheticJavaPropertySymbol) {
@@ -265,9 +274,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                         }
                     }
                 }
-            }
 
-            return super.handleElementRename(ktReference, newElementName)
+                super.handleElementRename(ktReference, newElementName)
+            }
         }
     }
 

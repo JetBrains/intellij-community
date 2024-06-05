@@ -114,7 +114,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       ProgressManager.getInstance().runProcess(() -> {
         try {
           new IndexUpdateRunner(index, indexingRequest)
-            .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
+            .indexFiles(getProject(), new IndexUpdateRunner.FileSet(getProject(), "test files", files),
                         new ProjectDumbIndexingHistoryImpl(getProject()));
         }
         catch (Exception e) {

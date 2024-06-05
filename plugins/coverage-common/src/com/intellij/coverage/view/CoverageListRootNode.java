@@ -7,9 +7,17 @@ import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
 public class CoverageListRootNode extends CoverageListNode {
+  /**
+   * @deprecated Use {@link CoverageListRootNode#CoverageListRootNode(Project, PsiNamedElement, CoverageSuitesBundle)}
+   */
+  @Deprecated
   public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage,
                               CoverageSuitesBundle bundle,
-                              CoverageViewManager.StateBean stateBean) {
-    super(project, classOrPackage, bundle, stateBean);
+                              @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    this(project, classOrPackage, bundle);
+  }
+
+  public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage, CoverageSuitesBundle bundle) {
+    super(project, classOrPackage, bundle);
   }
 }

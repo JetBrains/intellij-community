@@ -25,10 +25,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
-import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.logFreeDiskSpace
-import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import java.nio.file.*
@@ -1112,7 +1109,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
     for (command in commands) {
       launch {
         val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
-        productRunner.runProduct(args = listOf(command.first, targetPath.toString()), isLongRunning = true)
+        productRunner.runProduct(args = listOf(command.first, targetPath.toString()), timeout = DEFAULT_TIMEOUT)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(

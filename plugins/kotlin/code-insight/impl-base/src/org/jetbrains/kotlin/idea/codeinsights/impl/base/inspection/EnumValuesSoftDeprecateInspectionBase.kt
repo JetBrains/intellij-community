@@ -93,7 +93,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
     context(KtAnalysisSession)
     private fun createQuickFix(callExpression: KtCallExpression, symbol: KtFunctionLikeSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
-        val enumClassQualifiedName = enumClassSymbol?.classIdIfNonLocal?.asFqNameString() ?: return null
+        val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
         return createQuickFix(getReplaceFixType(callExpression), enumClassQualifiedName)
     }
 
@@ -143,7 +143,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
     context(KtAnalysisSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
         val resolvedCall = expression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
-        return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal?.toString()
+        return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()
     }
 
     protected enum class ReplaceFixType {

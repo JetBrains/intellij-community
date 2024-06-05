@@ -30,7 +30,7 @@ object AddRemainingWhenBranchesUtils {
         shortenReferences(
             whenExpression,
             callableShortenStrategy = {
-                if (it.callableIdIfNonLocal?.classId == context.enumToStarImport) {
+                if (it.callableId?.classId == context.enumToStarImport) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
                     ShortenStrategy.DO_NOT_SHORTEN

@@ -21,7 +21,6 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
 
   @Volatile
   private var startedCommand: StartedCommand? = null
-  internal val commandExecutionManager: ShellCommandExecutionManager = ShellCommandExecutionManager(session, this)
 
   init {
     session.controller.addCustomCommandListener(TerminalCustomCommandListener {
@@ -212,12 +211,6 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
 
   fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
-  }
-
-  fun sendCommandToExecute(shellCommand: String) = commandExecutionManager.sendCommandToExecute(shellCommand)
-
-  fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
-    return commandExecutionManager.runGeneratorAsync(shellCommand)
   }
 
   companion object {

@@ -85,7 +85,7 @@ object CreateKotlinCallableActionTextBuilder {
             is KtCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
 
-            is KtClassLikeSymbol -> classIdIfNonLocal?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
+            is KtClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null
         }
     }

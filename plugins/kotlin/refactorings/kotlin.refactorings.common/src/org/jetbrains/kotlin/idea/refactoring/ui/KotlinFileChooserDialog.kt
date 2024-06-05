@@ -7,6 +7,7 @@ import com.intellij.ide.util.TreeChooser
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.util.projectScope
@@ -51,9 +52,9 @@ class KotlinFileChooserDialog(
      * Base class [AbstractTreeClassChooserDialog] unfortunately doesn't filter the file tree according to the provided "scope".
      * As a workaround we use filter preventing wrong file selection.
      */
-    private class ScopeAwareClassFilter(val searchScope: GlobalSearchScope?, val packageName: String?) : TreeChooser.Filter<KtFile> {
-        override fun isAccepted(element: KtFile?): Boolean {
-            if (element == null) return false
+    private class ScopeAwareClassFilter(val searchScope: GlobalSearchScope?, val packageName: String?) : TreeChooser.Filter<PsiFile> {
+        override fun isAccepted(element: PsiFile?): Boolean {
+            if (element !is KtFile) return false
             if (searchScope == null && packageName == null) return true
 
             val matchesSearchScope = searchScope?.accept(element.virtualFile) ?: true

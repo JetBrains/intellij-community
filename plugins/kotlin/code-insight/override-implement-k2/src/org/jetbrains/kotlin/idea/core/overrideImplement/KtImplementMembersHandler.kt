@@ -155,7 +155,7 @@ private fun List<KtCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberI
         val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
 
         @NlsSafe
-        val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
+        val fqName = (containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
         KtClassMemberInfo.create(
             symbol = unimplementedMemberSymbol,
             memberText = unimplementedMemberSymbol.render(KtGenerateMembersHandler.renderer),

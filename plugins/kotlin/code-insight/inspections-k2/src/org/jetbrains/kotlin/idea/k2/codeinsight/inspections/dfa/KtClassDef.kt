@@ -37,7 +37,7 @@ class KtClassDef(
         analyze(module) {
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
             classLikeSymbol.superTypes.any { superType ->
-                (superType as? KtNonErrorClassType)?.expandedClassSymbol?.classIdIfNonLocal?.asFqNameString() == superClassQualifiedName
+                (superType as? KtNonErrorClassType)?.expandedClassSymbol?.classId?.asFqNameString() == superClassQualifiedName
             }
         }
 
@@ -83,7 +83,7 @@ class KtClassDef(
     }
 
     override fun getQualifiedName(): String? = analyze(module) {
-        val fqNameUnsafe = cls.restoreSymbol()?.classIdIfNonLocal?.asSingleFqName()?.toUnsafe() ?: return@analyze null
+        val fqNameUnsafe = cls.restoreSymbol()?.classId?.asSingleFqName()?.toUnsafe() ?: return@analyze null
         correctFqName(fqNameUnsafe)
     }
 
@@ -120,7 +120,7 @@ class KtClassDef(
     companion object {
         context(KtAnalysisSession)
         fun KtClassOrObjectSymbol.classDef(): KtClassDef = KtClassDef(
-            useSiteModule, classIdIfNonLocal?.hashCode() ?: name.hashCode(), createPointer(),
+            useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
             classKind, (this as? KtSymbolWithModality)?.modality
         )
 
@@ -131,7 +131,7 @@ class KtClassDef(
                 } else analyze(def.module) {
                     var symbol = def.cls.restoreSymbol() ?: return@analyze TypeConstraints.unresolved(def.qualifiedName ?: "???")
                     var correctedDef = def
-                    val classId = symbol.classIdIfNonLocal
+                    val classId = symbol.classId
                     if (classId != null) {
                         val correctedClassId = JavaToKotlinClassMap.mapJavaToKotlin(classId.asSingleFqName())
                         if (correctedClassId != null) {

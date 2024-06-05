@@ -8,10 +8,12 @@ import org.jetbrains.plugins.terminal.block.util.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 internal class ShellCdCommandTest : BasePlatformTestCase() {
-  private val expectedDirectories = listOf("directory/", "settings/", ".hiddenDir/")
+  private val separator = File.separatorChar
+  private val expectedDirectories = listOf("directory$separator", "settings$separator", ".hiddenDir$separator")
   private val allFiles = expectedDirectories + listOf("file.txt", ".hidden")
 
   @Test
@@ -23,8 +25,8 @@ internal class ShellCdCommandTest : BasePlatformTestCase() {
 
   @Test
   fun `suggest only directories if there is base path`() = runBlocking {
-    val fixture = createFixture(allFiles, expectedPath = "src/")
-    val actual = fixture.getCompletions("cd src/")
+    val fixture = createFixture(allFiles, expectedPath = "src$separator")
+    val actual = fixture.getCompletions("cd src$separator")
     assertSameElements(actual.map { it.name }, expectedDirectories)
   }
 

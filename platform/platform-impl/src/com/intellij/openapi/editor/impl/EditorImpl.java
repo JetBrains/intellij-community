@@ -3965,15 +3965,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String committed;
       if (beginIndex < composedStartIndex) {
         if (endIndex <= composedStartIndex) {
-          committed = getText(beginIndex, endIndex - beginIndex);
+          committed = getText(beginIndex, endIndex);
         }
         else {
           int firstPartLength = composedStartIndex - beginIndex;
-          committed = getText(beginIndex, firstPartLength) + getText(composedEndIndex, endIndex - beginIndex - firstPartLength);
+          committed = getText(beginIndex, beginIndex + firstPartLength) + getText(composedEndIndex, endIndex - firstPartLength);
         }
       }
       else {
-        committed = getText(beginIndex + composedEndIndex - composedStartIndex, endIndex - beginIndex);
+        committed = getText(beginIndex + composedEndIndex - composedStartIndex, endIndex);
       }
 
       return new AttributedString(committed).getIterator();

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -20,11 +19,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.ScriptDiagnostic
-
-val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
-    ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
 
 @set: org.jetbrains.annotations.TestOnly
 var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
@@ -86,7 +81,9 @@ suspend fun configureGradleScriptsK2(
     javaHome: String?,
     project: Project,
     scripts: Set<ScriptModel>,
+    definitions: List<ScriptDefinition>,
 ) {
+    K2ScriptDefinitionProvider.getInstance(project).updateDefinitions(definitions)
     K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(scripts, javaHome)
     project.createScriptModules(scripts)
 

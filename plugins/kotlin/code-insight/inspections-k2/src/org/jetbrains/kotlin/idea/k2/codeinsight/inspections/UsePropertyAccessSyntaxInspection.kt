@@ -551,7 +551,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     }
 
     private fun functionNameIsInNotPropertiesList(symbol: KtCallableSymbol, callExpression: KtExpression): Boolean {
-        val symbolUnsafeName = symbol.callableIdIfNonLocal?.asSingleFqName()?.toUnsafe()
+        val symbolUnsafeName = symbol.callableId?.asSingleFqName()?.toUnsafe()
 
         val notProperties = NotPropertiesService.getNotProperties(callExpression)
         return symbolUnsafeName in notProperties

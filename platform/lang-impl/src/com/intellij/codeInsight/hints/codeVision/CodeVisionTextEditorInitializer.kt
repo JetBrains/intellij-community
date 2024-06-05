@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.lensContext
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -25,7 +26,8 @@ internal class CodeVisionTextEditorInitializer : TextEditorInitializer {
                                         document: Document,
                                         editorSupplier: suspend () -> EditorEx,
                                         highlighterReady: suspend () -> Unit) {
-    if (!Registry.`is`("editor.codeVision.new", true)) {
+    if (!Registry.`is`("editor.codeVision.new", true) ||
+        !CodeVisionSettings.getInstance().codeVisionEnabled) {
       return
     }
 
@@ -57,8 +59,22 @@ internal class CodeVisionTextEditorInitializer : TextEditorInitializer {
     if (raisedState == null) {
       return emptyList()
     }
+    val providerIdToGroupId = providerToGroupMap(project)
+    val settings = CodeVisionSettings.getInstance()
+    return raisedState.filter { (_, zombieEntry) ->
+      val zombieGroup = providerIdToGroupId[zombieEntry.providerId]
+      zombieGroup != null && settings.isProviderEnabled(zombieGroup)
+    }
+  }
+
+  private suspend fun providerToGroupMap(project: Project): Map<String, String> {
+    // Examples to remind what is what
+    // groupId:    "rename", "vcs.code.vision", "references", "llm", "component.usage", "inheritors", "problems"
+    // providerId: "Rename refactoring", "vcs.code.vision", "java.references", "LLMDocumentationCodeVisionProvider",
+    //             "JSComponentUsageCodeVisionProvider", "go.references", "go.inheritors", "java.inheritors",
+    //             "java.RelatedProblems", "python.references", "js.references", "js.inheritors",
+    //             "cypress.commands.references", "php.references", "php.inheritors"
     val cvHost = project.serviceAsync<CodeVisionHost>()
-    val providers = cvHost.providers.map { p -> p.id }.toSet()
-    return raisedState.filter { (_, entry) -> providers.contains(entry.providerId) }
+    return cvHost.providers.associate { provider -> provider.id to provider.groupId }
   }
 }

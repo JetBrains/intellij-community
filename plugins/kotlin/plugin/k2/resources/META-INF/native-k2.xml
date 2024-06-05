@@ -3,13 +3,13 @@
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.konan.K2KotlinNativeMetadataDecompiler"/>
 
     <projectService
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsModelChangeService"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsModelChangeService"/>
     <postStartupActivity
-            implementation="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsStartupActivity"/>
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsStartupActivity"/>
 
     <workspaceModel.fileIndexContributor
-            implementation="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
-    <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.fwdDeclaration.KotlinForwardDeclarationsFileSystemImpl"
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
+    <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
                        key="fwd" physical="false"/>
   </extensions>
 </idea-plugin>

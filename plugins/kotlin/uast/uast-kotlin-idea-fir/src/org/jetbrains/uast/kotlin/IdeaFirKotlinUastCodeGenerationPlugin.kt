@@ -3,8 +3,8 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KtReferenceMutateService

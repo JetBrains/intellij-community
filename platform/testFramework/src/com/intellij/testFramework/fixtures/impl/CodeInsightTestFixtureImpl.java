@@ -1166,6 +1166,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     processGuttersAtCaret(editor, getProject(), processor);
     return new ArrayList<>(processor.getResults());
   }
+  @NotNull
+  public List<GutterMark> findGuttersAtCaret(@NotNull String filePath) {
+    configureByFilesInner(filePath);
+    return findGuttersAtCaret();
+  }
 
   public static boolean processGuttersAtCaret(Editor editor, Project project, @NotNull Processor<? super GutterMark> processor) {
     int offset = editor.getCaretModel().getOffset();

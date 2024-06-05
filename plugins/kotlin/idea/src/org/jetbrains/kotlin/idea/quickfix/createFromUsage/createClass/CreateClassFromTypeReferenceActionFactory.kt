@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -37,8 +38,8 @@ object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<K
 
         return when (typeRefParent) {
             is KtSuperTypeEntry -> listOfNotNull(
-                ClassKind.INTERFACE,
-                if (typeRefParent.classExpected()) ClassKind.PLAIN_CLASS else null
+              ClassKind.INTERFACE,
+              if (typeRefParent.classExpected()) ClassKind.PLAIN_CLASS else null
             )
             else -> ClassKind.entries.filter {
                 val noTypeArguments = element.typeArgumentsAsTypes.isEmpty()

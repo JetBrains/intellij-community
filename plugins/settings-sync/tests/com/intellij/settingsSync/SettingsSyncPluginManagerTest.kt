@@ -1,14 +1,17 @@
 package com.intellij.settingsSync
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
+import com.intellij.settingsSync.plugins.PluginManagerProxy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicReference
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
   @Test
@@ -39,6 +42,55 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       assertEquals(1, installedPluginIds.size)
       assertTrue(installedPluginIds.contains(ideaLight.pluginId))
+    }
+    finally {
+      SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, true)
+    }
+  }
+
+  @Test
+  fun `test do not change bundled plugins when bundled plugins sync is disabled`() {
+    testPluginManager.addPluginDescriptors(quickJump, git4idea, css)
+    pluginManager.updateStateFromIdeOnStart(null)
+    testPluginManager.disablePlugin(git4idea.pluginId)
+    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID, false)
+    PluginManagerProxy.getInstance().addPluginStateChangedListener({ pluginDescriptors, enable ->
+                                                                     fail("Shouldn't have set enabled=$enable for ${pluginDescriptors.joinToString()}")
+                                                                   }, testRootDisposable)
+    try {
+      pluginManager.pushChangesToIde(state {
+        git4idea(enabled = true)
+        css(enabled = false)
+        quickJump(enabled = true)
+      })
+
+      val installedPluginIds = testPluginManager.installer.installedPluginIds
+      // nothing is installed/enabled
+      assertEquals(0, installedPluginIds.size)
+
+      assertPluginManagerState {
+        git4idea(enabled = true)
+        css(enabled = false)
+        quickJump(enabled = true)
+      }
+    }
+    finally {
+      SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, true)
+    }
+  }
+
+
+  @Test
+  fun `test don't update state when plugin sync is disabled`() {
+    testPluginManager.addPluginDescriptors(quickJump, git4idea)
+    pluginManager.updateStateFromIdeOnStart(null)
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
+    try {
+      testPluginManager.disablePlugin(git4idea.pluginId)
+      assertPluginManagerState {
+        quickJump(enabled = true)
+      }
+
     }
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, true)
@@ -114,8 +166,6 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
 
     testPluginManager.disablePlugin(git4idea.pluginId)
-    // PluginEnabledStateListener.invoke is called in coroutine scope, so we'll have to wait a bit until it's ready
-    testScheduler.runCurrent()
 
     assertPluginManagerState {
       quickJump(enabled = true)

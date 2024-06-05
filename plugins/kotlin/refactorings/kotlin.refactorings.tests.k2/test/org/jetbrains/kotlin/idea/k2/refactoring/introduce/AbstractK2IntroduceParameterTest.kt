@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler

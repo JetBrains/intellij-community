@@ -31,7 +31,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         val containingClassIsObject = symbol.originalContainingClassForOverride?.classKind?.isObject == true
         if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
-        val callableId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
+        val callableId = symbol.callableId?.asSingleFqName() ?: return ImportStrategy.DoNothing
 
         return if (symbol.isExtensionCall(isFunctionalVariableCall)) {
             ImportStrategy.AddImport(callableId)
@@ -44,7 +44,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
     fun detectImportStrategyForClassifierSymbol(symbol: KtClassifierSymbol): ImportStrategy {
         if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
 
-        val classId = symbol.classIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
+        val classId = symbol.classId?.asSingleFqName() ?: return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)
     }
 

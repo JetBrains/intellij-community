@@ -55,7 +55,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   private final @NotNull Project myProject;
   private final GlobalSearchScope myScope;
-  private final @NotNull Filter<T> myClassFilter;
+  private final @NotNull Filter<? super T> myClassFilter;
   private final @NotNull Comparator<? super NodeDescriptor<?>> myComparator;
   private final Class<T> myElementClass;
   private final @Nullable T myBaseClass;
@@ -80,7 +80,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<? super T> classFilter,
                                         @Nullable T initialClass) {
     this(title, project, scope, elementClass, classFilter, null, null, initialClass, false, true);
   }
@@ -89,7 +89,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<? super T> classFilter,
                                         @Nullable T baseClass,
                                         @Nullable T initialClass,
                                         boolean isShowMembers,
@@ -101,7 +101,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<? super T> classFilter,
                                         @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                                         @Nullable T baseClass,
                                         @Nullable T initialClass,
@@ -126,7 +126,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     handleSelectionChanged();
   }
 
-  private Filter<T> allFilter() {
+  private Filter<? super T> allFilter() {
     return __ -> true;
   }
 
@@ -261,6 +261,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private Set<Object> doFilter(Set<Object> elements) {
     Set<Object> result = new LinkedHashSet<>();
     for (Object o : elements) {
+      //noinspection unchecked
       if (myElementClass.isInstance(o) && getFilter().isAccepted((T)o)) {
         result.add(o);
       }
@@ -330,6 +331,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       @Override
       public void elementChosen(Object element) {
+        //noinspection unchecked
         mySelectedClass = (T)element;
         ((Navigatable)element).navigate(true);
       }
@@ -356,6 +358,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   protected @Nullable T calcSelectedClass() {
     if (getTabbedPane().getSelectedIndex() == 0) {
+      //noinspection unchecked
       return (T)getGotoByNamePanel().getChosenElement();
     }
     else {
@@ -386,16 +389,12 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     return myScope;
   }
 
-  protected @NotNull Filter<T> getFilter() {
+  protected @NotNull Filter<? super T> getFilter() {
     return myClassFilter;
   }
 
   T getBaseClass() {
     return myBaseClass;
-  }
-
-  T getInitialClass() {
-    return myInitialClass;
   }
 
   protected TabbedPaneWrapper getTabbedPane() {
@@ -551,6 +550,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private final class MyCallback extends ChooseByNamePopupComponent.Callback {
     @Override
     public void elementChosen(Object element) {
+      //noinspection unchecked
       mySelectedClass = (T)element;
       close(OK_EXIT_CODE);
     }

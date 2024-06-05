@@ -127,6 +127,8 @@ class BuildScriptDataBuilder(
 
   override fun project(name: String) = backend.project(name)
   override fun project(name: String, configuration: String) = backend.project(name, configuration)
+  override fun ScriptTreeBuilder.mavenRepository(url: String) = with(backend) { mavenRepository(url) }
+  override fun ScriptTreeBuilder.mavenCentral() = with(backend) { mavenCentral() }
   // @formatter:on
 
   companion object {

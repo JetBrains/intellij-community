@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -36,21 +37,28 @@ internal class ParameterHintsEditorInitializer : TextEditorInitializer {
     editorSupplier: suspend () -> EditorEx,
     highlighterReady: suspend () -> Unit,
   ) {
-    val hints = project.serviceAsync<ParamHintsGrave>().raise(file, document) ?: return
+    val zombieHints = project.serviceAsync<ParamHintsGrave>().raise(file, document) ?: return
     val psiManager = project.serviceAsync<PsiManager>()
     val psiFile = readActionBlocking { psiManager.findFile(file) } ?: return
-    InlayParameterHintsExtension.forLanguage(psiFile.language) ?: return
-    val editor = editorSupplier()
-    withContext(Dispatchers.EDT) {
-      ParameterHintsUpdater(editor, listOf(), hints, Int2ObjectOpenHashMap(0), true).update()
+    if (isEnabledForLang(psiFile.language)) {
+      val editor = editorSupplier()
+      withContext(Dispatchers.EDT) {
+        ParameterHintsUpdater(editor, listOf(), zombieHints, Int2ObjectOpenHashMap(0), true).update()
+      }
     }
+  }
+
+  private fun isEnabledForLang(language: Language): Boolean {
+    return InlayParameterHintsExtension.forLanguage(language) != null && isParameterHintsEnabledForLanguage(language)
   }
 }
 
 @Service(Level.PROJECT)
-internal class ParamHintsGrave(project: Project, private val scope: CoroutineScope)
-  : TextEditorCache<ParameterHintsState>(project, scope), Disposable
-{
+internal class ParamHintsGrave(
+  project: Project,
+  private val scope: CoroutineScope,
+) : TextEditorCache<ParameterHintsState>(project, scope), Disposable {
+
   override fun namePrefix() = "persistent-parameter-hints"
   override fun valueExternalizer() = ParameterHintsState.Externalizer
   override fun useHeapCache() = true

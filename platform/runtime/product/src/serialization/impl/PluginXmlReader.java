@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.product.serialization.impl;
 
 import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
 import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.serialization.impl.XmlStreamUtil;
@@ -19,13 +20,14 @@ public final class PluginXmlReader {
   private static final String PLUGIN_XML_PATH = "META-INF/plugin.xml";
 
   @NotNull
-  public static List<RawIncludedRuntimeModule> loadPluginModules(RuntimeModuleDescriptor mainModule, RuntimeModuleRepository repository) {
+  public static List<RawIncludedRuntimeModule> loadPluginModules(RuntimeModuleDescriptor mainModule, RuntimeModuleRepository repository,
+                                                                 ResourceFileResolver resourceFileResolver) {
     try {
       List<RawIncludedRuntimeModule> modules = new ArrayList<>();
       Set<String> addedModules = new HashSet<>();
       modules.add(new RawIncludedRuntimeModule(mainModule.getModuleId(), ModuleImportance.FUNCTIONAL));
       addedModules.add(mainModule.getModuleId().getStringId());
-      try (InputStream inputStream = mainModule.readFile(PLUGIN_XML_PATH)) {
+      try (InputStream inputStream = resourceFileResolver.readResourceFile(mainModule.getModuleId(), PLUGIN_XML_PATH)) {
         if (inputStream == null) {
           throw new MalformedRepositoryException(PLUGIN_XML_PATH + " is not found in '" + mainModule.getModuleId().getStringId() + "' module in " + repository);
         }

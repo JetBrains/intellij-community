@@ -49,7 +49,7 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
     override fun prepareContext(element: KtCallExpression): Unit? {
         val functionSymbol = element.resolveToFunctionSymbol() ?: return null
         val receiverClassId = (functionSymbol.receiverType as? KtNonErrorClassType)?.classId ?: return null
-        return (functionSymbol.callableIdIfNonLocal == COLLECTION_COUNT_CALLABLE_ID
+        return (functionSymbol.callableId == COLLECTION_COUNT_CALLABLE_ID
                 && receiverClassId in COLLECTION_CLASS_IDS).asUnit
     }
 

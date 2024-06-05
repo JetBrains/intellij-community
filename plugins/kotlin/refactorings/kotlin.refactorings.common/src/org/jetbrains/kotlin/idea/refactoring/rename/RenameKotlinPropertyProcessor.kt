@@ -16,8 +16,8 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod

@@ -55,6 +55,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -796,6 +797,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                                     @NotNull List<String> taskNames,
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
+    initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
+
     String dispatchPort = parameters.get(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY);
     if (dispatchPort == null) {
       return;

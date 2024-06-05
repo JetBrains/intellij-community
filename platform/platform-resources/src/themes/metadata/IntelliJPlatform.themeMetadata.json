@@ -324,6 +324,11 @@
       "since": "2022.2"
     },
     {
+      "key": "DisclosureButton.arc",
+      "description": "Arc of disclosure button",
+      "since": "2024.2"
+    },
+    {
       "key": "DisclosureButton.defaultBackground",
       "description": "Background of disclosure button",
       "since": "2024.2"
@@ -341,6 +346,11 @@
     {
       "key": "DisclosureButton.successBackground",
       "description": "Success or visited background of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.textRightIconGap",
+      "description": "Gap between text and right icon",
       "since": "2024.2"
     },
     {

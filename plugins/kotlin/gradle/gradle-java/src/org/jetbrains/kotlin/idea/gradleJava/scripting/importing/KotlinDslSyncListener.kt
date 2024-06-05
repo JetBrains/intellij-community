@@ -12,15 +12,12 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptModel
 import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -83,9 +80,6 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
 
         if (KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
-            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<GradleScriptDefinitionsSource>().firstOrNull()
-                .safeAs<GradleScriptDefinitionsSource>()?.updateDefinitions(definitions)
 
             val scripts = sync.models.mapNotNull {
                 val path = Path.of(it.file)
@@ -93,7 +87,7 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
                     ScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports)
                 }
             }.toSet()
-            coroutineScope.launch { configureGradleScriptsK2(sync.javaHome, project, scripts) }
+            coroutineScope.launch { configureGradleScriptsK2(sync.javaHome, project, scripts, definitions) }
         } else {
             @Suppress("DEPRECATION")
             ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(

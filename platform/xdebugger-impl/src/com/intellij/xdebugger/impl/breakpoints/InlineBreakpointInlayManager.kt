@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -278,16 +279,18 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
 
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
     val linePosition = XSourcePositionImpl.create(file, line)
-    val breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null)
 
-    val variants =
+    val variants = try {
+      val breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null)
       if (breakpointTypes.isNotEmpty()) {
         XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
           .filter { it.shouldUseAsInlineVariant() }
-      }
-      else {
+      } else {
         emptyList()
       }
+    } catch (_: IndexNotReadyException) {
+      emptyList()
+    }
 
     // Any breakpoint offset from the interval between line start until the first non-whitespace character (code start) is normalized
     // to the offset of that non-whitespace character.

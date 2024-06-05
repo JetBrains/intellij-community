@@ -24,6 +24,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   private int mouseButton;
   private boolean wasDragged;
   private boolean leftMouseButtonOnly = false;
+  private final static boolean moveAfterMouseRelease = StartupUiUtil.isWaylandToolkit();
 
   /**
    * @param content the window content to find a window, or {@code null} to use a component from a mouse event
@@ -143,7 +144,8 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
         }
         updateBounds(bounds, view, dx, dy);
         Rectangle viewBounds = view.getBounds();
-        if (!bounds.equals(viewBounds)) {
+        boolean reallyMoveWindow = !moveAfterMouseRelease || !mouseMove;
+        if (reallyMoveWindow && !bounds.equals(viewBounds)) {
           boolean moved = bounds.x != viewBounds.x || bounds.y != viewBounds.y;
           boolean resized = bounds.width != viewBounds.width || bounds.height != viewBounds.height;
           view.reshape(bounds.x, bounds.y, bounds.width, bounds.height);

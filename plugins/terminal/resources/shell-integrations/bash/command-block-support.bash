@@ -37,7 +37,7 @@ __jetbrains_intellij_encode_slow() {
 __jetbrains_intellij_encode() {
   builtin local value="$1"
   if builtin command -v od > /dev/null && builtin command -v tr > /dev/null; then
-    builtin printf "%s" "$value" | od -An -tx1 -v | tr -d "[:space:]"
+    builtin printf "%s" "$value" | builtin command od -An -tx1 -v | builtin command tr -d "[:space:]"
   else
     __jetbrains_intellij_encode_slow "$value"
   fi
@@ -77,7 +77,7 @@ __jetbrains_intellij_get_environment() {
 }
 
 __jetbrains_intellij_escape_json() {
-  sed -e 's/\\/\\\\/g'\
+  builtin command sed -e 's/\\/\\\\/g'\
       -e 's/"/\\"/g'\
       <<< "$1"
 }
@@ -102,6 +102,9 @@ __jetbrains_intellij_debug_log() {
 }
 
 __jetbrains_intellij_command_started() {
+  # The real command, typed by user.
+  builtin local typed_command="$1"
+  # Resolved command to be really executed by Bash. (i.e. alias value)
   builtin local bash_command="$BASH_COMMAND"
   if __jetbrains_intellij_is_generator_command "$bash_command"
   then
@@ -112,7 +115,7 @@ __jetbrains_intellij_command_started() {
   __jetbrains_intellij_debug_log "command_started '$bash_command'"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
-     "$(__jetbrains_intellij_encode "$bash_command")" \
+     "$(__jetbrains_intellij_encode "$typed_command")" \
      "$(__jetbrains_intellij_encode "$current_directory")"
 }
 
@@ -155,7 +158,7 @@ __jetbrains_intellij_report_prompt_state() {
   builtin local conda_env=""
   if builtin command -v git > /dev/null
   then
-    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+    git_branch="$(builtin command git symbolic-ref --short HEAD 2> /dev/null || builtin command git rev-parse --short HEAD 2> /dev/null)"
   fi
   if [[ -n $VIRTUAL_ENV ]]
   then
@@ -271,8 +274,10 @@ function __jetbrains_intellij_fix_prompt_command_order() {
   __jetbrains_intellij_debug_log "After PROMPT_COMMAND modification: $(declare -p PROMPT_COMMAND)"
 }
 
-# override clear behaviour to handle it on IDE side and remove the blocks
-clear() {
+# Avoid conflict with user defined alias
+unalias clear 2>/dev/null
+# Override clear behaviour to handle it on IDE side and remove the blocks
+function clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
 

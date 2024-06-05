@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 
 @Suppress("GrUnresolvedAccess")
 open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImportingTestCase() {
@@ -50,6 +51,19 @@ open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImpor
     }
     else {
       "https://repo1.maven.org/maven2"
+    }
+
+    @JvmStatic
+    protected fun ScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
+      call("maven") {
+        call("url", url)
+        if (useOldStyleMetadata) {
+          call("metadataSources") {
+            call("mavenPom")
+            call("artifact")
+          }
+        }
+      }
     }
   }
 }

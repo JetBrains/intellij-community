@@ -217,6 +217,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
   val availabilityRange: TextRange?
 
   when {
+    // The gutter icon should be hidden when the rename inlay is shown
     refactoringData is SuggestedRenameData && RenameCodeVisionSupport.isEnabledFor(psiFile.fileType) -> {
       refactoringAvailable = false
       tooltip = ""

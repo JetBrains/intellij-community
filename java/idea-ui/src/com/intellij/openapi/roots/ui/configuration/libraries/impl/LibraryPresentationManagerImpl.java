@@ -144,7 +144,7 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
   @NotNull
   @Override
   public List<@Nls String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
-    final SmartList<@Nls String> result = new SmartList<>();
+    final Set<@Nls String> result = new LinkedHashSet<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
@@ -157,7 +157,7 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
         return true;
       }
     });
-    return result;
+    return new SmartList<>(result);
   }
 
   @Override

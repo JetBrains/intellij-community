@@ -141,7 +141,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
             return true
         }
 
-        if ((classSymbol as? KtClassOrObjectSymbol)?.classIdIfNonLocal == null) {
+        if ((classSymbol as? KtClassOrObjectSymbol)?.classId == null) {
             //because org.jetbrains.kotlin.fir.FirVisibilityChecker.Default always return true for local classes,
             //let's be pessimistic here and prohibit local classes completely
             return false

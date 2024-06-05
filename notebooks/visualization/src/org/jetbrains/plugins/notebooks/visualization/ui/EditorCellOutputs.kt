@@ -192,8 +192,15 @@ class EditorCellOutputs(
       null
     }
     result?.also {
-      it.component.outputComponentFactory = factory
-      it.component.gutterPainter = it.gutterPainter
+      val component = it.component
+      component.outputComponentFactory = factory
+      component.gutterPainter = it.gutterPainter
+
+      val disposable = it.disposable
+      if (disposable != null) {
+        // Parent disposable might be better, but it's better than nothing
+        Disposer.register(editor.disposable, disposable)
+      }
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).outputCreated(editor, lines.last)
     return result

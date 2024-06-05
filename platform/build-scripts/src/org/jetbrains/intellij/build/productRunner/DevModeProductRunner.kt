@@ -8,9 +8,8 @@ import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
-import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
 
 /**
  * Only for use in build scripts, not for dev mode / integrations tests.
@@ -44,12 +43,12 @@ private class DevModeProductRunner(
   private val homePath: Path,
   private val classPath: Collection<String>,
 ) : IntellijProductRunner {
-  override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, isLongRunning: Boolean) {
+  override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
     runApplicationStarter(
       context = context,
       classpath = classPath,
       args = args,
-      timeout = if (isLongRunning) DEFAULT_TIMEOUT else 30.seconds,
+      timeout = timeout,
       homePath = homePath,
       vmProperties = additionalVmProperties + getIdeSystemProperties(homePath),
       isFinalClassPath = true,

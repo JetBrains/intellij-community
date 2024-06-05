@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.create
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.model.RepositoryModels
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -10,7 +10,7 @@ class RepositoriesModelBuilderTest(gradleVersion: String) : AbstractModelBuilder
 
   @Test
   fun `test repository order is the same as in the build script`() {
-    createProjectFile("build.gradle", create(gradleVersion, false)
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
       .addRepository("""
         maven { 
           name 'YYY'

@@ -12,8 +12,7 @@ interface LocalizationStateService {
       if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
         return null
       }
-      return ApplicationManager.getApplication().getService(
-        LocalizationStateService::class.java)
+      return ApplicationManager.getApplication().getService(LocalizationStateService::class.java)
     }
   }
 

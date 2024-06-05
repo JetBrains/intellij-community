@@ -5,7 +5,7 @@ package com.intellij.codeInsight.navigation
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.lang.documentation.psi.isNavigatableQuickDoc
 import com.intellij.lang.documentation.psi.psiDocumentationTargets
-import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
+import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.project.Project
@@ -61,7 +61,7 @@ internal fun symbolCtrlMouseData(
   return targetCtrlMouseData(
     ranges,
     true, // non-PSI are always navigatable
-    target = symbolDocumentationTarget(project, symbol),
+    target = symbolDocumentationTargets(project, symbol).firstOrNull(),
   )
 }
 

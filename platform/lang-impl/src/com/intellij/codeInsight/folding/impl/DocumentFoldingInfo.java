@@ -33,6 +33,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -74,7 +75,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       Boolean storedCollapseByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
       boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
                                   !FoldingUtil.caretInsideRange(editor, region.getTextRange());
-      if (collapseByDefault == expanded || signature == null) {
+      if (collapseByDefault == expanded || isManuallyCreated(region, signature)) {
         if (signature != null) {
           myInfos.add(new Info(signature, expanded));
         }
@@ -85,6 +86,10 @@ final class DocumentFoldingInfo implements CodeFoldingState {
         }
       }
     }
+  }
+
+  private static boolean isManuallyCreated(@Nullable FoldRegion region, @Nullable String signature) {
+    return signature == null && !CodeFoldingManagerImpl.isAutoCreated(region);
   }
 
   @Override

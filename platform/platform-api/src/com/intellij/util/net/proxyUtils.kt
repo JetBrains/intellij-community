@@ -59,7 +59,7 @@ fun ProxyConfiguration.StaticProxyConfiguration.asJvmProperties(credentialProvid
     jvmPropertiesWithCredentials
   }
   else {
-    jvmPropertiesWithCredentials + (JavaProxyProperty.HTTP_NON_PROXY_HOSTS to exceptions.replace(",", "|"))
+    jvmPropertiesWithCredentials + (JavaProxyProperty.HTTP_NON_PROXY_HOSTS to exceptions.split(',').joinToString("|", transform = String::trim))
   }
 }
 
@@ -114,11 +114,11 @@ private fun Proxy.asJvmPropertiesWithCredentials(credentialProvider: ProxyCreden
   }
   val address = address()
   if (address !is InetSocketAddress) {
-    return emptyMap()
+    return props
   }
   val credentials = credentialProvider.getCredentials(address.hostString, address.port)
   if (credentials == null || !credentials.isFulfilled()) {
-    return emptyMap()
+    return props
   }
   val proxyType = type()
   val usernameProp = if (proxyType == Proxy.Type.SOCKS) JavaProxyProperty.SOCKS_USERNAME else JavaProxyProperty.HTTP_USERNAME

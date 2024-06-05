@@ -42,7 +42,7 @@ internal open class ClassifierImportCandidatesProvider(
         return buildList {
             addAll(indexProvider.getKotlinClassesByName(unresolvedName, ::acceptsKotlinClass))
             addAll(indexProvider.getJavaClassesByName(unresolvedName, ::acceptsJavaClass))
-        }.filter { it.isVisible(fileSymbol) && it.classIdIfNonLocal != null && acceptsClassLikeSymbol(it) }
+        }.filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it) }
     }
 }
 

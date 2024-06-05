@@ -149,7 +149,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
 context(KtAnalysisSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
-    val fqName = (containingSymbol as? KtClassLikeSymbol)?.classIdIfNonLocal?.asFqNameString()
+    val fqName = (containingSymbol as? KtClassLikeSymbol)?.classId?.asFqNameString()
         ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
 
     val fqNameSection = fqName?.let {

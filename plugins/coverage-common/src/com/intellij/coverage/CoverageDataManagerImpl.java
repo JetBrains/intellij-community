@@ -252,6 +252,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
     CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
     suite.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
+    suite.setCoverageData(null);
     triggerPresentationUpdate();
   }
 

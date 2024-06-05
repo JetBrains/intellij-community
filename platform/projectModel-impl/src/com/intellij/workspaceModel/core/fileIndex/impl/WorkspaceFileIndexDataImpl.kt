@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.SlowOperations
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 
@@ -30,7 +31,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
   
   /** these maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
-  private val fileSets = HashMap<VirtualFile, StoredFileSetCollection>()
+  private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection> = CollectionFactory.createSmallMemoryFootprintMap()
   private val fileSetsByPackagePrefix = PackagePrefixStorage()
 
   private val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, this)

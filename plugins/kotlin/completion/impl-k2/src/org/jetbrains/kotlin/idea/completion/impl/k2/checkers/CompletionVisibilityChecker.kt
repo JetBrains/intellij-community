@@ -43,7 +43,7 @@ internal fun interface CompletionVisibilityChecker {
                 if (basicContext.parameters.invocationCount > 1) return true
 
                 if (symbol is KtClassLikeSymbol) {
-                    val classId = (symbol as? KtClassLikeSymbol)?.classIdIfNonLocal
+                    val classId = (symbol as? KtClassLikeSymbol)?.classId
                     if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
                 }
 

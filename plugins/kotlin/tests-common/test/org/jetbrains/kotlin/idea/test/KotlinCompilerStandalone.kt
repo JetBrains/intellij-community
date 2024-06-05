@@ -278,6 +278,7 @@ object KotlinCliCompilerFacade {
             TestKotlinArtifacts.trove4j,
             TestKotlinArtifacts.kotlinDaemon,
             TestKotlinArtifacts.jetbrainsAnnotations,
+            TestKotlinArtifacts.kotlinxCoroutines,
         )
     }
 

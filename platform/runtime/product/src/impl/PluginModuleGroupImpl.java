@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.product.impl;
 
 import com.intellij.platform.runtime.product.*;
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
 import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.product.serialization.impl.PluginXmlReader;
@@ -16,13 +17,16 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
   private final RuntimeModuleDescriptor myMainModule;
   private final ProductMode myCurrentMode;
   private final RuntimeModuleRepository myRepository;
+  private final ResourceFileResolver myResourceFileResolver;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
   private volatile Set<RuntimeModuleId> myOptionalModuleIds;
 
-  public PluginModuleGroupImpl(@NotNull RuntimeModuleDescriptor mainModule, @NotNull ProductMode currentMode, @NotNull RuntimeModuleRepository repository) {
+  public PluginModuleGroupImpl(@NotNull RuntimeModuleDescriptor mainModule, @NotNull ProductMode currentMode, @NotNull RuntimeModuleRepository repository,
+                               @NotNull ResourceFileResolver resourceFileResolver) {
     myMainModule = mainModule;
     myCurrentMode = currentMode;
     myRepository = repository;
+    myResourceFileResolver = resourceFileResolver;
   }
 
   @NotNull
@@ -40,7 +44,8 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
   }
 
   private void loadIncludedModules() {
-    List<RawIncludedRuntimeModule> rawIncludedModules = PluginXmlReader.loadPluginModules(myMainModule, myRepository);
+    List<RawIncludedRuntimeModule> rawIncludedModules = PluginXmlReader.loadPluginModules(myMainModule, myRepository,
+                                                                                          myResourceFileResolver);
     List<IncludedRuntimeModule> includedModules = new ArrayList<>();
     Set<RuntimeModuleId> optionalModuleIds = new LinkedHashSet<>();
     ProductModeMatcher matcher = new ProductModeMatcher(myCurrentMode);

@@ -55,7 +55,7 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val call = element.resolveCall()?.successfulFunctionCallOrNull() ?: return null
         val allOverriddenSymbols = listOf(call.symbol) + call.symbol.getAllOverriddenSymbols()
-        return allOverriddenSymbols.any { it.callableIdIfNonLocal == TO_STRING_CALLABLE_ID }
+        return allOverriddenSymbols.any { it.callableId == TO_STRING_CALLABLE_ID }
             .asUnit
     }
 

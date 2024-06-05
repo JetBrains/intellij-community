@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl.moduleBased
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
-import com.intellij.platform.runtime.product.serialization.IncludedProductModulesResolver
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
@@ -45,9 +45,9 @@ class OriginalModuleRepositoryImpl(private val context: CompilationContext) : Or
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
     val productModulesFile = findProductModulesFile(context, rootModuleName)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
-    val resolver = object : IncludedProductModulesResolver {
-      override fun readProductModules(moduleId: RuntimeModuleId): InputStream? {
-        return findProductModulesFile(context, moduleId.stringId)?.inputStream()
+    val resolver = object : ResourceFileResolver {
+      override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
+        return context.findFileInModuleSources(context.findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
       }
     }
     return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString,

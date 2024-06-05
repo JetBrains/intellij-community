@@ -838,7 +838,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
         val functionName = target.name.asString()
         if (functionName != LET && functionName != RUN) return null
-        if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableIdIfNonLocal?.packageName) return null
+        if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableId?.packageName) return null
         var outerExpr: KtExpression = call.parent as? KtQualifiedExpression ?: return null
         var outerExprParent = outerExpr.parent
         while (outerExprParent is KtBinaryExpression && AND_OR_ELVIS_TOKENS.contains(outerExprParent.operationToken) && 
@@ -1524,7 +1524,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         // TODO: collection methods (forEach, map, etc.)
         val resolvedCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return false
         val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
-        val packageName = symbol.callableIdIfNonLocal?.packageName ?: return false
+        val packageName = symbol.callableId?.packageName ?: return false
         val bodyExpression = lambda.bodyExpression
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
         if (packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && resolvedCall.argumentMapping.size == 1) {
@@ -1600,7 +1600,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return false
             val name = target.name.asString()
             if (name == "isEmpty" || name == "isNotEmpty") {
-                val callableId = target.callableIdIfNonLocal
+                val callableId = target.callableId
                 if (callableId != null && callableId.packageName.asString() == "kotlin.collections") {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.COLLECTION_SIZE))
                     addInstruction(PushValueInstruction(DfTypes.intValue(0)))

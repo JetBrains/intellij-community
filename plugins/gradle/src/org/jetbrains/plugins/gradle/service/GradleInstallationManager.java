@@ -383,7 +383,7 @@ public class GradleInstallationManager implements Disposable {
     }
     File[] arg = new File[files.length];
     for (int i = 0; i < files.length; i++) {
-      arg[i] = new File(files[i].getPath());
+      arg[i] = new File(files[i].getPresentableUrl());
     }
     return isGradleSdk(arg);
   }

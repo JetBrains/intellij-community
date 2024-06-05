@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.codeInsight
 
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTestMixIn
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
@@ -23,7 +23,7 @@ internal interface FirOverrideImplementTestMixIn : OverrideImplementTestMixIn<Kt
     override fun isMemberOfAny(parentClass: KtClassOrObject, chooserObject: KtClassMember): Boolean = allowAnalysisOnEdt {
         analyze(parentClass) {
             val symbol = chooserObject.memberInfo.symbolPointer.restoreSymbol() ?: return false
-            symbol.callableIdIfNonLocal?.classId == StandardClassIds.Any
+            symbol.callableId?.classId == StandardClassIds.Any
         }
     }
 
@@ -37,7 +37,7 @@ internal interface FirOverrideImplementTestMixIn : OverrideImplementTestMixIn<Kt
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getContainingClassName(parentClass: KtClassOrObject, chooserObject: KtClassMember): String = allowAnalysisOnEdt {
         analyze(parentClass) {
-            chooserObject.memberInfo.symbolPointer.restoreSymbol()?.callableIdIfNonLocal?.classId?.shortClassName?.asString() ?: ""
+            chooserObject.memberInfo.symbolPointer.restoreSymbol()?.callableId?.classId?.shortClassName?.asString() ?: ""
         }
     }
 }

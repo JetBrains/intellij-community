@@ -3,11 +3,6 @@ package com.intellij.tools.apiDump
 
 import org.objectweb.asm.Type
 
-class API(
-  val publicApi: List<ApiClass>,
-  val privateApi: Set<String>,
-)
-
 data class ApiClass(
   val className: String,
   val flags: ApiFlags,

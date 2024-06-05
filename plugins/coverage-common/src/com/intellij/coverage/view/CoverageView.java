@@ -3,6 +3,7 @@ package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -79,15 +80,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private boolean myHasVCSFilter = false;
   private boolean myHasFullyCoveredFilter = false;
 
-
-  public CoverageView(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
+  public CoverageView(Project project, CoverageSuitesBundle bundle) {
     myProject = project;
-    myStateBean = stateBean;
+    myStateBean = CoverageViewManager.getInstance(project).getStateBean();
     mySuitesBundle = bundle;
-    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle, myStateBean);
-    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle, stateBean);
+    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle);
+    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle);
 
-    myModel = new CoverageTableModel(mySuitesBundle, stateBean, project, myTreeStructure);
+    myModel = new CoverageTableModel(mySuitesBundle, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
     TreeUtil.expand(myTable.getTree(), 2);
@@ -130,11 +130,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
-    if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
-      stateBean.myAscendingOrder = true;
-      stateBean.mySortingColumn = 0;
+    if (myStateBean.mySortingColumn < 0 || myStateBean.mySortingColumn >= myModel.getColumnCount()) {
+      myStateBean.myAscendingOrder = true;
+      myStateBean.mySortingColumn = 0;
     }
-    final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+    var sortKey = new RowSorter.SortKey(myStateBean.mySortingColumn, myStateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
     addToCenter(myTable);
 
@@ -153,7 +153,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
 
-    myTable.getTree().registerKeyboardAction(e -> resetView(),
+    myTable.getTree().registerKeyboardAction(e -> resetView(null),
                                              KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH,
                                                                     ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
                                                                                              : InputEvent.CTRL_DOWN_MASK),
@@ -174,10 +174,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private void resetIfAllFiltered(AbstractTreeNode<?> root, ActionToolbar actionToolbar) {
     // This call must come first for correct hasVCSFilteredNodes call
     boolean hasChildren = myViewExtension.hasChildren(root);
-    if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
+    if (hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
       if (!hasChildren) {
-        myStateBean.setShowOnlyModified(false);
-        resetView();
+        resetView(() -> myStateBean.setShowOnlyModified(false));
       }
       else {
         final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
@@ -190,6 +189,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }
     }
+  }
+
+  private boolean hasVCSFilteredNodes() {
+    CoverageAnnotator annotator = mySuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject);
+    ModifiedFilesFilter filter = annotator.getModifiedFilesFilter();
+    return filter != null && filter.getHasFilteredFiles();
   }
 
   private void setUpShowRootNode(ActionToolbar actionToolbar) {
@@ -258,7 +263,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void setUpEmptyText() {
-    boolean hasVcsFiltered = myViewExtension.hasVCSFilteredNodes();
     boolean hasFullyCovered = myViewExtension.hasFullyCoveredNodes();
     myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
@@ -279,16 +283,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       });
       emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
     }
-    if (hasVcsFiltered && myStateBean.isShowOnlyModified()) {
+    if (myStateBean.isShowOnlyModified() && hasVCSFilteredNodes()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.setShowOnlyModified(false);
-        resetView();
+        resetView(() -> myStateBean.setShowOnlyModified(false));
       });
     }
     if (hasFullyCovered && myStateBean.isHideFullyCovered()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.fully.covered.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.setHideFullyCovered(false);
-        resetView();
+        resetView(() -> myStateBean.setHideFullyCovered(false));
       });
     }
   }
@@ -389,16 +391,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       hasFilters = true;
       myHasVCSFilter = true;
     }
-    else {
-      myStateBean.setShowOnlyModified(false);
-    }
     if (myViewExtension.supportFlattenPackages()) {
       filtersActionGroup.add(new HideFullyCoveredAction());
       hasFilters = true;
       myHasFullyCoveredFilter = true;
-    }
-    else {
-      myStateBean.setHideFullyCovered(false);
     }
     if (hasFilters) {
       filtersActionGroup.setPopup(true);
@@ -484,9 +480,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return null;
   }
 
-  private void resetView() {
-    myTreeStructure.reset();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> myModel.reset(true));
+  private void resetView(@Nullable Runnable updateSettings) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (updateSettings != null) {
+        updateSettings.run();
+      }
+      myTreeStructure.reset();
+      myModel.reset(true);
+    });
   }
 
   private void addLoggingListeners() {
@@ -540,8 +541,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setFlattenPackages(state);
-      resetView();
+      resetView(() -> myStateBean.setFlattenPackages(state));
     }
 
     @Override
@@ -563,8 +563,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setHideFullyCovered(state);
-      resetView();
+      resetView(() -> myStateBean.setHideFullyCovered(state));
     }
 
     @Override
@@ -586,8 +585,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setShowOnlyModified(state);
-      resetView();
+      resetView(() -> myStateBean.setShowOnlyModified(state));
     }
 
     @Override

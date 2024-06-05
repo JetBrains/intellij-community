@@ -37,7 +37,7 @@ internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
                 }
 
                 result += SuspendCallLineMarkerInfo(target.anchorLeaf, message, declarationName, symbol.psi?.createSmartPointer())
-            } else if (symbol is KtKotlinPropertySymbol && symbol.callableIdIfNonLocal == COROUTINE_CONTEXT_CALLABLE_ID) {
+            } else if (symbol is KtKotlinPropertySymbol && symbol.callableId == COROUTINE_CONTEXT_CALLABLE_ID) {
                 val message = KotlinLineMarkersBundle.message("line.markers.coroutine.context.call.description")
                 result += SuspendCallLineMarkerInfo(target.anchorLeaf, message, symbol.name.asString(), symbol.psi?.createSmartPointer())
             }

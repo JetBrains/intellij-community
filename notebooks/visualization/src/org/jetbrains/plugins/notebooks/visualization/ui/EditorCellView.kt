@@ -121,7 +121,7 @@ class EditorCellView(
     Disposer.dispose(inlay)
   }
 
-  fun update() {
+  fun update(force: Boolean = false) {
     val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
       .filter { it !is NotebookCellInlayController.InputFactory }
 
@@ -145,7 +145,7 @@ class EditorCellView(
         DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component) { interval })
       }
     }
-    input.update()
+    input.update(force)
     updateOutputs()
     updateBoundaries()
     updateCellHighlight()

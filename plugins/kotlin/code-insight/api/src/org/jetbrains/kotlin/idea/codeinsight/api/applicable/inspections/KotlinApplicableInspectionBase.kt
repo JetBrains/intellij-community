@@ -5,7 +5,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
+import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
@@ -30,7 +30,7 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C> : LocalInspectio
     ) {
         if (!isApplicableByPsi(element)) return
 
-        val ranges = KtAnalysisAllowanceManager.forbidAnalysisInside("getApplicabilityRanges") {
+        val ranges = forbidAnalysis("getApplicabilityRanges") {
             getApplicableRanges(element)
         }
         if (ranges.isEmpty()) return

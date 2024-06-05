@@ -31,7 +31,7 @@ internal class KtCancellationCheckProvider : CancellationCheckProvider {
 
     analyze(callExpression) {
       val functionCalledSymbol = callExpression.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return false
-      return functionCalledSymbol.callableIdIfNonLocal?.asSingleFqName() == FqName(cancellationCheckFqn)
+      return functionCalledSymbol.callableId?.asSingleFqName() == FqName(cancellationCheckFqn)
     }
   }
 

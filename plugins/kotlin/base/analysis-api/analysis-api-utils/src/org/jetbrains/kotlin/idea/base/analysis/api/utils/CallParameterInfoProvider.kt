@@ -70,7 +70,7 @@ object CallParameterInfoProvider {
      */
     context(KtAnalysisSession)
     fun isArraySetCall(sourceElement: KtElement, signature: KtFunctionLikeSignature<*>): Boolean {
-        val callableId = signature.symbol.callableIdIfNonLocal ?: return false
+        val callableId = signature.symbol.callableId ?: return false
         val isSet = callableId.callableName == OperatorNameConventions.SET
         return isSet && sourceElement is KtArrayAccessExpression
     }

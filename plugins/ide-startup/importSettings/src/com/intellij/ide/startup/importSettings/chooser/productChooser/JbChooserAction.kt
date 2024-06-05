@@ -35,7 +35,7 @@ class SyncChooserAction(controller: ImportSettingsController, syncDataProvider: 
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = false
-    if (!service.isSyncEnabled.value) {
+    if (!service.isSyncEnabled || !service.hasDataToSync.value) {
       return
     }
     super.update(e)

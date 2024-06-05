@@ -40,7 +40,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
             val expandedClassSymbol = expectedReturnType.expandedClassSymbol
             return expandedClassSymbol != null &&
                     !expectedReturnType.isMarkedNullable &&
-                    expandedClassSymbol.classIdIfNonLocal != StandardClassIds.Any
+                    expandedClassSymbol.classId != StandardClassIds.Any
         }
     }
 

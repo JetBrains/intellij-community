@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -90,10 +90,10 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
                         val call = element.resolveCall()?.singleCallOrNull<KtCall>()
                         if (call is KtSimpleFunctionCall) {
                             val functionSymbol = call.partiallyAppliedSymbol.symbol
-                            val callableId = functionSymbol.callableIdIfNonLocal
+                            val callableId = functionSymbol.callableId
                             if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
                                 for (overriddenSymbol in functionSymbol.getAllOverriddenSymbols()) {
-                                    val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableIdIfNonLocal]
+                                    val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableId]
                                     if (mappedCallableId != null) {
                                         return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
                                     }

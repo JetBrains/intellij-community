@@ -49,7 +49,7 @@ public final class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinD
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("groovy")
-      .addRepositoriesDefinition("mavenCentral()")
+      .withMavenCentral()
       .addOther("""
                   tasks.getByName<Test>("test") {
                       useJUnitPlatform()

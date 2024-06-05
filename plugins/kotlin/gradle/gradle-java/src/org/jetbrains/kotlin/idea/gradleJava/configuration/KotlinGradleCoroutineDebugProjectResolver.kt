@@ -47,9 +47,12 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
             //language=Gradle
             """
             gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
-                taskGraph.allTasks.each { Task task ->
-                    if (!(task instanceof Test || task instanceof JavaExec)) return
-                    $gradleVersionCheck
+                $gradleVersionCheck
+                def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
+                def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof Test || task instanceof JavaExec }
+                def matchedTasks = debugAllIsEnabled ? jvmTasks : GradleTasksUtil.filterStartTasks(jvmTasks, gradle, rootProject)
+
+                matchedTasks.each { Task task ->                    
                     for (arg in task.getJvmArgs()) {
                         if (arg == "-D$DEBUG_PROPERTY_NAME=$DEBUG_PROPERTY_VALUE_OFF") {
                             return

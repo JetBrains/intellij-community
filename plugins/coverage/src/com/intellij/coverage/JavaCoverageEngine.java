@@ -9,7 +9,6 @@ import com.intellij.coverage.analysis.JavaCoverageAnnotator;
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
-import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -764,9 +763,8 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   public CoverageViewExtension createCoverageViewExtension(Project project,
-                                                           CoverageSuitesBundle suiteBundle,
-                                                           CoverageViewManager.StateBean stateBean) {
-    return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
+                                                           CoverageSuitesBundle suiteBundle) {
+    return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle);
   }
 
   public static boolean isSourceMapNeeded(RunConfigurationBase<?> configuration) {

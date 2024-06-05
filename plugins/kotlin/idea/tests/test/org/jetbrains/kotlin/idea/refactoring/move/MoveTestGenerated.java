@@ -378,6 +378,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test");
         }
 
+        @TestMetadata("kotlin/getOperatorInternalUsage/getOperatorInternalUsage.test")
+        public void testKotlin_getOperatorInternalUsage_GetOperatorInternalUsage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/getOperatorInternalUsage/getOperatorInternalUsage.test");
+        }
+
         @TestMetadata("kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test")
         public void testKotlin_implicitInvokeCalls_differentSourceAndTarget_DifferentSourceAndTarget() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test");
@@ -393,6 +398,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
         }
 
+        @TestMetadata("kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test")
+        public void testKotlin_innerEnumReferenceWithoutQualifier_InnerEnumReferenceWithoutQualifier() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test");
+        }
+
         @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
         public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
@@ -401,6 +411,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/internalReferences/internalReferences.test")
         public void testKotlin_internalReferences_InternalReferences() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/internalReferences/internalReferences.test");
+        }
+
+        @TestMetadata("kotlin/invokeOperatorInternalUsage/invokeOperatorInternalUsage.test")
+        public void testKotlin_invokeOperatorInternalUsage_InvokeOperatorInternalUsage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/invokeOperatorInternalUsage/invokeOperatorInternalUsage.test");
         }
 
         @TestMetadata("kotlin/kt17032/kt17032.test")

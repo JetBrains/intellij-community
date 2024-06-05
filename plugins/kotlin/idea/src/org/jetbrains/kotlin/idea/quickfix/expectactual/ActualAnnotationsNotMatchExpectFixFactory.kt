@@ -64,7 +64,7 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
     private fun getAnnotationClassId(annotationEntry: KtAnnotationEntry): ClassId? {
         analyze(annotationEntry) {
             val resolvedExpectAnnotationCall = annotationEntry.resolveCall()?.singleConstructorCallOrNull() ?: return null
-            return resolvedExpectAnnotationCall.symbol.containingClassIdIfNonLocal
+            return resolvedExpectAnnotationCall.symbol.containingClassId
         }
     }
 }

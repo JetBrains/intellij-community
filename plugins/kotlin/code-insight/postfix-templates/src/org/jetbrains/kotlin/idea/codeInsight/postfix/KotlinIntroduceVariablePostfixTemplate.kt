@@ -6,10 +6,10 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithEx
 import com.intellij.lang.LanguageRefactoringSupport
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.psi.KtExpression

@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
+import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -32,7 +32,7 @@ abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
 
         // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
         val relativeCaretOffset = context.offset - element.startOffset
-        val ranges = KtAnalysisAllowanceManager.forbidAnalysisInside("getApplicabilityRanges") {
+        val ranges = forbidAnalysis("getApplicabilityRanges") {
             getApplicableRanges(element)
         }
         if (!ranges.any { it.containsOffset(relativeCaretOffset) }) return false

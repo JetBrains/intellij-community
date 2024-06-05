@@ -48,7 +48,7 @@ internal object SuperClassNotInitializedFactories {
             Modality.SEALED -> {
                 val subClass = superTypeEntry.parentOfType<KtClassOrObject>()
                 subClass?.isLocal == false
-                        && classIdIfNonLocal?.packageFqName == superTypeEntry.containingKtFile.packageFqName
+                        && classId?.packageFqName == superTypeEntry.containingKtFile.packageFqName
                         && getContainingModule() == useSiteModule
             }
         }

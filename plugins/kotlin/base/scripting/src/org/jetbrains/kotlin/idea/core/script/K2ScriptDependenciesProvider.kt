@@ -103,20 +103,6 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
 
     private val configurationsByFile = ConcurrentHashMap<VirtualFile, ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>>()
 
-    fun addConfiguration(script: SourceCode): ScriptCompilationConfigurationResult {
-        val definition = findScriptDefinition(project, script)
-        val virtualFile = script.getVirtualFile(definition)
-
-        val previousConfiguration = getConfiguration(virtualFile)
-        val configuration = project.runReadActionInSmartMode {
-            refineScriptCompilationConfiguration(script, definition, project, previousConfiguration?.valueOrNull()?.configuration)
-        }
-
-        configurationsByFile[virtualFile] = configuration
-
-        return configuration
-    }
-
     fun reloadConfigurations(scripts: Set<ScriptModel>, javaHome: String?) {
         val classes = mutableSetOf<VirtualFile>()
         val sources = mutableSetOf<VirtualFile>()

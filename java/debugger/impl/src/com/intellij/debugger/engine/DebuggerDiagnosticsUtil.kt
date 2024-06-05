@@ -249,4 +249,9 @@ object DebuggerDiagnosticsUtil {
       return e.toString()
     }
   }
+
+  @JvmStatic
+  fun logDebug(message: String) {
+    thisLogger().debug(message)
+  }
 }
