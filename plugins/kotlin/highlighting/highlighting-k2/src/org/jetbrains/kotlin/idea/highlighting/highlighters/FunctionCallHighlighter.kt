@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
@@ -33,7 +33,7 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
         val operationReference = expression.operationReference as? KtReferenceExpression ?: return
         if (operationReference.isAssignment()) return
         val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
-        if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return
+        if (call is KtSimpleFunctionCall && (call.symbol as? KaFunctionSymbol)?.isOperator == true) return
         val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
         if (highlightInfoType != null) {
             val builder = HighlightingFactory.highlightName(operationReference, highlightInfoType)
@@ -62,7 +62,7 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
         return when (val function = call.symbol) {
             is KtConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
             is KaAnonymousFunctionSymbol -> null
-            is KtFunctionSymbol -> when {
+            is KaFunctionSymbol -> when {
                 function.isSuspend -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL
                 call.isImplicitInvoke -> if (function.isBuiltinFunctionInvoke) {
                     KotlinHighlightInfoTypeSemanticNames.VARIABLE_AS_FUNCTION_CALL

@@ -692,7 +692,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         containingLightDeclaration: PsiModifierListOwner?,
     ): PsiType? {
         analyzeForUast(suspendFunction) {
-            val symbol = suspendFunction.getSymbol() as? KtFunctionSymbol ?: return null
+            val symbol = suspendFunction.getSymbol() as? KaFunctionSymbol ?: return null
             if (!symbol.isSuspend) return null
             val continuationType = buildClassType(StandardClassIds.Continuation) { argument(symbol.returnType) }
             return toPsiType(

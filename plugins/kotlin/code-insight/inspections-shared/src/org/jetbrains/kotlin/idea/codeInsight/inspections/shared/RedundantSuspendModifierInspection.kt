@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.Modality
@@ -35,7 +35,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) || function.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
 
             analyze(function) {
-                val functionSymbol = function.getFunctionLikeSymbol() as? KtFunctionSymbol ?: return
+                val functionSymbol = function.getFunctionLikeSymbol() as? KaFunctionSymbol ?: return
                 if (functionSymbol.modality == Modality.OPEN) return
 
                 if (function.hasSuspendOrUnresolvedCall()) return
@@ -57,7 +57,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
         if (this is KtKotlinPropertySymbol && getFqNameIfPackageOrNonLocal() == coroutineContextFqName) {
             return true
         }
-        return this is KtFunctionSymbol && isSuspend
+        return this is KaFunctionSymbol && isSuspend
     }
 
     private fun KtNamedFunction.hasSuspendOrUnresolvedCall(): Boolean {

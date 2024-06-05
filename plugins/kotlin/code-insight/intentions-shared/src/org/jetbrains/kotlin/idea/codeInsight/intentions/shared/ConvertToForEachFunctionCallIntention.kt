@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -58,7 +58,7 @@ internal class ConvertToForEachFunctionCallIntention :
         val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression
         if (calleeExpression?.text == WITH_INDEX_NAME) {
             if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
-            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return null
+            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return null
             if (symbol.callableId?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 

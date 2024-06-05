@@ -360,7 +360,7 @@ abstract class KtSymbolBasedFunctionLikeDescriptor(context: Fe10WrapperContext) 
     ): FunctionDescriptor = noImplementation()
 }
 
-class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, context: Fe10WrapperContext) :
+class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KaFunctionSymbol, context: Fe10WrapperContext) :
     KtSymbolBasedFunctionLikeDescriptor(context),
     SimpleFunctionDescriptor,
     KtSymbolBasedNamed {
@@ -390,7 +390,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
             ktSymbol.getAllOverriddenSymbols()
         }
 
-        return overriddenKtSymbols.map { KtSymbolBasedFunctionDescriptor(it as KtFunctionSymbol, context) }
+        return overriddenKtSymbols.map { KtSymbolBasedFunctionDescriptor(it as KaFunctionSymbol, context) }
     }
 
     override fun copy(

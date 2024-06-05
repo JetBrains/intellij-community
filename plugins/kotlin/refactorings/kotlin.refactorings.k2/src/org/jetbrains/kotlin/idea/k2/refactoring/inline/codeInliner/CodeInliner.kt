@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -208,7 +208,7 @@ class CodeInliner(
             importDescriptors.firstOrNull { it.fqName?.shortName()?.asString() == nameExpression.text } as? KtNamedFunction ?: return
 
         analyze(function) {
-            if ((function.getSymbol() as? KtFunctionSymbol)?.isInfix != true) return
+            if ((function.getSymbol() as? KaFunctionSymbol)?.isInfix != true) return
         }
         val argument = call.valueArguments.singleOrNull() ?: return
         if (argument.isNamed()) return

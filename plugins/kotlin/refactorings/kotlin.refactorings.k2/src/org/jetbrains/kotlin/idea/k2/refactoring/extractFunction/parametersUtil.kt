@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -420,7 +420,7 @@ private fun createOriginalType(
     parameterExpression: KtExpression?,
     receiverToExtract: KtReceiverValue?
 ): KtType = (if (extractFunctionRef) {
-    val functionSymbol = (originalDeclaration as KtNamedFunction).getSymbol() as KtFunctionSymbol
+    val functionSymbol = (originalDeclaration as KtNamedFunction).getSymbol() as KaFunctionSymbol
     val typeString =
         buildString { //todo rewrite as soon as functional type can be created by api call: https://youtrack.jetbrains.com/issue/KT-66566
             functionSymbol.receiverParameter?.type?.render(position = Variance.INVARIANT)?.let {

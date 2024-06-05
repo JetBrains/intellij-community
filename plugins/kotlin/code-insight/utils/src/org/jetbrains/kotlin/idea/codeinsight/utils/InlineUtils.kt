@@ -26,7 +26,7 @@ fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
         ?: getDefaultArgumentSymbol(argument)
         ?: return null
 
-    if ((symbol is KtFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
+    if ((symbol is KaFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
         if (argumentSymbol.isNoinline) return null
         val parameterType = argumentSymbol.returnType
         if (!parameterType.isMarkedNullable
@@ -83,7 +83,7 @@ private fun isArrayGeneratorConstructorCall(symbol: KaFunctionLikeSymbol): Boole
                 || classId in StandardClassIds.elementTypeByUnsignedArrayType
 
         return isArrayClass && checkParameters(symbol)
-    } else if (symbol is KtFunctionSymbol && symbol.isExtension) {
+    } else if (symbol is KaFunctionSymbol && symbol.isExtension) {
         val receiverType = symbol.receiverType
         return receiverType is KtNonErrorClassType
                 && receiverType.classId in StandardClassIds.elementTypeByUnsignedArrayType

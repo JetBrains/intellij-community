@@ -12,7 +12,7 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -119,7 +119,7 @@ private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpre
     context(KtAnalysisSession)
     private fun isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
         val functionParent = expression.parentOfType<KtFunction>(withSelf = true) ?: return false
-        val symbol = functionParent.getSymbol() as? KtFunctionSymbol ?: return false
+        val symbol = functionParent.getSymbol() as? KaFunctionSymbol ?: return false
         return symbol.isSuspend
     }
 

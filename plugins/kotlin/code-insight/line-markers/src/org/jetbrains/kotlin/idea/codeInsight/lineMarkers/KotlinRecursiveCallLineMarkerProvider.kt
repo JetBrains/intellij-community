@@ -40,7 +40,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             if (isRecursiveCall(target, targetDeclaration)) {
                 @NlsSafe val declarationName = when (symbol) {
                     is KtVariableLikeSymbol -> symbol.name.asString()
-                    is KtFunctionSymbol -> symbol.name.asString() + "()"
+                    is KaFunctionSymbol -> symbol.name.asString() + "()"
                     is KtPropertyGetterSymbol -> "get()"
                     is KtPropertySetterSymbol -> "set()"
                     is KtConstructorSymbol -> "constructor()"
@@ -88,7 +88,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             return when (val expression = KtPsiUtil.deparenthesize(dispatchReceiver.expression)) {
                 is KtThisExpression -> expression.instanceReference.mainReference.resolveToSymbol() == containingClass
                 is KtExpression -> when (val receiverSymbol = expression.mainReference?.resolveToSymbol()) {
-                    is KtFunctionSymbol -> {
+                    is KaFunctionSymbol -> {
                         receiverSymbol.isOperator
                                 && receiverSymbol.name.asString() == "invoke"
                                 && containingClass.classKind.isObject

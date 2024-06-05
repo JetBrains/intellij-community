@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
@@ -83,7 +83,7 @@ internal class OverrideKeywordHandler(
         declaration: KtCallableDeclaration,
         symbolToOverride: KtCallableSymbol
     ): Boolean = when (declaration) {
-        is KtFunction -> symbolToOverride is KtFunctionSymbol
+        is KtFunction -> symbolToOverride is KaFunctionSymbol
         is KtValVarKeywordOwner -> {
             if (symbolToOverride !is KtVariableSymbol) {
                 false
@@ -115,7 +115,7 @@ internal class OverrideKeywordHandler(
         val isImplement = (memberSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
-        val isSuspendFunction = (memberSymbol as? KtFunctionSymbol)?.isSuspend == true
+        val isSuspendFunction = (memberSymbol as? KaFunctionSymbol)?.isSuspend == true
 
         val containingSymbol = memberSymbol.unwrapFakeOverrides.originalContainingClassForOverride
         val baseClassName = containingSymbol?.name?.asString()
@@ -148,7 +148,7 @@ internal class OverrideKeywordHandler(
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")
             .append(memberSymbol.render(renderingOptionsForLookupElementRendering))
-        if (memberSymbol is KtFunctionSymbol) {
+        if (memberSymbol is KaFunctionSymbol) {
             append(" {...}")
         }
     }

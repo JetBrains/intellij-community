@@ -17,7 +17,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -131,7 +131,7 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
 
 private fun functionNameByArgument(argument: KtExpression): String? =
     analyze(argument) {
-        val function = getFunctionSymbol(argument) as? KtFunctionSymbol ?: return null
+        val function = getFunctionSymbol(argument) as? KaFunctionSymbol ?: return null
         return function.name.asString()
     }
 

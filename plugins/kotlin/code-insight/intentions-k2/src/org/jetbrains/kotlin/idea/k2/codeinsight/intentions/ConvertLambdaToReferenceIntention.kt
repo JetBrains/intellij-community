@@ -97,7 +97,7 @@ internal class ConvertLambdaToReferenceIntention :
         if (element.parentValueArgument() as? KtLambdaArgument == null) {
             val renderTypeForProperty = if (parent is KtProperty && parent.typeReference == null) {
                 val propertyType = parent.getReturnKtType()
-                val symbol = element.singleStatementOrNull()?.resolveCall()?.singleFunctionCallOrNull()?.symbol as? KtFunctionSymbol
+                val symbol = element.singleStatementOrNull()?.resolveCall()?.singleFunctionCallOrNull()?.symbol as? KaFunctionSymbol
                 if (symbol != null && symbol.overloadedFunctions(element).size > 1) {
                     propertyType.render(position = Variance.IN_VARIANCE)
                 } else null
@@ -247,7 +247,7 @@ private fun buildReferenceText(receiver: String, selector: String, call: KtCalla
 }
 
 private val KtCallableSymbol.isInvokeOperator: Boolean
-    get() = this is KtFunctionSymbol && this.isOperator && name == org.jetbrains.kotlin.util.OperatorNameConventions.INVOKE
+    get() = this is KaFunctionSymbol && this.isOperator && name == org.jetbrains.kotlin.util.OperatorNameConventions.INVOKE
 
 private fun getCalleeReferenceExpression(callableExpression: KtExpression): KtNameReferenceExpression? {
     return when (callableExpression) {
@@ -308,7 +308,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     }
 
     val lambdaParameterIsSuspend = lambdaParameterType?.isSuspendFunctionType == true
-    val calleeFunctionIsSuspend = (symbol as? KtFunctionSymbol)?.isSuspend
+    val calleeFunctionIsSuspend = (symbol as? KaFunctionSymbol)?.isSuspend
     if (!lambdaParameterIsSuspend && calleeFunctionIsSuspend == true) return false
     if (lambdaParameterIsSuspend && calleeFunctionIsSuspend == false && !languageVersionSettings.supportsFeature(LanguageFeature.SuspendConversion)) return false
 
@@ -330,7 +330,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
     if (symbol is KaFunctionLikeSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionLikeSymbol)?.valueParameters?.none { it.hasDefaultValue } == true)) return false
 
-    if (!lambdaExpression.isArgument() && symbol is KtFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
+    if (!lambdaExpression.isArgument() && symbol is KaFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
         val property = lambdaExpression.getStrictParentOfType<KtProperty>()
         if (property != null && property.initializer?.let(KtPsiUtil::safeDeparenthesize) != lambdaExpression) return false
     }
@@ -382,18 +382,18 @@ private fun isExtensionFunctionType(type: KtType): Boolean {
 }
 
 context(KtAnalysisSession)
-private fun KtFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KtFunctionSymbol> {
+private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KaFunctionSymbol> {
     val scope = when (val containingSymbol = this.getContainingSymbol()) {
         is KaClassOrObjectSymbol -> containingSymbol.getMemberScope()
         else -> lambdaArgument.containingKtFile.getScopeContextForPosition(lambdaArgument).getCompositeScope()
     }
-    return scope.getCallableSymbols(name).filterIsInstance<KtFunctionSymbol>().toList()
+    return scope.getCallableSymbols(name).filterIsInstance<KaFunctionSymbol>().toList()
 }
 
 context(KtAnalysisSession)
 private fun KtCallExpression.addTypeArgumentsIfNeeded(lambda: KtLambdaExpression): String? {
     val resolvedCall = lambda.singleStatementOrNull()?.resolveCall()?.successfulFunctionCallOrNull() ?: return null
-    val calledFunctionInLambda = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+    val calledFunctionInLambda = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol ?: return null
     val overloadedFunctions = calledFunctionInLambda.overloadedFunctions(lambda)
 
     if (overloadedFunctions.count { it.valueParameters.size == calledFunctionInLambda.valueParameters.size } < 2

@@ -347,9 +347,9 @@ class ImportQuickFix(
             this is KtPropertySymbol -> ImportFixHelper.ImportKind.PROPERTY
             this is KtJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
 
-            this is KtFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
-            this is KtFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
-            this is KtFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
+            this is KaFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
+            this is KaFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
+            this is KaFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
             this is KaNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
             this is KaNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS

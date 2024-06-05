@@ -22,7 +22,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
         fun getFunctionUsageType(functionSymbol: KaFunctionLikeSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
-                    return when ((functionSymbol as KtFunctionSymbol).name) {
+                    return when ((functionSymbol as KaFunctionSymbol).name) {
                         OperatorNameConventions.GET -> IMPLICIT_GET
                         OperatorNameConventions.SET -> IMPLICIT_SET
                         else -> error("Expected get or set operator but resolved to unexpected symbol {functionSymbol.render()}")

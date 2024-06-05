@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -75,9 +75,9 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
 
         val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol
-        if (targetFunctionSymbol is KtFunctionSymbol && targetFunctionSymbol.isOverride) {
+        if (targetFunctionSymbol is KaFunctionSymbol && targetFunctionSymbol.isOverride) {
             for (baseFunctionSymbol in targetFunctionSymbol.getAllOverriddenSymbols()) {
-                if (baseFunctionSymbol is KtFunctionSymbol && !baseFunctionSymbol.isOverride) {
+                if (baseFunctionSymbol is KaFunctionSymbol && !baseFunctionSymbol.isOverride) {
                     return baseFunctionSymbol.valueParameters.singleOrNull { it.name == targetParameterSymbol.name }
                 }
             }

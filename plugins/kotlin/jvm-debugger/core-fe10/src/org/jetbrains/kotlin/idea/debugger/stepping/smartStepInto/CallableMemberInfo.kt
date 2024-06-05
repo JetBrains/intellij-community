@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
@@ -31,8 +31,8 @@ internal fun CallableMemberInfo(
     ordinal: Int = 0,
     name: String = symbol.methodName()
 ): CallableMemberInfo {
-    val isInvoke = symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke
-    val isSuspend = symbol is KtFunctionSymbol && symbol.isSuspend
+    val isInvoke = symbol is KaFunctionSymbol && symbol.isBuiltinFunctionInvoke
+    val isSuspend = symbol is KaFunctionSymbol && symbol.isSuspend
     val effectiveName = if (isInvoke && isSuspend) "invokeSuspend" else name
     return CallableMemberInfo(
         isInvoke = isInvoke,
@@ -41,7 +41,7 @@ internal fun CallableMemberInfo(
         hasInlineClassInValueParameters = symbol.containsInlineClassInValueArguments(),
         isInternalMethod = symbol is KtSymbolWithVisibility && symbol.visibility == Visibilities.Internal,
         isExtension = symbol.isExtension,
-        isInline = symbol is KtFunctionSymbol && symbol.isInline,
+        isInline = symbol is KaFunctionSymbol && symbol.isInline,
         name = effectiveName,
         ordinal = ordinal,
     )
@@ -52,7 +52,7 @@ internal fun KaFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean
     valueParameters.any { it.returnType.expandedClassSymbol?.isInlineClass() == true }
 
 private fun KaFunctionLikeSymbol.methodName() = when (this) {
-    is KtFunctionSymbol -> getByteCodeMethodName()
+    is KaFunctionSymbol -> getByteCodeMethodName()
     is KtConstructorSymbol -> "<init>"
     else -> ""
 }

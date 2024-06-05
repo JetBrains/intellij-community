@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -69,7 +69,7 @@ internal class ReplaceGetOrSetInspection :
         // `resolveCall()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
         val call = element.resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return null
         val functionSymbol = call.symbol
-        if (functionSymbol !is KtFunctionSymbol || !functionSymbol.isOperator) {
+        if (functionSymbol !is KaFunctionSymbol || !functionSymbol.isOperator) {
             return null
         }
 
@@ -107,7 +107,7 @@ internal class ReplaceGetOrSetInspection :
     }
 
     context(KtAnalysisSession)
-    private fun KtFunctionSymbol.isExplicitOperator(): Boolean {
+    private fun KaFunctionSymbol.isExplicitOperator(): Boolean {
         fun KtCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
         return hasOperatorKeyword() || getAllOverriddenSymbols().any { it.hasOperatorKeyword() }
     }

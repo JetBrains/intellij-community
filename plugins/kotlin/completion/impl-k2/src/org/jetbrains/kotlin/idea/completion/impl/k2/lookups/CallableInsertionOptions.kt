@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 
 @ApiStatus.Internal
@@ -25,7 +25,7 @@ internal fun detectCallableOptions(symbol: KtCallableSymbol, importStrategyDetec
     return CallableInsertionOptions(
         importingStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(symbol),
         insertionStrategy = when (symbol) {
-            is KtFunctionSymbol -> CallableInsertionStrategy.AsCall
+            is KaFunctionSymbol -> CallableInsertionStrategy.AsCall
             else -> CallableInsertionStrategy.AsIdentifier
         }
     )

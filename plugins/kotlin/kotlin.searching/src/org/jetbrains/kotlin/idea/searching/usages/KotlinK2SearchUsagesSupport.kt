@@ -49,7 +49,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 //which doesn't work well for e.g. kotlin.FunctionN classes due to mapping in
                 //`org.jetbrains.kotlin.analysis.api.fir.FirDeserializedDeclarationSourceProvider`
                 val invokeSymbol = psiReference.resolveToSymbol() ?: return false
-                if (invokeSymbol is KtFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
+                if (invokeSymbol is KaFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
                     val searchTargetContainerSymbol = searchTarget.getSymbol() as? KaClassOrObjectSymbol ?: return false
 
                     fun KaClassOrObjectSymbol.isInheritorOrSelf(
@@ -308,7 +308,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     val allSuperMethods = if (deepest) symbol.getAllOverriddenSymbols() else symbol.getDirectlyOverriddenSymbols()
                     val deepestSuperMethods = allSuperMethods.filter {
                         when (it) {
-                            is KtFunctionSymbol -> !it.isOverride
+                            is KaFunctionSymbol -> !it.isOverride
                             is KtPropertySymbol -> !it.isOverride
                             else -> false
                         }

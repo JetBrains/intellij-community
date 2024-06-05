@@ -342,7 +342,7 @@ object ChangeSignatureFixFactory {
     ): List<ParameterQuickFix> {
         if (symbol !is KtParameterSymbol) return emptyList()
         val containingSymbol = symbol.getContainingSymbol() as? KaFunctionLikeSymbol ?: return emptyList()
-        if (containingSymbol is KtFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
+        if (containingSymbol is KaFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
             containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
             containingSymbol.origin == KtSymbolOrigin.LIBRARY
         ) return emptyList()
@@ -415,7 +415,7 @@ internal fun getDeclarationName(functionLikeSymbol: KaFunctionLikeSymbol): Strin
             } else constructorSymbol.containingClassId?.shortClassName
         }
 
-        is KtFunctionSymbol -> {
+        is KaFunctionSymbol -> {
             functionLikeSymbol.name
         }
 

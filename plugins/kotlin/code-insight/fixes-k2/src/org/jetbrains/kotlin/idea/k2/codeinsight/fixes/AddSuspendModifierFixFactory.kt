@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -75,7 +75,7 @@ private fun KtDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
     var declaration: KtDeclarationSymbol? = this
     var result: Visibility? = null
     while (declaration != null) {
-        if (declaration is KtFunctionSymbol && declaration.isInline) {
+        if (declaration is KaFunctionSymbol && declaration.isInline) {
             val visibility = declaration.visibility
             if (Visibilities.isPrivate(visibility)) {
                 return visibility

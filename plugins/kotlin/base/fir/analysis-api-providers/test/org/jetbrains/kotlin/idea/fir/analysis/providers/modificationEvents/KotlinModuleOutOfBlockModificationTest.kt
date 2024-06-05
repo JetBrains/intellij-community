@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
 import org.jetbrains.kotlin.psi.*
@@ -490,7 +490,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
                     val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull()
-                    val resolvedFunction = resolvedCall?.symbol as? KtFunctionSymbol
+                    val resolvedFunction = resolvedCall?.symbol as? KaFunctionSymbol
                     assert(resolvedFunction != null && resolvedFunction.name.asString() == "main" )
                 }
             }

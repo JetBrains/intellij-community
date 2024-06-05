@@ -79,7 +79,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): L
                         }
                         (classOrObjectSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true &&
                                 containingSymbol?.classId == StandardClassIds.Any -> {
-                            if ((symbolToProcess as? KtFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
+                            if ((symbolToProcess as? KaFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue
                             } else {
                                 BodyType.Super

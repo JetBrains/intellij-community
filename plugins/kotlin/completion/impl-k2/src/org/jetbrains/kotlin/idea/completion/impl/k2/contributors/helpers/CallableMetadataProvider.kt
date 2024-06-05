@@ -203,7 +203,7 @@ internal object CallableMetadataProvider {
     context(KtAnalysisSession)
     private val KtCallableSymbol.isOverride: Boolean
         get() = when (this) {
-            is KtFunctionSymbol -> isOverride
+            is KaFunctionSymbol -> isOverride
             is KtPropertySymbol -> isOverride
             else -> false
         }

@@ -597,7 +597,7 @@ internal open class FirCallableCompletionContributor(
                 is KtJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
                 is KtKotlinPropertySymbol -> symbol.isConst
                 is KaEnumEntrySymbol -> true
-                is KtFunctionSymbol -> {
+                is KaFunctionSymbol -> {
                     val isArrayOfCall = symbol.callableId?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 
                     isArrayOfCall && expectedType?.let { symbol.returnType.isPossiblySubTypeOf(it) } != false
@@ -726,7 +726,7 @@ internal class FirInfixCallableCompletionContributor(
 
     context(KtAnalysisSession)
     override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean {
-        return symbol is KtFunctionSymbol && symbol.isInfix && super.filter(symbol, sessionParameters)
+        return symbol is KaFunctionSymbol && symbol.isInfix && super.filter(symbol, sessionParameters)
     }
 
     companion object {

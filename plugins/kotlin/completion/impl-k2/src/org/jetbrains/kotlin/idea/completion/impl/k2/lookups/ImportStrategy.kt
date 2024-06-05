@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.name.FqName
@@ -37,7 +37,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
                 .any { callable ->
                     val callableFqName = callable.callableId?.asSingleFqName()
                     callable is KtKotlinPropertySymbol && callableFqName == nameToImport ||
-                            callable is KtFunctionSymbol && callableFqName == nameToImport
+                            callable is KaFunctionSymbol && callableFqName == nameToImport
                 }
             if (anyCallableSymbolMatches) return true
 

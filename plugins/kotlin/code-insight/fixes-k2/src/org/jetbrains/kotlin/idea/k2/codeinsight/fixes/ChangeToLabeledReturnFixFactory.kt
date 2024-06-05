@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -55,7 +55,7 @@ internal object ChangeToLabeledReturnFixFactory {
                     // check if the current function literal is inlined and stop processing outer declarations if it's not
                     val callee = call?.calleeExpression as? KtReferenceExpression ?: break
                     val symbol = callee.mainReference.resolveToSymbol()
-                    if (!(symbol is KtFunctionSymbol && symbol.isInline)) break
+                    if (!(symbol is KaFunctionSymbol && symbol.isInline)) break
                 }
 
                 else -> {}

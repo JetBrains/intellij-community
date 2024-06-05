@@ -144,7 +144,7 @@ fun generateMember(
                         if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)
                     }
 
-                    if (s is KtFunctionSymbol) {
+                    if (s is KaFunctionSymbol) {
                         if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
                         if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                         if (s.isInline) add(KtTokens.INLINE_KEYWORD)
@@ -200,7 +200,7 @@ fun generateMember(
 
 
     val newMember: KtCallableDeclaration = when (symbol) {
-        is KtFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
+        is KaFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
         is KtPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
         else -> error("Unknown member to override: $symbol")
     }
@@ -265,7 +265,7 @@ private fun generateConstructorParameter(
 context(KtAnalysisSession)
 private fun generateFunction(
     project: Project,
-    symbol: KtFunctionSymbol,
+    symbol: KaFunctionSymbol,
     renderer: KtDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
@@ -314,7 +314,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
         BodyType.EmptyOrTemplate -> return ""
         BodyType.FromTemplate -> {
             val templateKind = when (symbol) {
-                is KtFunctionSymbol -> TemplateKind.FUNCTION
+                is KaFunctionSymbol -> TemplateKind.FUNCTION
                 is KtPropertySymbol -> TemplateKind.PROPERTY_INITIALIZER
                 else -> throw IllegalArgumentException("$symbol must be either a function or a property")
             }
@@ -337,7 +337,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
             }
             append(".").append(symbol.name.render())
 
-            if (symbol is KtFunctionSymbol) {
+            if (symbol is KaFunctionSymbol) {
                 val paramTexts = symbol.valueParameters.map {
                     val renderedName = it.name.render()
                     if (it.isVararg) "*$renderedName" else renderedName

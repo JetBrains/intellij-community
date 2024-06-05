@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.*
@@ -102,7 +102,7 @@ object AddExclExclCallFixFactories {
         val typeScope = type.getTypeScope()?.getDeclarationScope()
             ?: return@IntentionBased emptyList()
         val hasValidIterator = typeScope.getCallableSymbols(OperatorNameConventions.ITERATOR)
-            .filter { it is KtFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
+            .filter { it is KaFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
         if (hasValidIterator) {
             listOfNotNull(expression.asAddExclExclCallFix())
         } else {

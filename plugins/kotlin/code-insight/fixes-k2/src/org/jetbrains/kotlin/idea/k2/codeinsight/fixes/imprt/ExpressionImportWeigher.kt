@@ -217,14 +217,14 @@ internal class OperatorExpressionImportWeigher(
 
     context(KtAnalysisSession)
     override fun weigh(symbol: KtDeclarationSymbol): Int {
-        val functionSymbol = (symbol as? KtFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
+        val functionSymbol = (symbol as? KaFunctionSymbol)?.takeIf { it.isOperator } ?: return 0
 
         return super.weigh(functionSymbol)
     }
 
     context(KtAnalysisSession)
     override fun ownWeigh(symbol: KtDeclarationSymbol): Int = withValidityAssertion {
-        symbol as KtFunctionSymbol
+        symbol as KaFunctionSymbol
 
         val name = symbol.name
 

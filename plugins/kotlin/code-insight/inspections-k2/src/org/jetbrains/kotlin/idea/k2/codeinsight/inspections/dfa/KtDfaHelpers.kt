@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
@@ -126,7 +126,7 @@ internal fun KtExpression.getKotlinType(): KtType? {
     if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
         val call = resolveCall()?.singleFunctionCallOrNull()
         if (call != null) {
-            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol)?.returnType
+            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaFunctionSymbol)?.returnType
             if (functionReturnType is KtTypeParameterType) {
                 val upperBound = functionReturnType.symbol.upperBounds.singleOrNull()
                 if (upperBound != null) {
@@ -226,7 +226,7 @@ internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
     val resolvedCall = expr.resolveCall()?.singleFunctionCallOrNull() ?: return null
-    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol
+    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaFunctionSymbol
     if (symbol == null || !symbol.isInline) return null
     val parameterSymbol = resolvedCall.argumentMapping[lambdaExpression]?.symbol ?: return null
     if (parameterSymbol.isNoinline) return null

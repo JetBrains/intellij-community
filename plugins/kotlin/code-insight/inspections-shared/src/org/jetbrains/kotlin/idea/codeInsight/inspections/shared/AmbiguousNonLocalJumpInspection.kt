@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange.AT_MOST_ONCE
@@ -75,8 +75,8 @@ private fun doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(callExpr: KtCa
             ?.name
             ?.let { lambdaParameterName ->
                 (callExpr.calleeExpression as? KtReferenceExpression)?.mainReference?.resolveToSymbol()
-                    ?.let { it as? KtFunctionSymbol }
-                    ?.takeIf(KtFunctionSymbol::isInline)
+                    ?.let { it as? KaFunctionSymbol }
+                    ?.takeIf(KaFunctionSymbol::isInline)
                     ?.contractEffects
                     ?.none {
                         it is KtContractCallsInPlaceContractEffectDeclaration &&
