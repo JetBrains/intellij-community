@@ -385,6 +385,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
     val mavenVersions: List<Array<String>>
       get() = listOf(
         arrayOf("4.0.0-alpha-13"),
+        arrayOf("3.9.7"),
         arrayOf("3.9.6"),
         arrayOf("3.9.5"),
         arrayOf("3.9.4"),
