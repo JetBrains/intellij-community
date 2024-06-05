@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +14,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -413,10 +411,8 @@ public class GradleExecutionHelper {
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings
   ) {
-    TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
-      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
-    TargetEnvironmentConfiguration environmentConfiguration =
-      environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
+    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(settings);
+    var environmentConfiguration = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getEnvironmentConfiguration());
     if (environmentConfiguration != null && !LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
       if (settings.isPassParentEnvs()) {
         LOG.warn("Host system environment variables will not be passed for the target run.");
