@@ -3783,6 +3783,7 @@ f:com.intellij.util.ui.HTMLEditorKitBuilder
 - f:withFontResolver(com.intellij.util.ui.CSSFontResolver):com.intellij.util.ui.HTMLEditorKitBuilder
 - f:withGapsBetweenParagraphs():com.intellij.util.ui.HTMLEditorKitBuilder
 - f:withStyleSheet(javax.swing.text.html.StyleSheet):com.intellij.util.ui.HTMLEditorKitBuilder
+- f:withUnderlinedHoveredHyperlink(Z):com.intellij.util.ui.HTMLEditorKitBuilder
 - f:withViewFactoryExtensions(kotlin.jvm.functions.Function2[]):com.intellij.util.ui.HTMLEditorKitBuilder
 - f:withWordWrapViewFactory():com.intellij.util.ui.HTMLEditorKitBuilder
 - f:withoutContentCss():com.intellij.util.ui.HTMLEditorKitBuilder
@@ -3935,6 +3936,7 @@ c:com.intellij.util.ui.JBHtmlEditorKit
 - install(javax.swing.JEditorPane):V
 - setFontResolver(com.intellij.util.ui.CSSFontResolver):V
 - setStyleSheet(javax.swing.text.html.StyleSheet):V
+- setUnderlineHoveredHyperlink(Z):V
 c:com.intellij.util.ui.JBHtmlEditorKit$JBHtmlFactory
 - javax.swing.text.html.HTMLEditorKit$HTMLFactory
 - <init>():V
