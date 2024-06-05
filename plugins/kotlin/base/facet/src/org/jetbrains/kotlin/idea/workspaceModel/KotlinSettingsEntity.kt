@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.workspaceModel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -17,7 +17,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
 
-interface KotlinSettingsEntity : ModuleSettingsBase {
+interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     val sourceRoots: List<String>
     val configFileItems: List<ConfigFileItem>
 
@@ -55,7 +55,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 
     //region generated code
     @GeneratedCodeApiVersion(3)
-    interface Builder : WorkspaceEntity.Builder<KotlinSettingsEntity>, ModuleSettingsBase.Builder<KotlinSettingsEntity> {
+    interface Builder : WorkspaceEntity.Builder<KotlinSettingsEntity>, ModuleSettingsFacetBridgeEntity.Builder<KotlinSettingsEntity> {
         override var entitySource: EntitySource
         override var name: String
         override var moduleId: ModuleId
@@ -82,7 +82,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         var flushNeeded: Boolean
     }
 
-    companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsBase) {
+    companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsFacetBridgeEntity) {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")

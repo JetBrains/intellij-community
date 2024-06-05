@@ -93,8 +93,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   ) {
     // TODO :: Fix detection of entities in modules
     val regexToDetectWsmClasses = Regex(mergePatterns(
-      // Regex for searching entities that implements `ModuleSettingsBase`
-      "interface [a-zA-Z0-9]+\\s*:\\s*ModuleSettingsBase[a-zA-Z0-9]*",
+      // Regex for searching entities that implements `ModuleSettingsFacetBridgeEntity`
+      "interface [a-zA-Z0-9]+\\s*:\\s*ModuleSettingsFacetBridgeEntity[a-zA-Z0-9]*",
       // Regex for searching regular entities in modules
       "interface [a-zA-Z0-9]+\\s*:\\s*WorkspaceEntity[a-zA-Z0-9]*",
       // Regex for searching entity source implementations in modules

@@ -35,7 +35,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
       val facetType = facetBridgeContributor.rootEntityType
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@{ facetChange ->
-        fun createBridge(entity: ModuleSettingsBase): Facet<*> {
+        fun createBridge(entity: ModuleSettingsFacetBridgeEntity): Facet<*> {
           val existingFacetBridge = builder.facetMapping().getDataByEntity(entity)
           if (existingFacetBridge != null) return existingFacetBridge
 
@@ -52,7 +52,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
           return newFacetBridge
         }
 
-        createBridge(facetChange.newEntity as ModuleSettingsBase)
+        createBridge(facetChange.newEntity as ModuleSettingsFacetBridgeEntity)
       }
     }
   }
@@ -75,7 +75,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
 
   private fun processBeforeChangeEvents(
     event: VersionedStorageChange,
-    workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>
+    workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>
   ) = processBeforeChangeEventsMs.addMeasuredTime {
     event
       .getChanges(workspaceFacetContributor.rootEntityType)
@@ -105,9 +105,9 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
 
   private fun processChangeEvents(
     event: VersionedStorageChange,
-    workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>
+    workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>
   ) = processChangeEventsMs.addMeasuredTime {
-    val changedFacets = mutableMapOf<Facet<*>, ModuleSettingsBase>()
+    val changedFacets = mutableMapOf<Facet<*>, ModuleSettingsFacetBridgeEntity>()
 
     val addedModulesNames by lazy {
       val result = mutableSetOf<String>()
@@ -191,7 +191,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
             if (!removedFacets.contains(rootEntity)) {
               val facet = event.storageBefore.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
               val actualRootElement = event.storageAfter.facetMapping().getEntities(facet).single()
-              changedFacets[facet] = actualRootElement as ModuleSettingsBase
+              changedFacets[facet] = actualRootElement as ModuleSettingsFacetBridgeEntity
             }
           }
           is EntityChange.Replaced -> {
@@ -225,7 +225,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       // FacetConfiguration is already updated and there is no need to update it again
       if (facetConfigurationXml != JDOMUtil.write(rootElement)) {
         @Suppress("UNCHECKED_CAST")
-        (facet as? FacetBridge<ModuleSettingsBase, *>)?.updateFacetConfiguration(rootEntity)
+        (facet as? FacetBridge<ModuleSettingsFacetBridgeEntity, *>)?.updateFacetConfiguration(rootEntity)
         ?: FacetUtil.loadFacetConfiguration(facet.configuration, rootElement)
         publisher.fireFacetConfigurationChanged(facet)
       }

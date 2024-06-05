@@ -871,7 +871,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       return moduleListSerializer.getFileName(module)
     }
     val moduleEntity = additionalModuleRelatedEntities.mapNotNull {
-      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsBase)?.moduleId ?: return@mapNotNull null
+      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsFacetBridgeEntity)?.moduleId ?: return@mapNotNull null
       storage.resolve(moduleId)
     }.firstOrNull() ?: return null
     return moduleListSerializer.getFileName(moduleEntity)

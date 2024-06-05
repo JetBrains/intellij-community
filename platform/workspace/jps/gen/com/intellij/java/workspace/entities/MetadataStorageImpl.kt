@@ -407,7 +407,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.FacetEntity", entityDataFqName = "com.intellij.platform.workspace.jps.entities.FacetEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
 "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId",
-"com.intellij.platform.workspace.jps.entities.ModuleSettingsBase"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
+"com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "moduleId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))), withDefault = false),
@@ -527,7 +527,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         
         addMetadata(typeMetadata)
         
-        typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleSettingsBase", entityDataFqName = "com.intellij.platform.workspace.jps.entities.ModuleSettingsBaseData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
+        typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", entityDataFqName = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
 "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "symbolicId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.SymbolicEntityId")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
@@ -599,14 +599,14 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity", metadataHash = -827124331)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity", metadataHash = -2115225774)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity", metadataHash = 1113105028)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 1372939205)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 1378414305)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetsOrderEntity", metadataHash = 351485456)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", metadataHash = 856518134)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = 242117557)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = -917110778)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = 1486093169)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = -371618300)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsBase", metadataHash = -1726065761)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", metadataHash = 1906189939)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkEntity", metadataHash = 154089668)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SourceRootEntity", metadataHash = -371054131)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity", metadataHash = -469779068)

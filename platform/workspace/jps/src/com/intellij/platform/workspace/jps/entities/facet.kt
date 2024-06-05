@@ -15,7 +15,7 @@ data class FacetEntityTypeId(val name: @NonNls String)
  * Describes a [Facet][com.intellij.facet.Facet].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
-interface FacetEntity: ModuleSettingsBase {
+interface FacetEntity: ModuleSettingsFacetBridgeEntity {
   val module: ModuleEntity
   val typeId: FacetEntityTypeId
   val configurationXmlTag: @NonNls String?
@@ -27,7 +27,7 @@ interface FacetEntity: ModuleSettingsBase {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsBase.Builder<FacetEntity> {
+  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
@@ -37,7 +37,7 @@ interface FacetEntity: ModuleSettingsBase {
     var underlyingFacet: FacetEntity.Builder?
   }
 
-  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsBase) {
+  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsFacetBridgeEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

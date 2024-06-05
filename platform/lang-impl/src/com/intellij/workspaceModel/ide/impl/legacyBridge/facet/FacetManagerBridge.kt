@@ -223,8 +223,8 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     super.facetsChanged()
   }
 
-  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsBase>,
-                       entityTypeToFacetContributor: Map<Class<ModuleSettingsBase>, WorkspaceFacetContributor<ModuleSettingsBase>>) {
+  fun checkConsistency(facetRelatedEntities: List<ModuleSettingsFacetBridgeEntity>,
+                       entityTypeToFacetContributor: Map<Class<ModuleSettingsFacetBridgeEntity>, WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>>) {
     val facetEntitiesSet = facetRelatedEntities.toHashSet()
     for (entity in facetRelatedEntities) {
       val facet = facetMapping().getDataByEntity(entity)
