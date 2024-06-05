@@ -740,20 +740,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   @Override
-  public String getDocStringValue() {
-    return DocStringUtil.getDocStringValue(this);
-  }
-
-  @Nullable
-  @Override
   public StructuredDocString getStructuredDocString() {
     return DocStringUtil.getStructuredDocString(this);
-  }
-
-  @Nullable
-  @Override
-  public PyStringLiteralExpression getDocStringExpression() {
-    return DocStringUtil.findDocStringExpression(this);
   }
 
   @Override

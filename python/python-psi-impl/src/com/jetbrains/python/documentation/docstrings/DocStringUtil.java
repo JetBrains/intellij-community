@@ -5,9 +5,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.ast.PyAstDocStringOwner;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.toolbox.Substring;
@@ -18,6 +18,10 @@ public final class DocStringUtil {
   private DocStringUtil() {
   }
 
+  /**
+   * @deprecated Use {@link DocStringUtilCore#getDocStringValue(PyAstDocStringOwner)}
+   */
+  @Deprecated
   @Nullable
   public static String getDocStringValue(@NotNull PyDocStringOwner owner) {
     return DocStringUtilCore.getDocStringValue(owner);
