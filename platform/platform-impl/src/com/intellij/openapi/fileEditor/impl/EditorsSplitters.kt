@@ -680,10 +680,8 @@ open class EditorsSplitters internal constructor(
         collectWindow(component.firstComponent)
         collectWindow(component.secondComponent)
       }
-      else if (component is JPanel || component is JBTabs) {
-        findWindowWith(component)?.let {
-          result.add(it)
-        }
+      else if (component is EditorWindowHolder) {
+        result.add(component.editorWindow)
       }
     }
 
@@ -718,7 +716,7 @@ open class EditorsSplitters internal constructor(
       }
 
       // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
-      findWindowWith(component)?.let {
+      ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow?.let {
         _currentWindowFlow.value = it
       }
     }
@@ -742,10 +740,6 @@ open class EditorsSplitters internal constructor(
   }
 }
 
-private fun findWindowWith(component: Component): EditorWindow? {
-  return ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow
-}
-
 private fun writePanel(component: Component): Element {
   return when (component) {
     is Splitter -> {
@@ -760,14 +754,15 @@ private fun writePanel(component: Component): Element {
       result.addContent(second)
       result
     }
-    is JBTabs -> {
+    is EditorWindowHolder -> {
+      val window = component.editorWindow
       val result = Element("leaf")
       result.setAttribute(IDE_FINGERPRINT, ideFingerprint().asString())
 
-      ClientProperty.get(component.component, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY)?.let { limit ->
+      ClientProperty.get(window.tabbedPane.component, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY)?.let { limit ->
         result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), limit.toString())
       }
-      findWindowWith(component)?.let { writeWindow(result = result, window = it) }
+      writeWindow(result = result, window = window)
       result
     }
     else -> throw IllegalArgumentException(component.javaClass.name)

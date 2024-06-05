@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.Companion.createDockableEditor
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
@@ -164,26 +164,6 @@ class EditorTabbedContainer internal constructor(
       }
     })
     setTabPlacement(UISettings.getInstance().editorTabPlacement)
-  }
-
-  companion object {
-
-    internal fun createDockableEditor(
-      image: Image?,
-      file: VirtualFile?,
-      presentation: Presentation,
-      window: EditorWindow,
-      isNorthPanelAvailable: Boolean,
-    ): DockableEditor {
-      return DockableEditor(
-        img = image,
-        file = file!!,
-        presentation = presentation,
-        preferredSize = window.size,
-        isPinned = window.isFilePinned(file),
-        isNorthPanelAvailable = isNorthPanelAvailable,
-      )
-    }
   }
 
   val tabCount: Int
@@ -487,9 +467,17 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     }
     presentation.icon = info.icon
     val editors = window.getComposite(file)?.allEditors ?: emptyList()
-    val isNorthPanelAvailable = isNorthPanelAvailable(editors)
     presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
-    session = DockManager.getInstance(window.manager.project).createDragSession(mouseEvent, createDockableEditor(img, file, presentation, window, isNorthPanelAvailable))
+    session = DockManager.getInstance(window.manager.project).createDragSession(
+      mouseEvent,
+      createDockableEditor(
+        image = img,
+        file = file,
+        presentation = presentation,
+        window = window,
+        isNorthPanelAvailable = isNorthPanelAvailable(editors),
+      ),
+    )
   }
 
   override fun processDragOut(event: MouseEvent, source: TabInfo) {
@@ -770,7 +758,22 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 
   override fun getIconAlpha(): Float = if (paintDimmed()) JBUI.CurrentTheme.EditorTabs.unselectedAlpha() else 1f
 
-  private fun paintDimmed(): Boolean {
-    return ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredTab(this)
-  }
+  private fun paintDimmed() = ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredTab(this)
+}
+
+internal fun createDockableEditor(
+  image: Image?,
+  file: VirtualFile?,
+  presentation: Presentation,
+  window: EditorWindow,
+  isNorthPanelAvailable: Boolean,
+): DockableEditor {
+  return DockableEditor(
+    img = image,
+    file = file!!,
+    presentation = presentation,
+    preferredSize = window.size,
+    isPinned = window.isFilePinned(file),
+    isNorthPanelAvailable = isNorthPanelAvailable,
+  )
 }
