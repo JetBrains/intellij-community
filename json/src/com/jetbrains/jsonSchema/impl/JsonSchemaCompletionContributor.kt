@@ -24,19 +24,25 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.injection.Injectable
-import com.intellij.psi.util.*
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.endOffset
 import com.intellij.ui.IconManager.Companion.getInstance
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
-import com.jetbrains.jsonSchema.extension.*
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
+import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
+import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_ORDER_SENSITIVE
@@ -135,16 +141,14 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       if (isName != ThreeState.NO) {
         val completionOriginalPosition = psiWalker!!.findChildBy(completionPath, originalPosition)
         val completionPosition = psiWalker.findChildBy(completionPath, position)
-        val insertComma = psiWalker.hasMissingCommaAfter(position)
-        val hasValue = psiWalker.isPropertyWithValue(checkable)
 
         val properties = psiWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition)
         val adapter = psiWalker.getParentPropertyAdapter(completionOriginalPosition)
 
         val forbiddenNames = findPropertiesThatMustNotBePresent(schema, position, myProject, properties)
           .plus(properties)
-        addAllPropertyVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath)
-        addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath)
+        addAllPropertyVariants(schema, forbiddenNames, adapter, knownNames, completionPath)
+        addIfThenElsePropertyNameVariants(schema, forbiddenNames, adapter, knownNames, completionPath)
         addPropertyNameSchemaVariants(schema)
       }
 
@@ -164,8 +168,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun addIfThenElsePropertyNameVariants(schema: JsonSchemaObject,
-                                          insertComma: Boolean,
-                                          hasValue: Boolean,
                                           forbiddenNames: Set<String>,
                                           adapter: JsonPropertyAdapter?,
                                           knownNames: MutableSet<String>,
@@ -181,14 +183,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         val effectiveBranch = ifThenElse.effectiveBranchOrNull(myProject, parentObject)
         if (effectiveBranch == null) continue
 
-        addAllPropertyVariants(effectiveBranch, insertComma,
-                               hasValue, forbiddenNames, adapter, knownNames, completionPath)
+        addAllPropertyVariants(effectiveBranch, forbiddenNames,
+                               adapter, knownNames, completionPath)
       }
     }
 
     fun addAllPropertyVariants(schema: JsonSchemaObject,
-                               insertComma: Boolean,
-                               hasValue: Boolean,
                                forbiddenNames: Set<String>,
                                adapter: JsonPropertyAdapter?,
                                knownNames: MutableSet<String>,
@@ -198,7 +198,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .forEach { name ->
           knownNames.add(name)
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
-          addPropertyVariant(name, propertySchema, hasValue, insertComma, completionPath)
+          addPropertyVariant(name, propertySchema, completionPath)
         }
     }
 
@@ -390,8 +390,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     fun addPropertyVariant(key: String,
                            jsonSchemaObject: JsonSchemaObject,
-                           hasValue: Boolean,
-                           insertComma: Boolean,
                            completionPath: SchemaPath?) {
       var propertyKey = key
       var schemaObject = jsonSchemaObject
@@ -404,7 +402,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .withLookupStrings(listOf(propertyKey) + completionPath?.accessor().orEmpty())
         .withTypeText(getDocumentationOrTypeName(schemaObject), true)
         .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
-        .withInsertHandler(choosePropertyInsertHandler(completionPath, variants, schemaObject, hasValue, insertComma))
+        .withInsertHandler(choosePropertyInsertHandler(completionPath, variants, schemaObject))
         .withDeprecation(schemaObject.deprecationMessage != null)
 
       completionVariants.add(builder)
@@ -417,28 +415,25 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     private fun choosePropertyInsertHandler(completionPath: SchemaPath?,
                                             variants: Collection<JsonSchemaObject>,
-                                            schemaObject: JsonSchemaObject,
-                                            hasValue: Boolean,
-                                            insertComma: Boolean): InsertHandler<LookupElement> {
+                                            schemaObject: JsonSchemaObject): InsertHandler<LookupElement> {
       if (hasSameType(variants)) {
         val type = JsonSchemaObjectReadingUtils.guessType(schemaObject)
         val values = schemaObject.enum
         if (!values.isNullOrEmpty()) {
           // if we have an enum with a single kind of values - trigger the handler with value
           if (values.map { v -> v.javaClass }.distinct().count() == 1) {
-            return createPropertyInsertHandler(schemaObject, hasValue, insertComma, completionPath)
+            return createPropertyInsertHandler(schemaObject, completionPath)
           }
         }
         else {
           // insert a default value if no enum
           if (type != null || schemaObject.default != null) {
-            return createPropertyInsertHandler(schemaObject, hasValue, insertComma, completionPath)
+            return createPropertyInsertHandler(schemaObject, completionPath)
           }
         }
       }
 
-      return createDefaultPropertyInsertHandler(hasValue || !schemaObject.enum.isNullOrEmpty(),
-                                                insertComma, completionPath)
+      return createDefaultPropertyInsertHandler(completionPath, !schemaObject.enum.isNullOrEmpty())
     }
 
     private fun getDocumentationOrTypeName(schemaObject: JsonSchemaObject): String? {
@@ -451,9 +446,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       }
     }
 
-    fun createDefaultPropertyInsertHandler(hasValue: Boolean,
-                                           insertComma: Boolean,
-                                           completionPath: SchemaPath?): InsertHandler<LookupElement> {
+    private fun createDefaultPropertyInsertHandler(completionPath: SchemaPath? = null,
+                                                   hasEnumValues: Boolean = false): InsertHandler<LookupElement> {
       return object : InsertHandler<LookupElement> {
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
           ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -462,7 +456,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
           expandMissingPropertiesAndMoveCaret(context, completionPath)
 
-          if (handleInsideQuotesInsertion(context, editor, hasValue, insideStringLiteral)) return
+          if (handleInsideQuotesInsertion(context, editor, insideStringLiteral)) return
+          val insertComma = psiWalker?.hasMissingCommaAfter(position) == true
+          val comma = if (insertComma) "," else ""
+          val hasValue = hasEnumValues || psiWalker?.let {
+            it.isPropertyWithValue(it.findElementToCheck(position))
+          } == true
           var offset = editor.caretModel.offset
           val initialOffset = offset
           val docChars = context.document.charsSequence
@@ -484,7 +483,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           }
           else {
             // inserting longer string for proper formatting
-            val stringToInsert = propertyValueSeparator + " 1" + (if (insertComma) "," else "")
+            val stringToInsert = propertyValueSeparator + " 1" + comma
             EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, propertyValueSeparator.length + 1)
             formatInsertedString(context, stringToInsert.length)
             offset = editor.caretModel.offset
@@ -511,8 +510,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
 
     fun createPropertyInsertHandler(jsonSchemaObject: JsonSchemaObject,
-                                    hasValue: Boolean,
-                                    insertComma: Boolean,
                                     completionPath: SchemaPath?): InsertHandler<LookupElement> {
       val defaultValueAsString = when (val defaultValue = jsonSchemaObject.default) {
         null, is JsonSchemaObject -> null
@@ -520,7 +517,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         else -> defaultValue.toString()
       }
       val finalType = JsonSchemaObjectReadingUtils.guessType(jsonSchemaObject) ?: detectTypeByEnumValues(jsonSchemaObject.enum.orEmpty())
-      return createPropertyInsertHandler(hasValue, insertComma, finalType, defaultValueAsString, jsonSchemaObject.enum, psiWalker!!, insideStringLiteral, completionPath)
+      return createPropertyInsertHandler(finalType, defaultValueAsString, jsonSchemaObject.enum, psiWalker!!, insideStringLiteral, completionPath)
     }
 
     companion object {
@@ -642,25 +639,24 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         DataManager.getInstance().getDataContext(editor.contentComponent), caret))
     }
 
-    private fun handleInsideQuotesInsertion(context: InsertionContext, editor: Editor, hasValue: Boolean,
-                                            insideStringLiteral: Boolean): Boolean {
-      if (insideStringLiteral) {
-        val offset = editor.caretModel.offset
-        val element = context.file.findElementAt(offset)
-        val tailOffset = context.tailOffset
-        val guessEndOffset = tailOffset + 1
-        if (element is LeafPsiElement) {
-          if (handleIncompleteString(editor, element)) return false
-          val endOffset = element.getTextRange().endOffset
-          if (endOffset > tailOffset) {
-            context.document.deleteString(tailOffset, endOffset - 1)
-          }
+    private fun handleInsideQuotesInsertion(context: InsertionContext, editor: Editor, insideStringLiteral: Boolean): Boolean {
+      if (!insideStringLiteral) return false
+      val offset = editor.caretModel.offset
+      val element = context.file.findElementAt(offset)
+      val tailOffset = context.tailOffset
+      val guessEndOffset = tailOffset + 1
+      if (element is LeafPsiElement) {
+        if (handleIncompleteString(editor, element)) return false
+        val endOffset = element.getTextRange().endOffset
+        if (endOffset > tailOffset) {
+          context.document.deleteString(tailOffset, endOffset - 1)
         }
-        if (hasValue) {
-          return true
-        }
-        editor.caretModel.moveToOffset(guessEndOffset)
       }
+      if (element != null) {
+        val walker = JsonLikePsiWalker.getWalker(element)
+        if (walker != null && walker.isPropertyWithValue(walker.findElementToCheck(element))) return true
+      }
+      editor.caretModel.moveToOffset(guessEndOffset)
       return false
     }
 
@@ -679,12 +675,10 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       return false
     }
 
-    fun createPropertyInsertHandler(hasValue: Boolean,
-                                    insertComma: Boolean,
-                                    finalType: JsonSchemaType?,
+    fun createPropertyInsertHandler(finalType: JsonSchemaType?,
                                     defaultValueAsString: String?,
-                                    values: List<Any>?, walker: JsonLikePsiWalker,
-                                    insideStringLiteral: Boolean,
+                                    values: List<Any>?,
+                                    walker: JsonLikePsiWalker, insideStringLiteral: Boolean,
                                     completionPath: SchemaPath? = null): InsertHandler<LookupElement> {
       return InsertHandler { context, _ ->
         ThreadingAssertions.assertWriteAccess()
@@ -694,26 +688,29 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         expandMissingPropertiesAndMoveCaret(context, completionPath)
 
         var stringToInsert: String? = null
-        val comma = if (insertComma) "," else ""
 
-        if (handleInsideQuotesInsertion(context, editor, hasValue, insideStringLiteral)) return@InsertHandler
+        if (handleInsideQuotesInsertion(context, editor, insideStringLiteral)) return@InsertHandler
 
         val propertyValueSeparator = walker.getPropertyValueSeparator(finalType)
 
         val leafAtCaret = context.file.findElementAt(editor.caretModel.offset)?.let {
-          rewindToMeaningfulLeaf(it)
+          rewindToMeaningfulLeaf(it, walker)
         }
+        val insertComma = leafAtCaret?.let { walker.hasMissingCommaAfter(it) } == true
+        val comma = if (insertComma) "," else ""
         val insertColon = propertyValueSeparator != leafAtCaret?.text
-        if (!insertColon) {
-          editor.caretModel.moveToOffset(editor.caretModel.offset + propertyValueSeparator.length)
+        if (leafAtCaret != null && !insertColon) {
+          editor.caretModel.moveToOffset(leafAtCaret.endOffset)
         }
         if (finalType != null) {
           var hadEnter: Boolean
           when (finalType) {
             JsonSchemaType._object -> {
-              EditorModificationUtil.insertStringAtCaret(editor, if (insertColon) ("$propertyValueSeparator ") else " ",
-                                                         false, true,
-                                                         if (insertColon) propertyValueSeparator.length + 1 else 1)
+              if (insertColon) {
+                EditorModificationUtil.insertStringAtCaret(editor, "$propertyValueSeparator ",
+                                                           false, true,
+                                                           propertyValueSeparator.length + 1)
+              }
               hadEnter = false
               val invokeEnter = walker.hasWhitespaceDelimitedCodeBlocks()
               if (insertColon && invokeEnter) {
@@ -753,9 +750,11 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
               AutoPopupController.getInstance(context.project).autoPopupMemberLookup(context.editor, null)
             }
             JsonSchemaType._array -> {
-              EditorModificationUtilEx.insertStringAtCaret(editor, if (insertColon) propertyValueSeparator else " ",
-                                                           false, true,
-                                                           propertyValueSeparator.length)
+              if (insertColon) {
+                EditorModificationUtilEx.insertStringAtCaret(editor, propertyValueSeparator,
+                                                             false, true,
+                                                             propertyValueSeparator.length)
+              }
               hadEnter = false
               if (insertColon && walker.hasWhitespaceDelimitedCodeBlocks()) {
                 invokeEnterHandler(editor)
@@ -764,7 +763,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
               else {
                 EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1)
               }
-              if (insertColon) {
+              if (insertColon || leafAtCaret?.text == walker.getPropertyValueSeparator(null)) {
                 stringToInsert = walker.defaultArrayValue + comma
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                            false, true,

@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl.nestedCompletions
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.json.pointer.JsonPointerPosition
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.*
@@ -72,9 +73,12 @@ fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPat
   val parentObject = getOrCreateParentObject(element, walker, context, path) ?: return
   val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
   cleanupWhitespacesAndDelete(element)
-  val pointer = SmartPointerManager.createPointer(newElement)
+  // the inserted element might contain invalid psi and be re-invalidated after the document commit,
+  // that's why we preserve the range instead and try restoring what was under
+  val pointer = SmartPointerManager.getInstance(context.project).createSmartPsiFileRangePointer(newElement.containingFile, newElement.textRange)
   PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
-  val psiElement = rewindToMeaningfulLeaf(pointer.element)
+  val e = context.file.findElementAt(pointer.range!!.startOffset)
+  val psiElement = rewindToMeaningfulLeaf(e, walker)
   if (psiElement != null) {
     context.editor.caretModel.moveToOffset(psiElement.endOffset)
   }
@@ -95,9 +99,10 @@ private fun getOrCreateParentObject(element: PsiElement,
     }
 }
 
-fun rewindToMeaningfulLeaf(element: PsiElement?): PsiElement? {
+fun rewindToMeaningfulLeaf(element: PsiElement?, walker: JsonLikePsiWalker): PsiElement? {
   var meaningfulLeaf = element?.lastLeaf()
-  while (meaningfulLeaf is PsiWhiteSpace || meaningfulLeaf is PsiErrorElement) {
+  while (meaningfulLeaf is PsiWhiteSpace || meaningfulLeaf is PsiErrorElement ||
+    meaningfulLeaf is LeafPsiElement && meaningfulLeaf.text == ",") {
     meaningfulLeaf = meaningfulLeaf.prevLeaf()
   }
   return meaningfulLeaf
@@ -135,7 +140,7 @@ private fun cleanupWhitespacesAndDelete(it: PsiElement) {
   it.delete()
 }
 
-private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, propertyName: String, walker: JsonLikePsiWalker, element: PsiElement): JsonPropertyAdapter {
+private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, propertyName: String, walker: JsonLikePsiWalker, element: PsiElement, fakeProperty: PsiElement?): JsonPropertyAdapter {
   val project = parentObject.delegate.project
   val syntaxAdapter = walker.getSyntaxAdapter(project)
   return syntaxAdapter.createProperty(propertyName, "f", project).also {
@@ -145,7 +150,7 @@ private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, 
       parentObject.delegate.addAfter(it, element.copy())
     }
     else {
-      addBeforeOrAfter(parentObject, it, element)
+      addBeforeOrAfter(parentObject, it, element, fakeProperty)
     }
   }.let { walker.getParentPropertyAdapter(it)!! }
 }
@@ -157,7 +162,7 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
                      index: Int,
                      fakeProperty: PsiElement?): PsiElement? {
   val property = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
-                  ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
+                  ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
   fakeProperty?.let {
     cleanupWhitespacesAndDelete(it)
   }
@@ -175,7 +180,19 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
   else {
     val movedElement =
       if (value.isObject) {
-        addBeforeOrAfter(value, element.copy(), element)
+        val elementToAdd = if (walker.createValueAdapter(element)?.isStringLiteral == true) {
+          walker.getSyntaxAdapter(element.project).createProperty(
+            StringUtil.unquoteString(element.text), "f", element.project
+          ).also {
+            walker.getParentPropertyAdapter(it)!!.values.singleOrNull()?.delegate?.delete()
+            it.childLeafs().firstOrNull { it.text == walker.getPropertyValueSeparator(null) }?.let {
+              it.prevSibling?.takeIf { it.text.isBlank() }?.delete()
+              it.nextSibling?.takeIf { it.text.isBlank() }?.delete()
+              it.delete()
+            }
+          }
+        } else element.copy()
+        addBeforeOrAfter(value, elementToAdd, element, fakeProperty)
       }
       else {
         val newElement = replaceValueForNesting(walker, value, element)
@@ -190,18 +207,27 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
 
 private fun addBeforeOrAfter(value: JsonValueAdapter,
                              elementToAdd: PsiElement,
-                             element: PsiElement): PsiElement {
+                             element: PsiElement,
+                             fakeProperty: PsiElement?): PsiElement {
   val properties = value.asObject?.propertyList.orEmpty()
   val firstProperty = properties.firstOrNull()
   val lastProperty = properties.lastOrNull()
   return if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
     val newElement = value.delegate.addAfter(elementToAdd, lastProperty.delegate)
-    newElement.parent.addBefore(createLeaf("\n", newElement)!!, newElement)
+    if (lastProperty.delegate != fakeProperty) {
+      JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
+        lastProperty.delegate, newElement
+      )
+    }
     newElement
   }
   else {
     val newElement = value.delegate.addBefore(elementToAdd, firstProperty?.delegate)
-    newElement.parent.addAfter(createLeaf("\n", newElement)!!, newElement)
+    firstProperty?.delegate?.takeIf { it != fakeProperty }?.let {
+      JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
+        newElement, it
+      )
+    }
     newElement
   }
 }

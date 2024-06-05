@@ -252,7 +252,7 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
             },
             "twosBrother": 4
           },
-          onesBrother: 2
+          "onesBrother": 2
           thr<caret>
         }
       """.trimIndent())
