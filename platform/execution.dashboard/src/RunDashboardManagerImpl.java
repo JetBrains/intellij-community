@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.platform.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -320,10 +321,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     syncConfigurations();
     if (!removed.isEmpty()) {
-      moveRemovedContent(getContainsTypeIdCondition(removed));
+      AppUIUtil.invokeOnEdt(() -> moveRemovedContent(getContainsTypeIdCondition(removed)), myProject.getDisposed());
     }
     if (!added.isEmpty()) {
-      moveAddedContent(getContainsTypeIdCondition(added));
+      AppUIUtil.invokeOnEdt(() -> moveAddedContent(getContainsTypeIdCondition(added)), myProject.getDisposed());
     }
     updateDashboard(true);
   }
