@@ -2,19 +2,19 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinModificationTrackerFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinGlobalModificationService"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinDirectInheritorsProvider"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinDirectInheritorsProvider"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinForwardDeclarationProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinForwardDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeForwardDeclarationProviderFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinForwardDeclarationsPackageProviderFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinForwardDeclarationsPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeForwardDeclarationPackageProviderFactory"/>
 
     <psi.treeChangePreprocessor

@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModificationEventKind
-import org.jetbrains.kotlin.analysis.api.platform.topics.isModuleLevel
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule

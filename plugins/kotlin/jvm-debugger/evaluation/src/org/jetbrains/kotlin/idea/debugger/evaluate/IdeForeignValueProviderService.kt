@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.analysis.api.platform.ForeignValueProviderService
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinForeignValueProviderService
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
-internal class IdeForeignValueProviderService : ForeignValueProviderService {
+internal class IdeForeignValueProviderService : KotlinForeignValueProviderService {
     override fun getForeignValues(codeFragment: KtCodeFragment): Map<String, String> {
         val project = codeFragment.project
         val context = codeFragment.context

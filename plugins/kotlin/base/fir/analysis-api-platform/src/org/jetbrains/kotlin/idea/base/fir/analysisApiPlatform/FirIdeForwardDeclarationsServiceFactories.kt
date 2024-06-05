@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinForwardDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclarationProvider
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinForwardDeclarationsPackageProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
+import org.jetbrains.kotlin.analysis.api.platform.packages.createPackageProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.api.platform.KotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.KotlinForwardDeclarationsPackageProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.KotlinForwardDeclarationProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.KotlinPackageProvider
-import org.jetbrains.kotlin.analysis.api.platform.createDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.createPackageProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModuleByModuleInfo
 
 /**

@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
-import org.jetbrains.kotlin.analysis.api.platform.KotlinPackageProvider
-import org.jetbrains.kotlin.analysis.api.platform.KotlinPackageProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.KotlinPackageProviderMerger
-import org.jetbrains.kotlin.analysis.api.platform.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.analysis.api.platform.impl.KotlinPackageProviderBase
-import org.jetbrains.kotlin.analysis.api.platform.impl.mergeSpecificProviders
-import org.jetbrains.kotlin.analysis.api.platform.impl.packageProviders.CompositeKotlinPackageProvider
+import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
+import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinCompositePackageProvider
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderBase
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -26,7 +26,7 @@ internal class IdeKotlinPackageProviderFactory(private val project: Project) : K
 
 internal class IdeKotlinPackageProviderMerger(private val project: Project) : KotlinPackageProviderMerger() {
     override fun merge(providers: List<KotlinPackageProvider>): KotlinPackageProvider =
-        providers.mergeSpecificProviders<_, IdeKotlinPackageProvider>(CompositeKotlinPackageProvider.factory) { targetProviders ->
+        providers.mergeSpecificProviders<_, IdeKotlinPackageProvider>(KotlinCompositePackageProvider.factory) { targetProviders ->
             IdeKotlinPackageProvider(
                 project,
                 GlobalSearchScope.union(targetProviders.map { it.searchScope })

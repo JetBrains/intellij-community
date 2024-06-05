@@ -7,11 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.platform.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalSourceOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationListener
 
 internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory(), Disposable {
     /**
@@ -27,11 +27,11 @@ internal class FirIdeKotlinModificationTrackerFactory(private val project: Proje
         val busConnection = project.analysisMessageBus.connect(this)
 
         busConnection.subscribe(
-            KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
+            KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
             KotlinModuleOutOfBlockModificationListener { module -> projectOutOfBlockModificationTracker.incModificationCount() },
         )
         busConnection.subscribe(
-            KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
             KotlinGlobalSourceOutOfBlockModificationListener { projectOutOfBlockModificationTracker.incModificationCount() },
         )
     }

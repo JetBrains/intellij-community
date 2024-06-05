@@ -14,15 +14,15 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinCompositeDeclarationProvider
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinFileBasedDeclarationProvider
+import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
 import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.api.platform.KotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.KotlinDeclarationProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.KotlinDeclarationProviderMerger
-import org.jetbrains.kotlin.analysis.api.platform.impl.declarationProviders.CompositeKotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.impl.declarationProviders.FileBasedKotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.impl.mergeSpecificProviders
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
@@ -46,8 +46,8 @@ internal class IdeKotlinDeclarationProviderFactory(private val project: Project)
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
             val fakeKtFile = PsiManager.getInstance(contextualModule.project).findFile(contextualModule.fakeVirtualFile)
             if (fakeKtFile is KtFile) {
-                val providerForFake = FileBasedKotlinDeclarationProvider(fakeKtFile)
-                return CompositeKotlinDeclarationProvider.create(listOf(providerForFake, mainProvider))
+                val providerForFake = KotlinFileBasedDeclarationProvider(fakeKtFile)
+                return KotlinCompositeDeclarationProvider.create(listOf(providerForFake, mainProvider))
             }
         }
 
@@ -57,7 +57,7 @@ internal class IdeKotlinDeclarationProviderFactory(private val project: Project)
 
 internal class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMerger() {
     override fun merge(providers: List<KotlinDeclarationProvider>): KotlinDeclarationProvider =
-        providers.mergeSpecificProviders<_, IdeKotlinDeclarationProvider>(CompositeKotlinDeclarationProvider.factory) { targetProviders ->
+        providers.mergeSpecificProviders<_, IdeKotlinDeclarationProvider>(KotlinCompositeDeclarationProvider.factory) { targetProviders ->
             IdeKotlinDeclarationProvider(
                 project,
                 GlobalSearchScope.union(targetProviders.map { it.scope }),

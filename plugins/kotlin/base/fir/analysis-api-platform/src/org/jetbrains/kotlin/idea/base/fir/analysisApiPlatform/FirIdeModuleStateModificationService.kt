@@ -39,11 +39,11 @@ import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
@@ -334,5 +334,5 @@ private fun Library.publishModuleStateModification(
 private fun KtModule.publishModuleStateModification(modificationKind: KotlinModuleStateModificationKind) {
     ThreadingAssertions.assertWriteAccess()
 
-    project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).onModification(this, modificationKind)
+    project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_STATE_MODIFICATION).onModification(this, modificationKind)
 }

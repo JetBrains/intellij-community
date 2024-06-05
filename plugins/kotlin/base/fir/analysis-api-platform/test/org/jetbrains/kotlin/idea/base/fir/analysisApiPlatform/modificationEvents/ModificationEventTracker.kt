@@ -4,18 +4,18 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinCodeFragmentContextModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalSourceModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinGlobalSourceOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModificationEventKind
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinTopics
-import org.jetbrains.kotlin.analysis.api.platform.topics.isModuleLevel
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinCodeFragmentContextModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.junit.Assert
 
 /**
@@ -59,7 +59,7 @@ open class ModificationEventTracker(
 
         val busConnection = project.analysisMessageBus.connect(this)
         busConnection.subscribe(
-            KotlinTopics.MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.MODULE_STATE_MODIFICATION,
             KotlinModuleStateModificationListener { module, modificationKind ->
                 handleReceivedEvent(
                     ReceivedEvent(
@@ -71,31 +71,31 @@ open class ModificationEventTracker(
             },
         )
         busConnection.subscribe(
-            KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
+            KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
             KotlinModuleOutOfBlockModificationListener { module ->
                 handleReceivedEvent(KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION, module)
             },
         )
         busConnection.subscribe(
-            KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION,
             KotlinGlobalModuleStateModificationListener {
                 handleReceivedEvent(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
             },
         )
         busConnection.subscribe(
-            KotlinTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION,
             KotlinGlobalSourceModuleStateModificationListener {
                 handleReceivedEvent(KotlinModificationEventKind.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION)
             },
         )
         busConnection.subscribe(
-            KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
             KotlinGlobalSourceOutOfBlockModificationListener {
                 handleReceivedEvent(KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION)
             },
         )
         busConnection.subscribe(
-            KotlinTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION,
+            KotlinModificationTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION,
             KotlinCodeFragmentContextModificationListener { module ->
                 handleReceivedEvent(KotlinModificationEventKind.CODE_FRAGMENT_CONTEXT_MODIFICATION, module)
             },

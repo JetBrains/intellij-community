@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
-import org.jetbrains.kotlin.analysis.api.platform.lifetime.KtLifetimeTokenProvider
+import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenProvider
 import org.jetbrains.kotlin.idea.fir.fe10.KtLifetimeTokenForKtSymbolBasedWrappers
 import org.jetbrains.kotlin.idea.fir.fe10.KtLifetimeTokenForKtSymbolBasedWrappersFactory
 
@@ -14,8 +14,8 @@ internal fun Project.registerLifetimeTokenFactoryForFe10Binding(disposable: Disp
     val token = KtLifetimeTokenForKtSymbolBasedWrappers(this)
     val factory = KtLifetimeTokenForKtSymbolBasedWrappersFactory(token)
     registerOrReplaceServiceInstance(
-        KtLifetimeTokenProvider::class.java,
-        object : KtLifetimeTokenProvider() {
+        KotlinLifetimeTokenProvider::class.java,
+        object : KotlinLifetimeTokenProvider() {
             override fun getLifetimeTokenFactory() = factory
         },
         parentDisposable = disposable

@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
@@ -28,7 +28,7 @@ fun Module.toKtModulesForModificationEvents(): List<KtModule> =
 fun KtModule.publishModuleOutOfBlockModification() {
     ThreadingAssertions.assertWriteAccess()
 
-    project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(this)
+    project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(this)
 }
 
 /**
@@ -47,5 +47,5 @@ fun Module.publishModuleOutOfBlockModification() {
 fun Project.publishGlobalSourceOutOfBlockModification() {
     ThreadingAssertions.assertWriteAccess()
 
-    analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
+    analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
 }

@@ -2,10 +2,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinModificationTrackerFactory"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.Fe10KotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinGlobalModificationService"
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.Fe10KotlinGlobalModificationService"/>
   </extensions>
 
