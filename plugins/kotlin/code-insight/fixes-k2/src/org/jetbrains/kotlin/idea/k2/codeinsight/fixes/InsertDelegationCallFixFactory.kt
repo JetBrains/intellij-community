@@ -10,9 +10,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.allConstructors
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object InsertDelegationCallFixFactory {
 
@@ -25,7 +26,11 @@ internal object InsertDelegationCallFixFactory {
     }
 
     val primaryConstructorDelegationCallExpected = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.PrimaryConstructorDelegationCallExpected ->
-        val secondaryConstructor = diagnostic.psi.getNonStrictParentOfType<KtSecondaryConstructor>() ?: return@ModCommandBased emptyList()
+        val secondaryConstructor = diagnostic.psi.getParentOfType<KtSecondaryConstructor>(
+            strict = false,
+            KtClassBody::class.java,
+        ) ?: return@ModCommandBased emptyList()
+
         val containingClass = secondaryConstructor.getContainingClassOrObject()
         if (containingClass.allConstructors.count() <= 1 || !secondaryConstructor.hasImplicitDelegationCall()) {
             return@ModCommandBased emptyList()
@@ -35,7 +40,11 @@ internal object InsertDelegationCallFixFactory {
     }
 
     private fun createQuickFix(diagnostic: KaFirDiagnostic.ExplicitDelegationCallRequired, isThis: Boolean): List<InsertDelegationCallFix> {
-        val secondaryConstructor = diagnostic.psi.getNonStrictParentOfType<KtSecondaryConstructor>() ?: return emptyList()
+        val secondaryConstructor = diagnostic.psi.getParentOfType<KtSecondaryConstructor>(
+            strict = false,
+            KtClassBody::class.java,
+        ) ?: return emptyList()
+
         if (!secondaryConstructor.hasImplicitDelegationCall()) return emptyList()
         val klass = secondaryConstructor.getContainingClassOrObject() as? KtClass ?: return emptyList()
         if (klass.hasPrimaryConstructor()) return emptyList()
