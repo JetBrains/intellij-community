@@ -93,11 +93,8 @@ internal class HistoryEntry(
     }
 
     fun createHeavy(project: Project, e: Element): HistoryEntry {
-      if (project.isDisposed) {
-        return createLight(project, e, FileEditorProviderManager.getInstance())
-      }
-
-      val entryData = parseEntry(project = project, element = e, fileEditorProviderManager = FileEditorProviderManager.getInstance())
+      val fileEditorProviderManager = FileEditorProviderManager.getInstance()
+      val entryData = parseEntry(project = project, element = e, fileEditorProviderManager = fileEditorProviderManager)
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)

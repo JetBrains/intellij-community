@@ -89,7 +89,6 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
@@ -268,12 +267,6 @@ open class FileEditorManagerImpl(
         dumbModeFinished(project = project, fileEditorProviderManager = providerManager)
       }
     }
-    project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
-      override fun exitDumbMode() {
-        // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
-        dumbModeFinished.tryEmit(Unit)
-      }
-    })
 
     closeFilesOnFileEditorRemoval()
 
@@ -281,6 +274,13 @@ open class FileEditorManagerImpl(
       initJob = CompletableDeferred(value = Unit)
       mainSplitters = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
       check(splitterFlow.tryEmit(mainSplitters))
+
+      project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+        override fun exitDumbMode() {
+          // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
+          dumbModeFinished.tryEmit(Unit)
+        }
+      })
     }
     else {
       initJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -322,6 +322,13 @@ open class FileEditorManagerImpl(
           // Dispose created editors. We do not use closeEditor method because it fires events and changes history.
           closeAllFiles(repaint = false)
         }
+      }
+    })
+
+    connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+      override fun exitDumbMode() {
+        // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
+        dumbModeFinished.tryEmit(Unit)
       }
     })
 
@@ -1301,13 +1308,12 @@ open class FileEditorManagerImpl(
       model = model,
       coroutineScope = coroutineScope,
     ) ?: return null
-    val job = coroutineScope.launch {
-      // listen for preview status change to update file tooltip
-      composite.isPreviewFlow.collect {
+    coroutineScope.launch {
+      // listen for preview status change to update file tooltip, skip the first value as it is the initial value
+      composite.isPreviewFlow.drop(1).collect {
         updateFileName(file)
       }
     }
-    job.cancelOnDispose(composite)
     return composite
   }
 

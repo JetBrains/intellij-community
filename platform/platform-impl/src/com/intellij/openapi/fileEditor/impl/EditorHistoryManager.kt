@@ -301,20 +301,24 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       // the last is the winner
       fileToElement.put(file, e)
     }
-    val list = fileToElement.values.mapNotNull { createEntry(it) }
-    synchronized(this) { entries.addAll(list) }
-  }
 
-  private fun createEntry(element: Element): HistoryEntry? {
-    try {
-      return SlowOperations.knownIssue("IDEA-333919, EA-831462").use { HistoryEntry.createHeavy(project, element) }
+    val list = fileToElement.values.mapNotNull { element ->
+      try {
+        SlowOperations.knownIssue("IDEA-333919, EA-831462").use {
+          HistoryEntry.createHeavy(project, element)
+        }
+      }
+      catch (ignored: ProcessCanceledException) {
+        null
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+        null
+      }
     }
-    catch (ignored: ProcessCanceledException) {
+    synchronized(this) {
+      entries.addAll(list)
     }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-    return null
   }
 
   @Synchronized

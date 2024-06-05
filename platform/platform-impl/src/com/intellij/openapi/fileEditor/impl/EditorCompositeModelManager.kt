@@ -65,7 +65,7 @@ internal fun createEditorCompositeModel(
         file = file,
         project = project,
         document = document.await(),
-        state = null,
+        state = fileEntry,
         flowCollector = this@flow,
       )
     }
