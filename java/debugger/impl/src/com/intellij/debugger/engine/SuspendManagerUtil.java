@@ -8,9 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.request.EventRequest;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 public final class SuspendManagerUtil {
@@ -64,6 +66,19 @@ public final class SuspendManagerUtil {
   public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, @NotNull ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return ContainerUtil.find(suspendManager.getEventContexts(), suspendContext -> suspendContext.suspends(thread));
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable SuspendContextImpl getPausedSuspendingContext(@NotNull SuspendManager suspendManager,
+                                                                        @NotNull ThreadReferenceProxyImpl thread) {
+    List<SuspendContextImpl> pausedContexts = suspendManager.getPausedContexts();
+    SuspendContextImpl context = ContainerUtil.find(pausedContexts, suspendContext ->
+      suspendContext.getEventThread() == thread && suspendContext.suspends(thread)
+    );
+    if (context != null) {
+      return context;
+    }
+    return ContainerUtil.find(pausedContexts, suspendContext -> suspendContext.suspends(thread));
   }
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {
