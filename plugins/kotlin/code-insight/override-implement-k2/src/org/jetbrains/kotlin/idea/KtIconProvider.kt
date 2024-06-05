@@ -84,7 +84,7 @@ object KtIconProvider {
                 }
             }
             is KaValueParameterSymbol -> KotlinIcons.PARAMETER
-            is KtLocalVariableSymbol -> when {
+            is KaLocalVariableSymbol -> when {
                 symbol.isVal -> KotlinIcons.VAL
                 else -> KotlinIcons.VAR
             }

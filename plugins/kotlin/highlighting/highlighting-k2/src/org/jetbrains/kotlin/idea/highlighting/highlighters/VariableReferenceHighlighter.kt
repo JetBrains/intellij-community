@@ -31,7 +31,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
         return when (val symbol = expression.mainReference.resolveToSymbol()) {
             is KtBackingFieldSymbol -> highlightBackingField(symbol, expression)
             is KtKotlinPropertySymbol -> highlightProperty(symbol, expression)
-            is KtLocalVariableSymbol -> {
+            is KaLocalVariableSymbol -> {
                 val result = mutableListOf<HighlightInfo.Builder>()
                 result.addIfNotNull(symbol.getHighlightingForMutableVar(expression))
                 HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)?.let { result.add(it) }

@@ -35,7 +35,7 @@ class KtVariableDescriptor(
             when (val symbol = pointer.restoreSymbol()) {
                 is KaValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
                 is KtPropertySymbol -> return@analyze symbol.isVal
-                is KtLocalVariableSymbol -> {
+                is KaLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
                     val psiElement = symbol.psi?.parent as? KtElement
                     if (psiElement == null) return@analyze true
@@ -134,7 +134,7 @@ class KtVariableDescriptor(
             val varFactory = factory.varFactory
             if (expr !is KtSimpleNameExpression) return null
             val symbol: KtVariableLikeSymbol = expr.mainReference.resolveToSymbol() as? KtVariableLikeSymbol ?: return null
-            if (symbol is KaValueParameterSymbol || symbol is KtLocalVariableSymbol) {
+            if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }
             if (!isTrackableProperty(symbol)) return null

@@ -13,7 +13,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.psi.isPartOfQualifiedExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -124,7 +124,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
                 }
                 for (nameReferenceExpression in nameReferenceExpressions) {
                     val referenceSymbol = nameReferenceExpression.mainReference.resolveToSymbol() ?: continue
-                    if (referenceSymbol != constructorPropertySymbol && referenceSymbol !is KtLocalVariableSymbol) {
+                    if (referenceSymbol != constructorPropertySymbol && referenceSymbol !is KaLocalVariableSymbol) {
                         return true
                     }
                 }

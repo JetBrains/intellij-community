@@ -194,7 +194,7 @@ object KotlinCallProcessor {
             }
 
             if (element is KtDestructuringDeclarationEntry) {
-                return handleSpecial(element) { !(it is KtLocalVariableSymbol && it.psi == element) }
+                return handleSpecial(element) { !(it is KaLocalVariableSymbol && it.psi == element) }
             }
 
             val callInfo = element.resolveCall()

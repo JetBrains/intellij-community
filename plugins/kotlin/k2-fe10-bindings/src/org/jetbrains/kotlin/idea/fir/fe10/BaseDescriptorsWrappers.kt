@@ -666,7 +666,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
     override fun getModality(): Modality = when (ktSymbol) {
         is KtJavaFieldSymbol -> (ktSymbol as KtJavaFieldSymbol).modality
         is KtPropertySymbol -> (ktSymbol as KtPropertySymbol).modality
-        is KtLocalVariableSymbol -> Modality.FINAL
+        is KaLocalVariableSymbol -> Modality.FINAL
     }
 
     override fun isExpect(): Boolean = implementationPostponed()
@@ -736,7 +736,7 @@ class KtSymbolBasedPropertyDescriptor(
 }
 
 class KtSymbolBasedLocalVariableDescriptor(
-    override val ktSymbol: KtLocalVariableSymbol,
+    override val ktSymbol: KaLocalVariableSymbol,
     context: Fe10WrapperContext
 ) : AbstractKtSymbolBasedPropertyDescriptor(context), VariableDescriptorWithAccessors {
 
