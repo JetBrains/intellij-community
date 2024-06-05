@@ -235,6 +235,10 @@ public class DynamicBundle extends AbstractBundle {
 
     @Attribute("locale")
     public String locale = Locale.ENGLISH.getLanguage();
+
+    @Attribute("displayName")
+    public String displayName;
+
     public PluginDescriptor pluginDescriptor;
 
     @Override

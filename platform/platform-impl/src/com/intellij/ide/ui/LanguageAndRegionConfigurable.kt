@@ -39,11 +39,11 @@ class LanguageAndRegionUi {
       val comboGroup = "language_and_region_combo"
 
       panel.row(IdeBundle.message("combobox.language")) {
-        val items = LocalizationUtil.getAllAvailableLocales()
+        val locales = LocalizationUtil.getAllAvailableLocales()
         val localizationService = LocalizationStateService.getInstance()!!
         val forcedLocale = LocalizationUtil.getForcedLocale()
         val selection = Locale.forLanguageTag(forcedLocale ?: localizationService.getSelectedLocale())
-        val model = CollectionComboBoxModel(items, selection)
+        val model = CollectionComboBoxModel(locales.first, selection)
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
 
         if (forcedLocale != null) {
@@ -78,7 +78,7 @@ class LanguageAndRegionUi {
 
         val languageComponent = languageBox.component
         languageComponent.isSwingPopup = false
-        languageComponent.renderer = LanguageComboBoxRenderer(items)
+        languageComponent.renderer = LanguageComboBoxRenderer(locales)
       }
 
       panel.row(IdeBundle.message("combobox.region")) {
@@ -148,13 +148,15 @@ internal class LanguageAndRegionConfigurable :
   }
 }
 
-private class LanguageComboBoxRenderer(private val allLocales: kotlin.collections.List<Locale>) : GroupedComboBoxRenderer<Locale>() {
+private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collections.List<Locale>, Map<Locale, String>>) :
+  GroupedComboBoxRenderer<Locale>() {
+
   override fun getText(item: Locale): @NlsSafe String {
-    return item.getDisplayLanguage(Locale.ENGLISH)
+    return locales.second[item] ?: item.getDisplayLanguage(Locale.ENGLISH)
   }
 
   override fun separatorFor(value: Locale): ListSeparator? {
-    if (allLocales.indexOf(value) == 1) {
+    if (locales.first.indexOf(value) == 1) {
       return ListSeparator()
     }
     return null

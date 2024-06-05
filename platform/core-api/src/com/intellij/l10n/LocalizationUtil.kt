@@ -209,12 +209,22 @@ object LocalizationUtil {
     }
   }
 
-  fun getAllAvailableLocales(): List<Locale> {
-    return buildList {
-      add(Locale.ENGLISH)
-      for (bundleEP in getAllLanguageBundleExtensions()) {
-        add(Locale.forLanguageTag(bundleEP.locale))
+  fun getAllAvailableLocales(): Pair<List<Locale>, Map<Locale, String>> {
+    val list = ArrayList<Locale>()
+    val map = HashMap<Locale, String>()
+
+    list.add(Locale.ENGLISH)
+
+    for (bundleEP in getAllLanguageBundleExtensions()) {
+      val locale = Locale.forLanguageTag(bundleEP.locale)
+      list.add(locale)
+
+      val displayName = bundleEP.displayName
+      if (!displayName.isNullOrEmpty()) {
+        map[locale] = displayName
       }
     }
+
+    return list to map
   }
 }
