@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
@@ -137,7 +137,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
     if (typeToCheck is KtNonErrorClassType) {
 
         val classSymbol = typeToCheck.classSymbol
-        if ((classSymbol as? KtAnonymousObjectSymbol)?.superTypes?.all { isResolvableInScope(it, scope, typeParameters) } == true) {
+        if ((classSymbol as? KaAnonymousObjectSymbol)?.superTypes?.all { isResolvableInScope(it, scope, typeParameters) } == true) {
             return true
         }
 
@@ -173,7 +173,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
 context(KtAnalysisSession)
 fun approximateWithResolvableType(type: KtType?, scope: PsiElement): KtType? {
     if (type == null) return null
-    if (!(type is KtNonErrorClassType && type.classSymbol is KtAnonymousObjectSymbol)
+    if (!(type is KtNonErrorClassType && type.classSymbol is KaAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())
     ) return type
     return type.getAllSuperTypes().firstOrNull {

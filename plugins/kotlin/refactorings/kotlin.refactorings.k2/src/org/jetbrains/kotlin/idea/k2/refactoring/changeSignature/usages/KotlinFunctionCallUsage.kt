@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -88,7 +88,7 @@ internal class KotlinFunctionCallUsage(
                 } else {
                     val symbol = ((partiallyAppliedSymbol.extensionReceiver
                         ?: partiallyAppliedSymbol.dispatchReceiver) as? KtImplicitReceiverValue)?.symbol
-                    val thisText = if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+                    val thisText = if (symbol is KtClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                         "this@" + symbol.name!!.asString()
                     } else {
                         "this"
@@ -110,7 +110,7 @@ internal class KotlinFunctionCallUsage(
                         is KtExplicitReceiverValue -> receiver.expression.text
                         is KtImplicitReceiverValue -> {
                             val symbol = receiver.symbol
-                            val thisText = if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+                            val thisText = if (symbol is KtClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                                 "this@" + symbol.name!!.asString()
                             } else {
                                 "this"

@@ -77,7 +77,7 @@ fun KtReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContex
 fun KaClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
     when (this) {
         is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
-        is KtAnonymousObjectSymbol -> context.implementationPlanned("KtAnonymousObjectSymbol")
+        is KaAnonymousObjectSymbol -> context.implementationPlanned("KaAnonymousObjectSymbol")
     }
 
 fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =

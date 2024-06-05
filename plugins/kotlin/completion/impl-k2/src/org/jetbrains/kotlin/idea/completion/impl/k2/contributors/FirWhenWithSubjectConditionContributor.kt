@@ -145,7 +145,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KtAnalysisSession)
     private fun isPrefixNeeded(symbol: KtNamedSymbol): Boolean {
         return when (symbol) {
-            is KtAnonymousObjectSymbol -> return false
+            is KaAnonymousObjectSymbol -> return false
             is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KtTypeAliasSymbol -> {
                 (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true

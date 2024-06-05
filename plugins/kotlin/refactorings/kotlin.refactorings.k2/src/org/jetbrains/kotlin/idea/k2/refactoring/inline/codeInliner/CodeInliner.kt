@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -97,7 +97,7 @@ class CodeInliner(
                 val receiverValue = partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver
                 if (receiverValue is KtImplicitReceiverValue) {
                     val symbol = receiverValue.symbol
-                    val thisText = if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+                    val thisText = if (symbol is KtClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                         "this@" + symbol.name!!.asString()
                     } else {
                         "this"

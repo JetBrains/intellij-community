@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -96,7 +96,7 @@ internal class MutableParameter(
     override fun getParameterTypeCandidates(): List<KtType> {
         analyze(scope) {
             return allParameterTypeCandidates().filter {
-                !(it is KtNonErrorClassType && it.classSymbol is KtAnonymousObjectSymbol) &&
+                !(it is KtNonErrorClassType && it.classSymbol is KaAnonymousObjectSymbol) &&
                         isResolvableInScope(it, scope, mutableSetOf())
             }
         }

@@ -50,7 +50,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTy
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -426,7 +426,7 @@ internal class KotlinIdeDeclarationRenderer(
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
                 if (owner is KtNonErrorClassType) {
-                    val superTypes = (owner.expandedClassSymbol as? KtAnonymousObjectSymbol)?.superTypes
+                    val superTypes = (owner.expandedClassSymbol as? KaAnonymousObjectSymbol)?.superTypes
                     if (superTypes != null) {
                         printer.append("<".escape())
                         printer.append("anonymous object : ")
