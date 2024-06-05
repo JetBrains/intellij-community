@@ -103,6 +103,11 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     }
 
     fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun getTestPresentation() = "Workspace: " + value.name
+
+    override fun toString() = testPresentation
   }
 
   class DataRule : EdtDataRule {
@@ -130,5 +135,10 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       super.update(data)
       data.setIcon(subproject.handler.subprojectIcon)
     }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun getTestPresentation() = "Subproject: " + subproject.name
+
+    override fun toString() = testPresentation
   }
 }
