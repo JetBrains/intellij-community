@@ -258,15 +258,14 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                     change.oldEntity
                         .takeIf { it.tableId !is GlobalLibraryTableId }
                         ?.findLibraryBridge(event.storageBefore)
-                        ?.let { it.publishModuleStateModification(project, KotlinModuleStateModificationKind.REMOVAL) }
+                        ?.publishModuleStateModification(project, KotlinModuleStateModificationKind.REMOVAL)
                 }
 
                 is EntityChange.Replaced -> {
                     change.newEntity()
                         ?.takeIf { it.tableId !is GlobalLibraryTableId }
-                        ?.findLibraryBridge(event.storageAfter)?.let {
-                        it.publishModuleStateModification(project)
-                    }
+                        ?.findLibraryBridge(event.storageAfter)
+                        ?.publishModuleStateModification(project)
                 }
             }
         }
