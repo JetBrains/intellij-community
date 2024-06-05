@@ -163,7 +163,7 @@ public fun retrieveConsoleTextStyle(): TextStyle {
 
     return retrieveDefaultTextStyle().copy(
         color = fontColor.toComposeColor(),
-        fontFamily = editorColorScheme.getFont(EditorFontType.PLAIN).asComposeFontFamily(),
+        fontFamily = editorColorScheme.getFont(EditorFontType.CONSOLE_PLAIN).asComposeFontFamily(),
         fontSize = fontSize,
         lineHeight = fontSize * editorColorScheme.lineSpacing,
         fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
