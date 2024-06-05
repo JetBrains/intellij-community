@@ -34,6 +34,7 @@ sealed class PlatformUpdates {
  *
  * [incompatible] - plugins that would become incompatible and don't have updates compatible with the specified build
  */
+// TODO separation into enabled and disabled as part of this class seems unnecessary
 @ApiStatus.Internal
 data class PluginUpdates @JvmOverloads internal constructor(
   val allEnabled: Collection<PluginDownloader> = emptyList(),
@@ -45,6 +46,8 @@ data class PluginUpdates @JvmOverloads internal constructor(
   }
 }
 
+// FIXME InternalPluginResults should not be exposed as a return value from non-internal API (or should be an interface instead) :(
+//       this also applies to neighbor classes
 @ApiStatus.Internal
 data class InternalPluginResults @JvmOverloads internal constructor(
   val pluginUpdates: PluginUpdates,

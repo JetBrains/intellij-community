@@ -3,7 +3,10 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.PluginStateListener;
+import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -23,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.ide.actions.SettingsEntryPointAction.*;
@@ -93,8 +95,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static void initPluginsListeners() {
     if (myUpdatesService == null) {
-      myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
-        if (ContainerUtil.isEmpty(descriptors)) {
+      myUpdatesService = PluginUpdatesService.connectWithUpdates(updateResult -> {
+        if (updateResult == null) {
           newUpdatedPlugins(null);
           myCustomRepositoryPlugins = null;
           return;
@@ -102,19 +104,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         if (!UpdateSettings.getInstance().isPluginsCheckNeeded()) {
           return;
         }
-        List<PluginDownloader> downloaders = new ArrayList<>();
-        try {
-          for (IdeaPluginDescriptor descriptor : descriptors) {
-            if (!UpdateChecker.isIgnored(descriptor)) {
-              downloaders.add(PluginDownloader.createDownloader(descriptor));
-            }
-          }
-        }
-        catch (IOException e) {
-          PluginManagerCore.getLogger().error(e);
-        }
-        newUpdatedPlugins(downloaders);
-        myCustomRepositoryPlugins = null;
+        newUpdatedPlugins(updateResult.getPluginUpdates().getAll());
+        myCustomRepositoryPlugins = updateResult.getPluginNods();
       });
     }
     if (myPluginStateListener == null) {
