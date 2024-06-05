@@ -176,7 +176,7 @@ open class EditorComposite internal constructor(
       val selectedFileEditor = if (model.state == null) {
         (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).getSelectedFileEditorProvider(
           file = file,
-          providers = fileEditorWithProviders.map { it.provider },
+          fileEditorWithProviders = fileEditorWithProviders,
           editorHistoryManager = project.serviceAsync<EditorHistoryManager>(),
         )
       }
@@ -291,7 +291,7 @@ open class EditorComposite internal constructor(
 
   @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"), level = DeprecationLevel.ERROR)
   val providers: Array<FileEditorProvider>
-    get() = allProviders.toTypedArray()
+    get() = providerSequence.toList().toTypedArray()
 
   override val allProviders: List<FileEditorProvider>
     get() = providerSequence.toList()
@@ -518,7 +518,7 @@ open class EditorComposite internal constructor(
     /**
      * @return `true` if the composite contains at least one modified editor
      */
-    get() = allEditors.any { it.isModified }
+    get() = allEditorsWithProviders.any { it.fileEditor.isModified }
 
   override fun dispose() {
     try {
@@ -792,7 +792,7 @@ fun retrofitEditorComposite(composite: FileEditorComposite?): com.intellij.opena
     return com.intellij.openapi.util.Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
   }
   else {
-    return com.intellij.openapi.util.Pair(composite.allEditors.toTypedArray(), composite.allProviders.toTypedArray())
+    return composite.retrofit()
   }
 }
 
@@ -873,7 +873,7 @@ private fun triggerStatOpen(project: Project, file: VirtualFile, start: Long, co
   StartUpMeasurer.addCompletedActivity(start, "editor time-to-show", ActivityCategory.DEFAULT, null)
 
   val timeToShow = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-  val fileEditor = composite.allEditors.firstOrNull()
+  val fileEditor = composite.allEditorsWithProviders.firstOrNull()?.fileEditor
   val textEditor = fileEditor as? TextEditor
   if (textEditor == null) {
     coroutineScope.launch {

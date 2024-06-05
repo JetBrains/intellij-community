@@ -46,6 +46,7 @@ interface FileEditorComposite {
 
   @Internal
   fun retrofit(): com.intellij.openapi.util.Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return com.intellij.openapi.util.Pair(allEditors.toTypedArray(), allProviders.toTypedArray())
+    val list = allEditorsWithProviders
+    return  com.intellij.openapi.util.Pair(list.map { it.fileEditor }.toTypedArray(), list.map { it.provider }.toTypedArray())
   }
 }

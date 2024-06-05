@@ -97,7 +97,7 @@ open class EditorsSplitters internal constructor(
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
-    fun stopOpenFilesActivity(project: Project) {
+    internal fun stopOpenFilesActivity(project: Project) {
       project.getUserData(OPEN_FILES_ACTIVITY)?.let { activity ->
         activity.end()
         project.putUserData(OPEN_FILES_ACTIVITY, null)
@@ -539,7 +539,11 @@ open class EditorsSplitters internal constructor(
 
   internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
     // we can't close individual tab in EditorComposite
-    val windows = windows.filter { window -> window.composites().any { it.allEditors.contains(editor) } }
+    val windows = windows.filter { window ->
+      window.composites().any { composite ->
+        composite.allEditorsWithProviders.any { it.fileEditor == editor }
+      }
+    }
     closeFileInWindows(file = file, windows = windows, moveFocus = moveFocus)
   }
 

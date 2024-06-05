@@ -56,12 +56,14 @@ internal class HistoryEntry(
       )
     }
 
-    fun createHeavy(project: Project,
-                    file: VirtualFile,
-                    providers: List<FileEditorProvider?>,
-                    states: List<FileEditorState?>,
-                    selectedProvider: FileEditorProvider,
-                    preview: Boolean): HistoryEntry {
+    fun createHeavy(
+      project: Project,
+      file: VirtualFile,
+      providers: List<FileEditorProvider?>,
+      states: List<FileEditorState?>,
+      selectedProvider: FileEditorProvider,
+      preview: Boolean,
+    ): HistoryEntry {
       if (project.isDisposed) {
         val pointer = LightFilePointer(file = file)
         val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -277,7 +277,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     Project project = myEditor.getProject();
     if (project != null) {
-      EditorsSplitters.Companion.stopOpenFilesActivity(project);
+      EditorsSplitters.Companion.stopOpenFilesActivity$intellij_platform_ide_impl(project);
     }
   }
 

@@ -108,13 +108,11 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val descriptor = OpenFileDescriptor(project, file)
-    val composite = openFileImpl3(descriptor, options)
-    val editors = composite.allEditors
-    for (i in editors.indices) {
-      val editor = editors[i]
+    val composite = openFileImpl3(openFileDescriptor = descriptor, options = options)
+    for ((editor, provider) in composite.allEditorsWithProviders) {
       if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
         if (editor.canNavigateTo(descriptor)) {
-          setSelectedEditor(descriptor.file, composite.allProviders.get(i).editorTypeId)
+          setSelectedEditor(descriptor.file, provider.editorTypeId)
           editor.navigateTo(descriptor)
         }
         break
@@ -446,7 +444,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    for (editor in openFileInCommand(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditors) {
+    for ((editor, _) in openFileInCommand(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditorsWithProviders) {
       if (editor is TextEditor) {
         return editor.editor
       }
@@ -458,10 +456,10 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     var result: FileEditorComposite? = null
     CommandProcessor.getInstance().executeCommand(project, {
       val composite = openFileImpl3(descriptor, options)
-      for ((i, editor) in composite.allEditors.withIndex()) {
+      for ((editor, provider) in composite.allEditorsWithProviders) {
         if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
           if (editor.canNavigateTo(descriptor)) {
-            setSelectedEditor(file = descriptor.file, fileEditorProviderId = composite.allProviders.get(i).editorTypeId)
+            setSelectedEditor(file = descriptor.file, fileEditorProviderId = provider.editorTypeId)
             editor.navigateTo(descriptor)
           }
           break

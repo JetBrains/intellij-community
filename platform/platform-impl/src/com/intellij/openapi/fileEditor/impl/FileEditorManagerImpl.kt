@@ -405,7 +405,7 @@ open class FileEditorManagerImpl(
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(object : ExtensionPointListener<FileEditorProvider> {
       override fun extensionRemoved(extension: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
         for (editor in openedComposites) {
-          for (provider in editor.allProviders) {
+          for ((_, provider) in editor.allEditorsWithProviders) {
             if (provider == extension) {
               closeFile(editor.file)
               break

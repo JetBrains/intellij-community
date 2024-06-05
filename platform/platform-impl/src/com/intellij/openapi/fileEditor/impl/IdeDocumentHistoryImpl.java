@@ -591,12 +591,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
-    var editors = editorsWithProviders.getAllEditors();
-    var providers = editorsWithProviders.getAllProviders();
-    for (int i = 0; i < editors.size(); i++) {
-      String typeId = providers.get(i).getEditorTypeId();
+    var list = editorsWithProviders.getAllEditorsWithProviders();
+    for (FileEditorWithProvider item : list) {
+      String typeId = item.getProvider().getEditorTypeId();
       if (typeId.equals(info.getEditorTypeId())) {
-        editors.get(i).setState(info.getNavigationState());
+        item.getFileEditor().setState(info.getNavigationState());
       }
     }
   }

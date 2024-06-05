@@ -41,8 +41,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         updateHistoryEntry(
           fileEditorManager = source as FileEditorManagerEx,
           file = file,
-          fileEditor = null,
-          fileEditorProvider = null,
+          fallback = null,
           changeEntryOrderOnly = false,
         )
       }
@@ -85,8 +84,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
    */
   private fun fileOpenedImpl(
     file: VirtualFile,
-    fallbackEditor: FileEditor?,
-    fallbackProvider: FileEditorProvider?,
+    fallback: FileEditorWithProvider?,
     fileEditorManager: FileEditorManagerEx,
   ) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -96,30 +94,27 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     }
 
     val editorComposite = fileEditorManager.getComposite(file)
-    var editors = editorComposite?.allEditors ?: emptyList()
-    var oldProviders = editorComposite?.allProviders ?: emptyList()
-    LOG.assertTrue(editors.size == oldProviders.size, "Different number of editors and providers")
-    if (editors.isEmpty() && fallbackEditor != null && fallbackProvider != null) {
-      editors = listOf(fallbackEditor)
-      oldProviders = listOf(fallbackProvider)
-    }
-    if (editors.isEmpty()) {
-      // fileOpened notification is asynchronous, file could have been closed by now due to some reason
-      return
+    var list = editorComposite?.allEditorsWithProviders ?: emptyList()
+    if (list.isEmpty()) {
+      list = listOfNotNull(fallback)
+      if (list.isEmpty()) {
+        // fileOpened notification is asynchronous, file could have been closed by now due to some reason
+        return
+      }
     }
 
-    val selectedProvider = if (editorComposite is EditorComposite) {
-      editorComposite.selectedWithProvider?.provider ?: oldProviders.first()
+    val selected = if (editorComposite is EditorComposite) {
+      editorComposite.selectedWithProvider ?: list.first()
     }
     else {
-      val selectedEditor = fileEditorManager.getSelectedEditorWithProvider(file) ?: fallbackEditor
-      val selectedProviderIndex = selectedEditor?.let { editors.indexOf(it) } ?: -1
+      val selected = fileEditorManager.getSelectedEditorWithProvider(file) ?: fallback
+      val selectedProviderIndex = selected?.let { list.indexOf(it) } ?: -1
       if (selectedProviderIndex == -1) {
-        LOG.error("Can't find $selectedEditor among $editors")
-        oldProviders.first()
+        LOG.error("Can't find $selected among $list")
+        list.first()
       }
       else {
-        oldProviders.get(selectedProviderIndex)
+        list.get(selectedProviderIndex)
       }
     }
 
@@ -128,11 +123,9 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       return
     }
 
-    val states = arrayOfNulls<FileEditorState>(editors.size)
-    val providers = arrayOfNulls<FileEditorProvider>(editors.size)
-    for (index in editors.indices.reversed()) {
-      providers[index] = oldProviders[index]
-      val editor = editors[index]
+    val states = arrayOfNulls<FileEditorState>(list.size)
+    for ((index, item) in list.reversed().withIndex()) {
+      val editor = item.fileEditor
       if (editor.isValid) {
         states[index] = editor.getState(FileEditorStateLevel.FULL)
       }
@@ -140,9 +133,9 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     val entry = HistoryEntry.createHeavy(
       project = project,
       file = file,
-      providers = providers.asList(),
+      providers = list.map { it.provider },
       states = states.asList(),
-      selectedProvider = selectedProvider,
+      selectedProvider = selected.provider,
       preview = editorComposite != null && editorComposite.isPreview,
     )
     synchronized(this) {
@@ -155,8 +148,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     updateHistoryEntry(
       fileEditorManager = FileEditorManagerEx.getInstanceEx(project),
       file = file,
-      fileEditor = null,
-      fileEditorProvider = null,
+      fallback = null,
       changeEntryOrderOnly = changeEntryOrderOnly,
     )
   }
@@ -164,19 +156,18 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   private fun updateHistoryEntry(
     fileEditorManager: FileEditorManagerEx,
     file: VirtualFile,
-    fileEditor: FileEditor?,
-    fileEditorProvider: FileEditorProvider?,
+    fallback: FileEditorWithProvider?,
     changeEntryOrderOnly: Boolean,
   ) {
     val list: List<FileEditorWithProvider>
     var preview = false
-    if (fileEditor == null || fileEditorProvider == null) {
+    if (fallback == null) {
       val composite = fileEditorManager.getComposite(file) ?: return
       list = composite.allEditorsWithProviders
       preview = composite.isPreview
     }
     else {
-      list = listOf(FileEditorWithProvider(fileEditor = fileEditor, provider = fileEditorProvider))
+      list = listOf(fallback)
     }
 
     if (list.isEmpty()) {
@@ -191,8 +182,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         // the file could have been deleted, so the isValid() check is essential
         fileOpenedImpl(
           file = file,
-          fallbackEditor = fileEditor,
-          fallbackProvider = fileEditorProvider,
+          fallback = fallback,
           fileEditorManager = fileEditorManager,
         )
       }
@@ -332,8 +322,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         updateHistoryEntry(
           fileEditorManager = fileEditorManager,
           file = file,
-          fileEditor = null,
-          fileEditorProvider = null,
+          fallback = null,
           changeEntryOrderOnly = false,
         )
       }
@@ -358,8 +347,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
       service.fileOpenedImpl(
         file = file,
-        fallbackEditor = null,
-        fallbackProvider = null,
+        fallback = null,
         fileEditorManager = source as? FileEditorManagerEx ?: return,
       )
     }
@@ -378,8 +366,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
           service.updateHistoryEntry(
             fileEditorManager = event.manager as FileEditorManagerEx,
             file = oldFile,
-            fileEditor = event.oldEditor,
-            fileEditorProvider = event.oldProvider,
+            fallback = event.oldEditor?.let { FileEditorWithProvider(fileEditor = it, provider = event.oldProvider!!) },
             changeEntryOrderOnly = false,
           )
         }
@@ -389,8 +376,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
           service.updateHistoryEntry(
             fileEditorManager = event.manager as FileEditorManagerEx,
             file = newFile,
-            fileEditor = event.newEditor,
-            fileEditorProvider = event.newProvider,
+            fallback = event.newEditor?.let { FileEditorWithProvider(fileEditor = it, provider = event.newProvider!!) },
             changeEntryOrderOnly = true,
           )
         }
