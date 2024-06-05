@@ -129,7 +129,7 @@ fun wrapState(element: Element, project: Project): Element {
 class BundledSchemeEP {
 
   /**
-   * Path to the scheme file (without filename suffix).
+   * Path to the scheme file (without the extension suffix, e.g., `themes/myScheme` for `themes/myScheme.xml`.
    */
   @Attribute("path")
   @RequiredElement
