@@ -5,7 +5,7 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
@@ -27,9 +27,9 @@ internal open class ClassifierImportCandidatesProvider(
     protected open fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean = true
 
     context(KtAnalysisSession)
-    protected fun KtClassLikeSymbol.getExpandedClassSymbol(): KtClassOrObjectSymbol? = when (this) {
+    protected fun KtClassLikeSymbol.getExpandedClassSymbol(): KaClassOrObjectSymbol? = when (this) {
         is KtTypeAliasSymbol -> expandedType.expandedClassSymbol
-        is KtClassOrObjectSymbol -> this
+        is KaClassOrObjectSymbol -> this
     }
 
     context(KtAnalysisSession)

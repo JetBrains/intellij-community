@@ -53,7 +53,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTy
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
@@ -265,7 +265,7 @@ internal class KotlinIdeDeclarationRenderer(
         visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
         modalityProvider = KaRendererModalityModifierProvider.WITH_IMPLICIT_MODALITY.onlyIf { symbol ->
             when {
-                symbol is KtClassOrObjectSymbol -> !(symbol.classKind == KtClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
+                symbol is KaClassOrObjectSymbol -> !(symbol.classKind == KtClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
 
                 symbol is KtCallableSymbol -> {
                     symbol.modality == Modality.OPEN || symbol.getContainingSymbol() != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
@@ -665,8 +665,8 @@ internal class KotlinIdeDeclarationRenderer(
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
-                if (symbol is KtClassOrObjectSymbol && symbol.classKind == KtClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
-                    val className = (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.name
+                if (symbol is KaClassOrObjectSymbol && symbol.classKind == KtClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
+                    val className = (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.name
                     if (className != null) {
                         printer.append(highlight("of ") { asInfo } )
                         printer.append(highlight(className.renderName()) { asClassName } )
@@ -679,7 +679,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }
                 printer.append(highlight(name.renderName()) {
                     when (symbol) {
-                        is KtClassOrObjectSymbol -> {
+                        is KaClassOrObjectSymbol -> {
                             if (symbol.classKind.isObject) {
                                 asObjectName
                             } else if (symbol.classKind == KtClassKind.ENUM_CLASS || symbol.classKind == KtClassKind.CLASS || symbol.classKind == KtClassKind.INTERFACE) {

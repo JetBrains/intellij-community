@@ -43,7 +43,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
         }
 
     context(KtAnalysisSession)
-private fun getOverridableMembers(classOrObjectSymbol: KtClassOrObjectSymbol): List<OverrideMember> {
+private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): List<OverrideMember> {
         return buildList {
             classOrObjectSymbol.getMemberScope().getCallableSymbols().forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
@@ -105,7 +105,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KtClassOrObjectSymbol): L
     private data class OverrideMember(
         val symbol: KtCallableSymbol,
         val bodyType: BodyType,
-        val containingSymbol: KtClassOrObjectSymbol?,
+        val containingSymbol: KaClassOrObjectSymbol?,
         override val token: KtLifetimeToken
     ) : KtLifetimeOwner
 

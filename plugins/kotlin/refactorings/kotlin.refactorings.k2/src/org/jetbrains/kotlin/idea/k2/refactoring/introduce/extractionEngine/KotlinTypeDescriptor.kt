@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -141,7 +141,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: 
             return true
         }
 
-        if ((classSymbol as? KtClassOrObjectSymbol)?.classId == null) {
+        if ((classSymbol as? KaClassOrObjectSymbol)?.classId == null) {
             //because org.jetbrains.kotlin.fir.FirVisibilityChecker.Default always return true for local classes,
             //let's be pessimistic here and prohibit local classes completely
             return false

@@ -74,7 +74,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KtFunctionalType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
-                (receiverTypeText + if (receiverSymbol is KtClassLikeSymbol && !(receiverSymbol is KtClassOrObjectSymbol && receiverSymbol.classKind == KtClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
+                (receiverTypeText + if (receiverSymbol is KtClassLikeSymbol && !(receiverSymbol is KaClassOrObjectSymbol && receiverSymbol.classKind == KtClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
             }
         }
     }
@@ -92,7 +92,7 @@ object CreateKotlinCallableActionTextBuilder {
 
     context (KtAnalysisSession)
     private fun KtType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KtType? {
-        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (classSymbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.INTERFACE) return this
+        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (classSymbol as? KaClassOrObjectSymbol)?.classKind == KtClassKind.INTERFACE) return this
         return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
 

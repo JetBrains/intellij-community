@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -29,7 +29,7 @@ import java.util.stream.Stream
 class KtClassDef(
     private val module: KtModule,
     private val hash: Int,
-    private val cls: KtSymbolPointer<KtClassOrObjectSymbol>,
+    private val cls: KtSymbolPointer<KaClassOrObjectSymbol>,
     private val kind: KtClassKind,
     private val modality: Modality?
 ) : TypeConstraints.ClassDef {
@@ -119,7 +119,7 @@ class KtClassDef(
 
     companion object {
         context(KtAnalysisSession)
-        fun KtClassOrObjectSymbol.classDef(): KtClassDef = KtClassDef(
+        fun KaClassOrObjectSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
             classKind, (this as? KtSymbolWithModality)?.modality
         )

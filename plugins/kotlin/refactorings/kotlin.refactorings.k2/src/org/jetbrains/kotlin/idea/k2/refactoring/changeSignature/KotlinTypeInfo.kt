@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeErrorTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -98,7 +98,7 @@ private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction:
         ?: (baseFunction as? PsiMember)?.getCallableSymbol() ?: return null
     val inheritor = inheritorCallable.getContainingSymbol()
     val base = baseCallable.getContainingSymbol()
-    return if (inheritor is KtClassOrObjectSymbol && base is KtClassOrObjectSymbol) {
+    return if (inheritor is KaClassOrObjectSymbol && base is KaClassOrObjectSymbol) {
         createInheritanceTypeSubstitutor(inheritor, base)?.let { iSubstitutor ->
             buildSubstitutor {
                 base.typeParameters.forEach {

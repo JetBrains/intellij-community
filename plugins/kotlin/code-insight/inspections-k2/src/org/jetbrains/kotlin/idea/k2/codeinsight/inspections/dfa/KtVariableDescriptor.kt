@@ -140,7 +140,7 @@ class KtVariableDescriptor(
             if (!isTrackableProperty(symbol)) return null
             val parent = expr.parent
             var qualifier: DfaVariableValue? = null
-            if ((symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind == KtClassKind.OBJECT) {
+            if ((symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KtClassKind.OBJECT) {
                 // property in an object: singleton, can track
                 return varFactory.createVariableValue(symbol.variableDescriptor(), null)
             }
@@ -160,7 +160,7 @@ class KtVariableDescriptor(
                 if (functionLiteral != null && type != null) {
                     qualifier = varFactory.createVariableValue(KtLambdaThisVariableDescriptor(functionLiteral, type.toDfType()))
                 } else {
-                    val classOrObject = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+                    val classOrObject = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
                     if (classOrObject != null) {
                         val dfType = TypeConstraints.exactClass(classOrObject.classDef()).instanceOf().asDfType()
                         qualifier = varFactory.createVariableValue(KtThisDescriptor(dfType))

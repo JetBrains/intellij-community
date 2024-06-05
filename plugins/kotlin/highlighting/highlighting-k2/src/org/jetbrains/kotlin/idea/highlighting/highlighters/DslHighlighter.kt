@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
@@ -82,6 +82,6 @@ private fun getDslAnnotation(type: KtType): ClassId? {
     return dslAnnotation
 }
 
-private fun KtClassOrObjectSymbol.isDslHighlightingMarker(): Boolean {
+private fun KaClassOrObjectSymbol.isDslHighlightingMarker(): Boolean {
     return hasAnnotation(DslStyleUtils.DSL_MARKER_CLASS_ID)
 }

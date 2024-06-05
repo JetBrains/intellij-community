@@ -152,10 +152,10 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
         else -> return false
     } as? KtSymbolWithKind ?: return true
     if (referencedSymbol is KtConstructorSymbol) return false
-    return (referencedSymbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind?.isObject ?: true
+    return (referencedSymbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
 
-private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KtClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
+private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
 
 private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES

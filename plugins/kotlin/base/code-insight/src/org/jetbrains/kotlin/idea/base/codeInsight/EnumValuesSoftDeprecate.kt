@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 context(KtAnalysisSession)
 @ApiStatus.Internal
 fun isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KtCallableSymbol): Boolean {
-    val enumClassSymbol = (symbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return false
+    val enumClassSymbol = (symbol.getContainingSymbol() as? KaClassOrObjectSymbol) ?: return false
     return isSoftDeprecatedEnumValuesMethod(symbol, enumClassSymbol) &&
             getEntriesPropertyOfEnumClass(enumClassSymbol) != null
 }
@@ -21,7 +21,7 @@ fun isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KtCallableS
 @ApiStatus.Internal
 fun isSoftDeprecatedEnumValuesMethod(
     valuesMethodSymbol: KtCallableSymbol,
-    enumClassSymbol: KtClassOrObjectSymbol,
+    enumClassSymbol: KaClassOrObjectSymbol,
 ): Boolean {
     return KtClassKind.ENUM_CLASS == enumClassSymbol.classKind &&
             StandardNames.ENUM_VALUES == valuesMethodSymbol.callableId?.callableName &&
@@ -31,7 +31,7 @@ fun isSoftDeprecatedEnumValuesMethod(
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getEntriesPropertyOfEnumClass(enumClassSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
+fun getEntriesPropertyOfEnumClass(enumClassSymbol: KaClassOrObjectSymbol): KtCallableSymbol? =
     enumClassSymbol.getStaticMemberScope().getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()
 
 @ApiStatus.Internal

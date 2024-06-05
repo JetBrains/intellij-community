@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -55,7 +55,7 @@ object ConvertReferenceToLambdaUtil {
         }
 
         val receiverSymbol = receiverExpression?.getQualifiedElementSelector()?.mainReference?.resolveToSymbol()
-        val acceptsReceiverAsParameter = receiverSymbol is KtClassOrObjectSymbol &&
+        val acceptsReceiverAsParameter = receiverSymbol is KaClassOrObjectSymbol &&
                 !matchingParameterIsExtension &&
                 (callableSymbol as? KtFunctionSymbol)?.isStatic != true && !receiverSymbol.classKind.isObject &&
                 (callableSymbol?.getContainingSymbol() != null || callableSymbol?.isExtension == true || symbol is KtNamedClassOrObjectSymbol && symbol.isInner)

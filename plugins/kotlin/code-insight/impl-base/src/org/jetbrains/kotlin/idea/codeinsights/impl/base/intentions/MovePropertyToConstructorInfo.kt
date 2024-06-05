@@ -5,7 +5,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
@@ -67,7 +67,7 @@ sealed interface MovePropertyToConstructorInfo {
             accept(referenceExpressionRecursiveVisitor { expression ->
                 if (!isValid) return@referenceExpressionRecursiveVisitor
                 for (reference in expression.references.filterIsInstance<KtReference>()) {
-                    for (classSymbol in reference.resolveToSymbols().filterIsInstance<KtClassOrObjectSymbol>()) {
+                    for (classSymbol in reference.resolveToSymbols().filterIsInstance<KaClassOrObjectSymbol>()) {
                         if (classSymbol == parentClassSymbol) {
                             isValid = false
                             return@referenceExpressionRecursiveVisitor

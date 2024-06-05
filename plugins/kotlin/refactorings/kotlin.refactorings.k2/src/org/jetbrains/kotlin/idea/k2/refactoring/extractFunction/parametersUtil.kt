@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -372,7 +372,7 @@ private fun ExtractionData.registerQualifierReplacements(
         if (listOwner == null || !PsiTreeUtil.isAncestor(listOwner, targetSibling, true)) {
             parametersInfo.typeParameters.add(TypeParameter(typeParameter, typeParameter.collectRelevantConstraints()))
         }
-    } else if (referencedClassifierSymbol is KtClassOrObjectSymbol && originalRef is KtSimpleNameExpression) {
+    } else if (referencedClassifierSymbol is KaClassOrObjectSymbol && originalRef is KtSimpleNameExpression) {
         val fqName = referencedClassifierSymbol.classId?.asSingleFqName()
         if (fqName != null) {
             val name = when (originalDeclaration) {
@@ -399,7 +399,7 @@ private fun getReferencedClassifierSymbol(
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.getSymbol()
     ?: (originalDeclaration as? PsiMember)?.getCallableSymbol()) ?: return null
     return when (referencedSymbol) {
-        is KtClassOrObjectSymbol -> when (referencedSymbol.classKind) {
+        is KaClassOrObjectSymbol -> when (referencedSymbol.classKind) {
             KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ENUM_CLASS -> referencedSymbol
             //if type reference or call to implicit constructor, then type expansion might be required
             else -> if (refInfo.refExpr.getNonStrictParentOfType<KtTypeReference>() != null || partiallyAppliedSymbol?.symbol is KtConstructorSymbol) referencedSymbol else null
@@ -487,7 +487,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             val (isCompanionObject, bothReceivers) = analyze(smartCastTarget) {
                 val symbol = originalRefExpr.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 val receiverSymbol = (symbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
-                ((receiverSymbol?.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) to
+                ((receiverSymbol?.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) to
                         (symbol?.dispatchReceiver != null && symbol.extensionReceiver != null)
             }
             val shouldSkipPrimaryReceiver = smartCast == null

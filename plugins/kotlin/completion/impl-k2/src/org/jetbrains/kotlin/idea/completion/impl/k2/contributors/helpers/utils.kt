@@ -194,5 +194,5 @@ private fun isEnumEntriesProperty(symbol: KtCallableSymbol): Boolean {
     return symbol is KtPropertySymbol &&
             symbol.isStatic &&
             symbol.callableId?.callableName == StandardNames.ENUM_ENTRIES &&
-            (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind == KtClassKind.ENUM_CLASS
+            (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KtClassKind.ENUM_CLASS
 }

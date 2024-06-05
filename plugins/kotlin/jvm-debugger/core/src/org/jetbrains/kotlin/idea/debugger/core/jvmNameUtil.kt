@@ -57,10 +57,10 @@ fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KtClassOrObjectSymbol? {
+fun KtFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KaClassOrObjectSymbol? {
     var symbol = getContainingSymbol()
     while (symbol != null) {
-        if (symbol is KtClassOrObjectSymbol) return symbol
+        if (symbol is KaClassOrObjectSymbol) return symbol
         symbol = symbol.getContainingSymbol()
     }
     return null

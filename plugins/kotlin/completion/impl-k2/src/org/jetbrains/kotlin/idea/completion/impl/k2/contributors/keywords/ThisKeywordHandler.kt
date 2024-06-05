@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
@@ -58,7 +58,7 @@ internal class ThisKeywordHandler(
 
     context(KtAnalysisSession)
     private fun canReferenceSymbolByThis(parameters: CompletionParameters, symbol: KtSymbol): Boolean {
-        if (symbol !is KtClassOrObjectSymbol) return true
+        if (symbol !is KaClassOrObjectSymbol) return true
         if (symbol.classKind != KtClassKind.COMPANION_OBJECT) return true
         val companionPsi = symbol.psi as KtClassOrObject
         return parameters.offset in companionPsi.textRange

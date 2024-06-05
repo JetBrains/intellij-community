@@ -199,7 +199,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val symbol = referenceExpression.resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KtDeclarationSymbol) {
-                val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+                val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement

@@ -166,7 +166,7 @@ private class Fe10BindingLexicalScopeForClassLikeElement(
         SCOPE_FOR_COMPANION // all companion objects except mine and the last one -- same class with OUTER_CLASS
     }
 
-    private val ktClassSymbol = context.withAnalysisSession { ktClassOrObject.getSymbol() } as KtClassOrObjectSymbol
+    private val ktClassSymbol = context.withAnalysisSession { ktClassOrObject.getSymbol() } as KaClassOrObjectSymbol
 
     override val ownerDescriptor: ClassDescriptor = ktClassSymbol.toDeclarationDescriptor(context)
 
@@ -202,9 +202,9 @@ private class Fe10BindingLexicalScopeForClassLikeElement(
             
             superTypeLoop@ for (superType in current.superTypes) {
                 if (superType !is KtNonErrorClassType) continue@superTypeLoop
-                val classOrObjectSymbol: KtClassOrObjectSymbol = when (val typeSymbol = superType.classSymbol) {
-                    is KtClassOrObjectSymbol -> typeSymbol
-                    is KtTypeAliasSymbol -> typeSymbol.expandedType.safeAs<KtNonErrorClassType>()?.classSymbol.safeAs<KtClassOrObjectSymbol>()
+                val classOrObjectSymbol: KaClassOrObjectSymbol = when (val typeSymbol = superType.classSymbol) {
+                    is KaClassOrObjectSymbol -> typeSymbol
+                    is KtTypeAliasSymbol -> typeSymbol.expandedType.safeAs<KtNonErrorClassType>()?.classSymbol.safeAs<KaClassOrObjectSymbol>()
                         ?: continue@superTypeLoop
                 }
                 if (classOrObjectSymbol.classKind == KtClassKind.CLASS) {

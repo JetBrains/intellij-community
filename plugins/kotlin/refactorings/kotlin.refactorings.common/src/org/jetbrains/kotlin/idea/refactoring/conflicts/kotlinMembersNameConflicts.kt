@@ -63,7 +63,7 @@ fun KtScope.findSiblingsByName(
 
     val classifierSymbols = getClassifierSymbols(newName)
     if (symbol is KtFunctionLikeSymbol) {
-        return (classifierSymbols.flatMap { (it as? KtClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables)
+        return (classifierSymbols.flatMap { (it as? KaClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables)
     }
 
     return (classifierSymbols + callables)
@@ -75,7 +75,7 @@ fun filterCandidates(symbol: KtDeclarationSymbol, candidateSymbol: KtDeclaration
         val skipCandidate = when (symbol) {
             is KtFunctionLikeSymbol -> !areSameSignatures(candidateSymbol, symbol)
             is KtPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
-            is KtClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, candidateSymbol) }
+            is KaClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, candidateSymbol) }
             else -> false
         }
 
@@ -86,7 +86,7 @@ fun filterCandidates(symbol: KtDeclarationSymbol, candidateSymbol: KtDeclaration
         return false
     }
 
-    if (candidateSymbol is KtClassOrObjectSymbol && symbol is KtFunctionLikeSymbol) {
+    if (candidateSymbol is KaClassOrObjectSymbol && symbol is KtFunctionLikeSymbol) {
         if (candidateSymbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, symbol) }) {
             return false
         }
@@ -131,7 +131,7 @@ fun checkDeclarationNewNameConflicts(
         }
 
         return when (containingSymbol) {
-            is KtClassOrObjectSymbol -> {
+            is KaClassOrObjectSymbol -> {
                 if (symbol is KtClassifierSymbol) {
                     //allow shadowing classes in super
                     containingSymbol.getCombinedDeclaredMemberScope()
@@ -155,7 +155,7 @@ fun checkDeclarationNewNameConflicts(
                 (block.statements.mapNotNull {
                     if (it.name != newName.asString()) return@mapNotNull null
                     val isAccepted = when (symbol) {
-                        is KtClassOrObjectSymbol -> it is KtClassOrObject
+                        is KaClassOrObjectSymbol -> it is KtClassOrObject
                         is KtVariableSymbol -> it is KtProperty
                         is KtFunctionLikeSymbol -> it is KtNamedFunction
                         else -> false
@@ -332,7 +332,7 @@ fun registerRetargetJobOnPotentialCandidates(
             block.statements.mapNotNull {
                 if (it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
-                    is KtClassOrObjectSymbol -> it is KtClassOrObject
+                    is KaClassOrObjectSymbol -> it is KtClassOrObject
                     is KtVariableSymbol -> it is KtProperty
                     is KtFunctionLikeSymbol -> it is KtNamedFunction
                     else -> false
@@ -343,7 +343,7 @@ fun registerRetargetJobOnPotentialCandidates(
         }
 
         while (classOrObjectSymbol != null) {
-            (classOrObjectSymbol as? KtClassOrObjectSymbol)?.getMemberScope()?.processScope(classOrObjectSymbol)
+            (classOrObjectSymbol as? KaClassOrObjectSymbol)?.getMemberScope()?.processScope(classOrObjectSymbol)
 
             val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
             companionObject?.getMemberScope()?.processScope(companionObject)

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -131,7 +131,7 @@ object K2CreateFunctionFromUsageBuilder {
     private fun shouldCreateCompanionClass(calleeExpression: KtSimpleNameExpression): Boolean {
         val receiverExpression = calleeExpression.getReceiverExpression()
         val receiverResolved =
-            (receiverExpression as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KtClassOrObjectSymbol
+            (receiverExpression as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaClassOrObjectSymbol
         return receiverResolved != null && receiverResolved.classKind != KtClassKind.OBJECT && receiverResolved.classKind != KtClassKind.COMPANION_OBJECT
     }
 
@@ -201,7 +201,7 @@ object K2CreateFunctionFromUsageBuilder {
         val containingClass = getStrictParentOfType<KtClassOrObject>() as? KtClass ?: return null
         if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
 
-        val classSymbol = containingClass.getSymbol() as? KtClassOrObjectSymbol ?: return null
+        val classSymbol = containingClass.getSymbol() as? KaClassOrObjectSymbol ?: return null
         val classType = buildClassType(classSymbol) {
             for (typeParameter in containingClass.typeParameters) {
                 argument(KtStarTypeProjection(token))

@@ -61,8 +61,8 @@ context(KtAnalysisSession)
 private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KtConstructorSymbol,
-        is KtClassOrObjectSymbol -> {
-            val classId = if (symbol is KtClassOrObjectSymbol) {
+        is KaClassOrObjectSymbol -> {
+            val classId = if (symbol is KaClassOrObjectSymbol) {
                 symbol.classId
             } else {
                 (symbol as KtConstructorSymbol).containingClassId
@@ -118,7 +118,7 @@ private fun canBeImported(symbol: KtCallableSymbol): Boolean {
         }
     } else {
         if ((symbol as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL) return true
-        val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return true
+        val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
         return containingClass.classKind == KtClassKind.OBJECT || containingClass.classKind == KtClassKind.COMPANION_OBJECT
     }
 }

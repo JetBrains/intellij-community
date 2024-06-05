@@ -6,7 +6,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
@@ -109,7 +109,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                     }
                                 }
                             } else {
-                                val name = (containingSymbol as? KtClassOrObjectSymbol)?.name
+                                val name = (containingSymbol as? KaClassOrObjectSymbol)?.name
                                 if (name != null) {
                                     if (receiverExpression is KtThisExpression) {
                                         result.add(KotlinNonQualifiedOuterThisUsage(receiverExpression, name))

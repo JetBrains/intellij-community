@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
@@ -36,7 +36,7 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
             is KtClassErrorType -> {
                 ktType.candidateClassSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
-                        is KtClassOrObjectSymbol -> candidateSymbol
+                        is KaClassOrObjectSymbol -> candidateSymbol
                         is KtTypeAliasSymbol -> candidateSymbol.expandedType.expandedClassSymbol
                         else -> null
                     } as? KtNamedClassOrObjectSymbol

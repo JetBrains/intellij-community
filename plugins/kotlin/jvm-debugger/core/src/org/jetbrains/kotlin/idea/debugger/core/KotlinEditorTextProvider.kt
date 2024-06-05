@@ -175,7 +175,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
 
     private fun isSymbolAllowed(symbol: KtSymbol, allowMethodCalls: Boolean): Boolean {
         return when (symbol) {
-            is KtClassOrObjectSymbol -> symbol.classKind.isObject
+            is KaClassOrObjectSymbol -> symbol.classKind.isObject
             is KtFunctionLikeSymbol -> allowMethodCalls
             is KtVariableSymbol, is KtValueParameterSymbol, is KtEnumEntrySymbol -> true
             else -> false

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -172,7 +172,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     ) {
         ProgressManager.checkCanceled()
 
-        if (symbol is KtClassOrObjectSymbol && symbol.classKind.isObject) return
+        if (symbol is KaClassOrObjectSymbol && symbol.classKind.isObject) return
 
         val shortNameString = when (symbol) {
             is KtTypeParameterSymbol -> symbol.name.asString()

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
@@ -43,7 +43,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                 .mapToKtClassMemberInfo()
 
         context(KtAnalysisSession)
-        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
+        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KtCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach

@@ -384,7 +384,7 @@ private fun isExtensionFunctionType(type: KtType): Boolean {
 context(KtAnalysisSession)
 private fun KtFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KtFunctionSymbol> {
     val scope = when (val containingSymbol = this.getContainingSymbol()) {
-        is KtClassOrObjectSymbol -> containingSymbol.getMemberScope()
+        is KaClassOrObjectSymbol -> containingSymbol.getMemberScope()
         else -> lambdaArgument.containingKtFile.getScopeContextForPosition(lambdaArgument).getCompositeScope()
     }
     return scope.getCallableSymbols(name).filterIsInstance<KtFunctionSymbol>().toList()

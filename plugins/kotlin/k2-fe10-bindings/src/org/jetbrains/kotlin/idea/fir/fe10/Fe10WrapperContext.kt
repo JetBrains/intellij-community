@@ -74,7 +74,7 @@ fun KtReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContex
         else -> context.errorHandling("Unexpected type of owner: $owner")
     }
 
-fun KtClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
+fun KaClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
     when (this) {
         is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
         is KtAnonymousObjectSymbol -> context.implementationPlanned("KtAnonymousObjectSymbol")

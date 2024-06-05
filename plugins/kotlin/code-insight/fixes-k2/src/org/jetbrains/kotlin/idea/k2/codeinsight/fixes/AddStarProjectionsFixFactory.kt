@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -58,7 +58,7 @@ internal object AddStarProjectionsFixFactory {
 context(KtAnalysisSession)
 private fun getTargetClasses(
     typeReference: KtTypeReference,
-    classSymbol: KtClassOrObjectSymbol,
+    classSymbol: KaClassOrObjectSymbol,
 ): List<KtNamedClassOrObjectSymbol> {
     val parentWithSelfClasses = classSymbol.parentsWithSelf.mapNotNull { it as? KtNamedClassOrObjectSymbol }.toList()
 

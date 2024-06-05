@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -101,6 +101,6 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
             is KtNameReferenceExpression -> return receiverExpression.mainReference.resolveToSymbol()
         }
 
-        return callSymbol.getContainingSymbol() as? KtClassOrObjectSymbol
+        return callSymbol.getContainingSymbol() as? KaClassOrObjectSymbol
     }
 }

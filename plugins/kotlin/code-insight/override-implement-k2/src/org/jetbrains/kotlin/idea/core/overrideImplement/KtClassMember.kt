@@ -76,14 +76,14 @@ data class KtClassMember(
     memberInfo.memberIcon,
 ), ClassMember {
     override fun getParentNodeDelegate(): MemberChooserObject? = memberInfo.containingSymbolText?.let {
-        KtClassOrObjectSymbolChooserObject(
+        KaClassOrObjectSymbolChooserObject(
             memberInfo.containingSymbolText,
             memberInfo.containingSymbolIcon
         )
     }
 }
 
-private data class KtClassOrObjectSymbolChooserObject(
+private data class KaClassOrObjectSymbolChooserObject(
     @NlsContexts.Label val symbolText: String?,
     val symbolIcon: Icon?
 ) :
@@ -132,7 +132,7 @@ fun generateMember(
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
-            val containingSymbol = targetClass?.getSymbol() as? KtClassOrObjectSymbol
+            val containingSymbol = targetClass?.getSymbol() as? KaClassOrObjectSymbol
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
@@ -249,7 +249,7 @@ private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): 
 }
 
 context(KtAnalysisSession)
-private fun KtClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
+private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
     isRequiresOptInFqName(annotation.classId?.asSingleFqName())
 }
 

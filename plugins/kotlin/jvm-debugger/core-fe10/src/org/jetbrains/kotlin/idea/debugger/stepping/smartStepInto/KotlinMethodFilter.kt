@@ -14,7 +14,7 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -62,7 +62,7 @@ open class KotlinMethodFilter(
     private fun declarationMatches(currentDeclaration: KtDeclaration): Boolean {
         val currentSymbol = currentDeclaration.getSymbol()
         // callable or constructor
-        if (currentSymbol !is KtCallableSymbol && currentSymbol !is KtClassOrObjectSymbol) return false
+        if (currentSymbol !is KtCallableSymbol && currentSymbol !is KaClassOrObjectSymbol) return false
         if (methodInfo.isInvoke) {
             // There can be only one 'invoke' target at the moment so consider position as expected.
             // Descriptors can be not-equal, say when parameter has type `(T) -> T` and lambda is `Int.() -> Int`.

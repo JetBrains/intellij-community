@@ -33,12 +33,12 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
 }
 
 context(KtAnalysisSession)
-private fun getAssociatedClass(symbol: KtSymbol): KtClassOrObjectSymbol? {
+private fun getAssociatedClass(symbol: KtSymbol): KaClassOrObjectSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
     if (symbol !is KtCallableSymbol) return null
     return when (symbol) {
         is KtFunctionSymbol, is KtPropertySymbol ->
-            if (symbol.isExtension) symbol.receiverType?.expandedClassSymbol else symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+            if (symbol.isExtension) symbol.receiverType?.expandedClassSymbol else symbol.getContainingSymbol() as? KaClassOrObjectSymbol
         is KtVariableLikeSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
             variableType?.receiverType?.expandedClassSymbol
@@ -49,7 +49,7 @@ private fun getAssociatedClass(symbol: KtSymbol): KtClassOrObjectSymbol? {
 
 context(KtAnalysisSession)
 private fun getImplicitReceiverInfoOfClass(
-    implicitReceivers: List<KtImplicitReceiver>, associatedClass: KtClassOrObjectSymbol
+    implicitReceivers: List<KtImplicitReceiver>, associatedClass: KaClassOrObjectSymbol
 ): ImplicitReceiverInfo? {
     // We can't use "this" with label if the label is already taken
     val alreadyReservedLabels = mutableListOf<Name>()
@@ -73,10 +73,10 @@ private fun getImplicitReceiverInfoOfClass(
 }
 
 context(KtAnalysisSession)
-private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KtClassOrObjectSymbol, Name?>? {
+private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KaClassOrObjectSymbol, Name?>? {
     val associatedClass = receiver.type.expandedClassSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
-        is KtClassOrObjectSymbol -> receiverSymbol.name
+        is KaClassOrObjectSymbol -> receiverSymbol.name
         is KtAnonymousFunctionSymbol -> {
             val receiverPsi = receiverSymbol.psi
             val potentialLabeledPsi = receiverPsi?.parent?.parent

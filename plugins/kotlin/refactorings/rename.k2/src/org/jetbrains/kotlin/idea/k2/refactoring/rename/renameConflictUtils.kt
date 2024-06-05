@@ -262,7 +262,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
 
         fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
             val symbol = receiverValue.symbol
-            return if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
+            return if ((symbol as? KaClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
                 //specify companion name to avoid clashes with enum entries
                 symbol.name!!.asString()
             } else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
@@ -307,7 +307,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 val symbol = appliedSymbol?.symbol
                 val containingSymbol = symbol?.getContainingSymbol()
                 val containerFQN =
-                    if (containingSymbol is KtClassOrObjectSymbol) {
+                    if (containingSymbol is KaClassOrObjectSymbol) {
                         containingSymbol.classId?.asSingleFqName()?.parent()
                     } else if (containingSymbol == null) {
                         (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName

@@ -304,7 +304,7 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
 context(KtAnalysisSession)
 internal fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
-    return if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
+    return if ((symbol as? KaClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
         (symbol.getContainingSymbol() as KtClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
     }
     else {
