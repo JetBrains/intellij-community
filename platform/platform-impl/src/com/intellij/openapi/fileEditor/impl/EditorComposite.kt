@@ -126,7 +126,7 @@ open class EditorComposite internal constructor(
     private set
 
   @JvmField
-  internal val shownDeferred = CompletableDeferred<Unit>()
+  internal val initDeferred = CompletableDeferred<Unit>()
 
   init {
     EDT.assertIsEdt()
@@ -136,16 +136,16 @@ open class EditorComposite internal constructor(
     }
     else {
       if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
-        shownDeferred.complete(Unit)
+        initDeferred.complete(Unit)
       }
       else {
         UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
-          shownDeferred.complete(Unit)
+          initDeferred.complete(Unit)
         }
       }
 
-      coroutineScope.launch(ModalityState.any().asContextElement() + ClientId.coroutineContext()) {
-        shownDeferred.await()
+      coroutineScope.launch(ModalityState.any().asContextElement()) {
+        initDeferred.await()
         model.collect {
           handleModel(it)
         }
@@ -209,12 +209,6 @@ open class EditorComposite internal constructor(
           model = model,
           selectedFileEditorProvider = selectedFileEditor,
         )
-
-        // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
-        // For example, see EditorHistoryManager -
-        // we will get assertion if we return a non-empty list of editors but do not set selected file editor.
-        fileEditorWithProviderList.clear()
-        fileEditorWithProviderList.addAll(fileEditorWithProviders)
 
         val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
         blockingContext {
@@ -337,9 +331,6 @@ open class EditorComposite internal constructor(
       }
     }
 
-    // select and focus before restoring state, to reduce the chance of focus stealing
-    _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
-
     for (fileEditorWithProvider in fileEditorWithProviders) {
       val provider = fileEditorWithProvider.provider
       val stateData = model.state?.providers?.get(provider.editorTypeId)
@@ -356,6 +347,14 @@ open class EditorComposite internal constructor(
     }
 
     fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
+
+    // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
+    // For example, see EditorHistoryManager -
+    // we will get assertion if we return a non-empty list of editors but do not set selected file editor.
+    fileEditorWithProviderList.clear()
+    fileEditorWithProviderList.addAll(fileEditorWithProviders)
+
+    _selectedEditorWithProvider.value = fileEditorWithProviderToSelect
   }
 
   private fun setTabbedPaneComponent(tabbedPaneWrapper: TabbedPaneWrapper) {

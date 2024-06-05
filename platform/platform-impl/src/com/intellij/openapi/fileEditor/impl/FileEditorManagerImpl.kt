@@ -2247,7 +2247,7 @@ open class FileEditorManagerImpl(
       ) ?: return
 
       if (fileEntry.currentInTab || !isLazyComposite) {
-        composite.shownDeferred.complete(Unit)
+        composite.initDeferred.complete(Unit)
       }
 
       if (fileEntry.pinned) {
@@ -2520,6 +2520,9 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
 @Internal
 fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   ThreadingAssertions.assertEventDispatchThread()
+
+  // make sure that init is started
+  composite.initDeferred.complete(Unit)
 
   // https://youtrack.jetbrains.com/issue/IDEA-319932
   // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
