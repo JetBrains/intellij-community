@@ -63,7 +63,6 @@ public class MavenProject {
   }
 
   private final @NotNull VirtualFile myFile;
-  private final Path myPath;
   private volatile @NotNull State myState = new State();
 
   public enum ProcMode {BOTH, ONLY, NONE}
@@ -104,7 +103,6 @@ public class MavenProject {
 
   public MavenProject(@NotNull VirtualFile file) {
     myFile = file;
-    myPath = file.toNioPath();
   }
 
   @NotNull
@@ -331,7 +329,7 @@ public class MavenProject {
   }
 
   private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel, String basePath) {
-    String extension = StringUtil.notNullize(PathUtil.getFileExtension(myPath.toFile().getName()));
+    String extension = StringUtil.notNullize(myFile.getExtension());
     LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
@@ -380,16 +378,11 @@ public class MavenProject {
   }
 
   public @NotNull @NonNls String getPath() {
-    return myPath.toString();
+    return myFile.getPath();
   }
-
-  public @NotNull @NonNls Path getNioPath() {
-    return myPath;
-  }
-
 
   public @NotNull @NonNls String getDirectory() {
-    return myPath.getParent().toString();
+    return myFile.getParent().getPath();
   }
 
   public @NotNull VirtualFile getDirectoryFile() {

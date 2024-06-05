@@ -123,7 +123,7 @@ public final class MavenModuleNameMapper {
 
     private String getDefaultModuleName() {
       var nameTemplate = Registry.stringValue("maven.import.module.name.template");
-      var folderName = project.getNioPath().getParent().toFile().getName();
+      var folderName = project.getDirectoryFile().getName();
       var mavenId = project.getMavenId();
       var nameCandidate = switch (nameTemplate) {
         case "folderName" -> folderName;
