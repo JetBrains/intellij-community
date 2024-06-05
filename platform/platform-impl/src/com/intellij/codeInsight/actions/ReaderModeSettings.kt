@@ -62,6 +62,9 @@ interface ReaderModeSettings : Disposable {
         else {
           getInstance(project).coroutineScope.launch {
             val matchMode = readAction {
+              if (!file.isValid) {
+                return@readAction false
+              }
               val value = matchMode(project, file, editor)
               file.setMatchModeCached(value)
               value
