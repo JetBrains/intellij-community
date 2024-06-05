@@ -16,7 +16,7 @@ class JpsFileCopyPackagingElementImpl extends JpsFileCopyPackagingElementBase<Jp
 
   @NotNull
   @Override
-  public JpsFileCopyPackagingElementImpl createCopy() {
+  public JpsFileCopyPackagingElementImpl createElementCopy() {
     return new JpsFileCopyPackagingElementImpl(myFilePath, myRenamedOutputFileName);
   }
 

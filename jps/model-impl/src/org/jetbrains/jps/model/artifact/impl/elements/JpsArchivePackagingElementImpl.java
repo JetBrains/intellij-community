@@ -31,9 +31,14 @@ class JpsArchivePackagingElementImpl extends JpsCompositePackagingElementBase<Jp
     myArchiveName = original.myArchiveName;
   }
 
+  @Override
+  public @NotNull JpsArchivePackagingElementImpl createCopy() {
+    return new JpsArchivePackagingElementImpl(this);
+  }
+
   @NotNull
   @Override
-  public JpsArchivePackagingElementImpl createCopy() {
+  public JpsArchivePackagingElementImpl createElementCopy() {
     return new JpsArchivePackagingElementImpl(this);
   }
 

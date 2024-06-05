@@ -26,9 +26,14 @@ class JpsArtifactRootElementImpl extends JpsCompositePackagingElementBase<JpsArt
     super(original);
   }
 
+  @Override
+  public @NotNull JpsArtifactRootElementImpl createCopy() {
+    return new JpsArtifactRootElementImpl();
+  }
+
   @NotNull
   @Override
-  public JpsArtifactRootElementImpl createCopy() {
+  public JpsArtifactRootElementImpl createElementCopy() {
     return new JpsArtifactRootElementImpl();
   }
 }

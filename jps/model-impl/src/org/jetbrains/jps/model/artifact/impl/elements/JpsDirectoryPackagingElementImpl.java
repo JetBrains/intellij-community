@@ -30,9 +30,14 @@ class JpsDirectoryPackagingElementImpl extends JpsCompositePackagingElementBase<
     myDirectoryName = original.myDirectoryName;
   }
 
+  @Override
+  public @NotNull JpsDirectoryPackagingElementImpl createCopy() {
+    return new JpsDirectoryPackagingElementImpl(this);
+  }
+
   @NotNull
   @Override
-  public JpsDirectoryPackagingElementImpl createCopy() {
+  public JpsDirectoryPackagingElementImpl createElementCopy() {
     return new JpsDirectoryPackagingElementImpl(this);
   }
 

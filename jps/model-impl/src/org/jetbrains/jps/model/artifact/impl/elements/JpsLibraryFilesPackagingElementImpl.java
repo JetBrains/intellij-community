@@ -46,7 +46,7 @@ class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElementBase
 
   @NotNull
   @Override
-  public JpsLibraryFilesPackagingElementImpl createCopy() {
+  public JpsLibraryFilesPackagingElementImpl createElementCopy() {
     return new JpsLibraryFilesPackagingElementImpl(this);
   }
 

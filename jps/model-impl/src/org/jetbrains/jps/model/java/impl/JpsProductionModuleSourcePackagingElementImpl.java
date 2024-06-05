@@ -28,9 +28,14 @@ final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeEl
     super(original);
   }
 
+  @Override
+  public @NotNull JpsProductionModuleSourcePackagingElementImpl createCopy() {
+    return new JpsProductionModuleSourcePackagingElementImpl(this);
+  }
+
   @NotNull
   @Override
-  public JpsProductionModuleSourcePackagingElementImpl createCopy() {
+  public JpsProductionModuleSourcePackagingElementImpl createElementCopy() {
     return new JpsProductionModuleSourcePackagingElementImpl(this);
   }
 

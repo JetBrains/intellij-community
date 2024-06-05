@@ -19,6 +19,7 @@ a:org.jetbrains.jps.model.artifact.impl.elements.JpsModuleOutputPackagingElement
 - org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
 - <init>(org.jetbrains.jps.model.artifact.impl.elements.JpsModuleOutputPackagingElementBase):V
 - <init>(org.jetbrains.jps.model.module.JpsModuleReference):V
+- createCopy():org.jetbrains.jps.model.artifact.impl.elements.JpsModuleOutputPackagingElementBase
 - getModuleReference():org.jetbrains.jps.model.module.JpsModuleReference
 - getOutputUrl():java.lang.String
 - pa:getOutputUrl(org.jetbrains.jps.model.module.JpsModule):java.lang.String

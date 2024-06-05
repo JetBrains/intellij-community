@@ -45,7 +45,7 @@ class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingElementBa
 
   @NotNull
   @Override
-  public JpsArtifactOutputPackagingElementImpl createCopy() {
+  public JpsArtifactOutputPackagingElementImpl createElementCopy() {
     return new JpsArtifactOutputPackagingElementImpl(this);
   }
 

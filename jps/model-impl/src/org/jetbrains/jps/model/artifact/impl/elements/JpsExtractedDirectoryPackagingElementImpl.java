@@ -17,7 +17,7 @@ class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackagingElem
 
   @NotNull
   @Override
-  public JpsExtractedDirectoryPackagingElementImpl createCopy() {
+  public JpsExtractedDirectoryPackagingElementImpl createElementCopy() {
     return new JpsExtractedDirectoryPackagingElementImpl(myFilePath, myPathInJar);
   }
 

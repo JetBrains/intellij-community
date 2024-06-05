@@ -34,7 +34,7 @@ final class JpsTestModuleOutputPackagingElementImpl extends JpsModuleOutputPacka
 
   @NotNull
   @Override
-  public JpsTestModuleOutputPackagingElementImpl createCopy() {
+  public JpsTestModuleOutputPackagingElementImpl createElementCopy() {
     return new JpsTestModuleOutputPackagingElementImpl(this);
   }
 

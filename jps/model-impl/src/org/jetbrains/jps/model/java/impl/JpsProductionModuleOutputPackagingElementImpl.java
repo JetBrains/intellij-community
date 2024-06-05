@@ -34,7 +34,7 @@ class JpsProductionModuleOutputPackagingElementImpl extends JpsModuleOutputPacka
 
   @NotNull
   @Override
-  public JpsProductionModuleOutputPackagingElementImpl createCopy() {
+  public JpsProductionModuleOutputPackagingElementImpl createElementCopy() {
     return new JpsProductionModuleOutputPackagingElementImpl(this);
   }
 
