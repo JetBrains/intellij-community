@@ -6,7 +6,6 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
-import com.intellij.execution.JavaExecutionUtil
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.JavaRunConfigurationModule
@@ -21,7 +20,6 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
@@ -30,16 +28,12 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
@@ -65,13 +59,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val runProfile = executeRunConfigurationTask.runProfile
     if (runProfile !is JavaRunConfigurationBase) return null
 
-    val runClass = runProfile.runClass
-    val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
-    val mainClassName = JavaExecutionUtil.getRuntimeQualifiedName(mainClass) ?: return null
-    val virtualFile = mainClass.containingFile.virtualFile
-    val module = runReadAction {
-      ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
-    } ?: return null
+    val mainClass = runProfile.runClass ?: return null
+    val module = runProfile.configurationModule.module ?: return null
 
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)
@@ -107,10 +96,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
     taskSettings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
 
-    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module)
-    taskSettings.externalProjectPath = gradleModuleData?.directoryToRunTask ?: GradleRunnerUtil.resolveProjectPath(module)
-    val runAppTaskName = mainClass.name!! + ".main()"
-    taskSettings.taskNames = listOf((gradleModuleData?.getTaskPath(runAppTaskName) ?: runAppTaskName))
+    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
+    val externalProjectPath = gradleModuleData.directoryToRunTask
+    taskSettings.externalProjectPath = externalProjectPath
+    val runAppTaskName = "$mainClass.main()"
+    taskSettings.taskNames = listOf(gradleModuleData.getTaskPath(runAppTaskName))
     customiseTaskExecutionsSettings(taskSettings, module)
 
     val executorId = executor?.id ?: DefaultRunExecutor.EXECUTOR_ID
@@ -120,12 +110,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val gradleRunConfiguration = runnerAndConfigurationSettings.configuration as ExternalSystemRunConfiguration
 
     val gradlePath = getGradleIdentityPathOrNull(module) ?: return null
-    val sourceSetName = when {
-                          GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY == ExternalSystemApiUtil.getExternalModuleType(
-                            module) -> GradleProjectResolverUtil.getSourceSetName(module)
-                          ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContent(virtualFile) -> "test"
-                          else -> "main"
-                        } ?: return null
+    val sourceSetName = GradleProjectResolverUtil.getSourceSetName(module) ?: return null
     val applicationConfiguration = runProfile as T
     val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
       FileUtil.toSystemIndependentName(it)
@@ -135,7 +120,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       .withParams(argsString(params))
       .withGradleTaskPath(gradlePath)
       .withRunAppTaskName(runAppTaskName)
-      .withMainClass(mainClassName)
+      .withMainClass(mainClass)
       .withJavaExePath(javaExePath)
       .withSourceSetName(sourceSetName)
       .withJavaModuleName(javaModuleName)
@@ -164,11 +149,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       return result.toString()
     }
 
-    private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
+    private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: String): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
         runReadAction {
           DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule?, RuntimeException> {
-            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
+            JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass))
           }?.name
         } ?: return null
       }
