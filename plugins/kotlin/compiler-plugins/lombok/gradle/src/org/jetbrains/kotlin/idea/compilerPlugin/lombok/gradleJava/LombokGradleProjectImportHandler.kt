@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava
 import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
-import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModel
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.lombok.LombokPluginNames
 
 class LombokGradleProjectImportHandler : AbstractCompilerPluginGradleImportHandler<LombokModel>() {

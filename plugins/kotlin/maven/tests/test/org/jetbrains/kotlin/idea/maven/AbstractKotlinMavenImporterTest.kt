@@ -52,7 +52,7 @@ import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
@@ -68,7 +68,6 @@ import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.Assume
 import org.junit.Test
-import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
@@ -3981,10 +3980,4 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             }
         }
     }
-}
-
-fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    val kotlincDirectory = KotlinPluginLayout.kotlinc
-    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
-    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }
