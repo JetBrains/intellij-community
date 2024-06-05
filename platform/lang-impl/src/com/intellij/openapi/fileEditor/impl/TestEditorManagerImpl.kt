@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -103,7 +102,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 
   override fun openFile(file: VirtualFile, window: EditorWindow?, options: FileEditorOpenOptions): FileEditorComposite {
-    return openFileInCommand(OpenFileDescriptor(project, file), options)
+    return doOpenFile(descriptor = OpenFileDescriptor(project, file), options = options)
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
@@ -444,7 +443,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    for ((editor, _) in openFileInCommand(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditorsWithProviders) {
+    for ((editor, _) in doOpenFile(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditorsWithProviders) {
       if (editor is TextEditor) {
         return editor.editor
       }
@@ -452,22 +451,18 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return null
   }
 
-  private fun openFileInCommand(descriptor: FileEditorNavigatable, options: FileEditorOpenOptions): FileEditorComposite {
-    var result: FileEditorComposite? = null
-    CommandProcessor.getInstance().executeCommand(project, {
-      val composite = openFileImpl3(descriptor, options)
-      for ((editor, provider) in composite.allEditorsWithProviders) {
-        if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
-          if (editor.canNavigateTo(descriptor)) {
-            setSelectedEditor(file = descriptor.file, fileEditorProviderId = provider.editorTypeId)
-            editor.navigateTo(descriptor)
-          }
-          break
+  private fun doOpenFile(descriptor: FileEditorNavigatable, options: FileEditorOpenOptions): FileEditorComposite {
+    val composite = openFileImpl3(descriptor, options)
+    for ((editor, provider) in composite.allEditorsWithProviders) {
+      if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
+        if (editor.canNavigateTo(descriptor)) {
+          setSelectedEditor(file = descriptor.file, fileEditorProviderId = provider.editorTypeId)
+          editor.navigateTo(descriptor)
         }
+        break
       }
-      result = composite
-    }, "", null)
-    return result!!
+    }
+    return composite
   }
 
   private fun doOpenTextEditor(descriptor: FileEditorNavigatable): Editor {
@@ -492,7 +487,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 
   override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {
-    return openFileInCommand(descriptor, options = FileEditorOpenOptions(requestFocus = focusEditor)).allEditors
+    return doOpenFile(descriptor, options = FileEditorOpenOptions(requestFocus = focusEditor)).allEditors
   }
 
   override fun getProject(): Project = project

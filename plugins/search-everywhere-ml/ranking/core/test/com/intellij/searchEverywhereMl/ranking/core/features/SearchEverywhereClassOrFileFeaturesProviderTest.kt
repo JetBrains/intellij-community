@@ -390,7 +390,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     val openedFiles = prepareForRecentIndexTest()
 
     checkThatFeature(RECENT_INDEX_DATA_KEY)
-      .ofElement(openedFiles.last()) // Last opened file (i.e. the most recent)
+      .ofElement(openedFiles.last()) // last opened file (i.e., the most recent)
       .isEqualTo(1)
   }
 
@@ -448,11 +448,15 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     closeAllOpenedFiles()
     EditorHistoryManager.getInstance(project).removeAllFiles()
 
-    val editor = FileEditorManager.getInstance(project)
-    return (1..numberOfFiles).map {
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val files = (1..numberOfFiles).map {
       val file = createTempVirtualFile("file$it.txt", null, "", StandardCharsets.UTF_8)
       MockPsiFile(file, PsiManager.getInstance(project))
-    }.onEach { file -> editor.openFile(file.virtualFile, true) }
+    }
+    for (file in files) {
+      fileEditorManager.openFile(file.virtualFile, true)
+    }
+    return files
   }
 
   private fun closeAllOpenedFiles() {
