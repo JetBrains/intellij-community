@@ -5053,7 +5053,54 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addElseBranchToIf")
+    public static class AddElseBranchToIf extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("error.kt")
+        public void testError() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/error.kt");
+        }
+
+        @TestMetadata("errorWithBlock.kt")
+        public void testErrorWithBlock() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/errorWithBlock.kt");
+        }
+
+        @TestMetadata("inElvis.kt")
+        public void testInElvis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/inElvis.kt");
+        }
+
+        @TestMetadata("inElvisBlock.kt")
+        public void testInElvisBlock() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/inElvisBlock.kt");
+        }
+
+        @TestMetadata("inElvisWithoutThen.kt")
+        public void testInElvisWithoutThen() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/inElvisWithoutThen.kt");
+        }
+
+        @TestMetadata("withoutCloseParenthesisInCondition.kt")
+        public void testWithoutCloseParenthesisInCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/withoutCloseParenthesisInCondition.kt");
+        }
+
+        @TestMetadata("withoutCondition.kt")
+        public void testWithoutCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addElseBranchToIf/withoutCondition.kt");
+        }
+    }
 
 
 
