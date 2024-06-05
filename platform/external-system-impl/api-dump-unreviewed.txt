@@ -706,6 +706,7 @@ f:com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - doInvoke(com.intellij.openapi.externalSystem.util.IntegrationKey,com.intellij.openapi.project.Project,java.lang.reflect.Method,java.lang.Object[],I):java.lang.Object
 - getCommunicationManager(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
 - getFacade(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
+- s:getInstance():com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - isTaskActive(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
 - onProjectRename(java.lang.String,java.lang.String):V
 a:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater

@@ -255,4 +255,8 @@ public final class ExternalSystemFacadeManager {
       return doInvoke(myKey.get(), project, method, args, REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER);
     }
   }
+
+  public static @NotNull ExternalSystemFacadeManager getInstance() {
+    return ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
+  }
 }
