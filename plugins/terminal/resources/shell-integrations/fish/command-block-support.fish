@@ -22,6 +22,8 @@ end
 function __jetbrains_intellij_initialize --on-event fish_prompt
   __jetbrains_intellij_report_prompt_state
   __jetbrains_intellij_debug_log 'initialized'
+  set -l hist "(builtin history)"
+  __jetbrains_intellij_send_message 'command_history;history_string=%s' (__jetbrains_intellij_encode "$hist")
   __jetbrains_intellij_send_message 'initialized'
   functions --erase __jetbrains_intellij_initialize
 

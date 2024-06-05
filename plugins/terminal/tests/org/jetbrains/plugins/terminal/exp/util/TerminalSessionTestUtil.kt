@@ -14,6 +14,7 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
+import com.jediterm.terminal.TerminalCustomCommandListener
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.testApps.LINE_SEPARATOR
@@ -31,10 +32,15 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 internal object TerminalSessionTestUtil {
-  fun startBlockTerminalSession(project: Project,
-                                shellPath: String,
-                                parentDisposable: Disposable,
-                                initialTermSize: TermSize = TermSize(200, 20)): BlockTerminalSession {
+
+  fun startBlockTerminalSession(
+    project: Project,
+    shellPath: String,
+    parentDisposable: Disposable,
+    initialTermSize: TermSize = TermSize(200, 20),
+    disableSavingHistory: Boolean = true,
+    terminalCustomCommandListener: TerminalCustomCommandListener = TerminalCustomCommandListener {}
+  ): BlockTerminalSession {
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY).setValue(true, parentDisposable)
@@ -42,7 +48,10 @@ internal object TerminalSessionTestUtil {
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_UNIX_REGISTRY).setValue(true, parentDisposable)
     val runner = LocalBlockTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath)).initialTermSize(initialTermSize)
-      .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true"))
+      .envVariables(listOfNotNull(
+        EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true",
+        ("HISTFILE" to "/dev/null").takeIf { disableSavingHistory }
+      ).toMap())
       .build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
     assumeBlockShellIntegration(configuredOptions)
@@ -53,6 +62,7 @@ internal object TerminalSessionTestUtil {
     Disposer.register(parentDisposable, session)
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
+    session.controller.addCustomCommandListener(terminalCustomCommandListener)
 
     val initializedFuture = CompletableFuture<Boolean>()
     val listenersDisposable = Disposer.newDisposable()
@@ -75,12 +85,14 @@ internal object TerminalSessionTestUtil {
       Disposer.dispose(listenersDisposable)
     }
 
-    disableSavingHistory(session)
+    if (disableSavingHistory) {
+      disableSavingHistory(session)
+    }
 
     return session
   }
 
-  private fun disableSavingHistory(session: BlockTerminalSession) {
+  fun disableSavingHistory(session: BlockTerminalSession) {
     if (session.shellIntegration.shellType == ShellType.POWERSHELL) {
       val commandResultFuture = getCommandResultFuture(session)
       // Disable saving history for the session only, not persisting.
@@ -204,8 +216,22 @@ internal object TerminalSessionTestUtil {
   fun getShellPaths(): List<Path> {
     return listOf(
       "/bin/zsh",
+      "/urs/bin/zsh",
+      "/urs/local/bin/zsh",
+      "/opt/homebrew/bin/zsh",
       "/bin/bash",
-      "/usr/local/bin/fish",
+      "/usr/bin/bash",
+      "/usr/local/bin/bash",
+      "/opt/homebrew/bin/bash",
+      // Disable fish because it fails tests on merge requests
+      //"/bin/fish",
+      //"/usr/bin/fish",
+      //"/usr/local/bin/fish",
+      //"/opt/homebrew/bin/fish",
+      "/bin/pwsh",
+      "/usr/bin/pwsh",
+      "/usr/local/bin/pwsh",
+      "/opt/homebrew/bin/pwsh",
       "powershell.exe",
       "pwsh.exe",
     ).mapNotNull {

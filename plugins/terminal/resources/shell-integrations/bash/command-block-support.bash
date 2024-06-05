@@ -138,11 +138,11 @@ __jetbrains_intellij_command_terminated() {
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_fix_prompt_command_order
+    builtin local hist="$(HISTTIMEFORMAT="" builtin history)"
+    builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
     builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
     __jetbrains_intellij_debug_log 'initialized'
     builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode $shell_info)"
-    builtin local hist="$(HISTTIMEFORMAT="" builtin history)"
-    builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
   else
     __jetbrains_intellij_debug_log "command_finished exit_code=$last_exit_code"
     builtin printf '\e]1341;command_finished;exit_code=%s\a' "$last_exit_code"
