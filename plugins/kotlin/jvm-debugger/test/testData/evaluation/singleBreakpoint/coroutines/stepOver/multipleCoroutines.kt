@@ -2,21 +2,19 @@
 
 import kotlinx.coroutines.*
 
-fun main() {
-    runBlocking {
-        for (i in 1 .. 100) {
-            launch(Dispatchers.Default) {
-                if (i == 5) {
-                    //Breakpoint!
-                    startMethod(i)
-                }
-                delay(1)
-                endMethod(i)
-                // EXPRESSION: i
-                // RESULT: 5: I
-                println(i)
-            }
+
+
+private fun CoroutineScope.work(i: Int) {
+    launch(Dispatchers.Default) {
+        if (i == 5) {
+            //Breakpoint!
+            startMethod(i)
         }
+        delay(1)
+        endMethod(i)
+        // EXPRESSION: i
+        // RESULT: 5: I
+        println(i)
     }
 }
 
@@ -30,6 +28,17 @@ suspend fun startMethod(i: Int) {
 suspend fun endMethod(i: Int) {
     delay(1)
     println("End")
+}
+
+fun main() {
+    runBlocking {
+        coroutineScope {
+            work(-1)
+        }
+        for (i in 1 .. 100) {
+            work(i)
+        }
+    }
 }
 
 // STEP_OVER: 4
