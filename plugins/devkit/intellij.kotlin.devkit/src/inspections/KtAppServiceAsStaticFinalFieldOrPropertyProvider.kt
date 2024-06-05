@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -53,7 +53,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
           analyze(property) {
             // return if it's an explicit constructor call
             val resolveSymbol = property.initializer?.resolveCall()?.singleFunctionCallOrNull()?.symbol
-            val isConstructorCall = resolveSymbol is KtSamConstructorSymbol || resolveSymbol is KaConstructorSymbol
+            val isConstructorCall = resolveSymbol is KaSamConstructorSymbol || resolveSymbol is KaConstructorSymbol
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass

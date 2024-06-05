@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -367,7 +367,7 @@ private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
     val resolveCall = initializer.resolveCall() ?: return false
     val functionCall = resolveCall.singleFunctionCallOrNull()
-    if (functionCall?.symbol is KtSamConstructorSymbol) {
+    if (functionCall?.symbol is KaSamConstructorSymbol) {
         return true
     }
 

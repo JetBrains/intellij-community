@@ -312,7 +312,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 ktCallElement.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return UastCallKind.METHOD_CALL
             val fqName = resolvedFunctionLikeSymbol.callableId?.asSingleFqName()
             return when {
-                resolvedFunctionLikeSymbol is KtSamConstructorSymbol ||
+                resolvedFunctionLikeSymbol is KaSamConstructorSymbol ||
                         resolvedFunctionLikeSymbol is KaConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
 
                 fqName != null && isAnnotationArgumentArrayInitializer(ktCallElement, fqName) -> UastCallKind.NESTED_ARRAY_INITIALIZER
@@ -341,7 +341,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     toPsiClass(resolvedFunctionLikeSymbol.returnType, source, context, ktCallElement.typeOwnerKind)
                 }
 
-                is KtSamConstructorSymbol -> {
+                is KaSamConstructorSymbol -> {
                     toPsiClass(resolvedFunctionLikeSymbol.returnType, source, ktCallElement, ktCallElement.typeOwnerKind)
                 }
 
