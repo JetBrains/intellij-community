@@ -85,44 +85,34 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     ExternalSystemTaskId id = getId();
     String projectPath = getExternalProjectPath();
 
-    ExternalSystemExecutionSettings settings;
-    RemoteExternalSystemTaskManager taskManager;
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
-    try {
-      progressNotificationManager.onStart(id, projectPath);
 
-      Project project = getIdeProject();
-      ProjectSystemId projectSystemId = getExternalSystemId();
-      ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
-      for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
-        executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
-        if (environmentConfigurationProvider != null) continue;
-        environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myConfiguration, project);
-      }
-
-      final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
-      settings = ExternalSystemApiUtil.getExecutionSettings(project, projectPath, projectSystemId);
-      KeyFMap keyFMap = getUserMap();
-      for (Key key : keyFMap.getKeys()) {
-        settings.putUserData(key, keyFMap.get(key));
-      }
-      ExternalSystemExecutionAware.Companion.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
-
-      RemoteExternalSystemFacade facade = manager.getFacade(project, projectPath, projectSystemId);
-      taskManager = facade.getTaskManager();
-      final List<String> vmOptions = parseCmdParameters(myVmOptions);
-      final List<String> arguments = parseCmdParameters(myArguments);
-      settings
-        .withVmOptions(vmOptions)
-        .withArguments(arguments)
-        .withEnvironmentVariables(myEnv)
-        .passParentEnvs(myPassParentEnvs);
+    Project project = getIdeProject();
+    ProjectSystemId projectSystemId = getExternalSystemId();
+    ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
+    for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
+      if (environmentConfigurationProvider != null) continue;
+      environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myConfiguration, project);
     }
-    catch (Exception e) {
-      progressNotificationManager.onFailure(id, e);
-      progressNotificationManager.onEnd(id);
-      throw e;
+
+    final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
+    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(project, projectPath, projectSystemId);
+    KeyFMap keyFMap = getUserMap();
+    for (Key key : keyFMap.getKeys()) {
+      settings.putUserData(key, keyFMap.get(key));
     }
+    ExternalSystemExecutionAware.Companion.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
+
+    RemoteExternalSystemFacade facade = manager.getFacade(project, projectPath, projectSystemId);
+    RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
+    final List<String> vmOptions = parseCmdParameters(myVmOptions);
+    final List<String> arguments = parseCmdParameters(myArguments);
+    settings
+      .withVmOptions(vmOptions)
+      .withArguments(arguments)
+      .withEnvironmentVariables(myEnv)
+      .passParentEnvs(myPassParentEnvs);
 
     StructuredIdeActivity activity =
       externalSystemTaskStarted(getIdeProject(), getExternalSystemId(), ExecuteTask, environmentConfigurationProvider);

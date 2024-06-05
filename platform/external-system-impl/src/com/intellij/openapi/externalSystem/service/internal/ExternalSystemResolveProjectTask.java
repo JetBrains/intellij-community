@@ -84,38 +84,27 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     ExternalSystemTaskId id = getId();
     ProjectSystemId projectSystemId = getExternalSystemId();
 
-    Project project;
-    RemoteExternalSystemProjectResolver resolver;
-    ExternalSystemExecutionSettings settings;
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
-    try {
-      progressNotificationManager.onStart(id, myProjectPath);
 
-      project = getIdeProject();
+    Project project = getIdeProject();
 
-      ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
-      for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
-        executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, project);
-        if (environmentConfigurationProvider != null) continue;
-        environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myProjectPath, myIsPreviewMode, project);
-      }
-
-      final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
-      resolver = manager.getFacade(project, myProjectPath, projectSystemId).getResolver();
-      settings = ExternalSystemApiUtil.getExecutionSettings(project, myProjectPath, projectSystemId);
-      if (StringUtil.isNotEmpty(myVmOptions)) {
-        settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
-      }
-      if (StringUtil.isNotEmpty(myArguments)) {
-        settings.withArguments(ParametersListUtil.parse(myArguments));
-      }
-      ExternalSystemExecutionAware.Companion.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
+    ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
+    for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, project);
+      if (environmentConfigurationProvider != null) continue;
+      environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myProjectPath, myIsPreviewMode, project);
     }
-    catch (Exception e) {
-      progressNotificationManager.onFailure(id, e);
-      progressNotificationManager.onEnd(id);
-      throw e;
+
+    final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
+    RemoteExternalSystemProjectResolver resolver = manager.getFacade(project, myProjectPath, projectSystemId).getResolver();
+    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(project, myProjectPath, projectSystemId);
+    if (StringUtil.isNotEmpty(myVmOptions)) {
+      settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
     }
+    if (StringUtil.isNotEmpty(myArguments)) {
+      settings.withArguments(ParametersListUtil.parse(myArguments));
+    }
+    ExternalSystemExecutionAware.Companion.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
 
     StructuredIdeActivity activity = externalSystemTaskStarted(project, projectSystemId, ResolveProject, environmentConfigurationProvider);
     try {
@@ -140,10 +129,8 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
           linkedProjectSettings.setModules(externalModulePaths);
         }
       }
-      progressNotificationManager.onSuccess(id);
     }
     finally {
-      progressNotificationManager.onEnd(id);
       activity.finished();
     }
   }

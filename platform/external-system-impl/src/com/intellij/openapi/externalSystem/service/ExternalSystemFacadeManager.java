@@ -8,9 +8,6 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.IntegrationKey;
 import com.intellij.openapi.project.Project;
@@ -52,14 +49,12 @@ public final class ExternalSystemFacadeManager {
 
   private final @NotNull Lock          myLock                   = new ReentrantLock();
 
-  private final @NotNull RemoteExternalSystemProgressNotificationManager myProgressManager;
   private final @NotNull RemoteExternalSystemCommunicationManager        myRemoteCommunicationManager;
   private final @NotNull InProcessExternalSystemCommunicationManager     myInProcessCommunicationManager;
 
   public ExternalSystemFacadeManager() {
     Application app = ApplicationManager.getApplication();
 
-    myProgressManager = (RemoteExternalSystemProgressNotificationManager)ExternalSystemProgressNotificationManager.getInstance();
     myRemoteCommunicationManager = app.getService(RemoteExternalSystemCommunicationManager.class);
     myInProcessCommunicationManager = app.getService(InProcessExternalSystemCommunicationManager.class);
   }
@@ -189,13 +184,12 @@ public final class ExternalSystemFacadeManager {
         myRemoteFacades.clear();
       }
     });
-    final RemoteExternalSystemFacade result = new ExternalSystemFacadeWrapper(facade, myProgressManager);
     ExternalSystemExecutionSettings settings
       = ExternalSystemApiUtil.getExecutionSettings(project, key.getExternalProjectConfigPath(), key.getExternalSystemId());
-    Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> newPair = Pair.create(result, settings);
+    Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> newPair = Pair.create(facade, settings);
     myRemoteFacades.put(key, newPair);
-    result.applySettings(newPair.second);
-    return result;
+    facade.applySettings(newPair.second);
+    return facade;
   }
 
   @SuppressWarnings("unchecked")
