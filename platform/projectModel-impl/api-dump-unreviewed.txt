@@ -1232,6 +1232,7 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCache
 - f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
 - sf:INSTANCE:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
+- sf:createPropertiesCopy(org.jetbrains.jps.model.JpsElement,org.jetbrains.jps.model.module.JpsModuleSourceRootType):org.jetbrains.jps.model.JpsElement
 - f:findSerializer(org.jetbrains.jps.model.module.JpsModuleSourceRootType):org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 - com.intellij.openapi.roots.TestModuleProperties

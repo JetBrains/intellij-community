@@ -39,6 +39,18 @@ object SourceRootPropertiesHelper {
     return serializer as JpsModuleSourceRootPropertiesSerializer<P>?
   }
 
+  @JvmStatic
+  fun <P : JpsElement> createPropertiesCopy(properties: P, type: JpsModuleSourceRootType<P>): P {
+    val serializer = findSerializer(type)
+    if (serializer == null) {
+      LOG.warn("Cannot find serializer for $type")
+      return type.createDefaultProperties()
+    }
+    val element = Element("properties")
+    serializer.saveProperties(properties, element)
+    return serializer.loadProperties(element)
+  }
+
   internal fun hasEqualProperties(entity: SourceRootEntity, sourceRoot: JpsModuleSourceRoot): Boolean {
     val properties = sourceRoot.properties
     val javaSourceEntity = entity.asJavaSourceRoot()
