@@ -452,7 +452,7 @@
     group="LAMBDAS_GROUP"
     providerId="groovy.lambda.parameter.inlay.provider"
     bundle="messages.GroovyBundle"
-    nameKey="settings.inlay.groovy.implicit.null.argument.provider.name"
+    nameKey="settings.inlay.groovy.lambda.parameter.provider.name"
     descriptionKey="settings.inlay.groovy.lambda.parameter.provider.description"
     />
     <codeInsight.parameterNameHints
