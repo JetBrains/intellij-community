@@ -67,6 +67,8 @@ public final class JpsAntExtensionService {
     String antPath = System.getProperty(BUNDLED_ANT_PATH_PROPERTY);
     File antHome;
     if (antPath != null) {
+      LOG.info("Using bundled Ant " + antPath);
+
       antHome = new File(antPath);
     }
     else {
