@@ -26,7 +26,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
 
     protected val kotlinRefactoringSettings: KotlinCommonRefactoringSettings = KotlinCommonRefactoringSettings.getInstance()
 
-    final override fun isKeepTheDeclarationByDefault(): Boolean = inlineKeepOption.get(kotlinRefactoringSettings)
+    override fun isKeepTheDeclarationByDefault(): Boolean = inlineKeepOption.get(kotlinRefactoringSettings)
     final override fun isInlineThis(): Boolean = inlineThisOption.get(kotlinRefactoringSettings)
     public final override fun doAction() {
         invokeRefactoring(createProcessor())

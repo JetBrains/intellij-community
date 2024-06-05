@@ -38,6 +38,10 @@ abstract class AbstractKotlinInlinePropertyDialog(property: KtProperty,
         init()
     }
 
+    override fun isKeepTheDeclarationByDefault(): Boolean {
+        return !simpleLocal && super.isKeepTheDeclarationByDefault()
+    }
+
     override val inlineThisOption: KMutableProperty1<KotlinCommonRefactoringSettings, Boolean> get() = KotlinCommonRefactoringSettings::INLINE_LOCAL_THIS
     override val inlineKeepOption: KMutableProperty1<KotlinCommonRefactoringSettings, Boolean> get() = KotlinCommonRefactoringSettings::INLINE_PROPERTY_KEEP
     fun shouldBeShown() = !simpleLocal || reference != null && EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
