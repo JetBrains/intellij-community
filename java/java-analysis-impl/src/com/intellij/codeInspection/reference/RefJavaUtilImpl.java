@@ -206,17 +206,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          if (node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
                            PsiElement resolvedMethod = returnToPhysical(node.resolve());
-                           RefMethod refConstructor = processNewLikeConstruct(resolvedMethod, node);
-
-                           if (refConstructor == null) {  // No explicit constructor referenced. Should use default one.
-                             UReferenceExpression reference = node.getClassReference();
-                             if (reference != null) {
-                               PsiElement constructorClass = reference.resolve();
-                               if (constructorClass instanceof PsiClass psiClass) {
-                                 processClassReference(psiClass, true, node);
-                               }
-                             }
-                           }
+                           processNewLikeConstruct(resolvedMethod, node);
                          }
                          try {
                            node.getTypeArguments().forEach(this::visitTypeRefs);
@@ -342,22 +332,27 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                          refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
 
-                       @Nullable
-                       private RefMethod processNewLikeConstruct(PsiElement javaConstructor, UCallExpression call) {
-                         if (javaConstructor == null) return null;
-                         RefMethodImpl refConstructor =
+                       private void processNewLikeConstruct(PsiElement javaConstructor, UCallExpression call) {
+                         RefMethodImpl refConstructor = javaConstructor == null ? null :
                            ObjectUtils.tryCast(refManager.getReference(javaConstructor.getOriginalElement()), RefMethodImpl.class);
-                         refFrom.addReference(refConstructor, javaConstructor, decl, false, true, null);
-
-                         for (UExpression arg : call.getValueArguments()) {
-                           arg.accept(this);
-                         }
 
                          if (refConstructor != null) {
                            refConstructor.initializeIfNeeded();
+                           refFrom.addReference(refConstructor, javaConstructor, decl, false, true, call);
                            refConstructor.updateParameterValues(call, javaConstructor);
                          }
-                         return refConstructor;
+                         else {
+                           UReferenceExpression reference = call.getClassReference();
+                           if (reference != null) {
+                             PsiElement constructorClass = reference.resolve();
+                             if (constructorClass instanceof PsiClass psiClass) {
+                               processClassReference(psiClass, true, call);
+                             }
+                           }
+                         }
+                         for (UExpression arg : call.getValueArguments()) {
+                           arg.accept(this);
+                         }
                        }
 
                        @Override
