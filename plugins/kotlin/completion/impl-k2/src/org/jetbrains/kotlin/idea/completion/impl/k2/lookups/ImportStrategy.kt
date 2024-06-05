@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -42,7 +42,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
             if (anyCallableSymbolMatches) return true
 
             return scope.getClassifierSymbols(nameToImport.shortName()).any { classifier ->
-                val classId = (classifier as? KtClassLikeSymbol)?.classId
+                val classId = (classifier as? KaClassLikeSymbol)?.classId
                 classId?.asSingleFqName() == nameToImport
             }
         }

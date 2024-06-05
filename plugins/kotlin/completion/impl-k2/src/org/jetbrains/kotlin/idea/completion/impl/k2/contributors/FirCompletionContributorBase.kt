@@ -89,7 +89,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         val lookup = with(lookupElementFactory) {
             when (symbol) {
-                is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
+                is KaClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
                 is KaTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
             }
         } ?: return

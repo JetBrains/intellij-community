@@ -271,7 +271,7 @@ class ImportQuickFix(
 
             when (symbol) {
                 is KtCallableSymbol -> symbol.callableId?.packageName
-                is KtClassLikeSymbol -> symbol.classId?.packageFqName
+                is KaClassLikeSymbol -> symbol.classId?.packageFqName
                 else -> null
             }?.let { packageName ->
                 append(" defined in ${packageName.asString()}")

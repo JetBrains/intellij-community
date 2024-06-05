@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -176,7 +176,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
         val shortNameString = when (symbol) {
             is KaTypeParameterSymbol -> symbol.name.asString()
-            is KtClassLikeSymbol -> symbol.name?.asString()
+            is KaClassLikeSymbol -> symbol.name?.asString()
         } ?: return
 
         val typeLookupElement = lookupElementFactory.createTypeLookupElement(symbol) ?: return

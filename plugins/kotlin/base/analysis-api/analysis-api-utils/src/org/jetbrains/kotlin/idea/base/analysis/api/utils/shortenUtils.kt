@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 fun shortenReferences(
     element: KtElement,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? = shortenReferencesInRange(
     element,
@@ -60,7 +60,7 @@ fun shortenReferences(
 fun shortenReferences(
     elements: Iterable<KtElement>,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ) {
     val elementPointers = elements.map { it.createSmartPointer() }
@@ -80,7 +80,7 @@ fun shortenReferences(
 private fun shortenReferencesIfValid(
     ptr: SmartPsiElementPointer<KtElement>,
     shortenOptions: ShortenOptions,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy
 ): PsiElement? = ptr.element?.let { elem ->
     shortenReferences(elem, shortenOptions, classShortenStrategy, callableShortenStrategy)
@@ -100,7 +100,7 @@ fun shortenReferencesInRange(
     file: KtFile,
     range: TextRange = file.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
     val shortenCommand = allowAnalysisOnEdt {
@@ -119,7 +119,7 @@ fun shortenReferencesInRange(
     element: KtElement,
     range: TextRange = element.containingFile.originalFile.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
     val ktFile = element.containingKtFile

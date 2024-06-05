@@ -46,7 +46,7 @@ class KotlinFirLookupElementFactory {
                 expectedType,
             )
 
-            is KtClassLikeSymbol -> classLookupElementFactory
+            is KaClassLikeSymbol -> classLookupElementFactory
                 .createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
 
             is KaTypeParameterSymbol -> typeParameterLookupElementFactory.createLookup(symbol)
@@ -87,7 +87,7 @@ class KotlinFirLookupElementFactory {
 
     context(KtAnalysisSession)
     fun createLookupElementForClassLikeSymbol(
-        symbol: KtClassLikeSymbol,
+        symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,
     ): LookupElement? {
         if (symbol !is KtNamedSymbol) return null

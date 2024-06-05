@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -103,7 +103,7 @@ object AddQualifiersUtil {
 
     fun getFqName(symbol: KtSymbol): FqName? {
         return when (symbol) {
-            is KtClassLikeSymbol -> symbol.classId?.asSingleFqName()
+            is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
             is KtConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
             is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null

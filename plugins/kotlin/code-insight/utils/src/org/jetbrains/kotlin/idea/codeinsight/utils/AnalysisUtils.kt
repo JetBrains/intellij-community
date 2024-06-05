@@ -41,7 +41,7 @@ context(KtAnalysisSession)
 fun KtSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     is KtPackageSymbol -> fqName
     is KtCallableSymbol -> callableId?.asSingleFqName()
-    is KtClassLikeSymbol -> classId?.asSingleFqName()
+    is KaClassLikeSymbol -> classId?.asSingleFqName()
     else -> null
 }
 

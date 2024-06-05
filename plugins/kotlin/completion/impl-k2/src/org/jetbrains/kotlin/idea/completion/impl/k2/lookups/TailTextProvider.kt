@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -50,7 +50,7 @@ internal object TailTextProvider {
 
     context(KtAnalysisSession)
     fun getTailText(
-        symbol: KtClassLikeSymbol,
+        symbol: KaClassLikeSymbol,
         usePackageFqName: Boolean = false,
         addTypeParameters: Boolean = true
     ): String = buildString {

@@ -66,7 +66,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
             }
 
         context(KtAnalysisSession)
-        private fun KtClassLikeSymbol.buildStarProjectedType(): KtType =
+        private fun KaClassLikeSymbol.buildStarProjectedType(): KtType =
             buildClassType(this@buildStarProjectedType) {
                 repeat(typeParameters.size) {
                     argument(KtStarTypeProjection(token))

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -52,13 +52,13 @@ class TypeLookupElementFactory {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KaTypeParameterSymbol -> symbol.name.asString().let { it to it }
 
-            is KtClassLikeSymbol -> when (val classId = symbol.classId) {
+            is KaClassLikeSymbol -> when (val classId = symbol.classId) {
                 null -> symbol.name?.asString()?.let { it to it }
                 else -> classId.relativeClassName.asString() to classId.asFqNameString()
             }
         } ?: return null
 
-        val tailText = (symbol as? KtClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
+        val tailText = (symbol as? KaClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
 
         return LookupElementBuilder.create(TypeLookupObject(fqNameAsString), relativeNameAsString)
             .withInsertHandler(TypeInsertHandler)

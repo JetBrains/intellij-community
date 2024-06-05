@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -42,7 +42,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
 
     context (KtAnalysisSession)
     fun detectImportStrategyForClassifierSymbol(symbol: KaClassifierSymbol): ImportStrategy {
-        if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
+        if (symbol !is KaClassLikeSymbol) return ImportStrategy.DoNothing
 
         val classId = symbol.classId?.asSingleFqName() ?: return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)

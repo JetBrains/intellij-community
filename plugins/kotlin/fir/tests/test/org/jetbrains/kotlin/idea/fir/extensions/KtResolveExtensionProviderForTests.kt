@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.*
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -107,7 +107,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
                                 callableId.className?.pathSegments().orEmpty() + callableId.callableName
                             }
 
-                            is KtClassLikeSymbol -> {
+                            is KaClassLikeSymbol -> {
                                 symbol.classId?.relativeClassName?.pathSegments()
                                     ?: return@firstNotNullOfOrNull null
                             }

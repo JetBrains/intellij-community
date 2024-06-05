@@ -7,7 +7,7 @@ import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.resolveExpression
@@ -31,7 +31,7 @@ internal class CreateMethodFromKotlinUsageRequest (
 
     private fun initializeTargetClass(receiverExpression: KtExpression?, functionCall: KtCallExpression): PsiElement? {
         return analyze(functionCall) {
-            (receiverExpression?.resolveExpression() as? KtClassLikeSymbol)?.psi
+            (receiverExpression?.resolveExpression() as? KaClassLikeSymbol)?.psi
         }
     }
 

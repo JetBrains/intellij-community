@@ -150,7 +150,7 @@ object K2CreateFromUsageUtil {
     context (KtAnalysisSession)
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
-        is KtClassLikeSymbol -> symbol // When the receiver is an object
+        is KaClassLikeSymbol -> symbol // When the receiver is an object
         else -> getKtType()?.expandedClassSymbol
     }?.psi
 

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
@@ -42,8 +42,8 @@ internal fun interface CompletionVisibilityChecker {
 
                 if (basicContext.parameters.invocationCount > 1) return true
 
-                if (symbol is KtClassLikeSymbol) {
-                    val classId = (symbol as? KtClassLikeSymbol)?.classId
+                if (symbol is KaClassLikeSymbol) {
+                    val classId = (symbol as? KaClassLikeSymbol)?.classId
                     if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
                 }
 

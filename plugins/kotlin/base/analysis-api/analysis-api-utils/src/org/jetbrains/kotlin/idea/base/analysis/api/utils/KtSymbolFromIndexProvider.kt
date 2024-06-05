@@ -44,7 +44,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getKotlinClassesByName(
         name: Name,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
-    ): Sequence<KtClassLikeSymbol> {
+    ): Sequence<KaClassLikeSymbol> {
         val isCommon = useSiteModule.platform.isCommon()
 
         val valueFilter: (KtClassLikeDeclaration) -> Boolean = { psiFilter(it) && useSiteFilter(it) }
@@ -53,7 +53,7 @@ class KtSymbolFromIndexProvider private constructor(
         return getClassLikeSymbols(
             classDeclarations = KotlinClassShortNameIndex.getAllElements(name.asString(), project, scope, valueFilter),
             typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(name.asString(), project, scope, valueFilter),
-            declarationsFromExtension = resolveExtensionScope.getClassifierSymbols(name).filterIsInstance<KtClassLikeSymbol>(),
+            declarationsFromExtension = resolveExtensionScope.getClassifierSymbols(name).filterIsInstance<KaClassLikeSymbol>(),
         )
     }
 
@@ -61,7 +61,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getKotlinClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
-    ): Sequence<KtClassLikeSymbol> {
+    ): Sequence<KaClassLikeSymbol> {
         val isCommon = useSiteModule.platform.isCommon()
 
         val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
@@ -71,7 +71,7 @@ class KtSymbolFromIndexProvider private constructor(
         return getClassLikeSymbols(
             classDeclarations = KotlinFullClassNameIndex.getAllElements(project, scope, keyFilter, valueFilter),
             typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(project, scope, keyFilter, valueFilter),
-            declarationsFromExtension = resolveExtensionScope.getClassifierSymbols(nameFilter).filterIsInstance<KtClassLikeSymbol>(),
+            declarationsFromExtension = resolveExtensionScope.getClassifierSymbols(nameFilter).filterIsInstance<KaClassLikeSymbol>(),
         )
     }
 
@@ -79,8 +79,8 @@ class KtSymbolFromIndexProvider private constructor(
     private fun getClassLikeSymbols(
         classDeclarations: List<KtClassOrObject>,
         typeAliasDeclarations: List<KtTypeAlias>,
-        declarationsFromExtension: Sequence<KtClassLikeSymbol>
-    ): Sequence<KtClassLikeSymbol> = sequence {
+        declarationsFromExtension: Sequence<KaClassLikeSymbol>
+    ): Sequence<KaClassLikeSymbol> = sequence {
         for (ktClassOrObject in classDeclarations) {
             yieldIfNotNull(ktClassOrObject.getNamedClassOrObjectSymbol())
         }

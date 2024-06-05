@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
@@ -380,7 +380,7 @@ private fun KtExpression.isClassOrPackageReference(): Boolean =
     when (this) {
         is KtNameReferenceExpression ->
             this.mainReference.resolveToSymbol()
-                .let { it is KtClassLikeSymbol || it is KtPackageSymbol }
+                .let { it is KaClassLikeSymbol || it is KtPackageSymbol }
         is KtDotQualifiedExpression -> this.selectorExpression?.isClassOrPackageReference() ?: false
         else -> false
     }

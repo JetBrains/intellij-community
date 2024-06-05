@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
@@ -29,7 +29,7 @@ internal object NotImportedWeigher {
 fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol, availableWithoutImport: Boolean) {
         if (availableWithoutImport) return
         val fqName = when (symbol) {
-            is KtClassLikeSymbol -> symbol.classId?.asSingleFqName()
+            is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
             is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
             is KtPackageSymbol -> symbol.fqName
             else -> null

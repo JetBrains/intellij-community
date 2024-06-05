@@ -185,7 +185,7 @@ internal object CallableMetadataProvider {
             .map { it.flatten() }
     }
 
-    private val KtClassLikeSymbol.companionObject: KaNamedClassOrObjectSymbol?
+    private val KaClassLikeSymbol.companionObject: KaNamedClassOrObjectSymbol?
         get() = (this as? KaNamedClassOrObjectSymbol)?.companionObject
 
     context(KtAnalysisSession)
@@ -216,21 +216,21 @@ internal object CallableMetadataProvider {
      * ```
      */
     context(KtAnalysisSession)
-    private fun getReferencedClassInCallableReferenceExpression(explicitReceiver: KtElement): KtClassLikeSymbol? {
+    private fun getReferencedClassInCallableReferenceExpression(explicitReceiver: KtElement): KaClassLikeSymbol? {
         val callableReferenceExpression = explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true) ?: return null
         if (callableReferenceExpression.lhs != explicitReceiver) return null
-        return explicitReceiver.reference()?.resolveToExpandedSymbol() as? KtClassLikeSymbol
+        return explicitReceiver.reference()?.resolveToExpandedSymbol() as? KaClassLikeSymbol
     }
 
     context(KtAnalysisSession)
-    private fun getQualifierClassInKDocName(explicitReceiver: KtElement): KtClassLikeSymbol? {
+    private fun getQualifierClassInKDocName(explicitReceiver: KtElement): KaClassLikeSymbol? {
         if (explicitReceiver !is KDocName) return null
 
-        return explicitReceiver.mainReference.resolveToSymbol() as? KtClassLikeSymbol
+        return explicitReceiver.mainReference.resolveToSymbol() as? KaClassLikeSymbol
     }
 
     context(KtAnalysisSession)
-    private fun buildClassType(symbol: KtClassLikeSymbol): KtClassType = buildClassType(symbol) {
+    private fun buildClassType(symbol: KaClassLikeSymbol): KtClassType = buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))
         }

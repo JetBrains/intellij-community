@@ -74,7 +74,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KtFunctionalType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
-                (receiverTypeText + if (receiverSymbol is KtClassLikeSymbol && !(receiverSymbol is KaClassOrObjectSymbol && receiverSymbol.classKind == KaClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
+                (receiverTypeText + if (receiverSymbol is KaClassLikeSymbol && !(receiverSymbol is KaClassOrObjectSymbol && receiverSymbol.classKind == KaClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
             }
         }
     }
@@ -85,7 +85,7 @@ object CreateKotlinCallableActionTextBuilder {
             is KtCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
 
-            is KtClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
+            is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null
         }
     }
