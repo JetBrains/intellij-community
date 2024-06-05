@@ -71,7 +71,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
      * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` when a Kotlin file is
      * moved, but we still need this listener to publish a module state modification event specifically.
      */
-    internal class SingleFileModuleModificationListener(private val project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
+    internal class SingleFileModuleModificationListener(project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
         override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent || event is VFileDeleteEvent
 
         override fun processEvent(event: VFileEvent, module: KtModule) {
