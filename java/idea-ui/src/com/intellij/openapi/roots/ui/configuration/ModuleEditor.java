@@ -96,12 +96,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
+  /**
+   * Listeners are automatically unsubscribed on dispose
+   */
   public void addChangeListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
-  }
-
-  public void removeChangeListener(ChangeListener listener) {
-    myEventDispatcher.removeListener(listener);
   }
 
   @Nullable
@@ -286,6 +285,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   @Override
   public void dispose() {
     try {
+      myEventDispatcher.getListeners().clear();
       for (final ModuleConfigurationEditor myEditor : myEditors) {
         myEditor.disposeUIResources();
       }
