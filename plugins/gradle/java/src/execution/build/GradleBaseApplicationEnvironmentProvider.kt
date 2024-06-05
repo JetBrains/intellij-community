@@ -39,6 +39,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Experimental
@@ -62,6 +63,13 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val mainClass = runProfile.runClass ?: return null
     val module = runProfile.configurationModule.module ?: return null
 
+    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
+    val externalProjectPath = gradleModuleData.directoryToRunTask
+    val settings = GradleSettings.getInstance(project)
+    val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
+    if (!projectSettings.isResolveModulePerSourceSet) {
+      return null
+    }
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)
       this.vmParametersList.addParametersString(runProfile.vmParameters)
@@ -95,10 +103,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.isPassParentEnvs = params.isPassParentEnvs
     taskSettings.env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
     taskSettings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
-
-    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
-    val externalProjectPath = gradleModuleData.directoryToRunTask
     taskSettings.externalProjectPath = externalProjectPath
+
     val runAppTaskName = "$mainClass.main()"
     taskSettings.taskNames = listOf(gradleModuleData.getTaskPath(runAppTaskName))
     customiseTaskExecutionsSettings(taskSettings, module)
