@@ -40,6 +40,8 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
       diagrams.statistic.time(vm.modules.start)
       diagrams.statistic.time(vm.modules.end)
       diagrams.statistic.thread(vm.modules.threadCount)
+
+      diagrams.updateView()
     }
 
     vm.statistics.cpu.advise(vm.lifetime) { statistics ->
@@ -49,10 +51,7 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
       diagrams.statistic.time(statistics.newValueOpt?.time)
       diagrams.statistic.cpu(statistics.newValueOpt?.data)
 
-      if (vm.cpuMemory.value == CPU) {
-        scroll.revalidate()
-        scroll.repaint()
-      }
+      if (vm.cpuMemory.value == CPU) diagrams.updateView()
     }
 
     vm.statistics.memoryUsed.advise(vm.lifetime) { statistics ->
@@ -62,24 +61,17 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
       diagrams.statistic.memory(statistics.newValueOpt?.data)
       diagrams.statistic.time(statistics.newValueOpt?.time)
 
-      if (vm.cpuMemory.value == MEMORY) {
-        scroll.revalidate()
-        scroll.repaint()
-      }
+      if (vm.cpuMemory.value == MEMORY) diagrams.updateView()
     }
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-
-      scroll.revalidate()
-      scroll.repaint()
+      diagrams.updateView()
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-
-      scroll.revalidate()
-      scroll.repaint()
+      diagrams.updateView()
     }
   }
 }

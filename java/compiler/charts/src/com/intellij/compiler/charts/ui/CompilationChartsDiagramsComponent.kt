@@ -5,13 +5,13 @@ import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.compiler.charts.ui.RenderType.FULL
-import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentSkipListSet
 import javax.swing.JViewport
 import kotlin.math.exp
@@ -30,7 +30,9 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
   var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   val statistic: Statistic = Statistic()
   var cpuMemory = MEMORY
+  var shouldRepaint: Boolean = true
   private val mouseAdapter: CompilationChartsMouseAdapter
+  var image: BufferedImage? = null
 
   private val charts: Charts
   private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
@@ -53,7 +55,7 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
     addMouseWheelListener { e ->
       if (e.isControlDown) {
         zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
-        this@CompilationChartsDiagramsComponent.repaint()
+        updateView()
       }
       else {
         e.component.parent.dispatchEvent(e)
@@ -102,21 +104,40 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
 
   override fun paintComponent(g2d: Graphics) {
     if (g2d !is Graphics2D) return
-    charts.model {
-      progress {
-        data(modules.data.getAndClean())
-        filter = modules.filter
-      }
-      usage(usages[cpuMemory]!!) {
-        data(stats[cpuMemory]!!.getAndClean())
-      }
-    }.draw(g2d, FULL) {
-      setupAntialiasing(g2d) // ??
-      val size = Dimension(width().toInt(), height().toInt())
-      if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
-        this@CompilationChartsDiagramsComponent.preferredSize = size
-        this@CompilationChartsDiagramsComponent.revalidate()
+    cached(g2d) {
+      return@cached charts.model {
+        progress {
+          data(modules.data.getAndClean())
+          filter = modules.filter
+        }
+        usage(usages[cpuMemory]!!) {
+          data(stats[cpuMemory]!!.getAndClean())
+        }
+      }.draw(g2d, this) {
+        val size = Dimension(width().toInt(), height().toInt())
+        if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
+          this@CompilationChartsDiagramsComponent.preferredSize = size
+          this@CompilationChartsDiagramsComponent.revalidate()
+        }
+        return@draw UIUtil.createImage(this@CompilationChartsDiagramsComponent, width().toInt(), height().toInt(), BufferedImage.TYPE_INT_ARGB)
       }
     }
+  }
+
+  private fun cached(g2d: Graphics2D, init: () -> BufferedImage) {
+    if (!shouldRepaint) {
+      image?.let { img -> g2d.drawImage(img, this) }
+      return
+    }
+
+    shouldRepaint = false
+    image?.flush()
+    image = init()
+  }
+
+  internal fun updateView() {
+    shouldRepaint = true
+    revalidate()
+    repaint()
   }
 }

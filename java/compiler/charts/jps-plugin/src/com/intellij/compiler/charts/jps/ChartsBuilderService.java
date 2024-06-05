@@ -12,7 +12,6 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class ChartsBuilderService extends BuilderService {
-  public static String COMPILATION_STATISTIC_BUILDER_ID = "jps.compile.statistic";
+  public static final String COMPILATION_STATISTIC_BUILDER_ID = "jps.compile.statistic";
 
   @Override
   public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
@@ -39,7 +38,7 @@ public class ChartsBuilderService extends BuilderService {
     public ExitCode build(@NotNull CompileContext context,
                           @NotNull ModuleChunk chunk,
                           @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                          @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                          @NotNull OutputConsumer outputConsumer) {
       return ExitCode.NOTHING_DONE;
     }
 
