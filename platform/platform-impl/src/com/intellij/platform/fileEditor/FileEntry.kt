@@ -11,6 +11,7 @@ private const val PINNED: @NonNls String = "pinned"
 private const val CURRENT_IN_TAB = "current-in-tab"
 
 internal class FileEntry(
+  @JvmField val tabTitle: String?,
   @JvmField val pinned: Boolean,
   @JvmField val currentInTab: Boolean,
   @JvmField val url: String,
@@ -19,6 +20,8 @@ internal class FileEntry(
   @JvmField val isPreview: Boolean,
   @JvmField val providers: Map<String, Element?>,
 )
+
+private const val TAB_TITLE = "tabTitle"
 
 internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFingerprint): FileEntry {
   val historyElement = fileElement.getChild(HistoryEntry.TAG)
@@ -35,8 +38,9 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
   }
 
   return FileEntry(
+    tabTitle = fileElement.getAttributeValue(TAB_TITLE),
     pinned = fileElement.getAttributeBooleanValue(PINNED),
-    currentInTab = fileElement.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
+    currentInTab = fileElement.getAttributeBooleanValue(CURRENT_IN_TAB),
     isPreview = historyElement.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
     url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE),
     selectedProvider = selectedProvider,
@@ -47,15 +51,18 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
 
 internal fun writeWindow(result: Element, window: EditorWindow) {
   val selectedComposite = window.selectedComposite
-  for (composite in window.composites()) {
+  for (tab in window.tabbedPane.tabs.tabs) {
+    val composite = tab.composite
     val fileElement = Element("file")
     fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project = window.manager.project))
     if (composite.isPinned) {
       fileElement.setAttribute(PINNED, "true")
     }
-    if (composite !== selectedComposite) {
-      fileElement.setAttribute(CURRENT_IN_TAB, "false")
+    if (composite === selectedComposite) {
+      fileElement.setAttribute(CURRENT_IN_TAB, "true")
     }
+
+    fileElement.setAttribute(TAB_TITLE, tab.text)
     result.addContent(fileElement)
   }
 }

@@ -749,7 +749,7 @@ open class FileEditorManagerImpl(
 
     openFileSetModificationCount.increment()
     window.closeFile(file = file, composite = composite)
-    removeSelectionRecord(file, window)
+    selectionHistory.removeRecord(file, window)
     return true
   }
 
@@ -2115,9 +2115,8 @@ open class FileEditorManagerImpl(
     selectionHistory.addRecord(file, window)
   }
 
-  fun removeSelectionRecord(file: VirtualFile, window: EditorWindow) {
+  internal fun removeSelectionRecord(file: VirtualFile, window: EditorWindow) {
     selectionHistory.removeRecord(file, window)
-    updateFileName(file)
   }
 
   override fun refreshIcons() {

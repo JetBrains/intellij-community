@@ -279,7 +279,7 @@ open class EditorsSplitters internal constructor(
           window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
         }
         else {
-          (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+          window.tabbedPane.editorTabs.revalidateAndRepaint()
         }
       }
     }
@@ -959,9 +959,14 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
                 computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = splitters.manager.project)
               }
             },
-            tabTitle = compositeCoroutineScope.async {
-              readAction {
-                EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, file)
+            tabTitle = if (!fileEntry.tabTitle.isNullOrEmpty() && fileEntry.ideFingerprint == ideFingerprint()) {
+              CompletableDeferred(fileEntry.tabTitle)
+            }
+            else {
+              compositeCoroutineScope.async {
+                readAction {
+                  EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, file)
+                }
               }
             }
           )
