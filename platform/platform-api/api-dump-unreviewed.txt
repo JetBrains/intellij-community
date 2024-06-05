@@ -887,29 +887,10 @@ a:com.intellij.ide.browsers.BrowserLauncher
 - f:browse(java.net.URI):V
 - a:browse(java.nio.file.Path):V
 - bs:browse$default(com.intellij.ide.browsers.BrowserLauncher,java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:browseUsingPath(java.lang.String,java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project,Z,java.lang.String[]):Z
-- bs:browseUsingPath$default(com.intellij.ide.browsers.BrowserLauncher,java.lang.String,java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project,Z,java.lang.String[],I,java.lang.Object):Z
 - sf:getInstance():com.intellij.ide.browsers.BrowserLauncher
 - a:open(java.lang.String):V
 f:com.intellij.ide.browsers.BrowserLauncher$Companion
 - f:getInstance():com.intellij.ide.browsers.BrowserLauncher
-c:com.intellij.ide.browsers.BrowserLauncherAppless
-- com.intellij.ide.browsers.BrowserLauncher
-- sf:Companion:com.intellij.ide.browsers.BrowserLauncherAppless$Companion
-- <init>():V
-- browse(java.io.File):V
-- browse(java.lang.String,com.intellij.ide.browsers.WebBrowser,com.intellij.openapi.project.Project):V
-- browse(java.nio.file.Path):V
-- p:canBrowse(com.intellij.openapi.project.Project,java.lang.String):Z
-- sf:canUseSystemDefaultBrowserPolicy():Z
-- p:getDefaultBrowser():com.intellij.ide.browsers.WebBrowser
-- open(java.lang.String):V
-- p:showError(java.lang.String,com.intellij.openapi.project.Project,com.intellij.ide.browsers.WebBrowser,kotlin.jvm.functions.Function0):V
-- bs:showError$default(com.intellij.ide.browsers.BrowserLauncherAppless,java.lang.String,com.intellij.openapi.project.Project,com.intellij.ide.browsers.WebBrowser,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- p:signUrl(java.lang.String):java.lang.String
-- p:substituteBrowser(java.lang.String):com.intellij.ide.browsers.WebBrowser
-f:com.intellij.ide.browsers.BrowserLauncherAppless$Companion
-- f:canUseSystemDefaultBrowserPolicy():Z
 a:com.intellij.ide.browsers.BrowserSpecificSettings
 - java.lang.Cloneable
 - <init>():V

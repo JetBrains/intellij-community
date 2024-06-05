@@ -5912,14 +5912,6 @@ f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 - f:getCoroutineScope():kotlinx.coroutines.CoroutineScope
 - *f:hasPendingActions():Z
 - f:waitForTasks():V
-c:com.intellij.ide.browsers.BrowserLauncherImpl
-- com.intellij.ide.browsers.BrowserLauncherAppless
-- <init>():V
-- p:canBrowse(com.intellij.openapi.project.Project,java.lang.String):Z
-- p:getDefaultBrowser():com.intellij.ide.browsers.WebBrowser
-- p:showError(java.lang.String,com.intellij.openapi.project.Project,com.intellij.ide.browsers.WebBrowser,kotlin.jvm.functions.Function0):V
-- p:signUrl(java.lang.String):java.lang.String
-- p:substituteBrowser(java.lang.String):com.intellij.ide.browsers.WebBrowser
 c:com.intellij.ide.browsers.BrowserSelector
 - <init>():V
 - <init>(com.intellij.openapi.util.Condition):V
