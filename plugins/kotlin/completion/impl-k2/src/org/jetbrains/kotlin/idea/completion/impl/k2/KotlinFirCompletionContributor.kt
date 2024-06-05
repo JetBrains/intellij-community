@@ -10,6 +10,7 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -125,6 +126,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
     context(KtAnalysisSession)
+    @OptIn(KaAnalysisApiInternals::class)
     private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
         val originalFile = basicCompletionContext.originalKtFile
         val fakeFile = basicCompletionContext.fakeKtFile
@@ -132,6 +134,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
     context(KtAnalysisSession)
+    @OptIn(KaAnalysisApiInternals::class)
     private fun recordOriginalDeclaration(basicContext: FirBasicCompletionContext, declaration: KtDeclaration) {
         try {
             declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, basicContext.originalKtFile))
