@@ -13982,6 +13982,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - paintComponent(java.awt.Graphics):V
 - putInfo(java.util.Map):V
 - repaintEditorComponent(I,I,I,I):V
+- select(I,I):V
 - setCursor(java.awt.Cursor):V
 - setText(java.lang.String):V
 - type(java.lang.String):com.intellij.openapi.util.ActionCallback

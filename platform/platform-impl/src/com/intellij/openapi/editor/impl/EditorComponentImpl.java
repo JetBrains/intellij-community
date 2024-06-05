@@ -947,6 +947,40 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     return myEditor.getSelectionModel().getSelectedText(true);
   }
 
+  @Override
+  public void select(int startOffset, int endOffset) {
+    // This method is called by the JDK on macOS, when the IME asks us to replace already committed text.
+    // Doing this is a bit complicated, since we have to account for multi-caret.
+
+    String selectedText = myEditor.getDocument().getText(new TextRange(startOffset, endOffset));
+
+    int length = endOffset - startOffset;
+    int offsetRelativeToCurrentCaret = startOffset - myEditor.getCaretModel().getCurrentCaret().getOffset();
+
+    boolean allCaretsHaveTheSameText = true;
+
+    for (var caret : myEditor.getCaretModel().getAllCarets()) {
+      var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
+      var caretEnd = caretStart + length;
+      String caretText = myEditor.getDocument().getText(new TextRange(caretStart, caretEnd));
+      if (!selectedText.equals(caretText)) {
+        allCaretsHaveTheSameText = false;
+        break;
+      }
+    }
+
+    if (allCaretsHaveTheSameText) {
+      for (var caret : myEditor.getCaretModel().getAllCarets()) {
+        var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
+        var caretEnd = caretStart + length;
+        caret.setSelection(caretStart, caretEnd);
+      }
+    } else {
+      // Fallback to the default implementation
+      myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    }
+  }
+
   @DirtyUI
   @Override
   public void setText(String text) {
