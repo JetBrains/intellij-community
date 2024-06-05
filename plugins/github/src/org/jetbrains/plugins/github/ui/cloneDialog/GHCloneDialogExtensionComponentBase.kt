@@ -10,7 +10,6 @@ import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -20,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -105,7 +103,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
 
   // state
-  private val loader = GHCloneDialogRepositoryListLoaderImpl()
+  private val loader = GHCloneDialogRepositoryListLoaderImpl(cs)
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
@@ -145,10 +143,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
         is GHRepositoryListItem.Error -> ""
       }
     }
-
-    @Suppress("LeakingThis")
-    val parentDisposable: Disposable = this
-    Disposer.register(parentDisposable, loader)
 
     val accountDetailsProvider = GHAccountsDetailsProvider(cs, accountManager)
 
