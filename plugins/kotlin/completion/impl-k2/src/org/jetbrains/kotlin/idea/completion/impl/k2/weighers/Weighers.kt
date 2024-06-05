@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -55,7 +55,7 @@ internal class WeighingContext private constructor(
         private val contextualOverriddenSymbols: MutableMap<Name, Set<KaCallableSymbol>> = mutableMapOf()
         context(KaSession)
         fun symbolIsPresentInContext(symbol: KaCallableSymbol): Boolean = withValidityAssertion {
-            if (symbol !is KtNamedSymbol) return false
+            if (symbol !is KaNamedSymbol) return false
 
             val symbols = symbolsContainingPosition[symbol.name].orEmpty()
             if (symbol in symbols) return true
@@ -164,8 +164,8 @@ internal class WeighingContext private constructor(
                 .parentsOfType<KtCallableDeclaration>()
                 .filter { it !is KtParameter }
                 .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KaCallableSymbol>() }
-                .filter { it is KtNamedSymbol }
-                .groupBy { (it as KtNamedSymbol).name }
+                .filter { it is KaNamedSymbol }
+                .groupBy { (it as KaNamedSymbol).name }
                 .let { ContextualSymbolsCache(it) }
         }
     }

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -309,7 +309,7 @@ private fun generateProperty(
 
 private fun <T> KaSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
-): String where T : KtNamedSymbol, T : KaCallableSymbol {
+): String where T : KaNamedSymbol, T : KaCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
         BodyType.EmptyOrTemplate -> return ""
         BodyType.FromTemplate -> {

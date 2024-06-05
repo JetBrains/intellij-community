@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -49,7 +49,7 @@ internal fun Fe10WrapperContext.containerDeclarationImplementationPostponed(): N
     implementationPostponed("It isn't clear what we really need and how to implement it")
 
 interface KtSymbolBasedNamed : Named {
-    val ktSymbol: KtNamedSymbol
+    val ktSymbol: KaNamedSymbol
     override fun getName(): Name = ktSymbol.name
 }
 

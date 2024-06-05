@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
@@ -215,14 +215,14 @@ object K2SemanticMatcher {
         fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean {
             if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
 
-            if (patternSymbol is KtNamedSymbol) {
+            if (patternSymbol is KaNamedSymbol) {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
                         if (!targetSymbol.returnType.isSubTypeOf(patternSymbol.returnType)) return false
                     }
                     val expression =
-                        KtPsiFactory(patternElement.project).createExpression((targetSymbol as KtNamedSymbol).name.asString())
+                        KtPsiFactory(patternElement.project).createExpression((targetSymbol as KaNamedSymbol).name.asString())
                     val oldElement = parameterSubstitution.put(patternElement, expression)
                     return oldElement !is KtElement || oldElement.text == expression.text
                 }

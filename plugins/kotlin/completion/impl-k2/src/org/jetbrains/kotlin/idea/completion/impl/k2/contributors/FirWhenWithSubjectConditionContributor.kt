@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -112,7 +112,7 @@ internal class FirWhenWithSubjectConditionContributor(
         getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
             .forEach { classifierWithScopeKind ->
                 val classifier = classifierWithScopeKind.symbol
-                if (classifier !is KtNamedSymbol) return@forEach
+                if (classifier !is KaNamedSymbol) return@forEach
                 availableFromScope += classifier
 
                 addLookupElement(
@@ -128,7 +128,7 @@ internal class FirWhenWithSubjectConditionContributor(
         if (prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
                 .forEach { classifier ->
-                    if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
+                    if (classifier !is KaNamedSymbol || classifier in availableFromScope) return@forEach
 
                     addLookupElement(
                         context,
@@ -143,12 +143,12 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
     context(KaSession)
-    private fun isPrefixNeeded(symbol: KtNamedSymbol): Boolean {
+    private fun isPrefixNeeded(symbol: KaNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
             is KaNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KaTypeAliasSymbol -> {
-                (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
+                (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
             }
 
             is KaTypeParameterSymbol -> true
@@ -270,7 +270,7 @@ internal class FirWhenWithSubjectConditionContributor(
     private fun addLookupElement(
         context: WeighingContext,
         lookupString: String,
-        symbol: KtNamedSymbol,
+        symbol: KaNamedSymbol,
         origin: CompletionSymbolOrigin,
         fqName: FqName?,
         isSingleCondition: Boolean,

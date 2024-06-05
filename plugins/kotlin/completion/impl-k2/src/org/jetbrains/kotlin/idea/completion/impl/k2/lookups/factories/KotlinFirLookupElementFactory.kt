@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
@@ -33,7 +33,7 @@ class KotlinFirLookupElementFactory {
 
     context(KaSession)
     fun createLookupElement(
-        symbol: KtNamedSymbol,
+        symbol: KaNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
         importingStrategy: ImportStrategy? = null,
         expectedType: KtType? = null,
@@ -90,7 +90,7 @@ class KotlinFirLookupElementFactory {
         symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,
     ): LookupElement? {
-        if (symbol !is KtNamedSymbol) return null
+        if (symbol !is KaNamedSymbol) return null
         return classLookupElementFactory.createLookup(symbol, importingStrategy)
     }
 }

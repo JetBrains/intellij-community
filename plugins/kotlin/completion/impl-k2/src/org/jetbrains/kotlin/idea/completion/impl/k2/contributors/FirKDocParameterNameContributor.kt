@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
@@ -38,7 +38,7 @@ internal open class FirKDocParameterNameContributor(
         val ownerDeclarationSymbol = ownerDeclaration.getSymbol()
 
         getParametersForKDoc(ownerDeclarationSymbol)
-            .filter { (it.symbol as KtNamedSymbol).name.asString() !in alreadyDocumentedParameters }
+            .filter { (it.symbol as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
             .forEach { addSymbolToCompletion(weighingContext, it) }
     }
 

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -115,7 +115,7 @@ object AddQualifiersUtil {
         val fqName = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(referenceExpression) {
-                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KtNamedSymbol ?: return null
+                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KaNamedSymbol ?: return null
                     val fqName = getFqName(symbol) ?: return null
                     if (!isApplicableTo(referenceExpression, symbol)) return null
                     fqName

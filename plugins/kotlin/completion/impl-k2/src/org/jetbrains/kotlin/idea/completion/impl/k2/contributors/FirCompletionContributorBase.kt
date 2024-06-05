@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -71,7 +71,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     context(KaSession)
     protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
-        if (symbol !is KtNamedSymbol) return
+        if (symbol !is KaNamedSymbol) return
 
         lookupElementFactory
             .createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
@@ -85,7 +85,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         symbolOrigin: CompletionSymbolOrigin,
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
     ) {
-        if (symbol !is KtNamedSymbol) return
+        if (symbol !is KaNamedSymbol) return
 
         val lookup = with(lookupElementFactory) {
             when (symbol) {
@@ -109,7 +109,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     ) {
         val symbol = signature.symbol
         val name = when (symbol) {
-            is KtNamedSymbol -> symbol.name
+            is KaNamedSymbol -> symbol.name
             is KaConstructorSymbol -> (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.name
             else -> null
         } ?: return

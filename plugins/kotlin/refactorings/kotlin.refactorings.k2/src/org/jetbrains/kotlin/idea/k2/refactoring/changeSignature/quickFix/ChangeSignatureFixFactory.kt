@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
@@ -347,7 +347,7 @@ object ChangeSignatureFixFactory {
             containingSymbol.origin == KtSymbolOrigin.LIBRARY
         ) return emptyList()
 
-        val name = (symbol as? KtNamedSymbol)?.name?.asString() ?: return emptyList()
+        val name = (symbol as? KaNamedSymbol)?.name?.asString() ?: return emptyList()
         element.parentOfType<KtCallElement>(true) ?: return emptyList()
 
         val input = Input(

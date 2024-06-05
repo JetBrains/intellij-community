@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -158,7 +158,7 @@ object OperatorToFunctionConverter {
                 val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull()
                 val targetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol
 
-                (targetSymbol as? KtNamedSymbol)?.name
+                (targetSymbol as? KaNamedSymbol)?.name
             }
         }
     }

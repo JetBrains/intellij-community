@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
@@ -235,7 +235,7 @@ private sealed class SimplifiedSignature {
             typeArgumentsAreRequired: Boolean
         ): SimplifiedSignature? {
             val symbol = callableSignature.symbol
-            if (symbol !is KtNamedSymbol) return null
+            if (symbol !is KaNamedSymbol) return null
 
             val containerFqName = if (considerContainer) symbol.getContainerFqName() else null
 

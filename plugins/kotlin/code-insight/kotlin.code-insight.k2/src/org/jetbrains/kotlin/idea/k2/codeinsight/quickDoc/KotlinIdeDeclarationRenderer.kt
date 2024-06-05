@@ -66,7 +66,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -501,10 +501,10 @@ internal class KotlinIdeDeclarationRenderer(
                                 }
                             }
 
-                            if (callableSymbol is KtNamedSymbol) {
+                            if (callableSymbol is KaNamedSymbol) {
                                 declarationRenderer.nameRenderer.renderName(analysisSession, callableSymbol, declarationRenderer, printer)
                             } else if (callableSymbol is KaConstructorSymbol) {
-                                (callableSymbol.getContainingSymbol() as? KtNamedSymbol)?.let {
+                                (callableSymbol.getContainingSymbol() as? KaNamedSymbol)?.let {
                                     printer.append(highlight(it.name.renderName()) {
                                         asClassName
                                     })
@@ -661,7 +661,7 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderName(
                 analysisSession: KaSession,
                 name: Name,
-                symbol: KtNamedSymbol?,
+                symbol: KaNamedSymbol?,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -314,7 +314,7 @@ private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExp
         ?.entries
         ?.asSequence()
         ?.map { it.getSymbol() }
-        ?.filterIsInstance<KtNamedSymbol>()
+        ?.filterIsInstance<KaNamedSymbol>()
         ?.associateBy { it.name }
         ?: mapOf(valueParameterSymbol.name to valueParameterSymbol)
 

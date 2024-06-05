@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
@@ -267,7 +267,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 symbol.name!!.asString()
             } else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
-            } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
+            } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KaNamedSymbol) {
                 receiverValue.type.expandedClassSymbol?.name?.let { "this@$it" } ?: "this"
             } else {
                 "this"

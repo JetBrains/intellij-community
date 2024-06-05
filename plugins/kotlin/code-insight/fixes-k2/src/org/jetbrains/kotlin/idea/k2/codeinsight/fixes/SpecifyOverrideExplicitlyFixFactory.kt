@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -85,9 +85,9 @@ internal object SpecifyOverrideExplicitlyFixFactory {
         }
 
     context(KaSession)
-    private fun KtDelegatedSuperTypeEntry.getSymbol(): KtNamedSymbol? {
+    private fun KtDelegatedSuperTypeEntry.getSymbol(): KaNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null
-        return nameReferenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol
+        return nameReferenceExpression.mainReference.resolveToSymbol() as? KaNamedSymbol
     }
 
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {

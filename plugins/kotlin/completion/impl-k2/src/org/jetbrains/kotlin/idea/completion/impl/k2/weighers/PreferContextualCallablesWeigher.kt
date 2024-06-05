@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 /**
@@ -37,7 +37,7 @@ internal object PreferContextualCallablesWeigher {
      */
     context(KaSession)
     fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
-        if (symbol !is KtNamedSymbol || symbol.name !in contextualSymbolsCache) return
+        if (symbol !is KaNamedSymbol || symbol.name !in contextualSymbolsCache) return
 
         val symbolsToCheck = sequence {
             yield(symbol)

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
@@ -360,7 +360,7 @@ class ImportQuickFix(
 
         context(KaSession)
         private fun KaDeclarationSymbol.getImportName(): String = buildString {
-            if (this@getImportName !is KtNamedSymbol) error("Unexpected anonymous declaration")
+            if (this@getImportName !is KaNamedSymbol) error("Unexpected anonymous declaration")
 
             if (this@getImportName is KaCallableSymbol) {
                 val classSymbol = if (receiverType != null) receiverType?.expandedClassSymbol else originalContainingClassForOverride

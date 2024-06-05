@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSupe
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
@@ -179,7 +179,7 @@ internal class KotlinFirStructureElementPresentation(
                 return null
             }
             
-            if (containingSymbol is KtNamedSymbol) {
+            if (containingSymbol is KaNamedSymbol) {
                 return withRightArrow(containingSymbol.name.asString())
             }
         }
