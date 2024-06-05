@@ -90,6 +90,8 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
     <externalTextProvider implementation="com.intellij.lang.ant.config.impl.AntTextProvider"/>
     <iconMapper mappingFile="antIconMappings.json"/>
+
+    <buildProcess.parametersProvider implementation="com.intellij.lang.ant.AntBuildParametersProvider"/>
   </extensions>
 
   <actions>
