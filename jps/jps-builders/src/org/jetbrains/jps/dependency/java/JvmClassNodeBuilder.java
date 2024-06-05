@@ -455,7 +455,6 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     }
   }
 
-  // todo: ignore private nodes on the client side
   @Override
   public JVMClassNode<? extends JVMClassNode<?, ?>, ? extends Proto.Diff<? extends JVMClassNode<?, ?>>> getResult() {
     JVMFlags flags = new JVMFlags(myAccess);

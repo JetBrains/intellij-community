@@ -81,9 +81,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
       }
     }
 
-    if (!node.isPrivate()) {
-      myNodes.add(new Pair<>(node, nodeSources));
-    }
+    myNodes.add(new Pair<>(node, nodeSources));
   }
 
   public List<Pair<Node<?, ?>, Iterable<NodeSource>>> getNodes() {
