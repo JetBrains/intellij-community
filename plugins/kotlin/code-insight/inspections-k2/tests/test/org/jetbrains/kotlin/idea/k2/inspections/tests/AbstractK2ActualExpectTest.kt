@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.inspections.tests
 
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.inspections.runInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NoActualForExpectInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection
 import java.io.File
 
 abstract class AbstractK2ActualExpectTest : AbstractK2MultiplatformTest() {
@@ -17,7 +17,7 @@ abstract class AbstractK2ActualExpectTest : AbstractK2MultiplatformTest() {
         val expectedMissingActualModules = missingActualDirective!!.substringAfter(":").trim()
             .takeIf { !it.isEmpty() }?.split(",")?.map { it.trim() } ?: emptyList()
         val problemDescriptors = runInspection(
-            NoActualForExpectInspection::class.java,
+            KotlinNoActualForExpectInspection::class.java,
             project,
             settings = null
         ).problemElements.values.map { it.descriptionTemplate }
