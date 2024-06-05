@@ -31,7 +31,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
             return
         }
 
-        val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return
+        val symbol = expression.mainReference.resolveToSymbol() as? KaClassifierSymbol ?: return
 
         if (isAnnotationCall(expression, symbol)) {
             // higlighted by AnnotationEntryHiglightingVisitor

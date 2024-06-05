@@ -108,7 +108,7 @@ internal class FirWhenWithSubjectConditionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
-        val availableFromScope = mutableSetOf<KtClassifierSymbol>()
+        val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
             .forEach { classifierWithScopeKind ->
                 val classifier = classifierWithScopeKind.symbol
@@ -172,7 +172,7 @@ internal class FirWhenWithSubjectConditionContributor(
         allInheritors
             .asSequence()
             .filter { it.classId !in handledCasesClassIds }
-            .filter { visibilityChecker.isVisible(it as KtClassifierSymbol) }
+            .filter { visibilityChecker.isVisible(it as KaClassifierSymbol) }
             .forEach { inheritor ->
                 val classId = inheritor.classId ?: return@forEach
                 addLookupElement(

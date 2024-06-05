@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
@@ -17,7 +17,7 @@ internal object TypeTextProvider {
      * Creates lookup element's type text, based on provided classifier symbol.
      */
     context(KtAnalysisSession)
-fun getTypeTextForClassifier(symbol: KtClassifierSymbol): String? = when (symbol) {
+fun getTypeTextForClassifier(symbol: KaClassifierSymbol): String? = when (symbol) {
         is KaTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
         else -> null
     }

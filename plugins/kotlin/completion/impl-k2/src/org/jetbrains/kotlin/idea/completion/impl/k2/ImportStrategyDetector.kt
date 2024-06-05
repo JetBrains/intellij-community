@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
@@ -41,7 +41,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
     }
 
     context (KtAnalysisSession)
-    fun detectImportStrategyForClassifierSymbol(symbol: KtClassifierSymbol): ImportStrategy {
+    fun detectImportStrategyForClassifierSymbol(symbol: KaClassifierSymbol): ImportStrategy {
         if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
 
         val classId = symbol.classId?.asSingleFqName() ?: return ImportStrategy.DoNothing

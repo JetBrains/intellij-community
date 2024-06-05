@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 
 context(KtAnalysisSession)
 internal fun withClassifierSymbolInfo(
-    symbol: KtClassifierSymbol,
+    symbol: KaClassifierSymbol,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed

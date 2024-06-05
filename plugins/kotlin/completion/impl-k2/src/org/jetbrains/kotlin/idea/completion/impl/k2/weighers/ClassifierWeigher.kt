@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
@@ -23,7 +23,7 @@ internal object ClassifierWeigher {
 
     context(KtAnalysisSession)
 fun addWeight(lookupElement: LookupElement, symbol: KtSymbol, symbolOrigin: CompletionSymbolOrigin) {
-        if (symbol !is KtClassifierSymbol) return
+        if (symbol !is KaClassifierSymbol) return
 
         val isLocal = (symbol as? KtClassLikeSymbol)?.symbolKind == KtSymbolKind.LOCAL
         val weight = if (isLocal) Weight.LOCAL else Weight.NON_LOCAL

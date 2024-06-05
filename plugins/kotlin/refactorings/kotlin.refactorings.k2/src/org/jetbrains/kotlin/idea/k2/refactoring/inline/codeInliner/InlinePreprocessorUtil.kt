@@ -305,7 +305,7 @@ context(KtAnalysisSession)
 internal fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
     return if ((symbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
-        (symbol.getContainingSymbol() as KtClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+        (symbol.getContainingSymbol() as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
     }
     else {
         "this"

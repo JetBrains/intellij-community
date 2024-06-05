@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -164,7 +164,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     context(KtAnalysisSession)
     private fun addSuggestions(
         variableOrParameter: KtCallableDeclaration,
-        symbol: KtClassifierSymbol,
+        symbol: KaClassifierSymbol,
         userPrefix: String,
         lookupNamesAdded: MutableSet<String>,
         weighingContext: WeighingContext,

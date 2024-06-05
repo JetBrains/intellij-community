@@ -24,10 +24,10 @@ internal open class FirClassifierCompletionContributor(
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
 
     context(KtAnalysisSession)
-    protected open fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
+    protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
 
     context(KtAnalysisSession)
-    protected open fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
+    protected open fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
     context(KtAnalysisSession)
@@ -74,7 +74,7 @@ internal open class FirClassifierCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
     ) {
-        val availableFromScope = mutableSetOf<KtClassifierSymbol>()
+        val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         getAvailableClassifiersCurrentScope(
             originalKtFile,
             positionContext.nameExpression,
@@ -110,7 +110,7 @@ internal class FirAnnotationCompletionContributor(
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
     context(KtAnalysisSession)
-    override fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = when (classifierSymbol) {
+    override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
         is KaAnonymousObjectSymbol -> false
         is KaTypeParameterSymbol -> false
         is KaNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
@@ -137,7 +137,7 @@ internal class FirClassifierReferenceCompletionContributor(
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
     context(KtAnalysisSession)
-    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy = when (classifierSymbol) {
+    override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {
         is KaTypeParameterSymbol -> ImportStrategy.DoNothing
         is KtClassLikeSymbol -> {
             classifierSymbol.classId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing

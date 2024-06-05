@@ -132,7 +132,7 @@ fun checkDeclarationNewNameConflicts(
 
         return when (containingSymbol) {
             is KaClassOrObjectSymbol -> {
-                if (symbol is KtClassifierSymbol) {
+                if (symbol is KaClassifierSymbol) {
                     //allow shadowing classes in super
                     containingSymbol.getCombinedDeclaredMemberScope()
                 } else {

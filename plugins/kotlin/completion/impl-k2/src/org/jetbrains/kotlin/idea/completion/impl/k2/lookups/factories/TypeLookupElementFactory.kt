@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -48,7 +48,7 @@ class TypeLookupElementFactory {
     }
 
     context(KtAnalysisSession)
-    fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
+    fun createLookup(symbol: KaClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KaTypeParameterSymbol -> symbol.name.asString().let { it to it }
 
@@ -66,7 +66,7 @@ class TypeLookupElementFactory {
             .withTailText(tailText)
     }
 
-    private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KtClassifierSymbol? = when (this) {
+    private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
         is KtTypeParameterType -> symbol
         is KtUsualClassType -> classSymbol
         else -> null

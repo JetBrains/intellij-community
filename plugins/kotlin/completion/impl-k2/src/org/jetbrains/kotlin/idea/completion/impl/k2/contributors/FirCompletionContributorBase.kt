@@ -80,7 +80,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     context(KtAnalysisSession)
     protected fun addClassifierSymbolToCompletion(
-        symbol: KtClassifierSymbol,
+        symbol: KaClassifierSymbol,
         context: WeighingContext,
         symbolOrigin: CompletionSymbolOrigin,
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),

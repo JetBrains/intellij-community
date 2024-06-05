@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
@@ -233,7 +233,7 @@ private fun ExtractionData.registerParameter(
     val hasThisReceiver = thisSymbol != null
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression
 
-    val referencedClassifierSymbol: KtClassifierSymbol? =
+    val referencedClassifierSymbol: KaClassifierSymbol? =
         getReferencedClassifierSymbol(thisSymbol, originalDeclaration, refInfo, partiallyAppliedSymbol)
 
     if (referencedClassifierSymbol != null) {
@@ -361,7 +361,7 @@ private fun ExtractionData.calculateArgumentText(
  */
 context(KtAnalysisSession)
 private fun ExtractionData.registerQualifierReplacements(
-    referencedClassifierSymbol: KtClassifierSymbol,
+    referencedClassifierSymbol: KaClassifierSymbol,
     parametersInfo: ParametersInfo<KtType, MutableParameter>,
     originalDeclaration: PsiNamedElement,
     originalRef: KtReferenceExpression
@@ -395,7 +395,7 @@ private fun getReferencedClassifierSymbol(
     originalDeclaration: PsiNamedElement,
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>,
     partiallyAppliedSymbol: KtPartiallyAppliedSymbol<KtCallableSymbol, KtCallableSignature<KtCallableSymbol>>?
-): KtClassifierSymbol? {
+): KaClassifierSymbol? {
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.getSymbol()
     ?: (originalDeclaration as? PsiMember)?.getCallableSymbol()) ?: return null
     return when (referencedSymbol) {
@@ -407,7 +407,7 @@ private fun getReferencedClassifierSymbol(
 
         is KaTypeParameterSymbol -> referencedSymbol
 
-        is KtConstructorSymbol -> referencedSymbol.getContainingSymbol() as? KtClassifierSymbol
+        is KtConstructorSymbol -> referencedSymbol.getContainingSymbol() as? KaClassifierSymbol
 
         else -> null
     }

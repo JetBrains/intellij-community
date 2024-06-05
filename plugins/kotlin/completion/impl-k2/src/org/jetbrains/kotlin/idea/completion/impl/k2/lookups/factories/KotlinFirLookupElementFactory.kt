@@ -82,7 +82,7 @@ class KotlinFirLookupElementFactory {
         typeLookupElementFactory.createLookup(type)
 
     context(KtAnalysisSession)
-    fun createTypeLookupElement(classSymbol: KtClassifierSymbol): LookupElement? =
+    fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         typeLookupElementFactory.createLookup(classSymbol)
 
     context(KtAnalysisSession)

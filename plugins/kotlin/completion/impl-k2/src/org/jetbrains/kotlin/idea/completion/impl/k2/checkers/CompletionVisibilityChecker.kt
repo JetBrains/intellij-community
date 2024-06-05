@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion.checkers
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -24,7 +24,7 @@ internal fun interface CompletionVisibilityChecker {
     }
 
     context(KtAnalysisSession)
-    fun isVisible(symbol: KtClassifierSymbol): Boolean {
+    fun isVisible(symbol: KaClassifierSymbol): Boolean {
         return symbol !is KtSymbolWithVisibility || isVisible(symbol as KtSymbolWithVisibility)
     }
 
