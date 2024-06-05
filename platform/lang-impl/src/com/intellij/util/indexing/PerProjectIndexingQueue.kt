@@ -13,6 +13,8 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +31,7 @@ import kotlin.concurrent.write
 private class PerProviderSinkFactory(private val uncommittedListener: UncommittedFilesListener) {
   interface UncommittedFilesListener {
     fun onUncommittedCountChanged(cntDirty: Int)
-    fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long)
+    fun commit(iterator: IndexableFilesIterator, files: Collection<VirtualFile>, scanningId: Long)
   }
 
   private val activeSinksCount: AtomicInteger = AtomicInteger()
@@ -38,7 +40,7 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
 
   inner class PerProviderSinkImpl(private val iterator: IndexableFilesIterator,
                                   private val scanningId: Long) : PerProjectIndexingQueue.PerProviderSink {
-    private val files: MutableList<VirtualFile> = ArrayList()
+    private var files: PersistentSet<VirtualFile> = persistentSetOf()
     private var closed = false
 
     init {
@@ -52,7 +54,7 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
         ProgressManager.checkCanceled()
       }
 
-      files.add(file)
+      files = files.add(file)
       val cntDirty = cntFilesDirty.incrementAndGet()
       uncommittedListener.onUncommittedCountChanged(cntDirty)
     }
@@ -64,7 +66,7 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
         val cntDirty = cntFilesDirty.addAndGet(-files.size)
         LOG.assertTrue(cntDirty >= 0, "cntFilesDirty should be positive or 0: $cntDirty")
         uncommittedListener.commit(iterator, files, scanningId)
-        files.clear()
+        files = files.clear()
       }
     }
 
@@ -126,7 +128,7 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   private val sinkFactory = PerProviderSinkFactory(object : PerProviderSinkFactory.UncommittedFilesListener {
     override fun onUncommittedCountChanged(cntDirty: Int) = publishEstimatedFilesCount(cntDirty)
-    override fun commit(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) = addFiles(iterator, files,
+    override fun commit(iterator: IndexableFilesIterator, files: Collection<VirtualFile>, scanningId: Long) = addFiles(iterator, files,
                                                                                                                  scanningId)
   })
 
@@ -156,7 +158,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   // Accepting `List<VirtualFile>` delays the moment when we know that many files have changed, and we need a dumb mode.
   // Accepting [VirtualFile] without intermediate buffering ([PerProviderSink] is essentially a non-thread safe buffer) and adding
   // them directly to [filesSoFar] will likely slow down the process (though this assumption is not properly verified)
-  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) {
+  private fun addFiles(iterator: IndexableFilesIterator, files: Collection<VirtualFile>, scanningId: Long) {
     lock.read {
       filesSoFar.addAll(files)
       cntFilesSoFar.addAndGet(files.size)
