@@ -135,6 +135,53 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
     doTest(schema, text, "Add missing property 'baz'", afterFix);
   }
 
+  public void testAddPropInHashMapping() {
+    @Language("JSON") String schema = """
+      {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "addresses": {
+             "type": "array",
+             "items": {
+               "type": "object",
+               "properties": {
+                 "street": {
+                   "type": "string"
+                 },
+                 "city": {
+                   "type": "string"
+                 },
+                 "postalCode": {
+                   "type": "string",
+                   "pattern": "\\\\d{5}"
+                 }
+               },
+               "required": ["street", "city", "postalCode"]
+             }
+          }
+        },
+        "required": ["name", "age"]
+      }""";
+    String text = """
+      name: masha
+      age: 18
+      addresses:
+        - <warning>{ city: DefaultCity<caret> }</warning>""";
+    String afterFix = """
+      name: masha
+      age: 18
+      addresses:
+        - { city: DefaultCity, street:,postalCode: }""";
+    doTest(schema, text, "Add missing properties 'postalCode', 'street'", afterFix);
+  }
+
   public void testAddPropAfterObjectProp_wrongFormatting() {
     @Language("JSON") String schema = """
       {

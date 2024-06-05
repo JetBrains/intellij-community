@@ -31,6 +31,7 @@ import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
+import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -405,7 +406,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       if (newElement instanceof YAMLKeyValue && self instanceof YAMLKeyValue) {
         PsiElement sibling = skipSiblingsForward(self);
         if (sibling != null && sibling.getText().equals("\n")) return;
-        self.getParent().addAfter(YAMLElementGenerator.getInstance(self.getProject()).createEol(), self);
+        PsiElement parent = self.getParent();
+        parent.addAfter(generateSeparator(parent), self);
       }
     }
 
@@ -420,6 +422,14 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       return null;
     }
 
+    private static @NotNull PsiElement generateSeparator(PsiElement parent) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(parent.getProject());
+      if (parent instanceof YAMLHashImpl) {
+        return generator.createComma();
+      } else {
+        return generator.createEol();
+      }
+    }
 
     @Override
     public void removeIfComma(PsiElement forward) {
