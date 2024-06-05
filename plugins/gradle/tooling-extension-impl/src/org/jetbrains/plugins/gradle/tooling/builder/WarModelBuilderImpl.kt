@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFileName
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.java.archives.Manifest
 import org.gradle.api.java.archives.internal.ManifestInternal
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.Message
@@ -19,85 +17,78 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.internal.web.WarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
+import java.io.ByteArrayOutputStream
+import java.io.File
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
-import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFileName
-/**
- * @author Vladislav.Soroka
- */
-class WarModelBuilderImpl extends AbstractModelBuilderService {
+private const val WEB_APP_DIR_PROPERTY = "webAppDir"
+private const val WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
+private val is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
 
-  private static final String WEB_APP_DIR_PROPERTY = "webAppDir"
-  private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
-  private static final boolean is82OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.2")
+class WarModelBuilderImpl : AbstractModelBuilderService() {
 
-  @Override
-  boolean canBuild(String modelName) {
-    return WebConfiguration.name == modelName
+  override fun canBuild(modelName: String): Boolean {
+    return WebConfiguration::class.java.name == modelName
   }
 
-  @Nullable
-  @Override
-  Object buildAll(String modelName, Project project, @NotNull ModelBuilderContext context) {
-    final WarPlugin warPlugin = project.plugins.findPlugin(WarPlugin)
-    if (warPlugin == null) return null
 
-    def warModels = []
+  override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): Any? {
+    project.plugins.findPlugin(WarPlugin::class.java) ?: return null
 
-    project.tasks.each { Task task ->
-      if (task instanceof War) {
-        File webAppDir
-        String webAppDirName
+    val warModels = mutableListOf<WarModelImpl>()
+
+    for (task in project.tasks) {
+      if (task is War) {
+        val webAppDir: File
+        val webAppDirName: String
 
         if (is82OrBetter) {
           webAppDir = task.webAppDirectory.asFile.get()
-          webAppDirName = webAppDir.getName()
-        } else {
-          webAppDirName = !project.hasProperty(WEB_APP_DIR_NAME_PROPERTY) ?
-                                       "src/main/webapp" : String.valueOf(project.property(WEB_APP_DIR_NAME_PROPERTY))
+          webAppDirName = webAppDir.name
+        }
+        else {
+          webAppDirName = if (!project.hasProperty(WEB_APP_DIR_NAME_PROPERTY)) "src/main/webapp" else project.property(WEB_APP_DIR_NAME_PROPERTY).toString()
 
-          webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY) ? new File(project.projectDir, webAppDirName) :
-                                 (File)project.property(WEB_APP_DIR_PROPERTY)
+          webAppDir = if (!project.hasProperty(WEB_APP_DIR_PROPERTY)) File(project.projectDir, webAppDirName) else project.property(WEB_APP_DIR_PROPERTY) as File
         }
 
-        final WarModelImpl warModel = new WarModelImpl(getTaskArchiveFileName(task), webAppDirName, webAppDir)
+        val warModel = WarModelImpl(getTaskArchiveFileName(task)!!, webAppDirName, webAppDir)
 
-        final List<WebConfiguration.WebResource> webResources = []
-        final War warTask = task as War
+        val webResources = mutableListOf<WebConfiguration.WebResource>()
+        val warTask = task as War
         warModel.webXml = warTask.webXml
         try {
-          CopySpecWalker.walk(warTask.rootSpec, new CopySpecWalker.Visitor() {
-            @Override
-            void visitSourcePath(String relativePath, String path) {
-              def file = new File(path)
-              addPath(webResources, relativePath, "", file.absolute ? file : new File(warTask.project.projectDir, path))
+          CopySpecWalker.walk(warTask.rootSpec, object : CopySpecWalker.Visitor {
+
+            override fun visitSourcePath(relativePath: String?, path: String) {
+              val file = File(path)
+              addPath(webResources, relativePath, "", if (file.isAbsolute) file else File(warTask.project.projectDir, path))
             }
 
-            @Override
-            void visitDir(String relativePath, FileVisitDetails dirDetails) {
+
+            override fun visitDir(relativePath: String?, dirDetails: FileVisitDetails) {
               addPath(webResources, relativePath, dirDetails.path, dirDetails.file)
             }
 
-            @Override
-            void visitFile(String relativePath, FileVisitDetails fileDetails) {
+
+            override fun visitFile(relativePath: String?, fileDetails: FileVisitDetails) {
               if (warTask.webXml == null ||
-                  !fileDetails.file.canonicalPath.equals(warTask.webXml.canonicalPath)) {
+                  !fileDetails.file.canonicalPath.equals(warTask.webXml?.canonicalPath)) {
                 addPath(webResources, relativePath, fileDetails.path, fileDetails.file)
               }
             }
           })
-          warModel.classpath = new LinkedHashSet<>(warTask.classpath.files)
+          warModel.classpath = LinkedHashSet(warTask.classpath?.files)
         }
-        catch (Exception e) {
+        catch (e: Exception) {
           reportErrorMessage(modelName, project, context, e)
         }
 
         warModel.webResources = webResources
         warModel.archivePath = getTaskArchiveFile(warTask)
 
-        Manifest manifest = warTask.manifest
-        if (manifest instanceof ManifestInternal) {
-          ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        val manifest = warTask.manifest
+        if (manifest is ManifestInternal) {
+          val baos = ByteArrayOutputStream()
           manifest.writeTo(baos)
           warModel.manifestContent = baos.toString(manifest.contentCharset)
         }
@@ -105,16 +96,11 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
       }
     }
 
-    new WebConfigurationImpl(warModels)
+    return WebConfigurationImpl(warModels)
   }
 
-  @Override
-  void reportErrorMessage(
-    @NotNull String modelName,
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull Exception exception
-  ) {
+
+  override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
     context.messageReporter.createMessage()
       .withGroup(Messages.WAR_CONFIGURATION_MODEL_GROUP)
       .withKind(Message.Kind.WARNING)
@@ -124,10 +110,13 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
       .reportMessage(project)
   }
 
-  private static addPath(List<WebConfiguration.WebResource> webResources, String warRelativePath, String fileRelativePath, File file) {
-    warRelativePath = warRelativePath == null ? "" : warRelativePath
+  companion object {
 
-    WebConfiguration.WebResource webResource = new WebResourceImpl(warRelativePath, fileRelativePath, file)
-    webResources.add(webResource)
+    private fun addPath(webResources: MutableList<WebConfiguration.WebResource>, warRelativePath: String?, fileRelativePath: String, file: File) {
+      var warRelativePathOrEmpty = warRelativePath ?: ""
+
+      val webResource = WebResourceImpl(warRelativePathOrEmpty, fileRelativePath, file)
+      webResources.add(webResource)
+    }
   }
 }
