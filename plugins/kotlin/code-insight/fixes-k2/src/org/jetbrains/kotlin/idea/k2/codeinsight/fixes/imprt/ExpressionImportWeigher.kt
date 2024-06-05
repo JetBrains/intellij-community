@@ -131,7 +131,7 @@ internal class CallExpressionImportWeigher(
     context(KtAnalysisSession)
     override fun ownWeigh(symbol: KtDeclarationSymbol): Int = withValidityAssertion {
         when {
-            symbol is KtCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
+            symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
             symbol is KaClassOrObjectSymbol && presentReceiverTypes.isEmpty() -> {
                 val constructors = symbol.getDeclaredMemberScope().getConstructors()
@@ -144,7 +144,7 @@ internal class CallExpressionImportWeigher(
 
     context(KtAnalysisSession)
     private fun calculateWeight(
-        symbolToBeImported: KtCallableSymbol,
+        symbolToBeImported: KaCallableSymbol,
         presentReceiverTypes: List<KtType>,
         presentValueArgumentTypes: List<KtType?>,
     ): Int {
@@ -204,7 +204,7 @@ internal class CallExpressionImportWeigher(
     }
 
     context(KtAnalysisSession)
-    private fun calculateCallExtensionsWeight(symbolToBeImported: KtCallableSymbol): Int =
+    private fun calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
         with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
 }
 

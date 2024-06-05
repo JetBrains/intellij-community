@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
@@ -66,7 +66,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
             is KtBinaryExpression -> left?.isComparable() == true && right?.isComparable() == true
             else -> {
                 val type = resolveCall()?.singleFunctionCallOrNull()?.symbol?.returnType
-                    ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KtCallableSymbol)?.returnType
+                    ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
                 (type is KtNonErrorClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||
                                 type.getAllSuperTypes(true).any {

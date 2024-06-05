@@ -84,7 +84,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
             ImportMemberIntention.Context(classId.asSingleFqName(), shortenCommand)
         }
 
-        is KtCallableSymbol -> {
+        is KaCallableSymbol -> {
             val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
             if (!canBeImported(symbol)) return null
@@ -107,7 +107,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
 }
 
 context(KtAnalysisSession)
-private fun canBeImported(symbol: KtCallableSymbol): Boolean {
+private fun canBeImported(symbol: KaCallableSymbol): Boolean {
     if (symbol is KaEnumEntrySymbol) return true
     if (symbol.origin == KtSymbolOrigin.JAVA) {
         return when (symbol) {

@@ -6,7 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -93,7 +93,7 @@ sealed class ChangeVisibilityModifierIntention(
         val modifierList = element.modifierList
 
         if (modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
-            val callableDescriptor = symbol as? KtCallableSymbol ?: return null
+            val callableDescriptor = symbol as? KaCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
             if (callableDescriptor.getAllOverriddenSymbols()
                     .map { (it as? KtSymbolWithVisibility)?.visibility?.compareTo(targetVisibility) }

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
@@ -23,7 +23,7 @@ internal open class CallableImportCandidatesProvider(
     protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean = javaCallable.canBeImported()
 
     context(KtAnalysisSession)
-    override fun collectCandidates(): List<KtCallableSymbol> {
+    override fun collectCandidates(): List<KaCallableSymbol> {
         val unresolvedName = positionContext.getName()
         val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()

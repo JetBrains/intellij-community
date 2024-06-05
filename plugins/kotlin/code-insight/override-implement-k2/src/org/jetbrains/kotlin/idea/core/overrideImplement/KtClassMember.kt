@@ -40,7 +40,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 data class KtClassMemberInfo internal constructor(
-    val symbolPointer: KaSymbolPointer<KtCallableSymbol>,
+    val symbolPointer: KaSymbolPointer<KaCallableSymbol>,
     @NlsSafe val memberText: String?,
     val memberIcon: Icon?,
     @NlsContexts.Label val containingSymbolText: String?,
@@ -50,7 +50,7 @@ data class KtClassMemberInfo internal constructor(
     companion object {
         context(KtAnalysisSession)
         fun create(
-            symbol: KtCallableSymbol,
+            symbol: KaCallableSymbol,
             memberText: @NlsSafe String? = null,
             memberIcon: Icon? = null,
             @NlsContexts.Label containingSymbolText: String? = null,
@@ -100,7 +100,7 @@ context(KtAnalysisSession)
 fun generateMember(
     project: Project,
     ktClassMember: KtClassMember,
-    symbol: KtCallableSymbol,
+    symbol: KaCallableSymbol,
     targetClass: KtClassOrObject?,
     copyDoc: Boolean,
     mode: MemberGenerateMode = MemberGenerateMode.OVERRIDE
@@ -256,7 +256,7 @@ private fun KaClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annota
 context(KtAnalysisSession)
 private fun generateConstructorParameter(
     project: Project,
-    symbol: KtCallableSymbol,
+    symbol: KaCallableSymbol,
     renderer: KtDeclarationRenderer,
 ): KtCallableDeclaration {
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
@@ -309,7 +309,7 @@ private fun generateProperty(
 
 private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
-): String where T : KtNamedSymbol, T : KtCallableSymbol {
+): String where T : KtNamedSymbol, T : KaCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
         BodyType.EmptyOrTemplate -> return ""
         BodyType.FromTemplate -> {

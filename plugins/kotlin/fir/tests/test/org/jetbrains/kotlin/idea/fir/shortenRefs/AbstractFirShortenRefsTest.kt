@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -40,7 +40,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
         val (classShortenStrategy, callableShortenStrategy) = if (strategyName == null) {
             ShortenStrategy.defaultClassShortenStrategy to ShortenStrategy.defaultCallableShortenStrategy
         } else {
-            { _: KaClassLikeSymbol -> ShortenStrategy.valueOf(strategyName) } to { _: KtCallableSymbol -> ShortenStrategy.valueOf(strategyName) }
+            { _: KaClassLikeSymbol -> ShortenStrategy.valueOf(strategyName) } to { _: KaCallableSymbol -> ShortenStrategy.valueOf(strategyName) }
         }
 
         if (InTextDirectivesUtils.isDirectiveDefined(file.text, BULK_DIRECTIVE)) {

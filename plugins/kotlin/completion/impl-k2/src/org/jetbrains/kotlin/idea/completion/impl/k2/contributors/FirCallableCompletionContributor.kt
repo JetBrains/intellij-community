@@ -102,7 +102,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    protected open fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
+    protected open fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
         sessionParameters.allowExpectedDeclarations || !(symbol is KtPossibleMultiplatformSymbol && symbol.isExpect)
 
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
@@ -477,7 +477,7 @@ internal open class FirCallableCompletionContributor(
      */
     context(KtAnalysisSession)
     private fun checkApplicabilityAndSubstitute(
-        callableSymbol: KtCallableSymbol,
+        callableSymbol: KaCallableSymbol,
         extensionChecker: KtCompletionExtensionCandidateChecker?
     ): ApplicableExtension? {
         val (signature, applicabilityResult) = if (extensionChecker != null) {
@@ -613,7 +613,7 @@ internal open class FirCallableCompletionContributor(
         (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isString
 
     context(KtAnalysisSession)
-    private fun KtCallableSymbol.hasConstEvaluationAnnotation(): Boolean =
+    private fun KaCallableSymbol.hasConstEvaluationAnnotation(): Boolean =
         annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
 
     context(KtAnalysisSession)
@@ -651,7 +651,7 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean = when {
+    override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean = when {
         // References to elements which are members and extensions at the same time are not allowed
         symbol.isExtension && symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> false
 
@@ -725,7 +725,7 @@ internal class FirInfixCallableCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean {
+    override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean {
         return symbol is KaFunctionSymbol && symbol.isInfix && super.filter(symbol, sessionParameters)
     }
 
@@ -819,9 +819,9 @@ private class CachingKtCompletionExtensionCandidateChecker(
      * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
      * the first time while processing the scope context and the second time while processing callables from indexes.
      */
-    private val cache: MutableMap<KtCallableSymbol, KaExtensionApplicabilityResult> = mutableMapOf()
+    private val cache: MutableMap<KaCallableSymbol, KaExtensionApplicabilityResult> = mutableMapOf()
 
-    override fun computeApplicability(candidate: KtCallableSymbol): KaExtensionApplicabilityResult {
+    override fun computeApplicability(candidate: KaCallableSymbol): KaExtensionApplicabilityResult {
         return cache.computeIfAbsent(candidate) {
             delegate.computeApplicability(candidate)
         }

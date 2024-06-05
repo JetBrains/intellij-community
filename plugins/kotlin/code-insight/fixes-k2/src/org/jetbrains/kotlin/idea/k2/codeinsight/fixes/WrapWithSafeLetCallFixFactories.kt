@@ -11,7 +11,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -276,7 +276,7 @@ object WrapWithSafeLetCallFixFactories {
             parent is KtProperty && expression == parent.initializer -> {
                 if (parent.typeReference == null) return true
                 val symbol = parent.getSymbol()
-                (symbol as? KtCallableSymbol)?.returnType?.isMarkedNullable ?: true
+                (symbol as? KaCallableSymbol)?.returnType?.isMarkedNullable ?: true
             }
             parent is KtValueArgument && expression == parent.getArgumentExpression() -> {
                 // In the following logic, if call is missing, unresolved, or contains error, we just stop here so the wrapped call would be
@@ -334,7 +334,7 @@ object WrapWithSafeLetCallFixFactories {
         if (index == -1) {
             // Null extension receiver means the function does not accept extension receiver and hence cannot be invoked on a nullable
             // value.
-            return (symbol as? KtCallableSymbol)?.receiverType?.isMarkedNullable == true
+            return (symbol as? KaCallableSymbol)?.receiverType?.isMarkedNullable == true
         }
         return symbol.valueParameters.getOrNull(index)?.returnType?.isMarkedNullable
     }

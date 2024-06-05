@@ -245,7 +245,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
                 val value =
                     (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KtImplicitReceiverValue
-                val originalSymbol = originalDeclaration.getSymbol() as? KtCallableSymbol
+                val originalSymbol = originalDeclaration.getSymbol() as? KaCallableSymbol
                 val originalSymbolReceiverType = originalSymbol?.receiverType
                 val originalSymbolDispatchType = originalSymbol?.getDispatchReceiverType()
                 if (value != null) {

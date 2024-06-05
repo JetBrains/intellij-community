@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeNameRend
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -267,7 +267,7 @@ internal class KotlinIdeDeclarationRenderer(
             when {
                 symbol is KaClassOrObjectSymbol -> !(symbol.classKind == KaClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
 
-                symbol is KtCallableSymbol -> {
+                symbol is KaCallableSymbol -> {
                     symbol.modality == Modality.OPEN || symbol.getContainingSymbol() != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
                 }
 
@@ -459,7 +459,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtCallableSignatureRenderer {
             override fun renderCallableSignature(
                 analysisSession: KtAnalysisSession,
-                symbol: KtCallableSymbol,
+                symbol: KaCallableSymbol,
                 keyword: KtKeywordToken?,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -635,7 +635,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtCallableParameterRenderer {
             override fun renderValueParameters(
                 analysisSession: KtAnalysisSession,
-                symbol: KtCallableSymbol,
+                symbol: KaCallableSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
@@ -717,7 +717,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtCallableReturnTypeRenderer {
             override fun renderReturnType(
                 analysisSession: KtAnalysisSession,
-                symbol: KtCallableSymbol,
+                symbol: KaCallableSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ) {

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -81,7 +81,7 @@ internal class OverrideKeywordHandler(
     context(KtAnalysisSession)
     private fun canCompleteDeclarationWithMember(
         declaration: KtCallableDeclaration,
-        symbolToOverride: KtCallableSymbol
+        symbolToOverride: KaCallableSymbol
     ): Boolean = when (declaration) {
         is KtFunction -> symbolToOverride is KaFunctionSymbol
         is KtValVarKeywordOwner -> {
@@ -144,7 +144,7 @@ internal class OverrideKeywordHandler(
     }
 
     context(KtAnalysisSession)
-    private fun getSymbolTextForLookupElement(memberSymbol: KtCallableSymbol): String = buildString {
+    private fun getSymbolTextForLookupElement(memberSymbol: KaCallableSymbol): String = buildString {
         append(KtTokens.OVERRIDE_KEYWORD.value)
             .append(" ")
             .append(memberSymbol.render(renderingOptionsForLookupElementRendering))

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -99,5 +99,5 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
 )
 
 context(KtAnalysisSession)
-internal fun KtCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
+internal fun KaCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
     isExtension || isFunctionalVariableCall && (returnType as? KtFunctionalType)?.hasReceiver == true

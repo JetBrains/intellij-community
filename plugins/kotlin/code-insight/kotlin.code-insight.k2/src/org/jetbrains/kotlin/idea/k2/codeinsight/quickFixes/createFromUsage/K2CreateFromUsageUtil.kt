@@ -88,7 +88,7 @@ object K2CreateFromUsageUtil {
                     val variable = parent.parent as KtProperty
                     val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
                     val ktType = variable.getReturnKtType()
-                    val symbol = variable.getSymbol() as? KtCallableSymbol
+                    val symbol = variable.getSymbol() as? KaCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.getSymbol()
                         .getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.NULLABLE_ANY
                     buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
@@ -149,7 +149,7 @@ object K2CreateFromUsageUtil {
 
     context (KtAnalysisSession)
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
-        //is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
+        //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KaClassLikeSymbol -> symbol // When the receiver is an object
         else -> getKtType()?.expandedClassSymbol
     }?.psi

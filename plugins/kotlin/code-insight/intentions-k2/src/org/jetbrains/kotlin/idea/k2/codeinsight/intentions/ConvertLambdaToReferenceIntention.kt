@@ -246,7 +246,7 @@ private fun buildReferenceText(receiver: String, selector: String, call: KtCalla
     }
 }
 
-private val KtCallableSymbol.isInvokeOperator: Boolean
+private val KaCallableSymbol.isInvokeOperator: Boolean
     get() = this is KaFunctionSymbol && this.isOperator && name == org.jetbrains.kotlin.util.OperatorNameConventions.INVOKE
 
 private fun getCalleeReferenceExpression(callableExpression: KtExpression): KtNameReferenceExpression? {

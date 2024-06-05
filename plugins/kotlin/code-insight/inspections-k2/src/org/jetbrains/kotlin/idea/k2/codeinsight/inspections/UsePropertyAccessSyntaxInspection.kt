@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
@@ -113,7 +113,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val symbol = mainReferenceOfCallableReference.resolveToSymbol() ?: return
 
-            val symbolPsi = (symbol as? KtCallableSymbol)?.psi ?: return
+            val symbolPsi = (symbol as? KaCallableSymbol)?.psi ?: return
 
             val problemHighlightType = getProblemHighlightType(symbolPsi)
 
@@ -394,7 +394,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      */
     context(KtAnalysisSession)
     private fun canConvert(
-        symbol: KtCallableSymbol,
+        symbol: KaCallableSymbol,
         callExpression: KtExpression,
         receiverType: KtType,
         propertyName: String
@@ -550,7 +550,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return replacementReceiverType.isEqualTo(expectedReceiverType)
     }
 
-    private fun functionNameIsInNotPropertiesList(symbol: KtCallableSymbol, callExpression: KtExpression): Boolean {
+    private fun functionNameIsInNotPropertiesList(symbol: KaCallableSymbol, callExpression: KtExpression): Boolean {
         val symbolUnsafeName = symbol.callableId?.asSingleFqName()?.toUnsafe()
 
         val notProperties = NotPropertiesService.getNotProperties(callExpression)
@@ -558,7 +558,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     }
 
     context(KtAnalysisSession)
-    private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KtCallableSymbol>): Boolean {
+    private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
         for (overriddenSymbol in allOverriddenSymbols) {
             if (overriddenSymbol.origin == KtSymbolOrigin.JAVA) {
                 val symbolAnnotations = overriddenSymbol.annotationsList.annotations

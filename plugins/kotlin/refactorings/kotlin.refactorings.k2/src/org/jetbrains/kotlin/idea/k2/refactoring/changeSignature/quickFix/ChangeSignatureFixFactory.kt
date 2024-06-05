@@ -310,7 +310,7 @@ object ChangeSignatureFixFactory {
 
     context(KtAnalysisSession)
     private fun createAddParameterFix(
-        ktCallableSymbol: KtCallableSymbol,
+        ktCallableSymbol: KaCallableSymbol,
         element: PsiElement,
     ): List<ParameterQuickFix> {
         if (ktCallableSymbol !is KaFunctionLikeSymbol) return emptyList()

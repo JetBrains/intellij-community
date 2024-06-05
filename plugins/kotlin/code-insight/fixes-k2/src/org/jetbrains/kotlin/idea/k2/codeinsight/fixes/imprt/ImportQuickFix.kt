@@ -270,7 +270,7 @@ class ImportQuickFix(
             }
 
             when (symbol) {
-                is KtCallableSymbol -> symbol.callableId?.packageName
+                is KaCallableSymbol -> symbol.callableId?.packageName
                 is KaClassLikeSymbol -> symbol.classId?.packageFqName
                 else -> null
             }?.let { packageName ->
@@ -334,7 +334,7 @@ class ImportQuickFix(
         private fun KtDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
             // don't import nested class on the fly because it will probably add qualification and confuse the user
             is KaNamedClassOrObjectSymbol -> isNested()
-            is KtCallableSymbol -> doNotImportCallablesOnFly
+            is KaCallableSymbol -> doNotImportCallablesOnFly
             else -> false
         }
 
@@ -362,7 +362,7 @@ class ImportQuickFix(
         private fun KtDeclarationSymbol.getImportName(): String = buildString {
             if (this@getImportName !is KtNamedSymbol) error("Unexpected anonymous declaration")
 
-            if (this@getImportName is KtCallableSymbol) {
+            if (this@getImportName is KaCallableSymbol) {
                 val classSymbol = if (receiverType != null) receiverType?.expandedClassSymbol else originalContainingClassForOverride
                 classSymbol?.name?.let { append(it.asString()) }
             }

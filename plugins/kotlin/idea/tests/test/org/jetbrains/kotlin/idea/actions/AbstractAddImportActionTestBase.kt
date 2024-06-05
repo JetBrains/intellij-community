@@ -8,7 +8,7 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
@@ -107,7 +107,7 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
  */
 private class MockAutoImportCallableWeigher : KotlinAutoImportCallableWeigher {
     override fun KtAnalysisSession.weigh(
-        symbolToBeImported: KtCallableSymbol,
+        symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int {
         val symbolAnnotated = symbolToBeImported.hasAnnotation(TEST_ANNOTATION_CLASS_ID)

@@ -73,7 +73,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
 
     context(KtAnalysisSession)
     private fun isOptInRequired(
-        enumEntriesPropertySymbol: KtCallableSymbol,
+        enumEntriesPropertySymbol: KaCallableSymbol,
         moduleApiVersion: ApiVersion,
     ): Boolean? {
         val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedClassSymbol

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -77,17 +77,17 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
      */
     context(KtAnalysisSession)
     private fun findMethod(
-        classSymbol: KaClassOrObjectSymbol, methodName: Name, condition: (KtCallableSymbol) -> Boolean
-    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
+        classSymbol: KaClassOrObjectSymbol, methodName: Name, condition: (KaCallableSymbol) -> Boolean
+    ): KaCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
 
     context(KtAnalysisSession)
-    private fun findEqualsMethodForClass(classSymbol: KaClassOrObjectSymbol): KtCallableSymbol? =
+    private fun findEqualsMethodForClass(classSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
         findMethod(classSymbol, EQUALS) { callableSymbol ->
             (callableSymbol as? KaFunctionSymbol)?.let { matchesEqualsMethodSignature(it) } == true
         }
 
     context(KtAnalysisSession)
-    private fun findHashCodeMethodForClass(classSymbol: KaClassOrObjectSymbol): KtCallableSymbol? =
+    private fun findHashCodeMethodForClass(classSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
         findMethod(classSymbol, HASH_CODE) { callableSymbol ->
             (callableSymbol as? KaFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
         }

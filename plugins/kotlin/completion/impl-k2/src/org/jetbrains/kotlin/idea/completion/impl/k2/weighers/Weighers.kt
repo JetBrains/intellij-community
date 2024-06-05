@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -51,10 +51,10 @@ internal class WeighingContext private constructor(
     /**
      * Cache for contextual symbols, i.e. symbols which are overridden by callables containing current position.
      */
-    class ContextualSymbolsCache(private val symbolsContainingPosition: Map<Name, List<KtCallableSymbol>>) {
-        private val contextualOverriddenSymbols: MutableMap<Name, Set<KtCallableSymbol>> = mutableMapOf()
+    class ContextualSymbolsCache(private val symbolsContainingPosition: Map<Name, List<KaCallableSymbol>>) {
+        private val contextualOverriddenSymbols: MutableMap<Name, Set<KaCallableSymbol>> = mutableMapOf()
         context(KtAnalysisSession)
-        fun symbolIsPresentInContext(symbol: KtCallableSymbol): Boolean = withValidityAssertion {
+        fun symbolIsPresentInContext(symbol: KaCallableSymbol): Boolean = withValidityAssertion {
             if (symbol !is KtNamedSymbol) return false
 
             val symbols = symbolsContainingPosition[symbol.name].orEmpty()
@@ -163,7 +163,7 @@ internal class WeighingContext private constructor(
             return element
                 .parentsOfType<KtCallableDeclaration>()
                 .filter { it !is KtParameter }
-                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KtCallableSymbol>() }
+                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KaCallableSymbol>() }
                 .filter { it is KtNamedSymbol }
                 .groupBy { (it as KtNamedSymbol).name }
                 .let { ContextualSymbolsCache(it) }
@@ -193,7 +193,7 @@ internal object Weighers {
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
         K2SoftDeprecationWeigher.addWeight(lookupElement, symbol, context.languageVersionSettings)
 
-        if (symbol !is KtCallableSymbol) return
+        if (symbol !is KaCallableSymbol) return
 
         PreferContextualCallablesWeigher.addWeight(lookupElement, symbol, context.contextualSymbolsCache)
         PreferFewerParametersWeigher. addWeight(lookupElement, symbol)

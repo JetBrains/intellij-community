@@ -27,7 +27,7 @@ object K2StatisticsInfoProvider {
         modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KtKeywordsRenderer.NONE }
 
         returnTypeFilter = object : KaCallableReturnTypeFilter {
-            override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean {
+            override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KaCallableSymbol): Boolean {
                 return symbol !is KaFunctionLikeSymbol
             }
         }
@@ -35,7 +35,7 @@ object K2StatisticsInfoProvider {
         callableSignatureRenderer = object : KaCallableSignatureRenderer {
             override fun renderCallableSignature(
                 analysisSession: KtAnalysisSession,
-                symbol: KtCallableSymbol,
+                symbol: KaCallableSymbol,
                 keyword: KtKeywordToken?,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
@@ -56,7 +56,7 @@ object K2StatisticsInfoProvider {
     context(KtAnalysisSession)
     fun forDeclarationSymbol(symbol: KtDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
         is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }
-        is KtCallableSymbol -> symbol.callableId?.let { callableId ->
+        is KaCallableSymbol -> symbol.callableId?.let { callableId ->
             val containerFqName = callableId.classId?.asFqNameString() ?: callableId.packageName
             val declarationText = prettyPrint { renderer.renderDeclaration(analysisSession, symbol, this) }
             StatisticsInfo(context, "$containerFqName###$declarationText")

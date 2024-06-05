@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -16,7 +16,7 @@ internal object PreferFewerParametersWeigher {
             by NotNullableUserDataProperty(Key("KOTLIN_PREFER_FEWER_PARAMETERS_WEIGHER"), 0)
 
     context(KtAnalysisSession)
-    fun addWeight(lookupElement: LookupElement, symbol: KtCallableSymbol) {
+    fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol) {
         lookupElement.parametersCount = (symbol as? KaFunctionLikeSymbol)?.valueParameters?.size ?: 0
     }
 

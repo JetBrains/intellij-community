@@ -141,7 +141,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         }
     }
 
-    private fun processCallable(symbol: KtCallableSymbol) {
+    private fun processCallable(symbol: KaCallableSymbol) {
         if (symbol.origin == KtSymbolOrigin.JAVA) {
             val javaMethod = symbol.psiSafe<PsiMethod>() ?: return
             for (type in javaMethod.throwsList.referencedTypes) {

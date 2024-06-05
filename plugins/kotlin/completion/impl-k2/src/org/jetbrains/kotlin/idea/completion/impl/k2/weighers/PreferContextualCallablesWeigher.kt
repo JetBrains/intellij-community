@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -36,7 +36,7 @@ internal object PreferContextualCallablesWeigher {
      * one of the callables containing current position.
      */
     context(KtAnalysisSession)
-    fun addWeight(lookupElement: LookupElement, symbol: KtCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
+    fun addWeight(lookupElement: LookupElement, symbol: KaCallableSymbol, contextualSymbolsCache: WeighingContext.ContextualSymbolsCache) {
         if (symbol !is KtNamedSymbol || symbol.name !in contextualSymbolsCache) return
 
         val symbolsToCheck = sequence {

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -19,7 +19,7 @@ internal fun interface CompletionVisibilityChecker {
     fun isVisible(symbol: KtSymbolWithVisibility): Boolean
 
     context(KtAnalysisSession)
-    fun isVisible(symbol: KtCallableSymbol): Boolean {
+    fun isVisible(symbol: KaCallableSymbol): Boolean {
         return symbol !is KtSymbolWithVisibility || isVisible(symbol as KtSymbolWithVisibility)
     }
 

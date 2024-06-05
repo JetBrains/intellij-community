@@ -70,7 +70,7 @@ object CreateKotlinCallableActionTextBuilder {
                     ?: request.receiverExpression.text
                 receiverTypeText = addedPackage + renderedReceiver
             }
-            return if (request.isExtension && receiverSymbol is KtCallableSymbol) {
+            return if (request.isExtension && receiverSymbol is KaCallableSymbol) {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KtFunctionalType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
@@ -82,7 +82,7 @@ object CreateKotlinCallableActionTextBuilder {
     context (KtAnalysisSession)
     private fun KtSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KtType?): String? {
         return when (this) {
-            is KtCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
+            is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
 
             is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)

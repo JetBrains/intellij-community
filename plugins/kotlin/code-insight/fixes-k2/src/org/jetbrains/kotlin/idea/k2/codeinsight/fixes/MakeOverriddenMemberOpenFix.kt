@@ -5,7 +5,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -63,7 +63,7 @@ context(KtAnalysisSession)
 private fun computeElementContext(element: KtNamedDeclaration): ElementContext? {
     val overriddenNonOverridableMembers = mutableListOf<DeclarationPointer>()
     val containingDeclarationNames = mutableListOf<String>()
-    val symbol = element.getSymbol() as? KtCallableSymbol ?: return null
+    val symbol = element.getSymbol() as? KaCallableSymbol ?: return null
 
     val allOverriddenSymbols = symbol.getAllOverriddenSymbols()
     for (overriddenSymbol in retainNonOverridableMembers(allOverriddenSymbols)) {
@@ -88,12 +88,12 @@ private data class ElementContext(
 
 context(KtAnalysisSession)
 private fun retainNonOverridableMembers(
-    callableMemberSymbols: Collection<KtCallableSymbol>,
-): Collection<KtCallableSymbol> {
+    callableMemberSymbols: Collection<KaCallableSymbol>,
+): Collection<KaCallableSymbol> {
     return callableMemberSymbols.filter { !it.isOverridable }
 }
 
-private val KtCallableSymbol.isOverridable: Boolean
+private val KaCallableSymbol.isOverridable: Boolean
     get() = (this as? KtSymbolWithModality)?.modality != Modality.FINAL &&
             (this as? KtSymbolWithVisibility)?.visibility != Visibilities.Private &&
             (this.getSymbolContainingMemberDeclarations() as? KaNamedClassOrObjectSymbol)?.isFinalClass != true

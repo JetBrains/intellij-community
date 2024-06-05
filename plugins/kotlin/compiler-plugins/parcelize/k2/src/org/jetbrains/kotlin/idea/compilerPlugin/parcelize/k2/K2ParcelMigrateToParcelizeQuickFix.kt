@@ -48,15 +48,15 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KtAnalysisSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
-            get() = getSymbolOfType<KtCallableSymbol>().returnType.classId
+            get() = getSymbolOfType<KaCallableSymbol>().returnType.classId
 
         context(KtAnalysisSession)
         override val KtCallableDeclaration.receiverTypeClassId: ClassId?
-            get() = getSymbolOfType<KtCallableSymbol>().receiverType?.classId
+            get() = getSymbolOfType<KaCallableSymbol>().receiverType?.classId
 
         context(KtAnalysisSession)
         override val KtCallableDeclaration.overrideCount: Int
-            get() = getSymbolOfType<KtCallableSymbol>().getAllOverriddenSymbols().size
+            get() = getSymbolOfType<KaCallableSymbol>().getAllOverriddenSymbols().size
 
         context(KtAnalysisSession)
         override val KtProperty.isJvmField: Boolean

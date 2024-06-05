@@ -134,7 +134,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getKotlinCallableSymbolsByName(
         name: Name,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
-    ): Sequence<KtCallableSymbol> {
+    ): Sequence<KaCallableSymbol> {
         val nameString = name.asString()
 
         val values = SmartList<KtNamedDeclaration>()
@@ -146,7 +146,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (callableDeclaration in values) {
-                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>())
+                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KaCallableSymbol>())
             }
             yieldAll(
                 getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(name)
@@ -158,7 +158,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getJavaCallableSymbolsByName(
         name: Name,
         psiFilter: (PsiMember) -> Boolean = { true }
-    ): Sequence<KtCallableSymbol> {
+    ): Sequence<KaCallableSymbol> {
         val nameString = name.asString()
 
         return sequence {
@@ -178,7 +178,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getTopLevelCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
-    ): Sequence<KtCallableSymbol> {
+    ): Sequence<KaCallableSymbol> {
         val values = SmartList<KtCallableDeclaration>()
         val processor = CancelableCollectFilterProcessor(values) {
             psiFilter(it) && useSiteFilter(it) && !it.isKotlinBuiltins() && it.receiverTypeReference == null
@@ -190,7 +190,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (callableDeclaration in values) {
-                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>())
+                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KaCallableSymbol>())
             }
             yieldAll(
                 getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(nameFilter).filter { !it.isExtension }
@@ -203,7 +203,7 @@ class KtSymbolFromIndexProvider private constructor(
         name: Name,
         receiverTypes: List<KtType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
-    ): Sequence<KtCallableSymbol> =
+    ): Sequence<KaCallableSymbol> =
         getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinTopLevelExtensionsByReceiverTypeIndex)
 
     context(KtAnalysisSession)
@@ -211,7 +211,7 @@ class KtSymbolFromIndexProvider private constructor(
         name: Name,
         receiverTypes: List<KtType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
-    ): Sequence<KtCallableSymbol> =
+    ): Sequence<KaCallableSymbol> =
         getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinExtensionsInObjectsByReceiverTypeIndex)
 
     context(KtAnalysisSession)
@@ -220,7 +220,7 @@ class KtSymbolFromIndexProvider private constructor(
         receiverTypes: List<KtType>,
         psiFilter: (KtCallableDeclaration) -> Boolean,
         indexHelper: KotlinExtensionsByReceiverTypeStubIndexHelper,
-    ): Sequence<KtCallableSymbol> {
+    ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
         if (receiverTypeNames.isEmpty()) return emptySequence()
 
@@ -230,7 +230,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (extension in values) {
-                yieldIfNotNull(extension.getSymbolOfTypeSafe<KtCallableSymbol>())
+                yieldIfNotNull(extension.getSymbolOfTypeSafe<KaCallableSymbol>())
             }
             val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
             yieldAll(resolveExtensionScope.getCallableSymbols(name).filterExtensionsByReceiverTypes(receiverTypes))
@@ -242,7 +242,7 @@ class KtSymbolFromIndexProvider private constructor(
         nameFilter: (Name) -> Boolean,
         receiverTypes: List<KtType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
-    ): Sequence<KtCallableSymbol> {
+    ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
         if (receiverTypeNames.isEmpty()) return emptySequence()
 
@@ -256,7 +256,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (extension in values) {
-                yieldIfNotNull(extension.getSymbolOfTypeSafe<KtCallableSymbol>())
+                yieldIfNotNull(extension.getSymbolOfTypeSafe<KaCallableSymbol>())
             }
             val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
             yieldAll(resolveExtensionScope.getCallableSymbols(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
@@ -264,7 +264,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KtAnalysisSession)
-    private fun Sequence<KtCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KtType>): Sequence<KtCallableSymbol> {
+    private fun Sequence<KaCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KtType>): Sequence<KaCallableSymbol> {
         val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KtTypeNullability.NON_NULLABLE) }
 
         return filter { symbol ->

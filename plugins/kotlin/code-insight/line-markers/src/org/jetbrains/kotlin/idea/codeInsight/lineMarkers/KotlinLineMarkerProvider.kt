@@ -17,7 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -101,7 +101,7 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         }
 
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return
+            var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return
             if (callableSymbol is KtValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return
             }
@@ -237,7 +237,7 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return null
+            var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return null
             if (callableSymbol is KtValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return null
             }

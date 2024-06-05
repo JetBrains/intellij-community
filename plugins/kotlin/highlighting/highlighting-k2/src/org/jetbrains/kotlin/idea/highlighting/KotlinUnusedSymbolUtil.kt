@@ -603,7 +603,7 @@ object KotlinUnusedSymbolUtil {
       fun KtExpression.isNameInEnumStaticMethods(): Boolean {
           if (getQualifiedExpressionForSelector() != null) return false
           if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
-          val symbol = mainReference?.resolveToSymbol() as? KtCallableSymbol ?: return false
+          val symbol = mainReference?.resolveToSymbol() as? KaCallableSymbol ?: return false
           return symbol.callableId?.asSingleFqName() in enumStaticMethods
       }
 
@@ -657,7 +657,7 @@ object KotlinUnusedSymbolUtil {
   private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope, symbol: KtDeclarationSymbol?): Boolean {
       val ownerClass = declaration.containingClassOrObject as? KtClass ?: return false
       if (!ownerClass.isInheritable()) return false
-      val callableSymbol = symbol as? KtCallableSymbol ?: return false
+      val callableSymbol = symbol as? KaCallableSymbol ?: return false
       if ((callableSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT) return false
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {

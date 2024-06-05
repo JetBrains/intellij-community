@@ -103,7 +103,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): L
     }
 
     private data class OverrideMember(
-        val symbol: KtCallableSymbol,
+        val symbol: KaCallableSymbol,
         val bodyType: BodyType,
         val containingSymbol: KaClassOrObjectSymbol?,
         override val token: KtLifetimeToken

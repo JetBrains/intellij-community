@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -394,7 +394,7 @@ private fun getReferencedClassifierSymbol(
     thisSymbol: KtSymbol?,
     originalDeclaration: PsiNamedElement,
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>,
-    partiallyAppliedSymbol: KtPartiallyAppliedSymbol<KtCallableSymbol, KtCallableSignature<KtCallableSymbol>>?
+    partiallyAppliedSymbol: KtPartiallyAppliedSymbol<KaCallableSymbol, KtCallableSignature<KaCallableSymbol>>?
 ): KaClassifierSymbol? {
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.getSymbol()
     ?: (originalDeclaration as? PsiMember)?.getCallableSymbol()) ?: return null

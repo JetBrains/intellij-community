@@ -497,13 +497,13 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
     override fun newCopyBuilder(): FunctionDescriptor.CopyBuilder<out SimpleFunctionDescriptor> = noImplementation()
 }
 
-private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtCallableSymbol): ReceiverParameterDescriptor? {
+private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KaCallableSymbol): ReceiverParameterDescriptor? {
     val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.getDispatchReceiverType() } ?: return null
     return KtSymbolStubDispatchReceiverParameterDescriptor(ktDispatchTypeAndAnnotations, context)
 }
 
 private fun <T> T.getExtensionReceiverParameter(
-    ktSymbol: KtCallableSymbol,
+    ktSymbol: KaCallableSymbol,
 ): ReceiverParameterDescriptor? where T : KtSymbolBasedDeclarationDescriptor, T : CallableDescriptor {
     val receiverType = ktSymbol.receiverType ?: return null
     val receiverValue = ExtensionReceiver(this, receiverType.toKotlinType(context), null)

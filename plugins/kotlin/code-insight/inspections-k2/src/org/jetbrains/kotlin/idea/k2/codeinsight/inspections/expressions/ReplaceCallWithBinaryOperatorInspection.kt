@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -198,7 +198,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
 private val KOTLIN_ANY_EQUALS_CALLABLE_ID = CallableId(StandardClassIds.Any, Name.identifier("equals"))
 
 context(KtAnalysisSession)
-private fun KtCallableSymbol.isAnyEquals(): Boolean {
+private fun KaCallableSymbol.isAnyEquals(): Boolean {
     val overriddenSymbols = sequence {
         yield(this@isAnyEquals)
         yieldAll(this@isAnyEquals.getAllOverriddenSymbols())

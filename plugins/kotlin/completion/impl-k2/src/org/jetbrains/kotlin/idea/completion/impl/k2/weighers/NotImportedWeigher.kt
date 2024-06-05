@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -30,7 +30,7 @@ fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol
         if (availableWithoutImport) return
         val fqName = when (symbol) {
             is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
+            is KaCallableSymbol -> symbol.callableId?.asSingleFqName()
             is KtPackageSymbol -> symbol.fqName
             else -> null
         } ?: return

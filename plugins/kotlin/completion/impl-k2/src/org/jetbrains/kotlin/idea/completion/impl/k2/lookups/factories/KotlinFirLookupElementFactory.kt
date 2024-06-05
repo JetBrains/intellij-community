@@ -39,7 +39,7 @@ class KotlinFirLookupElementFactory {
         expectedType: KtType? = null,
     ): LookupElement {
         return when (symbol) {
-            is KtCallableSymbol -> createCallableLookupElement(
+            is KaCallableSymbol -> createCallableLookupElement(
                 symbol.name,
                 symbol.asSignature(),
                 detectCallableOptions(symbol, importStrategyDetector),

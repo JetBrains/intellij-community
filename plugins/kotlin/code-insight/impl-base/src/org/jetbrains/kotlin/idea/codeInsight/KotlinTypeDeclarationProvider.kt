@@ -66,9 +66,9 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         return PsiElement.EMPTY_ARRAY
     }
 
-    private fun KtCallableDeclaration.getTypeDeclarationFromCallable(typeFromSymbol: (KtCallableSymbol) -> KtType?): Array<PsiElement> {
+    private fun KtCallableDeclaration.getTypeDeclarationFromCallable(typeFromSymbol: (KaCallableSymbol) -> KtType?): Array<PsiElement> {
         analyze(this) {
-            val symbol = getSymbol() as? KtCallableSymbol ?: return PsiElement.EMPTY_ARRAY
+            val symbol = getSymbol() as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
             val targetSymbol = type.upperBoundIfFlexible().abbreviatedTypeOrSelf.classSymbol ?: return PsiElement.EMPTY_ARRAY
             targetSymbol.psi?.let { return arrayOf(it) }

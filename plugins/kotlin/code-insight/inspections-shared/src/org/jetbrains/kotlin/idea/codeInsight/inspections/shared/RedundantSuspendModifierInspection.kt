@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallInfo
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -52,7 +52,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     private val coroutineContextFqName = StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
 
     context(KtAnalysisSession)
-    private fun KtCallableSymbol.isSuspendSymbol(): Boolean {
+    private fun KaCallableSymbol.isSuspendSymbol(): Boolean {
         // Currently, Kotlin does not support suspending properties except for accessing the coroutineContext
         if (this is KtKotlinPropertySymbol && getFqNameIfPackageOrNonLocal() == coroutineContextFqName) {
             return true

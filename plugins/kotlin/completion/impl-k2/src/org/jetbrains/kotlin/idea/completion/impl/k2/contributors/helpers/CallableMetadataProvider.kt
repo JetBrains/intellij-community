@@ -161,7 +161,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KtAnalysisSession)
-    private fun getExpectedNonExtensionReceiver(symbol: KtCallableSymbol): KaClassOrObjectSymbol? {
+    private fun getExpectedNonExtensionReceiver(symbol: KaCallableSymbol): KaClassOrObjectSymbol? {
         val containingClass = symbol.originalContainingClassForOverride
         return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassOrObjectSymbol)?.isInner == true) {
             containingClass.getContainingSymbol() as? KaClassOrObjectSymbol
@@ -201,7 +201,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KtAnalysisSession)
-    private val KtCallableSymbol.isOverride: Boolean
+    private val KaCallableSymbol.isOverride: Boolean
         get() = when (this) {
             is KaFunctionSymbol -> isOverride
             is KtPropertySymbol -> isOverride
@@ -242,7 +242,7 @@ internal object CallableMetadataProvider {
 
     context(KtAnalysisSession)
     private fun callableWeightByReceiver(
-        symbol: KtCallableSymbol,
+        symbol: KaCallableSymbol,
         flattenedActualReceiverTypes: List<List<KtType>>,
         expectedReceiverType: KtType,
     ): CallableMetadata {
@@ -280,7 +280,7 @@ internal object CallableMetadataProvider {
 
     context(KtAnalysisSession)
     private fun callableWeightKindByReceiverType(
-        symbol: KtCallableSymbol,
+        symbol: KaCallableSymbol,
         actualReceiverType: KtType,
         expectedReceiverType: KtType,
     ): CallableKind? = when {
@@ -299,7 +299,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KtAnalysisSession)
-    private fun isExtensionCallOnTypeParameterReceiver(symbol: KtCallableSymbol): Boolean {
+    private fun isExtensionCallOnTypeParameterReceiver(symbol: KaCallableSymbol): Boolean {
         val originalSymbol = symbol.unwrapFakeOverrides
         val receiverParameterType = originalSymbol.receiverType as? KtTypeParameterType ?: return false
         val parameterTypeOwner = receiverParameterType.symbol.getContainingSymbol() ?: return false

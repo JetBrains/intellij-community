@@ -677,7 +677,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun hasTypeForValueClassInSignature(ktDeclaration: KtDeclaration): Boolean {
         analyzeForUast(ktDeclaration) {
-            val symbol = ktDeclaration.getSymbol() as? KtCallableSymbol ?: return false
+            val symbol = ktDeclaration.getSymbol() as? KaCallableSymbol ?: return false
             if (symbol.returnType.typeForValueClass) return true
             if (symbol.receiverType?.typeForValueClass == true) return true
             if (symbol is KaFunctionLikeSymbol) {

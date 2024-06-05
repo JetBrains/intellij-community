@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -322,7 +322,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                     val targetSymbol = expression.mainReference.resolveToSymbol() as? KtAnnotatedSymbol ?: return
                     processSymbolAnnotations(targetSymbol)
 
-                    val typeSymbol = (targetSymbol as? KtCallableSymbol)?.returnType?.expandedClassSymbol ?: return
+                    val typeSymbol = (targetSymbol as? KaCallableSymbol)?.returnType?.expandedClassSymbol ?: return
                     processSymbolAnnotations(typeSymbol)
                 }
             })

@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -215,7 +215,7 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
     private fun calculateCallExtensionsWeight(namedFunction: KtNamedFunction): Int {
         return allowAnalysisOnEdt {
             analyze(element) {
-                val callableSymbol = namedFunction.getSymbol() as? KtCallableSymbol
+                val callableSymbol = namedFunction.getSymbol() as? KaCallableSymbol
                 if (callableSymbol != null) {
                     with(KotlinAutoImportCallableWeigher) { weigh(callableSymbol, element) }
                 } else {

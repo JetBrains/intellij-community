@@ -16,7 +16,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -180,7 +180,7 @@ sealed class K2MoveRenameUsageInfo(
             // example: a.foo() where foo is an extension function
             fun KtSimpleNameExpression.isExtensionReference(): Boolean {
                 return analyze(this) {
-                    val callable = mainReference.resolveToSymbol() as? KtCallableSymbol
+                    val callable = mainReference.resolveToSymbol() as? KaCallableSymbol
                     if (callable?.isExtension == true) return true
                     if (callable is KtPropertySymbol) {
                         val returnType = callable.returnType

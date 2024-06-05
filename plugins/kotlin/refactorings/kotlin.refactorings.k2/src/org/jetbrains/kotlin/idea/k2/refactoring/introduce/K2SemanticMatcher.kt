@@ -218,7 +218,7 @@ object K2SemanticMatcher {
             if (patternSymbol is KtNamedSymbol) {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
-                    if (patternSymbol is KtCallableSymbol && targetSymbol is KtCallableSymbol) {
+                    if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
                         if (!targetSymbol.returnType.isSubTypeOf(patternSymbol.returnType)) return false
                     }
                     val expression =
@@ -732,8 +732,8 @@ object K2SemanticMatcher {
     ): Boolean {
         if (targetExpression !is KtNameReferenceExpression || patternExpression !is KtNameReferenceExpression) return false
 
-        val targetSymbol = targetExpression.mainReference.resolveToSymbol().takeUnless { it is KtCallableSymbol } ?: return false
-        val patternSymbol = patternExpression.mainReference.resolveToSymbol().takeUnless { it is KtCallableSymbol } ?: return false
+        val targetSymbol = targetExpression.mainReference.resolveToSymbol().takeUnless { it is KaCallableSymbol } ?: return false
+        val patternSymbol = patternExpression.mainReference.resolveToSymbol().takeUnless { it is KaCallableSymbol } ?: return false
 
         return context.areSymbolsEqualOrAssociated(targetSymbol, patternSymbol)
     }
@@ -896,7 +896,7 @@ object K2SemanticMatcher {
     private fun KtFunction.getFunctionLikeSymbol(): KaFunctionLikeSymbol = getSymbolOfType<KaFunctionLikeSymbol>()
 
     context(KtAnalysisSession)
-    private fun KtCallableDeclaration.getCallableSymbol(): KtCallableSymbol = getSymbolOfType<KtCallableSymbol>()
+    private fun KtCallableDeclaration.getCallableSymbol(): KaCallableSymbol = getSymbolOfType<KaCallableSymbol>()
 
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
 

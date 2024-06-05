@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -75,7 +75,7 @@ internal object TailTextProvider {
     }
 
     context(KtAnalysisSession)
-    private fun KtCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
+    private fun KaCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
         val callableId = callableId ?: return null
         val className = callableId.className
 

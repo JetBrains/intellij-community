@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -67,7 +67,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         return analyze(function) {
-            val overridenFunctions = (function.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
+            val overridenFunctions = (function.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
             overridenFunctions.mapNotNull { it.psi as? KtNamedFunction }
         }
     }
@@ -84,7 +84,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     override fun getJvmName(element: PsiElement): String? {
         val property = element.unwrapped as? KtDeclaration ?: return null
         analyseOnEdt(property) {
-            val propertySymbol = property.getSymbol() as? KtCallableSymbol
+            val propertySymbol = property.getSymbol() as? KaCallableSymbol
             return propertySymbol?.let { getJvmName(it) }
         }
     }
@@ -110,7 +110,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(this) {
-                    val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
+                    val declarationSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return false
 
                     val callableSymbol = when (declarationSymbol) {
                         is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false

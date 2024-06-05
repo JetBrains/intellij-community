@@ -83,7 +83,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
             unresolvedRef.getReceiverForSelector()
         }
         return when (val symbol = currentDeclaration.getSymbol()) {
-            is KtCallableSymbol -> when {
+            is KaCallableSymbol -> when {
                 refExprParent is KtUserType -> false
 
                 // If current declaration is a function, we only offer names of unresolved function calls. For property declarations, we
@@ -120,8 +120,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     }
 
     context(KtAnalysisSession)
-    private fun getReceiverType(symbol: KtCallableSymbol): KtType? {
-        return symbol.receiverType ?: (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
+    private fun getReceiverType(symbol: KaCallableSymbol): KtType? {
+        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.getDispatchReceiverType()
     }
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {

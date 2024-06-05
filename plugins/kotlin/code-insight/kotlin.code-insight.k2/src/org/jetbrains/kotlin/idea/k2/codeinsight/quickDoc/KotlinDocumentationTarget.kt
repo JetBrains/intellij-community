@@ -281,7 +281,7 @@ private fun renderKDoc(
             stringBuilder.renderKDoc(it.contentTag, it.sections)
         }
     } else if (declaration is KtFunction &&
-        symbol is KtCallableSymbol &&
+        symbol is KaCallableSymbol &&
         symbol.getAllOverriddenSymbols().any { it.psi is PsiMethod }) {
         LightClassUtil.getLightClassMethod(declaration)?.let {
             stringBuilder.insert(KDocTemplate.DescriptionBodyTemplate.FromJava()) {
@@ -298,7 +298,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
         return it
     }
 
-    if (symbol is KtCallableSymbol) {
+    if (symbol is KaCallableSymbol) {
         symbol.getAllOverriddenSymbols().forEach { overrider ->
             findKDoc(overrider)?.let {
                 return it

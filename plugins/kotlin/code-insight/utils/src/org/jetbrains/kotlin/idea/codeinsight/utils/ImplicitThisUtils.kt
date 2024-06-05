@@ -35,7 +35,7 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
 context(KtAnalysisSession)
 private fun getAssociatedClass(symbol: KtSymbol): KaClassOrObjectSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
-    if (symbol !is KtCallableSymbol) return null
+    if (symbol !is KaCallableSymbol) return null
     return when (symbol) {
         is KaFunctionSymbol, is KtPropertySymbol ->
             if (symbol.isExtension) symbol.receiverType?.expandedClassSymbol else symbol.getContainingSymbol() as? KaClassOrObjectSymbol

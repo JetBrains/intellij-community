@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -77,7 +77,7 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
     )
 
     val analyzeResult = analyzeInModalWindow(declaration, KotlinK2RefactoringsBundle.message("resolving.super.methods.progress.title")) {
-        (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
+        (declaration.getSymbol() as? KaCallableSymbol)?.let { callableSymbol ->
             callableSymbol.originalContainingClassForOverride?.let { containingClass ->
                 val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
 

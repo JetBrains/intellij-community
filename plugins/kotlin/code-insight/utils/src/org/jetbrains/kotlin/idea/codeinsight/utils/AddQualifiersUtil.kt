@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -59,7 +59,7 @@ object AddQualifiersUtil {
         }
         if (prevElement.elementType == KtTokens.DOT) return false
         val fqName = getFqName(contextSymbol) ?: return false
-        if (contextSymbol is KtCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
+        if (contextSymbol is KaCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
 
         if (prevElement.elementType == KtTokens.COLONCOLON) {
 
@@ -70,7 +70,7 @@ object AddQualifiersUtil {
                         return true
                     }
                 }
-                return callableSymbol is KtCallableSymbol && callableSymbol.getContainingSymbol() == null
+                return callableSymbol is KaCallableSymbol && callableSymbol.getContainingSymbol() == null
             }
 
             if (isTopLevelCallable(contextSymbol)) return false
@@ -105,7 +105,7 @@ object AddQualifiersUtil {
         return when (symbol) {
             is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
             is KaConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableId?.asSingleFqName()
+            is KaCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null
         }
     }

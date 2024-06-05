@@ -333,7 +333,7 @@ internal fun nullability(ktType: KtType?): KtTypeNullability? {
 
 context(KtAnalysisSession)
 internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
-    return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
+    return (ktCallableDeclaration.getSymbol() as? KaCallableSymbol)?.returnType
 }
 
 /**
@@ -348,7 +348,7 @@ internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement?
             ?: symbol.psi
     }
 
-    if (symbol is KtCallableSymbol) {
+    if (symbol is KaCallableSymbol) {
         if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.unwrapFakeOverrides
             if (originalSymbol !== symbol) {

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -50,7 +50,7 @@ object ConvertReferenceToLambdaUtil {
 
         val symbol = element.callableReference.mainReference.resolveToSymbol() ?: return null
 
-        val callableSymbol = (symbol as? KtCallableSymbol)?.let {
+        val callableSymbol = (symbol as? KaCallableSymbol)?.let {
             (it as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: it
         }
 

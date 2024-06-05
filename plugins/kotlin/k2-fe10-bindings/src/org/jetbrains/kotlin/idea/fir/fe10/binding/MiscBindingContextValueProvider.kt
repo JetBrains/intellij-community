@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -67,7 +67,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         if (classDescriptor !is KtSymbolBasedClassDescriptor) return null
         val classSymbol = classDescriptor.ktSymbol
 
-        val copyFunction: KtCallableSymbol? = context.withAnalysisSession {
+        val copyFunction: KaCallableSymbol? = context.withAnalysisSession {
             classSymbol.getMemberScope().getCallableSymbols(Name.identifier("copy")).singleOrNull {
                 it.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
             }

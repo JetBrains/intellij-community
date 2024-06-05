@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport
@@ -25,7 +25,7 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
 
     override fun getOverrides(member: KtNamedDeclaration): Boolean? {
         analyze(member) {
-            val memberSymbol = (member.getSymbol() as? KtCallableSymbol) ?: return null
+            val memberSymbol = (member.getSymbol() as? KaCallableSymbol) ?: return null
             val allOverriddenSymbols = memberSymbol.getAllOverriddenSymbols().filterIsInstance<KtSymbolWithModality>()
             if (allOverriddenSymbols.isNotEmpty()) return allOverriddenSymbols.any { it.modality != Modality.ABSTRACT }
             return null

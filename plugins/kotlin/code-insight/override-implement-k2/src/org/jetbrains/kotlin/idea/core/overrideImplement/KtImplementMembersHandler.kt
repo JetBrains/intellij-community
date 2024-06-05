@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -43,7 +43,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                 .mapToKtClassMemberInfo()
 
         context(KtAnalysisSession)
-        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KtCallableSymbol> {
+        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KaCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
@@ -150,7 +150,7 @@ object MemberNotImplementedQuickfixFactories {
 }
 
 context(KtAnalysisSession)
-private fun List<KtCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
+private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
     return map { unimplementedMemberSymbol ->
         val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
 

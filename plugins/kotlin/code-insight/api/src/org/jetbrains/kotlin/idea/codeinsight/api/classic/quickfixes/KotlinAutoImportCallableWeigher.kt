@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 /**
@@ -23,7 +23,7 @@ interface KotlinAutoImportCallableWeigher {
      * @return extra weight to add. Can be any number.
      */
     fun KtAnalysisSession.weigh(
-        symbolToBeImported: KtCallableSymbol,
+        symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int
 
@@ -32,7 +32,7 @@ interface KotlinAutoImportCallableWeigher {
             ExtensionPointName.create("com.intellij.kotlin.autoImportCallableWeigher")
 
         fun KtAnalysisSession.weigh(
-            symbolToBeImported: KtCallableSymbol,
+            symbolToBeImported: KaCallableSymbol,
             unresolvedReferenceExpression: KtNameReferenceExpression
         ): Int {
             return EP_NAME.extensionList.sumOf { with(it) { weigh(symbolToBeImported, unresolvedReferenceExpression) } }

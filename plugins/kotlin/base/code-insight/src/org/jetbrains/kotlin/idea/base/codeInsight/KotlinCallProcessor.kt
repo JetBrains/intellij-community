@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.psi.*
 sealed interface CallTarget {
     val caller: KtElement
     val call: KtCall
-    val partiallyAppliedSymbol: KtPartiallyAppliedSymbol<KtCallableSymbol, KtCallableSignature<KtCallableSymbol>>
-    val symbol: KtCallableSymbol
+    val partiallyAppliedSymbol: KtPartiallyAppliedSymbol<KaCallableSymbol, KtCallableSignature<KaCallableSymbol>>
+    val symbol: KaCallableSymbol
 
     val anchor: PsiElement
         get() = when (val element = caller) {
@@ -39,7 +39,7 @@ sealed interface CallTarget {
         }
 }
 
-sealed interface TypedCallTarget<out S : KtCallableSymbol, out C : KtCallableSignature<S>> : CallTarget {
+sealed interface TypedCallTarget<out S : KaCallableSymbol, out C : KtCallableSignature<S>> : CallTarget {
     override val partiallyAppliedSymbol: KtPartiallyAppliedSymbol<S, C>
     override val symbol: S
 }

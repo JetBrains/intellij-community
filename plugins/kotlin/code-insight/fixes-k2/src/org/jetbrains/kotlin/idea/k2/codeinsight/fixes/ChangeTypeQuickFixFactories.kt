@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
@@ -232,8 +232,8 @@ object ChangeTypeQuickFixFactories {
         }
 
     private inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<KtNamedDeclaration>> changeReturnTypeOnOverride(
-        crossinline getCallableSymbol: (DIAGNOSTIC) -> KtCallableSymbol,
-        crossinline getSuperCallableSymbol: (DIAGNOSTIC) -> KtCallableSymbol,
+        crossinline getCallableSymbol: (DIAGNOSTIC) -> KaCallableSymbol,
+        crossinline getSuperCallableSymbol: (DIAGNOSTIC) -> KaCallableSymbol,
     ) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
         val declaration = diagnostic.psi as? KtCallableDeclaration
             ?: return@IntentionBased emptyList()
@@ -248,14 +248,14 @@ object ChangeTypeQuickFixFactories {
 
     context(KtAnalysisSession)
     private fun <PSI : KtCallableDeclaration> createChangeCurrentDeclarationQuickFix(
-        superCallable: KtCallableSymbol,
+        superCallable: KaCallableSymbol,
         declaration: PSI
     ): UpdateTypeQuickFix<PSI> = UpdateTypeQuickFix(declaration, TargetType.CURRENT_DECLARATION, createTypeInfo(superCallable.returnType))
 
     context(KtAnalysisSession)
     private fun createChangeOverriddenFunctionQuickFix(
-        callable: KtCallableSymbol,
-        superCallable: KtCallableSymbol,
+        callable: KaCallableSymbol,
+        superCallable: KaCallableSymbol,
     ): UpdateTypeQuickFix<KtCallableDeclaration>? {
         val type = callable.returnType
         val singleMatchingOverriddenFunctionPsi = superCallable.psiSafe<KtCallableDeclaration>() ?: return null
