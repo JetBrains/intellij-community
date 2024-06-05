@@ -411,6 +411,7 @@ public final class DeleteHandler {
             }
 
             private void count() {
+              indicator.checkCanceled();
               curFileCount.set(curFileCount.get() + 1);
             }
           });
