@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -175,7 +175,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         if (symbol is KaClassOrObjectSymbol && symbol.classKind.isObject) return
 
         val shortNameString = when (symbol) {
-            is KtTypeParameterSymbol -> symbol.name.asString()
+            is KaTypeParameterSymbol -> symbol.name.asString()
             is KtClassLikeSymbol -> symbol.name?.asString()
         } ?: return
 
@@ -263,8 +263,8 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    private fun getAvailableTypeParameters(scopes: KtScope): Sequence<KtTypeParameterSymbol> =
-        scopes.getClassifierSymbols().filterIsInstance<KtTypeParameterSymbol>()
+    private fun getAvailableTypeParameters(scopes: KtScope): Sequence<KaTypeParameterSymbol> =
+        scopes.getClassifierSymbols().filterIsInstance<KaTypeParameterSymbol>()
 
     private fun getDeclarationFromReceiverTypeReference(typeReference: KtTypeReference): KtCallableDeclaration? {
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }
@@ -274,7 +274,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     private fun typeIsVisible(
         type: KtType,
         visibilityChecker: CompletionVisibilityChecker,
-        availableTypeParameters: Set<KtTypeParameterSymbol> = emptySet()
+        availableTypeParameters: Set<KaTypeParameterSymbol> = emptySet()
     ): Boolean = when (type) {
         is KtTypeParameterType -> type.symbol in availableTypeParameters
 

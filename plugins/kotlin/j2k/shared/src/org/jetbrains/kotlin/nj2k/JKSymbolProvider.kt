@@ -6,7 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -42,7 +42,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     }
 
     context(KtAnalysisSession)
-    fun provideDirectSymbol(symbol: KtDeclarationSymbol): JKSymbol {
+    fun provideDirectSymbol(symbol: KaDeclarationSymbol): JKSymbol {
         val psi = symbol.psi ?: return JKUnresolvedClassSymbol(NO_NAME_PROVIDED, typeFactory)
         return provideDirectSymbol(psi)
     }

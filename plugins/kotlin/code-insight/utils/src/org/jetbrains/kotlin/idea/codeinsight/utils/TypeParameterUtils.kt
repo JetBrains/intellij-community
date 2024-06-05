@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -17,7 +17,7 @@ object TypeParameterUtils {
     }
 
     context(KtAnalysisSession)
-    fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtElement): Set<KtTypeParameterSymbol> {
+    fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtElement): Set<KaTypeParameterSymbol> {
         val call = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySet()
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
@@ -26,7 +26,7 @@ object TypeParameterUtils {
     }
 
     context(KtAnalysisSession)
-    fun typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
+    fun typeReferencesTypeParameter(typeParameter: KaTypeParameterSymbol, type: KtType): Boolean {
         return when (type) {
             is KtTypeParameterType -> type.symbol == typeParameter
             is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }

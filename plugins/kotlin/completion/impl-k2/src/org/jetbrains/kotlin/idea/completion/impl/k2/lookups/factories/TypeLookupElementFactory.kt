@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -50,7 +50,7 @@ class TypeLookupElementFactory {
     context(KtAnalysisSession)
     fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
-            is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
+            is KaTypeParameterSymbol -> symbol.name.asString().let { it to it }
 
             is KtClassLikeSymbol -> when (val classId = symbol.classId) {
                 null -> symbol.name?.asString()?.let { it to it }

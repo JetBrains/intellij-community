@@ -6,11 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.lookups.UniqueLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 
 internal class TypeParameterLookupElementFactory {
     context(KtAnalysisSession)
-fun createLookup(symbol: KtTypeParameterSymbol): LookupElementBuilder {
+fun createLookup(symbol: KaTypeParameterSymbol): LookupElementBuilder {
         return LookupElementBuilder.create(UniqueLookupObject(), symbol.name.asString())
             .let { withClassifierSymbolInfo(symbol, it) }
     }

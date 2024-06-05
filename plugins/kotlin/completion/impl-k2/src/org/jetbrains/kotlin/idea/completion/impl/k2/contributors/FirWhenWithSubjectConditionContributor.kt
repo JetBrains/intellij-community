@@ -151,7 +151,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
             }
 
-            is KtTypeParameterSymbol -> true
+            is KaTypeParameterSymbol -> true
             else -> false
         }
     }

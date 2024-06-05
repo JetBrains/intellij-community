@@ -176,7 +176,7 @@ fun generateMember(
                         if (s.isInner) add(KtTokens.INNER_KEYWORD)
                     }
 
-                    if (s is KtTypeParameterSymbol) {
+                    if (s is KaTypeParameterSymbol) {
                         if (s.isReified) add(KtTokens.REIFIED_KEYWORD)
                         when (s.variance) {
                             Variance.INVARIANT -> {}

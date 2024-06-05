@@ -112,7 +112,7 @@ internal class FirAnnotationCompletionContributor(
     context(KtAnalysisSession)
     override fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = when (classifierSymbol) {
         is KaAnonymousObjectSymbol -> false
-        is KtTypeParameterSymbol -> false
+        is KaTypeParameterSymbol -> false
         is KaNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
             KaClassKind.ANNOTATION_CLASS -> true
             KaClassKind.ENUM_CLASS -> false
@@ -138,7 +138,7 @@ internal class FirClassifierReferenceCompletionContributor(
 
     context(KtAnalysisSession)
     override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy = when (classifierSymbol) {
-        is KtTypeParameterSymbol -> ImportStrategy.DoNothing
+        is KaTypeParameterSymbol -> ImportStrategy.DoNothing
         is KtClassLikeSymbol -> {
             classifierSymbol.classId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
         }

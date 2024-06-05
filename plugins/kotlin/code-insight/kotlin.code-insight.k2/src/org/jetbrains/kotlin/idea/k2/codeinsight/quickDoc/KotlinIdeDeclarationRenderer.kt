@@ -64,7 +64,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -532,7 +532,7 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtSingleTypeParameterSymbolRenderer {
             override fun renderSymbol(
                 analysisSession: KtAnalysisSession,
-                symbol: KtTypeParameterSymbol,
+                symbol: KaTypeParameterSymbol,
                 declarationRenderer: KtDeclarationRenderer,
                 printer: PrettyPrinter
             ) {
@@ -691,7 +691,7 @@ internal class KotlinIdeDeclarationRenderer(
 
                         is KtParameterSymbol -> asParameter
                         is KtPackageSymbol -> asPackageName
-                        is KtTypeParameterSymbol -> asTypeParameterName
+                        is KaTypeParameterSymbol -> asTypeParameterName
                         is KaTypeAliasSymbol -> asTypeAlias
                         is KtPropertySymbol -> asInstanceProperty
                         else -> asFunDeclaration

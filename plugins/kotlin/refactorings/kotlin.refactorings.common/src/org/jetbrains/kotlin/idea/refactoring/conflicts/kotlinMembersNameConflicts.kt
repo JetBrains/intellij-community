@@ -112,7 +112,7 @@ fun checkDeclarationNewNameConflicts(
             return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals
         }
 
-        if (symbol is KtTypeParameterSymbol) {
+        if (symbol is KaTypeParameterSymbol) {
             val typeParameters = (containingSymbol as? KtSymbolWithTypeParameters)?.typeParameters?.filter { it.name == newName }?.asSequence() ?: return emptySequence()
 
             val outerTypeParameters = generateSequence<KtClassOrObject>(declaration.getStrictParentOfType()) {

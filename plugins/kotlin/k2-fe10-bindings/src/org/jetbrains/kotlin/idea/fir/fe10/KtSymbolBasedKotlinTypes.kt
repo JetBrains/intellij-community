@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -159,7 +159,7 @@ fun KaTypeAliasSymbol.toExpandedKotlinType(
     if (typeParameters.isEmpty()) return expandedUnsubstitutedType
 
     // KtSubstitutor isn't able to substitute TypeProjections KT-53095
-    val map = mutableMapOf<KtTypeParameterSymbol, TypeProjection>()
+    val map = mutableMapOf<KaTypeParameterSymbol, TypeProjection>()
 
     typeParameters.forEachIndexed { index, ktTypeParameterSymbol ->
         map[ktTypeParameterSymbol] = arguments[index].toTypeProjection(context)

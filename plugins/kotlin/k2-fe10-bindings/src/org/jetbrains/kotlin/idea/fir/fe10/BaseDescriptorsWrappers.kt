@@ -300,7 +300,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KaNamedClassOrObjectSy
 }
 
 class KtSymbolBasedTypeParameterDescriptor(
-    override val ktSymbol: KtTypeParameterSymbol, context: Fe10WrapperContext
+    override val ktSymbol: KaTypeParameterSymbol, context: Fe10WrapperContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeParameterDescriptor {
     override fun isReified(): Boolean = ktSymbol.isReified
     override fun getVariance(): Variance = ktSymbol.variance

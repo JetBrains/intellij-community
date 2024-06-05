@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -366,7 +366,7 @@ private fun ExtractionData.registerQualifierReplacements(
     originalDeclaration: PsiNamedElement,
     originalRef: KtReferenceExpression
 ) {
-    if (referencedClassifierSymbol is KtTypeParameterSymbol) {
+    if (referencedClassifierSymbol is KaTypeParameterSymbol) {
         val typeParameter = referencedClassifierSymbol.psi as KtTypeParameter
         val listOwner = typeParameter.parentOfType<KtTypeParameterListOwner>()
         if (listOwner == null || !PsiTreeUtil.isAncestor(listOwner, targetSibling, true)) {
@@ -405,7 +405,7 @@ private fun getReferencedClassifierSymbol(
             else -> if (refInfo.refExpr.getNonStrictParentOfType<KtTypeReference>() != null || partiallyAppliedSymbol?.symbol is KtConstructorSymbol) referencedSymbol else null
         }
 
-        is KtTypeParameterSymbol -> referencedSymbol
+        is KaTypeParameterSymbol -> referencedSymbol
 
         is KtConstructorSymbol -> referencedSymbol.getContainingSymbol() as? KtClassifierSymbol
 

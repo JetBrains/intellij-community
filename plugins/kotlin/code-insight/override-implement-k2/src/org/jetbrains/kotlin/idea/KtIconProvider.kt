@@ -92,7 +92,7 @@ object KtIconProvider {
                 symbol.isVal -> KotlinIcons.FIELD_VAL
                 else -> KotlinIcons.FIELD_VAR
             }
-            is KtTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
+            is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
             is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
 
             else -> {

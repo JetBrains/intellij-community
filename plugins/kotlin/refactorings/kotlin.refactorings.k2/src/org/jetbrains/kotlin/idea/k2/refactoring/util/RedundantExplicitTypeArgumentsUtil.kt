@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -59,8 +59,8 @@ fun areTypeArgumentsRedundant(element: KtTypeArgumentList): Boolean {
 
 
 context(KtAnalysisSession)
-private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): Set<KtTypeParameterSymbol>? {
-    val result = mutableSetOf<KtTypeParameterSymbol>()
+private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): Set<KaTypeParameterSymbol>? {
+    val result = mutableSetOf<KaTypeParameterSymbol>()
     for ((argumentExpression, sig) in resolvedCall.argumentMapping) {
         if (argumentExpression is KtLambdaExpression && argumentExpression.isExplicitTypeArgumentsNeededForTypeInference(sig)) {
             return null
@@ -86,7 +86,7 @@ private fun collectTypesInferredFromArguments(resolvedCall: KtFunctionCall<*>): 
 }
 
 context(KtAnalysisSession)
-private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KtFunctionCall<*>): Set<KtTypeParameterSymbol> {
+private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KtFunctionCall<*>): Set<KaTypeParameterSymbol> {
     val receiverParameterType = resolvedCall.partiallyAppliedSymbol.symbol.receiverParameter?.type ?: return emptySet()
     val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return emptySet()
     val typeArgumentsMapping = resolvedCall.typeArgumentsMapping
@@ -102,7 +102,7 @@ private fun collectTypesInferredFromExtensionReceiver(resolvedCall: KtFunctionCa
 }
 
 context(KtAnalysisSession)
-private fun buildType(type: KtType, typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType>): KtType? {
+private fun buildType(type: KtType, typeArgumentsMapping: Map<KaTypeParameterSymbol, KtType>): KtType? {
     return when (type) {
         is KtTypeParameterType -> typeArgumentsMapping[type.symbol]
 

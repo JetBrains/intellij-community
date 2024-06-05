@@ -13,7 +13,7 @@ import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -101,7 +101,7 @@ object FunctionInsertionHelper {
         if (symbol.typeParameters.isEmpty()) return true
 
         val typeParametersToInfer = symbol.typeParameters.toSet()
-        val potentiallyInferredTypeParameters = mutableSetOf<KtTypeParameterSymbol>()
+        val potentiallyInferredTypeParameters = mutableSetOf<KaTypeParameterSymbol>()
 
         /**
          * Collects type arguments of [type] (or type itself in case of [KtTypeParameterType]), which are probably will be inferred.
