@@ -69,6 +69,13 @@
       "focusedSelectedButtonColor": "#0f6780"
     },
 
+    "DisclosureButton": {
+      "defaultBackground": "#281A33",
+      "hoverOverlay": "#450073",
+      "pressedOverlay": "#54008c",
+      "successBackground": "#092E15"
+    },
+
     "Borders": {
       "color": "#b3b3b3",
       "ContrastBorderColor": "#B3B3B3"
