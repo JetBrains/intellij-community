@@ -7,13 +7,16 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.input.InputEvent.CTRL_MASK
+import com.jediterm.core.input.KeyEvent
 import com.jediterm.core.input.KeyEvent.VK_HOME
+import com.jediterm.terminal.Terminal
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.LOG
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.debug
 import org.jetbrains.plugins.terminal.util.ShellType
+import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
@@ -179,9 +182,18 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
         return@withLock // `generatorFinished` event will resume queue processing
       }
 
-      scheduledKeyBindings.drainToList().forEach { scheduledInput ->
+      val keyBindings = scheduledKeyBindings.drainToList()
+      if (keyBindings.isNotEmpty()) {
         session.terminalStarterFuture.thenAccept { terminalStarter ->
-          terminalStarter?.sendBytes(scheduledInput.bytes, false)
+          terminalStarter ?: return@thenAccept
+          keyBindings.forEach { keyBinding ->
+            terminalStarter.sendBytes(keyBinding.bytes, false)
+          }
+          if (session.shellIntegration.shellType == ShellType.BASH ) { // reset prompt state to trigger all shell events.
+            val clearPrompt: String = createClearPromptShortcut(terminalStarter.terminal)
+            val enterCode = String(terminalStarter.terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
+            terminalStarter.sendString(clearPrompt + enterCode, false)
+          }
         }
       }
 
@@ -222,15 +234,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     val adjustedCommand = shellCommand.replace("\n", System.lineSeparator())
     session.terminalStarterFuture.thenAccept { starter ->
       starter ?: return@thenAccept
-      val clearPrompt: String = when (session.shellIntegration.shellType) {
-        ShellType.POWERSHELL -> {
-          // Simulate pressing Ctrl+Home to delete all the characters from
-          // the cursor's position to the beginning of a line.
-          starter.terminal.getCodeForKey(VK_HOME, CTRL_MASK)!!.toString(Charsets.UTF_8)
-        }
-        // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
-        else -> "\u0015"
-      }
+      val clearPrompt = createClearPromptShortcut(starter.terminal)
       TerminalUtil.sendCommandToExecute(clearPrompt + adjustedCommand, starter)
 
       if (isGenerator) {
@@ -258,6 +262,18 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       listener.generatorCommandSent(generatorCommand)
     }
     debug { "Generator command sent: $generatorCommand" }
+  }
+
+  private fun createClearPromptShortcut(terminal: Terminal): String {
+    return when (session.shellIntegration.shellType) {
+      ShellType.POWERSHELL -> {
+        // Simulate pressing Ctrl+Home to delete all the characters from
+        // the cursor's position to the beginning of a line.
+        terminal.getCodeForKey(VK_HOME, CTRL_MASK)!!.toString(Charsets.UTF_8)
+      }
+      // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
+      else -> "\u0015"
+    }
   }
 
   /**

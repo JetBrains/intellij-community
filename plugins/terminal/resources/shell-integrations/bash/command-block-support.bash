@@ -288,15 +288,10 @@ function __jetbrains_intellij_report_shell_editor_buffer () {
   __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
   builtin printf '\e]1341;shell_editor_buffer_reported;shell_editor_buffer=%s\a' "$(__jetbrains_intellij_encode "${READLINE_LINE:-}")"
 }
-
-# Binding works in Bash >= 4.0.
-if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] >= 4)); then
-  # Remove binding if exists.
-  builtin bind -r '"\e[24~"'
-  # Bind F12 key to report prompt buffer.
-  # Note: We are allowed to bind only shortcuts which could not be typed by user via IJ UI.
-  builtin bind -x '"\e[24~":"__jetbrains_intellij_report_shell_editor_buffer"'
-fi
+# Remove binding if exists.
+builtin bind -r '"\eo"'
+# Bind [Esc, o] key sequence to report prompt buffer.
+builtin bind -x '"\eo":"__jetbrains_intellij_report_shell_editor_buffer"'
 
 preexec_functions+=(__jetbrains_intellij_command_started)
 precmd_functions+=(__jetbrains_intellij_command_terminated)
