@@ -58,7 +58,7 @@ object K2CreateFromUsageUtil {
     context (KtAnalysisSession)
     internal fun KtType.hasAbstractDeclaration(): Boolean {
         val classSymbol = expandedClassSymbol ?: return false
-        if (classSymbol.classKind == KtClassKind.INTERFACE) return true
+        if (classSymbol.classKind == KaClassKind.INTERFACE) return true
         val declaration = classSymbol.psi as? KtDeclaration ?: return false
         return declaration.modifierList.hasAbstractModifier()
     }

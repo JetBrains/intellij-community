@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -24,7 +24,7 @@ context(KtAnalysisSession)
 fun KtType.isEnum(): Boolean {
     if (this !is KtNonErrorClassType) return false
     val classSymbol = classSymbol
-    return classSymbol is KaClassOrObjectSymbol && classSymbol.classKind == KtClassKind.ENUM_CLASS
+    return classSymbol is KaClassOrObjectSymbol && classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
 /**

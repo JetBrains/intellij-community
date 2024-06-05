@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, private val editor: Editor) : TemplateEditingAdapter() {
     private var subtypeInfo: SubtypeInfo? = null
 
-    private class SubtypeInfo(val reference: KtReferenceExpression, val kind: KtClassKind, val hasZeroParameterConstructors: Boolean)
+    private class SubtypeInfo(val reference: KtReferenceExpression, val kind: KaClassKind, val hasZeroParameterConstructors: Boolean)
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) {
@@ -87,7 +87,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
         val subtypeInfo = this.subtypeInfo ?: return
         val classReference = subtypeInfo.reference
 
-        if (subtypeInfo.kind == KtClassKind.CLASS) {
+        if (subtypeInfo.kind == KaClassKind.CLASS) {
             val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)
 
             if (document != null) {

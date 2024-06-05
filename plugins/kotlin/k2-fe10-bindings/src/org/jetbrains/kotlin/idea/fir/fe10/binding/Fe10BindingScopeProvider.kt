@@ -207,7 +207,7 @@ private class Fe10BindingLexicalScopeForClassLikeElement(
                     is KaTypeAliasSymbol -> typeSymbol.expandedType.safeAs<KtNonErrorClassType>()?.classSymbol.safeAs<KaClassOrObjectSymbol>()
                         ?: continue@superTypeLoop
                 }
-                if (classOrObjectSymbol.classKind == KtClassKind.CLASS) {
+                if (classOrObjectSymbol.classKind == KaClassKind.CLASS) {
                     current = classOrObjectSymbol
                     continue@mainLoop
                 }

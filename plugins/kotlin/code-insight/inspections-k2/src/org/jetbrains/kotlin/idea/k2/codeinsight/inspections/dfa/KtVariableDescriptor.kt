@@ -140,7 +140,7 @@ class KtVariableDescriptor(
             if (!isTrackableProperty(symbol)) return null
             val parent = expr.parent
             var qualifier: DfaVariableValue? = null
-            if ((symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KtClassKind.OBJECT) {
+            if ((symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.OBJECT) {
                 // property in an object: singleton, can track
                 return varFactory.createVariableValue(symbol.variableDescriptor(), null)
             }

@@ -8,7 +8,7 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -40,7 +40,7 @@ internal object SuperClassNotInitializedFactories {
 
     context(KtAnalysisSession)
     private fun KaNamedClassOrObjectSymbol.isInheritableWithSuperConstructorCall(superTypeEntry: KtSuperTypeEntry): Boolean {
-        if (classKind != KtClassKind.CLASS) return false
+        if (classKind != KaClassKind.CLASS) return false
         return when (modality) {
             Modality.FINAL -> false
             Modality.OPEN -> true

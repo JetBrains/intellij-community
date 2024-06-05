@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -132,7 +132,7 @@ object K2CreateFunctionFromUsageBuilder {
         val receiverExpression = calleeExpression.getReceiverExpression()
         val receiverResolved =
             (receiverExpression as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaClassOrObjectSymbol
-        return receiverResolved != null && receiverResolved.classKind != KtClassKind.OBJECT && receiverResolved.classKind != KtClassKind.COMPANION_OBJECT
+        return receiverResolved != null && receiverResolved.classKind != KaClassKind.OBJECT && receiverResolved.classKind != KaClassKind.COMPANION_OBJECT
     }
 
     // assume the map is linked, because we require order
@@ -207,7 +207,7 @@ object K2CreateFunctionFromUsageBuilder {
                 argument(KtStarTypeProjection(token))
             }
         }
-        if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KtClassKind.INTERFACE) return classType
+        if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KaClassKind.INTERFACE) return classType
 
         // KtType.getAbstractSuperType() does not guarantee it's the closest abstract super type. We can implement it as a
         // breadth-first search, but it can cost a lot in terms of the memory usage.

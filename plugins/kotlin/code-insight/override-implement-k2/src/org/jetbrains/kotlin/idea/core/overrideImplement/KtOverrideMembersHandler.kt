@@ -68,7 +68,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): L
                     val containingSymbol = originalOverriddenSymbol.originalContainingClassForOverride
 
                     val bodyType = when {
-                        classOrObjectSymbol.classKind == KtClassKind.INTERFACE && containingSymbol?.classId == StandardClassIds.Any -> {
+                        classOrObjectSymbol.classKind == KaClassKind.INTERFACE && containingSymbol?.classId == StandardClassIds.Any -> {
                             if (hasNoSuperTypesExceptAny) {
                                 // If an interface does not extends any other interfaces, FE1.0 simply skips members of `Any`. So we mimic
                                 // the same behavior. See idea/testData/codeInsight/overrideImplement/noAnyMembersInInterface.kt

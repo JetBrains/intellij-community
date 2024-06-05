@@ -10,7 +10,7 @@ import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
@@ -30,7 +30,7 @@ class KtClassDef(
     private val module: KtModule,
     private val hash: Int,
     private val cls: KtSymbolPointer<KaClassOrObjectSymbol>,
-    private val kind: KtClassKind,
+    private val kind: KaClassKind,
     private val modality: Modality?
 ) : TypeConstraints.ClassDef {
     override fun isInheritor(superClassQualifiedName: String): Boolean =
@@ -57,11 +57,11 @@ class KtClassDef(
         return isInheritor(other) || other.isInheritor(this)
     }
 
-    override fun isInterface(): Boolean = kind == KtClassKind.INTERFACE || kind == KtClassKind.ANNOTATION_CLASS
+    override fun isInterface(): Boolean = kind == KaClassKind.INTERFACE || kind == KaClassKind.ANNOTATION_CLASS
 
-    override fun isEnum(): Boolean = kind == KtClassKind.ENUM_CLASS
+    override fun isEnum(): Boolean = kind == KaClassKind.ENUM_CLASS
 
-    override fun isFinal(): Boolean = kind != KtClassKind.ANNOTATION_CLASS && modality == Modality.FINAL
+    override fun isFinal(): Boolean = kind != KaClassKind.ANNOTATION_CLASS && modality == Modality.FINAL
 
     override fun isAbstract(): Boolean = modality == Modality.ABSTRACT
 
@@ -143,7 +143,7 @@ class KtClassDef(
                         }
                     }
                     when {
-                        symbol.classKind == KtClassKind.OBJECT -> TypeConstraints.singleton(correctedDef)
+                        symbol.classKind == KaClassKind.OBJECT -> TypeConstraints.singleton(correctedDef)
                         else -> TypeConstraints.exactClass(correctedDef)
                     }
                 }
@@ -159,7 +159,7 @@ class KtClassDef(
                         val symbol = getClassOrObjectSymbolByClassId(ClassId.topLevel(name.toSafe()))
                         when {
                             symbol == null -> TypeConstraints.unresolved(name.asString())
-                            symbol.classKind == KtClassKind.OBJECT -> TypeConstraints.singleton(symbol.classDef())
+                            symbol.classKind == KaClassKind.OBJECT -> TypeConstraints.singleton(symbol.classDef())
                             else -> TypeConstraints.exactClass(symbol.classDef())
                         }
                     }

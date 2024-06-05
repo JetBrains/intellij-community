@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -19,7 +19,7 @@ class RenameClassByCompanionObjectShortReferenceHandler : AbstractReferenceSubst
     allowAnalysisOnEdt {
       analyze(refExpr) {
         val symbol = refExpr.mainReference.resolveToSymbol() as? KaClassOrObjectSymbol ?: return null
-        if (symbol.classKind != KtClassKind.COMPANION_OBJECT) return null
+        if (symbol.classKind != KaClassKind.COMPANION_OBJECT) return null
         //Class name reference resolves to companion
         if (refExpr.getReferencedName() == symbol.name?.asString()) {
           return null

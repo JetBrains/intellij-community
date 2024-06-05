@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -91,7 +91,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
                         else -> {
                             val symbol = expandedClassSymbol ?: return DfType.TOP
                             val classDef = symbol.classDef()
-                            val constraint = if (symbol.classKind == KtClassKind.OBJECT) {
+                            val constraint = if (symbol.classKind == KaClassKind.OBJECT) {
                                 TypeConstraints.singleton(classDef)
                             } else {
                                 TypeConstraints.exactClass(classDef).instanceOf()

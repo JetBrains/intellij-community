@@ -119,6 +119,6 @@ private fun canBeImported(symbol: KtCallableSymbol): Boolean {
     } else {
         if ((symbol as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL) return true
         val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
-        return containingClass.classKind == KtClassKind.OBJECT || containingClass.classKind == KtClassKind.COMPANION_OBJECT
+        return containingClass.classKind == KaClassKind.OBJECT || containingClass.classKind == KaClassKind.COMPANION_OBJECT
     }
 }

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
@@ -65,7 +65,7 @@ internal class AnnotationImportCandidatesProvider(
 
     context(KtAnalysisSession)
     override fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean =
-        symbol.getExpandedClassSymbol()?.classKind == KtClassKind.ANNOTATION_CLASS
+        symbol.getExpandedClassSymbol()?.classKind == KaClassKind.ANNOTATION_CLASS
 }
 
 internal class ConstructorReferenceImportCandidatesProvider(
@@ -88,5 +88,5 @@ internal class ConstructorReferenceImportCandidatesProvider(
 
     context(KtAnalysisSession)
     override fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean =
-        symbol.getExpandedClassSymbol()?.classKind == KtClassKind.CLASS
+        symbol.getExpandedClassSymbol()?.classKind == KaClassKind.CLASS
 }

@@ -142,7 +142,7 @@ object KotlinUnusedSymbolUtil {
           declarationContainingClass?.mustHaveNonEmptyPrimaryConstructor() == true
       ) return null
       // experimental annotations
-      if (symbol is KaClassOrObjectSymbol && symbol.classKind == KtClassKind.ANNOTATION_CLASS) {
+      if (symbol is KaClassOrObjectSymbol && symbol.classKind == KaClassKind.ANNOTATION_CLASS) {
           val fqName = symbol.nameOrAnonymous.asString()
           val languageVersionSettings = declaration.languageVersionSettings
           if (fqName in languageVersionSettings.getFlag(AnalysisFlags.optIn)) return null
@@ -596,7 +596,7 @@ object KotlinUnusedSymbolUtil {
       if (importPath?.isAllUnder != true) return false
       val importedEnumFqName = this.importedFqName ?: return false
       val importedClass = resolveReferenceToSymbol() as? KaClassOrObjectSymbol ?: return false
-      if (importedClass.classKind != KtClassKind.ENUM_CLASS) return false
+      if (importedClass.classKind != KaClassKind.ENUM_CLASS) return false
 
       val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES.map { FqName("$importedEnumFqName.$it") }
 

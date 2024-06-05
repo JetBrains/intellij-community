@@ -114,10 +114,10 @@ internal class FirAnnotationCompletionContributor(
         is KaAnonymousObjectSymbol -> false
         is KtTypeParameterSymbol -> false
         is KaNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
-            KtClassKind.ANNOTATION_CLASS -> true
-            KtClassKind.ENUM_CLASS -> false
-            KtClassKind.ANONYMOUS_OBJECT -> false
-            KtClassKind.CLASS, KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.INTERFACE -> {
+            KaClassKind.ANNOTATION_CLASS -> true
+            KaClassKind.ENUM_CLASS -> false
+            KaClassKind.ANONYMOUS_OBJECT -> false
+            KaClassKind.CLASS, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.INTERFACE -> {
                 // TODO show class if nested classifier is annotation class
                 // classifierSymbol.getDeclaredMemberScope().getClassifierSymbols().any { filterClassifiers(it) }
                 false

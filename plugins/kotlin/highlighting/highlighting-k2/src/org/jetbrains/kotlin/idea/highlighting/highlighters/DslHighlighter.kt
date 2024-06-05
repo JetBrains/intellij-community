@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -55,7 +55,7 @@ fun KtClass.getDslStyleId(): Int? {
     }
     analyze(this) {
         val classSymbol = getNamedClassOrObjectSymbol()?.takeIf {
-            it.classKind == KtClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
+            it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
         } ?: return null
         val className = classSymbol.classId?.asSingleFqName() ?: return null
         return DslStyleUtils.styleIdByFQName(className)

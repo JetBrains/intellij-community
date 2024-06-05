@@ -268,7 +268,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     protected val KaNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
-        get() = classKind == KtClassKind.ENUM_CLASS ||
+        get() = classKind == KaClassKind.ENUM_CLASS ||
                 origin == KtSymbolOrigin.JAVA
 
     private val KaNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean

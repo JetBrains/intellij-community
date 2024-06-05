@@ -64,13 +64,13 @@ private fun Visibility.toDescriptorVisibility(): DescriptorVisibility =
         else -> error("Unknown visibility: $this")
     }
 
-private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
+private fun KaClassKind.toDescriptorKlassKind(): ClassKind =
     when (this) {
-        KtClassKind.CLASS -> ClassKind.CLASS
-        KtClassKind.ENUM_CLASS -> ClassKind.ENUM_CLASS
-        KtClassKind.ANNOTATION_CLASS -> ClassKind.ANNOTATION_CLASS
-        KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ANONYMOUS_OBJECT -> ClassKind.OBJECT
-        KtClassKind.INTERFACE -> ClassKind.INTERFACE
+        KaClassKind.CLASS -> ClassKind.CLASS
+        KaClassKind.ENUM_CLASS -> ClassKind.ENUM_CLASS
+        KaClassKind.ANNOTATION_CLASS -> ClassKind.ANNOTATION_CLASS
+        KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ANONYMOUS_OBJECT -> ClassKind.OBJECT
+        KaClassKind.INTERFACE -> ClassKind.INTERFACE
     }
 
 private fun KtSymbolOrigin.toCallableDescriptorKind(): CallableMemberDescriptor.Kind = when (this) {
@@ -234,7 +234,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KaNamedClassOrObjectSy
     KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, ClassDescriptor {
 
     override fun isInner(): Boolean = ktSymbol.isInner
-    override fun isCompanionObject(): Boolean = ktSymbol.classKind == KtClassKind.COMPANION_OBJECT
+    override fun isCompanionObject(): Boolean = ktSymbol.classKind == KaClassKind.COMPANION_OBJECT
     override fun isData(): Boolean = ktSymbol.isData
     override fun isInline(): Boolean = ktSymbol.isInline // seems like th`is `flag should be removed in favor of isValue
     override fun isValue(): Boolean = ktSymbol.isInline

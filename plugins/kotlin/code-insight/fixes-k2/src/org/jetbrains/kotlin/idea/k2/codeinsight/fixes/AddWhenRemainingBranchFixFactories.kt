@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -34,7 +34,7 @@ object AddWhenRemainingBranchFixFactories {
 
             val baseClassSymbol = subjectExpression.getKtType()?.expandedClassSymbol ?: return@buildList
             val enumToStarImport = baseClassSymbol.classId
-            if (baseClassSymbol.classKind == KtClassKind.ENUM_CLASS && enumToStarImport != null) {
+            if (baseClassSymbol.classKind == KaClassKind.ENUM_CLASS && enumToStarImport != null) {
                 add(
                     AddRemainingWhenBranchesQuickFix(
                         whenExpression,

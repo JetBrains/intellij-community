@@ -73,14 +73,14 @@ object KtIconProvider {
             }
             is KaClassOrObjectSymbol -> {
                 when (symbol.classKind) {
-                    KtClassKind.CLASS -> when {
+                    KaClassKind.CLASS -> when {
                         isAbstract -> KotlinIcons.ABSTRACT_CLASS
                         else -> KotlinIcons.CLASS
                     }
-                    KtClassKind.ENUM_CLASS -> KotlinIcons.ENUM
-                    KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
-                    KtClassKind.INTERFACE -> KotlinIcons.INTERFACE
-                    KtClassKind.ANONYMOUS_OBJECT, KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
+                    KaClassKind.ENUM_CLASS -> KotlinIcons.ENUM
+                    KaClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
+                    KaClassKind.INTERFACE -> KotlinIcons.INTERFACE
+                    KaClassKind.ANONYMOUS_OBJECT, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 }
             }
             is KtValueParameterSymbol -> KotlinIcons.PARAMETER

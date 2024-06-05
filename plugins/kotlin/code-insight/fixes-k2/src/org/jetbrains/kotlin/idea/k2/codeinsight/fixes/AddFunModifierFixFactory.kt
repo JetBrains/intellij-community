@@ -7,7 +7,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
@@ -73,7 +73,7 @@ internal object AddFunModifierFixFactory {
 
 context(KtAnalysisSession)
 private fun KaNamedClassOrObjectSymbol.isSamInterface(): Boolean {
-    if (classKind != KtClassKind.INTERFACE) return false
+    if (classKind != KaClassKind.INTERFACE) return false
     val singleAbstractMember = getMemberScope()
         .getCallableSymbols()
         .filterIsInstance<KtSymbolWithModality>()

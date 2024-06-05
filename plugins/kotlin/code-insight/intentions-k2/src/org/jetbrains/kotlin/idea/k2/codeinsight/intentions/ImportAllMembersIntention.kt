@@ -56,7 +56,7 @@ internal class ImportAllMembersIntention :
         val target = actualReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol ?: return null
         val classId = target.classId ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&
-            (target.classKind == KtClassKind.OBJECT ||
+            (target.classKind == KaClassKind.OBJECT ||
                     // One cannot use on-demand import for properties or functions declared inside objects
                     isReferenceToObjectMemberOrUnresolved(element))
         ) {
@@ -155,7 +155,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
     return (referencedSymbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
 
-private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
+private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassOrObjectSymbol>()?.classKind == KaClassKind.ENUM_CLASS
 
 private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES

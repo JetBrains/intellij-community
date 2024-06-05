@@ -65,7 +65,7 @@ internal class FirWhenWithSubjectConditionContributor(
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
         when {
-            classSymbol?.classKind == KtClassKind.ENUM_CLASS -> {
+            classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
                 completeEnumEntries(weighingContext, classSymbol, allConditionsExceptCurrent, visibilityChecker, isSingleCondition)
             }
             classSymbol?.modality == Modality.SEALED -> {
@@ -239,7 +239,7 @@ internal class FirWhenWithSubjectConditionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
-        require(classSymbol.classKind == KtClassKind.ENUM_CLASS)
+        require(classSymbol.classKind == KaClassKind.ENUM_CLASS)
         val handledCasesNames = conditions.mapNotNullTo(hashSetOf()) { condition ->
             val conditionWithExpression = condition as? KtWhenConditionWithExpression
             val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KaEnumEntrySymbol

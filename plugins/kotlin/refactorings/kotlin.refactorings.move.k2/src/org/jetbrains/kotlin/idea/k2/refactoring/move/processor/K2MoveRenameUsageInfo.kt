@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -159,13 +159,13 @@ sealed class K2MoveRenameUsageInfo(
         private fun KtSimpleNameExpression.isNameDeterminantInQualifiedChain(): Boolean = allowAnalysisOnEdt {
             analyze(this) {
                 val resolvedSymbol = mainReference.resolveToSymbol()
-                if (resolvedSymbol is KaClassOrObjectSymbol && resolvedSymbol.classKind == KtClassKind.COMPANION_OBJECT) return true
+                if (resolvedSymbol is KaClassOrObjectSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
                 if (resolvedSymbol is KtConstructorSymbol) return true
                 val containingSymbol = resolvedSymbol?.getContainingSymbol()
                 if (containingSymbol == null) return true // top levels are static
                 if (containingSymbol is KaClassOrObjectSymbol) {
                     when (containingSymbol.classKind) {
-                        KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ENUM_CLASS -> return true
+                        KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ENUM_CLASS -> return true
                         else -> {}
                     }
                 }

@@ -41,12 +41,12 @@ object KotlinIconProvider {
             val isAbstract = (symbol as? KaNamedClassOrObjectSymbol)?.modality == Modality.ABSTRACT
 
             return when (symbol.classKind) {
-                KtClassKind.CLASS -> if (isAbstract) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS
-                KtClassKind.ENUM_CLASS -> KotlinIcons.ENUM
-                KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
-                KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
-                KtClassKind.INTERFACE -> KotlinIcons.INTERFACE
-                KtClassKind.ANONYMOUS_OBJECT -> KotlinIcons.OBJECT
+                KaClassKind.CLASS -> if (isAbstract) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS
+                KaClassKind.ENUM_CLASS -> KotlinIcons.ENUM
+                KaClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
+                KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
+                KaClassKind.INTERFACE -> KotlinIcons.INTERFACE
+                KaClassKind.ANONYMOUS_OBJECT -> KotlinIcons.OBJECT
             }
         }
 

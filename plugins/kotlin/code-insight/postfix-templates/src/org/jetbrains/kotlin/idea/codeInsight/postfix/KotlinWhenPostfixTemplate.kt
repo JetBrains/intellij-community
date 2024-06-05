@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -79,7 +79,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
                         val klass = type.classSymbol
                         if (klass is KaNamedClassOrObjectSymbol) {
                             return when (klass.classKind) {
-                                KtClassKind.ENUM_CLASS -> collectEnumBranches(klass)
+                                KaClassKind.ENUM_CLASS -> collectEnumBranches(klass)
                                 else -> collectSealedClassInheritors(klass)
                             }
                         }
@@ -114,7 +114,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     private fun processSealedClassInheritor(klass: KaNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
         val classId = klass.classId ?: return false
 
-        if (klass.classKind == KtClassKind.OBJECT) {
+        if (klass.classKind == KaClassKind.OBJECT) {
             consumer.add(CaseBranch.Object(classId))
             return true
         }
@@ -148,7 +148,7 @@ private fun isSealedType(type: KtType): Boolean {
     if (type is KtNonErrorClassType) {
         val symbol = type.classSymbol
         if (symbol is KaNamedClassOrObjectSymbol) {
-            return symbol.classKind == KtClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED
+            return symbol.classKind == KaClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED
         }
     }
 

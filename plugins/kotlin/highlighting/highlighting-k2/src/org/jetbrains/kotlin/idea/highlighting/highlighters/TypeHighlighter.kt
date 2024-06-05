@@ -41,16 +41,16 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
         val color = when (symbol) {
             is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
             is KaNamedClassOrObjectSymbol -> when (symbol.classKind) {
-                KtClassKind.CLASS -> when (symbol.modality) {
+                KaClassKind.CLASS -> when (symbol.modality) {
                     Modality.FINAL, Modality.SEALED , Modality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
                     Modality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
                 }
-                KtClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
-                KtClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
-                KtClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
-                KtClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
-                KtClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
-                KtClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
+                KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+                KaClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KaClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KaClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+                KaClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
             }
 
             is KaTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
@@ -63,7 +63,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
     private fun isAnnotationCall(expression: KtSimpleNameExpression, target: KtSymbol): Boolean {
         val isKotlinAnnotation = target is KtConstructorSymbol
                 && target.isPrimary
-                && (target.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KtClassKind.ANNOTATION_CLASS
+                && (target.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS
 
         if (!isKotlinAnnotation) {
             val targetIsAnnotation = when (val targePsi = target.psi) {
