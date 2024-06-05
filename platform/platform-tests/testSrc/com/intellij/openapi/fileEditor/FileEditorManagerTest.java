@@ -38,7 +38,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.closeAllFiles();
     openFiles(STRING);
-    assertOpenFiles("foo.xml", "1.txt", "2.txt", "3.txt");
+    // regardless of pin, we open files in the same order as it was closed
+    assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
   }
 
   @Override

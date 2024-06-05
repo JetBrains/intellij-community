@@ -1083,20 +1083,21 @@ open class JBTabsImpl internal constructor(
               }
 
               var clickToUnpin = false
-              if (tabInfo.isPinned) {
-                if (tabAction != null) {
-                  val component = tabInfo.tabLabel!!
-                  ActionManager.getInstance().tryToExecute(tabAction, e, component, tabInfo.tabActionPlace, true)
-                  clickToUnpin = true
-                }
+
+              if (tabInfo.isPinned && tabAction != null) {
+                val component = tabInfo.tabLabel!!
+                ActionManager.getInstance().tryToExecute(tabAction, e, component, tabInfo.tabActionPlace, true)
+                clickToUnpin = true
               }
+
               if (!clickToUnpin) {
                 removeTab(tabInfo)
               }
               e.consume()
               val indexToSelect = min(clickedIndex, list.model.size)
               ClientProperty.put(this@JBTabsImpl, HIDDEN_INFOS_SELECT_INDEX_KEY, indexToSelect)
-              step.selectTab = false // do not select the current tab because we already handled other action: close or unpin
+              // do not select the current tab because we already handled other action: close or unpin
+              step.selectTab = false
               val curPopup = PopupUtil.getPopupContainerFor(list)
               if (curPopup != null) {
                 val button = PopupUtil.getPopupToggleComponent(curPopup)
@@ -1133,22 +1134,20 @@ open class JBTabsImpl internal constructor(
 
   // returns the icon that will be used in the hidden tabs list
   protected open fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
-    val hasActions = info.tabLabelActions != null && info.tabLabelActions!!.getChildren(null).isNotEmpty()
-    val icon: Icon? = if (hasActions) {
-      if (isHovered) AllIcons.Actions.CloseHovered else AllIcons.Actions.Close
+    return when {
+      info.isPinned -> AllIcons.Actions.PinTab
+      !info.tabLabelActions?.getChildren(null).isNullOrEmpty() -> if (isHovered) AllIcons.Actions.CloseHovered else AllIcons.Actions.Close
+      else -> EmptyIcon.ICON_16
     }
-    else {
-      EmptyIcon.ICON_16
-    }
-    return if (info.isPinned) AllIcons.Actions.PinTab else icon
   }
 
-  private inner class HiddenInfosListPopupStep(values: List<TabInfo>, private val separatorInfo: TabInfo?) : BaseListPopupStep<TabInfo>(
-    null, values) {
-    var selectTab = true
+  private inner class HiddenInfosListPopupStep(values: List<TabInfo>, private val separatorInfo: TabInfo?)
+    : BaseListPopupStep<TabInfo>(null, values) {
+     var selectTab = true
+
     override fun onChosen(selectedValue: TabInfo, finalChoice: Boolean): PopupStep<*>? {
       if (selectTab) {
-        select(selectedValue, true)
+        select(info = selectedValue, requestFocus = true)
       }
       else {
         selectTab = true
@@ -1160,10 +1159,8 @@ open class JBTabsImpl internal constructor(
 
     override fun getIconFor(value: TabInfo): Icon? = value.icon
 
-    override fun getTextFor(value: TabInfo): String {
-      @Suppress("DialogTitleCapitalization")
-      return value.text
-    }
+    @Suppress("DialogTitleCapitalization")
+    override fun getTextFor(value: TabInfo): String = value.text
   }
 
   private fun showTabLabelsPopup(rect: Rectangle, hiddenInfos: List<TabInfo>): JBPopup {
@@ -3244,7 +3241,7 @@ open class JBTabsImpl internal constructor(
       if (name == null) {
         // Similar to JTabbedPane, we return the name of our selected tab as our own name.
         val selectedLabel = selectedLabel
-        if (selectedLabel != null && selectedLabel.accessibleContext != null) {
+        if (selectedLabel != null) {
           name = selectedLabel.accessibleContext.accessibleName
         }
       }
@@ -3380,7 +3377,7 @@ private class AccessibleTabPage(
     }
     if (name == null) {
       val label = tabLabel
-      if (label != null && label.accessibleContext != null) {
+      if (label != null) {
         name = label.accessibleContext.accessibleName
       }
     }
@@ -3397,7 +3394,7 @@ private class AccessibleTabPage(
     }
     if (description == null) {
       val label = tabLabel
-      if (label != null && label.accessibleContext != null) {
+      if (label != null) {
         description = label.accessibleContext.accessibleDescription
       }
     }

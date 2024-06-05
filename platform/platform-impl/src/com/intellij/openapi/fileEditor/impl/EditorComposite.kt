@@ -337,9 +337,7 @@ open class EditorComposite internal constructor(
   var isPinned: Boolean = false
     set(pinned) {
       field = pinned
-       (compositePanel.parent as? JComponent)?.let {
-        ClientProperty.put(it, JBTabsImpl.PINNED, if (field) true else null)
-      }
+      ClientProperty.put(compositePanel, JBTabsImpl.PINNED, if (field) true else null)
     }
 
 
