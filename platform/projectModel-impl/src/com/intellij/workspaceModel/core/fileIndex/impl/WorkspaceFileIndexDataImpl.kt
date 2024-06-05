@@ -38,7 +38,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   
   private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project)
-  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
+  private val librariesAndSdkContributors: LibrariesAndSdkContributors
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityPointer<WorkspaceEntity>>()
@@ -48,10 +48,12 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private var hasDirtyEntities = false
 
   init {
+    Disposer.register(parentDisposable, this)
+    //do not move before registration to parentDisposable
+    librariesAndSdkContributors = LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
-    
-    Disposer.register(parentDisposable, this)
+
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
