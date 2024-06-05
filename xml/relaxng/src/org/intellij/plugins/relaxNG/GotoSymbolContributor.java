@@ -109,10 +109,12 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
   private static final class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
     final NavigationItem myItem;
     final ItemPresentation myPresentation;
+    final String myLocationString;
 
     private MyNavigationItem(NavigationItem item, @NotNull final ItemPresentation presentation) {
       myItem = item;
       myPresentation = presentation;
+      myLocationString = getLocationString((PsiElement)myItem);
     }
 
     @Override
@@ -123,7 +125,7 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     @Override
     @Nullable
     public String getLocationString() {
-      return getLocationString((PsiElement)myItem);
+      return myLocationString;
     }
 
     private static String getLocationString(PsiElement element) {
