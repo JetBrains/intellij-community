@@ -744,6 +744,8 @@ public final class org/jetbrains/jewel/ui/component/TooltipKt {
 public final class org/jetbrains/jewel/ui/component/Typography {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/Typography;
+	public final fun consoleTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun editorTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun h0TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun h1TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun h2TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;

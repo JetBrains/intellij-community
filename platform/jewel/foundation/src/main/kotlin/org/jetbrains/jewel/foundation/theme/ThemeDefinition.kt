@@ -15,6 +15,8 @@ public class ThemeDefinition(
     public val globalColors: GlobalColors,
     public val globalMetrics: GlobalMetrics,
     public val defaultTextStyle: TextStyle,
+    public val editorTextStyle: TextStyle,
+    public val consoleTextStyle: TextStyle,
     public val contentColor: Color,
     public val colorPalette: ThemeColorPalette,
     public val iconData: ThemeIconData,

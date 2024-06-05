@@ -27,6 +27,7 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun retrieveColorOrNull (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun retrieveColorOrUnspecified (Ljava/lang/String;)J
 	public static final fun retrieveColorsOrUnspecified ([Ljava/lang/String;)Ljava/util/List;
+	public static final fun retrieveEditorColorScheme ()Lcom/intellij/openapi/editor/colors/EditorColorsScheme;
 	public static final fun retrieveInsetsAsPaddingValues (Ljava/lang/String;)Landroidx/compose/foundation/layout/PaddingValues;
 	public static final fun retrieveIntAsDp (Ljava/lang/String;)F
 	public static final fun retrieveIntAsDpOrUnspecified (Ljava/lang/String;)F
@@ -109,7 +110,9 @@ public final class org/jetbrains/jewel/bridge/theme/BridgeThemeColorPaletteKt {
 }
 
 public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeKt {
+	public static final fun retrieveConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public static final fun retrieveEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
 
 public final class org/jetbrains/jewel/bridge/theme/SwingBridgeThemeKt {

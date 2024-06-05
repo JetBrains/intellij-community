@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -54,7 +55,8 @@ internal class SwingBridgeService(scope: CoroutineScope) {
 
             val DEFAULT = run {
                 val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
-                val themeDefinition = createBridgeThemeDefinition(textStyle)
+                val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
+                val themeDefinition = createBridgeThemeDefinition(textStyle, monospaceTextStyle, monospaceTextStyle)
 
                 BridgeThemeData(
                     themeDefinition = themeDefinition,

@@ -66,6 +66,17 @@ public object Typography {
     @Composable
     public fun h4TextStyle(): TextStyle =
         JewelTheme.defaultTextStyle.copy(fontSize = labelTextSize() + 1.sp, fontWeight = FontWeight.Bold)
+
+    /** The text style used for code editors. Usually is a monospaced font. */
+    @Composable
+    public fun editorTextStyle(): TextStyle = JewelTheme.editorTextStyle
+
+    /**
+     * The text style used for code consoles. Usually is a monospaced font. Can
+     * be the same as [editorTextStyle].
+     */
+    @Composable
+    public fun consoleTextStyle(): TextStyle = JewelTheme.consoleTextStyle
 }
 
 public operator fun TextUnit.plus(other: TextUnit): TextUnit =

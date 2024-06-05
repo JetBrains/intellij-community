@@ -42,6 +42,16 @@ public interface JewelTheme {
             @ReadOnlyComposable
             get() = LocalTextStyle.current
 
+        public val editorTextStyle: TextStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalEditorTextStyle.current
+
+        public val consoleTextStyle: TextStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalConsoleTextStyle.current
+
         public val contentColor: Color
             @Composable
             @ReadOnlyComposable
@@ -77,6 +87,8 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
         LocalIsDarkTheme provides theme.isDark,
         LocalContentColor provides theme.contentColor,
         LocalTextStyle provides theme.defaultTextStyle,
+        LocalEditorTextStyle provides theme.editorTextStyle,
+        LocalConsoleTextStyle provides theme.consoleTextStyle,
         LocalGlobalColors provides theme.globalColors,
         LocalGlobalMetrics provides theme.globalMetrics,
         content = content,
@@ -117,9 +129,17 @@ public val LocalTextStyle: ProvidableCompositionLocal<TextStyle> =
         error("No TextStyle provided. Have you forgotten the theme?")
     }
 
-/**
- * Overrides the dark mode for the current composition scope.
- */
+public val LocalEditorTextStyle: ProvidableCompositionLocal<TextStyle> =
+    staticCompositionLocalOf {
+        error("No EditorTextStyle provided. Have you forgotten the theme?")
+    }
+
+public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> =
+    staticCompositionLocalOf {
+        error("No ConsoleTextStyle provided. Have you forgotten the theme?")
+    }
+
+/** Overrides the dark mode for the current composition scope. */
 @Composable
 public fun OverrideDarkMode(isDark: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalIsDarkTheme provides isDark, content = content)

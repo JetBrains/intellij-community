@@ -9,27 +9,21 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.bridge.theme.retrieveDefaultTextStyle
+import org.jetbrains.jewel.bridge.theme.retrieveEditorTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -50,12 +44,17 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 public fun MarkdownStyling.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.create(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.create(
+        baseTextStyle,
+        defaultEditorTextStyle
+            .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColor)
+            .toSpanStyle(),
+    ),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.create(inlinesStyling),
     heading: Heading = Heading.create(baseTextStyle),
     blockQuote: BlockQuote = BlockQuote.create(textColor = baseTextStyle.color),
-    code: Code = Code.create(baseTextStyle),
+    code: Code = Code.create(editorTextStyle),
     list: List = List.create(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.create(),
@@ -283,13 +282,7 @@ public fun Code.Companion.create(
 ): Code = Code(indented, fenced)
 
 public fun Indented.Companion.create(
-    textStyle: TextStyle =
-        defaultTextStyle.copy(
-            color = blockContentColor,
-            fontFamily = editorFontFamily,
-            fontSize = defaultTextSize * .85,
-            lineHeight = defaultTextSize * .85 * 1.45,
-        ),
+    textStyle: TextStyle = defaultEditorTextStyle,
     padding: PaddingValues = PaddingValues(16.dp),
     shape: Shape = RectangleShape,
     background: Color = blockBackgroundColor,
@@ -310,13 +303,7 @@ public fun Indented.Companion.create(
     )
 
 public fun Fenced.Companion.create(
-    textStyle: TextStyle =
-        defaultTextStyle.copy(
-            color = blockContentColor,
-            fontFamily = editorFontFamily,
-            fontSize = defaultTextSize * .85,
-            lineHeight = defaultTextSize * .85 * 1.45,
-        ),
+    textStyle: TextStyle = defaultEditorTextStyle,
     padding: PaddingValues = PaddingValues(16.dp),
     shape: Shape = RectangleShape,
     background: Color = blockBackgroundColor,
@@ -359,8 +346,7 @@ public fun ThematicBreak.Companion.create(
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
 public fun HtmlBlock.Companion.create(
-    textStyle: TextStyle =
-        defaultTextStyle.copy(color = blockContentColor, fontFamily = editorFontFamily),
+    textStyle: TextStyle = defaultEditorTextStyle,
     padding: PaddingValues = PaddingValues(8.dp),
     shape: Shape = RoundedCornerShape(4.dp),
     background: Color = blockBackgroundColor,
@@ -372,13 +358,8 @@ public fun HtmlBlock.Companion.create(
 public fun InlinesStyling.Companion.create(
     textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
-        textStyle
-            .copy(
-                fontSize = textStyle.fontSize * .85,
-                background = inlineCodeBackgroundColor,
-                fontFamily = editorFontFamily,
-                color = blockContentColor,
-            )
+        defaultEditorTextStyle
+            .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColor)
             .toSpanStyle(),
     link: SpanStyle =
         textStyle.copy(
@@ -400,17 +381,11 @@ public fun InlinesStyling.Companion.create(
         renderInlineHtml,
     )
 
-private val defaultTextSize
-    get() = (JBFont.labelFontSize() + 1).sp
-
 private val defaultTextStyle
     get() = retrieveDefaultTextStyle().copy(color = Color.Unspecified)
 
 private val defaultEditorTextStyle
-    get() = defaultTextStyle.copy(
-        color = blockContentColor,
-        fontFamily = editorFontFamily,
-    )
+    get() = retrieveEditorTextStyle().copy(color = blockContentColor)
 
 private val dividerColor
     get() = retrieveColorOrUnspecified("Group.separatorColor")
@@ -432,13 +407,3 @@ private val inlineCodeBackgroundColor
         } else {
             Color(red = 212, green = 222, blue = 231, alpha = 25)
         }
-
-@OptIn(ExperimentalTextApi::class)
-private val editorFontFamily
-    get() = retrieveEditorColorScheme().getFont(EditorFontType.PLAIN).asComposeFontFamily()
-
-@Suppress("UnstableApiUsage") // We need to use @Internal APIs
-public fun retrieveEditorColorScheme(): EditorColorsScheme {
-    val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
-    return manager.schemeManager.activeScheme ?: DefaultColorSchemesManager.getInstance().firstScheme
-}

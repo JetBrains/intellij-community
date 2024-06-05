@@ -48,7 +48,6 @@ public final class org/jetbrains/jewel/intui/markdown/bridge/styling/BridgeMarkd
 	public static synthetic fun create-pI2OzKA$default (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote$Companion;Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;IJILjava/lang/Object;)Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;
 	public static final fun default-1Fc8zlc (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Image$Companion;Landroidx/compose/ui/Alignment;Landroidx/compose/ui/layout/ContentScale;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/ui/graphics/Shape;JFJ)Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Image;
 	public static synthetic fun default-1Fc8zlc$default (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Image$Companion;Landroidx/compose/ui/Alignment;Landroidx/compose/ui/layout/ContentScale;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/ui/graphics/Shape;JFJILjava/lang/Object;)Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Image;
-	public static final fun retrieveEditorColorScheme ()Lcom/intellij/openapi/editor/colors/EditorColorsScheme;
 }
 
 public final class org/jetbrains/jewel/intui/markdown/bridge/styling/extension/github/alerts/BridgeGitHubAlertStylingKt {

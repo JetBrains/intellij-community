@@ -40,7 +40,12 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 public fun MarkdownStyling.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(
+        baseTextStyle,
+        editorTextStyle
+            .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
+            .toSpanStyle(),
+    ),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.light(inlinesStyling),
     heading: Heading = Heading.light(baseTextStyle),
@@ -66,7 +71,12 @@ public fun MarkdownStyling.Companion.light(
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(
+        baseTextStyle,
+        editorTextStyle
+            .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
+            .toSpanStyle(),
+    ),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.dark(inlinesStyling),
     heading: Heading = Heading.dark(baseTextStyle),
@@ -613,7 +623,7 @@ public fun InlinesStyling.Companion.light(
     textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
         defaultEditorTextStyle
-            .copy(fontSize = textStyle.fontSize * .85, background = Color(0xFFEFF1F2))
+            .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
             .toSpanStyle(),
     link: SpanStyle =
         textStyle.copy(color = Color(0xFF0969DA), textDecoration = TextDecoration.Underline).toSpanStyle(),
@@ -636,7 +646,7 @@ public fun InlinesStyling.Companion.dark(
     textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
         defaultEditorTextStyle
-            .copy(fontSize = textStyle.fontSize * .85, background = Color(0xFF343941))
+            .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
             .toSpanStyle(),
     link: SpanStyle =
         textStyle
@@ -678,3 +688,8 @@ private val defaultEditorTextStyle
             fontSize = defaultTextSize,
             lineHeight = defaultTextSize * 1.2,
         )
+
+private val inlineCodeBackgroundColorLight =
+    Color(red = 212, green = 222, blue = 231, alpha = 255 / 4)
+private val inlineCodeBackgroundColorDark =
+    Color(red = 212, green = 222, blue = 231, alpha = 25)

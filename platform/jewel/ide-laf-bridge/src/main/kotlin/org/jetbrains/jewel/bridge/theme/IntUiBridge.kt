@@ -6,16 +6,21 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.DirProvider
@@ -31,6 +36,7 @@ import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeOrDefault
 import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeWithFallbacks
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveColorsOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.bridge.retrieveInsetsAsPaddingValues
 import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveTextStyle
@@ -124,13 +130,51 @@ private val iconsBasePath
 
 internal fun createBridgeThemeDefinition(): ThemeDefinition {
     val textStyle = retrieveDefaultTextStyle()
-    return createBridgeThemeDefinition(textStyle)
+    val editorTextStyle = retrieveEditorTextStyle()
+    val consoleTextStyle = retrieveConsoleTextStyle()
+    return createBridgeThemeDefinition(textStyle, editorTextStyle, consoleTextStyle)
 }
 
 public fun retrieveDefaultTextStyle(): TextStyle =
     retrieveTextStyle("Label.font", "Label.foreground")
 
-internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition {
+@OptIn(ExperimentalTextApi::class)
+public fun retrieveEditorTextStyle(): TextStyle {
+    val editorColorScheme = retrieveEditorColorScheme()
+
+    val fontSize = editorColorScheme.editorFontSize.sp
+    return retrieveDefaultTextStyle().copy(
+        color = editorColorScheme.defaultForeground.toComposeColor(),
+        fontFamily = editorColorScheme.getFont(EditorFontType.PLAIN).asComposeFontFamily(),
+        fontSize = fontSize,
+        lineHeight = fontSize * editorColorScheme.lineSpacing,
+        fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
+    )
+}
+
+@OptIn(ExperimentalTextApi::class)
+public fun retrieveConsoleTextStyle(): TextStyle {
+    val editorColorScheme = retrieveEditorColorScheme()
+    if (editorColorScheme.isUseEditorFontPreferencesInConsole) return retrieveEditorTextStyle()
+
+    val fontSize = editorColorScheme.consoleFontSize.sp
+    val fontColor = editorColorScheme.getColor(ColorKey.createColorKey("BLOCK_TERMINAL_DEFAULT_FOREGROUND"))
+        ?: editorColorScheme.defaultForeground
+
+    return retrieveDefaultTextStyle().copy(
+        color = fontColor.toComposeColor(),
+        fontFamily = editorColorScheme.getFont(EditorFontType.PLAIN).asComposeFontFamily(),
+        fontSize = fontSize,
+        lineHeight = fontSize * editorColorScheme.lineSpacing,
+        fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
+    )
+}
+
+internal fun createBridgeThemeDefinition(
+    textStyle: TextStyle,
+    editorTextStyle: TextStyle,
+    consoleTextStyle: TextStyle,
+): ThemeDefinition {
     val isDark = !JBColor.isBright()
 
     logger.debug("Obtaining theme definition from Swing...")
@@ -141,6 +185,8 @@ internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition 
         globalColors = GlobalColors.readFromLaF(),
         globalMetrics = GlobalMetrics.readFromLaF(),
         defaultTextStyle = textStyle,
+        editorTextStyle = editorTextStyle,
+        consoleTextStyle = consoleTextStyle,
         contentColor = JBColor.foreground().toComposeColor(),
         colorPalette = ThemeColorPalette.readFromLaF(),
         iconData = ThemeIconData.readFromLaF(),

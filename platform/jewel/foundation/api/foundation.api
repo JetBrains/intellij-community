@@ -767,8 +767,10 @@ public abstract interface class org/jetbrains/jewel/foundation/theme/JewelTheme 
 }
 
 public final class org/jetbrains/jewel/foundation/theme/JewelTheme$Companion {
+	public final fun getConsoleTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun getContentColor (Landroidx/compose/runtime/Composer;I)J
 	public final fun getDefaultTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun getEditorTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun getGlobalColors (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 	public final fun getName (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
@@ -782,7 +784,9 @@ public final class org/jetbrains/jewel/foundation/theme/JewelThemeKt {
 	public static final fun JewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun OverrideDarkMode (ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun getLocalColorPalette ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalConsoleTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalContentColor ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalEditorTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalIconData ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalThemeName ()Landroidx/compose/runtime/ProvidableCompositionLocal;
@@ -829,11 +833,13 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette$Compan
 
 public final class org/jetbrains/jewel/foundation/theme/ThemeDefinition {
 	public static final field $stable I
-	public synthetic fun <init> (Ljava/lang/String;ZLorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Landroidx/compose/ui/text/TextStyle;JLorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColorPalette ()Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
+	public final fun getConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getContentColor-0d7_KjU ()J
 	public final fun getDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getGlobalColors ()Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics ()Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 	public final fun getIconData ()Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;

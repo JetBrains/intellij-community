@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.takeOrElse
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.marker
 import com.intellij.ui.NewUI
@@ -216,4 +220,10 @@ internal fun isNewUiTheme(): Boolean {
 internal fun lafName(): String {
     val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
     return lafInfo.name
+}
+
+@Suppress("UnstableApiUsage") // We need to use @Internal APIs
+public fun retrieveEditorColorScheme(): EditorColorsScheme {
+    val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+    return manager.schemeManager.activeScheme ?: DefaultColorSchemesManager.getInstance().firstScheme
 }

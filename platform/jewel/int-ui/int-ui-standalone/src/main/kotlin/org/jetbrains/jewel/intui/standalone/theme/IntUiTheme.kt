@@ -50,6 +50,8 @@ public fun JewelTheme.Companion.lightThemeDefinition(
     palette: ThemeColorPalette = IntUiLightTheme.colors,
     iconData: ThemeIconData = IntUiLightTheme.iconData,
     defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
+    editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
+    consoleTextStyle: TextStyle = editorTextStyle,
     contentColor: Color = colors.text.normal,
 ): ThemeDefinition =
     ThemeDefinition(
@@ -58,6 +60,8 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         colors,
         metrics,
         defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
         contentColor,
         palette,
         iconData,
@@ -70,6 +74,8 @@ public fun JewelTheme.Companion.darkThemeDefinition(
     palette: ThemeColorPalette = IntUiDarkTheme.colors,
     iconData: ThemeIconData = IntUiDarkTheme.iconData,
     defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
+    editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
+    consoleTextStyle: TextStyle = editorTextStyle,
     contentColor: Color = colors.text.normal,
 ): ThemeDefinition =
     ThemeDefinition(
@@ -78,6 +84,8 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         colors,
         metrics,
         defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
         contentColor,
         palette,
         iconData,

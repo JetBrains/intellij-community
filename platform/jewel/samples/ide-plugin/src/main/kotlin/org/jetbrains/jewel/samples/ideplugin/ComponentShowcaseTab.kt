@@ -295,12 +295,16 @@ private fun MarkdownExample() {
             Markdown(
                 """
                 |Hi! This is an example of **Markdown** rendering. We support the [CommonMark specs](https://commonmark.org/)
-                |out of the box, but you can also have _extensions_.
+                |out of the box, but `you` can also have _extensions_.
                 |
                 |For example:
                 | * Images
                 | * Tables
                 | * And more — I am running out of random things to say 😆
+                |
+                |```kotlin
+                |fun hello() = "World"
+                |```
                 """.trimMargin(),
                 Modifier.fillMaxWidth()
                     .background(JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(), RoundedCornerShape(8.dp))
