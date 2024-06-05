@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,7 +40,7 @@ internal class KotlinFirStructureElementPresentation(
     private val isInherited: Boolean,
     navigatablePsiElement: NavigatablePsiElement,
     ktElement : KtElement,
-    pointer: KtSymbolPointer<*>?
+    pointer: KaSymbolPointer<*>?
 ) : ColoredItemPresentation, LocationPresentation {
     companion object {
         private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
@@ -102,7 +102,7 @@ internal class KotlinFirStructureElementPresentation(
         return null
     }
 
-    private fun getElementIcon(navigatablePsiElement: NavigatablePsiElement, ktElement: KtElement, pointer: KtSymbolPointer<*>?): Icon? {
+    private fun getElementIcon(navigatablePsiElement: NavigatablePsiElement, ktElement: KtElement, pointer: KaSymbolPointer<*>?): Icon? {
         if (navigatablePsiElement !is KtElement) {
             return navigatablePsiElement.getIcon(Iconable.ICON_FLAG_VISIBILITY)
         }
@@ -121,7 +121,7 @@ internal class KotlinFirStructureElementPresentation(
         return PsiIconUtil.getProvidersIcon(navigatablePsiElement, Iconable.ICON_FLAG_VISIBILITY)
     }
 
-    private fun getElementText(navigatablePsiElement: NavigatablePsiElement, ktElement : KtElement, pointer: KtSymbolPointer<*>?): String? {
+    private fun getElementText(navigatablePsiElement: NavigatablePsiElement, ktElement : KtElement, pointer: KaSymbolPointer<*>?): String? {
         if (navigatablePsiElement is KtObjectDeclaration && navigatablePsiElement.isObjectLiteral()) {
             return KotlinCodeInsightBundle.message("object.0", (navigatablePsiElement.getSuperTypeList()?.text?.let { " : $it" } ?: ""))
         }
@@ -159,7 +159,7 @@ internal class KotlinFirStructureElementPresentation(
         } as? KtNameReferenceExpression
     }
 
-    private fun getElementLocationString(isInherited: Boolean, ktElement: KtElement, pointer: KtSymbolPointer<*>?): String? {
+    private fun getElementLocationString(isInherited: Boolean, ktElement: KtElement, pointer: KaSymbolPointer<*>?): String? {
         if (!isInherited || pointer == null) return null
 
         analyze(ktElement) {

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
@@ -45,7 +45,7 @@ class KotlinFirStructureViewElement(
     constructor(
         element: NavigatablePsiElement,
         inheritElement: KtElement,
-        descriptor: KtSymbolPointer<*>,
+        descriptor: KaSymbolPointer<*>,
         isInherited: Boolean,
     ) : this(element = element, ktElement = inheritElement, isInherited = isInherited) {
         if (element !is KtElement) {

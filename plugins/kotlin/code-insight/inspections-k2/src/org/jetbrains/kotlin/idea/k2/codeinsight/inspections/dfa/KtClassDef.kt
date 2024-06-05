@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -29,7 +29,7 @@ import java.util.stream.Stream
 class KtClassDef(
     private val module: KtModule,
     private val hash: Int,
-    private val cls: KtSymbolPointer<KaClassOrObjectSymbol>,
+    private val cls: KaSymbolPointer<KaClassOrObjectSymbol>,
     private val kind: KaClassKind,
     private val modality: Modality?
 ) : TypeConstraints.ClassDef {

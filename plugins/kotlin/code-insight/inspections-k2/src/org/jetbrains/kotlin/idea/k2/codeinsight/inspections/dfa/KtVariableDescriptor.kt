@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.descriptors.Modality
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.*
 
 class KtVariableDescriptor(
     val module: KtModule,
-    val pointer: KtSymbolPointer<KtVariableLikeSymbol>,
+    val pointer: KaSymbolPointer<KtVariableLikeSymbol>,
     val type: DfType,
     val hash: Int
 ) : JvmVariableDescriptor() {

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
@@ -40,7 +40,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 data class KtClassMemberInfo internal constructor(
-    val symbolPointer: KtSymbolPointer<KtCallableSymbol>,
+    val symbolPointer: KaSymbolPointer<KtCallableSymbol>,
     @NlsSafe val memberText: String?,
     val memberIcon: Icon?,
     @NlsContexts.Label val containingSymbolText: String?,
