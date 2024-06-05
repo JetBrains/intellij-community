@@ -2463,16 +2463,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
-    }
-
-    @NotNull
-    @Override
-    public ActionRemoteBehavior getBehavior() {
-      if (PlatformUtils.isRider()) return ActionRemoteBehavior.FrontendThenBackend;
-      else return ActionRemoteBehavior.BackendOnly;
     }
 
     @Override
