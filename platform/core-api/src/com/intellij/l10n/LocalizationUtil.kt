@@ -21,7 +21,7 @@ object LocalizationUtil {
   @Volatile
   private var isL10nInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
-  private const val LOCALIZATION_KEY = "i18n.locale"
+  const val LOCALIZATION_KEY = "i18n.locale"
 
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
@@ -146,10 +146,36 @@ object LocalizationUtil {
     return isL10nInitialized
   }
 
+  fun getForcedLocale(): String? {
+    val languageTag = System.getProperty(LOCALIZATION_KEY)
+    if (languageTag.isNullOrEmpty()) {
+      return null
+    }
+    return languageTag
+  }
+
   fun getLocale(): Locale {
-    val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY)
-    else LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
+    val forcedLocale = getForcedLocale()
+    var localizationService: LocalizationStateService? = null
+
+    val languageTag = if (forcedLocale == null) {
+      localizationService = LocalizationStateService.getInstance()
+      localizationService?.getSelectedLocale() ?: return Locale.ENGLISH
+    }
+    else {
+      forcedLocale
+    }
+
     val locale = Locale.forLanguageTag(languageTag)
+
+    if (localizationService != null) {
+      val englishTag = Locale.ENGLISH.toLanguageTag()
+      if (languageTag != englishTag && findLanguageBundle(locale) == null) {
+        localizationService.setSelectedLocale(englishTag)
+        return Locale.ENGLISH
+      }
+    }
+
     return locale
   }
 

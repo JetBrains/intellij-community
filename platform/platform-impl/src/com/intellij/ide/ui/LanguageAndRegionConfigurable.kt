@@ -41,11 +41,16 @@ class LanguageAndRegionUi {
       panel.row(IdeBundle.message("combobox.language")) {
         val items = LocalizationUtil.getAllAvailableLocales()
         val localizationService = LocalizationStateService.getInstance()!!
-        val selection = Locale.forLanguageTag(localizationService.getSelectedLocale())
+        val forcedLocale = LocalizationUtil.getForcedLocale()
+        val selection = Locale.forLanguageTag(forcedLocale ?: localizationService.getSelectedLocale())
         val model = CollectionComboBoxModel(items, selection)
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
 
-        if (propertyGraph != null && parentDisposable != null && connection != null) {
+        if (forcedLocale != null) {
+          languageBox.enabled(false)
+            .comment(IdeBundle.message("combobox.language.disable.comment", LocalizationUtil.LOCALIZATION_KEY, forcedLocale))
+        }
+        else if (propertyGraph != null && parentDisposable != null && connection != null) {
           val property = propertyGraph.lazyProperty { Locale.forLanguageTag(localizationService.getSelectedLocale()) }
 
           property.afterChange(parentDisposable) {
