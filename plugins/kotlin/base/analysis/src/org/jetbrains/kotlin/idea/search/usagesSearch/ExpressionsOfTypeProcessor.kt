@@ -207,7 +207,7 @@ class ExpressionsOfTypeProcessor(
     }
 
     private fun addClassToProcess(cls: PsiElement) {
-        data class ProcessClassUsagesTask(val classToSearch: PsiElement) : Task {
+        class ProcessClassUsagesTask(val classToSearch: PsiElement) : Task {
             override fun perform() {
                 val debugInfo: StringBuilder? = if (isUnitTestMode()) StringBuilder() else null
                 testLog { "Searched references to ${logPresentation(classToSearch)}" }
@@ -218,7 +218,7 @@ class ExpressionsOfTypeProcessor(
                     val language = element.language
                     debugInfo?.apply { append(", found reference element [$language]: $element") }
                     val wasProcessed = when (language) {
-                        KotlinLanguage.INSTANCE -> processClassUsageInKotlin(element, debugInfo)
+                        KotlinLanguage.INSTANCE -> processClassUsageInKotlin(element, debugInfo, classToSearch)
                         JavaLanguage.INSTANCE -> processClassUsageInJava(element)
                         else -> {
                             when (language.displayName) {
@@ -483,7 +483,7 @@ class ExpressionsOfTypeProcessor(
         addTask(ProcessSamInterfaceTask(psiClass))
     }
 
-    private fun processClassUsageInKotlin(element: PsiElement, debugInfo: StringBuilder?): Boolean {
+    private fun processClassUsageInKotlin(element: PsiElement, debugInfo: StringBuilder?, classToSearch: PsiElement): Boolean {
         //TODO: type aliases
 
         when (element) {
@@ -497,7 +497,7 @@ class ExpressionsOfTypeProcessor(
                             return true // type qualifier
                         }
 
-                        return processClassUsageInUserType(elementParent)
+                        return processClassUsageInUserType(elementParent, classToSearch)
                     }
 
                     is KtCallExpression -> {
@@ -557,7 +557,7 @@ class ExpressionsOfTypeProcessor(
         return false // unsupported type of reference
     }
 
-    private fun processClassUsageInUserType(userType: KtUserType): Boolean {
+    private fun processClassUsageInUserType(userType: KtUserType, classToSearch: PsiElement): Boolean {
         val typeRef = userType.parents.lastOrNull { it is KtTypeReference }
         when (val typeRefParent = typeRef?.parent) {
             is KtTypeAlias -> {
@@ -601,14 +601,20 @@ class ExpressionsOfTypeProcessor(
             is KtConstructorCalleeExpression -> { // super-class name in the list of bases
                 val parent = typeRefParent.parent
                 if (parent is KtSuperTypeCallEntry) {
-                    addClassToProcess((parent.parent as KtSuperTypeList).parent as KtClassOrObject)
+                    val cls = (parent.parent as KtSuperTypeList).parent as KtClassOrObject
+                    if (cls != classToSearch) {
+                        addClassToProcess(cls)
+                    }
                     return true
                 }
             }
 
             is KtSuperTypeListEntry -> { // super-interface name in the list of bases
                 if (typeRef == typeRefParent.typeReference) {
-                    addClassToProcess((typeRefParent.parent as KtSuperTypeList).parent as KtClassOrObject)
+                    val cls = (typeRefParent.parent as KtSuperTypeList).parent as KtClassOrObject
+                    if (cls != classToSearch) {
+                        addClassToProcess(cls)
+                    }
                     return true
                 }
             }
