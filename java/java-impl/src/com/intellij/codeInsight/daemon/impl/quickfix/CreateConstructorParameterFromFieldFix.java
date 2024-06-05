@@ -21,6 +21,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,17 +154,18 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
         updater.trackDeclaration(constructor);
       }
       Map<PsiMethod, ChainedConstructorData> data = ChainedConstructorData.getChainedConstructorDataMap(writableFields, writableConstructors);
+      Map<PsiMethod, List<PsiVariable>> params = StreamEx.of(writableConstructors)
+        .toMap(ctr -> fillVariables(writableFields, ctr.getParameterList()));
       for (PsiMethod constructor : writableConstructors) {
-        addParameterToConstructor(context, constructor, writableFields, updater, data.get(constructor));
+        addParameterToConstructor(context, constructor, updater, data.get(constructor), params.get(constructor));
       }
     });
   }
 
   private static void addParameterToConstructor(@NotNull ActionContext context, @NotNull PsiMethod constructor,
-                                                @NotNull List<PsiField> fields, @NotNull ModPsiUpdater updater,
-                                                @Nullable ChainedConstructorData chainedConstructorData) {
+                                                @NotNull ModPsiUpdater updater, @Nullable ChainedConstructorData chainedConstructorData, 
+                                                @NotNull List<PsiVariable> params) {
     final PsiParameterList parameterList = constructor.getParameterList();
-    final List<PsiVariable> params = fillVariables(fields, parameterList);
 
     final Map<PsiField, String> usedFields = new LinkedHashMap<>();
     final MultiMap<PsiType, PsiVariable> types = new MultiMap<>();
