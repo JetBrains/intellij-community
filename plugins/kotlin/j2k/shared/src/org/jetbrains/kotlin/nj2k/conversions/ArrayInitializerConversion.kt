@@ -16,30 +16,35 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        var newElement = element
-        if (element is JKJavaNewArray) {
-            val primitiveArrayType = element.type.type as? JKJavaPrimitiveType
-            val arrayConstructorName =
-                if (primitiveArrayType != null)
-                    ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
-                else
-                    ArrayFqNames.ARRAY_OF_FUNCTION.asString()
-            val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
-            arguments.hasTrailingComma = element.hasTrailingComma
-            val typeArguments =
-                if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
-                else JKTypeArgumentList()
+        val newElement = when (element) {
+            is JKJavaNewArray -> {
+                val primitiveArrayType = element.type.type as? JKJavaPrimitiveType
+                val arrayConstructorName =
+                    if (primitiveArrayType != null)
+                        ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
+                    else
+                        ArrayFqNames.ARRAY_OF_FUNCTION.asString()
+                val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
+                arguments.hasTrailingComma = element.hasTrailingComma
+                val typeArguments =
+                    if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
+                    else JKTypeArgumentList()
 
-            newElement = JKCallExpressionImpl(
-                symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
-                arguments,
-                typeArguments,
-                canMoveLambdaOutsideParentheses = true
-            )
-        } else if (element is JKJavaNewEmptyArray) {
-            newElement = buildArrayInitializer(
-                element.initializer.also { element.initializer = emptyList() }, element.type.type
-            )
+                JKCallExpressionImpl(
+                    symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
+                    arguments,
+                    typeArguments,
+                    canMoveLambdaOutsideParentheses = true
+                )
+            }
+
+            is JKJavaNewEmptyArray -> {
+                buildArrayInitializer(
+                    element.initializer.also { element.initializer = emptyList() }, element.type.type
+                )
+            }
+
+            else -> return recurse(element)
         }
 
         return recurse(newElement.withFormattingFrom(element))
