@@ -30,9 +30,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class HighlightNamesUtil {
   private static final Logger LOG = Logger.getInstance(HighlightNamesUtil.class);
+
+  public static void highlightElement(@NotNull PsiElement psiElement, @NotNull HighlightInfoHolder holder) {
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return;
+    highlight(containingFile, holder, visitor -> psiElement.accept(visitor));
+  }
+
+  public static void highlight(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder, @NotNull Consumer<@NotNull JavaElementVisitor> consumer) {
+    JavaNamesHighlightVisitor visitor = new JavaNamesHighlightVisitor();
+    if (!visitor.suitableForFile(file)) return;
+    visitor.analyze(file, false, holder, () -> {
+      consumer.accept(visitor);
+    });
+  }
 
   @Nullable
   static HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
