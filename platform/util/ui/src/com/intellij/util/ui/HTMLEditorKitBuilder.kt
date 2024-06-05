@@ -19,6 +19,7 @@ class HTMLEditorKitBuilder {
   private var needGapsBetweenParagraphs = false
   private var loadCssFromFile = true
   private var fontResolver: CSSFontResolver? = null
+  private var underlinedHoveredHyperlink = true
 
   /**
    * Allows replacing default [ExtendableHTMLViewFactory] extensions
@@ -80,10 +81,15 @@ class HTMLEditorKitBuilder {
     fontResolver = resolver
   }
 
+  fun withUnderlinedHoveredHyperlink(flag: Boolean): HTMLEditorKitBuilder = apply {
+    underlinedHoveredHyperlink = flag
+  }
+
   fun build(): HTMLEditorKit {
     val styleSheet = overriddenRootStyle ?: createHtmlStyleSheet()
     return JBHtmlEditorKit(viewFactory, styleSheet, !loadCssFromFile).apply {
-      if (fontResolver != null) setFontResolver(fontResolver)
+      if (fontResolver != null) { setFontResolver(fontResolver) }
+      setUnderlineHoveredHyperlink(underlinedHoveredHyperlink)
     }
   }
 

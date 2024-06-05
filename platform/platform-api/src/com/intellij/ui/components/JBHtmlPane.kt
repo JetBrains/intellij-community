@@ -145,6 +145,7 @@ open class JBHtmlPane(
     val editorKit = HTMLEditorKitBuilder()
       .replaceViewFactoryExtensions(*extensions.toTypedArray())
       .withFontResolver(myPaneConfiguration.fontResolver ?: service.defaultEditorCssFontResolver())
+      .withUnderlinedHoveredHyperlink(myPaneConfiguration.underlinedHoveredHyperlink)
       .build()
     updateDocumentationPaneDefaultCssRules(editorKit)
 

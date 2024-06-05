@@ -48,6 +48,7 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
   internal val iconResolver: (String) -> Icon? = builder.iconResolver
   internal val customStyleSheetProviders: List<(backgroundColor: Color) -> StyleSheet> = builder.customStyleSheetProviders.toList()
   internal val fontResolver: CSSFontResolver? = builder.fontResolver
+  internal val underlinedHoveredHyperlink = builder.underlinedHoveredHyperlink
   internal val extensions: List<ExtendableHTMLViewFactory.Extension> = builder.extensions.toList()
 
   constructor() : this(builder())
@@ -96,6 +97,17 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
      * make sure to support font family names `_EditorFont_` and `_EditorFontNoLigatures_`.
      */
     var fontResolver: CSSFontResolver? = null
+
+    /**
+     * Toggle whether hyperlinks are underlined when hovered.
+     *
+     * This is useful if another implementation needs to apply a different style
+     * to hyperlinks when hovered (this can be done by adding an [javax.swing.event.HyperlinkListener]
+     * to the [JBHtmlPane]).
+     *
+     * Default is true.
+     */
+    var underlinedHoveredHyperlink: Boolean = true
 
     /**
      * Provide a list of additional extensions for the [ExtendableHTMLViewFactory]
