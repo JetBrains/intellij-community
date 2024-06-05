@@ -8,7 +8,12 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
+import com.intellij.codeInspection.lang.HTMLComposerExtension;
+import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
+import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
@@ -19,19 +24,25 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.Key;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.codeInspection.ex.GlobalInspectionContextTestUtilKt.areGlobalInspectionToolsInitialized;
 
 public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   @Override
@@ -241,5 +252,108 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     CommonProblemDescriptor descriptor = assertOneElement(presentation.getProblemDescriptors());
     assertEquals("Finished: "+shortName, descriptor.getDescriptionTemplate());
+  }
+
+  public void testPreInitTools() throws Exception {
+    InspectionExtensionsFactory.EP_NAME.getPoint().registerExtension(new GICTestExtensionFactory(), getTestRootDisposable());
+    try {
+      InspectionProfileImpl profile = new InspectionProfileImpl("Foo", new InspectionToolsSupplier() {
+        @Override
+        public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
+          var tools = new ArrayList<InspectionToolWrapper<?, ?>>();
+          tools.add(new LocalInspectionToolWrapper(new JavaDummyTestInspection()));
+          tools.add(new LocalInspectionToolWrapper(new JavaDummyPairedTestInspection()));
+          return tools;
+        }
+      }, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
+      InspectionsKt.disableAllTools(profile);
+      profile.enableTool(new JavaDummyTestInspection().getShortName(), getProject());
+
+      GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
+      context.setExternalProfile(profile);
+      configureByFile("Foo.java");
+
+      AnalysisScope scope = new AnalysisScope(getFile());
+      context.doInspections(scope);
+      UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invokeLater
+    }
+    finally {
+      InspectionExtensionsFactory.EP_NAME.getPoint().unregisterExtension(GICTestExtensionFactory.class);
+    }
+  }
+
+  private static class JavaDummyPairedTestInspection extends AbstractBaseJavaLocalInspectionTool {
+    @Override
+    public @NotNull String getShortName() {
+      return "JavaDummyPairedTestInspection";
+    }
+  }
+
+  private static class JavaDummyTestInspection extends AbstractBaseJavaLocalInspectionTool implements PairedUnfairLocalInspectionTool {
+    @Override
+    public @NotNull String getShortName() {
+      return "JavaDummyTestInspection";
+    }
+
+    @Override
+    public @NotNull String getInspectionForBatchShortName() {
+      return "JavaDummyPairedTestInspection";
+    }
+  }
+
+  private static class GICTestExtension implements GlobalInspectionContextExtension<GICTestExtension> {
+    private static final Key<GICTestExtension> ID = Key.create("GICTestExtension");
+    @Override
+    public @NotNull Key<GICTestExtension> getID() {
+      return ID;
+    }
+    @Override
+    public void performPreInitToolsActivities(@NotNull List<Tools> usedTools, @NotNull GlobalInspectionContext context) {
+      assertExpectedTools(usedTools, JavaDummyTestInspection.class);
+      assertFalse(areGlobalInspectionToolsInitialized((GlobalInspectionContextBase)context));
+    }
+    @Override
+    public void performPreRunActivities(@NotNull List<Tools> globalTools,
+                                        @NotNull List<Tools> localTools,
+                                        @NotNull GlobalInspectionContext context) {
+      assertExpectedTools(localTools, JavaDummyTestInspection.class, JavaDummyPairedTestInspection.class);
+      assertTrue(areGlobalInspectionToolsInitialized((GlobalInspectionContextBase)context));
+    }
+    @Override
+    public void performPostRunActivities(@NotNull List<InspectionToolWrapper<?, ?>> inspections,
+                                         @NotNull GlobalInspectionContext context) { }
+    @Override
+    public void cleanup() { }
+
+    private static void assertExpectedTools(@NotNull List<Tools> tools, Class<? extends LocalInspectionTool>... expectedClasses) {
+      assertEquals(expectedClasses.length, tools.size());
+      Set<Class<? extends InspectionProfileEntry>> toolsSet = ContainerUtil.map2Set(tools, tts -> tts.getTool().getTool().getClass());
+      for (var expectedCls : expectedClasses) {
+        assertTrue(toolsSet.contains(expectedCls));
+      }
+    }
+  }
+
+  private static class GICTestExtensionFactory extends InspectionExtensionsFactory {
+    @Override
+    public GICTestExtension createGlobalInspectionContextExtension() {
+      return new GICTestExtension();
+    }
+    @Override
+    public @Nullable RefManagerExtension createRefManagerExtension(RefManager refManager) {
+      return null;
+    }
+    @Override
+    public @Nullable HTMLComposerExtension createHTMLComposerExtension(HTMLComposer composer) {
+      return null;
+    }
+    @Override
+    public boolean isToCheckMember(@NotNull PsiElement element, @NotNull String id) {
+      return false;
+    }
+    @Override
+    public @Nullable String getSuppressedInspectionIdsIn(@NotNull PsiElement element) {
+      return "";
+    }
   }
 }

@@ -19,6 +19,12 @@ public interface GlobalInspectionContextExtension<T> {
   @NotNull
   Key<T> getID();
 
+  /**
+   * Executed before tools are initialized and PairedUnfairLocalInspectionTool are handled.
+   *
+   * @param usedTools list of tools from the selected inspection profile before they are classified and initialized
+   * @param context global inspection context
+   */
   default void performPreInitToolsActivities(@NotNull List<Tools> usedTools,
                                              @NotNull GlobalInspectionContext context) {}
 
