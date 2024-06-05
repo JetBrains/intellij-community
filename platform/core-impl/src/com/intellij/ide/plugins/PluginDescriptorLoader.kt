@@ -550,13 +550,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   customPluginDir: Path,
   bundledPluginDir: Path?,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
-  val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
-    System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
-  }
-  else {
-    platformPrefixProperty
-  }
+  val platformPrefix = PlatformUtils.getPlatformPrefix()
 
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
   if (isUnitTestMode) {

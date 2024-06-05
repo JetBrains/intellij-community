@@ -77,13 +77,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     zipFilePool: ZipFilePool,
     mainClassLoader: ClassLoader,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-    val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
-    val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
-      System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
-    }
-    else {
-      platformPrefixProperty
-    }
+    val platformPrefix = PlatformUtils.getPlatformPrefix()
 
     val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
     val isInDevServerMode = AppMode.isDevServer()
