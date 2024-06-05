@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.async.classAsCoroutineName
+import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.batchesFlow
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.time.Duration
 
@@ -101,7 +102,7 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
   private suspend fun loadCommitDiff(oid: String): List<FilePatch> =
     runCatching {
       val request = GithubApiPagesLoader.Request(Commits.getDiffFiles(ghRepository, oid), Commits::getDiffFiles)
-      GithubApiPagesLoader.loadAll(requestExecutor, request).mapNotNull(::toPatch)
+      batchesFlow(requestExecutor, request).foldToList().mapNotNull(::toPatch)
     }.processErrorAndGet {
       LOG.info("Error occurred while loading diffs for commit $oid", it)
     }
@@ -137,7 +138,7 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
           }
         }
         val request = GithubApiPagesLoader.Request(PullRequests.getDiffFiles(ghRepository, id), PullRequests::getDiffFiles)
-        val prPatches = GithubApiPagesLoader.loadAll(requestExecutor, request).mapNotNull(::toPatch)
+        val prPatches = batchesFlow(requestExecutor, request).foldToList().mapNotNull(::toPatch)
         val commitsWithPatches = commitsWithPatchesReqs.awaitAll()
 
         GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsWithPatches, prPatches)

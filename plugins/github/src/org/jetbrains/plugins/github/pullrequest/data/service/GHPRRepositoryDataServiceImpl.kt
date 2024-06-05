@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.async.awaitCompleted
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.nestedDisposable
@@ -17,7 +18,7 @@ import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.batchesFlow
 
 class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScope,
                                                          private val requestExecutor: GithubApiRequestExecutor,
@@ -44,9 +45,8 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   private fun doLoadCollaboratorsAsync(): Deferred<List<GithubUserWithPermissions>> = cs.async {
-    GithubApiPagesLoader
-      .loadAll(requestExecutor,
-               GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
+    val pagesRequest = GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository)
+    batchesFlow(requestExecutor, pagesRequest).foldToList()
   }
 
   private val convertedCollaboratorsRequest: Flow<Deferred<List<GHUser>>> by lazy {
@@ -64,9 +64,8 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   private fun doLoadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async {
-    GithubApiPagesLoader
-      .loadAll(requestExecutor,
-               GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository))
+    batchesFlow(requestExecutor,
+                GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository)).foldToList()
       .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
@@ -77,9 +76,8 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   private fun doLoadLabelsAsync(): Deferred<List<GHLabel>> = cs.async {
-    GithubApiPagesLoader
-      .loadAll(requestExecutor,
-               GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.owner, repoPath.repository))
+    batchesFlow(requestExecutor,
+                GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.owner, repoPath.repository)).foldToList()
       .map { GHLabel(it.nodeId, it.url, it.name, it.color) }
   }
 

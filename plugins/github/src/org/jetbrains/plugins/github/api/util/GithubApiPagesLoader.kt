@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.util
 
+import com.intellij.collaboration.api.page.foldToList
 import com.intellij.openapi.progress.ProgressIndicator
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -23,11 +26,8 @@ object GithubApiPagesLoader {
 
   @Throws(IOException::class)
   @JvmStatic
-  suspend fun <T> loadAll(executor: GithubApiRequestExecutor, pagesRequest: Request<T>): List<T> {
-    val result = mutableListOf<T>()
-    loadAll(executor, pagesRequest) { result.addAll(it) }
-    return result
-  }
+  suspend fun <T> loadAll(executor: GithubApiRequestExecutor, pagesRequest: Request<T>): List<T> =
+    batchesFlow(executor, pagesRequest).foldToList()
 
   @Throws(IOException::class)
   @JvmStatic
@@ -45,13 +45,11 @@ object GithubApiPagesLoader {
 
   @Throws(IOException::class)
   @JvmStatic
-  suspend fun <T> loadAll(executor: GithubApiRequestExecutor,
-                          pagesRequest: Request<T>,
-                          pageItemsConsumer: (List<T>) -> Unit) {
+  fun <T> batchesFlow(executor: GithubApiRequestExecutor, pagesRequest: Request<T>): Flow<List<T>> = flow {
     var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
     while (request != null) {
       val page = executor.executeSuspend(request)
-      pageItemsConsumer(page.items)
+      emit(page.items)
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }
   }
