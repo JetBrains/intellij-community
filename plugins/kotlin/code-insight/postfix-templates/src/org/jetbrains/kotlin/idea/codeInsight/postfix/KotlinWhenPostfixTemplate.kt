@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -95,7 +95,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     private fun collectEnumBranches(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
         val enumEntries = klass.getStaticDeclaredMemberScope()
             .getCallableSymbols()
-            .filterIsInstance<KtEnumEntrySymbol>()
+            .filterIsInstance<KaEnumEntrySymbol>()
 
         return buildList {
             for (enumEntry in enumEntries) {

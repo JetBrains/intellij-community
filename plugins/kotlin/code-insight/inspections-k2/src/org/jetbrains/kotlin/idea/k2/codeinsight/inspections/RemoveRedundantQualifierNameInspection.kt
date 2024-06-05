@@ -57,7 +57,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
             callableShortenStrategy = { callableSymbol ->
                 val containingSymbol = callableSymbol.getContainingSymbol()
 
-                if (callableSymbol !is KtEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
+                if (callableSymbol !is KaEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
                     ShortenStrategy.DO_NOT_SHORTEN
                 } else {
                     ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED

@@ -33,7 +33,7 @@ class KtVariableDescriptor(
     val stable: Boolean by lazy {
         when (val result = analyze(module) {
             when (val symbol = pointer.restoreSymbol()) {
-                is KtValueParameterSymbol, is KtEnumEntrySymbol -> return@analyze true
+                is KtValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
                 is KtPropertySymbol -> return@analyze symbol.isVal
                 is KtLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true

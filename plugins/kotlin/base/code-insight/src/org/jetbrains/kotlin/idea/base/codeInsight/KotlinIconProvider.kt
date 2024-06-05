@@ -56,7 +56,7 @@ object KotlinIconProvider {
             is KtPropertySymbol -> if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
             is KtTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)
             is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
-            is KtEnumEntrySymbol -> KotlinIcons.ENUM
+            is KaEnumEntrySymbol -> KotlinIcons.ENUM
             is KtConstructorSymbol -> symbol.getContainingSymbol()?.let { getIconFor(it) }
             else -> null
         }

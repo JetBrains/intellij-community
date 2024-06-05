@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
@@ -42,7 +42,7 @@ internal object KindWeigher {
     context(KtAnalysisSession)
     fun addWeight(lookupElement: LookupElement, symbol: KtSymbol?, context: WeighingContext) {
         lookupElement.isSymbolToSkip = symbol in context.symbolsToSkip
-        lookupElement.isEnumEntry = symbol is KtEnumEntrySymbol
+        lookupElement.isEnumEntry = symbol is KaEnumEntrySymbol
 
         if (lookupElement.lookupString != KtTokens.NULL_KEYWORD.value || lookupElement.`object` !is KeywordLookupObject) return
         lookupElement.isNullAtHighlyLikelyPosition = context.isPositionSuitableForNull && context.expectedType == null

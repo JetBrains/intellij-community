@@ -596,7 +596,7 @@ internal open class FirCallableCompletionContributor(
             when (symbol) {
                 is KtJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
                 is KtKotlinPropertySymbol -> symbol.isConst
-                is KtEnumEntrySymbol -> true
+                is KaEnumEntrySymbol -> true
                 is KtFunctionSymbol -> {
                     val isArrayOfCall = symbol.callableId?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 
@@ -659,7 +659,7 @@ internal class FirCallableReferenceCompletionContributor(
         symbol is KtValueParameterSymbol || symbol is KtLocalVariableSymbol || symbol is KtBackingFieldSymbol -> false
 
         // References to enum entries aren't supported
-        symbol is KtEnumEntrySymbol -> false
+        symbol is KaEnumEntrySymbol -> false
 
         else -> true
     }

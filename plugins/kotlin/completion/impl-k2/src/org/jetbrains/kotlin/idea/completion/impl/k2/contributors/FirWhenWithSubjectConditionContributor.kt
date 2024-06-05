@@ -242,7 +242,7 @@ internal class FirWhenWithSubjectConditionContributor(
         require(classSymbol.classKind == KtClassKind.ENUM_CLASS)
         val handledCasesNames = conditions.mapNotNullTo(hashSetOf()) { condition ->
             val conditionWithExpression = condition as? KtWhenConditionWithExpression
-            val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KtEnumEntrySymbol
+            val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KaEnumEntrySymbol
             resolvesTo?.name
         }
         val allEnumEntrySymbols = classSymbol.getEnumEntries()

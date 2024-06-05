@@ -42,7 +42,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
             getClassOrObjectSymbolByClassId(classId)?.let { return it }
             val parentSymbol = getClassOrObjectSymbolByClassId(classId.parentClassId!!)!!
 
-            // The function supports getting a `KtEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
+            // The function supports getting a `KaEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
             // semantically correct in FIR (enum entries aren't classes), it simplifies referring to the initializing object.
             val declarationSymbol = parentSymbol.getStaticDeclaredMemberScope().getCallableSymbols(classId.shortClassName).first()
             return declarationSymbol.getSymbolContainingMemberDeclarations() ?:

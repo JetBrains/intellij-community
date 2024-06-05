@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -588,7 +588,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         }
                         if (receiver is KtSimpleNameExpression) {
                             val symbol = receiver.mainReference.resolveToSymbol()
-                            if (symbol is KtEnumEntrySymbol) {
+                            if (symbol is KaEnumEntrySymbol) {
                                 // ordinal() call on explicit enum constant
                                 return true
                             }

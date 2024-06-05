@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 
 /**
@@ -11,14 +11,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
  *
  * A [KtClassOrObject][org.jetbrains.kotlin.psi.KtClassOrObject] might be an enum entry, but its symbol is not a [KtSymbolWithMembers],
  * because enum entry symbols are variable symbols. This is unfortunately a mismatch between the PSI
- * [KtEnumEntry][org.jetbrains.kotlin.psi.KtEnumEntry] on one side, and the Analysis API [KtEnumEntrySymbol] and the FIR compiler's view on
+ * [KtEnumEntry][org.jetbrains.kotlin.psi.KtEnumEntry] on one side, and the Analysis API [KaEnumEntrySymbol] and the FIR compiler's view on
  * enum entries on the other side.
  *
  * For FE10, the enum entry's initializer symbol is equal to the enum entry symbol. If the enum entry doesn't have a body, its initializer
  * will be `null`, but the enum entry will also not contain any member declarations.
  */
 fun KtDeclarationSymbol.getSymbolContainingMemberDeclarations(): KtSymbolWithMembers? = when (this) {
-    is KtEnumEntrySymbol -> enumEntryInitializer
+    is KaEnumEntrySymbol -> enumEntryInitializer
     is KtSymbolWithMembers -> this
     else -> null
 }

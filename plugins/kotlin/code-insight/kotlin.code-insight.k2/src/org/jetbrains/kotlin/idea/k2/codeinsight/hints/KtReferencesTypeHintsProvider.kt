@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -336,7 +336,7 @@ private fun isUnclearType(type: KtType, element: KtCallableDeclaration): Boolean
         if (type.isEnum()) {
             // Do not show type for enums if initializer has enum entry with explicit enum name: val p = Enum.ENTRY
             val symbol: KtSymbol? = selectorExpression?.mainReference?.resolveToSymbol()
-            if (symbol is KtEnumEntrySymbol) {
+            if (symbol is KaEnumEntrySymbol) {
                 return false
             }
         }
