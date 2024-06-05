@@ -36,18 +36,20 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class GHCloneDialogExtension : BaseCloneDialogExtension() {
+internal class GHCloneDialogExtension : GHCloneDialogExtensionBase() {
   override fun getName() = GithubUtil.SERVICE_DISPLAY_NAME
 
   override fun getAccounts(): Collection<GithubAccount> = GHAccountsUtil.accounts.filter { it.isGHAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GHCloneDialogExtensionComponent(project, modalityState)
+    project.service<GHCloneDialogExtensionComponentFactory>().createInScope(modalityState) {
+      GHCloneDialogExtensionComponent(project, this)
+    }
 }
 
-private class GHCloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
+private class GHCloneDialogExtensionComponent(project: Project, parentCs: CoroutineScope) : GHCloneDialogExtensionComponentBase(
   project,
-  modalityState,
+  parentCs,
   accountManager = service()
 ) {
 
