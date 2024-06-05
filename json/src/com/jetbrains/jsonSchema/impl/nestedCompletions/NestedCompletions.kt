@@ -45,10 +45,6 @@ internal fun JsonSchemaObject.collectNestedCompletions(
 private fun JsonSchemaObject.findSubSchemasByName(project: Project, name: String): Iterable<JsonSchemaObject> =
   JsonSchemaResolver(project, this, JsonPointerPosition().apply { addFollowingStep(name) }).resolve()
 
-internal fun CharSequence.mark(index: Int): String = substring(0, index) + "|" + substring(index)  // TODO: Remove, debugging only!
-internal fun CharSequence.mark(vararg indices: Int): String = indices.sortedDescending()  // TODO: Remove, debugging only!
-  .fold(toString()) { acc, mark -> acc.mark(mark) } // TODO: Remove, debugging only!
-
 
 internal fun JsonLikePsiWalker.findChildBy(path: SchemaPath?, start: PsiElement): PsiElement =
   path?.let {
@@ -61,40 +57,42 @@ private fun JsonLikePsiWalker.findContainingObjectAdapter(start: PsiElement) =
   start.parents(true).firstNotNullOfOrNull { createValueAdapter(it)?.asObject }
 
 internal tailrec fun JsonObjectValueAdapter.findChildBy(path: List<String>, offset: Int): JsonValueAdapter? =
-  if(offset > path.lastIndex) this
-  else childByName(path[offset])
+  if (offset > path.lastIndex) this
+  else propertyList.firstOrNull { it.name == path[offset] }
+    ?.values
+    ?.firstOrNull()
     ?.asObject
     ?.findChildBy(path, offset + 1)
 
-private fun JsonObjectValueAdapter.childByName(name: String): JsonValueAdapter? =
-  propertyList.firstOrNull { it.name == name }
-    ?.values
-    ?.firstOrNull()
-
 fun expandMissingPropertiesAndMoveCaret(context: InsertionContext, completionPath: SchemaPath?) {
-  if (completionPath == null) return
+  val path = completionPath?.accessor()
+  if (path.isNullOrEmpty()) return
   val element = context.file.findElementAt(context.startOffset)?.parent ?: return
   val walker = JsonLikePsiWalker.getWalker(element) ?: return
-  val container = element.parent ?: return
-  val path = completionPath.accessor()
-  if (path.isNotEmpty()) {
-    val parentObject = walker.createValueAdapter(container)?.asObject
-      ?: walker.createValueAdapter(container.parent)?.asObject?.takeIf {
-        // the first condition is a hack for yaml, we need to invent a better solution here
-        walker.defaultObjectValue.isNotBlank() && walker.getParentPropertyAdapter(container) != null
-      }
-      ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
-        walker.createValueAdapter(it)?.asObject
-      } ?: return
-    val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
-    val pointer = SmartPointerManager.createPointer(newElement)
-    cleanupWhitespacesAndDelete(element)
-    PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
-    val psiElement = rewindToMeaningfulLeaf(pointer.element)
-    if (psiElement != null) {
-      context.editor.caretModel.moveToOffset(psiElement.endOffset)
-    }
+  val parentObject = getOrCreateParentObject(element, walker, context, path) ?: return
+  val newElement = doExpand(parentObject, path, walker, element, 0, null) ?: return
+  cleanupWhitespacesAndDelete(element)
+  val pointer = SmartPointerManager.createPointer(newElement)
+  PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+  val psiElement = rewindToMeaningfulLeaf(pointer.element)
+  if (psiElement != null) {
+    context.editor.caretModel.moveToOffset(psiElement.endOffset)
   }
+}
+
+private fun getOrCreateParentObject(element: PsiElement,
+                                    walker: JsonLikePsiWalker,
+                                    context: InsertionContext,
+                                    path: List<String>): JsonObjectValueAdapter? {
+  val container = element.parent ?: return null
+  return walker.createValueAdapter(container)?.asObject
+    ?: walker.createValueAdapter(container.parent)?.asObject?.takeIf {
+      // the first condition is a hack for yaml, we need to invent a better solution here
+      walker.defaultObjectValue.isNotBlank() && walker.getParentPropertyAdapter(container) != null
+    }
+    ?: replaceAtCaretAndGetParentObject(element, walker, context, path).let {
+      walker.createValueAdapter(it)?.asObject
+    }
 }
 
 fun rewindToMeaningfulLeaf(element: PsiElement?): PsiElement? {
@@ -152,14 +150,14 @@ private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, 
   }.let { walker.getParentPropertyAdapter(it)!! }
 }
 
-private fun doExpand(parentObject: JsonObjectValueAdapter,
+private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
                      completionPath: List<String>,
                      walker: JsonLikePsiWalker,
                      element: PsiElement,
                      index: Int,
                      fakeProperty: PsiElement?): PsiElement? {
-  val property: JsonPropertyAdapter = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
-                                      ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
+  val property = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
+                  ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element)
   fakeProperty?.let {
     cleanupWhitespacesAndDelete(it)
   }
