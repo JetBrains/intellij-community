@@ -54,7 +54,7 @@ public final class ApplicationNamesInfo {
     }
     else {
       // Gateway started from another IntelliJ-based IDE; same for Qodana
-      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX) || "true".equals(System.getProperty("qodana.application"))) {
+      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX)) {
         String customAppInfo = System.getProperty("idea.application.info.value");
         if (customAppInfo != null) {
           try {
@@ -82,11 +82,27 @@ public final class ApplicationNamesInfo {
     }
 
     try {
-      return XmlDomReader.readXmlAsModel(stream);
+      XmlElement data = XmlDomReader.readXmlAsModel(stream);
+      if ("true".equals(System.getProperty("qodana.application"))) {
+        setQodanaProductAttributes(data);
+      }
+      return data;
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
     }
+  }
+
+  private static void setQodanaProductAttributes(XmlElement data) {
+    XmlElement namesNode = data.getChild("names");
+    assert namesNode != null;
+    String qodanaProductName = System.getProperty("qodana.product.name");
+    namesNode.attributes.put("product", qodanaProductName);
+    namesNode.attributes.put("fullname", qodanaProductName);
+
+    XmlElement buildNode = data.getChild("build");
+    assert buildNode != null;
+    buildNode.attributes.put("number", System.getProperty("qodana.build.number"));
   }
 
   @ApiStatus.Internal

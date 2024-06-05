@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.plugin.structure.base.utils.exists
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
@@ -426,7 +427,9 @@ internal class WindowsDistributionBuilder(
     val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.WINDOWS) {
       "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
     }
-
+    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS) {
+      "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
+    }
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
@@ -440,7 +443,7 @@ internal class WindowsDistributionBuilder(
         bootClassPathJarNames = context.bootClassPathJarNames,
         additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
         mainClass = context.ideMainClassName,
-        customCommands = listOfNotNull(jetbrainsClientCustomLaunchData),
+        customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData),
       )),
       context)
     writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)

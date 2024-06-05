@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.Decompressor
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
@@ -330,7 +331,9 @@ class MacDistributionBuilder(
     val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.MACOS) {
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
-
+    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS) {
+      "bin/${it.productProperties.baseFileName}.vmoptions"
+    }
     return ProductInfoLaunchData(
       os = OsFamily.MACOS.osName,
       arch.dirName,
@@ -341,7 +344,7 @@ class MacDistributionBuilder(
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
       mainClass = context.ideMainClassName,
-      customCommands = listOfNotNull(jetbrainsClientCustomLaunchData)
+      customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData)
     )
   }
 

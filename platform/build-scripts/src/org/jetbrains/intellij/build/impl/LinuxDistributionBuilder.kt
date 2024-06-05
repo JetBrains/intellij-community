@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -329,6 +330,9 @@ class LinuxDistributionBuilder(
     val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.LINUX) {
       "bin/${it.productProperties.baseFileName}64.vmoptions"
     }
+    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX) {
+      "bin/${it.productProperties.baseFileName}64.vmoptions"
+    }
 
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
@@ -344,7 +348,7 @@ class LinuxDistributionBuilder(
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
           mainClass = context.ideMainClassName,
-          customCommands = listOfNotNull(jetbrainsClientCustomLaunchData)
+          customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData)
         )
       ),
       context
