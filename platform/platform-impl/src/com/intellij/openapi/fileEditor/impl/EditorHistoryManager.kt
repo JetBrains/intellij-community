@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -37,11 +38,13 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { trimToSize() })
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
-        updateHistoryEntry(fileEditorManager = source as FileEditorManagerEx,
-                           file = file,
-                           fileEditor = null,
-                           fileEditorProvider = null,
-                           changeEntryOrderOnly = false)
+        updateHistoryEntry(
+          fileEditorManager = source as FileEditorManagerEx,
+          file = file,
+          fileEditor = null,
+          fileEditorProvider = null,
+          changeEntryOrderOnly = false,
+        )
       }
     })
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(object : ExtensionPointListener<FileEditorProvider> {
@@ -165,21 +168,18 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     fileEditorProvider: FileEditorProvider?,
     changeEntryOrderOnly: Boolean,
   ) {
-    val editors: List<FileEditor>
-    val providers: List<FileEditorProvider>
+    val list: List<FileEditorWithProvider>
     var preview = false
     if (fileEditor == null || fileEditorProvider == null) {
-      val composite = fileEditorManager.getComposite(file)
-      editors = composite?.allEditors ?: emptyList()
-      providers = composite?.allProviders ?: emptyList()
-      preview = composite != null && composite.isPreview
+      val composite = fileEditorManager.getComposite(file) ?: return
+      list = composite.allEditorsWithProviders
+      preview = composite.isPreview
     }
     else {
-      editors = listOf(fileEditor)
-      providers = listOf(fileEditorProvider)
+      list = listOf(FileEditorWithProvider(fileEditor = fileEditor, provider = fileEditorProvider))
     }
 
-    if (editors.isEmpty()) {
+    if (list.isEmpty()) {
       // not opened in any editor at the moment makes no sense to put the file in the history
       return
     }
@@ -201,8 +201,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     if (!changeEntryOrderOnly) {
       // update entry state
-      for ((i, editor) in editors.withIndex().reversed()) {
-        val provider = providers[i]
+      for ((editor, provider) in list.reversed()) {
         // can happen if fileEditorProvider is null
         if (!editor.isValid) {
           // this can happen, for example, if a file extension was changed
@@ -291,7 +290,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   }
 
   override fun loadState(state: Element) {
-    // each HistoryEntry contains myDisposable that must be disposed to dispose a corresponding virtual file pointer
+    // each HistoryEntry contains disposable that must be disposed to dispose a corresponding virtual file pointer
     removeAllFiles()
 
     // backward compatibility - previous entry maybe duplicated
@@ -312,8 +311,8 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     }
     catch (ignored: ProcessCanceledException) {
     }
-    catch (anyException: Exception) {
-      LOG.error(anyException)
+    catch (e: Exception) {
+      LOG.error(e)
     }
     return null
   }
@@ -323,16 +322,16 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     val element = Element("state")
     // update history before saving
     val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-    val openFiles = fileEditorManager.openFiles
-    for (i in openFiles.indices.reversed()) {
-      val file = openFiles[i]
+    for (file in fileEditorManager.openFiles.reversed()) {
       // we have to update only files that are in history
       if (getEntry(file) != null) {
-        updateHistoryEntry(fileEditorManager = fileEditorManager,
-                           file = file,
-                           fileEditor = null,
-                           fileEditorProvider = null,
-                           changeEntryOrderOnly = false)
+        updateHistoryEntry(
+          fileEditorManager = fileEditorManager,
+          file = file,
+          fileEditor = null,
+          fileEditorProvider = null,
+          changeEntryOrderOnly = false,
+        )
       }
     }
     for (entry in entries) {

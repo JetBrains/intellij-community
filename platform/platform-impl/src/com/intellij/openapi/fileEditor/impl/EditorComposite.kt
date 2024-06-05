@@ -386,7 +386,7 @@ open class EditorComposite internal constructor(
   final override val allEditors: List<FileEditor>
     get() = fileEditorWithProviderList.map { it.fileEditor }
 
-  val allEditorsWithProviders: List<FileEditorWithProvider>
+  override val allEditorsWithProviders: List<FileEditorWithProvider>
     get() = java.util.List.copyOf(fileEditorWithProviderList)
 
   fun getTopComponents(editor: FileEditor): List<JComponent> {
@@ -602,9 +602,7 @@ open class EditorComposite internal constructor(
     val pointer = LightFilePointer(file = file)
     val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
     for (fileEditorWithProvider in fileEditorWithProviderList) {
-      val state = fileEditorWithProvider.fileEditor.getState(FileEditorStateLevel.FULL).takeIf { it != FileEditorState.INSTANCE }
-                  ?: continue
-      stateMap.put(fileEditorWithProvider.provider, state)
+      stateMap.put(fileEditorWithProvider.provider, fileEditorWithProvider.fileEditor.getState(FileEditorStateLevel.FULL))
     }
     return HistoryEntry(
       filePointer = pointer,
