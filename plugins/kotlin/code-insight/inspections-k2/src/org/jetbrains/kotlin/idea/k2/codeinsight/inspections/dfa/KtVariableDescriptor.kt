@@ -154,7 +154,7 @@ class KtVariableDescriptor(
                 }
                 val receiverParameter = (expr.resolveCall()?.singleVariableAccessCall()
                     ?.partiallyAppliedSymbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
-                        as? KtReceiverParameterSymbol
+                        as? KaReceiverParameterSymbol
                 val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral
                 val type = receiverParameter?.type
                 if (functionLiteral != null && type != null) {

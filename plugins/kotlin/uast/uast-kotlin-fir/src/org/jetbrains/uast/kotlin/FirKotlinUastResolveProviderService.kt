@@ -489,7 +489,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 }
 
                 is KtTypeReference -> {
-                    if (resolvedTargetSymbol is KtReceiverParameterSymbol) {
+                    if (resolvedTargetSymbol is KaReceiverParameterSymbol) {
                         // Explicit `this` resolved to type reference if it belongs to an extension callable
                         when (val callable = resolvedTargetSymbol.owningCallableSymbol) {
                             is KaFunctionLikeSymbol -> {
@@ -525,7 +525,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         // Implicit `this` as the lambda receiver
                         resolvedTargetSymbol is KaAnonymousFunctionSymbol ||
                                 // Explicit `this`
-                                resolvedTargetSymbol is KtReceiverParameterSymbol
+                                resolvedTargetSymbol is KaReceiverParameterSymbol
                     if (isLambdaReceiver) {
                         // From its containing lambda (of function literal), build ULambdaExpression
                         val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()

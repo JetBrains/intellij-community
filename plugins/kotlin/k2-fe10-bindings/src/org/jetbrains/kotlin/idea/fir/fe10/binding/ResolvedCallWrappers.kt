@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -173,7 +173,7 @@ private fun KtReceiverValue.asFe10ReceiverValue(context: Fe10WrapperContext, sma
         )
 
         is KtImplicitReceiverValue -> {
-            val ktDeclaration = symbol.safeAs<KtReceiverParameterSymbol>()?.owningCallableSymbol ?: symbol
+            val ktDeclaration = symbol.safeAs<KaReceiverParameterSymbol>()?.owningCallableSymbol ?: symbol
             when (val descriptor = ktDeclaration.toDeclarationDescriptor(context)) {
                 is ClassDescriptor ->
                     if (smartCastType != null) {

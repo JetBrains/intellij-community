@@ -63,12 +63,12 @@ fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDe
         is KaNamedClassOrObjectSymbol -> toDeclarationDescriptor(context)
         is KaFunctionLikeSymbol -> toDeclarationDescriptor(context)
         is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
-        is KtReceiverParameterSymbol -> toDeclarationDescriptor(context)
+        is KaReceiverParameterSymbol -> toDeclarationDescriptor(context)
         is KaTypeAliasSymbol -> toDeclarationDescriptor(context)
         else -> context.implementationPlanned(this::class.qualifiedName ?: "")
     }
 
-fun KtReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
+fun KaReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
     when (val owner = owningCallableSymbol.toDeclarationDescriptor(context)) {
         is CallableDescriptor -> owner.extensionReceiverParameter ?: context.errorHandling("no receiver for $owner but expected")
         else -> context.errorHandling("Unexpected type of owner: $owner")

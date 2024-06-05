@@ -138,7 +138,7 @@ class KotlinFunctionCallInstruction(
         callDescriptor: KtFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaValue? {
-        if (this is KtReceiverParameterSymbol) {
+        if (this is KaReceiverParameterSymbol) {
             return arguments.qualifier
         }
         val parameterIndex = callDescriptor.argumentMapping.values.map { it.symbol }.indexOf(this)

@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -1673,7 +1673,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun tryPushImplicitQualifier(callInfo: KtSuccessCallInfo): Boolean {
         val call = callInfo.call as? KtFunctionCall<*>
         val receiver = (call?.partiallyAppliedSymbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
-        if (receiver is KtReceiverParameterSymbol) {
+        if (receiver is KaReceiverParameterSymbol) {
             val psi = receiver.psi
             if (psi is KtFunctionLiteral) {
                 val varDescriptor = KtLambdaThisVariableDescriptor(psi, receiver.type.toDfType())
@@ -1802,7 +1802,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processThisExpression(expr: KtThisExpression) {
         val exprType = expr.getKotlinType()
         val descriptor =
-            ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KtReceiverParameterSymbol
+            ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KaReceiverParameterSymbol
         if (descriptor != null && exprType != null) {
             val function = descriptor.psi as? KtFunctionLiteral
             val declType = descriptor.type

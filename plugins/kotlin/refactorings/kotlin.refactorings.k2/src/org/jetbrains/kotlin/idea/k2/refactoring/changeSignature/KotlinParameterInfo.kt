@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -227,7 +227,7 @@ class KotlinParameterInfo(
                     }
                 }
 
-                if (target is KtReceiverParameterSymbol && declarationSymbol.receiverParameter == target) {
+                if (target is KaReceiverParameterSymbol && declarationSymbol.receiverParameter == target) {
                     //this which refers to function's receiver
                     return 0
                 }

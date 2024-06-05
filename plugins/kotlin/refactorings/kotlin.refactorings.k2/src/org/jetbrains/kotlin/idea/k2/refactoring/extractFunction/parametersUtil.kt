@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -229,7 +229,7 @@ private fun ExtractionData.registerParameter(
         return
     }
 
-    val thisSymbol = (receiverSymbol as? KtReceiverParameterSymbol)?.type?.expandedClassSymbol ?: receiverSymbol
+    val thisSymbol = (receiverSymbol as? KaReceiverParameterSymbol)?.type?.expandedClassSymbol ?: receiverSymbol
     val hasThisReceiver = thisSymbol != null
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression
 

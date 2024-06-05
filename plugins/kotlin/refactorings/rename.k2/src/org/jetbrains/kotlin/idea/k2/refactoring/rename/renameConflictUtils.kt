@@ -267,7 +267,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 symbol.name!!.asString()
             } else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
-            } else if (symbol is KtReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
+            } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
                 receiverValue.type.expandedClassSymbol?.name?.let { "this@$it" } ?: "this"
             } else {
                 "this"

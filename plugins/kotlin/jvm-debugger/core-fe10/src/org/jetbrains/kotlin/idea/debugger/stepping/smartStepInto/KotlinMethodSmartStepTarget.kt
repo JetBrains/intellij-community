@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -122,7 +122,7 @@ private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
     override fun renderReceiver(
         analysisSession: KtAnalysisSession,
-        symbol: KtReceiverParameterSymbol,
+        symbol: KaReceiverParameterSymbol,
         declarationRenderer: KtDeclarationRenderer,
         printer: PrettyPrinter
     ) {}
