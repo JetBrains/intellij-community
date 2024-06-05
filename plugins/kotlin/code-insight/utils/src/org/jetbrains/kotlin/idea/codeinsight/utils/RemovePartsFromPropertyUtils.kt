@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 object RemovePartsFromPropertyUtils {
 
     @IntentionName
-    fun getActionName(
+    fun getRemovePartsFromPropertyActionName(
         removeInitializer: Boolean,
         removeGetter: Boolean,
         removeSetter: Boolean

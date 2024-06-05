@@ -89,7 +89,7 @@ internal object RemovePartsFromPropertyFixFactory {
             elementContext: ElementContext,
         ): String {
             val (removeInitializer, removeGetter, removeSetter, _) = elementContext
-            return RemovePartsFromPropertyUtils.getActionName(removeInitializer, removeGetter, removeSetter)
+            return RemovePartsFromPropertyUtils.getRemovePartsFromPropertyActionName(removeInitializer, removeGetter, removeSetter)
         }
 
         override fun invoke(

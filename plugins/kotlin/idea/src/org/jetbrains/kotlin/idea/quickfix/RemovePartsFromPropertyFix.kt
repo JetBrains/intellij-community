@@ -20,7 +20,7 @@ open class RemovePartsFromPropertyFix(
     private val removeGetter: Boolean,
     private val removeSetter: Boolean
 ) : KotlinQuickFixAction<KtProperty>(element) {
-    override fun getText(): String = RemovePartsFromPropertyUtils.getActionName(removeInitializer, removeGetter, removeSetter)
+    override fun getText(): String = RemovePartsFromPropertyUtils.getRemovePartsFromPropertyActionName(removeInitializer, removeGetter, removeSetter)
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.parts.from.property")
 
