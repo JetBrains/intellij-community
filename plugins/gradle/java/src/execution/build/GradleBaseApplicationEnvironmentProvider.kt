@@ -75,30 +75,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       this.vmParametersList.addParametersString(runProfile.vmParameters)
     }
 
-    val javaModuleName: String?
-    val javaExePath: String
-    try {
-      if (getEffectiveConfiguration(runProfile, project) != null) {
-        javaModuleName = null
-        javaExePath = GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey
-      }
-      else {
-        val jdk = JavaParametersUtil.createProjectJdk(project, runProfile.alternativeJrePath)
-                  ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-        val type = jdk.sdkType
-        if (type !is JavaSdkType) throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-        javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
-          FileUtil.toSystemIndependentName(it)
-        } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-        javaModuleName = findJavaModuleName(jdk, runProfile.configurationModule, mainClass)
-      }
-    }
-    catch (e: CantRunException) {
-      AppUIExecutor.onUiThread().expireWith(project).submit {
-        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
-      }
-      throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-    }
     val taskSettings = ExternalSystemTaskExecutionSettings()
     taskSettings.isPassParentEnvs = params.isPassParentEnvs
     taskSettings.env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
@@ -117,19 +93,17 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     val gradlePath = getGradleIdentityPathOrNull(module) ?: return null
     val sourceSetName = GradleProjectResolverUtil.getSourceSetName(module) ?: return null
-    val applicationConfiguration = runProfile as T
-    val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
+    val workingDir = ProgramParametersUtil.getWorkingDir(runProfile, module.project, module)?.let {
       FileUtil.toSystemIndependentName(it)
     }
-    val builder = GradleInitScriptParametersBuilder(applicationConfiguration, module)
+    val builder = GradleInitScriptParametersBuilder(runProfile, module)
       .withWorkingDirectory(workingDir)
       .withParams(argsString(params))
       .withGradleTaskPath(gradlePath)
       .withRunAppTaskName(runAppTaskName)
       .withMainClass(mainClass)
-      .withJavaExePath(javaExePath)
       .withSourceSetName(sourceSetName)
-      .withJavaModuleName(javaModuleName)
+      .withJavaConfiguration(project, runProfile)
 
     val initScript = generateInitScript(builder.build())
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
@@ -140,6 +114,38 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     gradleRunConfiguration.beforeRunTasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(runProfile)
       .filter { it.providerId !== CompileStepBeforeRun.ID }
     return environment
+  }
+
+  private fun GradleInitScriptParametersBuilder.withJavaConfiguration(project: Project, runProfile: JavaRunConfigurationBase) = apply {
+    if (getEffectiveConfiguration(runProfile, project) != null) {
+      withJavaModuleName(null)
+      withJavaExePath(GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey)
+    }
+    else {
+      val jdk = resolveRunConfigurationJdk(project, runProfile)
+      val type = jdk.sdkType as JavaSdkType
+
+      val javaExePath = type.getVMExecutablePath(jdk)
+                        ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
+      val javaModuleName = findJavaModuleName(jdk, runProfile.configurationModule, runProfile.runClass!!)
+
+      withJavaModuleName(javaModuleName)
+      withJavaExePath(FileUtil.toSystemIndependentName(javaExePath))
+    }
+  }
+
+  private fun resolveRunConfigurationJdk(project: Project, runProfile: JavaRunConfigurationBase): Sdk {
+    try {
+      return JavaParametersUtil.createProjectJdk(project, runProfile.alternativeJrePath)
+             ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
+    }
+    catch (e: CantRunException) {
+      @Suppress("IncorrectParentDisposable")
+      AppUIExecutor.onUiThread().expireWith(project).submit {
+        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+      }
+      throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
+    }
   }
 
   protected open fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {}
