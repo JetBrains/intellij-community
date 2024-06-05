@@ -2520,7 +2520,8 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
 
 @Suppress("SSBasedInspection")
 @RequiresEdt
-private fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
+@Internal
+fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   ThreadingAssertions.assertEventDispatchThread()
 
   // https://youtrack.jetbrains.com/issue/IDEA-319932

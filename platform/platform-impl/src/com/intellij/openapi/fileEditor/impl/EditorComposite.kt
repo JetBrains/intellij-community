@@ -8,6 +8,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -17,6 +18,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
@@ -41,6 +43,7 @@ import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -72,6 +75,14 @@ data class EditorCompositeModel internal constructor(
   @Internal
   constructor(fileEditorAndProviderList: List<FileEditorWithProvider>)
     : this(fileEditorAndProviderList = fileEditorAndProviderList, state = null)
+}
+
+// workaround for remote dev, where we cannot yet implement correctly
+@Internal
+class PrecomputedFlow(@JvmField val model: EditorCompositeModel) : Flow<EditorCompositeModel> {
+  override suspend fun collect(collector: FlowCollector<EditorCompositeModel>) {
+    error("Must not be called")
+  }
 }
 
 /**
@@ -122,19 +133,29 @@ open class EditorComposite internal constructor(
   init {
     EDT.assertIsEdt()
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      shownDeferred.complete(Unit)
-    }
-    else {
-      UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
-        shownDeferred.complete(Unit)
+    if (model is PrecomputedFlow) {
+      val context = ClientId.coroutineContext()
+      runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+        withContext(context) {
+          handleModel(model.model)
+        }
       }
     }
+    else {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+        shownDeferred.complete(Unit)
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(compositePanel, isDeferred = false) {
+          shownDeferred.complete(Unit)
+        }
+      }
 
-    coroutineScope.launch(ModalityState.any().asContextElement()) {
-      shownDeferred.await()
-      model.collect {
-        handleModel(it)
+      coroutineScope.launch(ModalityState.any().asContextElement() + ClientId.coroutineContext()) {
+        shownDeferred.await()
+        model.collect {
+          handleModel(it)
+        }
       }
     }
   }
