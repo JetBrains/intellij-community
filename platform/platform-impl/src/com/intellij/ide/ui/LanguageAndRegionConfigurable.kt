@@ -151,8 +151,15 @@ internal class LanguageAndRegionConfigurable :
 private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collections.List<Locale>, Map<Locale, String>>) :
   GroupedComboBoxRenderer<Locale>() {
 
+  @Suppress("NonAsciiCharacters")
+  private val names = buildMap<Locale, String> {
+    put(Locale.forLanguageTag("zh-CN"), "Chinese (Simplified) 中文语言包")
+    put(Locale.forLanguageTag("ko"), "Korean 한국어 언어 팩")
+    put(Locale.forLanguageTag("ja"), "Japanese 日本語言語パック")
+  }
+
   override fun getText(item: Locale): @NlsSafe String {
-    return locales.second[item] ?: item.getDisplayLanguage(Locale.ENGLISH)
+    return locales.second[item] ?: names[item] ?: item.getDisplayLanguage(Locale.ENGLISH)
   }
 
   override fun separatorFor(value: Locale): ListSeparator? {
