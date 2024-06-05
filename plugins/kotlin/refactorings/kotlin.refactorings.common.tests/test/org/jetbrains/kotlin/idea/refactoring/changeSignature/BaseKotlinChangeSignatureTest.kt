@@ -976,6 +976,7 @@ public @interface NotNull {
     fun testConvertParameterToReceiverAddParents() = doTest { receiverParameterInfo = newParameters[0] }
 
     fun testThisReplacement() = doTest { receiverParameterInfo = null }
+    fun testThisReplacement1() = doTest { receiverParameterInfo = null }
 
     fun testImplicitThisToParameterWithChangedType() = doTest {
         receiverParameterInfo!!.setType("Older")

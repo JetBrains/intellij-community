@@ -102,9 +102,12 @@ internal object KotlinChangeSignatureUsageSearcher {
                             if (originalReceiverType != null) {
                                 if (receiverValue.type.isSubTypeOf(originalReceiverType)) {
                                     if (receiverExpression is KtThisExpression) {
-                                        result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
+                                        val targetLabel = receiverExpression.getTargetLabel()
+                                        if (targetLabel == null || targetLabel.getKtType()?.let { originalReceiverType.isEqualTo(it) } == true) {
+                                            result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
+                                        }
                                     }
-                                    else {
+                                    else if (receiverValue is KtImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }
