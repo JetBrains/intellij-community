@@ -4936,15 +4936,6 @@ com.intellij.ide.actions.ReportFeedbackService
 - s:getInstance():com.intellij.ide.actions.ReportFeedbackService
 f:com.intellij.ide.actions.ReportFeedbackService$Companion
 - f:getInstance():com.intellij.ide.actions.ReportFeedbackService
-c:com.intellij.ide.actions.ReportProblemAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.ReportProblemAction$Handler
-- sf:INSTANCE:com.intellij.ide.actions.ReportProblemAction$Handler
-- f:submit(com.intellij.openapi.project.Project):V
 a:com.intellij.ide.actions.ResizeToolWindowAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.impl.FusAwareAction
