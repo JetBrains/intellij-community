@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -108,6 +109,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
             Messages.OK) {
           return;
         }
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
         propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, true);
       }
     }
