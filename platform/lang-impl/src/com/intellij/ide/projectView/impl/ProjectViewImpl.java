@@ -105,6 +105,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
+  public static final @NonNls String ANDROID_VIEW_ID = "AndroidView";
 
   private final CopyPasteDelegator copyPasteDelegator;
   private boolean isInitialized;
@@ -1445,7 +1446,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     //noinspection SpellCheckingInspection
     if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
       // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
-      return "AndroidView";
+      return ANDROID_VIEW_ID;
     }
     else {
       for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {

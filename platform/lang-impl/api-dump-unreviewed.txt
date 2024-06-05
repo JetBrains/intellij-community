@@ -16584,6 +16584,7 @@ c:com.intellij.ide.projectView.impl.ProjectViewImpl
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.util.BusyObject
 - com.intellij.ui.switcher.QuickActionProvider
+- sf:ANDROID_VIEW_ID:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V
 - addProjectPane(com.intellij.ide.projectView.impl.AbstractProjectViewPane):V
 - changeView(java.lang.String):V
