@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtilRt.DeleteFileVisitor;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -61,6 +60,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -399,7 +399,21 @@ public final class DeleteHandler {
         Ref<Integer> curFileCount = new Ref<>(0);
         for (PsiElement element : myFileElements) {
           VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-          Files.walkFileTree(file.toNioPath(), new DeleteFileVisitor(e -> curFileCount.set(curFileCount.get() + 1)));
+          Files.walkFileTree(file.toNioPath(), new NioFiles.StatsCollectingVisitor() {
+            @Override
+            protected void countDirectory(Path dir, BasicFileAttributes attrs) {
+              count();
+            }
+
+            @Override
+            protected void countFile(Path file, BasicFileAttributes attrs) {
+              count();
+            }
+
+            private void count() {
+              curFileCount.set(curFileCount.get() + 1);
+            }
+          });
         }
         final int totalFileCount = curFileCount.get();
         curFileCount.set(0);
