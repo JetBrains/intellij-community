@@ -86,11 +86,13 @@ public class SearchEverywhereCommand extends AbstractCommand {
     LOG.info(tabId.get());
 
     int numberOfPermits;
-    if(insertText.isEmpty() && myOptions.typingText.isEmpty()){
+    if (insertText.isEmpty() && myOptions.typingText.isEmpty()) {
       numberOfPermits = 1; //we don't wait for any text insertion
-    } else if(!insertText.isEmpty() && !myOptions.typingText.isEmpty()){
+    }
+    else if (!insertText.isEmpty() && !myOptions.typingText.isEmpty()) {
       numberOfPermits = -1; //we wait till both operations are finished
-    } else {
+    }
+    else {
       numberOfPermits = 0; //we wait till one operation is finished
     }
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
@@ -99,22 +101,25 @@ public class SearchEverywhereCommand extends AbstractCommand {
         try {
           TypingTarget target = findTarget(context);
           Component component;
-          if(!(target instanceof EditorComponentImpl)){
+          if (!(target instanceof EditorComponentImpl)) {
             LOG.info("Editor is not opened, focus owner will be used.");
             component = IdeFocusManager.getInstance(project).getFocusOwner();
-          } else{
-            component =  (EditorComponentImpl) target;
+          }
+          else {
+            component = (EditorComponentImpl)target;
           }
           DataContext dataContext = DataManager.getInstance().getDataContext(component);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere_dialog_shown", dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
-            manager.show(tabId.get(), "", new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(), 0) {
-              @Override
-              public Project getProject() {
-                return context.getProject();
-              }
-            });
+            manager.show(tabId.get(), "",
+                         new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
+                                           0) {
+                           @Override
+                           public Project getProject() {
+                             return context.getProject();
+                           }
+                         });
             attachSearchListeners(manager.getCurrentlyShownUI());
           });
           if (!insertText.isEmpty()) {
@@ -169,7 +174,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Span insertSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan();
     Span firstBatchAddedSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan();
-    ui.addSearchListener(new SearchAdapter(){
+    ui.addSearchListener(new SearchAdapter() {
       @Override
       public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
         super.elementsAdded(list);
@@ -209,8 +214,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
       public void searchFinished(@NotNull List<Object> items) {
         super.searchFinished(items);
         oneLetterLock.release();
-        oneLetterSpan.get().setAttribute("number", items.size());
-        oneLetterSpan.get().end();
+        if (!oneLetterSpan.isNull()) {
+          oneLetterSpan.get().setAttribute("number", items.size());
+          oneLetterSpan.get().end();
+        }
         if (isTypingFinished.get()) {
           typingSemaphore.release();
           typing.shutdown();
@@ -246,7 +253,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }
   }
 
-  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui){}
+  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui) { }
 
   static class Options {
     @Argument
