@@ -15874,7 +15874,7 @@ c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:addTopComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V
 - dispose():V
 - f:getAllEditors():java.util.List
-- f:getAllEditorsWithProviders():java.util.List
+- getAllEditorsWithProviders():java.util.List
 - getAllProviders():java.util.List
 - getComponent():javax.swing.JComponent
 - pf:getDisplayName(com.intellij.openapi.fileEditor.FileEditor):java.lang.String
@@ -15935,7 +15935,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - com.intellij.ide.actions.CloseAction$CloseTarget
-- sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer$Companion
 - close():V
 - f:getComponent():javax.swing.JComponent
 - f:getSelectedComponent(Z):java.lang.Object
@@ -15948,7 +15947,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 - f:setTabLayoutPolicy(I):V
 - f:setTabPlacement(I):V
 - f:setTextAttributes(I,com.intellij.openapi.editor.markup.TextAttributes):V
-f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer$Companion
 f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer$DockableEditor
 - com.intellij.ui.docking.DockableContent
 - <init>(java.awt.Image,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.Presentation,java.awt.Dimension,Z):V

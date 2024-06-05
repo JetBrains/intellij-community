@@ -5,6 +5,11 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.impl.DataValidators
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
@@ -26,6 +31,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.PossiblyDumbAware
@@ -57,6 +64,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.util.concurrent.TimeUnit
 import javax.swing.*
 
 private val LOG = logger<EditorComposite>()
@@ -341,7 +349,6 @@ open class EditorComposite internal constructor(
       ClientProperty.put(compositePanel, JBTabsImpl.PINNED, if (field) true else null)
     }
 
-
   private val _isPreviewFlow = MutableStateFlow(false)
   internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
 
@@ -420,12 +427,11 @@ open class EditorComposite internal constructor(
     selfBorder = false
     if (remove) {
       container.remove(component.parent)
-      val multicaster = dispatcher.multicaster
       if (top) {
-        multicaster.topComponentRemoved(editor, component, container)
+        dispatcher.multicaster.topComponentRemoved(editor, component, container)
       }
       else {
-        multicaster.bottomComponentRemoved(editor, component, container)
+        dispatcher.multicaster.bottomComponentRemoved(editor, component, container)
       }
     }
     else {
@@ -433,8 +439,10 @@ open class EditorComposite internal constructor(
       if (component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED) != true) {
         val border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER)
         selfBorder = border != null
-        wrapper.border = border ?: createTopBottomSideBorder(top = top,
-                                                             borderColor = ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR))
+        wrapper.border = border ?: createTopBottomSideBorder(
+          top = top,
+          borderColor = ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR),
+        )
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)
@@ -859,4 +867,35 @@ internal suspend fun doOnCompositeOpenComplete(
   action: suspend (selectedEditor: FileEditor) -> Unit,
 ) {
   action(composite.selectedEditorWithProvider.filterNotNull().first().fileEditor)
+}
+
+private fun triggerStatOpen(project: Project, file: VirtualFile, start: Long, composite: EditorComposite, coroutineScope: CoroutineScope) {
+  StartUpMeasurer.addCompletedActivity(start, "editor time-to-show", ActivityCategory.DEFAULT, null)
+
+  val timeToShow = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+  val fileEditor = composite.allEditors.firstOrNull()
+  val textEditor = fileEditor as? TextEditor
+  if (textEditor == null) {
+    coroutineScope.launch {
+      FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, -1, composite)
+    }
+  }
+  else {
+    // use ContextAwareRunnable to avoid unnecessary thread context capturing
+    val runnable = ContextAwareRunnable {
+      val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+      coroutineScope.launch {
+        StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
+        FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, durationMs, composite)
+      }
+    }
+    // Calling textEditor.editor can lead to the creation of an editor.
+    // This might not only be a performance issue, but it can also result in threading issues, as the EDT might be required.
+    if (textEditor is TextEditorImpl) {
+      AsyncEditorLoader.performWhenLoaded(editor = textEditor.editor, runnable)
+    }
+    else {
+      runnable.run()
+    }
+  }
 }

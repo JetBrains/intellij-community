@@ -6,9 +6,6 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
-import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
@@ -17,7 +14,6 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.lang.LangBundle
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
@@ -45,7 +41,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.isSingletonFileEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -117,7 +112,6 @@ import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
@@ -2347,37 +2341,6 @@ open class FileEditorManagerImpl(
         UIUtil.dispatchAllInvocationEvents()
         yield()
       }
-    }
-  }
-}
-
-internal fun triggerStatOpen(project: Project, file: VirtualFile, start: Long, composite: EditorComposite, coroutineScope: CoroutineScope) {
-  StartUpMeasurer.addCompletedActivity(start, "editor time-to-show", ActivityCategory.DEFAULT, null)
-
-  val timeToShow = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-  val fileEditor = composite.allEditors.firstOrNull()
-  val textEditor = fileEditor as? TextEditor
-  if (textEditor == null) {
-    coroutineScope.launch {
-      FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, -1, composite)
-    }
-  }
-  else {
-    // use ContextAwareRunnable to avoid unnecessary thread context capturing
-    val runnable = ContextAwareRunnable {
-      val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-      coroutineScope.launch {
-        StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
-        FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, durationMs, composite)
-      }
-    }
-    // Calling textEditor.editor can lead to the creation of an editor.
-    // This might not only be a performance issue, but it can also result in threading issues, as the EDT might be required.
-    if (textEditor is TextEditorImpl) {
-      AsyncEditorLoader.performWhenLoaded(editor = textEditor.editor, runnable)
-    }
-    else {
-      runnable.run()
     }
   }
 }
