@@ -43,6 +43,7 @@
     <orderEntry type="module" module-name="kotlin.formatter" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
