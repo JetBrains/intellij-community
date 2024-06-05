@@ -230,7 +230,7 @@ class Fe10BindingReceiverParameterDescriptorImpl(
     override fun hashCode(): Int = 31 * containingDeclaration.hashCode() + value.type.hashCode()
 }
 
-class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSymbol, context: Fe10WrapperContext) :
+class KtSymbolBasedClassDescriptor(override val ktSymbol: KaNamedClassOrObjectSymbol, context: Fe10WrapperContext) :
     KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, ClassDescriptor {
 
     override fun isInner(): Boolean = ktSymbol.isInner

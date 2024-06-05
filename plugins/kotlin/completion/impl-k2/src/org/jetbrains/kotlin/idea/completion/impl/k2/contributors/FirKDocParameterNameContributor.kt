@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -66,7 +66,7 @@ internal open class FirKDocParameterNameContributor(
         val valueParameters = when (ownerDeclarationSymbol) {
             is KtFunctionLikeSymbol -> ownerDeclarationSymbol.valueParameters
 
-            is KtNamedClassOrObjectSymbol -> {
+            is KaNamedClassOrObjectSymbol -> {
                 val primaryConstructor = ownerDeclarationSymbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
                 primaryConstructor?.valueParameters.orEmpty()
             }

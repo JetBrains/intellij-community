@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -29,11 +29,11 @@ internal object OptInFixUtils {
         getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
 
     context (KtAnalysisSession)
-    fun findAnnotation(classId: ClassId): KtNamedClassOrObjectSymbol? =
-        getClassOrObjectSymbolByClassId(classId) as? KtNamedClassOrObjectSymbol
+    fun findAnnotation(classId: ClassId): KaNamedClassOrObjectSymbol? =
+        getClassOrObjectSymbolByClassId(classId) as? KaNamedClassOrObjectSymbol
 
     context (KtAnalysisSession)
-    fun annotationIsVisible(annotation: KtNamedClassOrObjectSymbol, from: KtElement): Boolean {
+    fun annotationIsVisible(annotation: KaNamedClassOrObjectSymbol, from: KtElement): Boolean {
         val file = from.containingKtFile.getFileSymbol()
         return isVisible(annotation, file, receiverExpression = null, from)
     }

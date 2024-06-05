@@ -46,7 +46,7 @@ fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
 context(KtAnalysisSession)
 private fun explicitVisibilityRequired(symbol: KtSymbolWithVisibility): Boolean {
     if ((symbol as? KtConstructorSymbol)?.isPrimary == true) return false // 1
-    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.isData == true) return false // 2
+    if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isData == true) return false // 2
     if ((symbol as? KtCallableSymbol)?.getAllOverriddenSymbols()?.isNotEmpty() == true) return false // 3
     if (symbol is KtPropertyAccessorSymbol) return false // 4
     if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KtClassKind.ANNOTATION_CLASS) return false // 5

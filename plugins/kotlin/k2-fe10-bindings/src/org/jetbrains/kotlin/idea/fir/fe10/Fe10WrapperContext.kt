@@ -60,7 +60,7 @@ interface Fe10WrapperContext {
 
 fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
     when (this) {
-        is KtNamedClassOrObjectSymbol -> toDeclarationDescriptor(context)
+        is KaNamedClassOrObjectSymbol -> toDeclarationDescriptor(context)
         is KtFunctionLikeSymbol -> toDeclarationDescriptor(context)
         is KtVariableLikeSymbol -> toDeclarationDescriptor(context)
         is KtReceiverParameterSymbol -> toDeclarationDescriptor(context)
@@ -76,7 +76,7 @@ fun KtReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContex
 
 fun KaClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
     when (this) {
-        is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
+        is KaNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(this, context)
         is KaAnonymousObjectSymbol -> context.implementationPlanned("KaAnonymousObjectSymbol")
     }
 
@@ -86,7 +86,7 @@ fun KtFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         is KtAnonymousFunctionSymbol -> KtSymbolBasedAnonymousFunctionDescriptor(this, context)
         is KtConstructorSymbol -> {
             val ktConstructorSymbol = this
-            val ktClassOrObject = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() as KtNamedClassOrObjectSymbol }
+            val ktClassOrObject = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() as KaNamedClassOrObjectSymbol }
             KtSymbolBasedConstructorDescriptor(ktConstructorSymbol, KtSymbolBasedClassDescriptor(ktClassOrObject, context))
         }
         else -> error("Unexpected kind of KtFunctionLikeSymbol: ${this.javaClass}")

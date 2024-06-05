@@ -53,7 +53,7 @@ internal class ImportAllMembersIntention :
     context(KtAnalysisSession)
     override fun prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
-        val target = actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
+        val target = actualReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol ?: return null
         val classId = target.classId ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&
             (target.classKind == KtClassKind.OBJECT ||
@@ -157,10 +157,10 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
 
 private fun KtDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassOrObjectSymbol>()?.classKind == KtClassKind.ENUM_CLASS
 
-private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
+private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 
-private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
+private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()
 
 context(KtAnalysisSession)

@@ -90,7 +90,7 @@ object K2CreateFromUsageUtil {
                     val ktType = variable.getReturnKtType()
                     val symbol = variable.getSymbol() as? KtCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.getSymbol()
-                        .getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.NULLABLE_ANY
+                        .getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.NULLABLE_ANY
                     buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
                         argument(parameterType)
                         argument(ktType)

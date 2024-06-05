@@ -168,7 +168,7 @@ fun generateMember(
                         if (s.isLateInit) add(KtTokens.LATEINIT_KEYWORD)
                     }
 
-                    if (s is KtNamedClassOrObjectSymbol) {
+                    if (s is KaNamedClassOrObjectSymbol) {
                         if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
                         if (s.isInline) add(KtTokens.INLINE_KEYWORD)
                         if (s.isData) add(KtTokens.DATA_KEYWORD)

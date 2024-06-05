@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
@@ -129,7 +129,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
         if (receiverSymbol == null || receiverSymbol is KtPackageSymbol) return emptyList()
 
-        if (receiverSymbol is KtNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
+        if (receiverSymbol is KaNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
             val receiverSymbolType = receiverSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(explicitReceiver)
             return listOfNotNull(receiverSymbolType, receiverSymbol.companionObject?.buildSelfClassType())
         }
@@ -147,7 +147,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 }
 
 context(KtAnalysisSession)
-private fun KtNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KtType =
+private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KtType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
             val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.getKtType() }

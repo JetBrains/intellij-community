@@ -9,7 +9,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,7 +25,7 @@ internal object SuperClassNotInitializedFactories {
         val typeReference = diagnostic.psi
         val superTypeEntry = typeReference.parent as? KtSuperTypeEntry
             ?: return@ModCommandBased emptyList()
-        val superClassSymbol = typeReference.getKtType().expandedClassSymbol as? KtNamedClassOrObjectSymbol
+        val superClassSymbol = typeReference.getKtType().expandedClassSymbol as? KaNamedClassOrObjectSymbol
             ?: return@ModCommandBased emptyList()
 
         if (!superClassSymbol.isInheritableWithSuperConstructorCall(superTypeEntry)) {
@@ -39,7 +39,7 @@ internal object SuperClassNotInitializedFactories {
     }
 
     context(KtAnalysisSession)
-    private fun KtNamedClassOrObjectSymbol.isInheritableWithSuperConstructorCall(superTypeEntry: KtSuperTypeEntry): Boolean {
+    private fun KaNamedClassOrObjectSymbol.isInheritableWithSuperConstructorCall(superTypeEntry: KtSuperTypeEntry): Boolean {
         if (classKind != KtClassKind.CLASS) return false
         return when (modality) {
             Modality.FINAL -> false

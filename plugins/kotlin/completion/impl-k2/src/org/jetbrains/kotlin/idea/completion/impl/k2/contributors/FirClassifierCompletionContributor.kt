@@ -113,7 +113,7 @@ internal class FirAnnotationCompletionContributor(
     override fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = when (classifierSymbol) {
         is KaAnonymousObjectSymbol -> false
         is KtTypeParameterSymbol -> false
-        is KtNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
+        is KaNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
             KtClassKind.ANNOTATION_CLASS -> true
             KtClassKind.ENUM_CLASS -> false
             KtClassKind.ANONYMOUS_OBJECT -> false

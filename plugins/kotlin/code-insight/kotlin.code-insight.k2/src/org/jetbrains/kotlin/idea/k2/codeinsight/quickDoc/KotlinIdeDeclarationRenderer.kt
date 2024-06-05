@@ -59,7 +59,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -275,7 +275,7 @@ internal class KotlinIdeDeclarationRenderer(
             }
         }
 
-        fun KtDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KtNamedClassOrObjectSymbol && isInline
+        fun KtDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassOrObjectSymbol && isInline
 
         val valueModifierRenderer = object : KtRendererOtherModifiersProvider {
             override fun getOtherModifiers(analysisSession: KtAnalysisSession, symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> {
@@ -698,7 +698,7 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 })
 
-                if (symbol is KtNamedClassOrObjectSymbol && symbol.isData) {
+                if (symbol is KaNamedClassOrObjectSymbol && symbol.isData) {
                     val primaryConstructor = symbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
                     if (primaryConstructor != null) {
                         declarationRenderer.valueParametersRenderer.renderValueParameters(

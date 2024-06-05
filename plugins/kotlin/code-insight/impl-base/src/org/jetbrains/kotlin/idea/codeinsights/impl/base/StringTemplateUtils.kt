@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
@@ -49,7 +49,7 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
 
     if (expression.getKtType()?.isString != true) return false
     val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KtCallableSymbol
-    val classContainingPlus = plusOperation?.getContainingSymbol() as? KtNamedClassOrObjectSymbol
+    val classContainingPlus = plusOperation?.getContainingSymbol() as? KaNamedClassOrObjectSymbol
     return if (classContainingPlus != null) {
         classContainingPlus.classId?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
     } else {

@@ -263,7 +263,7 @@ class ImportQuickFix(
         context(KtAnalysisSession)
         private fun renderSymbol(symbol: KtDeclarationSymbol): String = prettyPrint {
             val fqName = symbol.getFqName()
-            if (symbol is KtNamedClassOrObjectSymbol) {
+            if (symbol is KaNamedClassOrObjectSymbol) {
                 append("class $fqName")
             } else {
                 renderer.renderDeclaration(analysisSession, symbol, printer = this)
@@ -333,13 +333,13 @@ class ImportQuickFix(
         context(KtAnalysisSession)
         private fun KtDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
             // don't import nested class on the fly because it will probably add qualification and confuse the user
-            is KtNamedClassOrObjectSymbol -> isNested()
+            is KaNamedClassOrObjectSymbol -> isNested()
             is KtCallableSymbol -> doNotImportCallablesOnFly
             else -> false
         }
 
         context(KtAnalysisSession)
-        private fun KtNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KtNamedClassOrObjectSymbol
+        private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KaNamedClassOrObjectSymbol
 
         context(KtAnalysisSession)
         private fun KtDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
@@ -351,8 +351,8 @@ class ImportQuickFix(
             this is KtFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
             this is KtFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
-            this is KtNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
-            this is KtNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS
+            this is KaNamedClassOrObjectSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
+            this is KaNamedClassOrObjectSymbol -> ImportFixHelper.ImportKind.CLASS
             this is KtTypeAliasSymbol -> ImportFixHelper.ImportKind.TYPE_ALIAS
 
             else -> null

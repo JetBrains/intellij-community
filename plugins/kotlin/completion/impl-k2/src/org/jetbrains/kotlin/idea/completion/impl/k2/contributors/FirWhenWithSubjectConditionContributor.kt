@@ -87,9 +87,9 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
     context(KtAnalysisSession)
-    private fun getClassSymbol(subjectType: KtType): KtNamedClassOrObjectSymbol? {
+    private fun getClassSymbol(subjectType: KtType): KaNamedClassOrObjectSymbol? {
         val classType = subjectType as? KtNonErrorClassType
-        return classType?.classSymbol as? KtNamedClassOrObjectSymbol
+        return classType?.classSymbol as? KaNamedClassOrObjectSymbol
     }
 
 
@@ -120,7 +120,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     classifier.name.asString(),
                     classifier,
                     CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
-                    (classifier as? KtNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
+                    (classifier as? KaNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition,
                 )
             }
@@ -135,7 +135,7 @@ internal class FirWhenWithSubjectConditionContributor(
                         classifier.name.asString(),
                         classifier,
                         CompletionSymbolOrigin.Index,
-                        (classifier as? KtNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
+                        (classifier as? KaNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
                         isSingleCondition,
                     )
                 }
@@ -146,7 +146,7 @@ internal class FirWhenWithSubjectConditionContributor(
     private fun isPrefixNeeded(symbol: KtNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
-            is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
+            is KaNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KtTypeAliasSymbol -> {
                 (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
             }
@@ -159,7 +159,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KtAnalysisSession)
     private fun completeSubClassesOfSealedClass(
         context: WeighingContext,
-        classSymbol: KtNamedClassOrObjectSymbol,
+        classSymbol: KaNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
         whenCondition: KtWhenCondition,
         visibilityChecker: CompletionVisibilityChecker,
@@ -198,16 +198,16 @@ internal class FirWhenWithSubjectConditionContributor(
                 is KtWhenConditionIsPattern -> (condition.typeReference?.typeElement as? KtUserType)?.referenceExpression?.reference()
                 else -> null
             }
-            val resolvesTo = reference?.resolveToExpandedSymbol() as? KtNamedClassOrObjectSymbol
+            val resolvesTo = reference?.resolveToExpandedSymbol() as? KaNamedClassOrObjectSymbol
             resolvesTo?.classId
         }
 
     context(KtAnalysisSession)
-    private fun getAllSealedInheritors(classSymbol: KtNamedClassOrObjectSymbol): Collection<KtNamedClassOrObjectSymbol> {
+    private fun getAllSealedInheritors(classSymbol: KaNamedClassOrObjectSymbol): Collection<KaNamedClassOrObjectSymbol> {
 
         fun getAllSealedInheritorsTo(
-            classSymbol: KtNamedClassOrObjectSymbol,
-            destination: MutableSet<KtNamedClassOrObjectSymbol>
+            classSymbol: KaNamedClassOrObjectSymbol,
+            destination: MutableSet<KaNamedClassOrObjectSymbol>
         ) {
             classSymbol.getSealedClassInheritors().forEach { inheritor ->
                 destination += inheritor
@@ -217,7 +217,7 @@ internal class FirWhenWithSubjectConditionContributor(
             }
         }
 
-        return ObjectOpenCustomHashSet(KtNamedClassOrObjectSymbolTObjectHashingStrategy)
+        return ObjectOpenCustomHashSet(KaNamedClassOrObjectSymbolTObjectHashingStrategy)
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
@@ -234,7 +234,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KtAnalysisSession)
     private fun completeEnumEntries(
         context: WeighingContext,
-        classSymbol: KtNamedClassOrObjectSymbol,
+        classSymbol: KaNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
@@ -343,10 +343,10 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
 }
 
 @Suppress("AnalysisApiMissingLifetimeControlOnCallable")
-private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KtNamedClassOrObjectSymbol> {
-    override fun equals(p0: KtNamedClassOrObjectSymbol?, p1: KtNamedClassOrObjectSymbol?): Boolean {
+private object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassOrObjectSymbol> {
+    override fun equals(p0: KaNamedClassOrObjectSymbol?, p1: KaNamedClassOrObjectSymbol?): Boolean {
         return p0?.classId == p1?.classId
     }
 
-    override fun hashCode(p0: KtNamedClassOrObjectSymbol?): Int = p0?.classId?.hashCode() ?: 0
+    override fun hashCode(p0: KaNamedClassOrObjectSymbol?): Int = p0?.classId?.hashCode() ?: 0
 }

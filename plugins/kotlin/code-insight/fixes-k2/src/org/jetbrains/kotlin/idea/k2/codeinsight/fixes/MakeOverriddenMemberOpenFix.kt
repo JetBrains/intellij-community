@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -96,7 +96,7 @@ private fun retainNonOverridableMembers(
 private val KtCallableSymbol.isOverridable: Boolean
     get() = (this as? KtSymbolWithModality)?.modality != Modality.FINAL &&
             (this as? KtSymbolWithVisibility)?.visibility != Visibilities.Private &&
-            (this.getSymbolContainingMemberDeclarations() as? KtNamedClassOrObjectSymbol)?.isFinalClass != true
+            (this.getSymbolContainingMemberDeclarations() as? KaNamedClassOrObjectSymbol)?.isFinalClass != true
 
-private val KtNamedClassOrObjectSymbol.isFinalClass: Boolean
+private val KaNamedClassOrObjectSymbol.isFinalClass: Boolean
     get() = modality == Modality.FINAL && classKind != KtClassKind.ENUM_CLASS

@@ -248,11 +248,11 @@ internal open class FirCallableCompletionContributor(
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
 
             else -> sequence {
-                if (symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope) {
+                if (symbol is KaNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope) {
                     yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
                 }
 
-                if (symbol !is KtNamedClassOrObjectSymbol || symbol.canBeUsedAsReceiver) {
+                if (symbol !is KaNamedClassOrObjectSymbol || symbol.canBeUsedAsReceiver) {
                     yieldAll(
                         collectDotCompletionForCallableReceiver(
                             scopeContext,
@@ -267,11 +267,11 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    protected val KtNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
+    protected val KaNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
         get() = classKind == KtClassKind.ENUM_CLASS ||
                 origin == KtSymbolOrigin.JAVA
 
-    private val KtNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean
+    private val KaNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean
         get() = classKind.isObject || companionObject != null
 
     context(KtAnalysisSession)
@@ -398,7 +398,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KtAnalysisSession)
     protected fun collectDotCompletionFromStaticScope(
-        symbol: KtNamedClassOrObjectSymbol,
+        symbol: KaNamedClassOrObjectSymbol,
         withCompanionScope: Boolean,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
@@ -617,7 +617,7 @@ internal open class FirCallableCompletionContributor(
         annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
 
     context(KtAnalysisSession)
-    protected fun KtNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KtScope = buildList {
+    protected fun KaNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KtScope = buildList {
         if (withCompanionScope) {
             addIfNotNull(companionObject?.getMemberScope())
         }
@@ -677,7 +677,7 @@ internal class FirCallableReferenceCompletionContributor(
 
         return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
             is KtPackageSymbol -> emptySequence()
-            is KtNamedClassOrObjectSymbol -> sequence {
+            is KaNamedClassOrObjectSymbol -> sequence {
                 if (symbol.hasImportantStaticMemberScope) {
                     yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
                 }
@@ -772,7 +772,7 @@ internal class FirKDocCallableCompletionContributor(
                     listOf(KtScopeWithKind(parentSymbol.getPackageScope(), packageScopeKind, token))
                 }
 
-                is KtNamedClassOrObjectSymbol -> buildList {
+                is KaNamedClassOrObjectSymbol -> buildList {
                     val type = parentSymbol.buildSelfClassType()
 
                     type.getTypeScope()?.getDeclarationScope()?.let { typeScope ->

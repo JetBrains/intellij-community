@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractAnonymousSuperMacro
@@ -23,7 +23,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
                 analyze(expression) {
                     val scope = file.getScopeContextForPosition(expression).getCompositeScope()
                     return scope.getClassifierSymbols()
-                        .filterIsInstance<KtNamedClassOrObjectSymbol>()
+                        .filterIsInstance<KaNamedClassOrObjectSymbol>()
                         .filter { shouldSuggest(it) }
                         .filter { symbol ->
                             when (symbol.classKind) {
@@ -40,7 +40,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
         }
     }
 
-    private fun shouldSuggest(declaration: KtNamedClassOrObjectSymbol): Boolean {
+    private fun shouldSuggest(declaration: KaNamedClassOrObjectSymbol): Boolean {
         val classId = declaration.classId
         if (classId != null) {
             val packageName = classId.packageFqName.asString()

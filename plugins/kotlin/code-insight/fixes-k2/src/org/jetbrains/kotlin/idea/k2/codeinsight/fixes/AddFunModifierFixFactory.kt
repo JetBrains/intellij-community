@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.Modality
@@ -32,7 +32,7 @@ internal object AddFunModifierFixFactory {
 
         val referrerCall = referrer.parent as? KtCallExpression ?: return@ModCommandBased emptyList()
         if (referrerCall.valueArguments.singleOrNull() !is KtLambdaArgument) return@ModCommandBased emptyList()
-        val referenceClassSymbol = diagnostic.classSymbol as? KtNamedClassOrObjectSymbol ?: return@ModCommandBased emptyList()
+        val referenceClassSymbol = diagnostic.classSymbol as? KaNamedClassOrObjectSymbol ?: return@ModCommandBased emptyList()
         if (referenceClassSymbol.isFun || !referenceClassSymbol.isSamInterface()) return@ModCommandBased emptyList()
 
         val referenceClass = referenceClassSymbol.psi as? KtClass ?: return@ModCommandBased emptyList()
@@ -72,7 +72,7 @@ internal object AddFunModifierFixFactory {
 }
 
 context(KtAnalysisSession)
-private fun KtNamedClassOrObjectSymbol.isSamInterface(): Boolean {
+private fun KaNamedClassOrObjectSymbol.isSamInterface(): Boolean {
     if (classKind != KtClassKind.INTERFACE) return false
     val singleAbstractMember = getMemberScope()
         .getCallableSymbols()

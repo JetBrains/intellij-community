@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -90,8 +90,8 @@ private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
     (getArgumentExpression() as? KtDotQualifiedExpression)?.receiverExpression as? KtClassLiteralExpression
 
 context(KtAnalysisSession)
-private fun KtElement.resolveToClassSymbol(): KtNamedClassOrObjectSymbol? =
-    mainReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol
+private fun KtElement.resolveToClassSymbol(): KaNamedClassOrObjectSymbol? =
+    mainReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol
 
 context(KtAnalysisSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KtFunctionSymbol? =

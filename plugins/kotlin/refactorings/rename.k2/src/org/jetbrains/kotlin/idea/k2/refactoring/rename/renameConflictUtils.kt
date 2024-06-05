@@ -278,8 +278,8 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
             val containingSymbol = appliedSymbol?.symbol?.getContainingSymbol()
             val enumClassSymbol = containingSymbol?.getContainingSymbol()
             //add companion qualifier to avoid clashes with enum entries
-            return if (containingSymbol is KtNamedClassOrObjectSymbol && containingSymbol.classKind == KtClassKind.COMPANION_OBJECT &&
-                enumClassSymbol is KtNamedClassOrObjectSymbol && enumClassSymbol.classKind == KtClassKind.ENUM_CLASS &&
+            return if (containingSymbol is KaNamedClassOrObjectSymbol && containingSymbol.classKind == KtClassKind.COMPANION_OBJECT &&
+                enumClassSymbol is KaNamedClassOrObjectSymbol && enumClassSymbol.classKind == KtClassKind.ENUM_CLASS &&
                 (receiverValue.expression as? KtNameReferenceExpression)?.mainReference?.resolve() == containingSymbol.psi
             ) {
                 containingSymbol.name.asString()

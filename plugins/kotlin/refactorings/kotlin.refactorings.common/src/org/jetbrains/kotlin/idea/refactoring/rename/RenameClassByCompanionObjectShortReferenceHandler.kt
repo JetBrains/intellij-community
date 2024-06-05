@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.references.mainReference
 
 class RenameClassByCompanionObjectShortReferenceHandler : AbstractReferenceSubstitutionRenameHandler() {
@@ -24,7 +24,7 @@ class RenameClassByCompanionObjectShortReferenceHandler : AbstractReferenceSubst
         if (refExpr.getReferencedName() == symbol.name?.asString()) {
           return null
         }
-        val containingSymbol = symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol ?: return null
+        val containingSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return null
         if (containingSymbol.companionObject != symbol) return null
         return containingSymbol.psi
       }

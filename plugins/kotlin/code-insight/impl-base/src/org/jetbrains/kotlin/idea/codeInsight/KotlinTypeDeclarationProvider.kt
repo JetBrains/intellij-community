@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.abbreviatedTypeOrSelf
@@ -51,7 +51,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
 
     private fun getClassTypeDeclaration(symbol: KtClassOrObject): Array<PsiElement> {
         analyze(symbol) {
-            (symbol.getSymbol() as? KtNamedClassOrObjectSymbol)?.psi?.let { return arrayOf(it) }
+            (symbol.getSymbol() as? KaNamedClassOrObjectSymbol)?.psi?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY
     }
@@ -59,7 +59,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
     private fun getTypeAliasDeclaration(symbol: KtTypeAlias): Array<PsiElement> {
         analyze(symbol) {
             val typeAliasSymbol = symbol.getSymbol() as? KtTypeAliasSymbol
-            (typeAliasSymbol?.expandedType?.expandedClassSymbol as? KtNamedClassOrObjectSymbol)?.psi?.let {
+            (typeAliasSymbol?.expandedType?.expandedClassSymbol as? KaNamedClassOrObjectSymbol)?.psi?.let {
                 return arrayOf(it)
             }
         }

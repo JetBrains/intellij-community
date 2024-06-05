@@ -632,7 +632,7 @@ object KotlinUnusedSymbolUtil {
   private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KtDeclarationSymbol?): Boolean {
       return when {
           symbol is KtConstructorSymbol -> {
-              val classSymbol = symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol ?: return false
+              val classSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return false
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
@@ -643,9 +643,9 @@ object KotlinUnusedSymbolUtil {
 
   context(KtAnalysisSession)
   private fun KtFunctionSymbol.hasInlineClassParameters(): Boolean {
-      val receiverParameterClassSymbol = receiverType?.expandedClassSymbol as? KtNamedClassOrObjectSymbol
+      val receiverParameterClassSymbol = receiverType?.expandedClassSymbol as? KaNamedClassOrObjectSymbol
       return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
-          val namedClassOrObjectSymbol = it.returnType.expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return@any false
+          val namedClassOrObjectSymbol = it.returnType.expandedClassSymbol as? KaNamedClassOrObjectSymbol ?: return@any false
           namedClassOrObjectSymbol.isInline
       }
   }

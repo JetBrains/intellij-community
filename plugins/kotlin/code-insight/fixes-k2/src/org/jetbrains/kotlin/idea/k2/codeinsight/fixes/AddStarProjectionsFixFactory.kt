@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddStarProjectionsFix
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 internal object AddStarProjectionsFixFactory {
     val addStarProjectionsFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoTypeArgumentsOnRhs ->
         val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
-        val classSymbol = diagnostic.classifier as? KtNamedClassOrObjectSymbol
+        val classSymbol = diagnostic.classifier as? KaNamedClassOrObjectSymbol
 
         if (classSymbol?.isInner == true) {
             val targetClasses = getTargetClasses(typeReference, classSymbol)
@@ -59,11 +59,11 @@ context(KtAnalysisSession)
 private fun getTargetClasses(
     typeReference: KtTypeReference,
     classSymbol: KaClassOrObjectSymbol,
-): List<KtNamedClassOrObjectSymbol> {
-    val parentWithSelfClasses = classSymbol.parentsWithSelf.mapNotNull { it as? KtNamedClassOrObjectSymbol }.toList()
+): List<KaNamedClassOrObjectSymbol> {
+    val parentWithSelfClasses = classSymbol.parentsWithSelf.mapNotNull { it as? KaNamedClassOrObjectSymbol }.toList()
 
     val scope = typeReference.containingKtFile.getScopeContextForPosition(typeReference).getCompositeScope()
-    val classSymbols = scope.getClassifierSymbols().filterIsInstance<KtNamedClassOrObjectSymbol>().toSet()
+    val classSymbols = scope.getClassifierSymbols().filterIsInstance<KaNamedClassOrObjectSymbol>().toSet()
 
     val targets = parentWithSelfClasses.takeWhile {
         it.isInner || !classSymbols.contains(it)
@@ -85,7 +85,7 @@ private val KtDeclarationSymbol.parentsWithSelf: Sequence<KtDeclarationSymbol>
         it.getContainingSymbol()
     }
 
-private fun createReplaceString(targetClasses: List<KtNamedClassOrObjectSymbol>): String {
+private fun createReplaceString(targetClasses: List<KaNamedClassOrObjectSymbol>): String {
     return targetClasses.mapIndexed { index, c ->
         val name = c.name.asString()
         val last = targetClasses.getOrNull(index - 1)

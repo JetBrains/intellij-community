@@ -32,7 +32,7 @@ fun KtFunctionSymbol.getByteCodeMethodName(): String {
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtDeclarationSymbol.isInlineClass(): Boolean = this is KtNamedClassOrObjectSymbol && this.isInline
+fun KtDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassOrObjectSymbol && this.isInline
 
 @ApiStatus.Internal
 @RequiresReadLock

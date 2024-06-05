@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -31,7 +31,7 @@ internal object AddDataModifierFixFactory {
         val type = (callableSymbol?.returnType as? KtNonErrorClassType)?.ownTypeArguments?.firstOrNull()?.type
             ?: callableSymbol?.returnType
 
-        val classSymbol = (type as? KtNonErrorClassType)?.classSymbol as? KtNamedClassOrObjectSymbol
+        val classSymbol = (type as? KtNonErrorClassType)?.classSymbol as? KaNamedClassOrObjectSymbol
             ?: return@ModCommandBased emptyList()
 
         val modality = classSymbol.modality

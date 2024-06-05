@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
@@ -32,14 +32,14 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         val ktType = typeReference.getKtType() as? KtClassType ?: return null
         return when (ktType) {
-            is KtNonErrorClassType -> listOfNotNull(ktType.expandedClassSymbol as? KtNamedClassOrObjectSymbol)
+            is KtNonErrorClassType -> listOfNotNull(ktType.expandedClassSymbol as? KaNamedClassOrObjectSymbol)
             is KtClassErrorType -> {
                 ktType.candidateClassSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KaClassOrObjectSymbol -> candidateSymbol
                         is KtTypeAliasSymbol -> candidateSymbol.expandedType.expandedClassSymbol
                         else -> null
-                    } as? KtNamedClassOrObjectSymbol
+                    } as? KaNamedClassOrObjectSymbol
                 }
             }
         }
