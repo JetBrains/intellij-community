@@ -523,7 +523,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     }
                     val isLambdaReceiver =
                         // Implicit `this` as the lambda receiver
-                        resolvedTargetSymbol is KtAnonymousFunctionSymbol ||
+                        resolvedTargetSymbol is KaAnonymousFunctionSymbol ||
                                 // Explicit `this`
                                 resolvedTargetSymbol is KtReceiverParameterSymbol
                     if (isLambdaReceiver) {

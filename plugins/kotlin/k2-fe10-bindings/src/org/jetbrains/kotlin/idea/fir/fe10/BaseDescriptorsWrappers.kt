@@ -455,7 +455,7 @@ class KtSymbolBasedConstructorDescriptor(
 }
 
 class KtSymbolBasedAnonymousFunctionDescriptor(
-    override val ktSymbol: KtAnonymousFunctionSymbol,
+    override val ktSymbol: KaAnonymousFunctionSymbol,
     context: Fe10WrapperContext
 ) : KtSymbolBasedFunctionLikeDescriptor(context), SimpleFunctionDescriptor {
     override fun getName(): Name = SpecialNames.ANONYMOUS

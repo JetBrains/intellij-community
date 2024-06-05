@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.completion.labelNameToTail
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -73,7 +73,7 @@ internal class ThisKeywordHandler(
     context(KtAnalysisSession)
     private fun getThisLabelBySymbol(symbol: KtSymbol): Name? = when {
         symbol is KtNamedSymbol && !symbol.name.isSpecial -> symbol.name
-        symbol is KtAnonymousFunctionSymbol -> {
+        symbol is KaAnonymousFunctionSymbol -> {
             val psi = symbol.psi as KtFunctionLiteral
             psi.findLabelAndCall().first
         }

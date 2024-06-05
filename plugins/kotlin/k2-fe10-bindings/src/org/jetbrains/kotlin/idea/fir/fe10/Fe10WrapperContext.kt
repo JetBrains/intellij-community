@@ -83,7 +83,7 @@ fun KaClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): 
 fun KaFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedFunctionLikeDescriptor =
     when (this) {
         is KtFunctionSymbol -> KtSymbolBasedFunctionDescriptor(this, context)
-        is KtAnonymousFunctionSymbol -> KtSymbolBasedAnonymousFunctionDescriptor(this, context)
+        is KaAnonymousFunctionSymbol -> KtSymbolBasedAnonymousFunctionDescriptor(this, context)
         is KtConstructorSymbol -> {
             val ktConstructorSymbol = this
             val ktClassOrObject = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() as KaNamedClassOrObjectSymbol }

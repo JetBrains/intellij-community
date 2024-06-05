@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -49,7 +49,7 @@ object LambdaToAnonymousFunctionUtil {
             }
         }
 
-        val functionSymbol = functionLiteral.getSymbol() as? KtAnonymousFunctionSymbol ?: return null
+        val functionSymbol = functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return null
         return KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
             typeParams()
             functionSymbol.receiverType?.let {

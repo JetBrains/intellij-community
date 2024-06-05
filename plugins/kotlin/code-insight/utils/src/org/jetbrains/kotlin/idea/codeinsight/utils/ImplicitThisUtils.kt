@@ -77,7 +77,7 @@ private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<K
     val associatedClass = receiver.type.expandedClassSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
         is KaClassOrObjectSymbol -> receiverSymbol.name
-        is KtAnonymousFunctionSymbol -> {
+        is KaAnonymousFunctionSymbol -> {
             val receiverPsi = receiverSymbol.psi
             val potentialLabeledPsi = receiverPsi?.parent?.parent
             if (potentialLabeledPsi is KtLabeledExpression) potentialLabeledPsi.getLabelNameAsName()

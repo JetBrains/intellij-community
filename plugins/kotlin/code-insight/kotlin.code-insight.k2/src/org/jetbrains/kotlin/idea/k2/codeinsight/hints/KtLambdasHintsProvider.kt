@@ -9,7 +9,7 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
@@ -94,7 +94,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
 
         sink.whenOptionEnabled(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name) {
             analyze(functionLiteral) {
-                val anonymousFunctionSymbol = functionLiteral.getSymbol() as? KtAnonymousFunctionSymbol ?: return@whenOptionEnabled
+                val anonymousFunctionSymbol = functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return@whenOptionEnabled
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
                     sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hasBackground = true) {
                         text("this: ")

@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -43,6 +43,6 @@ fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KtValueParamet
 context(KtAnalysisSession)
 fun KtValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
     if (!isImplicitLambdaParameter) return null
-    val lambda = getContainingSymbol() as? KtAnonymousFunctionSymbol ?: return null
+    val lambda = getContainingSymbol() as? KaAnonymousFunctionSymbol ?: return null
     return lambda.psi as? KtFunctionLiteral
 }
