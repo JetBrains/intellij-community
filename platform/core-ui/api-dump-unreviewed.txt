@@ -5,7 +5,6 @@ c:com.intellij.ide.UiActivity
 - equals(java.lang.Object):Z
 - getEqualityObjects():java.lang.Object[]
 - hashCode():I
-- f:isSameOrGeneralFor(com.intellij.ide.UiActivity):Z
 c:com.intellij.ide.UiActivity$AsyncBgOperation
 - com.intellij.ide.UiActivity
 - <init>(java.lang.String):V
