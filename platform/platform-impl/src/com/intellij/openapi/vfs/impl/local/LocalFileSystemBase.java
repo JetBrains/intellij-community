@@ -143,15 +143,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Path.of(toIoPath(file)) : null;
   }
 
-  private Path convertToNioFileAndCheck(VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
+  private Path convertToNioFileAndCheck(VirtualFile file, boolean assertSlowOp) throws NoSuchFileException {
     if (assertSlowOp) { // remove condition when writes are moved to BGT
       SlowOperations.assertSlowOperationsAreAllowed();
     }
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
-      throw new FileNotFoundException("Not a file: " + file);
+      throw new NoSuchFileException(file.getPath(), null, "Not a file");
     }
     var path = getNioPath(file);
-    if (path == null) throw new FileNotFoundException(file.getPath());
+    if (path == null) throw new NoSuchFileException(file.getPath());
     return path;
   }
 

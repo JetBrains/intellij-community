@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.core.CoreBundle;
@@ -29,9 +29,9 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -959,12 +958,12 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertThat(file.is(VFileProperty.SPECIAL)).isTrue();
     assertThat(file.getLength()).isEqualTo(0);
 
-    assertThatExceptionOfType(FileNotFoundException.class)
+    assertThatExceptionOfType(NoSuchFileException.class)
       .isThrownBy(() -> file.getInputStream())
-      .withMessageStartingWith("Not a file: ");
-    assertThatExceptionOfType(FileNotFoundException.class)
+      .withMessageContaining("Not a file");
+    assertThatExceptionOfType(NoSuchFileException.class)
       .isThrownBy(() -> file.contentsToByteArray())
-      .withMessageStartingWith("Not a file: ");
+      .withMessageContaining("Not a file");
   }
 
   @Test
