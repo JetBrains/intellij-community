@@ -71,7 +71,6 @@ private class IdeKotlinDeclarationProvider(
     val scope: GlobalSearchScope,
     private val contextualModule: KtModule?,
 ) : KotlinDeclarationProvider() {
-    private val log = Logger.getInstance(IdeKotlinDeclarationProvider::class.java)
     private val stubIndex: StubIndex = StubIndex.getInstance()
     private val psiManager = PsiManager.getInstance(project)
 
@@ -227,6 +226,8 @@ private class IdeKotlinDeclarationProvider(
 
 
     companion object {
+        private val log = Logger.getInstance(IdeKotlinDeclarationProvider::class.java)
+
         private fun CallableId.asTopLevelStringForIndexes(): String {
             require(this.classId == null) {
                 "Expecting top-level callable, but was $this"
