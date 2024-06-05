@@ -208,10 +208,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return answer == EXPLICIT_NULL ? null : answer;
   }
 
-  protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
-    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    if (keyIndex == -1) return EXPLICIT_NULL; // newly created data key => no data provider => no value
-    boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
+  protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowed, boolean ruleValuesAllowed) {
+    int keyIndex = getDataKeyIndex(dataId);
+    if (keyIndex == -1) return EXPLICIT_NULL; // DataKey not found
 
     Object answer = null;
     for (ProviderData map : myCachedData) {
@@ -315,13 +314,15 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return dataId -> DataManager.getInstance().getCustomizedData(dataId, context, snapshot::get);
   }
 
-  private static void updateDataKeyIndices(DataKey<?> @NotNull [] keys) {
-    if (ourDataKeysIndices.size() >= keys.length) {
-      return;
+  private static int getDataKeyIndex(@NotNull String dataId) {
+    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
+    if (keyIndex == -1 && ourDataKeysIndices.size() < DataKey.allKeysCount()) {
+      for (DataKey<?> key : DataKey.allKeys()) {
+        ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
+      }
+      keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
     }
-    for (DataKey<?> key : keys) {
-      ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
-    }
+    return keyIndex;
   }
 
   private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull MySink sink,
@@ -484,7 +485,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       try {
         if (keys == null) {
           keys = DataKey.allKeys();
-          updateDataKeyIndices(keys);
         }
         for (DataKey<?> key : keys) {
           Object data = key.getData(provider);
