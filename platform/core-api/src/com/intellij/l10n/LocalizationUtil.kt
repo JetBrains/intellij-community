@@ -150,12 +150,6 @@ object LocalizationUtil {
     val languageTag = if (!System.getProperty(LOCALIZATION_KEY).isNullOrEmpty()) System.getProperty(LOCALIZATION_KEY)
     else LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
-
-    val englishTag = Locale.ENGLISH.toLanguageTag()
-    if (languageTag != englishTag && findLanguageBundle(locale) == null) {
-      LocalizationStateService.getInstance()!!.setSelectedLocale(englishTag)
-    }
-
     return locale
   }
 
