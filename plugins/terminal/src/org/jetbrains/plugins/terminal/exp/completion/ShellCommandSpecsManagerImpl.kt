@@ -7,7 +7,6 @@ import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -183,8 +182,7 @@ internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
 
     val baseSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.DEFAULT }
     if (baseSpecs.size > 1) {
-      // TODO: raise the level to warning once all conflicts of existing json-based specs will be resolved.
-      LOG.debug { conflictMessage(ShellCommandSpecConflictStrategy.DEFAULT, baseSpecs) }
+      LOG.warn(conflictMessage(ShellCommandSpecConflictStrategy.DEFAULT, baseSpecs))
     }
     val baseSpecData = baseSpecs.firstOrNull()
 
