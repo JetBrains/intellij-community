@@ -38,14 +38,14 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
 
   }
 
-  override val library: LibraryEntity
-    get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
-
   override val propertiesXmlTag: String?
     get() {
       readField("propertiesXmlTag")
       return dataSource.propertiesXmlTag
     }
+
+  override val library: LibraryEntity
+    get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
     get() {
@@ -124,6 +124,14 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
 
       }
 
+    override var propertiesXmlTag: String?
+      get() = getEntityData().propertiesXmlTag
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).propertiesXmlTag = value
+        changedProperty.add("propertiesXmlTag")
+      }
+
     override var library: LibraryEntity.Builder
       get() {
         val _diff = diff
@@ -158,14 +166,6 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
-      }
-
-    override var propertiesXmlTag: String?
-      get() = getEntityData().propertiesXmlTag
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).propertiesXmlTag = value
-        changedProperty.add("propertiesXmlTag")
       }
 
     override fun getEntityClass(): Class<LibraryPropertiesEntity> = LibraryPropertiesEntity::class.java

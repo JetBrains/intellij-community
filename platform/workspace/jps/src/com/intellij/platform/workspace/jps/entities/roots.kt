@@ -3,11 +3,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -19,22 +14,22 @@ import org.jetbrains.annotations.NonNls
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
 interface ContentRootEntity : WorkspaceEntity {
-    val module: ModuleEntity
+  @EqualsBy
+  val url: VirtualFileUrl
+  val excludedPatterns: List<@NlsSafe String>
 
-    @EqualsBy
-    val url: VirtualFileUrl
-    val excludedPatterns: List<@NlsSafe String>
+  val module: ModuleEntity
 
-    val sourceRoots: List<@Child SourceRootEntity>
-    val excludedUrls: List<@Child ExcludeUrlEntity>
+  val sourceRoots: List<@Child SourceRootEntity>
+  val excludedUrls: List<@Child ExcludeUrlEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ContentRootEntity> {
     override var entitySource: EntitySource
-    var module: ModuleEntity.Builder
     var url: VirtualFileUrl
     var excludedPatterns: MutableList<String>
+    var module: ModuleEntity.Builder
     var sourceRoots: List<SourceRootEntity.Builder>
     var excludedUrls: List<ExcludeUrlEntity.Builder>
   }
@@ -84,7 +79,7 @@ val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extensio
 
 
 /**
- * Provides an ID of a source root type (`java-source`, `java-resources`, etc.). 
+ * Provides an ID of a source root type (`java-source`, `java-resources`, etc.).
  * Use [com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry] to get a descriptor by this ID.
  */
 data class SourceRootTypeId(val name: @NonNls String)
@@ -94,18 +89,18 @@ data class SourceRootTypeId(val name: @NonNls String)
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
  */
 interface SourceRootEntity : WorkspaceEntity {
-    val contentRoot: ContentRootEntity
+  val url: VirtualFileUrl
+  val rootTypeId: SourceRootTypeId
 
-    val url: VirtualFileUrl
-    val rootTypeId: SourceRootTypeId
+  val contentRoot: ContentRootEntity
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceRootEntity> {
     override var entitySource: EntitySource
-    var contentRoot: ContentRootEntity.Builder
     var url: VirtualFileUrl
     var rootTypeId: SourceRootTypeId
+    var contentRoot: ContentRootEntity.Builder
   }
 
   companion object : EntityType<SourceRootEntity, Builder>() {

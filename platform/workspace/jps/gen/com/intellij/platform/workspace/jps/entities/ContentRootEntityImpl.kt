@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.jps.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -49,9 +48,6 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
 
   }
 
-  override val module: ModuleEntity
-    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
-
   override val url: VirtualFileUrl
     get() {
       readField("url")
@@ -63,6 +59,9 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
       readField("excludedPatterns")
       return dataSource.excludedPatterns
     }
+
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
   override val sourceRoots: List<SourceRootEntity>
     get() = snapshot.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
@@ -114,6 +113,12 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
+      if (!getEntityData().isUrlInitialized()) {
+        error("Field ContentRootEntity#url should be initialized")
+      }
+      if (!getEntityData().isExcludedPatternsInitialized()) {
+        error("Field ContentRootEntity#excludedPatterns should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#module should be initialized")
@@ -123,12 +128,6 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ContentRootEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isUrlInitialized()) {
-        error("Field ContentRootEntity#url should be initialized")
-      }
-      if (!getEntityData().isExcludedPatternsInitialized()) {
-        error("Field ContentRootEntity#excludedPatterns should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -184,6 +183,38 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
 
       }
 
+    override var url: VirtualFileUrl
+      get() = getEntityData().url
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).url = value
+        changedProperty.add("url")
+        val _diff = diff
+        if (_diff != null) index(this, "url", value)
+      }
+
+    private val excludedPatternsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("excludedPatterns")
+    }
+    override var excludedPatterns: MutableList<String>
+      get() {
+        val collection_excludedPatterns = getEntityData().excludedPatterns
+        if (collection_excludedPatterns !is MutableWorkspaceList) return collection_excludedPatterns
+        if (diff == null || modifiable.get()) {
+          collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
+        }
+        else {
+          collection_excludedPatterns.cleanModificationUpdateAction()
+        }
+        return collection_excludedPatterns
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).excludedPatterns = value
+        excludedPatternsUpdater.invoke(value)
+      }
+
     override var module: ModuleEntity.Builder
       get() {
         val _diff = diff
@@ -222,38 +253,6 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var url: VirtualFileUrl
-      get() = getEntityData().url
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).url = value
-        changedProperty.add("url")
-        val _diff = diff
-        if (_diff != null) index(this, "url", value)
-      }
-
-    private val excludedPatternsUpdater: (value: List<String>) -> Unit = { value ->
-
-      changedProperty.add("excludedPatterns")
-    }
-    override var excludedPatterns: MutableList<String>
-      get() {
-        val collection_excludedPatterns = getEntityData().excludedPatterns
-        if (collection_excludedPatterns !is MutableWorkspaceList) return collection_excludedPatterns
-        if (diff == null || modifiable.get()) {
-          collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
-        }
-        else {
-          collection_excludedPatterns.cleanModificationUpdateAction()
-        }
-        return collection_excludedPatterns
-      }
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).excludedPatterns = value
-        excludedPatternsUpdater.invoke(value)
       }
 
     // List of non-abstract referenced types

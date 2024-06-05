@@ -3,8 +3,8 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -43,14 +43,14 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
 
   }
 
-  override val sourceRoot: SourceRootEntity
-    get() = snapshot.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)!!
-
   override val propertiesXmlTag: String
     get() {
       readField("propertiesXmlTag")
       return dataSource.propertiesXmlTag
     }
+
+  override val sourceRoot: SourceRootEntity
+    get() = snapshot.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
     get() {
@@ -95,6 +95,9 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
+      if (!getEntityData().isPropertiesXmlTagInitialized()) {
+        error("Field CustomSourceRootPropertiesEntity#propertiesXmlTag should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
           error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
@@ -104,9 +107,6 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
         if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
           error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
         }
-      }
-      if (!getEntityData().isPropertiesXmlTagInitialized()) {
-        error("Field CustomSourceRootPropertiesEntity#propertiesXmlTag should be initialized")
       }
     }
 
@@ -130,6 +130,14 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var propertiesXmlTag: String
+      get() = getEntityData().propertiesXmlTag
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).propertiesXmlTag = value
+        changedProperty.add("propertiesXmlTag")
       }
 
     override var sourceRoot: SourceRootEntity.Builder
@@ -166,14 +174,6 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoot")
-      }
-
-    override var propertiesXmlTag: String
-      get() = getEntityData().propertiesXmlTag
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).propertiesXmlTag = value
-        changedProperty.add("propertiesXmlTag")
       }
 
     override fun getEntityClass(): Class<CustomSourceRootPropertiesEntity> = CustomSourceRootPropertiesEntity::class.java

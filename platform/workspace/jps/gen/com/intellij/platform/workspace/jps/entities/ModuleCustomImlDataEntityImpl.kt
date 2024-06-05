@@ -41,9 +41,6 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
 
   }
 
-  override val module: ModuleEntity
-    get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
-
   override val rootManagerTagCustomData: String?
     get() {
       readField("rootManagerTagCustomData")
@@ -55,6 +52,8 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
       readField("customModuleOptions")
       return dataSource.customModuleOptions
     }
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
     get() {
@@ -99,6 +98,9 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
+      if (!getEntityData().isCustomModuleOptionsInitialized()) {
+        error("Field ModuleCustomImlDataEntity#customModuleOptions should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ModuleCustomImlDataEntity#module should be initialized")
@@ -108,9 +110,6 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ModuleCustomImlDataEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isCustomModuleOptionsInitialized()) {
-        error("Field ModuleCustomImlDataEntity#customModuleOptions should be initialized")
       }
     }
 
@@ -135,6 +134,22 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var rootManagerTagCustomData: String?
+      get() = getEntityData().rootManagerTagCustomData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).rootManagerTagCustomData = value
+        changedProperty.add("rootManagerTagCustomData")
+      }
+
+    override var customModuleOptions: Map<String, String>
+      get() = getEntityData().customModuleOptions
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).customModuleOptions = value
+        changedProperty.add("customModuleOptions")
       }
 
     override var module: ModuleEntity.Builder
@@ -171,22 +186,6 @@ open class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomIml
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var rootManagerTagCustomData: String?
-      get() = getEntityData().rootManagerTagCustomData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).rootManagerTagCustomData = value
-        changedProperty.add("rootManagerTagCustomData")
-      }
-
-    override var customModuleOptions: Map<String, String>
-      get() = getEntityData().customModuleOptions
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).customModuleOptions = value
-        changedProperty.add("customModuleOptions")
       }
 
     override fun getEntityClass(): Class<ModuleCustomImlDataEntity> = ModuleCustomImlDataEntity::class.java

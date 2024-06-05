@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NonNls
  */
 @Internal
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
-  val module: ModuleEntity
-
   val rootManagerTagCustomData: @NonNls String?
 
   /**
@@ -28,13 +26,15 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
    */
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
+  val module: ModuleEntity
+
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
-    var module: ModuleEntity.Builder
     var rootManagerTagCustomData: String?
     var customModuleOptions: Map<String, String>
+    var module: ModuleEntity.Builder
   }
 
   companion object : EntityType<ModuleCustomImlDataEntity, Builder>() {

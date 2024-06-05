@@ -3,6 +3,7 @@
 
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -20,16 +21,16 @@ import org.jetbrains.annotations.NonNls
  */
 @Internal
 interface SourceRootOrderEntity : WorkspaceEntity {
-  val contentRootEntity: ContentRootEntity
-
   val orderOfSourceRoots: List<VirtualFileUrl>
+
+  val contentRootEntity: ContentRootEntity
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<SourceRootOrderEntity> {
     override var entitySource: EntitySource
-    var contentRootEntity: ContentRootEntity.Builder
     var orderOfSourceRoots: MutableList<VirtualFileUrl>
+    var contentRootEntity: ContentRootEntity.Builder
   }
 
   companion object : EntityType<SourceRootOrderEntity, Builder>() {
@@ -70,17 +71,17 @@ val ContentRootEntity.sourceRootOrder: @Child SourceRootOrderEntity?
  * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
  */
 @Internal
-interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
-  val sourceRoot: SourceRootEntity
-
+interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String
+
+  val sourceRoot: SourceRootEntity
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
-    var sourceRoot: SourceRootEntity.Builder
     var propertiesXmlTag: String
+    var sourceRoot: SourceRootEntity.Builder
   }
 
   companion object : EntityType<CustomSourceRootPropertiesEntity, Builder>() {

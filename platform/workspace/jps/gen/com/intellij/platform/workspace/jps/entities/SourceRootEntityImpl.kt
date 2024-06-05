@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.jps.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -40,9 +39,6 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
 
   }
 
-  override val contentRoot: ContentRootEntity
-    get() = snapshot.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this)!!
-
   override val url: VirtualFileUrl
     get() {
       readField("url")
@@ -54,6 +50,9 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
       readField("rootTypeId")
       return dataSource.rootTypeId
     }
+
+  override val contentRoot: ContentRootEntity
+    get() = snapshot.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
     get() {
@@ -99,6 +98,12 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
+      if (!getEntityData().isUrlInitialized()) {
+        error("Field SourceRootEntity#url should be initialized")
+      }
+      if (!getEntityData().isRootTypeIdInitialized()) {
+        error("Field SourceRootEntity#rootTypeId should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(CONTENTROOT_CONNECTION_ID, this) == null) {
           error("Field SourceRootEntity#contentRoot should be initialized")
@@ -108,12 +113,6 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
         if (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] == null) {
           error("Field SourceRootEntity#contentRoot should be initialized")
         }
-      }
-      if (!getEntityData().isUrlInitialized()) {
-        error("Field SourceRootEntity#url should be initialized")
-      }
-      if (!getEntityData().isRootTypeIdInitialized()) {
-        error("Field SourceRootEntity#rootTypeId should be initialized")
       }
     }
 
@@ -137,6 +136,25 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var url: VirtualFileUrl
+      get() = getEntityData().url
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).url = value
+        changedProperty.add("url")
+        val _diff = diff
+        if (_diff != null) index(this, "url", value)
+      }
+
+    override var rootTypeId: SourceRootTypeId
+      get() = getEntityData().rootTypeId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).rootTypeId = value
+        changedProperty.add("rootTypeId")
 
       }
 
@@ -178,25 +196,6 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
-      }
-
-    override var url: VirtualFileUrl
-      get() = getEntityData().url
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).url = value
-        changedProperty.add("url")
-        val _diff = diff
-        if (_diff != null) index(this, "url", value)
-      }
-
-    override var rootTypeId: SourceRootTypeId
-      get() = getEntityData().rootTypeId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).rootTypeId = value
-        changedProperty.add("rootTypeId")
-
       }
 
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java

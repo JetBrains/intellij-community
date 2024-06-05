@@ -53,9 +53,6 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
       return dataSource.moduleId
     }
 
-  override val module: ModuleEntity
-    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
-
   override val typeId: FacetEntityTypeId
     get() {
       readField("typeId")
@@ -67,6 +64,9 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
       readField("configurationXmlTag")
       return dataSource.configurationXmlTag
     }
+
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
 
   override val underlyingFacet: FacetEntity?
     get() = snapshot.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
@@ -119,6 +119,9 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
       if (!getEntityData().isModuleIdInitialized()) {
         error("Field ModuleSettingsFacetBridgeEntity#moduleId should be initialized")
       }
+      if (!getEntityData().isTypeIdInitialized()) {
+        error("Field FacetEntity#typeId should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field FacetEntity#module should be initialized")
@@ -128,9 +131,6 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field FacetEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isTypeIdInitialized()) {
-        error("Field FacetEntity#typeId should be initialized")
       }
     }
 
@@ -176,6 +176,23 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
 
       }
 
+    override var typeId: FacetEntityTypeId
+      get() = getEntityData().typeId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).typeId = value
+        changedProperty.add("typeId")
+
+      }
+
+    override var configurationXmlTag: String?
+      get() = getEntityData().configurationXmlTag
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).configurationXmlTag = value
+        changedProperty.add("configurationXmlTag")
+      }
+
     override var module: ModuleEntity.Builder
       get() {
         val _diff = diff
@@ -214,23 +231,6 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var typeId: FacetEntityTypeId
-      get() = getEntityData().typeId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).typeId = value
-        changedProperty.add("typeId")
-
-      }
-
-    override var configurationXmlTag: String?
-      get() = getEntityData().configurationXmlTag
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).configurationXmlTag = value
-        changedProperty.add("configurationXmlTag")
       }
 
     override var underlyingFacet: FacetEntity.Builder?
