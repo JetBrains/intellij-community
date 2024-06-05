@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/quickfix.special/codeFragmentAutoImport")
-public class CodeFragmentAutoImportTestGenerated extends AbstractCodeFragmentAutoImportTest {
+public class K1CodeFragmentAutoImportTestGenerated extends AbstractK1CodeFragmentAutoImportTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

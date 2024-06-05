@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHand
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import java.io.File
 
-abstract class AbstractCodeFragmentCompletionHandlerTest : AbstractCompletionHandlerTest(CompletionType.BASIC) {
+abstract class AbstractK1CodeFragmentCompletionHandlerTest : AbstractCompletionHandlerTest(CompletionType.BASIC) {
     override fun setUpFixture(testPath: String) {
         myFixture.configureByCodeFragment(dataFile(testPath).path)
     }

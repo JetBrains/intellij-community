@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../completion/testData/basic/codeFragments")
-public abstract class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCompletionTest {
+public abstract class K1CodeFragmentCompletionTestGenerated extends AbstractK1CodeFragmentCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/codeFragments/runtimeType")
-    public static class RuntimeType extends AbstractCodeFragmentCompletionTest {
+    public static class RuntimeType extends AbstractK1CodeFragmentCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -66,7 +66,7 @@ public abstract class CodeFragmentCompletionTestGenerated extends AbstractCodeFr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/codeFragments")
-    public static class Uncategorized extends AbstractCodeFragmentCompletionTest {
+    public static class Uncategorized extends AbstractK1CodeFragmentCompletionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

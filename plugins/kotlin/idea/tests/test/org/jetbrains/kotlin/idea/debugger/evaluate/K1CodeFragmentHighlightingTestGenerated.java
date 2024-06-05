@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCodeFragmentHighlightingTest {
+public abstract class K1CodeFragmentHighlightingTestGenerated extends AbstractK1CodeFragmentHighlightingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/codeFragments")
-    public static class CodeFragments extends AbstractCodeFragmentHighlightingTest {
+    public static class CodeFragments extends AbstractK1CodeFragmentHighlightingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -170,7 +170,7 @@ public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCode
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/codeFragments/imports")
-    public static class Imports extends AbstractCodeFragmentHighlightingTest {
+    public static class Imports extends AbstractK1CodeFragmentHighlightingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
