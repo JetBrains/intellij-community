@@ -3,12 +3,19 @@ package org.jetbrains.kotlin.idea.runConfigurations.jvm
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -20,16 +27,14 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KotlinMainMethodProvider : JavaMainMethodProvider {
-    override fun isDumbAware(): Boolean {
-        return true
-    }
+    override fun isDumbAware(): Boolean = true
 
     override fun isApplicable(clazz: PsiClass): Boolean {
-        return clazz is KtLightClassBase
+        return clazz is KtLightClass
     }
 
     override fun hasMainMethod(clazz: PsiClass): Boolean {
-        val lightClassBase = clazz as? KtLightClassBase
+        val lightClassBase = clazz as? KtLightClass
         val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
         if (lightClassBase is KtLightClassForFacade) {
             return runReadAction { lightClassBase.files.any { mainFunctionDetector.hasMain(it) } }
@@ -41,7 +46,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     override fun findMainInClass(clazz: PsiClass): PsiMethod? =
         runReadAction {
             try {
-                val lightClassBase = clazz as? KtLightClassBase
+                val lightClassBase = clazz as? KtLightClass
                 val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
                 if (lightClassBase is KtLightClassForFacade) {
                     return@runReadAction lightClassBase.files
@@ -68,7 +73,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     override fun getMainClassName(clazz: PsiClass): String? {
         return when (clazz) {
             is KtLightClassForFacade -> clazz.facadeClassFqName.asString()
-            is KtLightClassBase -> {
+            is KtLightClass -> {
                 val classOrObject = clazz.kotlinOrigin ?: return null
                 KotlinRunConfigurationProducer.getMainClassJvmName(classOrObject)
             }
