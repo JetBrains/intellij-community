@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -59,13 +59,12 @@ internal object InsertDelegationCallFixFactory {
             analyze(newDelegationCall) {
                 val resolvedCall = newDelegationCall.resolveCall()
 
-                // if the new delegation call contains errors, or if there's a cycle in the delegation call chain,
-                // move the caret inside the parentheses.
-                if (resolvedCall is KtErrorCallInfo || (element.valueParameters.all { it.hasDefaultValue() })) {
-                    val leftParOffset = newDelegationCall.valueArgumentList!!.leftParenthesis!!.textOffset
-                    updater.moveCaretTo(leftParOffset + 1)
-                }
+                // If the new delegation call does not contain errors and there is no cycle in the delegation call chain,
+                // do not move the caret.
+                if (resolvedCall is KtSuccessCallInfo && element.valueParameters.any { !it.hasDefaultValue() }) return
             }
+            val leftParOffset = newDelegationCall.valueArgumentList!!.leftParenthesis!!.textOffset
+            updater.moveCaretTo(leftParOffset + 1)
         }
 
         override fun getActionName(
