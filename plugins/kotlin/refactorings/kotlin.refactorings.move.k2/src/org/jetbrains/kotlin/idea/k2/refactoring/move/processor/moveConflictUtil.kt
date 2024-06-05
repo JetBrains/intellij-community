@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -183,7 +182,7 @@ context(KtAnalysisSession)
 private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.getFileSymbol() ?: return false
     val symbol = getSymbol()
-    if (symbol !is KtSymbolWithVisibility) return false
+    if (symbol !is KaSymbolWithVisibility) return false
     return isVisible(symbol, file, position = usage)
 }
 

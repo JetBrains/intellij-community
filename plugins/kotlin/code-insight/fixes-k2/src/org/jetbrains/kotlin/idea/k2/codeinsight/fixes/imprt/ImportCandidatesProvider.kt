@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
@@ -33,7 +33,7 @@ internal abstract class ImportCandidatesProvider(
 
     context(KtAnalysisSession)
     protected fun KtSymbol.isVisible(fileSymbol: KtFileSymbol): Boolean =
-        this is KtSymbolWithVisibility && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
+        this is KaSymbolWithVisibility && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
@@ -16,16 +16,16 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
     context(KtAnalysisSession)
-    fun isVisible(symbol: KtSymbolWithVisibility): Boolean
+    fun isVisible(symbol: KaSymbolWithVisibility): Boolean
 
     context(KtAnalysisSession)
     fun isVisible(symbol: KaCallableSymbol): Boolean {
-        return symbol !is KtSymbolWithVisibility || isVisible(symbol as KtSymbolWithVisibility)
+        return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
     }
 
     context(KtAnalysisSession)
     fun isVisible(symbol: KaClassifierSymbol): Boolean {
-        return symbol !is KtSymbolWithVisibility || isVisible(symbol as KtSymbolWithVisibility)
+        return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
     }
 
     companion object {
@@ -34,7 +34,7 @@ internal fun interface CompletionVisibilityChecker {
             positionContext: KotlinRawPositionContext
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
             context(KtAnalysisSession)
-            override fun isVisible(symbol: KtSymbolWithVisibility): Boolean {
+            override fun isVisible(symbol: KaSymbolWithVisibility): Boolean {
                 if (positionContext is KDocNameReferencePositionContext) return true
 
                 // Don't offer any deprecated items that could lead to compile errors.

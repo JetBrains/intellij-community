@@ -5,7 +5,7 @@ import com.intellij.refactoring.changeSignature.MethodDescriptor.ReadWriteOption
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -97,7 +97,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     @OptIn(KaAllowAnalysisOnEdt::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable.getSymbol() as? KtSymbolWithVisibility)?.visibility ?: Visibilities.Public
+            (callable.getSymbol() as? KaSymbolWithVisibility)?.visibility ?: Visibilities.Public
         }
     }
 

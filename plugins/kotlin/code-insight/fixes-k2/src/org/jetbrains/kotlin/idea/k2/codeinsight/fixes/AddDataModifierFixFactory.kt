@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -77,7 +77,7 @@ internal object AddDataModifierFixFactory {
 }
 
 context(KtAnalysisSession)
-private fun KtSymbolWithVisibility.isVisible(position: KtElement): Boolean {
+private fun KaSymbolWithVisibility.isVisible(position: KtElement): Boolean {
     val file = position.containingKtFile.getFileSymbol()
     return isVisible(this, file, position = position)
 }

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.psi.KtClass
@@ -104,7 +104,7 @@ object KtIconProvider {
 
     context(KtAnalysisSession)
     private fun getVisibilityIcon(symbol: KtSymbol): Icon? {
-        return when ((symbol as? KtSymbolWithVisibility)?.visibility?.normalize()) {
+        return when ((symbol as? KaSymbolWithVisibility)?.visibility?.normalize()) {
             Visibilities.Public -> PlatformIcons.PUBLIC_ICON
             Visibilities.Protected -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
             Visibilities.Private, Visibilities.PrivateToThis -> IconManager.getInstance()

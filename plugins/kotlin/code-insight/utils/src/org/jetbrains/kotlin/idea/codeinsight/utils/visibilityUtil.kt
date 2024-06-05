@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -44,7 +44,7 @@ fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
  * Do we need something like @PublicApiFile to disable (or invert) this inspection per-file?
  */
 context(KtAnalysisSession)
-private fun explicitVisibilityRequired(symbol: KtSymbolWithVisibility): Boolean {
+private fun explicitVisibilityRequired(symbol: KaSymbolWithVisibility): Boolean {
     if ((symbol as? KaConstructorSymbol)?.isPrimary == true) return false // 1
     if (symbol is KtPropertySymbol && (symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isData == true) return false // 2
     if ((symbol as? KaCallableSymbol)?.getAllOverriddenSymbols()?.isNotEmpty() == true) return false // 3
@@ -58,7 +58,7 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
         val defaultVisibilityKeyword = implicitVisibility()
         if (visibilityModifier == defaultVisibilityKeyword) {
             val explicitVisibilityRequired = languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED
-                    && analyze(this) { explicitVisibilityRequired(getSymbolOfType<KtSymbolWithVisibility>()) }
+                    && analyze(this) { explicitVisibilityRequired(getSymbolOfType<KaSymbolWithVisibility>()) }
             if (!explicitVisibilityRequired) {
                 visibilityModifierType()?.let { removeModifier(it) }
                 return
@@ -101,7 +101,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
             analyze(this) {
                 getSymbolOfType<KaCallableSymbol>()
                     .getAllOverriddenSymbols()
-                    .mapNotNull { (it as? KtSymbolWithVisibility)?.visibility }
+                    .mapNotNull { (it as? KaSymbolWithVisibility)?.visibility }
                     .maxWithOrNull { v1, v2 -> Visibilities.compare(v1, v2) ?: -1 }
                     ?.toKeywordToken()
             }
