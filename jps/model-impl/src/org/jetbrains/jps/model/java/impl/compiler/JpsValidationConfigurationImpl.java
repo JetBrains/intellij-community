@@ -5,11 +5,11 @@ import org.jetbrains.jps.model.java.compiler.JpsValidationConfiguration;
 
 import java.util.Set;
 
-public class JpsValidationConfigurationImpl implements JpsValidationConfiguration {
+class JpsValidationConfigurationImpl implements JpsValidationConfiguration {
   private final boolean myValidateOnBuild;
   private final Set<String> myDisabledValidators;
 
-  public JpsValidationConfigurationImpl(boolean validateOnBuild, Set<String> disabledValidators) {
+  JpsValidationConfigurationImpl(boolean validateOnBuild, Set<String> disabledValidators) {
     myValidateOnBuild = validateOnBuild;
     myDisabledValidators = disabledValidators;
   }

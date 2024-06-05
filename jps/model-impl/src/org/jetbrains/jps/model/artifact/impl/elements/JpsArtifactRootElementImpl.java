@@ -18,8 +18,8 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
 
-public class JpsArtifactRootElementImpl extends JpsCompositePackagingElementBase<JpsArtifactRootElementImpl> implements JpsArtifactRootElement {
-  public JpsArtifactRootElementImpl() {
+class JpsArtifactRootElementImpl extends JpsCompositePackagingElementBase<JpsArtifactRootElementImpl> implements JpsArtifactRootElement {
+  JpsArtifactRootElementImpl() {
   }
 
   private JpsArtifactRootElementImpl(JpsArtifactRootElementImpl original) {

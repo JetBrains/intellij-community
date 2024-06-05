@@ -6,11 +6,11 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.Objects;
 
-public abstract class JpsFileCopyPackagingElementBase<Self extends JpsFileCopyPackagingElementBase<Self>> extends JpsElementBase<Self> implements
+abstract class JpsFileCopyPackagingElementBase<Self extends JpsFileCopyPackagingElementBase<Self>> extends JpsElementBase<Self> implements
                                                                                                                                  JpsPackagingElement {
   protected String myFilePath;
 
-  public JpsFileCopyPackagingElementBase(String filePath) {
+  protected JpsFileCopyPackagingElementBase(String filePath) {
     myFilePath = filePath;
   }
 

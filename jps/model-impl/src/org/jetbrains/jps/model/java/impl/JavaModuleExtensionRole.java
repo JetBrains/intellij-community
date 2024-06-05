@@ -6,7 +6,7 @@ import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 
-public final class JavaModuleExtensionRole extends JpsElementChildRoleBase<JpsJavaModuleExtension> implements JpsElementCreator<JpsJavaModuleExtension> {
+final class JavaModuleExtensionRole extends JpsElementChildRoleBase<JpsJavaModuleExtension> implements JpsElementCreator<JpsJavaModuleExtension> {
   public static final JavaModuleExtensionRole INSTANCE = new JavaModuleExtensionRole();
 
   private JavaModuleExtensionRole() {

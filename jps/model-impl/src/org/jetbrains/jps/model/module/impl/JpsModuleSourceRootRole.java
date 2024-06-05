@@ -5,9 +5,9 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
-public final class JpsModuleSourceRootRole extends JpsElementChildRoleBase<JpsModuleSourceRoot> {
+final class JpsModuleSourceRootRole extends JpsElementChildRoleBase<JpsModuleSourceRoot> {
   private static final JpsModuleSourceRootRole INSTANCE = new JpsModuleSourceRootRole();
-  public static final JpsElementCollectionRole<JpsModuleSourceRoot> ROOT_COLLECTION_ROLE = JpsElementCollectionRole.create(INSTANCE);
+  static final JpsElementCollectionRole<JpsModuleSourceRoot> ROOT_COLLECTION_ROLE = JpsElementCollectionRole.create(INSTANCE);
 
   private JpsModuleSourceRootRole() {
     super("module source root");

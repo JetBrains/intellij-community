@@ -22,10 +22,10 @@ import org.jetbrains.jps.model.module.impl.JpsDependenciesRootsEnumeratorBase;
 
 import java.util.function.Consumer;
 
-public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRootsEnumeratorBase<JpsJavaDependenciesEnumeratorImpl> implements JpsJavaDependenciesRootsEnumerator {
+class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRootsEnumeratorBase<JpsJavaDependenciesEnumeratorImpl> implements JpsJavaDependenciesRootsEnumerator {
   private boolean myWithoutSelfModuleOutput;
 
-  public JpsJavaDependenciesRootsEnumeratorImpl(JpsJavaDependenciesEnumeratorImpl dependenciesEnumerator, JpsOrderRootType rootType) {
+  JpsJavaDependenciesRootsEnumeratorImpl(JpsJavaDependenciesEnumeratorImpl dependenciesEnumerator, JpsOrderRootType rootType) {
     super(dependenciesEnumerator, rootType);
   }
 

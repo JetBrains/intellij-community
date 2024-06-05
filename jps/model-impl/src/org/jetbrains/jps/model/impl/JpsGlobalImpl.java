@@ -28,17 +28,17 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
-public final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
+final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
   private final JpsLibraryCollectionImpl myLibraryCollection;
   private JpsPathMapper myPathMapper = JpsPathMapper.IDENTITY;
 
-  public JpsGlobalImpl(@NotNull JpsModel model) {
+  JpsGlobalImpl(@NotNull JpsModel model) {
     super(model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
     myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
   }
 
-  public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model) {
+  JpsGlobalImpl(JpsGlobalImpl original, JpsModel model) {
     super(original, model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }

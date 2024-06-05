@@ -6,11 +6,11 @@ import org.jetbrains.jps.model.artifact.elements.JpsExtractedDirectoryPackagingE
 
 import java.util.Objects;
 
-public class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsExtractedDirectoryPackagingElementImpl>
+class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsExtractedDirectoryPackagingElementImpl>
   implements JpsExtractedDirectoryPackagingElement {
   private String myPathInJar;
 
-  public JpsExtractedDirectoryPackagingElementImpl(String filePath, String pathInJar) {
+  JpsExtractedDirectoryPackagingElementImpl(String filePath, String pathInJar) {
     super(filePath);
     myPathInJar = pathInJar;
   }

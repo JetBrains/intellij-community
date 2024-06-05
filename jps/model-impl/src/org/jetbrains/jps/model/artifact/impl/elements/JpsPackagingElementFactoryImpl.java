@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.artifact.impl.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifactReference;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 
+@ApiStatus.Internal
 public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
 
   @Override

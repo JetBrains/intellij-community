@@ -22,13 +22,13 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> implements JpsUrlList {
+final class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> implements JpsUrlList {
   private final List<String> myUrls = new ArrayList<>();
 
-  public JpsUrlListImpl() {
+  JpsUrlListImpl() {
   }
 
-  public JpsUrlListImpl(JpsUrlListImpl list) {
+  JpsUrlListImpl(JpsUrlListImpl list) {
     myUrls.addAll(list.myUrls);
   }
 

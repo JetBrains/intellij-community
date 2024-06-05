@@ -5,7 +5,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
-public final class JpsArtifactRole extends JpsElementChildRoleBase<JpsArtifact> {
+final class JpsArtifactRole extends JpsElementChildRoleBase<JpsArtifact> {
   private static final JpsArtifactRole INSTANCE = new JpsArtifactRole();
   public static final JpsElementCollectionRole<JpsArtifact> ARTIFACT_COLLECTION_ROLE = JpsElementCollectionRole.create(INSTANCE);
 

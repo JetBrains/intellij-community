@@ -2,12 +2,14 @@
 package org.jetbrains.jps.model.ex;
 
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
   private final Object myDataLock = new Object();
   private final Map<JpsElementChildRole<?>, JpsElement> myElements = CollectionFactory.createSmallMemoryFootprintMap(1);

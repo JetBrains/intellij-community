@@ -18,10 +18,10 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsDirectoryPackagingElement;
 
-public class JpsDirectoryPackagingElementImpl extends JpsCompositePackagingElementBase<JpsDirectoryPackagingElementImpl> implements JpsDirectoryPackagingElement {
+class JpsDirectoryPackagingElementImpl extends JpsCompositePackagingElementBase<JpsDirectoryPackagingElementImpl> implements JpsDirectoryPackagingElement {
   private String myDirectoryName;
 
-  public JpsDirectoryPackagingElementImpl(String directoryName) {
+  JpsDirectoryPackagingElementImpl(String directoryName) {
     myDirectoryName = directoryName;
   }
 
