@@ -183,7 +183,7 @@ function addContexts(sessionDiv, popup, lookup) {
   if (!("cc_context" in lookup["additionalInfo"])) return
 
   const contextJson = lookup["additionalInfo"]["cc_context"]
-  maybeAddButtonToCopyCompletionContext(contextJson, sessionDiv, popup, lookup)
+  addButtonToCopyCompletionContext(contextJson, sessionDiv, popup, lookup)
 
   const contextObject = JSON.parse(contextJson)
   contextObject.contexts.items.forEach(context => {
@@ -201,12 +201,12 @@ function createContextBlock(context) {
 
 function createCodeElement(context) {
   const code = document.createElement("code")
-  code.innerHTML = `<b>File: ${context.filetype}</b><br><b>Type: ${context.type}</b><br><pre>${context.content}</pre>`
+  code.innerHTML = `<b>File: ${context.filepath}</b><br><b>Type: ${context.type}</b><br><pre>${context.content}</pre>`
   code.style.whiteSpace = "inherit"
   return code
 }
 
-function maybeAddButtonToCopyCompletionContext(context, sessionDiv, popup, lookup) {
+function addButtonToCopyCompletionContext(context, sessionDiv, popup, lookup) {
   let buttonDiv = document.createElement("DIV")
   let button = document.createElement("BUTTON")
   button.textContent = "Copy Context"
