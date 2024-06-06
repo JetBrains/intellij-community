@@ -1,12 +1,12 @@
 object A {
     @JvmStatic
     fun main(args: Array<String>) {
-        val ANDAND = (true
+        val ANDAND = true
                 && true
-                && true)
-        val OROR = (true
+                && true
+        val OROR = true
                 || true
-                || true)
+                || true
         val PLUS = (1
                 + 2
                 + 3)

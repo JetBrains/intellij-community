@@ -424,6 +424,12 @@ internal fun JKBinaryExpression.recursivelyContainsNewlineBeforeOperator(): Bool
         return lastChild.recursivelyEndsWithNewline()
     }
 
+    val operator = operator.token.text
+    if (operator == "&&" || operator == "||") {
+        // && and || actually can start on a new line in Kotlin, unlike other operators
+        return false
+    }
+
     val left = this.left
     val right = this.right
     if (left.recursivelyEndsWithNewline()) {
