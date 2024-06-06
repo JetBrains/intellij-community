@@ -20,8 +20,9 @@ public interface GlobalInspectionContextExtension<T> {
   Key<T> getID();
 
   /**
-   * Executed before tools are initialized and {@link com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool} are handled.
-   * Could be used to modify the list of used tools, to enable/disable unfair tools if necessary, etc.
+   * Executed before tools are initialized (i.e., LocalInspectionTool.initialize() is called), and tools implementing
+   * {@link com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool} are instantiated.
+   * Could be used to modify the list of used tools, to enable/disable unfair tools in the selected profile if necessary, etc.
    *
    * @param usedTools list of tools from the selected inspection profile before they are classified and initialized
    * @param context global inspection context
