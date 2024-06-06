@@ -13,9 +13,7 @@ import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -230,21 +228,6 @@ private fun <T, R> Flow<T>.mapScoped2(supervisor: Boolean, mapper: suspend Corou
 @ApiStatus.Experimental
 private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
 
-/**
- * Performs mapping only if the source value is not null
- */
-@ApiStatus.Experimental
-fun <T, R> Flow<T?>.mapNullable(mapper: (T) -> R): Flow<R?> = map { it?.let(mapper) }
-
-/**
- * Performs mapping only if the source value is not null
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-@ApiStatus.Experimental
-fun <T, R> Flow<T?>.mapNullableLatest(mapper: suspend (T) -> R): Flow<R?> = mapLatest {
-  if (it != null) mapper(it) else null
-}
-
 @ApiStatus.Experimental
 fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> = mapScoped2 { if (it == null) null else mapper(it) }
 
@@ -392,6 +375,7 @@ private class ReferentiallyComparedValue<T : Any>(val value: T) {
  * This acts as a replacement of consecutive `asResultFlow` and `throwFailure` and avoids that exceptions cancel the flow.
  */
 @JvmName("transformConsecutiveResultSuccesses")
+@ApiStatus.Internal
 fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
   transformer: suspend Flow<T>.() -> Flow<R>
@@ -428,6 +412,7 @@ fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
  * This means that, if [resetOnFailure] is `true`, the [transformer] block is called once for every series of consecutive
  * successes. If it is `false`, the [transformer] block is called only once with a flow that receives every success value.
  */
+@ApiStatus.Internal
 fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
   transformer: suspend Flow<T>.() -> Flow<R>
@@ -464,6 +449,7 @@ fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
  * Will not emit "loading" state if the computation was completed before handling its state
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Internal
 fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
   transformLatest { request ->
     if (!request.isCompleted) {
@@ -515,20 +501,9 @@ suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
   }.first().getOrThrow()
 
 /**
- * Maps the flow of requests to a flow of successfully computed values
- */
-fun <T> Flow<CompletableFuture<T>>.values(): Flow<T> = mapNotNull {
-  try {
-    it.asDeferred().await()
-  }
-  catch (_: Throwable) {
-    null
-  }
-}
-
-/**
  * Maps values in the flow to successful results and catches and wraps any exception into a failure result.
  */
+@Deprecated("This doesn't work as we expected it to. `Flow.catch` doesn't actually prevent the flow from stopping")
 fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =
   map { Result.success(it) }.catch { emit(Result.failure(it)) }
 
@@ -541,6 +516,7 @@ fun <T, R> Flow<Result<T>>.mapCatching(mapper: suspend (T) -> R): Flow<Result<R>
 /**
  * Maps a flow or results to a flow of values from successful results. Failure results are re-thrown as exceptions.
  */
+@Deprecated("This doesn't work as we expected it to. The flow will actually stop emitting on error")
 fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =
   map { it.getOrThrow() }
 
