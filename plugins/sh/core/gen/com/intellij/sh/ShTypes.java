@@ -94,6 +94,7 @@ public interface ShTypes {
   IElementType PARENTHESES_OPERATION = new ShCompositeElementType("PARENTHESES_OPERATION");
   IElementType PATTERN = new ShCompositeElementType("PATTERN");
   IElementType PIPELINE_COMMAND = new ShCompositeElementType("PIPELINE_COMMAND");
+  IElementType PIPELINE_COMMAND_LIST = new ShCompositeElementType("PIPELINE_COMMAND_LIST");
   IElementType POST_EXPRESSION = new ShCompositeElementType("POST_EXPRESSION");
   IElementType POST_OPERATION = new ShCompositeElementType("POST_OPERATION");
   IElementType PRE_EXPRESSION = new ShCompositeElementType("PRE_EXPRESSION");
@@ -459,6 +460,9 @@ public interface ShTypes {
       }
       else if (type == PIPELINE_COMMAND) {
         return new ShPipelineCommandImpl(node);
+      }
+      else if (type == PIPELINE_COMMAND_LIST) {
+        return new ShPipelineCommandListImpl(node);
       }
       else if (type == POST_EXPRESSION) {
         return new ShPostExpressionImpl(node);

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShCompoundListImpl extends ShCompositeElementImpl implements ShCompoundList {
+public class ShPipelineCommandListImpl extends ShCompositeElementImpl implements ShPipelineCommandList {
 
-  public ShCompoundListImpl(ASTNode node) {
+  public ShPipelineCommandListImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull ShVisitor visitor) {
-    visitor.visitCompoundList(this);
+    visitor.visitPipelineCommandList(this);
   }
 
   @Override
@@ -28,8 +28,8 @@ public class ShCompoundListImpl extends ShCompositeElementImpl implements ShComp
 
   @Override
   @NotNull
-  public List<ShPipelineCommandList> getPipelineCommandListList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShPipelineCommandList.class);
+  public List<ShCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommand.class);
   }
 
 }

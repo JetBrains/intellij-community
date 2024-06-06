@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface ShCompoundList extends ShCompositeElement {
+public interface ShPipelineCommandList extends ShCompositeElement {
 
   @NotNull
-  List<ShPipelineCommandList> getPipelineCommandListList();
+  List<ShCommand> getCommandList();
 
 }

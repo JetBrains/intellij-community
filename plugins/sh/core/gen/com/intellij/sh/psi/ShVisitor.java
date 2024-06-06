@@ -349,6 +349,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitPipelineCommandList(@NotNull ShPipelineCommandList o) {
+    visitCompositeElement(o);
+  }
+
   public void visitPostExpression(@NotNull ShPostExpression o) {
     visitExpression(o);
   }

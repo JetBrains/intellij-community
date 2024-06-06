@@ -376,38 +376,42 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (nl pipeline_command_list | pipeline_command_list) end_of_list newlines
+  // newlines (pipeline_command_list end_of_list newlines)+
   public static boolean block_compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<block compound list>");
-    r = block_compound_list_0(b, l + 1);
+    r = newlines(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, end_of_list(b, l + 1));
-    r = p && newlines(b, l + 1) && r;
+    r = r && block_compound_list_1(b, l + 1);
     exit_section_(b, l, m, r, p, ShParser::block_compound_list_recover);
     return r || p;
   }
 
-  // nl pipeline_command_list | pipeline_command_list
-  private static boolean block_compound_list_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_compound_list_0")) return false;
+  // (pipeline_command_list end_of_list newlines)+
+  private static boolean block_compound_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_compound_list_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = block_compound_list_0_0(b, l + 1);
-    if (!r) r = pipeline_command_list(b, l + 1);
+    r = block_compound_list_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!block_compound_list_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "block_compound_list_1", c)) break;
+    }
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // nl pipeline_command_list
-  private static boolean block_compound_list_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_compound_list_0_0")) return false;
+  // pipeline_command_list end_of_list newlines
+  private static boolean block_compound_list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_compound_list_1_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = nl(b, l + 1);
+    r = pipeline_command_list(b, l + 1);
     p = r; // pin = 1
-    r = r && pipeline_command_list(b, l + 1);
+    r = r && report_error_(b, end_of_list(b, l + 1));
+    r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -696,8 +700,8 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // pipeline_command (
-  //                      ('&&' | '||') newlines? pipeline_command
-  //                    | ('|' | '|&' | '&'| ';') pipeline_command?
+  //                      ('|' | '|&' | '&&' | '||') newlines pipeline_command
+  //                    | (';' | '&') pipeline_command?
   //                  )*
   public static boolean commands_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list")) return false;
@@ -711,8 +715,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   // (
-  //                      ('&&' | '||') newlines? pipeline_command
-  //                    | ('|' | '|&' | '&'| ';') pipeline_command?
+  //                      ('|' | '|&' | '&&' | '||') newlines pipeline_command
+  //                    | (';' | '&') pipeline_command?
   //                  )*
   private static boolean commands_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1")) return false;
@@ -724,8 +728,8 @@ public class ShParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ('&&' | '||') newlines? pipeline_command
-  //                    | ('|' | '|&' | '&'| ';') pipeline_command?
+  // ('|' | '|&' | '&&' | '||') newlines pipeline_command
+  //                    | (';' | '&') pipeline_command?
   private static boolean commands_list_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0")) return false;
     boolean r;
@@ -736,36 +740,31 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('&&' | '||') newlines? pipeline_command
+  // ('|' | '|&' | '&&' | '||') newlines pipeline_command
   private static boolean commands_list_1_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = commands_list_1_0_0_0(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, commands_list_1_0_0_1(b, l + 1));
+    r = r && report_error_(b, newlines(b, l + 1));
     r = p && pipeline_command(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // '&&' | '||'
+  // '|' | '|&' | '&&' | '||'
   private static boolean commands_list_1_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_0_0")) return false;
     boolean r;
-    r = consumeToken(b, AND_AND);
+    r = consumeToken(b, PIPE);
+    if (!r) r = consumeToken(b, PIPE_AMP);
+    if (!r) r = consumeToken(b, AND_AND);
     if (!r) r = consumeToken(b, OR_OR);
     return r;
   }
 
-  // newlines?
-  private static boolean commands_list_1_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "commands_list_1_0_0_1")) return false;
-    newlines(b, l + 1);
-    return true;
-  }
-
-  // ('|' | '|&' | '&'| ';') pipeline_command?
+  // (';' | '&') pipeline_command?
   private static boolean commands_list_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_1")) return false;
     boolean r, p;
@@ -777,14 +776,12 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '|' | '|&' | '&'| ';'
+  // ';' | '&'
   private static boolean commands_list_1_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_1_0")) return false;
     boolean r;
-    r = consumeToken(b, PIPE);
-    if (!r) r = consumeToken(b, PIPE_AMP);
+    r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, AMP);
-    if (!r) r = consumeToken(b, SEMI);
     return r;
   }
 
@@ -843,38 +840,78 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pipeline_command_list end_of_list? newlines
+  // (pipeline_command_list end_of_list? newlines)+
   public static boolean compound_case_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_case_list")) return false;
-    boolean r, p;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<compound case list>");
+    r = compound_case_list_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!compound_case_list_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "compound_case_list", c)) break;
+    }
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // pipeline_command_list end_of_list? newlines
+  private static boolean compound_case_list_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list_0")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = pipeline_command_list(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, compound_case_list_1(b, l + 1));
+    r = r && report_error_(b, compound_case_list_0_1(b, l + 1));
     r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // end_of_list?
-  private static boolean compound_case_list_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compound_case_list_1")) return false;
+  private static boolean compound_case_list_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list_0_1")) return false;
     end_of_list(b, l + 1);
     return true;
   }
 
   /* ********************************************************** */
-  // newlines pipeline_command_list end_of_list newlines
+  // newlines (pipeline_command_list end_of_list newlines)+
   public static boolean compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_list")) return false;
-    boolean r, p;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<compound list>");
     r = newlines(b, l + 1);
-    r = r && pipeline_command_list(b, l + 1);
+    r = r && compound_list_1(b, l + 1);
+    exit_section_(b, l, m, r, false, ShParser::compound_list_recover);
+    return r;
+  }
+
+  // (pipeline_command_list end_of_list newlines)+
+  private static boolean compound_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_list_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = compound_list_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!compound_list_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "compound_list_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // pipeline_command_list end_of_list newlines
+  private static boolean compound_list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_list_1_0")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = pipeline_command_list(b, l + 1);
+    r = r && end_of_list(b, l + 1);
     p = r; // pin = 2
-    r = r && report_error_(b, end_of_list(b, l + 1));
-    r = p && newlines(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, ShParser::compound_list_recover);
+    r = r && newlines(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
@@ -1581,23 +1618,48 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // newlines pipeline_command_list end_of_list? newlines
+  // newlines (pipeline_command_list end_of_list? newlines)+
   public static boolean list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list")) return false;
-    boolean r, p;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<list>");
     r = newlines(b, l + 1);
-    r = r && pipeline_command_list(b, l + 1);
+    r = r && list_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (pipeline_command_list end_of_list? newlines)+
+  private static boolean list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "list_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = list_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!list_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "list_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // pipeline_command_list end_of_list? newlines
+  private static boolean list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "list_1_0")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = pipeline_command_list(b, l + 1);
+    r = r && list_1_0_1(b, l + 1);
     p = r; // pin = 2
-    r = r && report_error_(b, list_2(b, l + 1));
-    r = p && newlines(b, l + 1) && r;
+    r = r && newlines(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // end_of_list?
-  private static boolean list_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "list_2")) return false;
+  private static boolean list_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "list_1_0_1")) return false;
     end_of_list(b, l + 1);
     return true;
   }
@@ -1660,23 +1722,6 @@ public class ShParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "newlines", c)) break;
     }
     return true;
-  }
-
-  /* ********************************************************** */
-  // '\n'+
-  static boolean nl(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nl")) return false;
-    if (!nextTokenIs(b, LINEFEED)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LINEFEED);
-    while (r) {
-      int c = current_position_(b);
-      if (!consumeToken(b, LINEFEED)) break;
-      if (!empty_element_parsed_guard_(b, "nl", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -1910,11 +1955,13 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pipeline_command (pipeline_command_list_separator pipeline_command)*
-  static boolean pipeline_command_list(PsiBuilder b, int l) {
+  // pipeline_command (
+  //                                              ('|' | '|&' | '&&' | '||') newlines pipeline_command
+  //                                            )*
+  public static boolean pipeline_command_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list")) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
+    Marker m = enter_section_(b, l, _NONE_, PIPELINE_COMMAND_LIST, "<pipeline command list>");
     r = pipeline_command(b, l + 1);
     p = r; // pin = 1
     r = r && pipeline_command_list_1(b, l + 1);
@@ -1922,7 +1969,9 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (pipeline_command_list_separator pipeline_command)*
+  // (
+  //                                              ('|' | '|&' | '&&' | '||') newlines pipeline_command
+  //                                            )*
   private static boolean pipeline_command_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list_1")) return false;
     while (true) {
@@ -1933,40 +1982,26 @@ public class ShParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // pipeline_command_list_separator pipeline_command
+  // ('|' | '|&' | '&&' | '||') newlines pipeline_command
   private static boolean pipeline_command_list_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = pipeline_command_list_separator(b, l + 1);
+    r = pipeline_command_list_1_0_0(b, l + 1);
+    r = r && newlines(b, l + 1);
     r = r && pipeline_command(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  /* ********************************************************** */
-  // ('&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n') newlines
-  static boolean pipeline_command_list_separator(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_list_separator")) return false;
+  // '|' | '|&' | '&&' | '||'
+  private static boolean pipeline_command_list_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_list_1_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = pipeline_command_list_separator_0(b, l + 1);
-    r = r && newlines(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n'
-  private static boolean pipeline_command_list_separator_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_list_separator_0")) return false;
-    boolean r;
-    r = consumeToken(b, AND_AND);
-    if (!r) r = consumeToken(b, OR_OR);
-    if (!r) r = consumeToken(b, AMP);
-    if (!r) r = consumeToken(b, SEMI);
-    if (!r) r = consumeToken(b, PIPE);
+    r = consumeToken(b, PIPE);
     if (!r) r = consumeToken(b, PIPE_AMP);
-    if (!r) r = consumeToken(b, LINEFEED);
+    if (!r) r = consumeToken(b, AND_AND);
+    if (!r) r = consumeToken(b, OR_OR);
     return r;
   }
 

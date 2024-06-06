@@ -133,8 +133,8 @@ private file ::=
 private simple_list ::= (commands_list newlines)*
 
 commands_list ::= pipeline_command (
-                     ('&&' | '||') newlines? pipeline_command
-                   | ('|' | '|&' | '&'| ';') pipeline_command?
+                     ('|' | '|&' | '&&' | '||') newlines pipeline_command
+                   | (';' | '&') pipeline_command?
                  )*
 
 pipeline_command ::=  '!'? command
@@ -200,7 +200,7 @@ private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin("
 private case_clause_recover ::= !(esac)
 
 case_clause ::= newlines pattern ')' newlines compound_case_list? {pin=3}
-compound_case_list ::= pipeline_command_list end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+compound_case_list ::= (pipeline_command_list end_of_list? newlines)+ {pin(".*")=1 elementType=compound_list}
 pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
 private case_pattern_recover ::= !(')'|';;'|esac)
 
@@ -213,13 +213,12 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-compound_list ::= newlines pipeline_command_list end_of_list newlines {pin(".*")=2 recoverWhile=compound_list_recover}
+compound_list ::= newlines (pipeline_command_list end_of_list newlines)+ {pin(".*")=2 recoverWhile=compound_list_recover}
 private compound_list_recover ::= !(elif | else | then | fi)
 
-private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
-  pin=1
-} // todo with pin
-private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n') newlines
+pipeline_command_list ::= pipeline_command (
+                                             ('|' | '|&' | '&&' | '||') newlines pipeline_command
+                                           )* {pin=1} // todo with pin
 
 function_definition ::= &(function | word '(') function_definition_inner {
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
@@ -247,7 +246,7 @@ block ::= '{' block_compound_list '}'  {
   elementTypeClass="com.intellij.sh.lexer.ShLazyBlockElementType"
 }
 
-block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list newlines {
+block_compound_list ::= newlines (pipeline_command_list end_of_list newlines)+  {
   pin(".*")=1
   elementType=compound_list
   recoverWhile=block_compound_list_recover
@@ -287,8 +286,7 @@ private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=o
 private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
 
 subshell_command ::= '(' list ')'
-list ::= newlines pipeline_command_list end_of_list? newlines {pin(".*")=2 elementType=compound_list}
-private nl ::= '\n'+
+list ::= newlines (pipeline_command_list end_of_list? newlines)+ {pin(".*")=2 elementType=compound_list}
 private end_of_list ::= '\n' | ';' | '&'
 
 shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {pin=1}
