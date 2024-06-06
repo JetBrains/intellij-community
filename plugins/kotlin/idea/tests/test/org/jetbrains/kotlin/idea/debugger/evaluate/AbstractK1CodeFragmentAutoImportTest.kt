@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import kotlin.test.assertNull
 
-abstract class AbstractK1CodeFragmentAutoImportTest : AbstractKotlinHighlightVisitorTest() {
+abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisitorTest() {
     override fun doTest(filePath: String) {
         myFixture.configureByCodeFragment(filePath)
         myFixture.doHighlighting()
@@ -27,3 +27,5 @@ abstract class AbstractK1CodeFragmentAutoImportTest : AbstractKotlinHighlightVis
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
+
+abstract class AbstractK1CodeFragmentAutoImportTest : AbstractCodeFragmentAutoImportTest()

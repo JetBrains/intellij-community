@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-abstract class AbstractK1CodeFragmentHighlightingTest : AbstractKotlinHighlightVisitorTest() {
+abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVisitorTest() {
     override fun doTest(filePath: String) {
         myFixture.configureByCodeFragment(filePath)
         checkHighlighting(filePath)
@@ -51,3 +51,5 @@ abstract class AbstractK1CodeFragmentHighlightingTest : AbstractKotlinHighlightV
         myFixture.checkHighlighting(true, false, false)
     }
 }
+
+abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest()
