@@ -1,2 +1,0 @@
-MODULE common { platform=[JVM] }
-

@@ -30,63 +30,58 @@ public class K2ActualExpectTestGenerated extends AbstractK2ActualExpectTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("actualizedClass")
+    @TestMetadata("actualizedClass.kt")
     public void testActualizedClass() throws Exception {
-        runTest("testData/multiplatform/actualExpect/actualizedClass/");
+        runTest("testData/multiplatform/actualExpect/actualizedClass.kt");
     }
 
-    @TestMetadata("actualizedFunction")
+    @TestMetadata("actualizedFunction.kt")
     public void testActualizedFunction() throws Exception {
-        runTest("testData/multiplatform/actualExpect/actualizedFunction/");
+        runTest("testData/multiplatform/actualExpect/actualizedFunction.kt");
     }
 
-    @TestMetadata("actualizedInParent")
+    @TestMetadata("actualizedInParent.kt")
     public void testActualizedInParent() throws Exception {
-        runTest("testData/multiplatform/actualExpect/actualizedInParent/");
+        runTest("testData/multiplatform/actualExpect/actualizedInParent.kt");
     }
 
-    @TestMetadata("actualizedTypealias")
+    @TestMetadata("actualizedTypealias.kt")
     public void testActualizedTypealias() throws Exception {
-        runTest("testData/multiplatform/actualExpect/actualizedTypealias/");
+        runTest("testData/multiplatform/actualExpect/actualizedTypealias.kt");
     }
 
-    @TestMetadata("missedActual")
-    public void testMissedActual() throws Exception {
-        runTest("testData/multiplatform/actualExpect/missedActual/");
-    }
-
-    @TestMetadata("missedActualClass")
+    @TestMetadata("missedActualClass.kt")
     public void testMissedActualClass() throws Exception {
-        runTest("testData/multiplatform/actualExpect/missedActualClass/");
+        runTest("testData/multiplatform/actualExpect/missedActualClass.kt");
     }
 
-    @TestMetadata("missedActualFunction")
+    @TestMetadata("missedActualFunction.kt")
     public void testMissedActualFunction() throws Exception {
-        runTest("testData/multiplatform/actualExpect/missedActualFunction/");
+        runTest("testData/multiplatform/actualExpect/missedActualFunction.kt");
     }
 
-    @TestMetadata("missedActualInSubtree")
+    @TestMetadata("missedActualInSubtree.kt")
     public void testMissedActualInSubtree() throws Exception {
-        runTest("testData/multiplatform/actualExpect/missedActualInSubtree/");
+        runTest("testData/multiplatform/actualExpect/missedActualInSubtree.kt");
     }
 
-    @TestMetadata("missedActualObject")
+    @TestMetadata("missedActualObject.kt")
     public void testMissedActualObject() throws Exception {
-        runTest("testData/multiplatform/actualExpect/missedActualObject/");
+        runTest("testData/multiplatform/actualExpect/missedActualObject.kt");
     }
 
-    @TestMetadata("missedActualSingleTarget")
-    public void testMissedActualSingleTarget() throws Exception {
-        runTest("testData/multiplatform/actualExpect/missedActualSingleTarget/");
-    }
-
-    @TestMetadata("onlyListMissingLeaves")
+    @TestMetadata("onlyListMissingLeaves.kt")
     public void testOnlyListMissingLeaves() throws Exception {
-        runTest("testData/multiplatform/actualExpect/onlyListMissingLeaves/");
+        runTest("testData/multiplatform/actualExpect/onlyListMissingLeaves.kt");
     }
 
-    @TestMetadata("optionalExpectation")
+    @TestMetadata("optionalExpectation.kt")
     public void testOptionalExpectation() throws Exception {
-        runTest("testData/multiplatform/actualExpect/optionalExpectation/");
+        runTest("testData/multiplatform/actualExpect/optionalExpectation.kt");
+    }
+
+    @TestMetadata("optionalExpectationAlias.kt")
+    public void testOptionalExpectationAlias() throws Exception {
+        runTest("testData/multiplatform/actualExpect/optionalExpectationAlias.kt");
     }
 }

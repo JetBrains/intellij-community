@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTe
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
-import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 
 
 internal fun MutableTWorkspace.generateK2InspectionTests() {
@@ -102,7 +101,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         }
 
         testClass<AbstractK2ActualExpectTest> {
-            model("code-insight/inspections-k2/tests/testData/multiplatform/actualExpect/", pattern = DIRECTORY, isRecursive = false)
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
+            model("code-insight/inspections-k2/tests/testData/multiplatform/actualExpect/", pattern = pattern, isRecursive = false)
         }
     }
     testGroup("code-insight/inspections-k2/tests", category = QUICKFIXES, testDataPath = "../../..") {
