@@ -235,7 +235,7 @@ object ProjectUtil {
       } ?: blockingContext {
         ProjectUtilCore.getFileAndRefresh(file)
       } ?: return null
-      project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
+      project = chooseProcessorAndOpenAsync(processors, virtualFile, options)?.also { options.beforeOpen?.invoke(it) }
     }
     return postProcess(project)
   }
