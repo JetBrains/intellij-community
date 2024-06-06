@@ -1,6 +1,6 @@
 package test
 
-class TestValReassign(private var s1: String?) {
+class TestValReassign(private val s1: String?) {
     private var s2: String? = null
 
     constructor(s1: String?, s2: String?) : this(s1) {

@@ -78,7 +78,7 @@ class TestForLoopParameter {
     }
 }
 
-class TestPrimaryConstructorProperty(private var foo: @TypeUseAnon1 @TypeUseAnon2 String?)
+class TestPrimaryConstructorProperty(private val foo: @TypeUseAnon1 @TypeUseAnon2 String?)
 
 class TestStandardMethods : Cloneable {
     override fun toString(): @TypeUseAnon1 String {

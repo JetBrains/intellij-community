@@ -1,6 +1,5 @@
 internal class C {
-    var `this`: Int = 0
-        private set
+    val `this`: Int = 0
 
     fun foo() {
         println(this.`this`)

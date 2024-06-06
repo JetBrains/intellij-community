@@ -5,6 +5,5 @@ internal interface I {
 }
 
 internal class C {
-    var x: Type? = null
-        private set
+    val x: Type? = null
 }

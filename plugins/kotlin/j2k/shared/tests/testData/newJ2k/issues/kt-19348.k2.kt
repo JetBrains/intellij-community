@@ -2,7 +2,7 @@ class TestMutltipleCtorsWithJavadoc
 /**
  * Javadoc for 1st ctor
  * @param x
- */(private var x: String?) {
+ */(private val x: String?) {
     private var y: String? = null
 
     // ---

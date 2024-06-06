@@ -1,4 +1,4 @@
-class TestInitInCtor(private var i: Int) {
+class TestInitInCtor(private val i: Int) {
     private val j: Int
 
     init {
