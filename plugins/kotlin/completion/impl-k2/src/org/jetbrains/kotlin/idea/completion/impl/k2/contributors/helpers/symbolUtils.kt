@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
 /**
@@ -27,7 +27,7 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
 
     return reference.resolveToSymbols().mapNotNull { symbol ->
         when (symbol) {
-            is KtSymbolWithMembers -> {
+            is KaSymbolWithMembers -> {
                 val scope = if (symbol is KaNamedClassOrObjectSymbol && symbol.classKind.isObject) {
                     symbol.getMemberScope()
                 } else {

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
@@ -206,7 +206,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             analyze(t) {
                 val resolvedSymbol = t.getSymbol()
                 val containingSymbol = resolvedSymbol.getContainingSymbol() ?: return true
-                if (containingSymbol is KtSymbolWithMembers) {
+                if (containingSymbol is KaSymbolWithMembers) {
                     val staticScope = containingSymbol.getStaticMemberScope()
                     return resolvedSymbol in staticScope.getAllSymbols()
                 }

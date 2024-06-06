@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -169,7 +169,7 @@ sealed class K2MoveRenameUsageInfo(
                         else -> {}
                     }
                 }
-                if (containingSymbol is KtSymbolWithMembers) {
+                if (containingSymbol is KaSymbolWithMembers) {
                     if (resolvedSymbol in containingSymbol.getStaticMemberScope().getAllSymbols()) return true
                 }
                 return false
