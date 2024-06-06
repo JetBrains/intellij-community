@@ -16,7 +16,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
@@ -182,7 +182,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
         final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
         if (gotIt.canShow()) {
-          final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
+          final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
           if (filterAction != null) {
             gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
           }
@@ -652,12 +652,5 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
     }
-  }
-
-  private static JComponent findToolbarActionButtonWithIcon(ActionToolbar toolbar, Icon icon) {
-    return UIUtil.uiTraverser(toolbar.getComponent())
-      .filter(ActionButton.class)
-      .filter(button -> button.getIcon() == icon)
-      .first();
   }
 }

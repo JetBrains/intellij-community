@@ -11987,6 +11987,12 @@ pf:com.intellij.openapi.actionSystem.impl.ActionButton$AccessibleActionButton
 - getAccessibleName():java.lang.String
 - getAccessibleRole():javax.accessibility.AccessibleRole
 - getAccessibleStateSet():javax.accessibility.AccessibleStateSet
+f:com.intellij.openapi.actionSystem.impl.ActionButtonUtil
+- sf:INSTANCE:com.intellij.openapi.actionSystem.impl.ActionButtonUtil
+- sf:findActionButton(javax.swing.JComponent,kotlin.jvm.functions.Function1):com.intellij.openapi.actionSystem.impl.ActionButton
+- sf:findActionButtonById(javax.swing.JComponent,java.lang.String):com.intellij.openapi.actionSystem.impl.ActionButton
+- sf:findToolbarActionButton(com.intellij.openapi.actionSystem.ActionToolbar,kotlin.jvm.functions.Function1):com.intellij.openapi.actionSystem.impl.ActionButton
+- sf:findToolbarActionButtonById(com.intellij.openapi.actionSystem.ActionToolbar,java.lang.String):com.intellij.openapi.actionSystem.impl.ActionButton
 c:com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 - com.intellij.openapi.actionSystem.impl.ActionButton
 - sf:SHORTCUT_SHOULD_SHOWN:com.intellij.openapi.util.Key

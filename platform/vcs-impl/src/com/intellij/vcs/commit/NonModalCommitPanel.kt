@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.project.Project
@@ -29,7 +29,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUIUtil
 import org.jetbrains.annotations.Nls
@@ -192,7 +191,6 @@ abstract class NonModalCommitPanel(
   }
 }
 
-private fun CommitActionsPanel.getShowCommitOptionsButton(): JComponent? =
-  uiTraverser(this)
-    .filter(ActionButton::class.java)
-    .find { it.action is ShowCommitOptionsAction }
+private fun CommitActionsPanel.getShowCommitOptionsButton(): JComponent? = ActionButtonUtil.findActionButton(this) {
+  it.action is ShowCommitOptionsAction
+}
