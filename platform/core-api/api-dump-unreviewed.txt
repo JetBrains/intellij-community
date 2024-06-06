@@ -4777,6 +4777,7 @@ a:com.intellij.psi.PsiWalkingState
 - p:<init>(com.intellij.psi.PsiElementVisitor):V
 - p:<init>(com.intellij.psi.PsiElementVisitor,com.intellij.util.WalkingState$TreeGuide):V
 - elementStarted(com.intellij.psi.PsiElement):V
+- s:processAll(com.intellij.psi.PsiElement,com.intellij.util.Processor):Z
 - visit(com.intellij.psi.PsiElement):V
 com.intellij.psi.PsiWhiteSpace
 - com.intellij.psi.PsiElement

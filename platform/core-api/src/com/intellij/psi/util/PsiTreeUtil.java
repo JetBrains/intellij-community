@@ -1220,7 +1220,7 @@ public class PsiTreeUtil {
    */
   public static boolean hasErrorElements(@NotNull PsiElement element) {
     Ref<Boolean> result = new Ref<>(false);
-    WalkingState.processAll(element, PsiWalkingState.PsiTreeGuide.instance, el -> {
+    PsiWalkingState.processAll(element, el -> {
       if (el instanceof PsiErrorElement) {
         result.set(true);
         return false;
