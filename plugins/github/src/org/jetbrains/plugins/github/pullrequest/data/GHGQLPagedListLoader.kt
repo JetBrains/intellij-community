@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 
-open class GHGQLPagedListLoader<T>(progressManager: ProgressManager,
+internal class GHGQLPagedListLoader<T>(progressManager: ProgressManager,
                                    private val loader: SimpleGHGQLPagesLoader<T>)
   : GHListLoaderBase<T>(progressManager) {
 
