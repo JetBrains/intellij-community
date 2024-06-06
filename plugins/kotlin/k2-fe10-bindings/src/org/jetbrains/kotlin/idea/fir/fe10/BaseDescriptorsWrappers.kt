@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.*
@@ -510,7 +510,7 @@ private fun <T> T.getExtensionReceiverParameter(
     return Fe10BindingReceiverParameterDescriptorImpl(this, receiverValue, receiverType.getDescriptorsAnnotations(context))
 }
 
-private fun KtSymbolBasedDeclarationDescriptor.getTypeParameters(ktSymbol: KtSymbolWithTypeParameters) =
+private fun KtSymbolBasedDeclarationDescriptor.getTypeParameters(ktSymbol: KaSymbolWithTypeParameters) =
     ktSymbol.typeParameters.map { KtSymbolBasedTypeParameterDescriptor(it, context) }
 
 private class KtSymbolBasedReceiverValue(val ktType: KtType, val context: Fe10WrapperContext) : ReceiverValue {
