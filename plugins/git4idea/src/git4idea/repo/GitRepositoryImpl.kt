@@ -1,278 +1,251 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.repo;
+package git4idea.repo
 
-import com.intellij.dvcs.repo.RepositoryImpl;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsScopeKt;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.vcs.log.Hash;
-import git4idea.GitDisposable;
-import git4idea.GitLocalBranch;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
-import git4idea.status.GitStagingAreaHolder;
-import git4idea.telemetry.GitTelemetrySpan;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.RepositoryImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsScope
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.util.ObjectUtils
+import com.intellij.vcs.log.Hash
+import git4idea.*
+import git4idea.branch.GitBranchesCollection
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder
+import git4idea.status.GitStagingAreaHolder
+import git4idea.telemetry.GitTelemetrySpan
+import io.opentelemetry.api.trace.Span
+import org.jetbrains.annotations.ApiStatus
+import java.io.File
+import java.util.*
+import kotlin.concurrent.Volatile
 
-import java.io.File;
-import java.util.*;
+class GitRepositoryImpl private constructor(
+  project: Project,
+  rootDir: VirtualFile,
+  private val gitDir: VirtualFile,
+  parentDisposable: Disposable
+) : RepositoryImpl(project, rootDir, parentDisposable), GitRepository {
 
-import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
-import static com.intellij.util.ObjectUtils.notNull;
-import static git4idea.repo.GitRecentCheckoutBranches.collectRecentCheckoutBranches;
+  private val vcs = GitVcs.getInstance(project)
 
-public final class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
-  private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
+  private val repositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir)
+  private val repositoryReader = GitRepositoryReader(repositoryFiles)
 
-  private final @NotNull GitVcs myVcs;
-  private final @NotNull GitRepositoryReader myReader;
-  private final @NotNull VirtualFile myGitDir;
-  private final @NotNull GitRepositoryFiles myRepositoryFiles;
+  private val stagingAreaHolder: GitStagingAreaHolder
+  private val untrackedFilesHolder: GitUntrackedFilesHolder
+  private val ignoredRepositoryFilesHolder: GitRepositoryIgnoredFilesHolder
 
-  private final @NotNull GitUntrackedFilesHolder myUntrackedFilesHolder;
-  private final @NotNull GitStagingAreaHolder myStagingAreaHolder;
-  private final @NotNull GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
+  @Volatile
+  private var repoInfo: GitRepoInfo
 
-  private volatile @NotNull GitRepoInfo myInfo;
-  private volatile @NotNull List<GitLocalBranch> myRecentCheckoutBranches = Collections.emptyList();
+  @Volatile
+  private var recentCheckoutBranches = emptyList<GitLocalBranch>()
 
   /**
    * @param rootDir Root of the repository (parent directory of '.git' file/directory).
    * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
    */
-  private GitRepositoryImpl(@NotNull VirtualFile rootDir,
-                            @NotNull VirtualFile gitDir,
-                            @NotNull Project project) {
-    super(project, rootDir);
-    myVcs = GitVcs.getInstance(project);
-    myGitDir = gitDir;
-    myRepositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir);
-    myReader = new GitRepositoryReader(myRepositoryFiles);
-    myInfo = readRepoInfo();
+  init {
+    stagingAreaHolder = GitStagingAreaHolder(this)
 
-    myStagingAreaHolder = new GitStagingAreaHolder(this);
+    untrackedFilesHolder = GitUntrackedFilesHolder(this)
+    Disposer.register(this, untrackedFilesHolder)
 
-    myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
-    Disposer.register(this, myUntrackedFilesHolder);
+    ignoredRepositoryFilesHolder = GitRepositoryIgnoredFilesHolder(this)
 
-    myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredFilesHolder(this);
+    repoInfo = readRepoInfo()
   }
 
-  /**
-   * @deprecated Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull GitRepository getInstance(@NotNull VirtualFile root,
-                                          @NotNull Project project,
-                                          boolean listenToRepoChanges) {
-    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
-    return notNull(repository, () -> createInstance(root, project, GitDisposable.getInstance(project)));
+  @Deprecated("Deprecated in Java")
+  override fun getGitDir(): VirtualFile {
+    return gitDir
   }
 
-  /**
-   * @deprecated Use {@link #createInstance(VirtualFile, Project, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  public static @NotNull GitRepository createInstance(@NotNull VirtualFile root,
-                                             @NotNull Project project,
-                                             @NotNull Disposable parentDisposable,
-                                             boolean listenToRepoChanges) {
-    return createInstance(root, project, parentDisposable);
+  override fun getRepositoryFiles(): GitRepositoryFiles {
+    return repositoryFiles
   }
 
-  /**
-   * Creates a new instance of the GitRepository for the given Git root directory. <br/>
-   * Use {@link GitRepositoryManager#getRepositoryForRoot(VirtualFile)} if you need to obtain an instance
-   */
-  @ApiStatus.Internal
-  public static @NotNull GitRepository createInstance(@NotNull VirtualFile root,
-                                             @NotNull Project project,
-                                             @NotNull Disposable parentDisposable) {
-    VirtualFile gitDir = Objects.requireNonNull(GitUtil.findGitDir(root));
-    return createInstance(root, gitDir, project, parentDisposable);
+  override fun getStagingAreaHolder(): GitStagingAreaHolder {
+    return stagingAreaHolder
   }
 
-  @ApiStatus.Internal
-  static @NotNull GitRepository createInstance(@NotNull VirtualFile root,
-                                               @NotNull VirtualFile gitDir,
-                                               @NotNull Project project,
-                                               @NotNull Disposable parentDisposable) {
-    ProgressManager.checkCanceled();
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project);
-    repository.setupUpdater();
-    GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
-
-    ReadAction.run(() -> {
-      if (!Disposer.tryRegister(parentDisposable, repository)) {
-        Disposer.dispose(repository);
-      }
-    });
-    return repository;
+  override fun getUntrackedFilesHolder(): GitUntrackedFilesHolder {
+    return untrackedFilesHolder
   }
 
-  private void setupUpdater() {
-    GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
-    Disposer.register(this, updater);
+  override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
+    return ignoredRepositoryFilesHolder
   }
 
-  @Deprecated
-  @Override
-  public @NotNull VirtualFile getGitDir() {
-    return myGitDir;
+  override fun getInfo(): GitRepoInfo {
+    return repoInfo
   }
 
-  @Override
-  public @NotNull GitRepositoryFiles getRepositoryFiles() {
-    return myRepositoryFiles;
+  override fun getCurrentBranch(): GitLocalBranch? {
+    return repoInfo.currentBranch
   }
 
-  @Override
-  public @NotNull GitStagingAreaHolder getStagingAreaHolder() {
-    return myStagingAreaHolder;
+  override fun getCurrentRevision(): String? {
+    return repoInfo.currentRevision
   }
 
-  @Override
-  public @NotNull GitUntrackedFilesHolder getUntrackedFilesHolder() {
-    return myUntrackedFilesHolder;
+  override fun getState(): Repository.State {
+    return repoInfo.state
   }
 
-  @Override
-  public @NotNull GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
-    return myIgnoredRepositoryFilesHolder;
+  override fun getCurrentBranchName(): String? {
+    val currentBranch = currentBranch
+    return currentBranch?.name
   }
 
-  @Override
-  public @NotNull GitRepoInfo getInfo() {
-    return myInfo;
+  override fun getVcs(): GitVcs {
+    return vcs
   }
 
-  @Override
-  public @Nullable GitLocalBranch getCurrentBranch() {
-    return myInfo.getCurrentBranch();
-  }
-
-  @Override
-  public @Nullable String getCurrentRevision() {
-    return myInfo.getCurrentRevision();
-  }
-
-  @Override
-  public @NotNull State getState() {
-    return myInfo.getState();
-  }
-
-  @Override
-  public @Nullable String getCurrentBranchName() {
-    GitLocalBranch currentBranch = getCurrentBranch();
-    return currentBranch == null ? null : currentBranch.getName();
-  }
-
-  @Override
-  public @NotNull GitVcs getVcs() {
-    return myVcs;
-  }
-
-  @Override
-  public @NotNull Collection<GitSubmoduleInfo> getSubmodules() {
-    return myInfo.getSubmodules();
+  override fun getSubmodules(): Collection<GitSubmoduleInfo> {
+    return repoInfo.submodules
   }
 
   /**
    * @return local and remote branches in this repository.
    */
-  @Override
-  public @NotNull GitBranchesCollection getBranches() {
-    GitRepoInfo info = myInfo;
-    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes(), myRecentCheckoutBranches);
+  override fun getBranches(): GitBranchesCollection {
+    val info = repoInfo
+    return GitBranchesCollection(info.localBranchesWithHashes, info.remoteBranchesWithHashes, recentCheckoutBranches)
   }
 
-  @Override
-  public @NotNull Collection<GitRemote> getRemotes() {
-    return myInfo.getRemotes();
+  override fun getRemotes(): Collection<GitRemote> {
+    return repoInfo.remotes
   }
 
-  @Override
-  public @NotNull Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-    return myInfo.getBranchTrackInfos();
+  override fun getBranchTrackInfos(): Collection<GitBranchTrackInfo> {
+    return repoInfo.branchTrackInfos
   }
 
-  @Override
-  public @Nullable GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
-    return myInfo.getBranchTrackInfosMap().get(localBranchName);
+  override fun getBranchTrackInfo(localBranchName: String): GitBranchTrackInfo? {
+    return repoInfo.branchTrackInfosMap[localBranchName]
   }
 
-  @Override
-  public boolean isRebaseInProgress() {
-    return getState() == State.REBASING;
+  override fun isRebaseInProgress(): Boolean {
+    return state == Repository.State.REBASING
   }
 
-  @Override
-  public boolean isOnBranch() {
-    return getState() != State.DETACHED && getState() != State.REBASING;
+  override fun isOnBranch(): Boolean {
+    return state != Repository.State.DETACHED && state != Repository.State.REBASING
   }
 
-  @Override
-  public void update() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    GitRepoInfo previousInfo = myInfo;
-    myInfo = readRepoInfo();
-    notifyIfRepoChanged(this, previousInfo, myInfo);
+  override fun update() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val previousInfo = repoInfo
+    repoInfo = readRepoInfo()
+    notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
 
-  private @NotNull GitRepoInfo readRepoInfo() {
-    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope),
-                           GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName(), span -> {
-      span.setAttribute("repository", getShortRepositoryName(this));
+  private fun readRepoInfo(): GitRepoInfo {
+    return computeWithSpan(getInstance().getTracer(VcsScope),
+                           GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()) { span: Span ->
+      span.setAttribute("repository", DvcsUtil.getShortRepositoryName(this))
 
-      File configFile = myRepositoryFiles.getConfigFile();
-      GitConfig config = GitConfig.read(configFile);
-      myRepositoryFiles.updateCustomPaths(config.parseCore());
+      val configFile = repositoryFiles.configFile
+      val config = GitConfig.read(configFile)
+      repositoryFiles.updateCustomPaths(config.parseCore())
 
-      Collection<GitRemote> remotes = config.parseRemotes();
-      GitBranchState state = myReader.readState(remotes);
-      boolean isShallow = myReader.hasShallowCommits();
-      Collection<GitBranchTrackInfo> trackInfos =
-        config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
-      GitHooksInfo hooksInfo = myReader.readHooksInfo();
-      Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-      Map<GitLocalBranch, Hash> localBranches = new HashMap<>(state.getLocalBranches());
-      myRecentCheckoutBranches = collectRecentCheckoutBranches(this, branch -> localBranches.containsKey(branch));
-      return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
-                             localBranches, new HashMap<>(state.getRemoteBranches()),
-                             new LinkedHashSet<>(trackInfos),
-                             submodules, hooksInfo, isShallow);
-    });
-  }
-
-  private @NotNull File getSubmoduleFile() {
-    return new File(VfsUtilCore.virtualToIoFile(getRoot()), ".gitmodules");
-  }
-
-  private static void notifyIfRepoChanged(@NotNull GitRepository repository,
-                                          @NotNull GitRepoInfo previousInfo,
-                                          @NotNull GitRepoInfo info) {
-    Project project = repository.getProject();
-    if (!project.isDisposed() && !info.equals(previousInfo)) {
-      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
+      val remotes = config.parseRemotes()
+      val state = repositoryReader.readState(remotes)
+      val isShallow = repositoryReader.hasShallowCommits()
+      val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
+      val hooksInfo = repositoryReader.readHooksInfo()
+      val submoduleFile = File(VfsUtilCore.virtualToIoFile(root), ".gitmodules")
+      val submodules = GitModulesFileReader().read(submoduleFile)
+      val localBranches: Map<GitLocalBranch, Hash> = HashMap(state.localBranches)
+      recentCheckoutBranches = collectRecentCheckoutBranches { branch: GitLocalBranch -> localBranches.containsKey(branch) }
+      GitRepoInfo(currentBranch = state.currentBranch,
+                  currentRevision = state.currentRevision,
+                  state = state.state,
+                  remotes = LinkedHashSet(remotes),
+                  localBranchesWithHashes = localBranches,
+                  remoteBranchesWithHashes = HashMap<GitRemoteBranch, Hash>(state.remoteBranches),
+                  branchTrackInfos = LinkedHashSet(trackInfos),
+                  submodules = submodules,
+                  hooksInfo = hooksInfo,
+                  isShallow = isShallow)
     }
   }
 
-  @Override
-  public @NotNull String toLogString() {
-    return "GitRepository " + getRoot() + " : " + myInfo;
+  override fun toLogString(): String {
+    return "GitRepository $root : $repoInfo"
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
+
+
+    @JvmStatic
+    @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
+    fun getInstance(root: VirtualFile,
+                    project: Project,
+                    listenToRepoChanges: Boolean): GitRepository {
+      val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)
+      return ObjectUtils.notNull(repository) { createInstance(root, project, GitDisposable.getInstance(project)) }
+    }
+
+
+    @JvmStatic
+    @ApiStatus.Internal
+    @Deprecated("Use {@link #createInstance(VirtualFile, Project, Disposable)}")
+    fun createInstance(root: VirtualFile,
+                       project: Project,
+                       parentDisposable: Disposable,
+                       listenToRepoChanges: Boolean): GitRepository {
+      return createInstance(root, project, parentDisposable)
+    }
+
+    /**
+     * Creates a new instance of the GitRepository for the given Git root directory. <br></br>
+     * Use [GitRepositoryManager.getRepositoryForRoot] if you need to obtain an instance
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    fun createInstance(root: VirtualFile,
+                       project: Project,
+                       parentDisposable: Disposable): GitRepository {
+      val gitDir = Objects.requireNonNull(GitUtil.findGitDir(root))
+      return createInstance(root, gitDir!!, project, parentDisposable)
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun createInstance(root: VirtualFile,
+                       gitDir: VirtualFile,
+                       project: Project,
+                       parentDisposable: Disposable): GitRepository {
+      ProgressManager.checkCanceled()
+
+      val repository = GitRepositoryImpl(project, root, gitDir, parentDisposable)
+
+      val updater = GitRepositoryUpdater(repository, repository.repositoryFiles)
+      Disposer.register(repository, updater)
+
+      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
+      return repository
+    }
+
+    private fun notifyIfRepoChanged(repository: GitRepository,
+                                    previousInfo: GitRepoInfo,
+                                    info: GitRepoInfo) {
+      val project = repository.project
+      if (!project.isDisposed && info != previousInfo) {
+        GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
+      }
+    }
   }
 }
