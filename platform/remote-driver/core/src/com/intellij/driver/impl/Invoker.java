@@ -135,9 +135,18 @@ public class Invoker implements InvokerMBean {
 
     if (call.getDispatcher() == OnDispatcher.EDT) {
       Object[] res = new Object[1];
+      ModalityState[] modalityState = new ModalityState[1];
+      try {
+        SwingUtilities.invokeAndWait(() -> {
+          modalityState[0] = ModalityState.current();
+        });
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
       ApplicationManager.getApplication().invokeAndWait(() -> {
         res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
-      });
+      }, modalityState[0]);
       result = res[0];
     }
     else {
