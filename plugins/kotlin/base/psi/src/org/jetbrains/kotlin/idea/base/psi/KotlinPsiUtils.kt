@@ -322,3 +322,14 @@ fun KtSimpleNameExpression.isPartOfQualifiedExpression(): Boolean {
 fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
     return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
 }
+
+fun KtNamedDeclaration.getReturnTypeReference(): KtTypeReference? = getReturnTypeReferences().singleOrNull()
+
+fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference> {
+    return when (this) {
+        is KtCallableDeclaration -> listOfNotNull(typeReference)
+        is KtClassOrObject -> superTypeListEntries.mapNotNull { it.typeReference }
+        is KtScript -> emptyList()
+        else -> throw AssertionError("Unexpected declaration kind: $text")
+    }
+}
