@@ -5,19 +5,20 @@ SHELL_SCRIPT
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('git')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('log')
+            PsiWhiteSpace(' ')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
             GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('git')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('log')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('cat')
+                PsiElement(word)('cat')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(})('}')
@@ -70,27 +71,29 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('show_help')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              VARIABLE
-                PsiElement(var)('$ACTION')
-              PsiElement(STRING_CONTENT)(' is not a valid command')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('show_help')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                VARIABLE
+                  PsiElement(var)('$ACTION')
+                PsiElement(STRING_CONTENT)(' is not a valid command')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(;)(';')
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('exit')
-            PsiWhiteSpace(' ')
-            NUMBER
-              PsiElement(int)('1')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('exit')
+              PsiWhiteSpace(' ')
+              NUMBER
+                PsiElement(int)('1')
           PsiElement(;)(';')
           PsiElement(\n)('\n')
         PsiElement(})('}')

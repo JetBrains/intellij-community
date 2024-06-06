@@ -4,16 +4,17 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            PsiElement(word)('-e')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            PsiElement(word)('/lib/init/splash-functions-base')
-          PsiWhiteSpace(' ')
-          PsiElement(])(']')
+        PIPELINE_COMMAND_LIST
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('-e')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('/lib/init/splash-functions-base')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
@@ -22,12 +23,13 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          INCLUDE_COMMAND
-            INCLUDE_DIRECTIVE
-              PsiElement(word)('.')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('/lib/init/splash-functions-base')
+          PIPELINE_COMMAND_LIST
+            INCLUDE_COMMAND
+              INCLUDE_DIRECTIVE
+                PsiElement(word)('.')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('/lib/init/splash-functions-base')
           PsiElement(\n)('\n')
       ELSE_CLAUSE
         PsiElement(else)('else')
@@ -37,24 +39,26 @@ SHELL_SCRIPT
           PsiComment(Comment)('# Quiet down script if old initscripts version without /lib/init/splash-functions-base is used.')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          FUNCTION_DEFINITION
-            PsiElement(word)('splash_progress')
-            PsiElement(()('(')
-            PsiElement())(')')
-            PsiWhiteSpace(' ')
-            BLOCK
-              PsiElement({)('{')
+          PIPELINE_COMMAND_LIST
+            FUNCTION_DEFINITION
+              PsiElement(word)('splash_progress')
+              PsiElement(()('(')
+              PsiElement())(')')
               PsiWhiteSpace(' ')
-              COMPOUND_LIST
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('return')
-                  PsiWhiteSpace(' ')
-                  NUMBER
-                    PsiElement(int)('1')
-                PsiElement(;)(';')
-              PsiWhiteSpace(' ')
-              PsiElement(})('}')
+              BLOCK
+                PsiElement({)('{')
+                PsiWhiteSpace(' ')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND_LIST
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('return')
+                      PsiWhiteSpace(' ')
+                      NUMBER
+                        PsiElement(int)('1')
+                  PsiElement(;)(';')
+                PsiWhiteSpace(' ')
+                PsiElement(})('}')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')

@@ -13,13 +13,14 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('a')
+                PsiElement(word)('a')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(esac)('esac')
@@ -39,13 +40,14 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('a')
+                PsiElement(word)('a')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(esac)('esac')
@@ -67,13 +69,14 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('a')
+                PsiElement(word)('a')
           PsiElement(\n)('\n')
       PsiWhiteSpace(' ')
       PsiElement(;;)(';;')
@@ -85,13 +88,14 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('b')
+                PsiElement(word)('b')
           PsiElement(\n)('\n')
           PsiElement(\n)('\n')
       PsiWhiteSpace(' ')
@@ -148,13 +152,14 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('a')
+                PsiElement(word)('a')
       PsiElement(;;)(';;')
       PsiWhiteSpace(' ')
       PsiElement(esac)('esac')
@@ -173,13 +178,14 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('a')
+                PsiElement(word)('a')
       PsiElement(;;)(';;')
       PsiWhiteSpace(' ')
       PsiElement(esac)('esac')

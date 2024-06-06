@@ -4,23 +4,24 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
-          PsiWhiteSpace(' ')
-          ASSIGNMENT_CONDITION
-            LITERAL_CONDITION
-              PsiElement(word)('startpar')
+        PIPELINE_COMMAND_LIST
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
             PsiWhiteSpace(' ')
-            PsiElement(=)('=')
+            ASSIGNMENT_CONDITION
+              LITERAL_CONDITION
+                PsiElement(word)('startpar')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              LITERAL_CONDITION
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$CONCURRENCY')
+                  PsiElement(CLOSE_QUOTE)('"')
             PsiWhiteSpace(' ')
-            LITERAL_CONDITION
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$CONCURRENCY')
-                PsiElement(CLOSE_QUOTE)('"')
-          PsiWhiteSpace(' ')
-          PsiElement(])(']')
+            PsiElement(])(']')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
@@ -29,45 +30,47 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          TEST_COMMAND
-            PsiElement(test)('test')
+          PIPELINE_COMMAND_LIST
+            TEST_COMMAND
+              PsiElement(test)('test')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-s')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('/etc/init.d/.depend.boot')
+            PsiWhiteSpace('  ')
+            PsiElement(||)('||')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-s')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('/etc/init.d/.depend.boot')
-          PsiWhiteSpace('  ')
-          PsiElement(||)('||')
-          PsiWhiteSpace(' ')
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('CONCURRENCY')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('none')
-              PsiElement(CLOSE_QUOTE)('"')
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('CONCURRENCY')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('none')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          TEST_COMMAND
-            PsiElement(test)('test')
+          PIPELINE_COMMAND_LIST
+            TEST_COMMAND
+              PsiElement(test)('test')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-s')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('/etc/init.d/.depend.start')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-s')
+            PsiElement(||)('||')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('/etc/init.d/.depend.start')
-          PsiWhiteSpace(' ')
-          PsiElement(||)('||')
-          PsiWhiteSpace(' ')
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('CONCURRENCY')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('none')
-              PsiElement(CLOSE_QUOTE)('"')
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('CONCURRENCY')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('none')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')

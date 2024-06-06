@@ -62,13 +62,14 @@ SHELL_SCRIPT
           SUBSHELL_COMMAND
             PsiElement(()('(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                NUMBER
-                  PsiElement(int)('123')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('123')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -86,13 +87,14 @@ SHELL_SCRIPT
           SUBSHELL_COMMAND
             PsiElement(()('(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                NUMBER
-                  PsiElement(int)('123')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('123')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST

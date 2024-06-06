@@ -21,15 +21,16 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            EVAL_COMMAND
-              PsiElement(eval)('eval')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$executable')
-                PsiElement(CLOSE_QUOTE)('"')
-              PsiWhiteSpace(' ')
-              PsiElement(EVAL_CONTENT)('2>/dev/null')
+            PIPELINE_COMMAND_LIST
+              EVAL_COMMAND
+                PsiElement(eval)('eval')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$executable')
+                  PsiElement(CLOSE_QUOTE)('"')
+                PsiWhiteSpace(' ')
+                PsiElement(EVAL_CONTENT)('2>/dev/null')
           PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')

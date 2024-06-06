@@ -34,12 +34,13 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              OLD_ARITHMETIC_EXPANSION
-                PsiElement(ARITH_SQUARE_LEFT)('$[')
-                LITERAL_EXPRESSION
-                  NUMBER
-                    PsiElement(int)('1')
-                PsiElement(ARITH_SQUARE_RIGHT)(']')
+            PIPELINE_COMMAND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                OLD_ARITHMETIC_EXPANSION
+                  PsiElement(ARITH_SQUARE_LEFT)('$[')
+                  LITERAL_EXPRESSION
+                    NUMBER
+                      PsiElement(int)('1')
+                  PsiElement(ARITH_SQUARE_RIGHT)(']')
           PsiElement(CLOSE_BACKQUOTE)('`')
         PsiElement(})('}')

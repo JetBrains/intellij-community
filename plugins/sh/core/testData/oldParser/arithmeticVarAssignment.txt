@@ -39,17 +39,18 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Welcome ')
-              VARIABLE
-                PsiElement(var)('$c')
-              PsiElement(STRING_CONTENT)(' times...')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Welcome ')
+                VARIABLE
+                  PsiElement(var)('$c')
+                PsiElement(STRING_CONTENT)(' times...')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')

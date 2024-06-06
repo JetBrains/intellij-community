@@ -12,17 +12,18 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('   ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('local')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              ASSIGNMENT_COMMAND
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)('local1')
-                PsiElement(=)('=')
-                NUMBER
-                  PsiElement(int)('1')
+                  PsiElement(word)('local')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                ASSIGNMENT_COMMAND
+                  LITERAL
+                    PsiElement(word)('local1')
+                  PsiElement(=)('=')
+                  NUMBER
+                    PsiElement(int)('1')
           PsiElement(\n)('\n')
         PsiElement(})('}')

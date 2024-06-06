@@ -126,27 +126,28 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('tr')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(<<<)('<<<')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('[[{')
-                VARIABLE
-                  PsiElement(var)('$op')
-                PsiElement(word)('[[')
-                PsiElement($)('$')
-                SHELL_PARAMETER_EXPANSION
-                  PsiElement({)('{')
-                  PsiElement(word)('branch')
-                  PsiElement(})('}')
-                PsiElement(word)('\\<<<]]+={}')
-                PsiWhiteSpace('   ')
-                PsiElement(word)('sdfsdfsd')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('tr')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(<<<)('<<<')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('[[{')
+                  VARIABLE
+                    PsiElement(var)('$op')
+                  PsiElement(word)('[[')
+                  PsiElement($)('$')
+                  SHELL_PARAMETER_EXPANSION
+                    PsiElement({)('{')
+                    PsiElement(word)('branch')
+                    PsiElement(})('}')
+                  PsiElement(word)('\\<<<]]+={}')
+                  PsiWhiteSpace('   ')
+                  PsiElement(word)('sdfsdfsd')
         PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -158,25 +159,26 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('tr')
-            PsiWhiteSpace('  ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(<<<)('<<<')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('[[{')
-                VARIABLE
-                  PsiElement(var)('$op')
-                PsiElement(word)('[[')
-                PsiElement($)('$')
-                SHELL_PARAMETER_EXPANSION
-                  PsiElement({)('{')
-                  PsiElement(word)('branch')
-                  PsiElement(})('}')
-                PsiElement(word)('\\<<<]]+={}')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('tr')
+              PsiWhiteSpace('  ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(<<<)('<<<')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('[[{')
+                  VARIABLE
+                    PsiElement(var)('$op')
+                  PsiElement(word)('[[')
+                  PsiElement($)('$')
+                  SHELL_PARAMETER_EXPANSION
+                    PsiElement({)('{')
+                    PsiElement(word)('branch')
+                    PsiElement(})('}')
+                  PsiElement(word)('\\<<<]]+={}')
         PsiWhiteSpace('   ')
         PsiElement())(')')
     PsiElement(;)(';')
@@ -191,17 +193,18 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('tr')
-            PsiWhiteSpace('  ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(<<<)('<<<')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(RAW_STRING)(''[[8+8]][[${branch}\\)]$\&\&]+={}    p'')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('tr')
+              PsiWhiteSpace('  ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(<<<)('<<<')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(RAW_STRING)(''[[8+8]][[${branch}\\)]$\&\&]+={}    p'')
         PsiWhiteSpace('  ')
         PsiElement())(')')
     PsiElement(;)(';')
@@ -215,25 +218,26 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('tr')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(<<<)('<<<')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(STRING_CONTENT)('[[8+8]][[')
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('branch')
-                    PsiElement(})('}')
-                  PsiElement(STRING_CONTENT)('\\)]$\&\&]+={}    p')
-                  PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('tr')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(<<<)('<<<')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(OPEN_QUOTE)('"')
+                    PsiElement(STRING_CONTENT)('[[8+8]][[')
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(word)('branch')
+                      PsiElement(})('}')
+                    PsiElement(STRING_CONTENT)('\\)]$\&\&]+={}    p')
+                    PsiElement(CLOSE_QUOTE)('"')
         PsiWhiteSpace('  ')
         PsiElement())(')')
     PsiElement(;)(';')
@@ -243,39 +247,41 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
-          PsiWhiteSpace(' ')
-          LOGICAL_BITWISE_CONDITION
-            PsiElement(!)('!')
+        PIPELINE_COMMAND_LIST
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
             PsiWhiteSpace(' ')
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('ed')
+            LOGICAL_BITWISE_CONDITION
+              PsiElement(!)('!')
               PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                REDIRECTION
-                  PsiElement(<<<)('<<<')
-                  PsiElement(word)('Q')
-          PsiWhiteSpace(' ')
-          PsiElement(])(']')
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('ed')
+                PsiWhiteSpace(' ')
+                SIMPLE_COMMAND_ELEMENT
+                  REDIRECTION
+                    PsiElement(<<<)('<<<')
+                    PsiElement(word)('Q')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
         PsiElement(then)('then')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('Some')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('text')
+                PsiElement(word)('Some')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('text')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
       PsiElement(fi)('fi')

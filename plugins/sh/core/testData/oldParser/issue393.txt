@@ -12,9 +12,10 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace(' ')
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('echo')
+          PIPELINE_COMMAND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
           PsiElement(\n)('\n')
         PsiWhiteSpace(' ')
         PsiElement(})('}')

@@ -4,18 +4,20 @@ SHELL_SCRIPT
       PsiElement(until)('until')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('a')
+        PIPELINE_COMMAND_LIST
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('a')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       DO_BLOCK
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('b')
+          PIPELINE_COMMAND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('b')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')

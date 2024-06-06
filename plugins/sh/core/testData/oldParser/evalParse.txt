@@ -57,12 +57,13 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            EVAL_COMMAND
-              PsiElement(eval)('eval')
-              PsiWhiteSpace(' ')
-              PsiElement(EVAL_CONTENT)('ls')
-              PsiWhiteSpace(' ')
-              PsiElement(EVAL_CONTENT)('-l')
+            PIPELINE_COMMAND_LIST
+              EVAL_COMMAND
+                PsiElement(eval)('eval')
+                PsiWhiteSpace(' ')
+                PsiElement(EVAL_CONTENT)('ls')
+                PsiWhiteSpace(' ')
+                PsiElement(EVAL_CONTENT)('-l')
           PsiElement(CLOSE_BACKQUOTE)('`')
   PsiWhiteSpace('  ')
   PsiComment(Comment)('#  Similar to y=`ls -l`')
@@ -97,40 +98,42 @@ SHELL_SCRIPT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+            PIPELINE_COMMAND_LIST
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('echo')
+                PsiWhiteSpace(' ')
                 LITERAL
-                  PsiElement(word)('echo')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('args')
-              VARIABLE
-                PsiElement(var)('$i')
+                  PsiElement(word)('args')
+                VARIABLE
+                  PsiElement(var)('$i')
           PsiElement(CLOSE_BACKQUOTE)('`')
       PsiElement(EVAL_CONTENT)('=')
       SIMPLE_COMMAND_ELEMENT
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+            PIPELINE_COMMAND_LIST
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('cygpath')
+                PsiWhiteSpace(' ')
                 LITERAL
-                  PsiElement(word)('cygpath')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('--path')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('--ignore')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('--mixed')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$arg')
-                PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(word)('--path')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('--ignore')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('--mixed')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$arg')
+                  PsiElement(CLOSE_QUOTE)('"')
           PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -138,17 +141,18 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        PIPELINE_COMMAND
-          PsiElement(!)('!')
-          PsiWhiteSpace(' ')
-          EVAL_COMMAND
-            PsiElement(eval)('eval')
+        PIPELINE_COMMAND_LIST
+          PIPELINE_COMMAND
+            PsiElement(!)('!')
             PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              VARIABLE
-                PsiElement(var)('$@')
-              PsiElement(CLOSE_QUOTE)('"')
+            EVAL_COMMAND
+              PsiElement(eval)('eval')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                VARIABLE
+                  PsiElement(var)('$@')
+                PsiElement(CLOSE_QUOTE)('"')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
@@ -156,24 +160,25 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(>&)('>&')
-                NUMBER
-                  PsiElement(int)('2')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('WARNING: command failed \"')
-              VARIABLE
-                PsiElement(var)('$@')
-              PsiElement(STRING_CONTENT)('\"')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(>&)('>&')
+                  NUMBER
+                    PsiElement(int)('2')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('WARNING: command failed \"')
+                VARIABLE
+                  PsiElement(var)('$@')
+                PsiElement(STRING_CONTENT)('\"')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
   PsiElement(\n)('\n')

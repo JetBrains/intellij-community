@@ -8,13 +8,14 @@ SHELL_SCRIPT
           COMMAND_SUBSTITUTION_COMMAND
             PsiElement(OPEN_BACKQUOTE)('`')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('uname')
+                  PsiWhiteSpace(' ')
                   LITERAL
-                    PsiElement(word)('uname')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('-s')
+                    PsiElement(word)('-s')
             PsiElement(CLOSE_BACKQUOTE)('`')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')
@@ -37,13 +38,14 @@ SHELL_SCRIPT
           SUBSHELL_COMMAND
             PsiElement(()('(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('uname')
+                  PsiWhiteSpace(' ')
                   LITERAL
-                    PsiElement(word)('uname')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('-s')
+                    PsiElement(word)('-s')
             PsiElement())(')')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')

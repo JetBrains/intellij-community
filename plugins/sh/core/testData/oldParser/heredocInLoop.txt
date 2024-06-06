@@ -17,17 +17,18 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              HEREDOC
-                PsiElement(HEREDOC_MARKER_TAG)('<<')
-                PsiElement(HEREDOC_MARKER_START)('EOF')
-                PsiElement(\n)('\n')
-                PsiElement(HEREDOC_CONTENT)('  heredoccontent\n')
-                PsiElement(HEREDOC_MARKER_END)('EOF')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                HEREDOC
+                  PsiElement(HEREDOC_MARKER_TAG)('<<')
+                  PsiElement(HEREDOC_MARKER_START)('EOF')
+                  PsiElement(\n)('\n')
+                  PsiElement(HEREDOC_CONTENT)('  heredoccontent\n')
+                  PsiElement(HEREDOC_MARKER_END)('EOF')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
