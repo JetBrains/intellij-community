@@ -22,11 +22,14 @@ object Locators {
     byAttributes(ATTR_CLASS to cls, ATTR_ACCESSIBLE_NAME to accessibleName)
   fun <T : Component> byType(type: Class<T>) = byType(type.name)
   fun byType(type: String) = """//div[@javaclass="$type" or contains(@classhierarchy, "$type ") or contains(@classhierarchy, " $type ")]"""
+  fun <T : Component> byTypeAndAccessibleName(type: Class<T>, accessibleName: String) = byTypeAndAttributes(type.name, ATTR_ACCESSIBLE_NAME to accessibleName)
   fun byJavaClassContains(type: String) = byAttributeContains(ATTR_JAVA_CLASS, type)
   fun byAttribute(name: String, value: String) = byAttributes(name to value)
   fun byAttributes(attr: Pair<String, String>, vararg attrs: Pair<String, String>) =
     "//div[${listOf(attr, *attrs).joinToString(" and ") { "${it.first}=${it.second.escapeQuoteWithConcat()}" }}]"
   fun byAttributeContains(name: String, value: String) = "//div[contains($name,'$value')]"
+  fun byTypeAndAttributes(type: String, attr: Pair<String, String>, vararg attrs: Pair<String, String>) =
+    "//div[(@javaclass='$type' or contains(@classhierarchy, '$type ') or contains(@classhierarchy, ' $type ')) and ${listOf(attr, *attrs).joinToString(" and ") { "${it.first}=${it.second.escapeQuoteWithConcat()}" }}]"
   fun componentWithChild(componentLocator: String, childLocator: String) = "${componentLocator}[.${childLocator}]"
 }
 

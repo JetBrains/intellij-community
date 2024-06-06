@@ -20,6 +20,7 @@ interface Component {
   fun getClass(): Class
   fun getForeground(): ColorRef
   fun getBackground(): ColorRef
+  fun getAccessibleContext(): AccessibleContextRef?
 }
 
 @Remote("java.awt.Color")
@@ -29,3 +30,8 @@ interface ColorRef{
 
 @Remote("java.lang.Class")
 interface Class
+
+@Remote("javax.accessibility.AccessibleContext")
+interface AccessibleContextRef {
+  fun getAccessibleName(): String?
+}
