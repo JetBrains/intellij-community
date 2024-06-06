@@ -46,6 +46,8 @@ open class ProjectAttachProcessor {
     }
   }
 
+  open suspend fun beforeAttach(project: Project?) {}
+
   open fun beforeDetach(module: Module) {}
 
   open fun isEnabled(project: Project?, path: Path?, newProject: Project?): Boolean = true

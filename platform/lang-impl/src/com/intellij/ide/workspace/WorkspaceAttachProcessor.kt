@@ -3,6 +3,7 @@ package com.intellij.ide.workspace
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
+import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import kotlinx.coroutines.launch
@@ -18,6 +19,10 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
       linkToWorkspace(project, projectDir.pathString)
     }
     return true
+  }
+
+  override suspend fun beforeAttach(project: Project?) {
+    project?.stateStore?.save(true)
   }
 
   override fun isEnabled(project: Project?, path: Path?, newProject: Project?): Boolean =

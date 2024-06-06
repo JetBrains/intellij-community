@@ -2664,6 +2664,7 @@ c:com.intellij.projectImport.ProjectAttachProcessor
 - <init>():V
 - attachToProject(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback):Z
 - *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
+- beforeAttach(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - beforeDetach(com.intellij.openapi.module.Module):V
 - sf:canAttachToProject():Z
 - getActionText(com.intellij.openapi.project.Project):java.lang.String
