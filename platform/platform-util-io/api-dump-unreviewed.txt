@@ -405,6 +405,9 @@ c:com.intellij.execution.process.ProcessWrapper
 - getOriginalProcess():java.lang.Process
 - getOutputStream():java.io.OutputStream
 - waitFor():I
+com.intellij.execution.process.PtyBasedProcess
+- a:hasPty():Z
+- a:setWindowSize(I,I):V
 f:com.intellij.execution.process.ScriptRunnerUtil
 - sf:STDERR_OUTPUT_KEY_FILTER:com.intellij.openapi.util.Condition
 - sf:STDOUT_OR_STDERR_OUTPUT_KEY_FILTER:com.intellij.openapi.util.Condition

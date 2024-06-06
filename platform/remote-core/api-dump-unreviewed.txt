@@ -77,9 +77,6 @@ e:com.intellij.credentialStore.ProviderType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.credentialStore.ProviderType
 - s:values():com.intellij.credentialStore.ProviderType[]
-com.intellij.execution.process.PtyBasedProcess
-- a:hasPty():Z
-- a:setWindowSize(I,I):V
 a:com.intellij.ide.passwordSafe.PasswordSafe
 - com.intellij.credentialStore.CredentialStore
 - com.intellij.ide.passwordSafe.PasswordStorage

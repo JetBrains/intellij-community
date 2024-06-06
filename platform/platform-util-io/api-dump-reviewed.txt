@@ -325,3 +325,6 @@ c:com.intellij.execution.process.OSProcessHandler$Silent
 - com.intellij.execution.process.OSProcessHandler
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
 - p:readerOptions():com.intellij.util.io.BaseOutputReader$Options
+com.intellij.execution.process.PtyBasedProcess
+- a:hasPty():Z
+- a:setWindowSize(I,I):V
