@@ -36,8 +36,8 @@ class DeclarativeInlayRenderer(
   }
 
   @RequiresEdt
-  fun updateState(newState: TinyTree<Any?>, disabled: Boolean, hasBackground: Boolean) {
-    presentationList.updateState(newState, disabled, hasBackground)
+  fun updateState(newState: TinyTree<Any?>, disabled: Boolean, hintColorKind: HintColorKind) {
+    presentationList.updateState(newState, disabled, hintColorKind)
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {

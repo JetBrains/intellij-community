@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.daemon.impl.ZombieInlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
-import com.intellij.codeInsight.hints.declarative.InlayPayload
-import com.intellij.codeInsight.hints.declarative.InlayPosition
-import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
 import com.intellij.openapi.util.NlsContexts
@@ -19,7 +16,7 @@ import java.io.DataOutput
 data class InlayData(
   val position: InlayPosition,
   @NlsContexts.HintText val tooltip: String?,
-  val hasBackground: Boolean,
+  val hintColorKind: HintColorKind,
   val tree: TinyTree<Any?>,
   val providerId: String,
   val disabled: Boolean,
@@ -33,7 +30,7 @@ data class InlayData(
 
     companion object {
       // increment on format changed
-      private const val SERDE_VERSION = 3
+      private const val SERDE_VERSION = 4
     }
 
     override fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -41,7 +38,7 @@ data class InlayData(
     override fun save(output: DataOutput, inlayData: InlayData) {
       writePosition(output, inlayData.position)
       writeTooltip(output, inlayData.tooltip)
-      output.writeBoolean(inlayData.hasBackground)
+      output.writeUTF(inlayData.hintColorKind.name)
       treeExternalizer.save(output, inlayData.tree)
       writeUTF(output, inlayData.providerId)
       output.writeBoolean(inlayData.disabled)
@@ -52,14 +49,14 @@ data class InlayData(
     override fun read(input: DataInput): InlayData {
       val position: InlayPosition       = readPosition(input)
       val tooltip: String?              = readTooltip(input)
-      val hasBackground: Boolean        = input.readBoolean()
+      val hintColorKind: HintColorKind  = HintColorKind.valueOf(input.readUTF())
       val tree: TinyTree<Any?>          = treeExternalizer.read(input)
       val providerId: String            = readUTF(input)
       val disabled: Boolean             = input.readBoolean()
       val payloads: List<InlayPayload>? = readPayloads(input)
       val providerClass: Class<*>       = ZombieInlayHintsProvider::class.java
       val sourceId: String              = readSourceId(input)
-      return InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, sourceId)
+      return InlayData(position, tooltip, hintColorKind, tree, providerId, disabled, payloads, providerClass, sourceId)
     }
 
     private fun writePosition(output: DataOutput, position: InlayPosition) {
