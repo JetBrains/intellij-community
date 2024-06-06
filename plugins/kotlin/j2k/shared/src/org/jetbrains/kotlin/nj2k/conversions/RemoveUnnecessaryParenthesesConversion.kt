@@ -41,6 +41,17 @@ class RemoveUnnecessaryParenthesesConversion(context: NewJ2kConverterContext) : 
         // Nested parentheses are always unnecessary
         if (innerExpression is JKParenthesizedExpression || parent is JKParenthesizedExpression) return false
 
+        // Conditions in if-else/while/do-while expressions have their own parentheses (e.g., the `(isEnabled)` in `if (isEnabled) return`)
+        // Also, arguments don't need parentheses.
+        if ((parent is JKIfElseExpression && parent.condition === expression) ||
+            (parent is JKIfElseStatement && parent.condition === expression) ||
+            (parent is JKWhileStatement && parent.condition === expression) ||
+            (parent is JKDoWhileStatement && parent.condition === expression) ||
+            parent is JKArgument
+        ) {
+            return false
+        }
+
         // We can omit parentheses for a binary expression like `1 + \n 2` but not one like `5 + 3 \n -2`
         if (innerExpression is JKBinaryExpression && innerExpression.recursivelyContainsNewlineBeforeOperator()) {
             return true
@@ -50,8 +61,7 @@ class RemoveUnnecessaryParenthesesConversion(context: NewJ2kConverterContext) : 
         // child node that can possibly be surrounded by parentheses
         if (parent is JKDelegationConstructorCall ||
             parent is JKKtWhenCase ||
-            parent is JKReturnStatement ||
-            parent is JKArgument
+            parent is JKReturnStatement
         ) {
             return false
         }
@@ -61,15 +71,6 @@ class RemoveUnnecessaryParenthesesConversion(context: NewJ2kConverterContext) : 
             (parent is JKAssignmentChainAlsoLink && parent.receiver == expression)
         ) {
             return !innerExpression.isAtomic()
-        }
-
-        // Conditions in if-else/while/do-while expressions have their own parentheses (e.g. the `(isEnabled)` in `if (isEnabled) return`)
-        if ((parent is JKIfElseExpression && parent.condition === expression) ||
-            (parent is JKIfElseStatement && parent.condition === expression) ||
-            (parent is JKWhileStatement && parent.condition === expression) ||
-            (parent is JKDoWhileStatement && parent.condition === expression)
-        ) {
-            return false
         }
 
         if (parent is JKForInStatement && parent.iterationExpression == expression) return false

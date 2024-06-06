@@ -5556,6 +5556,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testRemoveUnnecessaryParenthesesConditionalOperators() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParenthesesConditionalOperators.java");
         }
+
+        @TestMetadata("removeUnnecessaryParenthesesSpecialContext.java")
+        public void testRemoveUnnecessaryParenthesesSpecialContext() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParenthesesSpecialContext.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
