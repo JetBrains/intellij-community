@@ -75,6 +75,7 @@ public final class ParameterInfoComponent extends JPanel {
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
   private int myWidthLimit = 500;
+  private static final int myMaxWrappableLengthLimit = 1000;
   private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
@@ -239,7 +240,7 @@ public final class ParameterInfoComponent extends JPanel {
       return preferredSize;
     }
     else {
-      return new Dimension(preferredSize.width + 20, visibleRowsHeight);
+      return new Dimension(preferredSize.width, visibleRowsHeight);
     }
   }
 
@@ -396,12 +397,13 @@ public final class ParameterInfoComponent extends JPanel {
         setVisible(i, false);
       }
       else {
-        setVisible(i, true);
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
           try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305563, EA-819694")) {
             myParameterInfoControllerData.getHandler().updateUI(o, context);
           }
         });
+
+        setVisible(i, isEnabled(i));
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {
@@ -577,7 +579,7 @@ public final class ParameterInfoComponent extends JPanel {
         String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
         FontMetrics fontMetrics = getFontMetrics(BOLD_FONT);
-        if (fontMetrics.stringWidth(line + texts[i]) >= myWidthLimit) {
+        if (fontMetrics.stringWidth(line + texts[i]) >= myMaxWrappableLengthLimit) {
           OneLineComponent component = getOneLineComponent(index);
           buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
           index += 1;
