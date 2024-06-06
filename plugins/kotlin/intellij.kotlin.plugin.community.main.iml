@@ -103,6 +103,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-toml" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" exported="" />
     <orderEntry type="module" module-name="kotlin.idea" exported="" />
