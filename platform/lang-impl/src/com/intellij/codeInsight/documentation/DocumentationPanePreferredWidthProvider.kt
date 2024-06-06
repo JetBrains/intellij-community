@@ -119,7 +119,8 @@ internal class DocumentationPanePreferredWidthProvider(
     // or an actual preferred span no larger than MIN_CELL_WIDTH
     val preferredSectionWidth =
       cellPreferredSectionWidth[cell]
-      ?: min(MIN_CELL_WIDTH, cell.getPreferredSpan(View.X_AXIS).toInt().takeIf { it > 0 }?.let { it + cell.cssMargin.width } ?: MIN_CELL_WIDTH)
+      ?: min(MIN_CELL_WIDTH, cell.getPreferredSpan(View.X_AXIS).toInt().takeIf { it > 0 }?.let { it + cell.cssMargin.width }
+                             ?: MIN_CELL_WIDTH)
 
     // A cell can contain a table, so let's find out the maximum preferred size from any child table
     return max(preferredSectionWidth, getPreferredWidthForRows(cell.parent, cell2SubCells[cell]))
@@ -143,7 +144,7 @@ internal class DocumentationPanePreferredWidthProvider(
         result.add(cur)
       }
       for (i in 0 until cur.viewCount) {
-        queue.add(cur.getView(i))
+        cur.getView(i)?.let { queue.add(it) }
       }
     }
     return result
