@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -150,7 +150,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
         is KtCallExpression -> selectorExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.symbol
         is KtNameReferenceExpression -> selectorExpression.mainReference.resolveToSymbol()
         else -> return false
-    } as? KtSymbolWithKind ?: return true
+    } as? KaSymbolWithKind ?: return true
     if (referencedSymbol is KaConstructorSymbol) return false
     return (referencedSymbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind?.isObject ?: true
 }

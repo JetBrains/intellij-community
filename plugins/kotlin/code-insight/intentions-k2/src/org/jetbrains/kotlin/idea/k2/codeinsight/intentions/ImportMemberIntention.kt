@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -117,7 +117,7 @@ private fun canBeImported(symbol: KaCallableSymbol): Boolean {
             else -> false
         }
     } else {
-        if ((symbol as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL) return true
+        if ((symbol as? KaSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL) return true
         val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
         return containingClass.classKind == KaClassKind.OBJECT || containingClass.classKind == KaClassKind.COMPANION_OBJECT
     }
