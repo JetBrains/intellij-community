@@ -286,6 +286,7 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
 
 /**
  * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
+ *
  * Keys are distinguished by a [hashingStrategy]
  *
  * When a new iterable is received:
@@ -295,6 +296,8 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
  *
  * Order of the values in the resulting map is the same as in the source iterable
  * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
+ *
+ * **Returned flow never completes**
  */
 fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
                                                    hashingStrategy: HashingStrategy<K>,
@@ -304,14 +307,11 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
   : Flow<Map<K, V>> = flow {
   coroutineScope {
     val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
-    launchNow {
-      collect { items ->
-        container.update(items)
-      }
+    collect {
+      container.update(it)
+      emit(container.mappingState.value)
     }
-    container.mappingState.collect {
-      emit(it)
-    }
+    awaitCancellation()
   }
 }
 
