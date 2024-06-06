@@ -649,8 +649,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return oldIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(existingChildren, added, byName, true, (nextInfo, mergeResult) -> {
-        if (mergeResult != ContainerUtil.MergeResult.COPIED_FROM_LIST1) {
+      ContainerUtil.processSortedListsInOrder(existingChildren, added, byName, /*mergeEqualItems: */ true, (nextInfo, mergeResult) -> {
+        //TODO RC: this branch differs from (added.size=1) branch above in many aspects. The most noticeable are
+        //         comparison: we merge existing/added lists by-name here, but we look up existing fileId above.
+        //         This seems suspicious, and I'm not sure that consequences of the difference could be.
+        //         Another difference is that here we call callback.accept() first, and update .childrenIds list with
+        //         the new files afterwards, but in 1-item branch above we add new file to .childrenIds list first,
+        //         and call the callback afterwards.
+        if (mergeResult == ContainerUtil.MergeResult.COPIED_FROM_LIST2) {
           assert nextInfo.getId() > 0 : nextInfo;
           @SuppressWarnings("MagicConstant") @PersistentFS.Attributes int attributes = nextInfo.getFileAttributeFlags();
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
