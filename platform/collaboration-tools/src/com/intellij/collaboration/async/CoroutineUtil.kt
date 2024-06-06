@@ -285,20 +285,10 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
 /**
- * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
- *
- * Keys are distinguished by a [hashingStrategy]
- *
- * When a new iterable is received:
- * * a new [CoroutineScope] and a new value is created via [valueExtractor] for new items
- * * existing values are updated via [update] if it was supplied
- * * values for missing items are removed and destroyed via [destroy]
- *
- * Order of the values in the resulting map is the same as in the source iterable
- * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
- *
- * **Returned flow never completes**
+ * The destructor is never necessary because cleanup can be performed on scope cancellation
+ * @see associateCachingBy
  */
+@ApiStatus.Obsolete
 fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
                                                    hashingStrategy: HashingStrategy<K>,
                                                    valueExtractor: CoroutineScope.(T) -> V,
@@ -316,6 +306,27 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
 }
 
 /**
+ * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
+ *
+ * Keys are distinguished by a [hashingStrategy]
+ *
+ * When a new iterable is received:
+ * * a new [CoroutineScope] and a new value is created via [valueExtractor] for new items
+ * * existing values are updated via [update] if it was supplied
+ * * values for missing items are removed and their scope is cancelled
+ *
+ * Order of the values in the resulting map is the same as in the source iterable
+ * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
+ *
+ * **Returned flow never completes**
+ */
+fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
+                                                   hashingStrategy: HashingStrategy<K>,
+                                                   valueExtractor: CoroutineScope.(T) -> V,
+                                                   update: (suspend V.(T) -> Unit)? = null)
+  : Flow<Map<K, V>> = associateCachingBy(keyExtractor, hashingStrategy, valueExtractor, { }, update)
+
+/**
  * @see associateCachingBy
  *
  * Shorthand for cases where key is the same as item destructor simply cancels the value scope
@@ -326,6 +337,8 @@ private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingSt
   return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
+@ApiStatus.Internal
+@ApiStatus.Obsolete
 fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
                                                   mapper: CoroutineScope.(T) -> R,
                                                   destroy: suspend R.() -> Unit,
