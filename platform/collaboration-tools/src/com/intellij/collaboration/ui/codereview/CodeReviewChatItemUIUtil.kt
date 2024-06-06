@@ -12,7 +12,6 @@ import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -69,6 +68,16 @@ object CodeReviewChatItemUIUtil {
       override val iconGap: Int = 10
       override val paddingInsets: Insets = Insets(4, CodeReviewCommentUIUtil.INLAY_PADDING, 4, CodeReviewCommentUIUtil.INLAY_PADDING)
       override val inputPaddingInsets: Insets = Insets(6, CodeReviewCommentUIUtil.INLAY_PADDING, 6, CodeReviewCommentUIUtil.INLAY_PADDING)
+    },
+
+    /**
+     * Same as [COMPACT] but without any padding at all
+     */
+    SUPER_COMPACT {
+      override val iconSize: Int = Avatar.Sizes.BASE
+      override val iconGap: Int = 10
+      override val paddingInsets: Insets = Insets(0,0,0,0)
+      override val inputPaddingInsets: Insets = Insets(0,0,0,0)
     };
 
     /**

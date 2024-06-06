@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.plugins.github.ai">
+  <dependencies>
+    <plugin id="com.intellij.ml.llm"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="PR AI Assistant" icon="org.jetbrains.plugins.github.GithubIcons.PullRequestsToolWindow"
+                anchor="right" doNotActivateOnStart="true" canCloseContents="false"
+                factoryClass="org.jetbrains.plugins.github.ai.assistedReview.GHPRAiAssistantToolwindowFactory"/>
+  </extensions>
+</idea-plugin>

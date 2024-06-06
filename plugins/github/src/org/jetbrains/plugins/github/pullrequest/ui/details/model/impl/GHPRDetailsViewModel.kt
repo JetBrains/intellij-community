@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
@@ -80,9 +80,8 @@ internal class GHPRDetailsViewModelImpl(
   override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
 
   private val serverPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
-  override val statusVm = GHPRStatusViewModelImpl(cs, project, serverPath,
-                                                  dataContext.repositoryDataService.repositoryMapping.gitRepository,
-                                                  dataProvider.detailsData, detailsState)
+  private val gitRepository = dataContext.repositoryDataService.repositoryMapping.gitRepository
+  override val statusVm = GHPRStatusViewModelImpl(cs, project, serverPath, gitRepository, dataProvider, detailsState)
 
   override val reviewFlowVm =
     GHPRReviewFlowViewModelImpl(cs,

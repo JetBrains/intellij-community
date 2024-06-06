@@ -143,5 +143,5 @@ internal class GHPRReviewFileEditorViewModelImpl(
   }
 }
 
-private val TextFilePatch.ranges: List<Range>
+internal val TextFilePatch.ranges: List<Range>
   get() = hunks.map(PatchHunkUtil::getRange)

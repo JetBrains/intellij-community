@@ -75,6 +75,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
       when (model) {
         is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, model.vm)
         is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, model.vm)
+        is GHPREditorMappedComponentModel.AIComment -> GHPRAICommentEditorInlayRenderer(this, model.vm)
       }
   }
 }
@@ -88,10 +89,11 @@ private class DiffEditorModel(
     CodeReviewCommentableEditorModel.WithMultilineComments {
 
   private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
+  private val aiComments = diffVm.aiComments.mapModelsToViewModels { MappedAIComment(it) }.stateInNow(cs, emptyList())
   private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())
 
-  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
-    combineStateIn(cs, threads, newComments) { threads, new -> threads + new }
+  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel.Diff>> =
+    combineStateIn(cs, threads, aiComments, newComments) { threads, aiComments, new -> threads + aiComments + new }
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     diffVm.locationsWithDiscussions.map {
@@ -103,7 +105,7 @@ private class DiffEditorModel(
     val leftRange = getSideRange(it, Side.LEFT)
     val rightRange = getSideRange(it, Side.RIGHT)
     if (leftRange != null && rightRange != null) {
-      LineRange(min(leftRange.start, rightRange.start), max(leftRange.end, rightRange.end))
+      LineRange(min(leftRange.start, rightRange.start), max(leftRange .end, rightRange.end))
     }
     else leftRange ?: rightRange
   }
@@ -150,7 +152,13 @@ private class DiffEditorModel(
     : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
     private val cs = parentCs.childScope(javaClass.name)
     override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.isVisible, hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
+    override val line: StateFlow<Int?> = vm.location.mapState { it?.let(locationToLine) }
+  }
+
+  private inner class MappedAIComment(vm: GHPRReviewAICommentDiffViewModel)
+    : GHPREditorMappedComponentModel.AIComment(vm) {
+    override val isVisible: StateFlow<Boolean> = vm.isVisible
+    override val line: StateFlow<Int?> = MutableStateFlow(vm.location?.let(locationToLine))
   }
 
   private inner class MappedNewComment(vm: GHPRNewCommentDiffViewModel)
