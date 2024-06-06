@@ -15,7 +15,6 @@ import git4idea.ui.branch.MergeDirectionModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import net.miginfocom.layout.CC
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.BranchState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateDirectionModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModel
@@ -59,15 +58,15 @@ internal object GitLabMergeRequestCreateComponentFactory {
     val actionsPanel = GitLabMergeRequestCreateActionsComponentFactory.create(project, cs, createVm)
 
     return CodeReviewCreateReviewLayoutBuilder()
-      .addComponent(directionSelector, CC().growX().pushX().minWidth("0"))
-      .addComponent(commitsLoadingPanel, CC().growX().pushX().growY(0.5f).pushY(0.5f), true)
+      .addComponent(directionSelector, zeroMinWidth = true)
+      .addComponent(commitsLoadingPanel, stretchYWithWeight = 0.5f, withoutBorder = true)
       .addSeparator()
-      .addComponent(titleField, CC().growX().pushX().minWidth("0"))
+      .addComponent(titleField, zeroMinWidth = true)
       .addSeparator()
-      .addComponent(reviewersPanel, CC().growX().pushX().minWidth("0").pushX().growY(0.3f).pushY(0.3f))
+      .addComponent(reviewersPanel, zeroMinWidth = true, stretchYWithWeight = 0.3f)
       .addSeparator()
-      .addComponent(statusPanel, CC().growX().pushX())
-      .addComponent(actionsPanel, CC().growX().pushX(), withListBackground = false)
+      .addComponent(statusPanel)
+      .addComponent(actionsPanel, withListBackground = false)
       .build()
   }
 

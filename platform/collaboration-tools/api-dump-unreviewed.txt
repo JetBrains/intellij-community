@@ -1074,12 +1074,12 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - sf:splitCommitMessage(java.lang.String):kotlin.Pair
 *f:com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 - *sf:Companion:com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder$Companion
-- <init>():V
-- f:addComponent(javax.swing.JComponent,net.miginfocom.layout.CC,Z,Z):com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
-- bs:addComponent$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder,javax.swing.JComponent,net.miginfocom.layout.CC,Z,Z,I,java.lang.Object):com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
+- f:addComponent(javax.swing.JComponent,Z,java.lang.Float,Z,Z):com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
+- bs:addComponent$default(com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder,javax.swing.JComponent,Z,java.lang.Float,Z,Z,I,java.lang.Object):com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 - f:addSeparator():com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 - f:build():javax.swing.JComponent
 *f:com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder$Companion
+- f:create():com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 *f:com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
 - f:applyDefaults(com.intellij.ui.components.JBTextArea):V
@@ -2204,12 +2204,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 *f:com.intellij.collaboration.ui.util.LinkMouseListener
 - com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 - <init>(com.intellij.collaboration.ui.util.ClickableCellRenderer):V
-*f:com.intellij.collaboration.ui.util.MigLayoutUtilKt
-- sf:emptyBorders(net.miginfocom.layout.LC):net.miginfocom.layout.LC
-- sf:emptyGap(net.miginfocom.layout.CC):net.miginfocom.layout.CC
-- sf:gap(net.miginfocom.layout.CC,I,I,I,I):net.miginfocom.layout.CC
-- sf:gap(net.miginfocom.layout.CC,java.awt.Insets):net.miginfocom.layout.CC
-- bs:gap$default(net.miginfocom.layout.CC,I,I,I,I,I,java.lang.Object):net.miginfocom.layout.CC
 *f:com.intellij.collaboration.ui.util.SwingBindingsKt
 - sf:bindBackgroundIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindBorderIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V

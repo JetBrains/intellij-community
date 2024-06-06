@@ -1,4 +1,2 @@
 kotlin/Result
 kotlin/jvm/internal/DefaultConstructorMarker
-net/miginfocom/layout/CC
-net/miginfocom/layout/LC
