@@ -20,9 +20,10 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
     return true
   }
 
-  override fun isEnabled(project: Project?, path: Path?): Boolean =
+  override fun isEnabled(project: Project?, path: Path?, newProject: Project?): Boolean =
     isWorkspaceSupportEnabled && project?.isWorkspace == true &&
-    (path == null || !getAllSubprojects(project).any { it.projectPath == path.pathString })
+    (path == null || !getAllSubprojects(project).any { it.projectPath == path.pathString }) &&
+    newProject?.isWorkspace == false
 
   override fun getActionText(project: Project): String {
     if (project.isWorkspace) {
