@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -50,7 +51,7 @@ class EditorCell(
 
   fun hide() {
     _visible = false
-    view?.dispose()
+    view?.let { Disposer.dispose(it) }
     view = null
   }
 
@@ -68,7 +69,7 @@ class EditorCell(
   }
 
   fun dispose() {
-    view?.dispose()
+    view?.let { Disposer.dispose(it) }
   }
 
   fun update(force: Boolean = false) {

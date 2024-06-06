@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -30,7 +31,9 @@ class EditorCellOutputs(
   private val editor: EditorImpl,
   private val interval: () -> NotebookCellLines.Interval,
   private val onInlayDisposed: (EditorCellOutputs) -> Unit = {}
-) {
+) : Disposable {
+
+
 
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
 
@@ -46,6 +49,7 @@ class EditorCellOutputs(
       200
     }
   }
+
   private val outerComponent = SurroundingComponent.create(editor, innerComponent).also {
     DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it, interval))
   }
@@ -60,7 +64,7 @@ class EditorCellOutputs(
     update()
   }
 
-  fun dispose() {
+  override fun dispose() {
     outputs.forEach { it.dispose() }
     inlay?.let { Disposer.dispose(it) }
   }
@@ -96,6 +100,7 @@ class EditorCellOutputs(
         .firstOrNull()
         ?.takeIf { it.isNotEmpty() }
       ?: emptyList()
+
     updateData(outputDataKeys)
     recreateInlayIfNecessary()
     onViewportChange()

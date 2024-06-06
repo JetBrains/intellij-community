@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -31,7 +32,7 @@ class EditorCellView(
   private val editor: EditorImpl,
   private val intervals: NotebookCellLines,
   internal var cell: EditorCell
-) {
+) : Disposable {
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
   private val controllers: List<NotebookCellInlayController>
@@ -52,7 +53,7 @@ class EditorCellView(
       val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
       val controller = getInputFactories().firstNotNullOfOrNull { factory ->
         failSafeCompute(factory, editor, currentController?.let { listOf(it) }
-                                    ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
+                                         ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
       }
       if (controller != null) {
         if (controller == currentController) {
@@ -106,12 +107,12 @@ class EditorCellView(
     )
   }
 
-  fun dispose() {
+  override fun dispose() {
     _controllers.forEach { controller ->
       disposeController(controller)
     }
     input.dispose()
-    outputs?.dispose()
+
     removeCellHighlight()
   }
 
@@ -122,6 +123,10 @@ class EditorCellView(
   }
 
   fun update(force: Boolean = false) {
+    extracted(force)
+  }
+
+  private fun extracted(force: Boolean) {
     val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
       .filter { it !is NotebookCellInlayController.InputFactory }
 
@@ -154,7 +159,7 @@ class EditorCellView(
   private fun updateOutputs() {
     if (hasOutputs()) {
       if (_outputs == null) {
-        _outputs = EditorCellOutputs(editor, { interval })
+        _outputs = EditorCellOutputs(editor, { interval }).also { Disposer.register(this, it) }
         updateCellHighlight()
         updateFolding()
       }
@@ -163,7 +168,7 @@ class EditorCellView(
       }
     }
     else {
-      outputs?.dispose()
+      outputs?.let { Disposer.dispose(it) }
       _outputs = null
     }
   }
@@ -308,7 +313,8 @@ class EditorCellView(
   private fun updateRunButton() {
     if (mouseOver || selected) {
       input.showRunButton()
-    } else {
+    }
+    else {
       input.hideRunButton()
     }
   }
