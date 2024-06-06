@@ -4,6 +4,7 @@ package com.intellij.compiler.charts.ui
 import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -11,7 +12,7 @@ import com.jetbrains.rd.util.reactive.IViewableList
 import javax.swing.JViewport
 import javax.swing.ScrollPaneConstants
 
-class CompilationChartsView(private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
+class CompilationChartsView(project: Project, private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
   init {
     val zoom = Zoom()
 
@@ -26,11 +27,12 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
     }
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
       name = "compilation-charts-diagrams-component"
+      isFocusable = true
     }
     scroll.setViewportView(diagrams)
 
-    val actionPanel = ActionPanel(vm)
-    addToTop(actionPanel)
+    val panel = ActionPanel(project, vm, diagrams)
+    addToTop(panel)
     addToCenter(scroll)
 
     vm.modules.get().advise(vm.lifetime) { module ->
@@ -42,6 +44,7 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
       diagrams.statistic.thread(vm.modules.threadCount)
 
       diagrams.updateView()
+      panel.updateLabel(vm.modules.get().keys, vm.filter.value)
     }
 
     vm.statistics.cpu.advise(vm.lifetime) { statistics ->

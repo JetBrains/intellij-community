@@ -5,8 +5,8 @@ import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.awt.Graphics
@@ -19,7 +19,7 @@ import kotlin.math.exp
 
 class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewModel,
                                          private val zoom: Zoom,
-                                         private val viewport: JViewport) : JBPanelWithEmptyText() {
+                                         private val viewport: JViewport) : JBTable() {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
   }
@@ -30,11 +30,13 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
   var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   val statistic: Statistic = Statistic()
   var cpuMemory = MEMORY
-  var shouldRepaint: Boolean = true
+  private var shouldRepaint: Boolean = true
   private val mouseAdapter: CompilationChartsMouseAdapter
-  var image: BufferedImage? = null
-
+  private var image: BufferedImage? = null
   private val charts: Charts
+  private val emptyText = object : StatusText(this) {
+    override fun isStatusVisible() = false
+  }
   private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
     MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
       unit = "MB"
@@ -123,6 +125,7 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
       }
     }
   }
+  override fun getEmptyText() = emptyText
 
   private fun cached(g2d: Graphics2D, init: () -> BufferedImage) {
     if (!shouldRepaint) {

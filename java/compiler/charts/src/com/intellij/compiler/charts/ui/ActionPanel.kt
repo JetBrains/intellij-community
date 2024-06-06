@@ -4,7 +4,12 @@ package com.intellij.compiler.charts.ui
 import com.intellij.compiler.charts.CompilationChartsBundle
 import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBTextField
@@ -12,6 +17,7 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -22,14 +28,18 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.BorderFactory
 import javax.swing.BoxLayout
+import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
 
-class ActionPanel(private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
+class ActionPanel(private val project: Project, private val vm: CompilationChartsViewModel, private val component: JComponent) : BorderLayoutPanel() {
   private val searchField: JBTextField = object : ExtendableTextField() {
     val reset = Runnable {
       vm.filter.set(vm.filter.value.setText(listOf()))
       text = ""
+      updateLabel(null, null)
     }
     init {
       setExtensions(object : ExtendableTextComponent.Extension {
@@ -48,15 +58,23 @@ class ActionPanel(private val vm: CompilationChartsViewModel) : BorderLayoutPane
         override fun getActionOnClick() = reset
       })
 
-      addActionListener { _ ->
-        val words = this.text.split(" ").filter { it.isNotBlank() }.map { it.trim() }
-        if (words.isEmpty()) {
-          vm.filter.set(vm.filter.value.setText(listOf()))
+      document.addDocumentListener(object : DocumentListener {
+        override fun insertUpdate(e: DocumentEvent) = updateFilter()
+        override fun removeUpdate(e: DocumentEvent) = updateFilter()
+        override fun changedUpdate(e: DocumentEvent) = updateFilter()
+
+        private fun updateFilter() {
+          val words = text.split(" ").filter { it.isNotBlank() }.map { it.trim() }
+          if (words.isEmpty()) {
+            vm.filter.set(vm.filter.value.setText(listOf()))
+            updateLabel(null, null)
+          } else {
+            vm.filter.set(vm.filter.value.setText(words))
+            updateLabel(vm.modules.get().keys, vm.filter.value)
+          }
         }
-        else {
-          vm.filter.set(vm.filter.value.setText(words))
-        }
-      }
+      })
+
       addKeyListener(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
           if (e.keyCode == KeyEvent.VK_ESCAPE) reset.run()
@@ -65,6 +83,11 @@ class ActionPanel(private val vm: CompilationChartsViewModel) : BorderLayoutPane
       border = JBUI.Borders.empty(1)
       BoxLayout(this, BoxLayout.LINE_AXIS)
     }
+  }
+
+  private val countLabel = JBLabel("").apply {
+    border = JBUI.Borders.emptyLeft(5)
+    fontColor = UIUtil.FontColor.BRIGHTER
   }
 
   init {
@@ -77,6 +100,7 @@ class ActionPanel(private val vm: CompilationChartsViewModel) : BorderLayoutPane
       border = JBUI.Borders.empty(2)
       add(JBLabel(CompilationChartsBundle.message("charts.module")))
       add(searchField)
+      add(countLabel)
     })
 
     // legend
@@ -155,7 +179,7 @@ class ActionPanel(private val vm: CompilationChartsViewModel) : BorderLayoutPane
 
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent) {
-            when(vm.cpuMemory.value) {
+            when (vm.cpuMemory.value) {
               CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY -> {
                 label.text = CompilationChartsBundle.message("charts.cpu.type")
                 block.background = COLOR_CPU_BORDER
@@ -171,5 +195,25 @@ class ActionPanel(private val vm: CompilationChartsViewModel) : BorderLayoutPane
         })
       })
     })
+
+    DumbAwareAction.create {
+      val focusManager = IdeFocusManager.getInstance(project)
+      if (focusManager.getFocusedDescendantFor(this@ActionPanel.component) != null) {
+        focusManager.requestFocus(searchField, true)
+      }
+    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
+  }
+
+  fun updateLabel(set: Set<CompilationChartsViewModel.Modules.EventKey>?, filter: CompilationChartsViewModel.Filter?) {
+    if (set == null || filter == null) {
+      countLabel.text = ""
+    } else {
+      val count = set.count { filter.test(it) }
+      if (count == set.count()) {
+        countLabel.text = ""
+      } else {
+        countLabel.text = CompilationChartsBundle.message("charts.search.results", count)
+      }
+    }
   }
 }

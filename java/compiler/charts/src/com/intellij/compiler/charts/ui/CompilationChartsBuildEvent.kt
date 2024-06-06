@@ -9,15 +9,16 @@ import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class CompilationChartsBuildEvent(buildId: Any) :
+class CompilationChartsBuildEvent(project: Project, buildId: Any) :
   AbstractBuildEvent(Any(), buildId, System.currentTimeMillis(), CompilationChartsBundle.message("charts.tab.name")),
   PresentableBuildEvent {
 
-  private val console: CompilationChartsExecutionConsole by lazy { CompilationChartsExecutionConsole() }
+  private val console: CompilationChartsExecutionConsole by lazy { CompilationChartsExecutionConsole(project) }
 
   override fun getPresentationData(): BuildEventPresentationData = CompilationChartsPresentationData(console)
 
@@ -31,10 +32,10 @@ class CompilationChartsBuildEvent(buildId: Any) :
     override fun consoleToolbarActions(): ActionGroup? = null
   }
 
-  private class CompilationChartsExecutionConsole : ExecutionConsole {
+  private class CompilationChartsExecutionConsole(project: Project) : ExecutionConsole {
     val vm: CompilationChartsViewModel = CompilationChartsViewModel(this.createLifetime())
-    private val _component: JComponent by lazy {
-      CompilationChartsView(vm)
+    private val _component: CompilationChartsView by lazy {
+      CompilationChartsView(project, vm)
     }
 
     override fun dispose() {

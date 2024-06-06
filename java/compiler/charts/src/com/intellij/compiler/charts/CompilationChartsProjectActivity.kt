@@ -40,9 +40,9 @@ class CompilationChartsProjectActivity : ProjectActivity {
           val title = event.buildDescriptor.title.lowercase()
           if (title.contains("up-to-date") || title.startsWith("worksheet")) return@BuildProgressListener
 
-          val chartEvent = CompilationChartsBuildEvent(buildId)
+          val chartEvent = CompilationChartsBuildEvent(project, buildId)
           view.onEvent(buildId, chartEvent)
-          handler.addState(chartEvent.vm());
+          handler.addState(chartEvent.vm())
         }
         is FinishBuildEvent -> handler.removeState()
       }
