@@ -8415,6 +8415,7 @@ c:com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 - s:findTargetElementsNoVS(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,Z):com.intellij.psi.PsiElement[]
 - getCtrlMouseData(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.CtrlMouseData
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForLookup():Z
 - s:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):V
 - s:startFindUsages(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint):V
@@ -8425,12 +8426,16 @@ f:com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction
 - getCtrlMouseData(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.CtrlMouseData
 f:com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
 - com.intellij.codeInsight.CodeInsightActionHandler
-- sf:INSTANCE:com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
+- sf:Companion:com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$Companion
 - sf:getCtrlMouseData(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.CtrlMouseData
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - startInWriteAction():Z
 - sf:testGTDUOutcome(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$GTDUOutcome
 - sf:testGTDUOutcomeInNonBlockingReadAction(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$GTDUOutcome
+f:com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$Companion
+- f:getCtrlMouseData(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.CtrlMouseData
+- f:testGTDUOutcome(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$GTDUOutcome
+- f:testGTDUOutcomeInNonBlockingReadAction(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$GTDUOutcome
 e:com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$GTDUOutcome
 - java.lang.Enum
 - sf:GTD:com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2$GTDUOutcome
