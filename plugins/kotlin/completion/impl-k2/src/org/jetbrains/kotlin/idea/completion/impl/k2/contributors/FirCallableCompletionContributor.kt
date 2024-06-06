@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -103,7 +103,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     protected open fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
-        sessionParameters.allowExpectedDeclarations || !(symbol is KtPossibleMultiplatformSymbol && symbol.isExpect)
+        sessionParameters.allowExpectedDeclarations || !(symbol is KaPossibleMultiplatformSymbol && symbol.isExpect)
 
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
         get() = prefixMatcher.prefix.isNotEmpty()
