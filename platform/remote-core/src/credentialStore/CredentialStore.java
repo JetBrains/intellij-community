@@ -8,12 +8,10 @@ import org.jetbrains.annotations.Nullable;
  * Please see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html">Storing Sensitive Data</a>.
  */
 public interface CredentialStore {
-  @Nullable
-  Credentials get(@NotNull CredentialAttributes attributes);
+  @Nullable Credentials get(@NotNull CredentialAttributes attributes);
 
-  @Nullable
-  default String getPassword(@NotNull CredentialAttributes attributes) {
-    Credentials credentials = get(attributes);
+  default @Nullable String getPassword(@NotNull CredentialAttributes attributes) {
+    var credentials = get(attributes);
     return credentials == null ? null : credentials.getPasswordAsString();
   }
 

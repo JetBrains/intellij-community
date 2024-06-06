@@ -22,7 +22,6 @@ f:com.intellij.credentialStore.CredentialAttributes
 - f:isPasswordMemoryOnly():Z
 f:com.intellij.credentialStore.CredentialAttributesKt
 - sf:SERVICE_NAME_PREFIX:java.lang.String
-- sf:CredentialAttributes(java.lang.Class,java.lang.String):com.intellij.credentialStore.CredentialAttributes
 - sf:generateServiceName(java.lang.String,java.lang.String):java.lang.String
 - sf:getACCESS_TO_KEY_CHAIN_DENIED():com.intellij.credentialStore.Credentials
 - sf:getCANNOT_UNLOCK_KEYCHAIN():com.intellij.credentialStore.Credentials
@@ -48,15 +47,10 @@ com.intellij.credentialStore.CredentialStoreManager
 - sf:Companion:com.intellij.credentialStore.CredentialStoreManager$Companion
 - a:availableProviders():java.util.List
 - a:defaultProvider():com.intellij.credentialStore.ProviderType
+- s:getInstance():com.intellij.credentialStore.CredentialStoreManager
 - a:isSupported(com.intellij.credentialStore.ProviderType):Z
 f:com.intellij.credentialStore.CredentialStoreManager$Companion
 - f:getInstance():com.intellij.credentialStore.CredentialStoreManager
-c:com.intellij.credentialStore.CredentialStoreManagerImpl
-- com.intellij.credentialStore.CredentialStoreManager
-- <init>():V
-- availableProviders():java.util.List
-- defaultProvider():com.intellij.credentialStore.ProviderType
-- isSupported(com.intellij.credentialStore.ProviderType):Z
 f:com.intellij.credentialStore.Credentials
 - <init>(java.lang.String,com.intellij.credentialStore.OneTimeString):V
 - b:<init>(java.lang.String,com.intellij.credentialStore.OneTimeString,I,kotlin.jvm.internal.DefaultConstructorMarker):V

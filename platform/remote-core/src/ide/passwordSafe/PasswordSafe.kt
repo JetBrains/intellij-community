@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.passwordSafe
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.concurrency.Promise
 
 /**
- * [See documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html)
+ * [See the documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
  */
 abstract class PasswordSafe : PasswordStorage, CredentialStore {
   companion object {
@@ -18,7 +18,7 @@ abstract class PasswordSafe : PasswordStorage, CredentialStore {
   }
 
   /**
-   * State of "Remember" check box is global. If user did uncheck for one dialog, it should be unchecked for another.
+   * The state of the "Remember" check box is global; if a user unchecks it in one dialog, it should be unchecked in another.
    */
   abstract var isRememberPasswordByDefault: Boolean
 
