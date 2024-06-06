@@ -11,6 +11,14 @@
     "Docker:app:DockerSettings.dockerPath",
     "Git4Idea:app:Git-Application-Settings.*",
     "JavaScript:app:JsxEmmetOptions.*",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myCloseSessionOnLogout",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myHighlightHyperlinks",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myOverrideIdeShortcuts",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myReportMouse",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myShellIntegration",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myShellPath",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myTabName",
+    "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.useShellPrompt",
     "Pythonid:app:PyCondaPackageService.*"
   ]
 }
