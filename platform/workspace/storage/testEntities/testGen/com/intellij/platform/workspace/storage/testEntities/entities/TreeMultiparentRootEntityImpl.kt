@@ -37,6 +37,8 @@ open class TreeMultiparentRootEntityImpl(private val dataSource: TreeMultiparent
 
   }
 
+  override val symbolicId: TreeMultiparentSymbolicId = super.symbolicId
+
   override val data: String
     get() {
       readField("data")

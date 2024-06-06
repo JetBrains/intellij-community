@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
@@ -34,6 +35,8 @@ open class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : Fa
     )
 
   }
+
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId> = super.symbolicId
 
   override val data: String
     get() {

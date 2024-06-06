@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -32,6 +31,8 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
     )
 
   }
+
+  override val symbolicId: SdkId = super.symbolicId
 
   override val name: String
     get() {

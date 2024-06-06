@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
@@ -39,6 +40,8 @@ open class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymb
     )
 
   }
+
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId> = super.symbolicId
 
   override val booleanProperty: Boolean
     get() {

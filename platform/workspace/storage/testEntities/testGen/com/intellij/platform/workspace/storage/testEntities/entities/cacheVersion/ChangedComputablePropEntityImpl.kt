@@ -29,6 +29,8 @@ open class ChangedComputablePropEntityImpl(private val dataSource: ChangedComput
 
   }
 
+  override val symbolicId: ChangedComputablePropEntityId = super.symbolicId
+
   override val text: String
     get() {
       readField("text")

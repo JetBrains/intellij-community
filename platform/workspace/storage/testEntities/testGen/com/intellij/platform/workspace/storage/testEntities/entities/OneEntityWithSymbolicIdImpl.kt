@@ -32,6 +32,8 @@ open class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymb
 
   }
 
+  override val symbolicId: OneSymbolicId = super.symbolicId
+
   override val myName: String
     get() {
       readField("myName")

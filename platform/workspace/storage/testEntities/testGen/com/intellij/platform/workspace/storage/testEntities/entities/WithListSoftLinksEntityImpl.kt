@@ -35,6 +35,8 @@ open class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftLinks
 
   }
 
+  override val symbolicId: AnotherNameId = super.symbolicId
+
   override val myName: String
     get() {
       readField("myName")

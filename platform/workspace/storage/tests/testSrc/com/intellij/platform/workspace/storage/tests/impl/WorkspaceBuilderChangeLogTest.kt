@@ -510,10 +510,10 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify`() {
-    val entity = builder addEntity NamedEntity("Parent", MySource)
+    var entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "AnotherName"
     }
     builder.modifyNamedEntity(entity) {
@@ -574,13 +574,13 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps three modify`() {
-    val entity = builder addEntity NamedEntity("Parent", MySource)
+    var entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "AnotherName"
     }
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "AndAnotherName"
     }
     builder.modifyNamedEntity(entity) {
@@ -593,13 +593,13 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify and source change`() {
-    val entity = builder addEntity NamedEntity("Parent", MySource)
+    var entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "AnotherName"
     }
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       this.entitySource = AnotherSource
     }
     builder.modifyNamedEntity(entity) {
@@ -613,16 +613,16 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify and two source change`() {
-    val entity = builder addEntity NamedEntity("Parent", MySource)
+    var entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "AnotherName"
     }
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       this.entitySource = AnotherSource
     }
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       this.entitySource = MySource
     }
     builder.modifyNamedEntity(entity) {
@@ -635,16 +635,16 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify and two source change in mix`() {
-    val entity = builder addEntity NamedEntity("Parent", MySource)
+    var entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       myName = "AnotherName"
     }
-    builder.modifyNamedEntity(entity) {
+    entity = builder.modifyNamedEntity(entity) {
       this.entitySource = AnotherSource
     }
-    builder.modifyNamedEntity(entity) {
+    entity =builder.modifyNamedEntity(entity) {
       myName = "Parent"
     }
     builder.modifyNamedEntity(entity) {

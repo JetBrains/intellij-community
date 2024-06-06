@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -40,6 +40,8 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
     )
 
   }
+
+  override val symbolicId: FacetId = super.symbolicId
 
   override val name: String
     get() {

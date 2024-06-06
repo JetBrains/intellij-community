@@ -31,6 +31,8 @@ open class ChangedComputablePropsOrderEntityImpl(private val dataSource: Changed
 
   }
 
+  override val symbolicId: ChangedComputablePropsOrderEntityId = super.symbolicId
+
   override val someKey: Int
     get() {
       readField("someKey")

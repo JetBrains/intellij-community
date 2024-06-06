@@ -56,6 +56,8 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
 
   }
 
+  override val symbolicId: ArtifactId = super.symbolicId
+
   override val name: String
     get() {
       readField("name")

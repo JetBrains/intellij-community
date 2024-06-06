@@ -28,6 +28,8 @@ open class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithPIdDa
 
   }
 
+  override val symbolicId: SecondPId = super.symbolicId
+
   override val data: String
     get() {
       readField("data")

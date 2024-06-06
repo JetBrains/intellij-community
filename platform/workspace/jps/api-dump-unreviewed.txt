@@ -139,6 +139,7 @@ c:com.intellij.java.workspace.entities.ArtifactEntityImpl
 - getName():java.lang.String
 - getOutputUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - getRootElement():com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- getSymbolicId():com.intellij.java.workspace.entities.ArtifactId
 f:com.intellij.java.workspace.entities.ArtifactEntityImpl$Builder
 - com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 - com.intellij.java.workspace.entities.ArtifactEntity$Builder
@@ -1746,6 +1747,7 @@ c:com.intellij.platform.workspace.jps.entities.FacetEntityImpl
 - getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
 - getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
 - getName():java.lang.String
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.FacetId
 - getTypeId():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 - getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntity
 f:com.intellij.platform.workspace.jps.entities.FacetEntityImpl$Builder
@@ -1900,6 +1902,7 @@ c:com.intellij.platform.workspace.jps.entities.LibraryEntityImpl
 - getExcludedRoots():java.util.List
 - getName():java.lang.String
 - getRoots():java.util.List
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.LibraryId
 - getTableId():com.intellij.platform.workspace.jps.entities.LibraryTableId
 - getTypeId():com.intellij.platform.workspace.jps.entities.LibraryTypeId
 f:com.intellij.platform.workspace.jps.entities.LibraryEntityImpl$Builder
@@ -2133,6 +2136,7 @@ c:com.intellij.platform.workspace.jps.entities.ModuleEntityImpl
 - getEntitySource():com.intellij.platform.workspace.storage.EntitySource
 - getFacets():java.util.List
 - getName():java.lang.String
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.ModuleId
 - getType():com.intellij.platform.workspace.jps.entities.ModuleTypeId
 f:com.intellij.platform.workspace.jps.entities.ModuleEntityImpl$Builder
 - com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -2315,6 +2319,7 @@ c:com.intellij.platform.workspace.jps.entities.SdkEntityImpl
 - getHomePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - getName():java.lang.String
 - getRoots():java.util.List
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.SdkId
 - getType():java.lang.String
 - getVersion():java.lang.String
 f:com.intellij.platform.workspace.jps.entities.SdkEntityImpl$Builder

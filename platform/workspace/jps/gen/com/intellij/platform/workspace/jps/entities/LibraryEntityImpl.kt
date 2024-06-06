@@ -45,6 +45,8 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
 
   }
 
+  override val symbolicId: LibraryId = super.symbolicId
+
   override val name: String
     get() {
       readField("name")

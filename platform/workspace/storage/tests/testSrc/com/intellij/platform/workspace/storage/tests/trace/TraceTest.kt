@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTracker
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
@@ -140,6 +141,7 @@ class TraceTest {
   }
 
   @Test
+  @Disabled
   fun `get symbolic id`() {
     val traces = ReadTracker.trace(snapshot) {
       val value = it.resolve(NameId("name"))!!

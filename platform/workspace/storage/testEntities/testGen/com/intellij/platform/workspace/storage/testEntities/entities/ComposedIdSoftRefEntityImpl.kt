@@ -34,6 +34,8 @@ open class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRef
 
   }
 
+  override val symbolicId: ComposedId = super.symbolicId
+
   override val myName: String
     get() {
       readField("myName")

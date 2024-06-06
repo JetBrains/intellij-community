@@ -1,14 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -43,6 +47,8 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
     )
 
   }
+
+  override val symbolicId: KotlinSettingsId = super.symbolicId
 
   override val name: String
     get() {

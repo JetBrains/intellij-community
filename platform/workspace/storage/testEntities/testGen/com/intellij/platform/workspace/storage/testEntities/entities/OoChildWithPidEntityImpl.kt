@@ -37,6 +37,8 @@ open class OoChildWithPidEntityImpl(private val dataSource: OoChildWithPidEntity
 
   }
 
+  override val symbolicId: OoChildEntityId = super.symbolicId
+
   override val childProperty: String
     get() {
       readField("childProperty")

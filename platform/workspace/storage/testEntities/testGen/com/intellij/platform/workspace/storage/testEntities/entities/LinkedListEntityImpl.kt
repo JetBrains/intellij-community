@@ -31,6 +31,8 @@ open class LinkedListEntityImpl(private val dataSource: LinkedListEntityData) : 
 
   }
 
+  override val symbolicId: LinkedListEntityId = super.symbolicId
+
   override val myName: String
     get() {
       readField("myName")

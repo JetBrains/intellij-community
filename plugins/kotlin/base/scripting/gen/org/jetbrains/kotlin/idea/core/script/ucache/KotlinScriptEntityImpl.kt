@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -33,6 +32,8 @@ open class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData
     )
 
   }
+
+  override val symbolicId: KotlinScriptId = super.symbolicId
 
   override val path: String
     get() {

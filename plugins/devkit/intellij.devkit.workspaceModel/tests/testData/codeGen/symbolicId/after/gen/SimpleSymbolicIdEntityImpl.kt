@@ -29,6 +29,8 @@ open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEn
 
   }
 
+  override val symbolicId: SimpleId = super.symbolicId
+
   override val version: Int
     get() {
       readField("version")

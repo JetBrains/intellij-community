@@ -41,6 +41,8 @@ open class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEnti
 
   }
 
+  override val symbolicId: OoParentEntityId = super.symbolicId
+
   override val parentProperty: String
     get() {
       readField("parentProperty")

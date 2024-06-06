@@ -36,6 +36,8 @@ open class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedEntit
 
   }
 
+  override val symbolicId: NameId = super.symbolicId
+
   override val myName: String
     get() {
       readField("myName")
