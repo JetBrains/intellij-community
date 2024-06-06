@@ -17,7 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
-import com.intellij.platform.ml.embeddings.search.indices.EntitySourceType.DEFAULT
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.normalized
@@ -123,7 +123,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
       }
       .toList()
 
-    index.addEntries(indexed, sourceType = DEFAULT)
+    index.addEntries(indexed)
   }
 
   private suspend fun loadRequirements(project: Project?) {
@@ -157,7 +157,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
           .mapNotNull { action ->
             val id = actionManager.getId(action)
             val templateText = action.templateText
-            if (id == null || templateText == null) null else IndexQueueEntry(id, templateText)
+            if (id == null || templateText == null) null else IndexQueueEntry(EntityId(id), templateText)
           }
           .toList()
       }
@@ -165,4 +165,4 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
   }
 }
 
-private data class IndexQueueEntry(val actionId: String, val templateText: String)
+private data class IndexQueueEntry(val actionId: EntityId, val templateText: String)

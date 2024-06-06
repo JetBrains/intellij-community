@@ -8,6 +8,7 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -42,6 +43,6 @@ class FileEmbeddingsStorage(project: Project, coroutineScope: CoroutineScope)
 }
 
 class IndexableFile(file: VirtualFile) : IndexableEntity {
-  override val id = file.name.intern()
+  override val id = EntityId(file.name.intern())
   override val indexableRepresentation by lazy { splitIdentifierIntoTokens(file.nameWithoutExtension) }
 }

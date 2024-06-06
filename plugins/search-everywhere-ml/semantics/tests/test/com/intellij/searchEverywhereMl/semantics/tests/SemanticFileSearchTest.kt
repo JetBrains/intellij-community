@@ -5,20 +5,23 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.ml.embeddings.search.services.*
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
+import com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.services.IndexableFile
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.runTest
 import java.io.BufferedReader
 import java.nio.file.Path
 import kotlin.io.path.inputStream
-import kotlinx.coroutines.test.runTest
 
 class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
   private val storage
@@ -66,7 +69,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     val files = items.filterIsInstance<PsiFile>().map { IndexableFile(it.virtualFile) }
 
     assertEquals(2, files.size)
-    assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), files.map { it.id }.toSet())
+    assertEquals(setOf(EntityId("IndexProjectAction.java"), EntityId("ProjectIndexingTask.kt")), files.map { it.id }.toSet())
   }
 
   fun `test file renaming changes the index`() = runTest {
