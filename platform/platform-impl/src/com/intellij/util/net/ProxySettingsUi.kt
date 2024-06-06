@@ -333,7 +333,10 @@ class ProxySettingsUi(
         proxyHostTextField.text = conf.host
         proxyPortTextField.number = conf.port
         proxyExceptionsField.text = conf.exceptions
-
+        when (conf.protocol) {
+          ProxyProtocol.HTTP -> typeHttpRb.isSelected = true
+          ProxyProtocol.SOCKS -> typeSocksRb.isSelected = true
+        }
         val creds = credentialStore.getCredentials(conf.host, conf.port)
         proxyAuthCheckBox.isSelected = creds != null
         proxyLoginTextField.text = creds?.userName
