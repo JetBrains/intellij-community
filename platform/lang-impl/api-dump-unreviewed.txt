@@ -6432,13 +6432,11 @@ f:com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction$TypeDefinitions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 *f:com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 *f:com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory
 - com.intellij.codeInsight.hints.InlayHintsProviderFactory
@@ -6450,7 +6448,6 @@ f:com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction$TypeDefinitions
 - com.intellij.openapi.actionSystem.ToggleAction
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -6466,7 +6463,6 @@ f:com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction$TypeDefinitions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 - com.intellij.codeInsight.hints.InlayHintsProvider

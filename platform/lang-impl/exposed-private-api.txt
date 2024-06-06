@@ -48,7 +48,6 @@ com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/largeFilesEditor/editor/AbsoluteSymbolPosition
 com/intellij/largeFilesEditor/search/searchTask/FrameSearcher
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
-com/intellij/openapi/actionSystem/remoting/ActionRemoteBehavior
 com/intellij/openapi/client/ClientProjectSession
 com/intellij/openapi/components/impl/stores/IComponentStore
 com/intellij/openapi/editor/EditorMouseHoverPopupManager$Context

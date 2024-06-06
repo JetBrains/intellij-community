@@ -4739,7 +4739,6 @@ c:com.intellij.ide.actions.OpenFileAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - pf:getPathToSelect():com.intellij.openapi.vfs.VirtualFile
 - sf:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
 - sf:openFile(java.lang.String,com.intellij.openapi.project.Project):V
