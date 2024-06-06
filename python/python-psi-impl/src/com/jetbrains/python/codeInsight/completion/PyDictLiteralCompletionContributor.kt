@@ -53,7 +53,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
     val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
     val actualType = typeEvalContext.getType(possibleSequenceExpr)
     val quote = getForcedQuote(possibleSequenceExpr, originalElement)
-    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext)).forEach {
+    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext))?.forEach {
       addCompletionForTypedDictKeys(it.getType(typeEvalContext), actualType, result, quote)
     }
   }

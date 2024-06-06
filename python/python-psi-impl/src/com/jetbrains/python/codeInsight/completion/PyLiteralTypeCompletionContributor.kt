@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.IconManager
@@ -12,6 +11,7 @@ import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
@@ -20,16 +20,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyLiteralTypeCompletionContributor : CompletionContributor() {
   init {
-    extend(
-      CompletionType.BASIC,
-      or(
-        psiElement().withSuperParent(2, PyKeywordArgument::class.java),
-        psiElement().withSuperParent(2, PyArgumentList::class.java),
-        psiElement().withSuperParent(2, PySubscriptionExpression::class.java),
-        psiElement().inside(PyAssignmentStatement::class.java),
-      ),
-      PyLiteralTypeCompletionProvider()
-    )
+    extend(CompletionType.BASIC, psiElement(), PyLiteralTypeCompletionProvider())
   }
 }
 
@@ -38,11 +29,9 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
     val position = parameters.position.parent as? PyExpression ?: return
     val typeEvalContext = TypeEvalContext.codeCompletion(position.project, position.containingFile)
 
-    val callSiteExpr = PsiTreeUtil.getParentOfType(position, PyCallSiteExpression::class.java)
-    if (callSiteExpr != null) {
-      val types = PyCallExpressionHelper
-        .getMappedParameters(position, PyResolveContext.defaultContext(typeEvalContext))
-        .mapNotNull { it.getArgumentType(typeEvalContext) }
+    val mappedParameters = PyCallExpressionHelper.getMappedParameters(position, PyResolveContext.defaultContext(typeEvalContext))
+    if (mappedParameters != null) {
+      val types = mappedParameters.mapNotNull { it.getArgumentType(typeEvalContext) }
       addToResult(position, types, result)
       return
     }
@@ -51,11 +40,12 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
                                                             PyParenthesizedExpression::class.java,
                                                             PyTupleExpression::class.java) as? PyAssignmentStatement
     if (assignmentStatement != null) {
-      val mapping = assignmentStatement.targetsToValuesMapping.find { it.second === position }
+      val mapping = assignmentStatement.targetsToValuesMapping.find { PyPsiUtils.flattenParens(it.second) === position }
       if (mapping != null) {
         val type = typeEvalContext.getType(mapping.first)
         addToResult(position, listOfNotNull(type), result)
       }
+      return
     }
   }
 

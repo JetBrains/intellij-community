@@ -755,14 +755,15 @@ public final class PyCallExpressionHelper {
    * {@code argument} can be (parenthesized) expression or a value of a {@link PyKeywordArgument}
    */
   @ApiStatus.Internal
-  @NotNull
+  @Nullable
   public static List<PyCallableParameter> getMappedParameters(@NotNull PyExpression argument,
                                                               @NotNull PyResolveContext resolveContext) {
     while (argument.getParent() instanceof PyParenthesizedExpression parenthesizedExpr) {
       argument = parenthesizedExpr;
     }
 
-    if (argument.getParent() instanceof PyKeywordArgument keywordArgument && keywordArgument.getValueExpression() == argument) {
+    if (argument.getParent() instanceof PyKeywordArgument keywordArgument) {
+      assert keywordArgument.getValueExpression() == argument;
       argument = keywordArgument;
     }
 
@@ -771,7 +772,7 @@ public final class PyCallExpressionHelper {
       parent = parent.getParent();
     }
     if (!(parent instanceof PyCallSiteExpression callSite)) {
-      return Collections.emptyList();
+      return null;
     }
 
     PyExpression finalArgument = argument;

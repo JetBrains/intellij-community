@@ -11,16 +11,36 @@ class PyLiteralTypeCompletionTest : PyTestCase() {
     doTestCompletionVariantsContains("inCallExpression.py", "\"1\"", "\"2\"", "\"foo\"", "\"5\"")
   }
 
+  // PY-72661
+  fun testNestedParenthesisInCallExpression() {
+    myFixture.testCompletionVariants("nestedParenthesisInCallExpression.py", "abb", "bac")
+  }
+
   fun testInKeywordArgument() {
     doTestCompletionVariantsContains("inKeywordArgument.py", "\"3\"", "\"foo\"", "\"5\"")
+  }
+
+  // PY-72661
+  fun testNestedParenthesisInKeywordArgumentValue() {
+    doTestCompletionVariantsContains("nestedParenthesisInKeywordArgumentValue.py", "\"-1\"", "\"foo\"", "\"6\"")
   }
 
   fun testInSubscriptionExpression() {
     doTestCompletionVariantsContains("inSubscriptionExpression.py", "\"1\"", "\"foo\"", "\"5\"")
   }
 
+  // PY-72661
+  fun testNestedParenthesisInSubscriptionExpression() {
+    myFixture.testCompletionVariants("nestedParenthesisInSubscriptionExpression.py", "1", "2", "foo", "5")
+  }
+
   fun testInAssigment() {
     doTestCompletionVariantsContains("inAssignment.py", "\"1\"", "\"3\"", "\"foo\"", "\"5\"")
+  }
+
+  // PY-72661
+  fun testNestedParenthesisInAssigment() {
+    doTestCompletionVariantsContains("nestedParenthesisInAssigment.py", "\"0\"", "\"acc\"", "\"5\"")
   }
 
   fun testInDoubleQuotedString() {
