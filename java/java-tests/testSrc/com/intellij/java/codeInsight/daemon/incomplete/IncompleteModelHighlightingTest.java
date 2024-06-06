@@ -19,7 +19,7 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
   private void doTest(String fileName) {
     enableInspectionTools(new UnusedImportInspection(), new RedundantThrowsDeclarationLocalInspection());
     IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
-    try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
+    try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState(this)))) {
       doTest(BASE_PATH + "/" + fileName, true, true);
     }
   }

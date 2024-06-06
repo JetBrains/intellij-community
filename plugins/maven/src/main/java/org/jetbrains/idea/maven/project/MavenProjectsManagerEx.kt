@@ -359,7 +359,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           return result.modules
         }
         incompleteState = writeAction {
-          project.service<IncompleteDependenciesService>().enterIncompleteState()
+          project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
         }
       }
       val result = doDynamicSync(syncActivity, read, spec, modelsProvider)

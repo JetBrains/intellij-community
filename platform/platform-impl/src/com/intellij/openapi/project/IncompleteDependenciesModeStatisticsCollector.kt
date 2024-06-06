@@ -11,25 +11,44 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object IncompleteDependenciesModeStatisticsCollector : CounterUsagesCollector() {
-  fun started(project: Project?, stateBefore: DependenciesState, stateAfter: DependenciesState): StructuredIdeActivity {
-    return INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY.started(project) {
-        listOf(EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter))
-      }
+  fun incompleteModeStarted(project: Project?): StructuredIdeActivity {
+    return INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY.started(project)
   }
 
-  @JvmStatic
-  fun finished(activity: StructuredIdeActivity?, stateBefore: DependenciesState, stateAfter: DependenciesState) {
-    activity?.finished { listOf(EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter)) }
+  fun incompleteModeFinished(activity: StructuredIdeActivity?) {
+    activity?.finished()
   }
 
-  val GROUP: EventLogGroup = EventLogGroup("incomplete.dependencies.mode", 1)
+  fun incompleteModeActivityStarted(project: Project?,
+                                    incompleteModeActivity: StructuredIdeActivity,
+                                    requestor: Class<*>,
+                                    stateBefore: DependenciesState,
+                                    stateAfter: DependenciesState): StructuredIdeActivity {
+    return INCOMPLETE_DEPENDENCIES_MODE_SUBTASK_ACTIVITY.startedWithParent(project, incompleteModeActivity) {
+      listOf(EventPair(REQUESTOR, requestor), EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter))
+    }
+  }
+
+  fun incompleteModeActivityFinished(activity: StructuredIdeActivity?, requestor: Class<*>, stateBefore: DependenciesState, stateAfter: DependenciesState) {
+    activity?.finished { listOf(EventPair(REQUESTOR, requestor), EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter)) }
+  }
+
+  val GROUP: EventLogGroup = EventLogGroup("incomplete.dependencies.mode", 2)
 
   @JvmField
   val STATE_BEFORE: EnumEventField<DependenciesState> = EventFields.Enum("state_before", DependenciesState::class.java)
   @JvmField
   val STATE_AFTER: EnumEventField<DependenciesState> = EventFields.Enum("state_after", DependenciesState::class.java)
   @JvmField
-  val INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity("incomplete_dependencies_mode", arrayOf(STATE_BEFORE, STATE_AFTER), arrayOf(STATE_BEFORE, STATE_AFTER))
+  val REQUESTOR: ClassEventField = EventFields.Class("requestor")
+
+  @JvmField
+  val INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity("incomplete_dependencies_mode")
+  @JvmField
+  val INCOMPLETE_DEPENDENCIES_MODE_SUBTASK_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity("incomplete_dependencies_mode_subtask",
+                                                                                                       arrayOf(REQUESTOR, STATE_BEFORE, STATE_AFTER),
+                                                                                                       arrayOf(REQUESTOR, STATE_BEFORE, STATE_AFTER),
+                                                                                                       parentActivity = INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY)
 
   override fun getGroup(): EventLogGroup = GROUP
 }

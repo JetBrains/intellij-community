@@ -31,7 +31,7 @@ internal class ToggleIncompleteDependenciesModeAction : DumbAwareAction() {
         project.putUserData(INCOMPLETE_MODE_ACCESS_TOKEN, null)
       }
       else {
-        val token = project.getService(IncompleteDependenciesService::class.java).enterIncompleteState()
+        val token = project.getService(IncompleteDependenciesService::class.java).enterIncompleteState(this@ToggleIncompleteDependenciesModeAction)
         project.putUserData(INCOMPLETE_MODE_ACCESS_TOKEN, token)
       }
     }
