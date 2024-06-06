@@ -141,18 +141,26 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
 
   private fun updatePaddingsAndMargins(force: Boolean) {
     val parentView = parent
-    val index = (0..<parentView.viewCount).firstOrNull { parentView.getView(it) === this } ?: -1
-
-    // Heuristics to determine whether we are within the same inline (e.g. <span>) element with paddings.
-    // Nested inline element insets are not supported, because hierarchy of inline elements is not preserved.
-    val prevSibling = getSibling(parentView, index, -1)
-    val nextSibling = getSibling(parentView, index, 1)
 
     val cssPadding = this.cssPadding
     val cssMargin = this.cssMargin
 
-    val startView = prevSibling?.cssPadding != cssPadding || prevSibling.cssMargin != cssMargin
-    val endView = nextSibling?.cssPadding != cssPadding || nextSibling.cssMargin != cssMargin
+    val startView: Boolean
+    val endView: Boolean
+    if (parentView == null) {
+      startView = true
+      endView = true
+    } else {
+      val index = (0..<parentView.viewCount).firstOrNull { parentView.getView(it) === this } ?: -1
+
+      // Heuristics to determine whether we are within the same inline (e.g. <span>) element with paddings.
+      // Nested inline element insets are not supported, because hierarchy of inline elements is not preserved.
+      val prevSibling = getSibling(parentView, index, -1)
+      val nextSibling = getSibling(parentView, index, 1)
+
+      startView = prevSibling?.cssPadding != cssPadding || prevSibling.cssMargin != cssMargin
+      endView = nextSibling?.cssPadding != cssPadding || nextSibling.cssMargin != cssMargin
+    }
 
     if (!force && startView == this.startView && endView == this.endView) {
       return
