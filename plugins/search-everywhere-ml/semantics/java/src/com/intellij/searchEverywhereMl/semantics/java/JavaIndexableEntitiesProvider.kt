@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.java
 
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
 import com.intellij.platform.ml.embeddings.search.services.IndexableSymbol
@@ -14,13 +15,13 @@ class JavaIndexableEntitiesProvider : FileIndexableEntitiesProvider {
     return (file as PsiJavaFile).classes.filterNotNull()
       .flatMap { it.methods.toList() }
       .filter { it.name != ANONYMOUS_ID }
-      .map { IndexableSymbol(it.name.intern()) }
+      .map { IndexableSymbol(EntityId(it.name.intern())) }
   }
 
   override fun extractIndexableClasses(file: PsiFile): List<IndexableClass> {
     return (file as PsiJavaFile).classes.filterNotNull()
       .filter { it !is PsiAnonymousClass }
-      .map { IndexableClass(it.name?.intern() ?: "") }
+      .map { IndexableClass(EntityId(it.name?.intern() ?: "")) }
   }
 
   companion object {

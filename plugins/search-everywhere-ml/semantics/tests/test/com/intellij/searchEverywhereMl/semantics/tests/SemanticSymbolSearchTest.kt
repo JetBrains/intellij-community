@@ -5,14 +5,15 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
 import com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSymbolSearchEverywhereContributor
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.editor.commitToPsi
@@ -66,11 +67,11 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
     assertEquals(2, items.size)
 
-    val methods = items.filterIsInstance<PsiMethod>().map { IndexableClass(it.name) } +
-                  items.filterIsInstance<KtFunction>().map { IndexableClass(it.name ?: "") } +
-                  items.filterIsInstance<PsiClass>().map { IndexableClass(it.name ?: "") } // we might have constructors in the results
+    val methods = items.filterIsInstance<PsiMethod>().map { IndexableClass(EntityId(it.name)) } +
+                  items.filterIsInstance<KtFunction>().map { IndexableClass(EntityId(it.name ?: "")) } +
+                  items.filterIsInstance<PsiClass>().map { IndexableClass(EntityId(it.name ?: "")) } // we might have constructors in the results
     assertEquals(2, methods.size)
-    assertEquals(setOf("ProjectIndexingTask", "startIndexing"), methods.map { it.id }.toSet())
+    assertEquals(setOf(EntityId("ProjectIndexingTask"), EntityId("startIndexing")), methods.map { it.id }.toSet())
   }
 
   fun `test method renaming changes the index`() = runTest {

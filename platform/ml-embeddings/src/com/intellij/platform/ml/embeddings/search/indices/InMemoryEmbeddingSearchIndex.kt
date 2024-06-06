@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicLong
  * Can be persisted to disk.
  */
 class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) : EmbeddingSearchIndex {
-  private var idToEmbedding: MutableMap<String, FloatTextEmbedding> = CollectionFactory.createSmallMemoryFootprintMap()
-  private val uncheckedIds: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
+  private var idToEmbedding: MutableMap<EntityId, FloatTextEmbedding> = CollectionFactory.createSmallMemoryFootprintMap()
+  private val uncheckedIds: MutableSet<EntityId> = ConcurrentCollectionFactory.createConcurrentSet()
   private val lock = SuspendingReadWriteLock()
 
   private val fileManager = LocalEmbeddingIndexFileManager(root)
@@ -33,18 +33,16 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     limit = value
   }
 
-  override suspend fun contains(id: String): Boolean = lock.read {
+  override suspend fun contains(id: EntityId): Boolean = lock.read {
     id in idToEmbedding
   }
 
-  override suspend fun lookup(id: String): FloatTextEmbedding? = lock.read { idToEmbedding[id] }
+  override suspend fun lookup(id: EntityId): FloatTextEmbedding? = lock.read { idToEmbedding[id] }
 
   override suspend fun clear() = lock.write {
     idToEmbedding.clear()
     uncheckedIds.clear()
   }
-
-  override suspend fun clearBySourceType(sourceType: EntitySourceType) = Unit
 
   override suspend fun onIndexingStart() {
     lock.write {
@@ -58,7 +56,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     uncheckedIds.clear()
   }
 
-  override suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, sourceType: EntitySourceType, shouldCount: Boolean) =
+  override suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>, shouldCount: Boolean) =
     lock.write {
       if (limit != null) {
         val list = values.toList()
@@ -73,7 +71,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
   override suspend fun saveToDisk() = lock.read { save() }
 
   override suspend fun loadFromDisk() = lock.write {
-    val (ids, _, embeddings) = fileManager.loadIndex() ?: return@write
+    val (ids, embeddings) = fileManager.loadIndex() ?: return@write
     idToEmbedding = (ids zip embeddings).toMap().toMutableMap()
   }
 
@@ -107,7 +105,6 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
 
   private suspend fun save() {
     val (ids, embeddings) = idToEmbedding.toList().unzip()
-    val idsSourceTypes = ids.map { EntitySourceType.DEFAULT }
-    fileManager.saveIndex(ids = ids, idsSourceTypes = idsSourceTypes, embeddings = embeddings)
+    fileManager.saveIndex(ids = ids, embeddings = embeddings)
   }
 }

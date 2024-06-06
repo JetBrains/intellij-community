@@ -12,15 +12,15 @@ interface EmbeddingSearchIndex {
   suspend fun getSize(): Int
   suspend fun setLimit(value: Int?)
 
-  suspend fun contains(id: String): Boolean
-  suspend fun lookup(id: String): FloatTextEmbedding?
+  suspend fun contains(id: EntityId): Boolean
+  suspend fun lookup(id: EntityId): FloatTextEmbedding?
   suspend fun clear()
-  suspend fun clearBySourceType(sourceType: EntitySourceType)
+  suspend fun clearBySourceType(sourceType: EntitySourceType) = Unit
 
   suspend fun onIndexingStart()
   suspend fun onIndexingFinish()
 
-  suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, sourceType: EntitySourceType, shouldCount: Boolean = false)
+  suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>, shouldCount: Boolean = false)
 
   suspend fun saveToDisk()
   suspend fun loadFromDisk()
@@ -34,20 +34,20 @@ interface EmbeddingSearchIndex {
   suspend fun checkCanAddEntry(): Boolean
 }
 
-internal fun Map<String, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,
+internal fun Map<EntityId, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,
                                                          topK: Int, similarityThreshold: Double?): List<ScoredText> {
   return asSequence()
     .map { it.key to searchEmbedding.times(it.value) }
     .filter { (_, similarity) -> if (similarityThreshold != null) similarity > similarityThreshold else true }
     .sortedByDescending { (_, similarity) -> similarity }
     .take(topK)
-    .map { (id, similarity) -> ScoredText(id, similarity.toDouble()) }
+    .map { (id, similarity) -> ScoredText(id.id, similarity.toDouble()) }
     .toList()
 }
 
-internal fun Sequence<Pair<String, FloatTextEmbedding>>.streamFindClose(queryEmbedding: FloatTextEmbedding,
+internal fun Sequence<Pair<EntityId, FloatTextEmbedding>>.streamFindClose(queryEmbedding: FloatTextEmbedding,
                                                                         similarityThreshold: Double?): Sequence<ScoredText> {
   return map { (id, embedding) -> id to queryEmbedding.times(embedding) }
     .filter { similarityThreshold == null || it.second > similarityThreshold }
-    .map { (id, similarity) -> ScoredText(id, similarity.toDouble()) }
+    .map { (id, similarity) -> ScoredText(id.id, similarity.toDouble()) }
 }

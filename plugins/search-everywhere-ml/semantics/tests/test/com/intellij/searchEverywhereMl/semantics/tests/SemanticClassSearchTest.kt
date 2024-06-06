@@ -5,13 +5,14 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
 import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
+import com.intellij.platform.ml.embeddings.search.services.IndexableClass
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticClassSearchEverywhereContributor
-import com.intellij.platform.ml.embeddings.search.services.IndexableClass
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -19,8 +20,8 @@ import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.flow.*
-import org.jetbrains.kotlin.psi.KtClass
 import kotlinx.coroutines.test.runTest
+import org.jetbrains.kotlin.psi.KtClass
 import kotlin.time.Duration.Companion.seconds
 
 class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
@@ -65,10 +66,10 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
     assertEquals(2, items.size)
 
-    val classes = items.filterIsInstance<PsiClass>().map { IndexableClass(it.name ?: "") } +
-                  items.filterIsInstance<KtClass>().map { IndexableClass(it.name ?: "") }
+    val classes = items.filterIsInstance<PsiClass>().map { IndexableClass(EntityId(it.name ?: "")) } +
+                  items.filterIsInstance<KtClass>().map { IndexableClass(EntityId(it.name ?: "")) }
     assertEquals(2, classes.size)
-    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), classes.map { it.id }.toSet())
+    assertEquals(setOf(EntityId("IndexProjectAction"), EntityId("ProjectIndexingTask")), classes.map { it.id }.toSet())
   }
 
   fun `test class renaming changes the index`() = runTest {

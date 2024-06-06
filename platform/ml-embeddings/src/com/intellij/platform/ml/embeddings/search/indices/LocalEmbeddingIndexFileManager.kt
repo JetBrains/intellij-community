@@ -31,8 +31,6 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     get() = field.also { Files.createDirectories(field) }
   private val idsPath
     get() = rootPath.resolve(IDS_FILENAME)
-  private val idsSourcesPath
-    get() = rootPath.resolve(IDS_SOURCES_FILENAME)
   private val embeddingsPath
     get() = rootPath.resolve(EMBEDDINGS_FILENAME)
 
@@ -89,14 +87,13 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     }
   }
 
-  data class LoadedIndex(val ids: List<String>, val idsSourceTypes: List<EntitySourceType>, val embeddings: List<FloatTextEmbedding>)
+  data class LoadedIndex(val ids: List<EntityId>, val embeddings: List<FloatTextEmbedding>)
 
   suspend fun loadIndex(): LoadedIndex? = coroutineScope {
     lock.read {
-      if (!idsPath.exists() || !idsSourcesPath.exists() || !embeddingsPath.exists()) return@read null
+      if (!idsPath.exists() || !embeddingsPath.exists()) return@read null
       try {
-        val ids = mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
-        val idsSourceTypes = mapper.readValue<List<EntitySourceType>>(idsSourcesPath.toFile()).toMutableList()
+        val ids = mapper.readValue<List<EntityId>>(idsPath.toFile()).map { EntityId(it.id.intern(), it.sourceType) }.toMutableList()
 
         val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
         val embeddings = embeddingsPath.inputStream().buffered().use { input ->
@@ -108,7 +105,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
             })
           }
         }
-        LoadedIndex(ids, idsSourceTypes, embeddings)
+        LoadedIndex(ids, embeddings)
       }
       catch (e: JsonProcessingException) {
         return@read null
@@ -116,7 +113,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     }
   }
 
-  suspend fun saveIds(ids: List<String>) = lock.write {
+  suspend fun saveIds(ids: List<EntityId>) = lock.write {
     withNotEnoughSpaceCheck {
       idsPath.outputStream().buffered().use { output ->
         mapper.writer(prettyPrinter).writeValue(output, ids)
@@ -124,14 +121,11 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     }
   }
 
-  suspend fun saveIndex(ids: List<String>, idsSourceTypes: List<EntitySourceType>, embeddings: List<FloatTextEmbedding>) {
+  suspend fun saveIndex(ids: List<EntityId>, embeddings: List<FloatTextEmbedding>) {
     lock.write {
       withNotEnoughSpaceCheck {
         idsPath.outputStream().buffered().use { output ->
           mapper.writer(prettyPrinter).writeValue(output, ids)
-        }
-        idsSourcesPath.outputStream().buffered().use { output ->
-          mapper.writer(prettyPrinter).writeValue(output, idsSourceTypes)
         }
       }
       val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
@@ -157,7 +151,6 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     catch (e: IOException) {
       if (e.message?.lowercase()?.contains("space") == true) {
         idsPath.toFile().delete()
-        idsSourcesPath.toFile().delete()
         embeddingsPath.toFile().delete()
       }
       else throw e
@@ -169,7 +162,6 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     const val EMBEDDING_ELEMENT_SIZE = 4
 
     private const val IDS_FILENAME = "ids.json"
-    private const val IDS_SOURCES_FILENAME = "idsSources.json"
     private const val EMBEDDINGS_FILENAME = "embeddings.bin"
   }
 }
