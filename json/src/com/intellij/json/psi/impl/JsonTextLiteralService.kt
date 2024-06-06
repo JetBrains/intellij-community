@@ -12,11 +12,13 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import java.time.Duration
 
 @Service
 internal class JsonTextLiteralService : Disposable {
   private val unquoteAndUnescapeCache: LoadingCache<String, String> = Caffeine.newBuilder()
     .maximumSize(2048)
+    .expireAfterAccess(Duration.ofMinutes(5))
     .executor(Dispatchers.Default.asExecutor())
     .build { key ->
       val text = JsonPsiUtil.stripQuotes(key)
