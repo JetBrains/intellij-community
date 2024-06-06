@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
-import groovy.transform.CompileDynamic
-import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.testing.Test
@@ -16,62 +14,59 @@ import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
+import java.io.File
 
-@CompileStatic
-class ExternalTestsModelBuilderImpl implements ModelBuilderService {
-  @Override
-  boolean canBuild(String modelName) {
-    return ExternalTestsModel.name == modelName
+class ExternalTestsModelBuilderImpl : ModelBuilderService {
+  override fun canBuild(modelName: String?): Boolean {
+    return ExternalTestsModel::class.java.name == modelName
   }
 
-  @Override
-  Object buildAll(String modelName, Project project) {
-    def defaultTestsModel = new DefaultExternalTestsModel()
+  override fun buildAll(modelName: String, project: Project): Any {
+    val defaultTestsModel = DefaultExternalTestsModel()
     // Projects using android plugins are not supported by this model builder.
     if (project.plugins.hasPlugin("com.android.base")) {
       return defaultTestsModel
     }
     if (JavaPluginUtil.isJavaPluginApplied(project)) {
-      defaultTestsModel.sourceTestMappings = getMapping(project)
+      defaultTestsModel.setSourceTestMappings(getMapping(project))
     }
     return defaultTestsModel
   }
 
-  private static List<ExternalTestSourceMapping> getMapping(Project project) {
-    def taskToClassesDirs = new LinkedHashMap<Test, Set<String>>()
-    project.tasks.withType(Test.class, { Test task ->
-      taskToClassesDirs.put(task, getClassesDirs(task))
-    })
-
-    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
-    if (sourceSetContainer == null) return Collections.emptyList()
-    def classesDirToSourceDirs = new LinkedHashMap<String, Set<String>>()
+  private fun getMapping(project: Project): List<ExternalTestSourceMapping> {
+    val taskToClassesDirs = LinkedHashMap<Test, MutableSet<String>>()
+    val tasks = project.tasks.withType(Test::class.javaObjectType)
+    for (task in tasks) {
+      taskToClassesDirs[task] = getClassesDirs(task)
+    }
+    val sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project) ?: return emptyList()
+    val classesDirToSourceDirs = LinkedHashMap<String, MutableSet<String>>()
     for (sourceSet in sourceSetContainer) {
-      def sourceDirectorySet = sourceSet.allSource
-      List<String> sourceFolders = []
-      for (File dir : sourceDirectorySet.srcDirs) {
+      val sourceDirectorySet = sourceSet.allSource
+      val sourceFolders = mutableListOf<String>()
+      for (dir in sourceDirectorySet.srcDirs) {
         sourceFolders.add(dir.absolutePath)
       }
       for (classDirectory in getPaths(sourceSet.output)) {
-        def storedSourceFolders = classesDirToSourceDirs.get(classDirectory)
+        var storedSourceFolders: MutableSet<String>? = classesDirToSourceDirs[classDirectory]
         if (storedSourceFolders == null) {
-          storedSourceFolders = new LinkedHashSet<String>()
+          storedSourceFolders = LinkedHashSet()
         }
         storedSourceFolders.addAll(sourceFolders)
-        classesDirToSourceDirs.put(classDirectory, storedSourceFolders)
+        classesDirToSourceDirs[classDirectory] = storedSourceFolders
       }
     }
-    def testSourceMappings = new ArrayList<ExternalTestSourceMapping>()
-    for (entry in taskToClassesDirs.entrySet()) {
-      def sourceFolders = new LinkedHashSet<String>()
-      for (classDirectory in entry.value) {
-        def storedSourceFolders = classesDirToSourceDirs.get(classDirectory)
+
+    val testSourceMappings = ArrayList<ExternalTestSourceMapping>()
+    for ((task, classesDirs) in taskToClassesDirs) {
+      val sourceFolders = LinkedHashSet<String>()
+      for (classDirectory in classesDirs) {
+        val storedSourceFolders = classesDirToSourceDirs.get(classDirectory)
         if (storedSourceFolders == null) continue
         for (folder in storedSourceFolders) sourceFolders.add(folder)
       }
-      def task = entry.key
-      def defaultExternalTestSourceMapping = new DefaultExternalTestSourceMapping()
-      defaultExternalTestSourceMapping.testName = task.name
+      val defaultExternalTestSourceMapping = DefaultExternalTestSourceMapping()
+      defaultExternalTestSourceMapping.setTestName(task.name)
       defaultExternalTestSourceMapping.testTaskPath = task.path
       defaultExternalTestSourceMapping.sourceFolders = sourceFolders
       testSourceMappings.add(defaultExternalTestSourceMapping)
@@ -79,37 +74,35 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
     return testSourceMappings
   }
 
-  @CompileDynamic
-  private static Set<String> getClassesDirs(Test test) {
-    def testClassesDirs = new LinkedHashSet()
+  private fun getClassesDirs(test: Test): MutableSet<String> {
+    val testClassesDirs = LinkedHashSet<String>()
     if (test.hasProperty("testClassesDirs")) {
       testClassesDirs.addAll(getPaths(test.testClassesDirs))
     }
     if (test.hasProperty("testClassesDir")) {
-      def testClassesDir = test.testClassesDir?.absolutePath
+      val testClassesDir: File? = test.property("testClassesDir") as? File
       if (testClassesDir != null) {
-        testClassesDirs.add(testClassesDir)
+        testClassesDirs.add(testClassesDir.absolutePath)
       }
     }
     return testClassesDirs
   }
 
-  private static Set<String> getPaths(FileCollection files) {
-    def paths = new LinkedHashSet<String>()
-    for (def file : files.files) {
+  private fun getPaths(files: FileCollection): MutableSet<String> {
+    val paths = LinkedHashSet<String>()
+    for (file in files.files) {
       paths.add(file.absolutePath)
     }
     return paths
   }
 
-  @Override
-  void reportErrorMessage(
-    @NotNull String modelName,
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull Exception exception
+  override fun reportErrorMessage(
+    @NotNull modelName: String,
+    @NotNull project: Project,
+    @NotNull context: ModelBuilderContext,
+    @NotNull exception: Exception
   ) {
-    context.getMessageReporter().createMessage()
+    context.messageReporter.createMessage()
       .withGroup(Messages.TEST_MODEL_GROUP)
       .withKind(Message.Kind.WARNING)
       .withTitle("Test model failure")
