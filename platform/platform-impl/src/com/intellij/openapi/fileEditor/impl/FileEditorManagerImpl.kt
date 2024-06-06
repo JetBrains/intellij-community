@@ -1803,7 +1803,7 @@ open class FileEditorManagerImpl(
     if (newFile != null) {
       val holder = ComponentUtil.getParentOfType(EditorWindowHolder::class.java, newComposite.component)
       if (holder != null) {
-        addSelectionRecord(file = newFile, window = holder.editorWindow)
+        selectionHistory.addRecord(file = newFile, window = holder.editorWindow)
       }
     }
 
@@ -2126,11 +2126,8 @@ open class FileEditorManagerImpl(
 
   fun getSelectionHistory(): List<Pair<VirtualFile, EditorWindow>> = selectionHistory.getHistory().map { Pair(it.first, it.second) }
 
+  @Internal
   fun getSelectionHistoryList(): Collection<kotlin.Pair<VirtualFile, EditorWindow>> = selectionHistory.getHistory()
-
-  final override fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {
-    selectionHistory.addRecord(file, window)
-  }
 
   internal fun removeSelectionRecord(file: VirtualFile, window: EditorWindow) {
     selectionHistory.removeRecord(file, window)

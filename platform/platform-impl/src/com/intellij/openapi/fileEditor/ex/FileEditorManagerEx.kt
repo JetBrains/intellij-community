@@ -234,8 +234,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     performWhenLoaded(editor, runnable)
   }
 
-  open fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {}
-
   @Internal
   @Experimental
   open suspend fun waitForTextEditors() {

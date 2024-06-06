@@ -588,7 +588,7 @@ object Switcher : BaseSwitcherAction(null) {
             var splitWindow: EditorWindow? = null
             for (value in values) {
               if (value is SwitcherVirtualFile) {
-                val file: VirtualFile = value.file
+                val file = value.file
                 if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
                   if (splitWindow == null) {
                     splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
@@ -603,8 +603,7 @@ object Switcher : BaseSwitcherAction(null) {
                 else if (value.window != null) {
                   val editorWindow = findAppropriateWindow(value.window)
                   if (editorWindow != null) {
-                    manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions().withRequestFocus(true))
-                    manager.addSelectionRecord(file, editorWindow)
+                    manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions(requestFocus = true))
                   }
                 }
                 else {
