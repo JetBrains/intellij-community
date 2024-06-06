@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -176,7 +176,7 @@ fun isArrayOfCall(callElement: KtCallElement): Boolean {
  * @return value of the [JvmName] annotation on [symbol] declaration if present, and `null` otherwise
  */
 context(KaSession)
-fun getJvmName(symbol: KtAnnotatedSymbol): String? {
+fun getJvmName(symbol: KaAnnotatedSymbol): String? {
     val jvmNameAnnotation = symbol.annotationsByClassId(JvmStandardClassIds.Annotations.JvmName).firstOrNull() ?: return null
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KtConstantAnnotationValue ?: return null
     val stringValue = annotationValue.constantValue as? KaConstantValue.KaStringConstantValue ?: return null

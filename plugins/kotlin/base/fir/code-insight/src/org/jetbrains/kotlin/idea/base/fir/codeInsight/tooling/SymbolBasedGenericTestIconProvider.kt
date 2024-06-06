@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
@@ -28,7 +28,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     }
 
     context(KaSession)
-    private fun isTestDeclaration(symbol: KtAnnotatedSymbol): Boolean {
+    private fun isTestDeclaration(symbol: KaAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
             (symbol as? KaSymbolWithVisibility)?.visibility != Visibilities.Public -> false
@@ -39,7 +39,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     }
 
     context(KaSession)
-    private tailrec fun isIgnored(symbol: KtAnnotatedSymbol): Boolean {
+    private tailrec fun isIgnored(symbol: KaAnnotatedSymbol): Boolean {
         if (symbol.hasAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
             return true
         }

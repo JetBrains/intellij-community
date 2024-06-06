@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
 import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionContributorBase
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -81,7 +81,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
 }
 
 context(KaSession)
-private inline fun <reified T : Annotation> KtAnnotatedSymbol.findAnnotation(): KtAnnotationApplicationWithArgumentsInfo? =
+private inline fun <reified T : Annotation> KaAnnotatedSymbol.findAnnotation(): KtAnnotationApplicationWithArgumentsInfo? =
     annotations.find { it.classId?.asFqNameString() == T::class.java.name }
 
 context(KaSession)

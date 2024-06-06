@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -143,7 +143,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
     abstract val ktSymbol: KtSymbol
     override val annotations: Annotations
         get() {
-            val ktAnnotations = (ktSymbol as? KtAnnotatedSymbol)?.annotations ?: return Annotations.EMPTY
+            val ktAnnotations = (ktSymbol as? KaAnnotatedSymbol)?.annotations ?: return Annotations.EMPTY
             return Annotations.create(ktAnnotations.map { KtSymbolBasedAnnotationDescriptor(it, context) })
         }
 

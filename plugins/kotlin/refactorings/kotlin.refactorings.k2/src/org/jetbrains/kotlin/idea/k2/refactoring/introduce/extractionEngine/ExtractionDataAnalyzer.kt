@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
@@ -310,7 +310,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                 override fun visitReferenceExpression(expression: KtReferenceExpression) {
                     super.visitReferenceExpression(expression)
 
-                    fun processSymbolAnnotations(targetSymbol: KtAnnotatedSymbol) {
+                    fun processSymbolAnnotations(targetSymbol: KaAnnotatedSymbol) {
                         for (ann in targetSymbol.annotations) {
                             val fqName = ann.classId?.asSingleFqName() ?: continue
                             if (ann.isExperimentalMarker()) {
@@ -319,7 +319,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                         }
                     }
 
-                    val targetSymbol = expression.mainReference.resolveToSymbol() as? KtAnnotatedSymbol ?: return
+                    val targetSymbol = expression.mainReference.resolveToSymbol() as? KaAnnotatedSymbol ?: return
                     processSymbolAnnotations(targetSymbol)
 
                     val typeSymbol = (targetSymbol as? KaCallableSymbol)?.returnType?.expandedClassSymbol ?: return
