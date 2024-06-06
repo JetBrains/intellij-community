@@ -2,9 +2,7 @@
 package com.intellij.ide.workspace.projectView
 
 import com.intellij.icons.ExpUiIcons
-import com.intellij.ide.projectView.PresentationData
-import com.intellij.ide.projectView.TreeStructureProvider
-import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.*
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode
 import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
@@ -65,53 +63,7 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     return Pair(first, second)
   }
 
-  private class WorkspaceNode(project: Project, value: PsiDirectory, viewSettings: ViewSettings,
-                              private val projectNode: ProjectViewProjectNode)
-    : PsiDirectoryNode(project, value, viewSettings) {
-
-    private val subprojectMap = HashMap<PsiDirectory, Subproject?>()
-
-    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-      val subprojects = getAllSubprojects(project).associateBy { it.projectPath }
-      subprojectMap.clear()
-      val children = projectNode.children.filter { it !is ExternalLibrariesNode }
-      val newChildren = ArrayList<AbstractTreeNode<*>>(children.size)
-      for (child in children) {
-        val directoryNode = child as? PsiDirectoryNode
-        if (directoryNode == null) {
-          newChildren.add(child)
-          continue
-        }
-        val path = directoryNode.value.virtualFile.path
-        val subproject = subprojects[path]
-        subprojectMap[directoryNode.value] = subproject
-        val node = if (subproject != null) SubprojectNode(directoryNode, subproject) else directoryNode
-        newChildren.add(node)
-      }
-      return newChildren
-    }
-
-    override fun update(data: PresentationData) {
-      projectNode.update(data)
-      data.setIcon(ExpUiIcons.Nodes.Workspace)
-    }
-
-    override fun computeBackgroundColor(): Color? = null
-
-    override fun contains(file: VirtualFile): Boolean {
-      return projectNode.contains(file)
-    }
-
-    fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
-
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun getTestPresentation() = "Workspace: " + value.name
-
-    override fun toString() = testPresentation
-  }
-
-  class DataRule : EdtDataRule {
-
+  internal class DataRule : EdtDataRule {
     override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
       val items = snapshot[PlatformCoreDataKeys.SELECTED_ITEMS] ?: return
       val directoryNodes = items.filterIsInstance<PsiDirectoryNode>()
@@ -126,19 +78,73 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       }
     }
   }
+}
 
-  private class SubprojectNode(original: PsiDirectoryNode,
-                               private val subproject: Subproject):
-    PsiDirectoryNode(original) {
+private class SubprojectNode(original: PsiDirectoryNode,
+                             private val subproject: Subproject):
+  PsiDirectoryNode(original) {
 
-    override fun update(data: PresentationData) {
-      super.update(data)
-      data.setIcon(subproject.handler.subprojectIcon)
+  override fun update(data: PresentationData) {
+    super.update(data)
+    data.setIcon(subproject.handler.subprojectIcon)
+  }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun getTestPresentation() = "Subproject: " + subproject.name
+
+  override fun toString() = testPresentation
+}
+
+private class WorkspaceNode(project: Project, value: PsiDirectory, viewSettings: ViewSettings,
+                            private val projectNode: ProjectViewProjectNode)
+  : PsiDirectoryNode(project, value, viewSettings) {
+
+  private val subprojectMap = HashMap<PsiDirectory, Subproject?>()
+
+  override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
+    val subprojects = getAllSubprojects(project).associateBy { it.projectPath }
+    subprojectMap.clear()
+    val children = projectNode.children.filter { it !is ExternalLibrariesNode }
+    val newChildren = ArrayList<AbstractTreeNode<*>>(children.size)
+    for (child in children) {
+      val directoryNode = child as? PsiDirectoryNode
+      if (directoryNode == null) {
+        newChildren.add(child)
+        continue
+      }
+      val path = directoryNode.value.virtualFile.path
+      val subproject = subprojects[path]
+      subprojectMap[directoryNode.value] = subproject
+      val node = if (subproject != null) SubprojectNode(directoryNode, subproject) else directoryNode
+      newChildren.add(node)
     }
+    return newChildren
+  }
 
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun getTestPresentation() = "Subproject: " + subproject.name
+  override fun update(data: PresentationData) {
+    projectNode.update(data)
+    data.setIcon(ExpUiIcons.Nodes.Workspace)
+  }
 
-    override fun toString() = testPresentation
+  override fun computeBackgroundColor(): Color? = null
+
+  override fun contains(file: VirtualFile): Boolean {
+    return projectNode.contains(file)
+  }
+
+  fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun getTestPresentation() = "Workspace: " + value.name
+
+  override fun toString() = testPresentation
+}
+
+internal class WorkspaceProjectViewNodeDecorator: ProjectViewNodeDecorator {
+  override fun decorate(node: ProjectViewNode<*>, data: PresentationData) {
+    val subprojectNode = node as? PsiDirectoryNode ?: return
+    val workspaceNode = subprojectNode.parent as? WorkspaceNode ?: return
+    val subproject = workspaceNode.getSubproject(subprojectNode.value) ?: return
+    data.setIcon(subproject.handler.subprojectIcon)
   }
 }

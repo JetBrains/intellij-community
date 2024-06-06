@@ -1732,6 +1732,7 @@
 
     <projectAttachProcessor implementation="com.intellij.ide.workspace.WorkspaceAttachProcessor" order="last"/>
     <treeStructureProvider implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider" order="last"/>
+    <projectViewNodeDecorator implementation="com.intellij.ide.workspace.projectView.WorkspaceProjectViewNodeDecorator" order="last"/>
     <workspace.subprojectHandler implementation="com.intellij.ide.workspace.DefaultSubprojectHandler" order="last"/>
 
     <edtDataRule implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider$DataRule"/>
