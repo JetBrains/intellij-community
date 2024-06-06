@@ -26,6 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -55,6 +56,7 @@ public final class ParameterInfoComponent extends JPanel {
   private OneElementComponent[] myPanels;
   private JLabel myShortcutLabel;
   private JPanel myBottomPanel;
+  private JComponent myCustomBottomComponent;
   private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"));
   private final boolean myAllowSwitchLabel;
 
@@ -144,15 +146,15 @@ public final class ParameterInfoComponent extends JPanel {
     if (myRequestFocus) {
       AccessibleContextUtil.setName(this, CodeInsightBundle.message("accessible.name.parameter.info.press.tab"));
     }
+    myBottomPanel = new JPanel(new VerticalLayout(5));
+    myBottomPanel.setOpaque(false);
+    add(myBottomPanel, BorderLayout.SOUTH);
 
     myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
     myDumbLabel.setIcon(AllIcons.General.Warning);
     if (mySimpleDesignMode) {
-      myBottomPanel = new JPanel(new BorderLayout());
-      myBottomPanel.setOpaque(false);
       myDumbLabel.setBorder(JBUI.Borders.emptyTop(12));
-      myBottomPanel.add(myDumbLabel, BorderLayout.NORTH);
-      add(myBottomPanel, BorderLayout.SOUTH);
+      myBottomPanel.add(myDumbLabel);
     }
     else {
       myDumbLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), JBUI.Borders.empty(2, 10, 6, 10)));
@@ -166,6 +168,7 @@ public final class ParameterInfoComponent extends JPanel {
 
     myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
     setShortcutLabel();
+    setCustomBottomComponent();
   }
 
   private void setPanels() {
@@ -180,10 +183,8 @@ public final class ParameterInfoComponent extends JPanel {
   }
 
   private void setShortcutLabel() {
-    JPanel parentPanel = mySimpleDesignMode ? myBottomPanel : this;
-
     if (myShortcutLabel != null) {
-      parentPanel.remove(myShortcutLabel);
+      myBottomPanel.remove(myShortcutLabel);
     }
 
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
@@ -208,13 +209,25 @@ public final class ParameterInfoComponent extends JPanel {
         myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
         myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
       }
-      parentPanel.add(myShortcutLabel, BorderLayout.SOUTH);
+      myBottomPanel.add(myShortcutLabel);
+    }
+  }
+
+  private void setCustomBottomComponent() {
+    if (myCustomBottomComponent != null) {
+      myBottomPanel.remove(myCustomBottomComponent);
+    }
+
+    myCustomBottomComponent = myParameterInfoControllerData.getHandler().createBottomComponent();
+    if (myCustomBottomComponent != null) {
+      myBottomPanel.add(myCustomBottomComponent);
     }
   }
 
   void fireDescriptorsWereSet() {
     setPanels();
     setShortcutLabel();
+    setCustomBottomComponent();
   }
 
   @Override
@@ -398,6 +411,10 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
+
+    if (myCustomBottomComponent != null) {
+      myParameterInfoControllerData.getHandler().updateBottomComponent(myCustomBottomComponent);
+    }
 
     updateLabels();
 
