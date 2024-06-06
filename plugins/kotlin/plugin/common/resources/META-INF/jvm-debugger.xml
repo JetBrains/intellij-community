@@ -25,7 +25,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
                     interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
-
+    <extensionPoint qualifiedName="com.intellij.debugger.dexBytecodeInspector"
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.DexBytecodeInspector" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator"
                     interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"/>
   </extensionPoints>

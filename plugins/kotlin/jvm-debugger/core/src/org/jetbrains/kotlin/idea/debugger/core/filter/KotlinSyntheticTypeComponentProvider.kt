@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core.filter
 import com.intellij.debugger.engine.SyntheticTypeComponentProvider
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.SUSPEND_IMPL_NAME_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.core.stepping.isSyntheticMethodForDefaultParameters
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.org.objectweb.asm.Opcodes
 import kotlin.jvm.internal.FunctionReference
 import kotlin.jvm.internal.PropertyReference
+import org.jetbrains.kotlin.idea.debugger.base.util.DexBytecodeInspector
 
 class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
     override fun isSynthetic(typeComponent: TypeComponent?): Boolean {
@@ -94,8 +96,16 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
         return hasInterfaceWithImplementation(this)
     }
 
-    // Check that method contains only load and invokeStatic instructions. Note that if after load goes ldc instruction it could be checkParametersNotNull method invocation
     private fun hasOnlyInvokeStatic(m: Method): Boolean {
+        if (DexDebugFacility.isDex(m.virtualMachine())) {
+            return DexBytecodeInspector.EP.extensions.firstOrNull()?.hasOnlyInvokeStatic(m)
+                ?: false
+        }
+        return hasOnlyInvokeStaticJVM(m)
+    }
+
+    // Check that method contains only load and invokeStatic instructions. Note that if after load goes ldc instruction it could be checkParametersNotNull method invocation
+    private fun hasOnlyInvokeStaticJVM(m: Method): Boolean {
         val instructions = m.bytecodes()
         var i = 0
         var isALoad0BeforeStaticCall = false
