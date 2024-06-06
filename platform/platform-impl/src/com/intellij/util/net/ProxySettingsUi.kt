@@ -256,9 +256,8 @@ class ProxySettingsUi(
       Messages.showMessageDialog(mainPanel, IdeBundle.message("message.connection.successful"), title, Messages.getInformationIcon())
     }
     else {
-      val msg = StringUtil.escapeXmlEntities(exception.message.orEmpty())
-      lastProxyError = msg
-      Messages.showErrorDialog(mainPanel, IdeBundle.message("dialog.message.problem.with.connection", msg, title))
+      lastProxyError = IdeBundle.message("dialog.message.problem.with.connection", StringUtil.removeHtmlTags(exception.message.orEmpty()))
+      Messages.showErrorDialog(mainPanel, lastProxyError, title)
     }
     reset(ProxySettings.getInstance())
   }
