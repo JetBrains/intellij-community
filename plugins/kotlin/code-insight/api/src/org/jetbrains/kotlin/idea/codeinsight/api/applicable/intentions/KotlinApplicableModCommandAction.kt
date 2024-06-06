@@ -28,7 +28,10 @@ abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
         element: E,
         context: ActionContext,
     ): Boolean {
-        if (!isApplicableByPsi(element)) return false
+        val isApplicableByPsi = forbidAnalysis("isApplicableByPsi") {
+            isApplicableByPsi(element)
+        }
+        if (!isApplicableByPsi) return false
 
         // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
         val relativeCaretOffset = context.offset - element.startOffset

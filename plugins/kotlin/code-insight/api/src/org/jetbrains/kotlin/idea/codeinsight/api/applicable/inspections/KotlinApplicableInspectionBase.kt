@@ -28,7 +28,10 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C> : LocalInspectio
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
     ) {
-        if (!isApplicableByPsi(element)) return
+        val isApplicableByPsi = forbidAnalysis("isApplicableByPsi") {
+            isApplicableByPsi(element)
+        }
+        if (!isApplicableByPsi) return
 
         val ranges = forbidAnalysis("getApplicabilityRanges") {
             getApplicableRanges(element)
