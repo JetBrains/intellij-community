@@ -53,5 +53,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="library" name="google-dexlib2" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
