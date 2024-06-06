@@ -118,6 +118,11 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     @JvmStatic
+    fun recordActionInvoked(project: Project, dataBuilder: MutableList<EventPair<*>>.() -> Unit) {
+      record(ActionsEventLogGroup.ACTION_FINISHED, project, dataBuilder)
+    }
+
+    @JvmStatic
     fun recordActionInvoked(project: Project?,
                             action: AnAction?,
                             event: AnActionEvent?,
@@ -149,6 +154,15 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     @JvmStatic
+    fun record(eventId: VarargEventId, project: Project?, dataBuilder: MutableList<EventPair<*>>.() -> Unit) {
+      val projectPairs = projectData(project)
+      eventId.log(project) {
+        addAll(projectPairs)
+        dataBuilder()
+      }
+    }
+
+    @JvmStatic
     fun record(eventId: VarargEventId,
                project: Project?,
                action: AnAction?,
@@ -156,18 +170,13 @@ class ActionsCollectorImpl : ActionsCollector() {
                customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
 
-      val isDumb = project
-        ?.takeIf { !project.isDisposed }
-        ?.let { DumbService.isDumb(project) }
-      val incompleteDependenciesMode = project
-        ?.takeIf { !project.isDisposed }
-        ?.getServiceIfCreated(IncompleteDependenciesService::class.java)
-        ?.getState()
       val isLookupActive = project
         ?.takeIf { !project.isDisposed }
         ?.getServiceIfCreated(LookupManager::class.java)
         ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
         ?.let { LookupManager.getActiveLookup(it) } != null
+
+      val projectPairs = projectData(project)
 
       eventId.log(project) {
         val info = getPluginInfo(action.javaClass)
@@ -177,15 +186,10 @@ class ActionsCollectorImpl : ActionsCollector() {
             add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.presentation)))
           }
           addAll(actionEventData(event))
+          addAll(projectPairs)
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
           }
-        }
-        if (project != null && isDumb != null) {
-          add(ActionsEventLogGroup.DUMB.with(isDumb))
-        }
-        if (project != null && incompleteDependenciesMode != null) {
-          add(ActionsEventLogGroup.INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode))
         }
         customDataProvider(this)
         addActionClass(this, action, info)
@@ -193,6 +197,25 @@ class ActionsCollectorImpl : ActionsCollector() {
 
       if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
         FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(getActionId(action))
+      }
+    }
+
+    private fun projectData(project: Project?): List<EventPair<*>> {
+      val isDumb = project
+        ?.takeIf { !project.isDisposed }
+        ?.let { DumbService.isDumb(project) }
+      val incompleteDependenciesMode = project
+        ?.takeIf { !project.isDisposed }
+        ?.getServiceIfCreated(IncompleteDependenciesService::class.java)
+        ?.getState()
+
+      return buildList {
+        if (isDumb != null) {
+          add(ActionsEventLogGroup.DUMB.with(isDumb))
+        }
+        if (incompleteDependenciesMode != null) {
+          add(ActionsEventLogGroup.INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode))
+        }
       }
     }
 

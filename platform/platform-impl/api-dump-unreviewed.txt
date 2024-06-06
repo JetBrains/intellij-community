@@ -11176,10 +11176,12 @@ f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsColl
 - sf:onAfterActionInvoked(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnActionResult):V
 - sf:onBeforeActionInvoked(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
 - sf:record(com.intellij.internal.statistic.eventLog.events.VarargEventId,com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1):V
+- sf:record(com.intellij.internal.statistic.eventLog.events.VarargEventId,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - record(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.lang.Language):V
 - record(java.lang.String,java.awt.event.InputEvent,java.lang.Class):V
 - sf:recordActionGroupExpanded(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,Z,J,java.util.List):V
 - sf:recordActionInvoked(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1):V
+- sf:recordActionInvoked(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - sf:recordCustomActionInvoked(com.intellij.openapi.project.Project,java.lang.String,java.awt.event.InputEvent,java.lang.Class):V
 - recordUpdate(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,J):V
 f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl$Companion
@@ -11190,8 +11192,10 @@ f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsColl
 - f:onAfterActionInvoked(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnActionResult):V
 - f:onBeforeActionInvoked(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
 - f:record(com.intellij.internal.statistic.eventLog.events.VarargEventId,com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1):V
+- f:record(com.intellij.internal.statistic.eventLog.events.VarargEventId,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - f:recordActionGroupExpanded(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,Z,J,java.util.List):V
 - f:recordActionInvoked(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1):V
+- f:recordActionInvoked(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - f:recordCustomActionInvoked(com.intellij.openapi.project.Project,java.lang.String,java.awt.event.InputEvent,java.lang.Class):V
 f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 - sf:ACTION_CLASS:com.intellij.internal.statistic.eventLog.events.EventField

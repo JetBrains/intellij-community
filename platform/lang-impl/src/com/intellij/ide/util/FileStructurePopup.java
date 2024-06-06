@@ -17,6 +17,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -72,6 +73,7 @@ import com.intellij.util.text.TextRangeUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -789,20 +791,17 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private void logFileStructureCheckboxClick(TreeAction action) {
-    Language language = null;
     FileType fileType = myFileEditor.getFile().getFileType();
-    if (fileType instanceof LanguageFileType) {
-      language = ((LanguageFileType) fileType).getLanguage();
-    }
+    Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
 
-    ActionsEventLogGroup.ACTION_FINISHED.log(
-      myProject,
-      EventFields.PluginInfoFromInstance.with(action),
-      EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP),
-      EventFields.CurrentFile.with(language),
-      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass()),
-      ActionsEventLogGroup.ACTION_ID.with(action.getClass().getName())
-    );
+    ActionsCollectorImpl.recordActionInvoked(myProject, pairs -> {
+      pairs.add(EventFields.PluginInfoFromInstance.with(action));
+      pairs.add(EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP));
+      pairs.add(EventFields.CurrentFile.with(language));
+      pairs.add(ActionsEventLogGroup.ACTION_CLASS.with(action.getClass()));
+      pairs.add(ActionsEventLogGroup.ACTION_ID.with(action.getClass().getName()));
+      return Unit.INSTANCE;
+    });
   }
 
   private @NotNull Promise<Void> rebuild(boolean refilterOnly) {
