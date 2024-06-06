@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.removeUnnecessaryParentheses
 import org.jetbrains.kotlin.idea.j2k.post.processing.diagnosticBasedProcessing
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
+import org.jetbrains.kotlin.idea.quickfix.isNumberConversionAvailable
+import org.jetbrains.kotlin.idea.quickfix.prepareNumberConversionElementContext
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -55,9 +57,11 @@ internal val fixTypeMismatchDiagnosticBasedProcessing =
 
             element is KtExpression
                     && realType.isSignedOrUnsignedNumberType()
-                    && expectedType.isSignedOrUnsignedNumberType() -> {
-                val fix = NumberConversionFix(element, realType, expectedType, disableIfAvailable = null)
-                fix.invoke(element.project, null, element.containingFile)
+                    && expectedType.isSignedOrUnsignedNumberType()
+                    && isNumberConversionAvailable(realType, expectedType) -> {
+                val elementContext = prepareNumberConversionElementContext(realType, expectedType)
+                val fix = NumberConversionFix(element, elementContext)
+                fix.asIntention().invoke(element.project, null, element.containingFile)
             }
 
             element is KtLambdaExpression

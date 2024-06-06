@@ -4,13 +4,12 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.isChar
-import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
-import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.isNullable
+import org.jetbrains.kotlin.types.typeUtil.*
 
 object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
@@ -22,14 +21,16 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
         val rightType = diagnosticWithParameters.c
 
         if (leftType.isNumberType() && rightType.isNumberType()) {
-            return listOf(
-                NumberConversionFix(left, leftType, rightType, enableNullableType = true) {
-                    KotlinBundle.message("convert.left.hand.side.to.0", it)
-                },
-                NumberConversionFix(right, rightType, leftType, enableNullableType = true) {
-                    KotlinBundle.message("convert.right.hand.side.to.0", it)
+            return buildList {
+                if (isNumberConversionAvailable(leftType, rightType, enableNullableType = true)) {
+                    val elementContext = prepareNumberConversionElementContext(leftType, rightType)
+                    add(NumberConversionFix(left, elementContext, NumberConversionFix.ConversionType.LEFT_HAND_SIDE).asIntention())
                 }
-            )
+                if (isNumberConversionAvailable(leftType, rightType, enableNullableType = true)) {
+                    val elementContext = prepareNumberConversionElementContext(rightType, leftType)
+                    add(NumberConversionFix(right, elementContext, NumberConversionFix.ConversionType.RIGHT_HAND_SIDE).asIntention())
+                }
+            }
         }
 
         val leftHandSideIsChar = leftType.isChar()
@@ -47,4 +48,31 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
     }
 
     private fun KotlinType.isNumberType() = this.makeNotNullable().isSignedOrUnsignedNumberType()
+}
+
+fun prepareNumberConversionElementContext(
+    fromType: KotlinType,
+    toType: KotlinType
+): NumberConversionFix.ElementContext = NumberConversionFix.ElementContext(
+    typePresentation = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(toType.makeNotNullable()),
+    fromInt = fromType.isInt(),
+    fromChar = fromType.isChar(),
+    fromFloatOrDouble = fromType.isFloat() || fromType.isDouble(),
+    fromNullable = fromType.isNullable(),
+    toChar = toType.isChar(),
+    toInt = toType.isInt(),
+    toByteOrShort = toType.isByte() || toType.isShort(),
+)
+
+fun isNumberConversionAvailable(
+    fromType: KotlinType,
+    toType: KotlinType,
+    enableNullableType: Boolean = false,
+): Boolean {
+    return fromType != toType && fromType.isNumberType(enableNullableType) && toType.isNumberType(enableNullableType)
+}
+
+private fun KotlinType.isNumberType(enableNullableType: Boolean): Boolean {
+    val type = if (enableNullableType) this.makeNotNullable() else this
+    return type.isSignedOrUnsignedNumberType()
 }
