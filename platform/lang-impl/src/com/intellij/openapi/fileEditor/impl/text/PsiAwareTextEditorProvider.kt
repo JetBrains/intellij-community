@@ -12,7 +12,6 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -56,9 +55,10 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       fileForTelemetry = file,
       editorCoroutineScope = editorCoroutineScope,
     )
-    val effectiveDocument = document!!
 
     return coroutineScope {
+      val effectiveDocument = document!!
+
       val markupCacheInvalidated = async(CoroutineName("markup cache invalidation")) {
         serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
       }
@@ -70,11 +70,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         val highlighter = readActionBlocking {
           editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
         }
-        readActionBlocking {
-          // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
-          // (the document text is compared, so, double work is not performed)
-          highlighter.setText(effectiveDocument.immutableCharSequence)
-        }
+        // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+        // (the document text is compared, so, double work is not performed)
+        highlighter.setText(effectiveDocument.immutableCharSequence)
         highlighter
       }
 
@@ -103,8 +101,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
             it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
           },
         )
-        editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
         editorDeferred.complete(editor)
+        editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
         val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
         val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
         asyncLoader.start(textEditor = textEditor, task = task)
@@ -127,12 +125,12 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val editorSupplier = suspend { editorDeferred.await() }
       val highlighterReady = suspend { highlighterDeferred.join() }
 
-      coroutineScope {
-        markupCacheInvalidated.await()
+      markupCacheInvalidated.await()
 
+      coroutineScope {
         for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
           if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-            thisLogger().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
+            logger<AsyncFileEditorProvider>().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
             continue
           }
 
@@ -195,11 +193,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         val highlighter = readActionBlocking {
           editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
         }
-        readActionBlocking {
-          // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
-           // (the document text is compared, so, double work is not performed)
-           highlighter.setText(effectiveDocument.immutableCharSequence)
-        }
+        // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+        // (the document text is compared, so, double work is not performed)
+        highlighter.setText(effectiveDocument.immutableCharSequence)
         highlighter
       }
 

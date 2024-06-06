@@ -48,6 +48,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -72,7 +73,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.fileEditor.FileEntry
-import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
@@ -100,10 +100,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import java.awt.AWTEvent
-import java.awt.Color
-import java.awt.Component
-import java.awt.KeyboardFocusManager
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -116,7 +113,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<FileEditorManagerImpl>()
@@ -1186,7 +1182,7 @@ open class FileEditorManagerImpl(
     // notify editors about selection changes
     val splitters = window.owner
     splitters.afterFileOpen(file)
-    addSelectionRecord(file, window)
+    selectionHistory.addRecord(file, window)
 
     if (isNewEditor) {
       openFileSetModificationCount.increment()
@@ -2452,6 +2448,10 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   // make sure that init is started
   composite.initDeferred.complete(Unit)
 
+  val job = composite.coroutineScope.launch {
+    composite.waitForAvailable()
+  }
+
   // https://youtrack.jetbrains.com/issue/IDEA-319932
   // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
@@ -2460,39 +2460,20 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
       composite.project,
       EditorBundle.message("editor.open.file.progress", composite.file.name),
     ) {
-      runBlocking {
-        attachAsChildTo(composite.coroutineScope)
-        // wait for first selection
-        composite.waitForAvailable()
+      runBlockingMaybeCancellable {
+        job.join()
       }
     }
   }
   else {
     // we don't need progress - handled by async editor loader
     runBlocking {
-      val mainJob = coroutineContext.job
-      val loopJob = launch {
-        ThreadingAssertions.assertEventDispatchThread()
-        val queue = IdeEventQueue.getInstance()
-        while (true) {
-          val event = queue.getNextEvent()
-          queue.dispatchEvent(event)
-          if (composite.coroutineScope.coroutineContext.job.isCompleted) {
-            mainJob.cancel()
-          }
-          yield()
-        }
+      job.invokeOnCompletion {
+        EventQueue.invokeLater(EmptyRunnable.getInstance())
       }
 
-      withContext(Dispatchers.Default) {
-        try {
-          // wait for first not-null selection
-          composite.waitForAvailable()
-        }
-        finally {
-          loopJob.cancel()
-          SwingUtilities.invokeLater(EmptyRunnable.getInstance())
-        }
+      IdeEventQueue.getInstance().pumpEventsForHierarchy {
+        job.isCompleted
       }
     }
   }

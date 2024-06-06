@@ -114,8 +114,22 @@ open class EditorComposite internal constructor(
   // available doesn't mean that a file editor is fully loaded
   @Internal
   suspend fun waitForAvailable() {
+    if (selectedEditorWithProvider.value != null || fileEditorWithProviderList.isNotEmpty()) {
+      return
+    }
+
     // skip initial null value
-    selectedEditorWithProvider.drop(1).first()
+    flow {
+      var isInitialValue = true
+      selectedEditorWithProvider.collect { value ->
+        if (isInitialValue && value == null) {
+          isInitialValue = false
+        }
+        else {
+          emit(value)
+        }
+      }
+    }.first()
   }
 
   private val topComponents = HashMap<FileEditor, JComponent>()

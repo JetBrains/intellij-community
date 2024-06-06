@@ -234,13 +234,16 @@ fun createAsyncEditorLoader(
 ): AsyncEditorLoader {
   // `openEditorImpl` uses runWithModalProgressBlocking,
   // but an async editor load is performed in the background, out of the `openEditorImpl` call
-  val coroutineScope = (editorCoroutineScope ?: project.service<AsyncEditorLoaderScopeHolder>().coroutineScope).childScope(
-    name = "AsyncEditorLoader(file=${fileForTelemetry.name})",
-    supervisor = false,
-    // name, not path (privacy)
-    context = tracer.rootSpan("AsyncEditorLoader", arrayOf("file", fileForTelemetry.name)) + ModalityState.any().asContextElement(),
+  return AsyncEditorLoader(
+    project = project,
+    provider = provider,
+    coroutineScope = (editorCoroutineScope ?: project.service<AsyncEditorLoaderScopeHolder>().coroutineScope).childScope(
+      name = "AsyncEditorLoader(file=${fileForTelemetry.name})",
+      supervisor = false,
+      // name, not path (privacy)
+      context = tracer.rootSpan("AsyncEditorLoader", arrayOf("file", fileForTelemetry.name)) + ModalityState.any().asContextElement(),
+    ),
   )
-  return AsyncEditorLoader(project = project, provider = provider, coroutineScope = coroutineScope)
 }
 
 private suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, document: Document, editor: EditorImpl) {

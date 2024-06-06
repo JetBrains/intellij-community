@@ -120,9 +120,12 @@ class AsyncEditorLoader internal constructor(
         addUi = textEditor.component::addLoadingDecoratorUi
       )
       // await instead of join to get errors here
-      task.await()
-
-      indicatorJob.cancel()
+      try {
+        task.await()
+      }
+      finally {
+        indicatorJob.cancel()
+      }
 
       // mark as loaded before daemonCodeAnalyzer restart
       val delayedActions = delayedActions.getAndSet(null)
