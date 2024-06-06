@@ -326,8 +326,8 @@ public final class HighlightControlFlowUtil {
     }
     else {
       PsiElement scope = variable instanceof PsiField
-                         ? ((PsiField)variable).getContainingClass()
-                         : variable.getParent() != null ? variable.getParent().getParent() : null;
+                               ? ((PsiField)variable).getContainingClass()
+                               : variable.getParent() != null ? variable.getParent().getParent() : null;
       while (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchBlock) {
         scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
       }
@@ -531,7 +531,7 @@ public final class HighlightControlFlowUtil {
     if (!PsiUtil.isAccessedForWriting(expression)) return null;
 
     PsiElement scope = variable instanceof PsiField ? variable.getParent() :
-                       variable.getParent() == null ? null : variable.getParent().getParent();
+                             variable.getParent() == null ? null : variable.getParent().getParent();
     PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
     if (codeBlock == null) return null;
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
@@ -709,8 +709,8 @@ public final class HighlightControlFlowUtil {
 
 
   static HighlightInfo.Builder checkVariableMustBeFinal(@NotNull PsiVariable variable,
-                                                        @NotNull PsiJavaCodeReferenceElement context,
-                                                        @NotNull LanguageLevel languageLevel) {
+                                                @NotNull PsiJavaCodeReferenceElement context,
+                                                @NotNull LanguageLevel languageLevel) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     PsiElement scope = getElementVariableReferencedFrom(variable, context);
     if (scope instanceof PsiClass) {

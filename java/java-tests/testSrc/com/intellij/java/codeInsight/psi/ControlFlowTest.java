@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -16,6 +17,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,5 +95,29 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(field, AllVariablesControlFlowPolicy.getInstance());
     assertSize(1, flow.getInstructions());
     assertInstanceOf(flow.getInstructions().get(0), WriteVariableInstruction.class);
+  }
+
+  public void testComplexAssignment() throws Exception {
+    @Language("JAVA")
+    String text = """
+    public class Foo {
+        public void someMethod() {
+            Runnable someRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    someRunnable.run();
+                }
+            };
+        }
+    }""";
+    configureFromFileText("a.java", text);
+    final PsiCodeBlock body = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0].getBody();
+    ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);
+    int from = flow.getStartOffset(body);
+    int end = flow.getEndOffset(body);
+    List<PsiVariable> ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
+    assertSize(1, ssa);
+    assertSize(2, flow.getInstructions());
+    assertInstanceOf(flow.getInstructions().get(0), ReadVariableInstruction.class);
   }
 }

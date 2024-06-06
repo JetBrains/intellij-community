@@ -30,6 +30,12 @@ public final class FinalUtils {
     return checkIfElementViolatesFinality(variable);
   }
 
+  /**
+   * This method checks if a Java variable should be immutable when converted to Kotlin
+   * Immutable means it is defined only once and so thus should be defined in the format "val foo = bar"
+   * <p>
+   * This varies from canBeFinal because
+   */
   public static boolean canBeImmutable(@NotNull PsiVariable variable) {
     if (variable.getInitializer() != null || variable instanceof PsiParameter) {
       // parameters have an implicit initializer

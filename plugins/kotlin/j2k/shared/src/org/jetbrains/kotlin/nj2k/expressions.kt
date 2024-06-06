@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.INTERFACE
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType
 import org.jetbrains.kotlin.nj2k.types.JKNoType
@@ -214,7 +213,7 @@ fun createCompanion(declarations: List<JKDeclaration>): JKClass =
         JKAnnotationList(),
         emptyList(),
         JKVisibilityModifierElement(Visibility.PUBLIC),
-        JKModalityModifierElement(FINAL)
+        JKModalityModifierElement(Modality.FINAL)
     )
 
 fun JKClass.getCompanion(): JKClass? =

@@ -117,8 +117,9 @@ public final class ControlFlowUtil {
             }
             else if (instruction instanceof ReadVariableInstruction) {
               ReadVariableInstruction read = (ReadVariableInstruction)instruction;
-              if (psiManager.areElementsEquivalent(read.variable, psiVariable) && state.getWriteCount() == 0) continue variables;
-              queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+              if (!psiManager.areElementsEquivalent(read.variable, psiVariable) || state.getWriteCount() != 0) {
+                queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+              }
             }
             else {
               queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
@@ -127,10 +128,8 @@ public final class ControlFlowUtil {
           else if (!reportVarsIfNonInitializingPathExists && state.getWriteCount() == 0) continue variables;
         }
       }
-
       result.add(psiVariable);
     }
-
     return result;
   }
 
@@ -2134,9 +2133,9 @@ public final class ControlFlowUtil {
    * @return locations of writes
    */
   public static @NotNull Map<PsiElement, PsiVariable> getWritesBeforeReads(@NotNull ControlFlow flow,
-                                                                           @NotNull Set<? extends PsiVariable> writeVars,
-                                                                           @NotNull Set<? extends PsiVariable> readVars,
-                                                                           final int stopPoint) {
+                                                                  @NotNull Set<? extends PsiVariable> writeVars,
+                                                                  @NotNull Set<? extends PsiVariable> readVars,
+                                                                  final int stopPoint) {
     Map<PsiElement, PsiVariable> writes = new LinkedHashMap<>();
     List<Instruction> instructions = flow.getInstructions();
 
