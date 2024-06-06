@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
-import kotlin.io.path.Path
 
 /**
  * Attaches sources to the IntelliJ Platform dependencies in projects using IntelliJ Platform Gradle Plugin 2.x.
@@ -30,6 +29,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     val (product, libraryCoordinates) = orderEntries.firstNotNullOfOrNull {
       val coordinates = it.library?.getMavenCoordinates() ?: return@firstNotNullOfOrNull null
       val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
+                    ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
       if (product == null) {
         return@firstNotNullOfOrNull null
       }
