@@ -36,9 +36,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import java.util.function.Predicate
 
 
-class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecification {
-
-  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
+class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -65,9 +63,7 @@ class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecificati
   }
 }
 
-class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification {
-
-  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
+class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -264,9 +260,7 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction(), ActionRemoteBehaviorSpecification {
-
-  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
+class ToggleInlineHintsAction : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

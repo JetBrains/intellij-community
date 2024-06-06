@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 
-open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification {
+open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.BackendOnly {
   companion object {
     @JvmStatic
     fun openFile(filePath: String, project: Project) {
@@ -67,9 +67,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   init {
     templatePresentation.isApplicationScope = true
   }
-
-  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
-
+  
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null

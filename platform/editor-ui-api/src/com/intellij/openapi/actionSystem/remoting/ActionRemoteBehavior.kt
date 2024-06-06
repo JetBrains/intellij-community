@@ -57,6 +57,13 @@ interface ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
   }
 
+  interface BackendOnly : ActionRemoteBehaviorSpecification {
+    override fun getBehavior(): ActionRemoteBehavior {
+      if (PlatformUtils.isRider() || PlatformUtils.isCLion()) return ActionRemoteBehavior.FrontendThenBackend
+      return ActionRemoteBehavior.BackendOnly
+    }
+  }
+
   interface Duplicated : ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.Duplicated
   }

@@ -83,9 +83,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
-class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
-  override fun getBehavior() = if (PlatformUtils.isRider() || PlatformUtils.isCLion()) ActionRemoteBehavior.FrontendThenBackend else ActionRemoteBehavior.BackendOnly
-
+class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val selectedFile = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
