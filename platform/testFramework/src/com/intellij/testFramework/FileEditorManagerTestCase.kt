@@ -23,8 +23,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
 
@@ -97,7 +95,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     runWithModalProgressBlocking(project, "") {
       manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement))
       manager!!.mainSplitters.windows().flatMap { it.composites() }.forEach {
-        it.selectedEditorWithProvider.filterNotNull().first()
+        it.waitForAvailable()
       }
     }
   }

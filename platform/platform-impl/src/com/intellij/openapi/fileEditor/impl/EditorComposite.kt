@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -111,6 +110,13 @@ open class EditorComposite internal constructor(
   @JvmField
   @Internal
   val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
+
+  // available doesn't mean that a file editor is fully loaded
+  @Internal
+  suspend fun waitForAvailable() {
+    // skip initial null value
+    selectedEditorWithProvider.drop(1).first()
+  }
 
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
@@ -682,23 +688,28 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorRemoved(editorTypeId)
   }
 
-  internal fun currentStateAsHistoryEntry(): HistoryEntry? {
+  internal fun currentStateAsFileEntry(): FileEntry? {
     if (fileEditorWithProviderList.isEmpty()) {
       // not initialized
       return null
     }
 
-    val pointer = LightFilePointer(file = file)
-    val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
-    for (fileEditorWithProvider in fileEditorWithProviderList) {
-      stateMap.put(fileEditorWithProvider.provider, fileEditorWithProvider.fileEditor.getState(FileEditorStateLevel.FULL))
+    val stateMap = LinkedHashMap<String, Element?>()
+    for ((fileEditor, provider) in fileEditorWithProviderList) {
+      stateMap.put(
+        provider.editorTypeId,
+        stateToElement(state = fileEditor.getState(FileEditorStateLevel.FULL), provider = provider, project = project),
+      )
     }
-    return HistoryEntry(
-      filePointer = pointer,
-      selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider,
+    return FileEntry(
+      url = file.url,
+      selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
       isPreview = isPreview,
-      disposable = null,
-      providerToState = stateMap,
+      providers = stateMap,
+      tabTitle = null,
+      pinned = false,
+      currentInTab = false,
+      ideFingerprint = null,
     )
   }
 
@@ -716,13 +727,8 @@ open class EditorComposite internal constructor(
         providerElement.setAttribute(SELECTED_ATTRIBUTE_VALUE, "true")
       }
 
-      val state = fileEditorWithProvider.fileEditor.getState(FileEditorStateLevel.FULL)
-      if (state !== FileEditorState.INSTANCE) {
-        val stateElement = Element(STATE_ELEMENT)
-        provider.writeState(state, project, stateElement)
-        if (!stateElement.isEmpty) {
-          providerElement.addContent(stateElement)
-        }
+      stateToElement(fileEditorWithProvider.fileEditor.getState(FileEditorStateLevel.FULL), provider, project)?.let {
+        providerElement.addContent(it)
       }
 
       element.addContent(providerElement)
@@ -938,7 +944,7 @@ internal suspend fun focusEditorOnCompositeOpenComplete(
   toFront: Boolean = true,
 ): Boolean {
   // wait for the file editor
-  composite.selectedEditorWithProvider.filterNotNull().first()
+  composite.waitForAvailable()
   return withContext(Dispatchers.EDT) {
     val currentSelectedComposite = splitters.currentCompositeFlow.value
     // while the editor was loading, the user switched to another editor - don't steal focus
@@ -963,13 +969,6 @@ internal suspend fun focusEditorOnCompositeOpenComplete(
       false
     }
   }
-}
-
-internal suspend fun doOnCompositeOpenComplete(
-  composite: EditorComposite,
-  action: suspend (selectedEditor: FileEditor) -> Unit,
-) {
-  action(composite.selectedEditorWithProvider.filterNotNull().first().fileEditor)
 }
 
 private fun triggerStatOpen(project: Project, file: VirtualFile, start: Long, composite: EditorComposite, coroutineScope: CoroutineScope) {
@@ -1001,4 +1000,15 @@ private fun triggerStatOpen(project: Project, file: VirtualFile, start: Long, co
       runnable.run()
     }
   }
+}
+
+private fun stateToElement(state: FileEditorState, provider: FileEditorProvider, project: Project): Element? {
+  if (state !== FileEditorState.INSTANCE) {
+    val stateElement = Element(STATE_ELEMENT)
+    provider.writeState(state, project, stateElement)
+    if (!stateElement.isEmpty) {
+      return stateElement
+    }
+  }
+  return null
 }

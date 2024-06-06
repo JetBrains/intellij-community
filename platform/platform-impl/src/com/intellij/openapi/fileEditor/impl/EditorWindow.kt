@@ -484,7 +484,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     val composite = owner.manager.openFileInNewCompositeInEdt(
       window = newWindow,
       file = nextFile,
-      entry = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile },
+      fileEntry = selectedComposite?.takeIf { it.file == nextFile }?.currentStateAsFileEntry(),
       options = FileEditorOpenOptions(
         requestFocus = focusNew,
         isExactState = true,
@@ -494,10 +494,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     ) ?: return newWindow
     if (composite is EditorComposite) {
       composite.coroutineScope.launch {
-        doOnCompositeOpenComplete(composite = composite) {
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            syncCaretIfPossible(composite.allEditors)
-          }
+        composite.waitForAvailable()
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          syncCaretIfPossible(composite.allEditors)
         }
       }
     }

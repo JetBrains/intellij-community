@@ -30,13 +30,10 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
-internal class IdeNavigationService(private val project: Project) : NavigationService {
-
+private class IdeNavigationService(private val project: Project) : NavigationService {
   /**
-   * - `permits = 1` means at any given time only 1 request is being handled.
+   * - `permits = 1` means at any given time only one request is being handled.
    * - [BufferOverflow.DROP_OLDEST] makes each new navigation request cancel the previous one.
    */
   private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
