@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -306,7 +306,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             return analyzeInModalWindow(element as KtDeclaration, RefactoringBundle.message("detecting.possible.conflicts")) {
                 (element.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols()
                     ?.asSequence()
-                    ?.filter { (it as? KtSymbolWithModality)?.modality == Modality.ABSTRACT }
+                    ?.filter { (it as? KaSymbolWithModality)?.modality == Modality.ABSTRACT }
                     ?.mapNotNull { it.psi }
                     ?.mapTo(ArrayList()) {
                         KotlinK2RefactoringsBundle.message(

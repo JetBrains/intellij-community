@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -121,7 +121,7 @@ class KtClassDef(
         context(KaSession)
         fun KaClassOrObjectSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
-            classKind, (this as? KtSymbolWithModality)?.modality
+            classKind, (this as? KaSymbolWithModality)?.modality
         )
 
         fun typeConstraintFactory(context: KtElement): TypeConstraints.TypeConstraintFactory {
