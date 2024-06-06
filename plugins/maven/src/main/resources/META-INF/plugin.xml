@@ -161,6 +161,7 @@
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
+    <recoveryAction implementation="org.jetbrains.idea.maven.project.actions.MavenProjectRecoveryAction"/>
 
     <fileIconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
