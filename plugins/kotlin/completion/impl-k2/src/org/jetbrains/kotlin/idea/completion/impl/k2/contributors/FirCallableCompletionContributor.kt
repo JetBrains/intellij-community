@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -653,7 +653,7 @@ internal class FirCallableReferenceCompletionContributor(
     context(KaSession)
     override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean = when {
         // References to elements which are members and extensions at the same time are not allowed
-        symbol.isExtension && symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> false
+        symbol.isExtension && symbol.symbolKind == KaSymbolKind.CLASS_MEMBER -> false
 
         // References to variables and parameters are unsupported
         symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol || symbol is KtBackingFieldSymbol -> false

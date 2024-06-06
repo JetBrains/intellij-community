@@ -7,7 +7,7 @@ import com.intellij.ui.PlatformIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtElement
@@ -30,7 +30,7 @@ object KotlinIconProvider {
                 symbol.isExtension -> {
                     if (isAbstract) KotlinIcons.ABSTRACT_EXTENSION_FUNCTION else KotlinIcons.EXTENSION_FUNCTION
                 }
-                symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> {
+                symbol.symbolKind == KaSymbolKind.CLASS_MEMBER -> {
                     IconManager.getInstance().getPlatformIcon(if (isAbstract) PlatformIcons.AbstractMethod else PlatformIcons.Method)
                 }
                 else -> KotlinIcons.FUNCTION

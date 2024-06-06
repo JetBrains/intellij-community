@@ -10,7 +10,7 @@ import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Modality
@@ -62,7 +62,7 @@ object KtIconProvider {
             is KtPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionLikeSymbol -> {
                 val isExtension = symbol.isExtension
-                val isMember = symbol.symbolKind == KtSymbolKind.CLASS_MEMBER
+                val isMember = symbol.symbolKind == KaSymbolKind.CLASS_MEMBER
                 when {
                     isExtension && isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                     isExtension && !isAbstract -> KotlinIcons.EXTENSION_FUNCTION
