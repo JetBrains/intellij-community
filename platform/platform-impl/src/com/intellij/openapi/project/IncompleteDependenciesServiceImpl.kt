@@ -45,8 +45,8 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
                                             newActivity
                                           }
 
-      val activity = IncompleteDependenciesModeStatisticsCollector.incompleteModeActivityStarted(project, currentIncompleteModeActivity, requestor, stateBefore, stateAfter)
-      val token = IncompleteDependenciesAccessTokenImpl(activity, requestor)
+      val subtaskActivity = IncompleteDependenciesModeStatisticsCollector.incompleteModeSubtaskStarted(project, currentIncompleteModeActivity, requestor, stateBefore, stateAfter)
+      val token = IncompleteDependenciesAccessTokenImpl(subtaskActivity, requestor)
       tokens.add(token)
 
       updateState(stateBefore, stateAfter)
@@ -61,7 +61,7 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
       tokens.remove(token)
       val stateBefore = DependenciesState.INCOMPLETE
       val stateAfter = if (tokens.isEmpty()) DependenciesState.COMPLETE else DependenciesState.INCOMPLETE
-      IncompleteDependenciesModeStatisticsCollector.incompleteModeActivityFinished(token.activity, token.requestor, stateBefore, stateAfter)
+      IncompleteDependenciesModeStatisticsCollector.incompleteModeSubtaskFinished(token.subtaskActivity, token.requestor, stateBefore, stateAfter)
       if (stateAfter == DependenciesState.COMPLETE) {
         assert(incompleteModeActivity != null)
         IncompleteDependenciesModeStatisticsCollector.incompleteModeFinished(incompleteModeActivity)
@@ -83,7 +83,7 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
     }
   }
 
-  private inner class IncompleteDependenciesAccessTokenImpl(val activity: StructuredIdeActivity, val requestor: Class<*>) : IncompleteDependenciesAccessToken() {
+  private inner class IncompleteDependenciesAccessTokenImpl(val subtaskActivity: StructuredIdeActivity, val requestor: Class<*>) : IncompleteDependenciesAccessToken() {
     @RequiresWriteLock
     override fun finish() {
       deregisterToken(this)

@@ -19,17 +19,17 @@ object IncompleteDependenciesModeStatisticsCollector : CounterUsagesCollector() 
     activity?.finished()
   }
 
-  fun incompleteModeActivityStarted(project: Project?,
-                                    incompleteModeActivity: StructuredIdeActivity,
-                                    requestor: Class<*>,
-                                    stateBefore: DependenciesState,
-                                    stateAfter: DependenciesState): StructuredIdeActivity {
+  fun incompleteModeSubtaskStarted(project: Project?,
+                                   incompleteModeActivity: StructuredIdeActivity,
+                                   requestor: Class<*>,
+                                   stateBefore: DependenciesState,
+                                   stateAfter: DependenciesState): StructuredIdeActivity {
     return INCOMPLETE_DEPENDENCIES_MODE_SUBTASK_ACTIVITY.startedWithParent(project, incompleteModeActivity) {
       listOf(EventPair(REQUESTOR, requestor), EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter))
     }
   }
 
-  fun incompleteModeActivityFinished(activity: StructuredIdeActivity?, requestor: Class<*>, stateBefore: DependenciesState, stateAfter: DependenciesState) {
+  fun incompleteModeSubtaskFinished(activity: StructuredIdeActivity?, requestor: Class<*>, stateBefore: DependenciesState, stateAfter: DependenciesState) {
     activity?.finished { listOf(EventPair(REQUESTOR, requestor), EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter)) }
   }
 
