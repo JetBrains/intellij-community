@@ -1,4 +1,4 @@
-class J(private var s1: String?) {
+class J(private val s1: String?) {
     private var s2: String? = null
     private var s3: String? = null
 

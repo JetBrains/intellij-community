@@ -1,6 +1,5 @@
 internal class C {
-    var default: Int = 0
-        private set
+    val default: Int = 0
 
     fun foo() {
         println(this.default)

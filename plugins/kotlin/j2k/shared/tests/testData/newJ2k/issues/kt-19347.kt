@@ -1,7 +1,7 @@
 package test
 
 class TestMutltipleCtors {
-    private var x: Int
+    private val x: Int
     private var y = 0
 
     constructor(x: Int) {

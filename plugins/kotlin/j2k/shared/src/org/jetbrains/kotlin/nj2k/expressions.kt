@@ -183,9 +183,6 @@ fun JKExpression.unboxFieldReference(): JKFieldAccessExpression? = when {
     else -> null
 }
 
-fun JKFieldAccessExpression.asAssignmentFromTarget(): JKKtAssignmentStatement? =
-    parent.safeAs<JKKtAssignmentStatement>()?.takeIf { it.field == this }
-
 fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     when (parent.safeAs<JKUnaryExpression>()?.operator?.token) {
         JKOperatorToken.PLUSPLUS, JKOperatorToken.MINUSMINUS -> true
@@ -195,13 +192,6 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
 context(KaSession)
 fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
-
-context(KaSession)
-fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
-    findUsages(scope, context).any {
-        it.asAssignmentFromTarget() != null
-                || it.isInDecrementOrIncrement()
-    }
 
 fun equalsExpression(left: JKExpression, right: JKExpression, typeFactory: JKTypeFactory) =
     JKBinaryExpression(
