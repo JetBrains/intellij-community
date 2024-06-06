@@ -279,7 +279,6 @@ public final class IndexLookupTimingsReporting {
       protected final ThreadLocal<T> currentTraceHolder;
 
       protected @Nullable IndexId<?, ?> indexId;
-      protected @Nullable Project project;
 
       protected long lookupStartedAtMs;
       protected boolean lookupFailed;
@@ -317,7 +316,6 @@ public final class IndexLookupTimingsReporting {
       protected void setupTraceBeforeStart(final @NotNull IndexId<?, ?> indexId,
                                            final @Nullable T parentTrace) {
         this.indexId = indexId;
-        this.project = null;
         this.lookupFailed = false;
         this.totalKeysIndexed = -1;
         this.lookupResultSize = -1;
@@ -359,7 +357,6 @@ public final class IndexLookupTimingsReporting {
         }
         finally {
           //indexId = null; //intentionally not clear it to provide a bit more debugging info
-          project = null;//avoid keeping reference to project in a thread-locals
 
           if (parentTrace != null) {
             currentTraceHolder.set(parentTrace);
@@ -386,10 +383,9 @@ public final class IndexLookupTimingsReporting {
       /* === Additional info about what was lookup-ed, and context/environment: ================================================ */
 
 
+      //FIXME: remove this method -- we don't use the project info
+      //       or store project.locationHash instead of project ref?
       public T withProject(final @Nullable Project project) {
-        if (traceWasStarted()) {
-          this.project = project;
-        }
         return typeSafeThis();
       }
 
@@ -417,7 +413,6 @@ public final class IndexLookupTimingsReporting {
       public String toString() {
         return getClass().getSimpleName() +
                "{indexId=" + indexId +
-               ", project=" + project +
                ", depth=" + depth +
                ", is started? =" + traceWasStarted() +
                ", lookupStartedAtMs=" + lookupStartedAtMs +
@@ -515,8 +510,6 @@ public final class IndexLookupTimingsReporting {
       protected void reportDetailedDataToFUS(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         EVENT_INDEX_ALL_KEYS_LOOKUP.log(
-          project,
-
           FIELD_INDEX_ID.with(indexId.getName()),
 
           //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
@@ -610,8 +603,6 @@ public final class IndexLookupTimingsReporting {
       @Override
       protected void reportDetailedDataToFUS(final long lookupFinishedAtMs) {
         EVENT_INDEX_LOOKUP_ENTRIES_BY_KEYS.log(
-          project,
-
           FIELD_INDEX_ID.with(indexId.getName()),
 
           FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(
@@ -727,8 +718,6 @@ public final class IndexLookupTimingsReporting {
       @Override
       protected void reportDetailedDataToFUS(long lookupFinishedAtMs) {
         EVENT_STUB_INDEX_LOOKUP_ENTRIES_BY_KEY.log(
-          project,
-
           FIELD_INDEX_ID.with(indexId.getName()),
 
           FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(
