@@ -2,12 +2,17 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -29,6 +34,17 @@ import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+
+private val FileEditor.description: String
+  get() = "${hashCode()} ${javaClass} ${toString()}"
+
+// See DaemonFusReporter. Reality in DaemonCodeAnalyzerImpl is a bit more complicated, probably including other editors if the file has Psi
+private fun Collection<FileEditor>.getWorthy(): List<TextEditor> =
+  mapNotNull {
+    if (it !is TextEditor || it.editor.editorKind != EditorKind.MAIN_EDITOR) null
+    else if (it is TextEditorWithPreview) it.textEditor
+    else it
+  }
 
 class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -96,6 +112,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
         locked = false
       }
       else {
+        sessions.forEach { printCodeAnalyzerStatistis(it.key.editor) }
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
       }
     }
@@ -222,6 +239,17 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
       unlockIfNeeded()
     }
   }
+
+  internal fun printCodeAnalyzerStatistis(editor: Editor) {
+    try {
+      ReadAction.run<Throwable> {
+        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).daemonCodeAnalyzerStatus.toString()}")
+      }
+    }
+    catch (throwable: Throwable) {
+      LOG.warn("Print Analyzer status failed")
+    }
+  }
 }
 
 private class SimpleEditedDocumentsListener(private val project: Project) : BulkAwareDocumentListener.Simple {
@@ -248,6 +276,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
+    ListenerState.LOG.info("daemon canceled with ${fileEditors.size} unfiltered editors")
     daemonStopped(fileEditors, true)
   }
 
@@ -268,14 +297,6 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
     project.service<ListenerState>().registerAnalysisFinished(highlightedEditors)
   }
 }
-
-// See DaemonFusReporter. Reality in DaemonCodeAnalyzerImpl is a bit more complicated, probably including other editors if the file has Psi
-private fun Collection<FileEditor>.getWorthy(): List<TextEditor> =
-  mapNotNull {
-    if (it !is TextEditor || it.editor.editorKind != EditorKind.MAIN_EDITOR) null
-    else if (it is TextEditorWithPreview) it.textEditor
-    else it
-  }
 
 internal class WaitForFinishedCodeAnalysisFileEditorListener : FileOpenedSyncListener {
   init {
@@ -353,6 +374,3 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
     }
   }
 }
-
-private val FileEditor.description: String
-  get() = "${hashCode()} ${javaClass} ${toString()}"
