@@ -2,11 +2,18 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.parameterInfo.ParameterFlag;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -14,17 +21,24 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.types.PyCallableType;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumMap;
-import java.util.EnumSet;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
+public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyParameterInfoUtils.CallInfo> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;
   private static final int MAX_PARAMETER_INFO_TO_SHOW = 20;
+
+  private boolean hideOverloads = true;
+  private int myRealOffset = -1;
+  private Editor myEditor;
+  private Object[] myObjectsToShow = null;
+  private PyArgumentList myArgumentList;
 
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
     ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
@@ -34,6 +48,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   @Override
   public @Nullable PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+    myEditor = context.getEditor();
     PsiFile file = context.getFile();
     int offset = context.getOffset();
     final PyArgumentList argumentList = PyParameterInfoUtils.findArgumentList(file, offset, -1);
@@ -43,8 +58,18 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
       if (parameterInfos.size() > MAX_PARAMETER_INFO_TO_SHOW) {
         parameterInfos = parameterInfos.subList(0, MAX_PARAMETER_INFO_TO_SHOW);
       }
-      Object[] infoArr = parameterInfos.toArray();
+      List<PyParameterInfoUtils.CallInfo> infos = new ArrayList<>();
+
+      boolean isFirst = true;
+      for (Pair<PyCallExpression, PyCallableType> paramInfo : parameterInfos) {
+        infos.add(new PyParameterInfoUtils.CallInfo(paramInfo.first, paramInfo.second, isFirst || hideOverloads));
+        isFirst = false;
+      }
+
+      Object[] infoArr = infos.toArray();
+      setDisplayAllOverloadsState(infoArr, hideOverloads);
       context.setItemsToShow(infoArr);
+      myObjectsToShow = infoArr;
       return argumentList;
     }
 
@@ -53,11 +78,17 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   @Override
   public void showParameterInfo(@NotNull PyArgumentList element, @NotNull CreateParameterInfoContext context) {
+    // Show all overloads on second shortcut hit at the same offset
+    int actualOffset = getRealCaretOffset(context.getEditor());
+    if (actualOffset == myRealOffset) {
+      hideOverloads = !hideOverloads;
+    }
     context.showHint(element, element.getTextOffset(), this);
   }
 
   @Override
   public @Nullable PyArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+    myRealOffset = getRealCaretOffset(context.getEditor());
     return PyParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
   }
 
@@ -68,6 +99,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
    */
   @Override
   public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
+    myArgumentList = argumentList;
+    myObjectsToShow = context.getObjectsToView();
     final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces
 
     if (!argumentList.getTextRange().contains(allegedCursorOffset) && argumentList.getText().endsWith(")")) {
@@ -78,13 +111,17 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     final PsiFile file = context.getFile();
     int offset = PyParameterInfoUtils.findCurrentParameter(argumentList, allegedCursorOffset, file);
 
+    setDisplayAllOverloadsState(context.getObjectsToView(), hideOverloads);
+
     context.setCurrentParameter(offset);
   }
 
   @Override
-  public void updateUI(@NotNull Pair<PyCallExpression, PyCallableType> callAndCallee, @NotNull ParameterInfoUIContext context) {
+  public void updateUI(@NotNull PyParameterInfoUtils.CallInfo description,
+                       @NotNull ParameterInfoUIContext context) {
+    context.setUIComponentEnabled(description.isVisible);
     final int currentParamOffset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
-    ParameterHints parameterHints = PyParameterInfoUtils.buildParameterHints(callAndCallee, currentParamOffset);
+    ParameterHints parameterHints = PyParameterInfoUtils.buildParameterHints(description.getCallandCalleePair(), currentParamOffset);
     if (parameterHints == null) return;
 
     boolean showAllHints = Registry.is("python.parameter.info.show.all.hints");
@@ -95,8 +132,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
       EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[parameterHints.getFlags().size()];
       for (int i = 0; i < flags.length; i++) {
         EnumSet<ParameterFlag> curFlags = parameterHints.getFlags().get(i);
-        PyParameterInfoUtils.ParameterDescription description = parameterDescriptions.get(i);
-        hintsToShow[i] = getRepresentationToShow(description, curFlags.contains(ParameterFlag.HIGHLIGHT), showAllHints);
+        PyParameterInfoUtils.ParameterDescription representation = parameterDescriptions.get(i);
+        hintsToShow[i] = getRepresentationToShow(representation, curFlags.contains(ParameterFlag.HIGHLIGHT), showAllHints);
         flags[i] = StreamEx.of(parameterHints.getFlags().get(i))
           .map(PARAM_FLAG_TO_UI_FLAG::get)
           .collect(MoreCollectors.toEnumSet(ParameterInfoUIContextEx.Flag.class));
@@ -106,7 +143,6 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
         //noinspection unchecked
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
-
       ((ParameterInfoUIContextEx)context).setupUIComponentPresentation(hintsToShow, flags, context.getDefaultParameterColor());
     }
     else { // fallback, no highlight
@@ -123,7 +159,82 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     }
   }
 
-  private static String getRepresentationToShow(PyParameterInfoUtils.ParameterDescription description, boolean isHighlighted, boolean showHints) {
+  @Override
+  public JComponent createBottomComponent() {
+    int numOfOverloads = getNumOfSignatures() - 1;
+
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    panel.setBorder(JBUI.Borders.empty(5, 0, 0, 5));
+    panel.setOpaque(false);
+
+    String showMoreShortCut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    JLabel shortCut = new JLabel(showMoreShortCut);
+
+    ActionLink actionLink = new ActionLink(getActionLinkText(numOfOverloads), event -> {
+      hideOverloads = !hideOverloads;
+      if (myEditor != null) {
+        ParameterInfoControllerBase controller =
+          ParameterInfoControllerBase.findControllerAtOffset(myEditor, myArgumentList.getOriginalElement().getTextOffset());
+        if (controller != null) {
+          setDisplayAllOverloadsState(myObjectsToShow, hideOverloads);
+          controller.setDescriptors(myObjectsToShow);
+          controller.updateComponent();
+        }
+      }
+    });
+
+    actionLink.setBorder(JBUI.Borders.emptyLeft(ExperimentalUI.isNewUI() ? 19 : 3));
+    panel.add(actionLink);
+    panel.add(shortCut);
+    if (numOfOverloads < 1) {
+      panel.setVisible(false);
+    }
+    return panel;
+  }
+
+  @Override
+  public void updateBottomComponent(@NotNull JComponent component) {
+    int numOfOverloads = getNumOfSignatures() - 1;
+    if (numOfOverloads >= 1) {
+      Component comp = component.getComponent(0);
+      if (comp instanceof ActionLink actionLink) {
+        actionLink.setText(getActionLinkText(numOfOverloads));
+        component.setVisible(true);
+      }
+    }
+  }
+
+  @Nls
+  private String getActionLinkText(int numOfOverloads) {
+    return hideOverloads
+           ? PyBundle.message("param.info.show.more.n.overloads",
+                              numOfOverloads,
+                              numOfOverloads > 1 ? 0 : 1)
+           : PyBundle.message("param.info.show.less");
+  }
+
+  private int getNumOfSignatures() {
+    if (myObjectsToShow != null) {
+      return myObjectsToShow.length;
+    }
+    return 0;
+  }
+
+  @Override
+  public void dispose(@NotNull DeleteParameterInfoContext context) {
+    resetDisplayState();
+    ParameterInfoHandler.super.dispose(context);
+  }
+
+  private void resetDisplayState() {
+    myRealOffset = -1;
+    hideOverloads = true;
+    myObjectsToShow = null;
+  }
+
+  private static String getRepresentationToShow(PyParameterInfoUtils.ParameterDescription description,
+                                                boolean isHighlighted,
+                                                boolean showHints) {
     String fullRepresentation = description.getFullRepresentation(isHighlighted || showHints);
     if (fullRepresentation.length() > MY_PARAM_LENGTH_LIMIT && !isHighlighted) {
       String annotation = description.getAnnotation();
@@ -136,5 +247,23 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   private static String getNoParamsMsg() {
     return CodeInsightBundle.message("parameter.info.no.parameters");
+  }
+
+  /* ParameterInfoContext.getOffset() does not represent the real offset in cases like
+   * foo(a, b,     <caret>) as it skips whitespaces
+   * The real offset is required for correct folding and unfolding of the overloads
+   * when the shortcut is pressed at the same *real* offset
+   */
+  private static int getRealCaretOffset(@NotNull Editor editor) {
+    return editor.getCaretModel().getCurrentCaret().getOffset();
+  }
+
+  private static void setDisplayAllOverloadsState(Object[] hintsToShow, boolean hideOverloads) {
+    if (hintsToShow != null && hintsToShow.length != 0) {
+      ((PyParameterInfoUtils.CallInfo)hintsToShow[0]).setVisible(true);
+      for (int i = 1; i < hintsToShow.length; i++) {
+        ((PyParameterInfoUtils.CallInfo)hintsToShow[i]).setVisible(!hideOverloads);
+      }
+    }
   }
 }
