@@ -388,4 +388,24 @@ public final class PyParameterInfoUtils {
       this.annotation = annotation;
     }
   }
+
+  public static class CallInfo {
+    public PyCallExpression call;
+    public PyCallableType callee;
+    public boolean isVisible;
+
+    public CallInfo(PyCallExpression call, PyCallableType callee, boolean isVisible) {
+      this.call = call;
+      this.callee = callee;
+      this.isVisible = isVisible;
+    }
+
+    public void setVisible(boolean visible) {
+      this.isVisible = visible;
+    }
+
+    public Pair<PyCallExpression, PyCallableType> getCallandCalleePair() {
+      return new Pair<>(call, callee);
+    }
+  }
 }
