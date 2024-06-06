@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtension
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.register
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptLibraryDependencies
 import org.jetbrains.kotlin.idea.base.util.SeqScope
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
@@ -50,35 +52,40 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
-        if (isBinary && ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
-            if (isLibrarySource) {
-                register(ScriptDependenciesSourceInfo.ForProject(project))
-            } else {
-                val scriptFile = when (val scriptModuleInfo = config.contextualModuleInfo) {
-                    is ScriptModuleInfo -> scriptModuleInfo.scriptFile
-                    is ScriptDependenciesInfo.ForFile -> scriptModuleInfo.scriptFile
-                    else -> null
-                }
-
-                if (scriptFile != null) {
-                    register {
-                        ScriptDependenciesInfo.ForFile(
-                            project,
-                            scriptFile,
-                            findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
-                        )
-                    }
+        if (isBinary) {
+            if (KotlinPluginModeProvider.isK2Mode()) {
+                val scriptFile = (config.contextualModuleInfo as? ScriptModuleInfo)?.scriptFile
+                scriptFile?.scriptLibraryDependencies(project)?.forEach(::register)
+            } else if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
+                if (isLibrarySource) {
+                    register(ScriptDependenciesSourceInfo.ForProject(project))
                 } else {
-                    register(ScriptDependenciesInfo.ForProject(project))
+                    val scriptFile = when (val scriptModuleInfo = config.contextualModuleInfo) {
+                        is ScriptModuleInfo -> scriptModuleInfo.scriptFile
+                        is ScriptDependenciesInfo.ForFile -> scriptModuleInfo.scriptFile
+                        else -> null
+                    }
+
+                    if (scriptFile != null) {
+                        register {
+                            ScriptDependenciesInfo.ForFile(
+                                project,
+                                scriptFile,
+                                findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+                            )
+                        }
+                    } else {
+                        register(ScriptDependenciesInfo.ForProject(project))
+                    }
                 }
             }
-        }
-
-        register {
-            if (!isBinary && ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSourcesScope().contains(virtualFile)) {
-                ScriptDependenciesSourceInfo.ForProject(project)
-            } else {
-                null
+        } else {
+            register {
+                if (ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSourcesScope().contains(virtualFile)) {
+                    ScriptDependenciesSourceInfo.ForProject(project)
+                } else {
+                    null
+                }
             }
         }
     }

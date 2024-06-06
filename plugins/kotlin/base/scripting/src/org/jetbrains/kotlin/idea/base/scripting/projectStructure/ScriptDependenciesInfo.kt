@@ -8,6 +8,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -61,6 +62,13 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
         val scriptFile: VirtualFile,
         val scriptDefinition: ScriptDefinition
     ) : ScriptDependenciesInfo(project), LanguageSettingsOwner {
+
+        init {
+            check(!KotlinPluginModeProvider.isK2Mode()) {
+                "ScriptDependenciesInfo.ForFile should not be used for K2 Scripting"
+            }
+        }
+
         override val sdk: Sdk?
             get() = ScriptDependencyAware.getInstance(project).getScriptSdk(scriptFile)
 
