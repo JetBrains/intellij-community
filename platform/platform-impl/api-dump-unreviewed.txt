@@ -5295,7 +5295,6 @@ f:com.intellij.ide.actions.Switcher$SwitcherPanel
 - f:getCbShowOnlyEditedFiles():javax.swing.JCheckBox
 - getData(java.lang.String):java.lang.Object
 - f:getFiles():com.intellij.ui.components.JBList
-- sf:getFilesSelectedIndexForTest(com.intellij.openapi.project.Project,Z):I
 - sf:getFilesToShowForTest(com.intellij.openapi.project.Project):java.util.List
 - f:getNavigationData():com.intellij.ide.actions.SwitcherLogger$NavigationData
 - f:getPinned():Z
@@ -16040,7 +16039,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - f:getAllComposites():java.util.List
 - f:getAllComposites(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - f:getCurrentWindow():com.intellij.openapi.fileEditor.impl.EditorWindow
-- f:getOrCreateCurrentWindow(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:getSelectedEditors():com.intellij.openapi.fileEditor.FileEditor[]
 - f:getSelectedFiles():com.intellij.openapi.vfs.VirtualFile[]
 - f:getTabsAt(com.intellij.ui.awt.RelativePoint):com.intellij.ui.tabs.JBTabs

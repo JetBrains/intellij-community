@@ -560,6 +560,7 @@ open class FileEditorManagerImpl(
     if (Registry.`is`("ide.navigate.to.recently.focused.editor", false)) {
       getLastFocusedSplitters()?.let { return it }
     }
+
     val focusManager = IdeFocusManager.getGlobalInstance()
     val focusOwner = focusManager.focusOwner
                      ?: KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
@@ -856,11 +857,13 @@ open class FileEditorManagerImpl(
       }
     }
 
-    if (windowToOpenIn == null && (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
-      windowToOpenIn = findWindowInAllSplitters(file)
-    }
     if (windowToOpenIn == null) {
-      windowToOpenIn = getOrCreateCurrentWindow(file)
+      if (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
+        windowToOpenIn = findWindowInAllSplitters(file)
+      }
+      if (windowToOpenIn == null) {
+        windowToOpenIn = getOrCreateCurrentWindow(file)
+      }
     }
 
     return doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
@@ -938,19 +941,24 @@ open class FileEditorManagerImpl(
     return null
   }
 
+  @RequiresEdt
   private fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
-    val currentEditor = selectedEditor
+    val splitters = getActiveSplitterSync()
+    val currentEditor = getSelectedEditor { splitters }
     val isSingletonEditor = isSingletonFileEditor(currentEditor)
-    val currentWindow = splitters.currentWindow
 
     // If the selected editor is a singleton in a split window, prefer the sibling of that split window.
     // When navigating from a diff view, opened in a vertical split,
     // this makes a new tab open below/above the diff view, still keeping the diff in sight.
-    if (isSingletonEditor && currentWindow != null && currentWindow.inSplitter() &&
-        currentWindow.tabCount == 1 && currentWindow.selectedComposite?.selectedEditor === currentEditor) {
-      val siblingWindow = currentWindow.getSiblings().firstOrNull()
-      if (siblingWindow != null) {
-        return siblingWindow
+    if (isSingletonEditor) {
+      val currentWindow = splitters.currentWindow
+      if (currentWindow != null && currentWindow.inSplitter() &&
+          currentWindow.tabCount == 1 &&
+          currentWindow.selectedComposite?.selectedEditor === currentEditor) {
+        val siblingWindow = currentWindow.getSiblings().firstOrNull()
+        if (siblingWindow != null) {
+          return siblingWindow
+        }
       }
     }
 
@@ -958,7 +966,6 @@ open class FileEditorManagerImpl(
     val useMainWindow = isSingletonEditor || uiSettings.openTabsInMainWindow
     val targetSplitters = if (useMainWindow) mainSplitters else splitters
     val targetWindow = targetSplitters.currentWindow
-
     if (targetWindow != null && uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
       return targetWindow
     }
@@ -1614,15 +1621,11 @@ open class FileEditorManagerImpl(
   fun getLastFocusedEditor(): FileEditor? = getSelectedEditor { getLastFocusedSplitters() ?: splitters }
 
   private inline fun getSelectedEditor(splitters: () -> EditorsSplitters): FileEditor? {
-    if (!ClientId.isCurrentlyUnderLocalId) {
-      return clientFileEditorManager?.getSelectedEditor()
+    return when {
+      !ClientId.isCurrentlyUnderLocalId -> clientFileEditorManager?.getSelectedEditor()
+      !initJob.isCompleted -> null
+      else -> splitters().currentWindow?.selectedComposite?.selectedEditor ?: super.getSelectedEditor()
     }
-    if (!initJob.isCompleted) {
-      return null
-    }
-
-    val selected = splitters().currentWindow?.selectedComposite
-    return selected?.selectedEditor ?: super.getSelectedEditor()
   }
 
   @RequiresEdt

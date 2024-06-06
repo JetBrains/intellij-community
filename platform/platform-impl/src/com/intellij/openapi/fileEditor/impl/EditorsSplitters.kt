@@ -604,7 +604,7 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
+  internal fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
     val windowsPerFile = findWindows(file)
     if (currentWindow == null) {
       if (!windowsPerFile.isEmpty()) {
