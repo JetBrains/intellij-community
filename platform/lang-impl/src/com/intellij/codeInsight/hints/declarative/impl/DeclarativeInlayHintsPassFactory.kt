@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus.Internal
 
 class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Suppress("CompanionObjectInExtension") // used in third party
@@ -51,7 +52,8 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(project))
     }
 
-    internal fun resetModificationStamp() {
+    @Internal
+    fun resetModificationStamp() {
       for (editor in EditorFactory.getInstance().allEditors) {
         resetModificationStamp(editor)
       }
