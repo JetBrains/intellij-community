@@ -17,15 +17,18 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.messages.MessageBusConnection
 import java.util.*
 
 class CompilationChartsProjectActivity : ProjectActivity {
   companion object {
     private val LOG: Logger = Logger.getInstance(CompilationChartsProjectActivity::class.java)
+    const val COMPILATION_CHARTS_KEY: String = "compilation.charts"
   }
 
   override suspend fun execute(project: Project) {
+    if (!Registry.`is`(COMPILATION_CHARTS_KEY)) return
 
     val view = project.getService(BuildViewManager::class.java)
     val disposable = Disposer.newDisposable(view, "Compilation charts event listener disposable")
