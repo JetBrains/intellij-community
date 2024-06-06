@@ -102,7 +102,7 @@ println c /*also important */
     myFixture.configureByText("a.groovy", fileText)
 
     WriteAction.compute {
-      def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file, null)
+      def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file)
       def names = []
       for (action in actions) {
         if (action instanceof Separator) {

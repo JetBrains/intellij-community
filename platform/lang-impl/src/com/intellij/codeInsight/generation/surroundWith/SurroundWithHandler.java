@@ -26,6 +26,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -44,10 +45,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -56,7 +60,24 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, null);
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
+    if (file instanceof PsiCompiledElement) {
+      HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.can.t.modify.decompiled.code"));
+      return;
+    }
+
+    Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
+    ReadAction.nonBlocking(() -> doBuildSurroundActions(project, editor, file, surrounders))
+      .expireWhen(() -> editor.isDisposed() || project.isDisposed())
+      .finishOnUiThread(ModalityState.nonModal(), applicable -> {
+        if (applicable != null) {
+          showPopup(editor, applicable);
+        }
+        else if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.couldn.t.find.surround"));
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override
@@ -64,24 +85,34 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
-    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    if (file instanceof PsiCompiledElement) {
-      HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.can.t.modify.decompiled.code"));
-      return;
-    }
+  /**
+   * Invoke the surrounder directly without showing a UI. Does nothing if the supplied surrounder is not applicable at a given point.
+   * 
+   * @param project context project
+   * @param editor editor to show the UI in, based on the caret positions
+   * @param file PSI file 
+   * @param surrounder template surrounder. The available surrounder of a given type will be executed.
+   */
+  @TestOnly
+  public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull Surrounder surrounder) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    assert EditorModificationUtil.checkModificationAllowed(editor);
+    assert !(file instanceof PsiCompiledElement);
 
-    List<AnAction> applicable = buildSurroundActions(project, editor, file, surrounder);
-    if (applicable != null) {
-      showPopup(editor, applicable);
-    }
-    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.couldn.t.find.surround"));
-    }
+    Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
+    StreamEx.ofValues(surrounders, s -> s.getClass().equals(surrounder.getClass()))
+      .findFirst()
+      .ifPresent(elements -> doSurround(project, editor, surrounder, elements));
   }
 
+  @TestOnly
   @Nullable
-  public static List<AnAction> buildSurroundActions(final Project project, final Editor editor, PsiFile file, @Nullable Surrounder surrounder){
+  public static List<AnAction> buildSurroundActions(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+    Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
+    return doBuildSurroundActions(project, editor, file, surrounders);
+  }
+
+  private static @NotNull Map<Surrounder, PsiElement[]> computeSurrounders(@NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = selectionModel.hasSelection();
     if (!hasSelection) {
@@ -101,12 +132,12 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
       PsiElement element1 = file.findElementAt(startOffsets[i]);
       PsiElement element2 = file.findElementAt(endOffsets[i] - 1);
 
-      if (element1 == null || element2 == null) return null;
+      if (element1 == null || element2 == null) return Map.of();
 
       TextRange textRange = new TextRange(startOffsets[i], endOffsets[i]);
       for (SurroundWithRangeAdjuster adjuster : SurroundWithRangeAdjuster.EP_NAME.getExtensionList()) {
         textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
-        if (textRange == null) return null;
+        if (textRange == null) return Map.of();
       }
       startOffsets[i] = textRange.getStartOffset();
       endOffsets[i] = textRange.getEndOffset();
@@ -116,7 +147,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
 
       final Language currentLanguage = element1.getParent().getLanguage();
       if (previousLanguage != null && !currentLanguage.equals(previousLanguage)) {
-        return null;
+        return Map.of();
       }
       previousLanguage = currentLanguage;
     }
@@ -139,11 +170,6 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
       surroundDescriptors = exclusiveSurroundDescriptors;
     }
 
-    if (surrounder != null) {
-      invokeSurrounderInTests(project, editor, file, surrounder, startOffsets, endOffsets, surroundDescriptors);
-      return null;
-    }
-
     Map<Surrounder, PsiElement[]> surrounders = new LinkedHashMap<>();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = getElementsToSurround(descriptor, file, startOffsets, endOffsets);
@@ -157,7 +183,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
         }
       }
     }
-    return doBuildSurroundActions(project, editor, file, surrounders);
+    return surrounders;
   }
 
   private static PsiElement[] getElementsToSurround(SurroundDescriptor descriptor, PsiFile file, int[] startOffsets, int[] endOffsets) {
@@ -184,26 +210,6 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     CharSequence text = document.getImmutableCharSequence();
     editor.getSelectionModel().setSelection(CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(caretOffset, document), " \t"),
                                             CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(caretOffset, document) - 1, " \t") + 1);
-  }
-
-  private static void invokeSurrounderInTests(Project project,
-                                              Editor editor,
-                                              PsiFile file,
-                                              Surrounder surrounder,
-                                              int[] startOffsets,
-                                              int[] endOffsets, List<? extends SurroundDescriptor> surroundDescriptors) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    for (SurroundDescriptor descriptor : surroundDescriptors) {
-      final PsiElement[] elements = getElementsToSurround(descriptor, file, startOffsets, endOffsets);
-      if (elements.length > 0) {
-        for (Surrounder descriptorSurrounder : descriptor.getSurrounders()) {
-          if (surrounder.getClass().equals(descriptorSurrounder.getClass())) {
-            doSurround(project, editor, surrounder, elements);
-            return;
-          }
-        }
-      }
-    }
   }
 
   private static void showPopup(Editor editor, List<AnAction> applicable) {
@@ -268,10 +274,11 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  private static List<AnAction> doBuildSurroundActions(Project project,
-                                                     Editor editor,
-                                                     PsiFile file,
-                                                     Map<Surrounder, PsiElement[]> surrounders) {
+  private static List<AnAction> doBuildSurroundActions(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file,
+                                                       @NotNull Map<Surrounder, PsiElement[]> surrounders) {
+    if (surrounders.isEmpty()) return null;
     List<AnAction> applicable = new ArrayList<>();
 
     Set<Character> usedMnemonicsSet = new HashSet<>();
