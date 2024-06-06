@@ -60,8 +60,11 @@ fun buildDevMain(): Collection<Path> {
             newClassPath = classPath
             homePath = runDir.toString().replace(File.separator, "/")
 
+            val systemProperties = System.getProperties()
             for ((name, value) in getIdeSystemProperties(runDir).map) {
-              System.setProperty(name, value)
+              if (!systemProperties.containsKey(name)) {
+                systemProperties.setProperty(name, value)
+              }
             }
           },
           generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false),
