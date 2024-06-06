@@ -20,9 +20,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
@@ -178,15 +176,38 @@ private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigat
   if (!options.preserveCaret && !options.requestFocus) {
     return false
   }
-  if (shouldOpenAsNative(request.file)) {
+  val file = request.file
+  if (shouldOpenAsNative(file)) {
+    return false
+  }
+
+  if (!project.serviceAsync<EditorHistoryManager>().hasBeenOpen(file)) {
     return false
   }
 
   val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
-  return activateFileIfOpen(project = project,
-                            vFile = request.file,
-                            range = elementRange,
-                            openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
+  val openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus)
+
+  val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
+  val wasAlreadyOpen = fileEditorManager.isFileOpen(file)
+  if (!wasAlreadyOpen) {
+    fileEditorManager.openFile(file = file, options = openOptions)
+  }
+
+  for (editor in fileEditorManager.getEditorList(file)) {
+    if (editor is TextEditor) {
+      val text = editor.editor
+      val offset = readAction { text.caretModel.offset }
+      if (elementRange.containsOffset(offset)) {
+        if (wasAlreadyOpen) {
+          // select the file
+          fileEditorManager.openFile(file = file, options = openOptions)
+        }
+        return true
+      }
+    }
+  }
+  return false
 }
 
 private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {
@@ -207,35 +228,3 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
     }
   }
 }
-
-private suspend fun activateFileIfOpen(project: Project, vFile: VirtualFile, range: TextRange?, openOptions: FileEditorOpenOptions): Boolean {
-  if (!project.serviceAsync<EditorHistoryManager>().hasBeenOpen(vFile)) {
-    return false
-  }
-
-  val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
-  val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
-  if (!wasAlreadyOpen) {
-    fileEditorManager.openFile(file = vFile, options = openOptions)
-  }
-
-  if (range == null) {
-    return false
-  }
-
-  for (editor in fileEditorManager.getEditorList(vFile)) {
-    if (editor is TextEditor) {
-      val text = editor.editor
-      val offset = readAction { text.caretModel.offset }
-      if (range.containsOffset(offset)) {
-        if (wasAlreadyOpen) {
-          // select the file
-          fileEditorManager.openFile(file = vFile, options = openOptions)
-        }
-        return true
-      }
-    }
-  }
-  return false
-}
-
