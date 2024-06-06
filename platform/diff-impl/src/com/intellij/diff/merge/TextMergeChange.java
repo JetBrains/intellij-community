@@ -267,7 +267,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), icon, isConflict(), () -> {
       myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.accept.change.command"),
                                    Collections.singletonList(this),
-                                   () -> myViewer.replaceChange(this, side, modifier));
+                                   () -> myViewer.replaceSingleChange(this, side, modifier));
     });
   }
 
@@ -286,7 +286,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     return createIconRenderer(DiffBundle.message("action.presentation.merge.resolve.text"), AllIcons.Diff.MagicResolve, false, () -> {
       myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.resolve.conflict.command"), Collections.singletonList(this),
-                                   () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE));
+                                   () -> myViewer.resolveSingleChangeAutomatically(this, ThreeSide.BASE));
     });
   }
 

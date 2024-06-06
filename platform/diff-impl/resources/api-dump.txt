@@ -1957,6 +1957,7 @@ f:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$PlaceSettings
 - bs:copy$default(com.intellij.diff.tools.util.base.TextDiffSettingsHolder$PlaceSettings,com.intellij.diff.tools.util.base.HighlightPolicy,com.intellij.diff.tools.util.base.IgnorePolicy,Z,Z,Z,Z,com.intellij.diff.tools.util.base.HighlightingLevel,Z,com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement,Z,I,java.lang.Object):com.intellij.diff.tools.util.base.TextDiffSettingsHolder$PlaceSettings
 - equals(java.lang.Object):Z
 - f:getBREADCRUMBS_PLACEMENT():com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
+- f:getENABLE_SYNC_SCROLL():Z
 - f:getEXPAND_BY_DEFAULT():Z
 - f:getEventDispatcher():com.intellij.util.EventDispatcher
 - f:getHIGHLIGHTING_LEVEL():com.intellij.diff.tools.util.base.HighlightingLevel
@@ -1969,6 +1970,7 @@ f:com.intellij.diff.tools.util.base.TextDiffSettingsHolder$PlaceSettings
 - f:getUSE_SOFT_WRAPS():Z
 - hashCode():I
 - f:setBREADCRUMBS_PLACEMENT(com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement):V
+- f:setENABLE_SYNC_SCROLL(Z):V
 - f:setEXPAND_BY_DEFAULT(Z):V
 - f:setHIGHLIGHTING_LEVEL(com.intellij.diff.tools.util.base.HighlightingLevel):V
 - f:setHIGHLIGHT_POLICY(com.intellij.diff.tools.util.base.HighlightPolicy):V
