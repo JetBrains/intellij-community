@@ -293,6 +293,9 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         val elements = mutableSetOf<KtNamedDeclaration>()
         elements.addAll(sourceData.elementsToCopy)
         (sourceData.singleElementToCopy as? KtFile)?.declarations?.filterIsInstance<KtNamedDeclaration>()?.forEach(elements::add)
+
+        if (elements.isEmpty()) return MultiMap.empty()
+
         val (fakeTarget, _) = createCopyTarget(
             elements, targetData.targetDirWrapper.baseDirectory, targetData.targetDirWrapper.pkgName, targetData.newName
         )

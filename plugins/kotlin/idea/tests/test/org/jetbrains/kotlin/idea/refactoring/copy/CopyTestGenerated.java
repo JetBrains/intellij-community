@@ -65,6 +65,11 @@ public class CopyTestGenerated extends AbstractCopyTest {
         runTest("testData/refactoring/copy/copyClassWithSmartCast/copyClassWithSmartCast.test");
     }
 
+    @TestMetadata("copyEmptyKtFile/copyEmptyKtFile.test")
+    public void testCopyEmptyKtFile_CopyEmptyKtFile() throws Exception {
+        runTest("testData/refactoring/copy/copyEmptyKtFile/copyEmptyKtFile.test");
+    }
+
     @TestMetadata("copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test")
     public void testCopyFIleFromDefaultPackage_CopyFIleFromDefaultPackage() throws Exception {
         runTest("testData/refactoring/copy/copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test");
