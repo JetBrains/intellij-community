@@ -755,15 +755,15 @@ private fun getFilesToShow(project: Project, onlyEdited: Boolean, toolWindowsCou
   val addedFiles = LinkedHashSet<VirtualFile>()
   if (!pinned) {
     for (pair in (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()) {
-      editors.add(SwitcherVirtualFile(project, pair.first, pair.second))
+      editors.add(SwitcherVirtualFile(project = project, file = pair.first, window = pair.second))
     }
-  }
 
-  if (!pinned) {
     for (editor in editors) {
       addedFiles.add(editor.file)
       filesData.add(editor)
-      if (filesData.size >= SWITCHER_ELEMENTS_LIMIT) break
+      if (filesData.size >= SWITCHER_ELEMENTS_LIMIT) {
+        break
+      }
     }
   }
 

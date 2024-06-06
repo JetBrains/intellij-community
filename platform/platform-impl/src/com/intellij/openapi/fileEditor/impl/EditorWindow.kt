@@ -171,10 +171,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
   fun composites(): Sequence<EditorComposite> = tabbedPane.tabs.tabs.asSequence().map { it.composite }
 
   @Suppress("DEPRECATION")
-  @get:Deprecated("{@link #getAllComposites()}", ReplaceWith("allComposites)"))
+  @get:Deprecated("{@link #getAllComposites()}", ReplaceWith("allComposites)"), level = DeprecationLevel.ERROR)
   val editors: Array<EditorWithProviderComposite>
     get() = composites().filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
 
+  @Deprecated("Use [fileList]", replaceWith = ReplaceWith("fileList"), level = DeprecationLevel.ERROR)
   val files: Array<VirtualFile>
     get() = files().toList().toTypedArray()
 

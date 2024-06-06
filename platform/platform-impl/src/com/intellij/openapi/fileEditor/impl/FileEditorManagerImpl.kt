@@ -2393,9 +2393,8 @@ private class SelectionHistory {
     for (pair in history) {
       val editorWindow = pair.second
       if (editorWindow.files().none()) {
-        val windows = editorWindow.owner.windows().toList()
-        if (windows.isNotEmpty() && windows[0].files().any()) {
-          copy.add(pair.first to windows[0])
+        editorWindow.owner.windows().firstOrNull()?.takeIf { it.files().any() }?.let {
+          copy.add(pair.first to it)
         }
         modified = true
       }
