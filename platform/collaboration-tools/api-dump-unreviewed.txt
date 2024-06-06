@@ -315,15 +315,6 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - hashCode():I
 *f:com.intellij.collaboration.async.ListLoaderKt
 - sf:getResultOrErrorFlow(com.intellij.collaboration.async.ListLoader):kotlinx.coroutines.flow.Flow
-*f:com.intellij.collaboration.async.MappingScopedItemsContainer
-- *sf:Companion:com.intellij.collaboration.async.MappingScopedItemsContainer$Companion
-- <init>(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):V
-- b:<init>(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:addIfAbsent(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
-- f:getMappingState():kotlinx.coroutines.flow.StateFlow
-- f:update(java.lang.Iterable,kotlin.coroutines.Continuation):java.lang.Object
-*f:com.intellij.collaboration.async.MappingScopedItemsContainer$Companion
-- f:byIdentity(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2):com.intellij.collaboration.async.MappingScopedItemsContainer
 *a:com.intellij.collaboration.async.MutableListLoader
 - com.intellij.collaboration.async.ListLoader
 - <init>():V
