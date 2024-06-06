@@ -46,7 +46,7 @@ class JKMultiversePropertySymbol(
         get() = target.typeReference?.toJK(typeFactory)
 }
 
-class JKMultiverseKaEnumEntrySymbol(
+class JKMultiverseKtEnumEntrySymbol(
     override val target: KtEnumEntry,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseKtSymbol<KtEnumEntry> {

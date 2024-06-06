@@ -162,7 +162,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     private fun createDirectSymbol(psi: PsiElement): JKSymbol = when (psi) {
         is PsiTypeParameter -> JKMultiverseTypeParameterSymbol(psi, typeFactory)
         is KtTypeParameter -> JKMultiverseKtTypeParameterSymbol(psi, typeFactory)
-        is KtEnumEntry -> JKMultiverseKaEnumEntrySymbol(psi, typeFactory)
+        is KtEnumEntry -> JKMultiverseKtEnumEntrySymbol(psi, typeFactory)
         is PsiClass -> JKMultiverseClassSymbol(psi, typeFactory)
         is KtClassOrObject -> JKMultiverseKtClassSymbol(psi, typeFactory)
         is PsiMethod -> JKMultiverseMethodSymbol(psi, typeFactory)
