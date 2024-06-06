@@ -2908,6 +2908,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/formatting/staticMembersWithComments.java");
         }
 
+        @TestMetadata("ternaryLineBreaks.java")
+        public void testTernaryLineBreaks() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/formatting/ternaryLineBreaks.java");
+        }
+
         @TestMetadata("trailingComma.java")
         public void testTrailingComma() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/formatting/trailingComma.java");

@@ -192,13 +192,26 @@ class JavaToJKTreeBuilder(
             return JKSuperExpression(type.toJK(), superTypeQualifier, outerTypeQualifier)
         }
 
-        private fun PsiConditionalExpression.toJK(): JKIfElseExpression =
-            JKIfElseExpression(
+        private fun PsiConditionalExpression.toJK(): JKIfElseExpression {
+            val expression = JKIfElseExpression(
                 condition.toJK(),
                 thenExpression.toJK(),
                 elseExpression.toJK(),
                 type.toJK()
             )
+
+            // Prettify formatting with inner line breaks:
+            //  - put the close parenthesis of the resulting `if` expression on the same line as the condition
+            //  - put both branches on separate lines
+            if (expression.condition.lineBreaksAfter > 0 || expression.thenBranch.lineBreaksAfter > 0) {
+                expression.condition.lineBreaksAfter = 0
+                expression.thenBranch.lineBreaksBefore = 1
+                expression.thenBranch.lineBreaksAfter = 1
+                expression.elseBranch.lineBreaksBefore = 1
+            }
+
+            return expression
+        }
 
         private fun PsiPolyadicExpression.toJK(): JKExpression {
             val token = JKOperatorToken.fromElementType(operationTokenType)
