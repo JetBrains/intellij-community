@@ -7,7 +7,6 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,11 +15,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.types.PyCallableType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1280,12 +1278,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   @NotNull
   private Collector feignCtrlP(int offset) {
-    return feignCtrlP(offset, myFixture.getFile(), true);
+    return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());
   }
 
   @NotNull
   private Collector feignCtrlPWithHintsForHighlightedOnly(int offset) {
-    return feignCtrlP(offset, myFixture.getFile(), false);
+    return feignCtrlP(offset, myFixture.getFile(), false, myFixture.getEditor());
   }
 
   /**
@@ -1295,20 +1293,21 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
    * @return a {@link Collector} with collected hint info.
    */
   @NotNull
-  private static Collector feignCtrlP(int offset, @NotNull PsiFile file, boolean showAllHints) {
+  private static Collector feignCtrlP(int offset, @NotNull PsiFile file, boolean showAllHints, Editor editor) {
     boolean oldKeyValue = Registry.is("python.parameter.info.show.all.hints");
     try {
       Registry.get("python.parameter.info.show.all.hints").setValue(showAllHints);
       final PyParameterInfoHandler handler = new PyParameterInfoHandler();
-      final Collector collector = new Collector(file, offset);
+      final Collector collector = new Collector(file, offset, editor);
       collector.setParameterOwner(handler.findElementForParameterInfo(collector));
 
       if (collector.getParameterOwner() != null) {
         handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector);
 
         for (Object itemToShow : collector.getItemsToShow()) {
+          PyParameterInfoUtils.CallInfo callInfo = (PyParameterInfoUtils.CallInfo)itemToShow;
           //noinspection unchecked
-          handler.updateUI((Pair<PyCallExpression, PyCallableType>)itemToShow, collector);
+          handler.updateUI(callInfo, collector);
         }
       }
       return collector;
@@ -1318,8 +1317,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
   }
 
-  public static void checkParameters(int offset, @NotNull PsiFile file, @NotNull String text, String @NotNull [] highlighted) {
-    Collector collector = feignCtrlP(offset, file, true);
+  public static void checkParameters(int offset, @NotNull PsiFile file, @NotNull String text, String @NotNull [] highlighted, Editor editor) {
+    Collector collector = feignCtrlP(offset, file, true, editor);
     collector.check(text, highlighted);
   }
 
@@ -1345,9 +1344,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     private int myIndex;
 
-    private Collector(@NotNull PsiFile file, int offset) {
+    private final Editor myEditor;
+
+    private Collector(@NotNull PsiFile file, int offset, Editor editor) {
       myFile = file;
       myOffset = offset;
+      myEditor = editor;
       myListOfTexts = new ArrayList<>();
       myListOfFlags = new ArrayList<>();
       myItemsToShow = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
@@ -1517,7 +1519,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     @NotNull
     public Editor getEditor() {
-      throw new UnsupportedOperationException();
+      return myEditor;
     }
 
     private void check(@NotNull String text, String @NotNull [] highlighted) {
