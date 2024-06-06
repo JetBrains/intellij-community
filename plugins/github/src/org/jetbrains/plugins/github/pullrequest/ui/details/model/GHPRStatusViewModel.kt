@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.launchNow
@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -13,11 +14,12 @@ import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.ai.assistedReview.GHPRAiAssistantToolwindowViewModel
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateComputationFlow
 
 interface GHPRStatusViewModel : CodeReviewStatusViewModel {
@@ -29,16 +31,18 @@ interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val requiredApprovingReviewsCount: Flow<Int>
 
   val resolveConflictsVm: ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>
+
+  fun requestAiReview()
 }
 
 private val LOG = logger<GHPRStatusViewModel>()
 
-class GHPRStatusViewModelImpl(
+class GHPRStatusViewModelImpl internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
   server: GithubServerPath,
   gitRepository: GitRepository,
-  detailsData: GHPRDetailsDataProvider,
+  private val dataProvider: GHPRDataProvider,
   detailsState: StateFlow<GHPullRequest>,
 ) : GHPRStatusViewModel {
   private val cs = parentCs.childScope()
@@ -48,6 +52,7 @@ class GHPRStatusViewModelImpl(
   override val isDraft: Flow<Boolean> = detailsState.map { it.isDraft }
     .modelFlow(cs, LOG)
 
+  private val detailsData = dataProvider.detailsData
   override val mergeabilityState: Flow<GHPRMergeabilityState?> =
     detailsData.mergeabilityStateComputationFlow.mapNotNull { it.getOrNull() }
       .modelFlow(cs, LOG)
@@ -83,4 +88,8 @@ class GHPRStatusViewModelImpl(
 
   override val resolveConflictsVm: ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError> =
     GHPRResolveConflictsLocallyViewModelImpl(cs, project, server, gitRepository, detailsData)
+
+  override fun requestAiReview() {
+    project.service<GHPRAiAssistantToolwindowViewModel>().requestReview(dataProvider)
+  }
 }

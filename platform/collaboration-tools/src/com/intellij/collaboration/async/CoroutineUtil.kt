@@ -163,6 +163,11 @@ fun <T1, T2, R> StateFlow<T1>.combineState(other: StateFlow<T2>, combiner: (T1, 
 fun <T1, T2, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
   combine(sf1, sf2, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value))
 
+@ApiStatus.Internal
+fun <T1, T2, T3, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: StateFlow<T2>, sf3: StateFlow<T3>,
+                                   combiner: (T1, T2, T3) -> R): StateFlow<R> =
+  combine(sf1, sf2, sf3, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value, sf3.value))
+
 /**
  * Special state flow which value is supplied by [valueSupplier] and collection is delegated to [source]
  *

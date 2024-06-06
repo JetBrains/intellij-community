@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.plugins.github">
 
   <content>
+    <module name="intellij.vcs.github/ai"/>
     <module name="intellij.vcs.github/tracker"/>
   </content>
 

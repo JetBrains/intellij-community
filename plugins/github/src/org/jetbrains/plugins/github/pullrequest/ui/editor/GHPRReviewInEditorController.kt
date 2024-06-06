@@ -108,7 +108,7 @@ private suspend fun showReview(settings: GithubPullRequestsProjectUISettings, fi
   }
 }
 
-private fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel): CodeReviewComponentInlayRenderer =
+private fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel.Editor): CodeReviewComponentInlayRenderer =
   when (model) {
     is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, model.vm)
     is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, model.vm)
