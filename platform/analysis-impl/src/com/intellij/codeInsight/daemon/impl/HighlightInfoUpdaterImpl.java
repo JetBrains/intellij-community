@@ -282,6 +282,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
    *               {@code Class<? extends Annotator>}: the tool is an {@link com.intellij.lang.annotation.Annotator} of the corresponding class
    *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
    */
+  @Override
   synchronized void psiElementVisited(@NotNull Object toolId,
                                       @NotNull PsiElement visitedPsiElement,
                                       @NotNull List<? extends HighlightInfo> newInfos,
