@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.local.clearCacheStore
@@ -134,6 +135,7 @@ class ApplicationStoreTest {
     test(ExportableItem(FileSpec("options/templates.xml", "templates.xml", false), "Live templates"))
     test(ExportableItem(FileSpec("templates", "templates", true), "Live templates (schemes)"))
     test(ExportableItem(FileSpec("options/project.default.xml", "project.default.xml", false), OptionsBundle.message("exportable.ProjectManager.presentable.name")))
+    test(ExportableItem(FileSpec("options/jdk.table.xml", "jdk.table.xml", false), ProjectBundle.message("sdk.table.settings")))
   }
 
   @Test
