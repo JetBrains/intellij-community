@@ -4,7 +4,6 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.dialog(@Language("xpath") xpath: String? = null, title: String? = null, action: UiComponent.() -> Unit = {}): DialogUiComponent {
@@ -22,8 +21,8 @@ fun Finder.isDialogOpened(@Language("xpath") xpath: String? = null) =
 fun Finder.dialog(@Language("xpath") xpath: String? = null, action: DialogUiComponent.() -> Unit) =
   x(xpath ?: "//div[@class='MyDialog']", DialogUiComponent::class.java).action()
 
-fun Finder.waitForNoOpenedDialogs(timeout: Duration = 100.seconds) {
-  waitFor(errorMessage = "Dialog is still opened", duration = timeout) {
+fun Finder.waitForNoOpenedDialogs() {
+  waitFor(errorMessage = "Dialog is still opened", duration = 100.seconds) {
     !isDialogOpened()
   }
 }
