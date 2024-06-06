@@ -4,8 +4,10 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.ui.JBUI.scale
+import org.jetbrains.annotations.ApiStatus
 
-class BlockInlayRenderer(
+@ApiStatus.NonExtendable
+open class BlockInlayRenderer(
   factory: PresentationFactory,
   constrainedPresentations: Collection<ConstrainedPresentation<*, BlockConstraints>>
 ) : LinearOrderInlayRenderer<BlockConstraints>(
