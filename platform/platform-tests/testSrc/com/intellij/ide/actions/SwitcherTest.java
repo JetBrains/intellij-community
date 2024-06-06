@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
@@ -26,9 +27,9 @@ public class SwitcherTest extends FileEditorManagerTestCase {
 
   private void testTabPlacement(int tabPlacement, boolean goForward) {
     UISettings.getInstance().getState().setEditorTabPlacement(tabPlacement);
-    manager.openFile(getFile("/src/1.txt"), true);
-    manager.openFile(getFile("/src/2.txt"), true);
-    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/1.txt"), null, new FileEditorOpenOptions().withRequestFocus());
+    manager.openFile(getFile("/src/2.txt"), null, new FileEditorOpenOptions().withRequestFocus());
+    manager.openFile(getFile("/src/3.txt"), null, new FileEditorOpenOptions().withRequestFocus());
     List<?> filesToShow = Switcher.SwitcherPanel.getFilesToShowForTest(getProject());
     int selectedItem = Switcher.SwitcherPanel.getFilesSelectedIndexForTest(getProject(), goForward);
 

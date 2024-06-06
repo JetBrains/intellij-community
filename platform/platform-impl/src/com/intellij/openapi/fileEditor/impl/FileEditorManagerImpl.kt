@@ -2499,7 +2499,7 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val dockContainer = DockManager.getInstance(editorManager.project).getContainerFor(window.component) { it is DockableEditorTabbedContainer }
   if (isSingletonEditor && dockContainer != null) {
     window.closeFile(oldFile)
-    editorManager.openFile(newFile, window, newOptions.withOpenMode(FileEditorManagerImpl.OpenMode.NEW_WINDOW))
+    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW))
   }
   else if (oldFile == newFile) {
     val index = window.files().indexOf(oldFile)
