@@ -9858,6 +9858,7 @@ a:com.intellij.codeInspection.ex.PerformFixesModalTask
 - pa:applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.CommonProblemDescriptor):V
 - p:beforeProcessing(com.intellij.codeInspection.CommonProblemDescriptor):V
 - doRun(com.intellij.openapi.progress.ProgressIndicator):V
+- getNumberOfSucceededFixes():I
 - p:getPresentableText(com.intellij.codeInspection.CommonProblemDescriptor):java.lang.String
 - f:getResultMessage(java.lang.String):java.lang.String
 - isDone():Z
