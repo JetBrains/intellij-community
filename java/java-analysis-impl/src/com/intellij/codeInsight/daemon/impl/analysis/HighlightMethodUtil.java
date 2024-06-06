@@ -663,6 +663,15 @@ public final class HighlightMethodUtil {
       if (methodCall instanceof PsiExpression) {
         AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(builder, fixRange, (PsiExpression)methodCall, expectedTypeByParent, actualType);
       }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+      if (parent instanceof PsiReturnStatement) {
+        PsiParameterListOwner context = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+        if (context instanceof PsiMethod containingMethod) {
+          HighlightUtil.registerReturnTypeFixes(builder, containingMethod, actualType);
+        }
+      } else if (parent instanceof PsiLocalVariable var) {
+        HighlightFixUtil.registerChangeVariableTypeFixes(var, actualType, var.getInitializer(), builder);
+      }
     }
     else {
       builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange);
