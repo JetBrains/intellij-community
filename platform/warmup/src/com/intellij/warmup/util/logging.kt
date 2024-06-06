@@ -33,14 +33,17 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal object WarmupLogger {
   fun logInfo(message: String) {
+    warmupLogger?.info(message)
     ConsoleLog.info(message)
   }
 
   fun logError(message: String, t: Throwable? = null) {
+    warmupLogger?.error(message, t)
     ConsoleLog.error(message, t)
   }
 
   internal fun logStructured(message: StructuredMessage) {
+    warmupLogger?.info(message.fullMessage)
     ConsoleLog.info(message.fullMessage)
   }
 }
@@ -55,9 +58,9 @@ internal fun CoroutineScope.initLogger(args: List<String>): Job {
     HeadlessLogging.loggingFlow().collect { (level, message) ->
       val messageRepresentation = message.representation()
       when (level) {
-        HeadlessLogging.SeverityKind.Info -> ConsoleLog.info(messageRepresentation)
-        HeadlessLogging.SeverityKind.Warning -> ConsoleLog.warn(messageRepresentation)
-        HeadlessLogging.SeverityKind.Fatal -> ConsoleLog.error(messageRepresentation)
+        HeadlessLogging.SeverityKind.Info -> WarmupLogger.logInfo(messageRepresentation)
+        HeadlessLogging.SeverityKind.Warning -> WarmupLogger.logInfo(messageRepresentation)
+        HeadlessLogging.SeverityKind.Fatal -> WarmupLogger.logError(messageRepresentation)
       }
     }
   }
