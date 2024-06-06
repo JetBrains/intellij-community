@@ -3,6 +3,7 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -17,10 +18,13 @@ internal class WhatsNewShowOnStartCheckService : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ourStarted.getAndSet(true)) return
     if (application.isHeadlessEnvironment || application.isUnitTestMode || isPlaybackMode) return
+    logger.info("Checking whether to show the What's New page on startup.")
 
     val content = WhatsNewContent.getWhatsNewContent()
+    logger.info("Got What's New content: $content")
     if (content != null) {
-      if (isWhatsNewTestMode || WhatsNewContentVersionChecker.isNeedToShowContent(content)) {
+      if (isWhatsNewTestMode.also { logger.info("What's New test mode: $it") }
+          || WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
         val whatsNewAction = service<ActionManager>().getAction("WhatsNewAction") as? WhatsNewAction
         whatsNewAction?.openWhatsNew(project)
       }
@@ -30,3 +34,5 @@ internal class WhatsNewShowOnStartCheckService : ProjectActivity {
 
 internal val isWhatsNewTestMode: Boolean
   get() = Registry.`is`("whats.new.test.mode")
+
+private val logger = logger<WhatsNewShowOnStartCheckService>()

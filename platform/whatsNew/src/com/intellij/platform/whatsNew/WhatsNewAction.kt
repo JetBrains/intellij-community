@@ -50,6 +50,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
   val content: WhatsNewContent? = WhatsNewContent.getWhatsNewContent()
 
   suspend fun openWhatsNew(project: Project) {
+    LOG.info("Open What's New page requested.")
     val dataContext = LOG.runAndLogException { DataManager.getInstance().dataContextFromFocusAsync.await() }
     openWhatsNewPage(project, dataContext)
   }
@@ -72,6 +73,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     check(JBCefApp.isSupported()) { "JCEF is not supported on this system" }
     val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
     withContext(Dispatchers.EDT) {
+      LOG.info("Opening What's New in editor.")
       openEditor(project, title, whatsNewContent.getRequest(dataContext))?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
         WhatsNewCounterUsageCollector.openedPerformed(project, byClient)

@@ -3,7 +3,6 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
 
 internal class WhatsNewContentVersionChecker {
   companion object {
@@ -13,7 +12,7 @@ internal class WhatsNewContentVersionChecker {
 
     fun isNeedToShowContent(whatsNewContent: WhatsNewContent): Boolean {
       val savedVersionInfo = PropertiesComponent.getInstance().getValue(LAST_SHOWN_EAP_VERSION_PROP) ?: run {
-        LOG.trace("$LAST_SHOWN_EAP_VERSION_PROP is not defined. Will show What's New.")
+        LOG.info("$LAST_SHOWN_EAP_VERSION_PROP is not defined. Will show What's New.")
         return true
       }
       val savedVersion = WhatsNewContent.ContentVersion.parse(savedVersionInfo) ?: run {
@@ -27,12 +26,12 @@ internal class WhatsNewContentVersionChecker {
       }
 
       val result = newVersion > savedVersion || (newVersion.releaseInfoEquals(savedVersion) && newVersion.hash != savedVersion.hash)
-      LOG.trace { "Comparing versions $newVersion > $savedVersion: $result." }
+      LOG.info("Comparing versions $newVersion > $savedVersion: $result.")
       return result
     }
 
     fun saveLastShownContent(content: WhatsNewContent) {
-      LOG.trace { "EapWhatsNew version saved '${content.getVersion()}'" }
+      LOG.info("EapWhatsNew version saved '${content.getVersion()}'")
       val version = content.getVersion() ?: run {
         LOG.error("What's New content $content returned a null version.")
         return
