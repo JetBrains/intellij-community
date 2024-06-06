@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKLightMethodData
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
-import org.jetbrains.kotlin.nj2k.tree.Mutability.*
+import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.types.determineType
