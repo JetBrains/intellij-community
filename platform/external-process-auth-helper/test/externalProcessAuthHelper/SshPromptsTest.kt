@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ssh
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.externalProcessAuthHelper
 
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class SSHUtilTest {
+class SshPromptsTest {
   @Test
+  @Suppress("NonAsciiCharacters")
   fun testPassphraseRegex() {
     passphraseRegexShouldMatch("Enter passphrase for key 'С:\\test\\dir\\.ssh\\id.rsa':", "С:\\test\\dir\\.ssh\\id.rsa")
     passphraseRegexShouldMatch("Enter passphrase for 'С:\\test\\dir\\.ssh\\id.rsa':", "С:\\test\\dir\\.ssh\\id.rsa")
@@ -20,20 +22,17 @@ class SSHUtilTest {
 
   @Test
   fun testPasswordRegex() {
-    passwordRegexShouldMatch("User1's password:", "User1")
+    regexShouldMatch(SshPrompts.PASSWORD_PROMPT, "User1's password:", "User1") { SshPrompts.extractUsername(it) }
   }
 
   private fun passphraseRegexShouldMatch(input: String, expected: String) {
-    return regexShouldMatch(SSHUtil.PASSPHRASE_PROMPT, input, expected) { SSHUtil.extractKeyPath(it) }
+    regexShouldMatch(SshPrompts.PASSPHRASE_PROMPT, input, expected) { SshPrompts.extractKeyPath(it) }
   }
 
-  private fun passwordRegexShouldMatch(input: String, expected: String) {
-    return regexShouldMatch(SSHUtil.PASSWORD_PROMPT, input, expected) { SSHUtil.extractUsername(it) }
-  }
   private fun regexShouldMatch(pattern: Pattern, input: String, expected: String, resultProvider: (Matcher) -> String) {
     val matcher = pattern.matcher(input)
-    Assertions.assertTrue(matcher.matches())
+    assertTrue(matcher.matches())
     val result = resultProvider(matcher)
-    Assertions.assertEquals(expected, result)
+    assertEquals(expected, result)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ssh.SSHUtil
 import externalApp.nativessh.NativeSshAskPassAppHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -59,10 +58,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
     override val title: String = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title")
     override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase")
     override fun parseDescription(description: String): Prompt? {
-      val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
+      val matcher = SshPrompts.PASSPHRASE_PROMPT.matcher(description)
       if (!matcher.matches()) return null
 
-      val keyPath = SSHUtil.extractKeyPath(matcher)
+      val keyPath = SshPrompts.extractKeyPath(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", keyPath)
       return Prompt(keyPath, promptMessage)
     }
@@ -72,10 +71,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
     override val title: String = ExternalProcessAuthHelperBundle.message("ssh.password.title")
     override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password")
     override fun parseDescription(description: String): Prompt? {
-      val matcher = SSHUtil.PASSWORD_PROMPT.matcher(description)
+      val matcher = SshPrompts.PASSWORD_PROMPT.matcher(description)
       if (!matcher.matches()) return null
 
-      val username = SSHUtil.extractUsername(matcher)
+      val username = SshPrompts.extractUsername(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
       return Prompt(username, promptMessage)
     }
@@ -85,10 +84,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
     override val title: String = ExternalProcessAuthHelperBundle.message("ssh.ask.pin.title")
     override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.pin")
     override fun parseDescription(description: String): Prompt? {
-      val matcher = SSHUtil.PKCS_PIN_TOKEN_PROMPT.matcher(description)
+      val matcher = SshPrompts.PKCS_PIN_TOKEN_PROMPT.matcher(description)
       if (!matcher.matches()) return null
 
-      val username = SSHUtil.extractPkcsTokenLabel(matcher)
+      val username = SshPrompts.extractPkcsTokenLabel(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.ask.pin.message", username)
       return Prompt(username, promptMessage)
     }
@@ -142,7 +141,7 @@ class NativeSshGuiAuthenticator(private val project: Project,
     private var lastAskedConfirmationInput: String? = null
 
     override fun handleInput(description: String): PromptAnswer {
-      if (!description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT)) {
+      if (!description.contains(SshPrompts.CONFIRM_CONNECTION_PROMPT)) {
         return PromptAnswer.NotHandled
       }
 
@@ -170,8 +169,8 @@ class NativeSshGuiAuthenticator(private val project: Project,
 
     private fun stripYesNoSuffix(description: String): @NlsSafe String {
       return StringUtil.replace(description,
-                                SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
-                                SSHUtil.CONFIRM_CONNECTION_PROMPT + "?")
+                                SshPrompts.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
+                                SshPrompts.CONFIRM_CONNECTION_PROMPT + "?")
     }
   }
 
