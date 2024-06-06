@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -176,30 +175,26 @@ private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigat
   if (!options.preserveCaret && !options.requestFocus) {
     return false
   }
+
+  val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
+
   val file = request.file
   if (shouldOpenAsNative(file)) {
     return false
   }
 
-  if (!project.serviceAsync<EditorHistoryManager>().hasBeenOpen(file)) {
-    return false
-  }
-
-  val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
   val openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus)
 
   val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
-  val wasAlreadyOpen = fileEditorManager.isFileOpen(file)
-  if (!wasAlreadyOpen) {
-    fileEditorManager.openFile(file = file, options = openOptions)
-  }
+  val existingComposite = fileEditorManager.getComposite(file)
+  val fileEditors = existingComposite?.allEditors ?: fileEditorManager.openFile(file = file, options = openOptions).allEditors
 
-  for (editor in fileEditorManager.getEditorList(file)) {
+  for (editor in fileEditors) {
     if (editor is TextEditor) {
       val text = editor.editor
       val offset = readAction { text.caretModel.offset }
       if (elementRange.containsOffset(offset)) {
-        if (wasAlreadyOpen) {
+        if (existingComposite != null) {
           // select the file
           fileEditorManager.openFile(file = file, options = openOptions)
         }

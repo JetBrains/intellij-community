@@ -114,6 +114,9 @@ open class EditorComposite internal constructor(
   // available doesn't mean that a file editor is fully loaded
   @Internal
   suspend fun waitForAvailable() {
+    // make sure that init is started
+    initDeferred.complete(Unit)
+
     if (selectedEditorWithProvider.value != null || fileEditorWithProviderList.isNotEmpty()) {
       return
     }
