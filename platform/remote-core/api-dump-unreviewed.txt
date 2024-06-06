@@ -380,8 +380,6 @@ a:com.intellij.remote.RemoteSshProcess
 - com.intellij.execution.process.SelfKiller
 - com.intellij.remote.Tunnelable
 - <init>():V
-- killProcessTree():Z
-- pa:sendCtrlC():Z
 *f:com.intellij.remote.SshConnectionConfigPatch
 - <init>():V
 - <init>(com.intellij.remote.SshConnectionConfigPatch$HostKeyVerifier,java.time.Duration,com.intellij.remote.SshConnectionConfigPatch$ProxyParams):V
