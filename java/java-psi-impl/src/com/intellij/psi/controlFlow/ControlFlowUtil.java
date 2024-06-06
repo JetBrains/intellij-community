@@ -117,8 +117,9 @@ public final class ControlFlowUtil {
             }
             else if (instruction instanceof ReadVariableInstruction) {
               ReadVariableInstruction read = (ReadVariableInstruction)instruction;
-              if (psiManager.areElementsEquivalent(read.variable, psiVariable) && state.getWriteCount() == 0) continue variables;
-              queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+              if (!psiManager.areElementsEquivalent(read.variable, psiVariable) || state.getWriteCount() != 0) {
+                queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+              }
             }
             else {
               queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));

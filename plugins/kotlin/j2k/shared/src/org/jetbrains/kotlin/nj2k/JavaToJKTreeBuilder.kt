@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
+import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -24,6 +25,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.parentOfType
+import com.siyeh.ig.psiutils.FinalUtils
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -62,6 +65,7 @@ class JavaToJKTreeBuilder(
     private val expressionTreeMapper = ExpressionTreeMapper()
     private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
     private val formattingCollector = FormattingCollector()
+    private val immutableVariables: MutableMap<PsiCodeBlock, Set<PsiElement>?> = mutableMapOf()
 
     // Per-file property with collected nullability information for various declarations.
     // Needs to be flushed before building the tree for each root element.
@@ -73,6 +77,13 @@ class JavaToJKTreeBuilder(
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
         declarationNullabilityInfo = null
+        val codeBlock = when (psi) {
+            is PsiCodeBlock -> psi
+            else -> psi.parentOfType<PsiCodeBlock>()
+        }
+        if (codeBlock != null && !immutableVariables.keys.contains(codeBlock)) {
+            immutableVariables[codeBlock] = LocalCanBeFinal().getImmutableLocalVariablesInBlock(codeBlock)
+        }
 
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
@@ -792,28 +803,33 @@ class JavaToJKTreeBuilder(
         private fun PsiMember.visibility(): JKVisibilityModifierElement =
             visibility(referenceSearcher) { ast, psi -> ast.withFormattingFrom(psi) }
 
-        fun PsiField.toJK(): JKField = JKField(
-            JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
-            nameIdentifier.toJK(),
-            with(expressionTreeMapper) {
-                withBodyGeneration(
-                    this@toJK,
-                    trueBranch = { initializer.toJK() },
-                    elseBranch = { createTodoExpression() }
-                )
-            },
-            annotationList(this),
-            otherModifiers(),
-            visibility(),
-            modality(),
-            JKMutabilityModifierElement(
-                if (containingClass?.isInterface == true) IMMUTABLE else UNKNOWN
-            )
-        ).also {
-            symbolProvider.provideUniverseSymbol(this, it)
-            it.psi = this
-            it.updateNullability()
-            it.withFormattingFrom(this)
+        fun PsiField.toJK(): JKField {
+            val mutability = when {
+                containingClass?.isInterface == true -> IMMUTABLE
+                visibility().visibility == Visibility.PRIVATE && FinalUtils.canBeImmutable(this) -> IMMUTABLE
+                else -> UNKNOWN
+            }
+            return JKField(
+                JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
+                nameIdentifier.toJK(),
+                with(expressionTreeMapper) {
+                    withBodyGeneration(
+                        this@toJK,
+                        trueBranch = { initializer.toJK() },
+                        elseBranch = { createTodoExpression() }
+                    )
+                },
+                annotationList(this),
+                otherModifiers(),
+                visibility(),
+                modality(),
+                JKMutabilityModifierElement(mutability)
+            ).also {
+                symbolProvider.provideUniverseSymbol(this, it)
+                it.psi = this
+                it.updateNullability()
+                it.withFormattingFrom(this)
+            }
         }
 
         fun <T : PsiModifierListOwner> T.annotationList(docCommentOwner: PsiDocCommentOwner?): JKAnnotationList {
@@ -961,21 +977,32 @@ class JavaToJKTreeBuilder(
             }
         }
 
-        fun PsiCodeBlock.toJK(): JKBlock = JKBlockImpl(
-            if (withBody) statements.map { it.toJK() } else listOf(createTodoExpression().asStatement())
-        ).withFormattingFrom(this).also {
-            it.leftBrace.withFormattingFrom(lBrace)
-            it.rightBrace.withFormattingFrom(rBrace)
+        fun PsiCodeBlock.toJK(): JKBlock {
+            if (!immutableVariables.keys.contains(this)) {
+                immutableVariables[this] = LocalCanBeFinal().getImmutableLocalVariablesInBlock(this)
+            }
+            return JKBlockImpl(
+                if (withBody) statements.map { it.toJK() } else listOf(createTodoExpression().asStatement())
+            ).withFormattingFrom(this).also {
+                it.leftBrace.withFormattingFrom(lBrace)
+                it.rightBrace.withFormattingFrom(rBrace)
+            }
         }
 
         fun PsiLocalVariable.toJK(): JKLocalVariable {
+            val codeBlock = parentOfType<PsiCodeBlock>()
+            val mutability = when {
+                hasModifierProperty(PsiModifier.FINAL) -> IMMUTABLE
+                immutableVariables[codeBlock]?.any { it == this } == true -> IMMUTABLE
+                immutableVariables[codeBlock] != null || codeBlock == null -> UNKNOWN
+                else -> IMMUTABLE
+            }
+
             return JKLocalVariable(
                 JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
                 nameIdentifier.toJK(),
                 with(expressionTreeMapper) { initializer.toJK().withLineBreaksFrom(initializer, copyLineBreaksBefore = true) },
-                JKMutabilityModifierElement(
-                    if (hasModifierProperty(PsiModifier.FINAL)) IMMUTABLE else UNKNOWN
-                ),
+                JKMutabilityModifierElement(mutability),
                 annotationList(null)
             ).also {
                 symbolProvider.provideUniverseSymbol(this, it)
