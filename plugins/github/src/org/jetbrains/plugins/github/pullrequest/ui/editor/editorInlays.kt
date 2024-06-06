@@ -5,10 +5,14 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.collaboration.util.Hideable
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewAICommentDiffViewModel
 
 sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
+  sealed interface Editor : GHPREditorMappedComponentModel
+  sealed interface Diff : GHPREditorMappedComponentModel
+
   abstract class Thread<VM : GHPRCompactReviewThreadViewModel>(val vm: VM)
-    : GHPREditorMappedComponentModel, Hideable {
+    : GHPREditorMappedComponentModel, Editor, Diff, Hideable {
     final override val key: Any = vm.id
     final override val hiddenState = MutableStateFlow(false)
     final override fun setHidden(hidden: Boolean) {
@@ -17,6 +21,14 @@ sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
   }
 
   abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM)
-    : GHPREditorMappedComponentModel {
+    : GHPREditorMappedComponentModel, Editor, Diff
+
+  abstract class AIComment(val vm: GHPRReviewAICommentDiffViewModel)
+    : GHPREditorMappedComponentModel, Diff, Hideable {
+    final override val key: Any = vm.key
+    final override val hiddenState = MutableStateFlow(false)
+    final override fun setHidden(hidden: Boolean) {
+      hiddenState.value = hidden
+    }
   }
 }

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.ai.assistedReview.GHPRAiAssistantReviewService
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import java.awt.Image
@@ -125,14 +126,16 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
 
       val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
       val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
+      val aiReviewService = GHPRAiAssistantReviewService(project, cs, remoteCoordinates.repository)
 
-      val dataProviderRepository = GHPRDataProviderRepositoryImpl(cs,
+      val dataProviderRepository = GHPRDataProviderRepositoryImpl(project, cs,
                                                                   repoDataService,
                                                                   detailsService,
                                                                   reviewService,
                                                                   filesService,
                                                                   commentService,
-                                                                  changesService) { id ->
+                                                                  changesService,
+                                                                  aiReviewService) { id ->
         GHGQLPagedListLoader(ProgressManager.getInstance(),
                              SimpleGHGQLPagesLoader(requestExecutor, { p ->
                                GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
