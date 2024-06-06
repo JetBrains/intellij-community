@@ -1746,6 +1746,12 @@
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.StringTemplateReverseMigrationInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.string.template.reverse.migration.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.implicit.to.explicit.class.backward.migration.name"/>
