@@ -1,0 +1,10 @@
+fun sample(){
+    extracted1<caret>()
+}
+
+private fun extracted1() {
+    println("42")
+}
+
+fun extracted(){
+}

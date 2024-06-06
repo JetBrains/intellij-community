@@ -30,6 +30,11 @@ public class InplaceIntroduceFunctionTestGenerated extends AbstractInplaceIntrod
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("ConflictDefaultName.kt")
+    public void testConflictDefaultName() throws Exception {
+        runTest("testData/refactoring/extractFunctionInplace/ConflictDefaultName.kt");
+    }
+
     @TestMetadata("ConflictNameNotAccepted.kt")
     public void testConflictNameNotAccepted() throws Exception {
         runTest("testData/refactoring/extractFunctionInplace/ConflictNameNotAccepted.kt");
