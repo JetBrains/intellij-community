@@ -1280,8 +1280,7 @@ open class JBTabsImpl internal constructor(
     return info
   }
 
-  @Internal
-  fun addTabWithoutUpdating(info: TabInfo, index: Int, isDropTarget: Boolean): Boolean {
+  private fun addTabWithoutUpdating(info: TabInfo, index: Int, isDropTarget: Boolean): Boolean {
     if (!isDropTarget && tabs.contains(info)) {
       return true
     }

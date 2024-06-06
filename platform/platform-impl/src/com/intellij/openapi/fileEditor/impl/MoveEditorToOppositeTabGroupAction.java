@@ -48,7 +48,7 @@ class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, 
       window.closeFile(vFile, true, false);
     }
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project))
-      .openFileImpl4$intellij_platform_ide_impl(siblings.get(0), vFile, entry, new FileEditorOpenOptions().withRequestFocus());
+      .openFileImpl$intellij_platform_ide_impl(siblings.get(0), vFile, entry, new FileEditorOpenOptions().withRequestFocus());
     vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
   }
 

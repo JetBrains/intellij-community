@@ -452,7 +452,7 @@ open class FileEditorManagerImpl(
     }
 
     // update for non-dumb-aware EditorTabTitleProviders
-    updateFileName(file = null)
+    scheduleUpdateFileName(file = null)
   }
 
   private suspend fun rootsChanged(fileEditorProviderManager: FileEditorProviderManager) {
@@ -477,7 +477,7 @@ open class FileEditorManagerImpl(
       updateFileEditorProviders(file = file, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
     }
 
-    updateFileName(file = null)
+    scheduleUpdateFileName(file = null)
   }
 
   private suspend fun updateFileEditorProviders(
@@ -599,7 +599,7 @@ open class FileEditorManagerImpl(
     if (!isFileOpen(file)) {
       return
     }
-    updateFileName(file)
+    scheduleUpdateFileName(file)
     queueUpdateFile(file)
   }
 
@@ -645,7 +645,7 @@ open class FileEditorManagerImpl(
   /**
    * Updates tab title and tab tool tip for the specified `file`.
    */
-  private fun updateFileName(file: VirtualFile?) {
+  private fun scheduleUpdateFileName(file: VirtualFile?) {
     // Queue here is to prevent title flickering when the tab is being closed and two events are arriving:
     // with component==null and component==next focused tab only the last event makes sense to handle
     fileTitleUpdateChannel.queue(file)
@@ -868,7 +868,7 @@ open class FileEditorManagerImpl(
     if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
       closeFile(file)
     }
-    return openFileImpl4(window = windowToOpenIn, _file = file, entry = null, options = options)
+    return openFileImpl(window = windowToOpenIn, _file = file, entry = null, options = options)
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
@@ -898,7 +898,7 @@ open class FileEditorManagerImpl(
     val isCurrentlyUnderLocalId = ClientId.isCurrentlyUnderLocalId
 
     val reuseOpen = options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)
-    val composite = withContext(Dispatchers.EDT) {
+    var composite: FileEditorComposite? = withContext(Dispatchers.EDT) {
       val existingWindow = if (reuseOpen) findWindowInAllSplitters(file) else null
       val window = existingWindow ?: getOrCreateCurrentWindow(file)
       if (forbidSplitFor(file) && !window.isFileOpen(file)) {
@@ -911,26 +911,13 @@ open class FileEditorManagerImpl(
 
       @Suppress("DuplicatedCode")
       runBulkTabChangeInEdt(window.owner) {
-        var composite = window.getComposite(file)
-        val isNewEditor = composite == null
-        if (composite == null) {
-          composite = createCompositeAndModel(file = file, window = window) ?: return@withContext FileEditorComposite.EMPTY
-        }
-
-        openInEdtImpl(
-          composite = composite,
-          window = window,
-          file = composite.file,
-          options = options,
-          isNewEditor = isNewEditor,
-        )
-        composite
+        doOpenInEdt(window = window, file = file, options = options, fileEntry = null)
       }
     }
 
     if (composite == null) {
       assert(!isCurrentlyUnderLocalId)
-      return clientFileEditorManager?.openFileAsync(
+      composite = clientFileEditorManager?.openFileAsync(
         file = file,
         // it used to be passed as forceCreate=false there, so we need to pass it as reuseOpen=true
         // otherwise, any navigation will open a new editor composite which is invisible in RD mode
@@ -1029,7 +1016,7 @@ open class FileEditorManagerImpl(
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }
-    return openFileImpl4(window = window, _file = file, entry = null, options = options)
+    return openFileImpl(window = window, _file = file, entry = null, options = options)
   }
 
   internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions) {
@@ -1049,19 +1036,7 @@ open class FileEditorManagerImpl(
 
     withContext(Dispatchers.EDT) {
       runBulkTabChangeInEdt(window.owner) {
-        var composite = window.getComposite(file)
-        val isNewEditor = composite == null
-        if (composite == null) {
-          composite = createCompositeAndModel(file = file, window = window) ?: return@withContext
-        }
-
-        openInEdtImpl(
-          composite = composite,
-          window = window,
-          file = composite.file,
-          options = options,
-          isNewEditor = isNewEditor,
-        )
+        doOpenInEdt(window = window, file = file, options = options, fileEntry = null)
       }
     }
   }
@@ -1078,7 +1053,7 @@ open class FileEditorManagerImpl(
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
   @Suppress("DuplicatedCode")
-  internal fun openFileImpl4(
+  internal fun openFileImpl(
     window: EditorWindow,
     @Suppress("LocalVariableName") _file: VirtualFile,
     entry: FileEntry?,
@@ -1093,12 +1068,13 @@ open class FileEditorManagerImpl(
       return openFileUsingClient(file, options)
     }
 
+    if (!file.isValid) {
+      LOG.error(InvalidVirtualFileAccessException(file))
+    }
+
     fun open(): FileEditorComposite {
       return runBulkTabChangeInEdt(window.owner) {
-        if (!file.isValid) {
-          LOG.error(InvalidVirtualFileAccessException(file))
-        }
-        doOpenInEdtImpl(
+        doOpenInEdt(
           window = window,
           file = file,
           fileEntry = entry,
@@ -1143,15 +1119,13 @@ open class FileEditorManagerImpl(
     }
 
     return runBulkTabChangeInEdt(window.owner) {
-      val composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry) ?: return null
-      openInEdtImpl(
-        composite = composite,
+      doOpenInEdt(
         window = window,
-        file = file,
+        file = effectiveFile,
         options = options,
-        isNewEditor = true,
+        fileEntry = fileEntry,
+        forceCompositeCreation = true,
       )
-      composite
     }
   }
 
@@ -1162,14 +1136,14 @@ open class FileEditorManagerImpl(
     return clientManager.openFile(file = file, options)
   }
 
-  @Suppress("DuplicatedCode")
-  private fun doOpenInEdtImpl(
+  private fun doOpenInEdt(
     window: EditorWindow,
     file: VirtualFile,
     fileEntry: FileEntry?,
     options: FileEditorOpenOptions,
+    forceCompositeCreation: Boolean = false,
   ): EditorComposite? {
-    var composite = window.getComposite(file)
+    var composite = if (forceCompositeCreation) null else window.getComposite(file)
     val isNewEditor = composite == null
     if (composite == null) {
       composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry) ?: return null
@@ -1178,13 +1152,17 @@ open class FileEditorManagerImpl(
 
     window.addComposite(
       composite = composite,
+      file = composite.file,
       options = options,
       isNewEditor = isNewEditor,
-      isOpenedInBulk = false,
-      file = composite.file,
     )
 
-    if (!isNewEditor) {
+    selectionHistory.addRecord(file, window)
+
+    if (isNewEditor) {
+      openFileSetModificationCount.increment()
+    }
+    else {
       for (editorWithProvider in composite.allEditorsWithProviders) {
         restoreEditorState(
           file = file,
@@ -1202,56 +1180,36 @@ open class FileEditorManagerImpl(
       if (provider != null) {
         composite.setSelectedEditor(provider)
       }
+
+      window.owner.afterFileOpen(file)
     }
 
-    // notify editors about selection changes
-    val splitters = window.owner
-    splitters.afterFileOpen(file)
-    selectionHistory.addRecord(file, window)
-
-    if (isNewEditor) {
-      openFileSetModificationCount.increment()
-    }
-
-    postOpenInEdt(file = file, options = options, composite = composite, splitters = splitters)
+    // update frame and tab title
+    scheduleUpdateFileName(file)
     return composite
   }
 
-  private fun postOpenInEdt(file: VirtualFile, options: FileEditorOpenOptions, composite: EditorComposite, splitters: EditorsSplitters) {
-    // update frame and tab title
-    updateFileName(file)
-
-    // transfer focus into editor
-    if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-      composite.coroutineScope.launch {
-        focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters)
-      }
-    }
-  }
-
+  @RequiresEdt
   internal fun createCompositeAndModel(
     file: VirtualFile,
     window: EditorWindow,
     fileEntry: FileEntry? = null,
   ): EditorComposite? {
-    if (forbidSplitFor(file) && openedComposites.any { it.file == file }) {
-      LOG.debug { "Cancelled 'createComposite' for $file - file is already opened" }
-      return null
-    }
-
     val compositeCoroutineScope = window.coroutineScope.childScope("EditorComposite(file=${file.name})")
-    val flow = createEditorCompositeModel(
+    val model = createEditorCompositeModel(
       coroutineScope = compositeCoroutineScope,
       editorPropertyChangeListener = editorPropertyChangeListener,
       fileProvider = { file },
       project = project,
       fileEntry = fileEntry,
-    ).shareIn(compositeCoroutineScope, started = SharingStarted.Eagerly, replay = 1)
-    return createCompositeByEditorWithModel(
-      file = file,
-      model = flow,
-      coroutineScope = compositeCoroutineScope,
     )
+    val composite = createCompositeByEditorWithModel(
+      file = file,
+      model = model,
+      coroutineScope = compositeCoroutineScope,
+    ) ?: return null
+    composite.initDeferred.complete(Unit)
+    return composite
   }
 
   internal fun createCompositeAndModel(
@@ -1318,6 +1276,7 @@ open class FileEditorManagerImpl(
     )
   }
 
+  @RequiresEdt
   fun createCompositeByEditorWithModel(
     file: VirtualFile,
     model: Flow<EditorCompositeModel>,
@@ -1331,12 +1290,13 @@ open class FileEditorManagerImpl(
     coroutineScope.launch {
       // listen for preview status change to update file tooltip, skip the first value as it is the initial value
       composite.isPreviewFlow.drop(1).collect {
-        updateFileName(file)
+        scheduleUpdateFileName(file)
       }
     }
     return composite
   }
 
+  @RequiresEdt
   protected fun createCompositeInstance(
     file: VirtualFile,
     model: Flow<EditorCompositeModel>,
@@ -1874,7 +1834,7 @@ open class FileEditorManagerImpl(
         EDT.isCurrentThreadEdt()
         val file = event.file
         if (isFileOpen(file)) {
-          updateFileName(file)
+          scheduleUpdateFileName(file)
           updateFileIcon(file) // file type can change after renaming
           updateFileBackgroundColor(file)
         }
@@ -1896,7 +1856,7 @@ open class FileEditorManagerImpl(
       val file = e.file
       for (openFile in openedFiles) {
         if (VfsUtilCore.isAncestor(file, openFile, false)) {
-          updateFileName(openFile)
+          scheduleUpdateFileName(openFile)
           updateFileBackgroundColor(openFile)
         }
       }
@@ -2076,7 +2036,7 @@ open class FileEditorManagerImpl(
       // "Mark modified files with asterisk"
       for (file in openedFiles.asReversed()) {
         updateFileIcon(file)
-        updateFileName(file)
+        scheduleUpdateFileName(file)
         updateFileBackgroundColor(file)
       }
 
@@ -2143,37 +2103,6 @@ open class FileEditorManagerImpl(
         splitters.scheduleUpdateFileIcon(file)
       }
     }
-  }
-
-  @Suppress("DuplicatedCode")
-  private fun openInEdtImpl(
-    composite: EditorComposite,
-    window: EditorWindow,
-    file: VirtualFile,
-    options: FileEditorOpenOptions,
-    isNewEditor: Boolean,
-  ) {
-    if (isNewEditor) {
-      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
-    }
-
-    window.addComposite(
-      composite = composite,
-      options = options,
-      isNewEditor = isNewEditor,
-      isOpenedInBulk = false,
-      file = composite.file,
-    )
-
-    // notify editors about selection changes
-    selectionHistory.addRecord(file, window)
-    if (isNewEditor) {
-      openFileSetModificationCount.increment()
-    }
-    else {
-      window.owner.afterFileOpen(file)
-    }
-    postOpenInEdt(file = file, options = options, composite = composite, splitters = window.owner)
   }
 
   internal fun openFilesOnStartup(

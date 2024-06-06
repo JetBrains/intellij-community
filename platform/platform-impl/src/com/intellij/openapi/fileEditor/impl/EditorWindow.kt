@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
@@ -206,7 +205,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         withContext(Dispatchers.EDT) {
           // select a composite in a tabbed pane and then focus on a composite if needed
           tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
-            tabbedPane.tabs.select(it, false)
+            tabbedPane.editorTabs.select(info = it, requestFocus = false)
           }
         }
       }
@@ -314,34 +313,25 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
                           "com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions"))
   fun setEditor(@Suppress("DEPRECATION") editor: EditorWithProviderComposite, focusEditor: Boolean) {
-    addComposite(composite = editor, options = FileEditorOpenOptions(requestFocus = focusEditor))
-  }
-
-  @RequiresEdt
-  internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
     addComposite(
-      composite = composite,
-      options = options,
-      isNewEditor = findTabByComposite(composite) == null,
-      isOpenedInBulk = false,
-      file = composite.file,
+      composite = editor,
+      file = editor.file,
+      options = FileEditorOpenOptions(requestFocus = focusEditor),
+      isNewEditor = findTabByComposite(composite = editor) == null,
     )
   }
 
   @RequiresEdt
   internal fun addComposite(
     composite: EditorComposite,
+    file: VirtualFile,
     options: FileEditorOpenOptions,
     isNewEditor: Boolean,
-    isOpenedInBulk: Boolean,
-    file: VirtualFile,
   ) {
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     composite.isPreview = isPreviewMode
     if (isNewEditor) {
-      if (!isOpenedInBulk) {
-        owner.scheduleUpdateFileIcon(file)
-      }
+      owner.scheduleUpdateFileIcon(file)
 
       var indexToInsert = options.index
       if (indexToInsert == -1) {
@@ -362,7 +352,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
         indexToInsert = indexToInsert,
         selectedEditor = composite.selectedEditor,
         parentDisposable = composite,
-        isOpenedInBulk = isOpenedInBulk,
       )
 
       composite.coroutineScope.launch {
@@ -389,9 +378,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
 
-      if (!isOpenedInBulk) {
-        trimToSize(fileToIgnore = file, transferFocus = false)
-      }
+      trimToSize(fileToIgnore = file, transferFocus = false)
     }
 
     owner.scheduleUpdateFileColor(file)
@@ -402,23 +389,24 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     if (options.selectAsCurrent) {
       _currentCompositeFlow.value = composite
-      if (isOpenedInBulk) {
-        owner.setCurrentWindow(window = this)
-      }
-      else {
-        // If you invoke action via context menu, then on mouse release we will process focus event,
-        // and EditorSplitters.MyFocusWatcher will focus the old editor window.
-        // So, we must use doWhenFocusSettlesDown.
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(ContextAwareRunnable {
-          owner.setCurrentWindow(window = this)
-        }, ModalityState.any())
+      // If you invoke action via context menu, then on mouse release we will process focus event,
+      // and EditorSplitters.MyFocusWatcher will focus the old editor window.
+      // So, we must use doWhenFocusSettlesDown.
+      composite.coroutineScope.launch {
+        // invokeLater
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          owner.setCurrentWindow(window = this@EditorWindow)
+        }
+
+        // transfer focus into editor
+        if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
+          focusEditorOnCompositeOpenComplete(composite = composite, splitters = owner)
+        }
       }
     }
 
-    if (!isOpenedInBulk) {
-      updateTabsVisibility()
-      owner.validate()
-    }
+    updateTabsVisibility()
+    owner.validate()
   }
 
   @RequiresEdt
@@ -445,7 +433,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       val target = getSiblings()[0]
       if (virtualFile != null) {
         syncCaretIfPossible(
-          owner.manager.openFileImpl4(
+          owner.manager.openFileImpl(
             window = target,
             _file = virtualFile,
             entry = null,
@@ -629,7 +617,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     assert(hasClosedTabs()) { "Nothing to restore" }
     val info = removedTabs.last()
     val file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst()) ?: return
-    manager.openFileImpl4(
+    manager.openFileImpl(
       window = this,
       _file = file,
       entry = null,
@@ -873,11 +861,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     // we'll select and focus on a single editor in the end
     val openOptions = FileEditorOpenOptions(selectAsCurrent = false, requestFocus = false)
     for (sibling in siblings) {
-      for (siblingEditor in sibling.composites().toList()) {
+      for (siblingComposite in sibling.composites().toList()) {
         if (compositeToSelect == null) {
-          compositeToSelect = siblingEditor
+          compositeToSelect = siblingComposite
         }
-        processSiblingComposite(siblingEditor, openOptions)
+        processSiblingComposite(siblingComposite, openOptions)
       }
       sibling.dispose()
     }
@@ -896,7 +884,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
   private fun processSiblingComposite(composite: EditorComposite, openOptions: FileEditorOpenOptions) {
     if (findTabByFile(composite.file) == null && tabCount < UISettings.getInstance().state.editorTabLimit) {
-      addComposite(composite, openOptions)
+      addComposite(
+        composite = composite,
+        file = composite.file,
+        options = openOptions,
+        isNewEditor = false,
+      )
     }
     else {
       manager.disposeComposite(composite)

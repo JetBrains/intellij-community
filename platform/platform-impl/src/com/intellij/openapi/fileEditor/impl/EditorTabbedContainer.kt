@@ -236,7 +236,6 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
-    isOpenedInBulk: Boolean,
   ): TabInfo {
     editorTabs.findInfo(file)?.let {
       return it
@@ -263,12 +262,7 @@ class EditorTabbedContainer internal constructor(
 
     tab.setDragOutDelegate(dragOutDelegate)
 
-    if (isOpenedInBulk) {
-      editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
-    }
-    else {
-      editorTabs.addTabSilently(info = tab, index = indexToInsert)
-    }
+    editorTabs.addTabSilently(info = tab, index = indexToInsert)
     return tab
   }
 

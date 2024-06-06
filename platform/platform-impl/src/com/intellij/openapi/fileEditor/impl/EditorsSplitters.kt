@@ -571,7 +571,12 @@ open class EditorsSplitters internal constructor(
           !window.isDisposed &&
           nextFile != null && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         manager.createCompositeAndModel(file = nextFile, window = window)?.let {
-          window.addComposite(composite = it, options = FileEditorOpenOptions(requestFocus = moveFocus, usePreviewTab = it.isPreview))
+          window.addComposite(
+            composite = it,
+            file = it.file,
+            options = FileEditorOpenOptions(requestFocus = moveFocus, usePreviewTab = it.isPreview),
+            isNewEditor = true,
+          )
         }
       }
     }
@@ -652,7 +657,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun onDisposeComposite(composite: EditorComposite) {
     if (currentCompositeFlow.value == composite) {
-      _currentWindowFlow.value = null
+      setCurrentWindow(_currentWindowFlow.value)
     }
   }
 
@@ -725,7 +730,7 @@ open class EditorsSplitters internal constructor(
 
       // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
       ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow?.let {
-        _currentWindowFlow.value = it
+        setCurrentWindow(it)
       }
     }
   }

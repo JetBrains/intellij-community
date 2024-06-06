@@ -962,7 +962,7 @@ internal suspend fun focusEditorOnCompositeOpenComplete(
 ): Boolean {
   // wait for the file editor
   composite.waitForAvailable()
-  return withContext(Dispatchers.EDT) {
+  return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     val currentSelectedComposite = splitters.currentCompositeFlow.value
     // while the editor was loading, the user switched to another editor - don't steal focus
     if (currentSelectedComposite === composite) {
