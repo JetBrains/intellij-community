@@ -10,32 +10,34 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          COMMAND
-            SHELL_COMMAND
-              BLOCK
-                PsiElement({)('{')
-                COMPOUND_LIST
-                  PsiElement(\n)('\n')
-                  PsiWhiteSpace('    ')
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('echo')
-                    PsiWhiteSpace(' ')
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(STRING_CONTENT)('Dummy text')
-                      PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(\n)('\n')
-                PsiWhiteSpace('  ')
-                PsiElement(})('}')
-            PsiWhiteSpace(' ')
-            REDIRECTION
-              PsiElement(>)('>')
+          PIPELINE_COMMAND_LIST
+            COMMAND
+              SHELL_COMMAND
+                BLOCK
+                  PsiElement({)('{')
+                  COMPOUND_LIST
+                    PsiElement(\n)('\n')
+                    PsiWhiteSpace('    ')
+                    PIPELINE_COMMAND_LIST
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('echo')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          PsiElement(STRING_CONTENT)('Dummy text')
+                          PsiElement(CLOSE_QUOTE)('"')
+                    PsiElement(\n)('\n')
+                  PsiWhiteSpace('  ')
+                  PsiElement(})('}')
               PsiWhiteSpace(' ')
-              VARIABLE
-                PsiElement(var)('$out_dir')
-              PsiElement(word)('/kernel.txt')
+              REDIRECTION
+                PsiElement(>)('>')
+                PsiWhiteSpace(' ')
+                VARIABLE
+                  PsiElement(var)('$out_dir')
+                PsiElement(word)('/kernel.txt')
           PsiElement(\n)('\n')
         PsiElement(})('}')
   PsiElement(\n)('\n')
@@ -53,13 +55,14 @@ SHELL_SCRIPT
           PROCESS_SUBSTITUTION
             PsiElement(>()('>(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('sed')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(RAW_STRING)(''s/^/OUTPUT  : /'')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('sed')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(RAW_STRING)(''s/^/OUTPUT  : /'')
             PsiElement())(')')
       PsiWhiteSpace(' ')
       NUMBER
@@ -71,17 +74,18 @@ SHELL_SCRIPT
           PROCESS_SUBSTITUTION
             PsiElement(>()('>(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('sed')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(RAW_STRING)(''s/^/OUTPUT  : /'')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND_ELEMENT
-                  REDIRECTION
-                    PsiElement(>&)('>&')
-                    NUMBER
-                      PsiElement(int)('2')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('sed')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(RAW_STRING)(''s/^/OUTPUT  : /'')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND_ELEMENT
+                    REDIRECTION
+                      PsiElement(>&)('>&')
+                      NUMBER
+                        PsiElement(int)('2')
             PsiElement())(')')

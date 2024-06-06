@@ -415,13 +415,14 @@ SHELL_SCRIPT
           COMMAND_SUBSTITUTION_COMMAND
             PsiElement(OPEN_BACKQUOTE)('`')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                VARIABLE
-                  PsiElement(var)('$pattern')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$pattern')
             PsiElement(CLOSE_BACKQUOTE)('`')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')
@@ -457,13 +458,14 @@ SHELL_SCRIPT
           SUBSHELL_COMMAND
             PsiElement(()('(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('echo')
-                PsiWhiteSpace(' ')
-                VARIABLE
-                  PsiElement(var)('$pattern')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$pattern')
             PsiElement())(')')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')
@@ -501,13 +503,14 @@ SHELL_SCRIPT
             SUBSHELL_COMMAND
               PsiElement(()('(')
               COMPOUND_LIST
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  VARIABLE
-                    PsiElement(var)('$pattern')
+                PIPELINE_COMMAND_LIST
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    VARIABLE
+                      PsiElement(var)('$pattern')
               PsiElement())(')')
             PsiElement(CLOSE_QUOTE)('"')
       PsiWhiteSpace(' ')
@@ -912,16 +915,17 @@ SHELL_SCRIPT
                   SUBSHELL_COMMAND
                     PsiElement(()('(')
                     COMPOUND_LIST
-                      SIMPLE_COMMAND
-                        GENERIC_COMMAND_DIRECTIVE
+                      PIPELINE_COMMAND_LIST
+                        SIMPLE_COMMAND
+                          GENERIC_COMMAND_DIRECTIVE
+                            LITERAL
+                              PsiElement(word)('echo')
+                          PsiWhiteSpace(' ')
                           LITERAL
-                            PsiElement(word)('echo')
-                        PsiWhiteSpace(' ')
-                        LITERAL
-                          PsiElement(word)('hello')
-                        PsiWhiteSpace(' ')
-                        LITERAL
-                          PsiElement(word)('world')
+                            PsiElement(word)('hello')
+                          PsiWhiteSpace(' ')
+                          LITERAL
+                            PsiElement(word)('world')
                     PsiElement())(')')
               PsiWhiteSpace(' ')
               PsiElement())(')')
@@ -1020,16 +1024,17 @@ SHELL_SCRIPT
                     SUBSHELL_COMMAND
                       PsiElement(()('(')
                       COMPOUND_LIST
-                        SIMPLE_COMMAND
-                          GENERIC_COMMAND_DIRECTIVE
+                        PIPELINE_COMMAND_LIST
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('echo')
+                            PsiWhiteSpace(' ')
                             LITERAL
-                              PsiElement(word)('echo')
-                          PsiWhiteSpace(' ')
-                          LITERAL
-                            PsiElement(word)('hello')
-                          PsiWhiteSpace(' ')
-                          LITERAL
-                            PsiElement(word)('world')
+                              PsiElement(word)('hello')
+                            PsiWhiteSpace(' ')
+                            LITERAL
+                              PsiElement(word)('world')
                       PsiElement())(')')
                 PsiElement())(')')
               PsiWhiteSpace(' ')

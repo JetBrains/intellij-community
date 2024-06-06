@@ -302,24 +302,25 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('wget')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('wget')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-nv')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('https://repo.labs.intellij.net/download/oracle/')
-            VARIABLE
-              PsiElement(var)('$FILE')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-O')
-            PsiWhiteSpace(' ')
-            VARIABLE
-              PsiElement(var)('$FILE')
+                PsiElement(word)('-nv')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('https://repo.labs.intellij.net/download/oracle/')
+              VARIABLE
+                PsiElement(var)('$FILE')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-O')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$FILE')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')

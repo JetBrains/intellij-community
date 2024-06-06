@@ -345,9 +345,10 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('true')
+        PIPELINE_COMMAND_LIST
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('true')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
@@ -356,26 +357,27 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('cat')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              HEREDOC
-                PsiElement(HEREDOC_MARKER_TAG)('<<-')
-                PsiWhiteSpace(' ')
-                PsiElement(HEREDOC_MARKER_START)('EOF')
-                PsiWhiteSpace(' ')
-                COMMANDS_LIST
-                  GENERIC_COMMAND_DIRECTIVE
-                    REDIRECTION
-                      PsiElement(>)('>')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('/tmp/yourfilehere')
-                PsiElement(\n)('\n')
-                PsiElement(HEREDOC_CONTENT)('    The leading tab is ignored.\n')
-                PsiElement(HEREDOC_MARKER_END)('EOF')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('cat')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                HEREDOC
+                  PsiElement(HEREDOC_MARKER_TAG)('<<-')
+                  PsiWhiteSpace(' ')
+                  PsiElement(HEREDOC_MARKER_START)('EOF')
+                  PsiWhiteSpace(' ')
+                  COMMANDS_LIST
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('/tmp/yourfilehere')
+                  PsiElement(\n)('\n')
+                  PsiElement(HEREDOC_CONTENT)('    The leading tab is ignored.\n')
+                  PsiElement(HEREDOC_MARKER_END)('EOF')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
   PsiElement(\n)('\n')

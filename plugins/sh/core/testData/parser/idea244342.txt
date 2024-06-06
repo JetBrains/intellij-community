@@ -7,67 +7,68 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        CONDITIONAL_COMMAND
-          PsiElement([[)('[[')
-          PsiWhiteSpace(' ')
-          LOGICAL_OR_CONDITION
-            PARENTHESES_CONDITION
-              PsiElement(()('(')
-              ASSIGNMENT_CONDITION
-                LITERAL_CONDITION
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$conf_branch')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiWhiteSpace(' ')
-                PsiElement(=)('=')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  PsiElement(word)('r/*/*')
-              PsiElement())(')')
+        PIPELINE_COMMAND_LIST
+          CONDITIONAL_COMMAND
+            PsiElement([[)('[[')
             PsiWhiteSpace(' ')
-            PsiElement(||)('||')
+            LOGICAL_OR_CONDITION
+              PARENTHESES_CONDITION
+                PsiElement(()('(')
+                ASSIGNMENT_CONDITION
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$conf_branch')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement(word)('r/*/*')
+                PsiElement())(')')
+              PsiWhiteSpace(' ')
+              PsiElement(||)('||')
+              PsiWhiteSpace(' ')
+              PARENTHESES_CONDITION
+                PsiElement(()('(')
+                LOGICAL_AND_CONDITION
+                  PARENTHESES_CONDITION
+                    PsiElement(()('(')
+                    EQUALITY_CONDITION
+                      LITERAL_CONDITION
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          VARIABLE
+                            PsiElement(var)('$conf_branch')
+                          PsiElement(CLOSE_QUOTE)('"')
+                      PsiWhiteSpace(' ')
+                      PsiElement(!=)('!=')
+                      PsiWhiteSpace(' ')
+                      LITERAL_CONDITION
+                        PsiElement(word)('r/*')
+                    PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  PsiElement(&&)('&&')
+                  PsiWhiteSpace(' ')
+                  PARENTHESES_CONDITION
+                    PsiElement(()('(')
+                    ASSIGNMENT_CONDITION
+                      LITERAL_CONDITION
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          VARIABLE
+                            PsiElement(var)('$conf_branch')
+                          PsiElement(CLOSE_QUOTE)('"')
+                      PsiWhiteSpace(' ')
+                      PsiElement(=)('=')
+                      PsiWhiteSpace(' ')
+                      LITERAL_CONDITION
+                        PsiElement(word)('*/*')
+                    PsiElement())(')')
+                PsiElement())(')')
             PsiWhiteSpace(' ')
-            PARENTHESES_CONDITION
-              PsiElement(()('(')
-              LOGICAL_AND_CONDITION
-                PARENTHESES_CONDITION
-                  PsiElement(()('(')
-                  EQUALITY_CONDITION
-                    LITERAL_CONDITION
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        VARIABLE
-                          PsiElement(var)('$conf_branch')
-                        PsiElement(CLOSE_QUOTE)('"')
-                    PsiWhiteSpace(' ')
-                    PsiElement(!=)('!=')
-                    PsiWhiteSpace(' ')
-                    LITERAL_CONDITION
-                      PsiElement(word)('r/*')
-                  PsiElement())(')')
-                PsiWhiteSpace(' ')
-                PsiElement(&&)('&&')
-                PsiWhiteSpace(' ')
-                PARENTHESES_CONDITION
-                  PsiElement(()('(')
-                  ASSIGNMENT_CONDITION
-                    LITERAL_CONDITION
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        VARIABLE
-                          PsiElement(var)('$conf_branch')
-                        PsiElement(CLOSE_QUOTE)('"')
-                    PsiWhiteSpace(' ')
-                    PsiElement(=)('=')
-                    PsiWhiteSpace(' ')
-                    LITERAL_CONDITION
-                      PsiElement(word)('*/*')
-                  PsiElement())(')')
-              PsiElement())(')')
-          PsiWhiteSpace(' ')
-          PsiElement(]])(']]')
+            PsiElement(]])(']]')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
@@ -75,14 +76,15 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Test output')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Test output')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')

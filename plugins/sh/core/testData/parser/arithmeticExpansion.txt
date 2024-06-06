@@ -22,41 +22,45 @@ SHELL_SCRIPT
       PsiElement(()('(')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        SUBSHELL_COMMAND
-          PsiElement(()('(')
-          COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                NUMBER
-                  PsiElement(int)('1')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                REDIRECTION
-                  PsiElement(>)('>')
+        PIPELINE_COMMAND_LIST
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    NUMBER
+                      PsiElement(int)('1')
                   PsiWhiteSpace(' ')
-                  NUMBER
-                    PsiElement(int)('2')
-          PsiElement())(')')
+                  SIMPLE_COMMAND_ELEMENT
+                    REDIRECTION
+                      PsiElement(>)('>')
+                      PsiWhiteSpace(' ')
+                      NUMBER
+                        PsiElement(int)('2')
+            PsiElement())(')')
       PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SUBSHELL_COMMAND
       PsiElement(()('(')
       COMPOUND_LIST
-        SUBSHELL_COMMAND
-          PsiElement(()('(')
-          COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                NUMBER
-                  PsiElement(int)('1')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                REDIRECTION
-                  PsiElement(>)('>')
+        PIPELINE_COMMAND_LIST
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    NUMBER
+                      PsiElement(int)('1')
                   PsiWhiteSpace(' ')
-                  NUMBER
-                    PsiElement(int)('2')
-          PsiElement())(')')
+                  SIMPLE_COMMAND_ELEMENT
+                    REDIRECTION
+                      PsiElement(>)('>')
+                      PsiWhiteSpace(' ')
+                      NUMBER
+                        PsiElement(int)('2')
+            PsiElement())(')')
       PsiWhiteSpace(' ')
       PsiElement())(')')

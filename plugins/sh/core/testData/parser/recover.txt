@@ -119,15 +119,16 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('sdfs')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('sdfs')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -180,15 +181,16 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('sdfs')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('sdfs')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -221,13 +223,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            VARIABLE
-              PsiElement(var)('$i')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$i')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -252,8 +255,8 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiElement(\n)('\n')
-          PsiErrorElement:<pipeline command> or '\n' expected, got '}'
-            <empty list>
+        PsiErrorElement:<pipeline command> or '\n' expected, got '}'
+          <empty list>
         PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -276,13 +279,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            VARIABLE
-              PsiElement(var)('$a')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$a')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -305,13 +309,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            VARIABLE
-              PsiElement(var)('$a')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$a')
           PsiElement(\n)('\n')
         PsiElement(})('}')
   PsiElement(\n)('\n')
@@ -337,15 +342,16 @@ SHELL_SCRIPT
         PsiElement(\n)('\n')
         PsiWhiteSpace('  ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('text')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('text')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
       PsiWhiteSpace('  ')
       PsiElement(;;)(';;')
@@ -388,15 +394,16 @@ SHELL_SCRIPT
         PsiElement(\n)('\n')
         PsiWhiteSpace('  ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('text')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('text')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
       PsiWhiteSpace('  ')
       PsiElement(;;)(';;')

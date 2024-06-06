@@ -40,25 +40,26 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('expr')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                VARIABLE
+                  PsiElement(var)('$file_path')
+                PsiElement(CLOSE_QUOTE)('"')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('expr')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              VARIABLE
-                PsiElement(var)('$file_path')
-              PsiElement(CLOSE_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)(':')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              VARIABLE
-                PsiElement(var)('$re_file_ext')
-              PsiElement(CLOSE_QUOTE)('"')
+                PsiElement(word)(':')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                VARIABLE
+                  PsiElement(var)('$re_file_ext')
+                PsiElement(CLOSE_QUOTE)('"')
         PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -70,20 +71,21 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('curl')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('curl')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('https')
-            SIMPLE_COMMAND_ELEMENT
-              ASSIGNMENT_COMMAND
-                LITERAL
-                  PsiElement(word)('://go.dev/VERSION?m')
-                PsiElement(=)('=')
-                LITERAL
-                  PsiElement(word)('text')
+                PsiElement(word)('https')
+              SIMPLE_COMMAND_ELEMENT
+                ASSIGNMENT_COMMAND
+                  LITERAL
+                    PsiElement(word)('://go.dev/VERSION?m')
+                  PsiElement(=)('=')
+                  LITERAL
+                    PsiElement(word)('text')
         PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -119,12 +121,13 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('deflatecmd')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(RAW_STRING)(''gunzip --stdout'')
+          PIPELINE_COMMAND_LIST
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('deflatecmd')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(RAW_STRING)(''gunzip --stdout'')
       PsiWhiteSpace(' ')
       PsiElement(;;)(';;')
       CASE_CLAUSE
@@ -137,12 +140,13 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('deflatecmd')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(RAW_STRING)(''bzcat'')
+          PIPELINE_COMMAND_LIST
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('deflatecmd')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(RAW_STRING)(''bzcat'')
       PsiWhiteSpace(' ')
       PsiElement(;;)(';;')
       CASE_CLAUSE
@@ -155,12 +159,13 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('deflatecmd')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(RAW_STRING)(''xzcat'')
+          PIPELINE_COMMAND_LIST
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('deflatecmd')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(RAW_STRING)(''xzcat'')
       PsiWhiteSpace(' ')
       PsiElement(;;)(';;')
       CASE_CLAUSE
@@ -173,12 +178,13 @@ SHELL_SCRIPT
         PsiElement())(')')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('deflatecmd')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(RAW_STRING)(''unzip -c'')
+          PIPELINE_COMMAND_LIST
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('deflatecmd')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(RAW_STRING)(''unzip -c'')
       PsiWhiteSpace(' ')
       PsiElement(;;)(';;')
       PsiElement(\n)('\n')
@@ -196,12 +202,13 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''Highlighting has stopped (in part)'')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''Highlighting has stopped (in part)'')
           PsiElement(\n)('\n')
         PsiElement(})('}')

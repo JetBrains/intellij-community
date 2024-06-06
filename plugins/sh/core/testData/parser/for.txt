@@ -32,18 +32,19 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('   ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Welcome ')
-              VARIABLE
-                PsiElement(var)('$i')
-              PsiElement(STRING_CONTENT)(' times')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Welcome ')
+                VARIABLE
+                  PsiElement(var)('$i')
+                PsiElement(STRING_CONTENT)(' times')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -88,18 +89,19 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('   ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Welcome ')
-              VARIABLE
-                PsiElement(var)('$c')
-              PsiElement(STRING_CONTENT)(' times')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Welcome ')
+                VARIABLE
+                  PsiElement(var)('$c')
+                PsiElement(STRING_CONTENT)(' times')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -117,9 +119,10 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('ls')
+            PIPELINE_COMMAND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('ls')
           PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
@@ -128,13 +131,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('du')
-            PsiWhiteSpace(' ')
-            VARIABLE
-              PsiElement(var)('$file')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('du')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$file')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -178,13 +182,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            NUMBER
-              PsiElement(int)('1')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              NUMBER
+                PsiElement(int)('1')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -210,9 +215,10 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('      ')
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('break')
+          PIPELINE_COMMAND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('break')
           PsiElement(;)(';')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
@@ -238,8 +244,8 @@ SHELL_SCRIPT
         PsiElement(do)('do')
         COMPOUND_LIST
           PsiElement(\n)('\n')
-          PsiErrorElement:<pipeline command> or '\n' expected, got 'done'
-            <empty list>
+        PsiErrorElement:<pipeline command> or '\n' expected, got 'done'
+          <empty list>
         PsiElement(done)('done')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -263,8 +269,8 @@ SHELL_SCRIPT
         PsiElement({)('{')
         COMPOUND_LIST
           PsiElement(\n)('\n')
-          PsiErrorElement:<pipeline command> or '\n' expected, got '}'
-            <empty list>
+        PsiErrorElement:<pipeline command> or '\n' expected, got '}'
+          <empty list>
         PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -315,15 +321,16 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Dummy text')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Dummy text')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -361,38 +368,40 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('dir')
-            PsiElement(=)('=')
-            VARIABLE
-              PsiElement(var)('$name')
-            LITERAL
-              PsiElement(word)('.git')
+          PIPELINE_COMMAND_LIST
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('dir')
+              PsiElement(=)('=')
+              VARIABLE
+                PsiElement(var)('$name')
+              LITERAL
+                PsiElement(word)('.git')
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              VARIABLE
-                PsiElement(var)('$name')
-              PsiElement(STRING_CONTENT)('.git = ')
-              VARIABLE
-                PsiElement(var)('$name')
-              PsiElement(STRING_CONTENT)('.git')
-              PsiElement(CLOSE_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(>>)('>>')
-                PsiWhiteSpace(' ')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
                 VARIABLE
-                  PsiElement(var)('$GIT_DIR')
-                PsiElement(word)('/map')
+                  PsiElement(var)('$name')
+                PsiElement(STRING_CONTENT)('.git = ')
+                VARIABLE
+                  PsiElement(var)('$name')
+                PsiElement(STRING_CONTENT)('.git')
+                PsiElement(CLOSE_QUOTE)('"')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(>>)('>>')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$GIT_DIR')
+                  PsiElement(word)('/map')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -434,18 +443,19 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('   ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Welcome ')
-              VARIABLE
-                PsiElement(var)('$i')
-              PsiElement(STRING_CONTENT)(' times')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Welcome ')
+                VARIABLE
+                  PsiElement(var)('$i')
+                PsiElement(STRING_CONTENT)(' times')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -487,18 +497,19 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('     ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Welcome ')
-              VARIABLE
-                PsiElement(var)('$i')
-              PsiElement(STRING_CONTENT)(' times')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Welcome ')
+                VARIABLE
+                  PsiElement(var)('$i')
+                PsiElement(STRING_CONTENT)(' times')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -516,19 +527,20 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('seq')
-              PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('1')
-              PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('2')
-              PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('20')
+            PIPELINE_COMMAND_LIST
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('seq')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('1')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('2')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('20')
           PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
@@ -537,18 +549,19 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('   ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('Welcome ')
-              VARIABLE
-                PsiElement(var)('$i')
-              PsiElement(STRING_CONTENT)(' times')
-              PsiElement(CLOSE_QUOTE)('"')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('Welcome ')
+                VARIABLE
+                  PsiElement(var)('$i')
+                PsiElement(STRING_CONTENT)(' times')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -594,13 +607,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('     ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            NUMBER
-              PsiElement(int)('1')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              NUMBER
+                PsiElement(int)('1')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -647,13 +661,14 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('     ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            NUMBER
-              PsiElement(int)('1')
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              NUMBER
+                PsiElement(int)('1')
           PsiElement(\n)('\n')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -696,30 +711,31 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('     ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('echo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-e')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('aSOFTWARE_INSTALL_STATE[')
-              VARIABLE
-                PsiElement(var)('$i')
-              PsiElement(STRING_CONTENT)(']=0')
-              PsiElement(CLOSE_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(>>)('>>')
-                PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  VARIABLE
-                    PsiElement(var)('$fp_target')
-                  PsiElement(CLOSE_QUOTE)('"')
+                PsiElement(word)('-e')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('aSOFTWARE_INSTALL_STATE[')
+                VARIABLE
+                  PsiElement(var)('$i')
+                PsiElement(STRING_CONTENT)(']=0')
+                PsiElement(CLOSE_QUOTE)('"')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(>>)('>>')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(OPEN_QUOTE)('"')
+                    VARIABLE
+                      PsiElement(var)('$fp_target')
+                    PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
         PsiElement(done)('done')

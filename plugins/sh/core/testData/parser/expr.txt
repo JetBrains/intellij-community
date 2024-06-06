@@ -695,6 +695,46 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
+            PIPELINE_COMMAND_LIST
+              FOR_COMMAND
+                PsiElement(for)('for')
+                PsiWhiteSpace(' ')
+                FOR_CLAUSE
+                  PsiElement(word)('x')
+                PsiWhiteSpace(' ')
+                DO_BLOCK
+                  PsiElement(do)('do')
+                  PsiWhiteSpace(' ')
+                  COMPOUND_LIST
+                    PIPELINE_COMMAND_LIST
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('echo')
+                        PsiWhiteSpace(' ')
+                        LITERAL
+                          PsiElement(word)('-n')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          VARIABLE
+                            PsiElement(var)('$sep')
+                          VARIABLE
+                            PsiElement(var)('$x')
+                          PsiElement(CLOSE_QUOTE)('"')
+                    PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  PsiElement(done)('done')
+          PsiElement())(')')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      PsiElement($)('$')
+      SUBSHELL_COMMAND
+        PsiElement(()('(')
+        COMPOUND_LIST
+          PIPELINE_COMMAND_LIST
             FOR_COMMAND
               PsiElement(for)('for')
               PsiWhiteSpace(' ')
@@ -705,59 +745,23 @@ SHELL_SCRIPT
                 PsiElement(do)('do')
                 PsiWhiteSpace(' ')
                 COMPOUND_LIST
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
+                  PIPELINE_COMMAND_LIST
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
                       LITERAL
-                        PsiElement(word)('echo')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('-n')
-                    PsiWhiteSpace(' ')
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      VARIABLE
-                        PsiElement(var)('$sep')
-                      VARIABLE
-                        PsiElement(var)('$x')
-                      PsiElement(CLOSE_QUOTE)('"')
+                        PsiElement(word)('-n')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$sep')
+                        VARIABLE
+                          PsiElement(var)('$x')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(;)(';')
                 PsiWhiteSpace(' ')
                 PsiElement(done)('done')
-          PsiElement())(')')
-        PsiElement(CLOSE_QUOTE)('"')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      PsiElement($)('$')
-      SUBSHELL_COMMAND
-        PsiElement(()('(')
-        COMPOUND_LIST
-          FOR_COMMAND
-            PsiElement(for)('for')
-            PsiWhiteSpace(' ')
-            FOR_CLAUSE
-              PsiElement(word)('x')
-            PsiWhiteSpace(' ')
-            DO_BLOCK
-              PsiElement(do)('do')
-              PsiWhiteSpace(' ')
-              COMPOUND_LIST
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('-n')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$sep')
-                    VARIABLE
-                      PsiElement(var)('$x')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-              PsiWhiteSpace(' ')
-              PsiElement(done)('done')
         PsiElement())(')')
