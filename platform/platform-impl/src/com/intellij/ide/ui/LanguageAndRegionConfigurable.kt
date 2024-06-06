@@ -42,8 +42,7 @@ class LanguageAndRegionUi {
         val locales = LocalizationUtil.getAllAvailableLocales()
         val localizationService = LocalizationStateService.getInstance()!!
         val forcedLocale = LocalizationUtil.getForcedLocale()
-        val selection = Locale.forLanguageTag(forcedLocale ?: localizationService.getSelectedLocale())
-        val model = CollectionComboBoxModel(locales.first, selection)
+        val model = CollectionComboBoxModel(locales.first, LocalizationUtil.getLocale())
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
 
         if (forcedLocale != null) {
@@ -51,10 +50,10 @@ class LanguageAndRegionUi {
             .comment(IdeBundle.message("combobox.language.disable.comment", LocalizationUtil.LOCALIZATION_KEY, forcedLocale))
         }
         else if (propertyGraph != null && parentDisposable != null && connection != null) {
-          val property = propertyGraph.lazyProperty { Locale.forLanguageTag(localizationService.getSelectedLocale()) }
+          val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale() }
 
           property.afterChange(parentDisposable) {
-            if (it.toLanguageTag() == localizationService.getSelectedLocale()) {
+            if (it.toLanguageTag() == LocalizationUtil.getLocale().toLanguageTag()) {
               return@afterChange
             }
 
@@ -67,11 +66,11 @@ class LanguageAndRegionUi {
           languageBox.bindItem(property)
 
           connection.subscribe(LocalizationListener.UPDATE_TOPIC, Runnable {
-            model.selectedItem = Locale.forLanguageTag(localizationService.getSelectedLocale())
+            model.selectedItem = LocalizationUtil.getLocale()
           })
         }
         else {
-          languageBox.bindItem({ Locale.forLanguageTag(localizationService.getSelectedLocale()) }, {
+          languageBox.bindItem({ LocalizationUtil.getLocale() }, {
             localizationService.setSelectedLocale((it ?: Locale.ENGLISH).toLanguageTag())
           })
         }
@@ -125,11 +124,11 @@ class LanguageAndRegionUi {
 
 internal class LanguageAndRegionConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "preferences.language.and.region") {
-  private lateinit var initSelectionLanguage: String
+  private lateinit var initSelectionLanguage: Locale
   private lateinit var initSelectionRegion: Region
 
   override fun createPanel(): DialogPanel {
-    initSelectionLanguage = LocalizationStateService.getInstance()!!.getSelectedLocale()
+    initSelectionLanguage = LocalizationUtil.getLocale()
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
@@ -139,7 +138,7 @@ internal class LanguageAndRegionConfigurable :
 
   override fun apply() {
     super.apply()
-    if (initSelectionLanguage != LocalizationStateService.getInstance()!!.getSelectedLocale() ||
+    if (initSelectionLanguage.toLanguageTag() != LocalizationUtil.getLocale().toLanguageTag() ||
         initSelectionRegion != RegionSettings.getRegion()) {
       ApplicationManager.getApplication().invokeLater {
         RestartDialog.showRestartRequired()

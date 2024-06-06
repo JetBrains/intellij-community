@@ -156,22 +156,12 @@ object LocalizationUtil {
 
   fun getLocale(): Locale {
     val forcedLocale = getForcedLocale()
-    var localizationService: LocalizationStateService? = null
-
-    val languageTag = if (forcedLocale == null) {
-      localizationService = LocalizationStateService.getInstance()
-      localizationService?.getSelectedLocale() ?: return Locale.ENGLISH
-    }
-    else {
-      forcedLocale
-    }
-
+    val languageTag = forcedLocale ?: LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
 
-    if (localizationService != null) {
+    if (forcedLocale == null) {
       val englishTag = Locale.ENGLISH.toLanguageTag()
       if (languageTag != englishTag && findLanguageBundle(locale) == null) {
-        localizationService.setSelectedLocale(englishTag)
         return Locale.ENGLISH
       }
     }
