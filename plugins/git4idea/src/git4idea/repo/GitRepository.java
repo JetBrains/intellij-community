@@ -9,6 +9,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,4 +114,7 @@ public interface GitRepository extends Repository {
 
   @NotNull
   GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
+
+  @NotNull
+  CoroutineScope getCoroutineScope();
 }

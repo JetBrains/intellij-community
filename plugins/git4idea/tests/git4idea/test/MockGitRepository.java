@@ -23,6 +23,7 @@ import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.repo.*;
 import git4idea.status.GitStagingAreaHolder;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -175,6 +176,11 @@ public class MockGitRepository implements GitRepository {
   @Override
   public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myProject.getCoroutineScope();
   }
 
   @Override

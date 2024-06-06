@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ObjectUtils
 import com.intellij.vcs.log.Hash
 import git4idea.*
@@ -23,6 +24,8 @@ import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.status.GitStagingAreaHolder
 import git4idea.telemetry.GitTelemetrySpan
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
@@ -49,6 +52,8 @@ class GitRepositoryImpl private constructor(
 
   @Volatile
   private var recentCheckoutBranches = emptyList<GitLocalBranch>()
+
+  private val coroutineScope = GitDisposable.getInstance(project).coroutineScope.childScope("GitRepositoryImpl")
 
   /**
    * @param rootDir Root of the repository (parent directory of '.git' file/directory).
@@ -143,6 +148,10 @@ class GitRepositoryImpl private constructor(
     return state != Repository.State.DETACHED && state != Repository.State.REBASING
   }
 
+  override fun getCoroutineScope(): CoroutineScope {
+    return coroutineScope
+  }
+
   override fun update() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val previousInfo = repoInfo
@@ -179,6 +188,11 @@ class GitRepositoryImpl private constructor(
                   hooksInfo = hooksInfo,
                   isShallow = isShallow)
     }
+  }
+
+  override fun dispose() {
+    super.dispose()
+    coroutineScope.cancel()
   }
 
   override fun toLogString(): String {
