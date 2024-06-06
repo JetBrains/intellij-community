@@ -216,7 +216,7 @@ public final class UpdateHighlightersUtil {
 
         if (range.contains(info) && !isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
           createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, infosToRemove, range2markerCache,
-                                      severityRegistrar);
+                                      severityRegistrar, session);
           changed[0] = true;
         }
         return true;
@@ -284,7 +284,8 @@ public final class UpdateHighlightersUtil {
                                                   @NotNull MarkupModelEx markup,
                                                   @Nullable HighlighterRecycler infosToRemove,
                                                   @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                  @NotNull SeverityRegistrar severityRegistrar) {
+                                                  @NotNull SeverityRegistrar severityRegistrar,
+                                                  @NotNull HighlightingSession highlightingSession) {
     long finalInfoRange = BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(info, document);
     if (finalInfoRange == -1) {
       return;
