@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossiblyNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -349,7 +349,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
-        val declarationName = (element.getSymbol() as? KtPossiblyNamedSymbol)?.name.toString()
+        val declarationName = (element.getSymbol() as? KaPossiblyNamedSymbol)?.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
             it.text == declarationName && it.reference?.isReferenceTo(element) ?: false
         }
