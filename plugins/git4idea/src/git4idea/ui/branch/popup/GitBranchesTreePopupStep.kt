@@ -4,10 +4,10 @@ package git4idea.ui.branch.popup
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -31,6 +31,7 @@ import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.tree.*
+import javax.swing.JComponent
 import javax.swing.tree.TreePath
 
 class GitBranchesTreePopupStep(internal val project: Project,
@@ -179,7 +180,8 @@ class GitBranchesTreePopupStep(internal val project: Project,
       else {
         finalRunnable = Runnable {
           val place = if (isFirstStep) TOP_LEVEL_ACTION_PLACE else SINGLE_REPOSITORY_ACTION_PLACE
-          ActionUtil.invokeAction(action, createDataContext(project, selectedRepository, affectedRepositories), place, null, null)
+          val dataContext = createDataContext(project, null, selectedRepository, affectedRepositories)
+          ActionUtil.invokeAction(action, dataContext, place, null, null)
         }
       }
     }
@@ -228,7 +230,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                           presentationFactory: PresentationFactory,
                                           selectedRepository: GitRepository?,
                                           repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
-      val dataContext = createDataContext(project, selectedRepository, repositories)
+      val dataContext = createDataContext(project, null, selectedRepository, repositories)
       val actionItems = ActionPopupStep.createActionItems(
         actionGroup, dataContext, TOP_LEVEL_ACTION_PLACE, presentationFactory,
         ActionPopupOptions.showDisabled())
@@ -245,18 +247,23 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                  selectedRepository: GitRepository?,
                                  repositories: List<GitRepository>,
                                  branch: GitBranch? = null): ListPopupStep<*> {
-      val dataContext = createDataContext(project, selectedRepository, repositories, branch)
+      val dataContext = createDataContext(project, null, selectedRepository, repositories, branch)
       return JBPopupFactory.getInstance()
         .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
 
-    internal fun createDataContext(project: Project, selectedRepository: GitRepository?, repositories: List<GitRepository>, branch: GitBranch? = null): DataContext =
-      SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, project)
-        .add(GitBranchActionsUtil.REPOSITORIES_KEY, repositories)
-        .add(GitBranchActionsUtil.SELECTED_REPO_KEY, selectedRepository)
-        .add(GitBranchActionsUtil.BRANCHES_KEY, branch?.let(::listOf))
-        .build()
+    internal fun createDataContext(project: Project,
+                                   component: JComponent?,
+                                   selectedRepository: GitRepository?,
+                                   repositories: List<GitRepository>,
+                                   branch: GitBranch? = null): DataContext =
+      CustomizedDataContext.withSnapshot(
+        DataManager.getInstance().getDataContext(component)) { sink ->
+        sink[CommonDataKeys.PROJECT] = project
+        sink[GitBranchActionsUtil.REPOSITORIES_KEY] = repositories
+        sink[GitBranchActionsUtil.SELECTED_REPO_KEY] = selectedRepository
+        sink[GitBranchActionsUtil.BRANCHES_KEY] = branch?.let(::listOf)
+      }
 
     /**
      * Adds weight to match offset. Degree of match is increased with the earlier the pattern was found in the name.

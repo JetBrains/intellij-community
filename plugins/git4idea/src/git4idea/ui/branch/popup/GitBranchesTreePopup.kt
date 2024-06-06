@@ -10,7 +10,6 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.concurrency.waitForPromise
@@ -104,6 +103,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     private set
 
   private val expandedPaths = HashSet<TreePath>()
+
+  private val am = ActionManager.getInstance()
+  private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
 
   init {
     setParentValue(parentValue)
@@ -338,15 +340,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       speedSearch.updatePattern(textInEditor)
       onSpeedSearchPatternChanged()
     }
-    val editorActionsContext = mapOf(PlatformCoreDataKeys.CONTEXT_COMPONENT to mySpeedSearchPatternField.textEditor)
-
-    (am.getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as ActionGroup)
-      .getChildren(null)
-      .forEach { action ->
-        registerAction(am.getId(action),
-                       KeymapUtil.getKeyStroke(action.shortcutSet),
-                       createShortcutAction(action, editorActionsContext, updateSpeedSearch, false))
-      }
+    val group = am.getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as DefaultActionGroup
+    for (action in group.getChildren(am)) {
+      registerAction(am.getId(action),
+                     KeymapUtil.getKeyStroke(action.shortcutSet),
+                     createShortcutAction(action, false, mySpeedSearchPatternField.textEditor, updateSpeedSearch))
+    }
   }
 
   private fun installShortcutActions(model: TreeModel) {
@@ -359,7 +358,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       .forEach { action ->
         registerAction(am.getId(action),
                        KeymapUtil.getKeyStroke(action.shortcutSet),
-                       createShortcutAction<Any>(action))
+                       createShortcutAction(action, true, null, null))
       }
   }
 
@@ -389,10 +388,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
   }
 
-  private fun <T> createShortcutAction(action: AnAction,
-                                       actionContext: Map<DataKey<T>, T> = emptyMap(),
-                                       afterActionPerformed: (() -> Unit)? = null,
-                                       closePopup: Boolean = true) = object : AbstractAction() {
+  private fun createShortcutAction(action: AnAction,
+                                   closePopup: Boolean,
+                                   contextComponent: JComponent?,
+                                   afterActionPerformed: (() -> Unit)?): AbstractAction = object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
@@ -400,14 +399,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           parent.cancel()
         }
       }
-
-      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
-      val resultContext =
-        with(SimpleDataContext.builder().setParent(stepContext)) {
-          actionContext.forEach { (key, value) -> add(key, value) }
-          build()
-        }
-
+      val resultContext = GitBranchesTreePopupStep.createDataContext(
+        project, contextComponent, treeStep.selectedRepository, treeStep.affectedRepositories)
       val actionPlace = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
       ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }
@@ -542,8 +535,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   override fun getActionMap(): ActionMap = tree.actionMap
 
   override fun getInputMap(): InputMap = tree.inputMap
-
-  private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
 
   override fun afterShow() {
     selectPreferred()
@@ -741,9 +732,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
     }
   }
-
-  private val am
-    get() = ActionManager.getInstance()
 
   companion object {
 
