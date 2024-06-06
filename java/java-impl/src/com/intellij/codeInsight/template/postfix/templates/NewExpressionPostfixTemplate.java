@@ -13,7 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,17 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     if (expression instanceof PsiReferenceExpression ref) {
       JavaResolveResult result = ref.advancedResolve(true);
       PsiElement element = result.getElement();
+      
+      if (element == null) {
+        String name = ref.getReferenceName();
+        if (name != null && ref.getQualifierExpression() == null) {
+          PsiClass[] classes = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+            () -> PsiShortNamesCache.getInstance(ref.getProject()).getClassesByName(name, ref.getResolveScope()));
+          if (classes.length == 1) {
+            element = classes[0];
+          }
+        }
+      }
 
       if (element instanceof PsiClass psiClass) {
         WriteAction.run(() -> insertConstructorCallWithSmartBraces(expression, editor, psiClass));
@@ -66,6 +79,11 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
       }
     }
     super.expandForChooseExpression(expression, editor);
+  }
+
+  @Override
+  protected PsiElement getElementToRemove(PsiElement expr) {
+    return expr;
   }
 
   public void insertConstructorCallWithSmartBraces(@NotNull PsiElement expression,
