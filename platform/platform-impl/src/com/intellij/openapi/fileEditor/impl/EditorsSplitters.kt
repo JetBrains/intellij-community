@@ -122,6 +122,9 @@ open class EditorsSplitters internal constructor(
 
   private val _currentWindowFlow = MutableStateFlow<EditorWindow?>(null)
   @JvmField
+  internal val currentWindowFlow: StateFlow<EditorWindow?> = _currentWindowFlow.asStateFlow()
+
+  @JvmField
   internal val currentCompositeFlow: StateFlow<EditorComposite?>
 
   val currentWindow: EditorWindow?

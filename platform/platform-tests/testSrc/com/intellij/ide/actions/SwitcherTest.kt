@@ -8,6 +8,8 @@ import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.testFramework.FileEditorManagerTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
+import org.assertj.core.api.Assertions.assertThat
 import javax.swing.SwingConstants
 
 class SwitcherTest : FileEditorManagerTestCase() {
@@ -26,15 +28,23 @@ class SwitcherTest : FileEditorManagerTestCase() {
   private fun testTabPlacement(tabPlacement: Int, goForward: Boolean) {
     getInstance().state.editorTabPlacement = tabPlacement
     manager!!.openFile(getFile("/src/1.txt"), null, FileEditorOpenOptions(requestFocus = true))
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     manager!!.openFile(getFile("/src/2.txt"), null, FileEditorOpenOptions(requestFocus = true))
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     manager!!.openFile(getFile("/src/3.txt"), null, FileEditorOpenOptions(requestFocus = true))
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+
     val filesToShow = getFilesToShowForTest(project)
     val selectedItem = getFilesSelectedIndexForTest(project, goForward)
 
+
     assertEquals(if (goForward) 1 else 2, selectedItem)
     assertEquals(3, filesToShow.size)
-    assertEquals(getFile("/src/3.txt"), filesToShow[0])
-    assertEquals(getFile("/src/2.txt"), filesToShow[1])
-    assertEquals(getFile("/src/1.txt"), filesToShow[2])
+
+    assertThat(filesToShow).containsExactly(
+      getFile("/src/3.txt"),
+      getFile("/src/2.txt"),
+      getFile("/src/1.txt"),
+    )
   }
 }

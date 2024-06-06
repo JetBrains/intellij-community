@@ -955,36 +955,33 @@ private fun isDumbAware(editor: FileEditor): Boolean {
   return editor.getUserData(DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
 }
 
-internal suspend fun focusEditorOnCompositeOpenComplete(
+@RequiresEdt
+internal fun focusEditorOnComposite(
   composite: EditorComposite,
   splitters: EditorsSplitters,
   toFront: Boolean = true,
 ): Boolean {
-  // wait for the file editor
-  composite.waitForAvailable()
-  return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    val currentSelectedComposite = splitters.currentCompositeFlow.value
-    // while the editor was loading, the user switched to another editor - don't steal focus
-    if (currentSelectedComposite === composite) {
-      val preferredFocusedComponent = composite.preferredFocusedComponent
-      if (preferredFocusedComponent == null) {
-        LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
-        false
-      }
-      else {
-        preferredFocusedComponent.requestFocusInWindow()
-        if (toFront) {
-          IdeFocusManager.getGlobalInstance().toFront(splitters)
-        }
-        true
-      }
+  val currentSelectedComposite = splitters.currentCompositeFlow.value
+  // while the editor was loading, the user switched to another editor - don't steal focus
+  if (currentSelectedComposite === composite) {
+    val preferredFocusedComponent = composite.preferredFocusedComponent
+    if (preferredFocusedComponent == null) {
+      LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
+      return false
     }
     else {
-      LOG.warn("Cannot focus editor (splitters=$splitters, " +
-               "composite=$composite, currentComposite=$currentSelectedComposite, " +
-               "reason=selection changed)")
-      false
+      preferredFocusedComponent.requestFocusInWindow()
+      if (toFront) {
+        IdeFocusManager.getGlobalInstance().toFront(splitters)
+      }
+      return true
     }
+  }
+  else {
+    LOG.warn("Cannot focus editor (splitters=$splitters, " +
+             "composite=$composite, currentComposite=$currentSelectedComposite, " +
+             "reason=selection changed)")
+    return false
   }
 }
 

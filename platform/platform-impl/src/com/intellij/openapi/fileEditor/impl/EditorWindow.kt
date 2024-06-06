@@ -389,18 +389,26 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     if (options.selectAsCurrent) {
       _currentCompositeFlow.value = composite
+      owner.setCurrentWindow(window = this@EditorWindow)
       // If you invoke action via context menu, then on mouse release we will process focus event,
       // and EditorSplitters.MyFocusWatcher will focus the old editor window.
       // So, we must use doWhenFocusSettlesDown.
-      composite.coroutineScope.launch {
-        // invokeLater
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment
+      if (isHeadless) {
+        owner.setCurrentWindow(window = this@EditorWindow)
+      }
+
+      composite.coroutineScope.launch(Dispatchers.EDT) {
+        if (!isHeadless) {
           owner.setCurrentWindow(window = this@EditorWindow)
         }
 
         // transfer focus into editor
-        if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-          focusEditorOnCompositeOpenComplete(composite = composite, splitters = owner)
+        if (options.requestFocus) {
+          withContext(Dispatchers.Default) {
+            composite.waitForAvailable()
+          }
+          focusEditorOnComposite(composite = composite, splitters = owner)
         }
       }
     }

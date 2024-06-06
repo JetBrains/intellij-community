@@ -76,7 +76,6 @@ import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
@@ -218,14 +217,24 @@ open class FileEditorManagerImpl(
     }
 
     val selectionFlow: StateFlow<SelectionState?> = splitterFlow
-      .flatMapLatest { it.currentCompositeFlow }
-      .flatMapLatest { composite ->
-        if (composite == null) {
+      .flatMapLatest { it.currentWindowFlow }
+      .flatMapLatest { editorWindow ->
+        if (editorWindow == null) {
           return@flatMapLatest flowOf(null)
         }
 
-        composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
-          fileEditorWithProvider?.let { SelectionState(composite = composite, fileEditorProvider = it) }
+        editorWindow.currentCompositeFlow.flatMapLatest { composite ->
+          @Suppress("IfThenToElvis")
+          if (composite == null) {
+            flowOf(null)
+          }
+          else {
+            composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
+              fileEditorWithProvider?.let {
+                SelectionState(composite = composite, window = editorWindow, fileEditorProvider = it)
+              }
+            }
+          }
         }
       }
       .stateIn(scope = coroutineScope, started = SharingStarted.Eagerly, initialValue = null)
@@ -246,7 +255,7 @@ open class FileEditorManagerImpl(
           withContext(Dispatchers.EDT) {
             runCatching {
               fireSelectionChanged(
-                newComposite = state?.composite,
+                newState = state,
                 oldEditorWithProvider = oldEditorWithProvider,
                 newEditorWithProvider = newEditorWithProvider,
                 publisher = publisher,
@@ -1157,8 +1166,6 @@ open class FileEditorManagerImpl(
       isNewEditor = isNewEditor,
     )
 
-    selectionHistory.addRecord(file, window)
-
     if (isNewEditor) {
       openFileSetModificationCount.increment()
     }
@@ -1743,7 +1750,7 @@ open class FileEditorManagerImpl(
   }
 
   private suspend fun fireSelectionChanged(
-    newComposite: EditorComposite?,
+    newState: SelectionState?,
     oldEditorWithProvider: FileEditorWithProvider?,
     newEditorWithProvider: FileEditorWithProvider?,
     publisher: FileEditorManagerListener,
@@ -1754,17 +1761,13 @@ open class FileEditorManagerImpl(
       blockingContext {
         newEditor.selectNotify()
       }
-      FileEditorCollector.logAlternativeFileEditorSelected(project = project, file = newComposite!!.file, editor = newEditor)
-      (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).providerSelected(newComposite)
+      FileEditorCollector.logAlternativeFileEditorSelected(project = project, file = newState!!.composite.file, editor = newEditor)
+      (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).providerSelected(newState.composite)
     }
     project.serviceAsync<IdeDocumentHistory>().onSelectionChanged()
 
-    val newFile = newComposite?.file
-    if (newFile != null) {
-      val holder = ComponentUtil.getParentOfType(EditorWindowHolder::class.java, newComposite.component)
-      if (holder != null) {
-        selectionHistory.addRecord(file = newFile, window = holder.editorWindow)
-      }
+    if (newState != null) {
+      selectionHistory.addRecord(file = newState.composite.file, window = newState.window)
     }
 
     publisher.selectionChanged(FileEditorManagerEvent(
@@ -2203,7 +2206,11 @@ open class FileEditorManagerImpl(
           composite.coroutineScope.launch {
             // well, we cannot focus if component is not added
             windowAdded()
-            if (focusEditorOnCompositeOpenComplete(composite = composite, splitters = splitters, toFront = false)) {
+            // wait for the file editor
+            composite.waitForAvailable()
+            if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                focusEditorOnComposite(composite = composite, splitters = splitters, toFront = false)
+              }) {
               // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
               splitters.updateFrameTitle()
             }
@@ -2287,7 +2294,11 @@ private class SelectionHistory {
   }
 }
 
-private class SelectionState(@JvmField val composite: EditorComposite, @JvmField val fileEditorProvider: FileEditorWithProvider)
+private class SelectionState(
+  @JvmField val composite: EditorComposite,
+  @JvmField val window: EditorWindow,
+  @JvmField val fileEditorProvider: FileEditorWithProvider,
+)
 
 @Internal
 suspend fun waitForFullyCompleted(composite: FileEditorComposite) {
