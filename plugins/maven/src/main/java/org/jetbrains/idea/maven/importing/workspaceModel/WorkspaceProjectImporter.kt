@@ -547,16 +547,16 @@ internal open class WorkspaceProjectImporter(
     val legacyFacetImporters = mavenProjectsWithModules.flatMap { projectWithModules ->
       projectWithModules.modules.asSequence().mapNotNull { moduleWithType ->
         val importers = MavenImporter.getSuitableImporters(projectWithModules.mavenProject, true)
-        MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
-                                                                       moduleWithType.module,
-                                                                       moduleWithType.type,
-                                                                       myProjectsTree,
-                                                                       projectWithModules.changes,
-                                                                       moduleNameByProject,
-                                                                       importers)
+        MavenProjectImporterUtil.LegacyExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
+                                                                            moduleWithType.module,
+                                                                            moduleWithType.type,
+                                                                            myProjectsTree,
+                                                                            projectWithModules.changes,
+                                                                            moduleNameByProject,
+                                                                            importers)
       }
     }
-    MavenProjectImporterUtil.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
+    MavenProjectImporterUtil.importLegacyExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 
   override fun createdModules(): List<Module> {

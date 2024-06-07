@@ -7,10 +7,10 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.COMPILED
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter
-import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.Companion.createCopyForLocalRepo
-import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.Companion.getAttachedJarsLibName
-import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.Companion.selectScope
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.createCopyForLocalRepo
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.getAttachedJarsLibName
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.selectScope
 import org.jetbrains.idea.maven.importing.tree.dependency.*
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter.Companion.JAVADOC_TYPE
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -89,7 +89,7 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
         ContainerUtil.addIfNotNull(result, createAttachArtifactDependency(depProject, scope, artifact))
 
         val classifier = artifact.classifier
-        if (classifier != null && MavenLegacyModuleImporter.IMPORTED_CLASSIFIERS.contains(classifier)
+        if (classifier != null && MavenProjectImporterUtil.IMPORTED_CLASSIFIERS.contains(classifier)
             && !isTestJar
             && "system" != artifact.scope
             && "false" != System.getProperty("idea.maven.classifier.dep")) {

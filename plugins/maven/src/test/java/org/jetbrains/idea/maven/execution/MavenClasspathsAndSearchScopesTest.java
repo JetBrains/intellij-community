@@ -13,7 +13,10 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
@@ -21,7 +24,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
-import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter;
 import org.junit.Test;
 
 import java.io.File;
@@ -923,81 +925,6 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
                             getProjectPath() + "/m2/target/classes",
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
                             getProjectPath() + "/m3/target/classes");
-  }
-
-  public void _testAdditionalClasspathElementsInTests() throws Exception {
-    File iof1 = new File(getDir(), "foo/bar1");
-    File iof2 = new File(getDir(), "foo/bar2");
-    iof1.mkdirs();
-    iof2.mkdirs();
-    VirtualFile f1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof1);
-    VirtualFile f2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof2);
-    VirtualFile f3 = createProjectSubDir("m1/foo/bar3");
-
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
-                                           "<artifactId>m1</artifactId>\n" +
-                                           "<version>1</version>\n" +
-
-                                           "<dependencies>\n" +
-                                           "  <dependency>\n" +
-                                           "    <groupId>junit</groupId>\n" +
-                                           "    <artifactId>junit</artifactId>\n" +
-                                           "    <version>4.0</version>\n" +
-                                           "  </dependency>\n" +
-                                           "</dependencies>\n" +
-
-                                           "<build>\n" +
-                                           "  <plugins>\n" +
-                                           "    <plugin>\n" +
-                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                                           "      <version>2.5</version>\n" +
-                                           "      <configuration>\n" +
-                                           "        <additionalClasspathElements>\n" +
-                                           "          <additionalClasspathElement>\n" + f1.getPath() + "</additionalClasspathElement>\n" +
-                                           "          <additionalClasspathElement>\n" + f2.getPath() + "</additionalClasspathElement>\n" +
-                                           "          <additionalClasspathElement>${project.basedir}/foo/bar3</additionalClasspathElement>\n" +
-                                           "        </additionalClasspathElements>\n" +
-                                           "      </configuration>\n" +
-                                           "    </plugin>\n" +
-                                           "  </plugins>\n" +
-                                           "</build>\n");
-
-    importProjects(m1);
-    assertModules("m1");
-
-    assertModuleModuleDeps("m1");
-    assertModuleLibDeps("m1", "Maven: junit:junit:4.0", MavenLegacyModuleImporter.SUREFIRE_PLUGIN_LIBRARY_NAME);
-
-    setupJdkForModules("m1");
-
-    //assertModuleSearchScope("m1",
-    //                        getProjectPath() + "/m1/src/main/java",
-    //                        getProjectPath() + "/m1/src/test/java",
-    //                        f1.getPath(),
-    //                        f2.getPath());
-
-    assertAllProductionSearchScope("m1",
-                                   getProjectPath() + "/m1/src/main/java",
-                                   getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
-    assertAllTestsSearchScope("m1",
-                              getProjectPath() + "/m1/src/main/java",
-                              getProjectPath() + "/m1/src/test/java",
-                              getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
-                              f1.getPath(),
-                              f2.getPath(),
-                              f3.getPath());
-
-    assertAllProductionClasspath("m1",
-                                 getProjectPath() + "/m1/target/classes",
-                                 getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
-    assertAllTestsClasspath("m1",
-                            getProjectPath() + "/m1/target/test-classes",
-                            getProjectPath() + "/m1/target/classes",
-                            getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
-                            f1.getPath(),
-                            f2.getPath(),
-                            f3.getPath());
   }
 
   @Test
