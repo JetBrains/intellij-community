@@ -11,10 +11,10 @@ import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.Runnable
 import org.jetbrains.kotlin.analysis.api.*
-import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
@@ -43,7 +44,7 @@ import org.jetbrains.kotlin.util.match
 
 internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
-        if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion() && psiReference is KtSymbolBasedReference) {
+        if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion() && psiReference is KtReference) {
             analyze(psiReference.element) {
                 //don't resolve to psi to avoid symbol -> psi, psi -> symbol conversion
                 //which doesn't work well for e.g. kotlin.FunctionN classes due to mapping in
