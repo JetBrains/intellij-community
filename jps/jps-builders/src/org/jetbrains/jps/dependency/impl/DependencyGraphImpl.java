@@ -234,6 +234,12 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
     affectedSources.addAll(diffContext.affectedSources);
 
+    if (!delta.isSourceOnly()) {
+      // complete affected file set with source-delta dependencies
+      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), params).getAffectedSources(), affectedSources);
+    }
+
+
     return new DifferentiateResult() {
       @Override
       public String getSessionName() {

@@ -6,14 +6,15 @@ import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
 
-import static org.jetbrains.jps.javac.Iterators.find;
-import static org.jetbrains.jps.javac.Iterators.map;
+import static org.jetbrains.jps.javac.Iterators.*;
 
 final class KJvmUtils {
 
@@ -107,5 +108,11 @@ final class KJvmUtils {
 
   static boolean isPrivate(Visibility vis) {
     return PRIVATE_VISIBILITY.contains(vis);
+  }
+
+  static Iterable<ReferenceID> withAllSubclassesIfSealed(Utils utils, ReferenceID sealedClassId) {
+    Iterators.Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
+      id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
+    return recurse(sealedClassId, withSubclassesIfSealed, true);
   }
 }

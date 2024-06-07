@@ -29,6 +29,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     Utils present = new Utils(context.getGraph(), context.getParams().belongsToCurrentCompilationChunk());
     Set<Usage> affectedUsages = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
+    Set<JvmNodeReferenceID> sealedNodes = new HashSet<>();
 
     for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
 
@@ -46,12 +47,14 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
         if (container instanceof KmClass) {
           baseNodes.add(cls.getReferenceID());
           if (KJvmUtils.isSealed(container)) {
-            for (NodeSource src : filter(unique(flat(map(present.directSubclasses(cls.getReferenceID()), present::getNodeSources))), s -> !baseSources.contains(s))) {
-              LOG.debug("Sealed class is about to be recompiled => should be always compiled together with all its subclasses. Affecting  " + src);
-              context.affectNodeSource(src);
-            }
+            sealedNodes.add(cls.getReferenceID());
+          }
+          Iterable<ReferenceID> parentCandidates = unique(flat(map(KJvmUtils.withAllSubclassesIfSealed(present, cls.getReferenceID()), present::allDirectSupertypes)));
+          for (JvmClass sealedParent : filter(flat(map(parentCandidates, id -> present.getNodes(id, JvmClass.class))), KJvmUtils::isSealed)) {
+            sealedNodes.add(sealedParent.getReferenceID());
           }
         }
+        
         List<KmTypeAlias> typeAliases = container.getTypeAliases();
         if (!typeAliases.isEmpty()) {
           String ownerName = KJvmUtils.getKotlinName(cls);
@@ -65,6 +68,11 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
       }
     }
 
+    for (NodeSource src : filter(unique(flat(map(flat(map(sealedNodes, id -> KJvmUtils.withAllSubclassesIfSealed(present, id))), present::getNodeSources))), s -> !baseSources.contains(s))) {
+      LOG.debug("Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src);
+      context.affectNodeSource(src);
+    }
+    
     if (!affectedUsages.isEmpty()) {
       BooleanFunction<NodeSource> unmodifiedKtSources = s -> !baseSources.contains(s) && !isEmpty(filter(graph.getNodes(s, JvmClass.class), KJvmUtils::isKotlinNode));
 

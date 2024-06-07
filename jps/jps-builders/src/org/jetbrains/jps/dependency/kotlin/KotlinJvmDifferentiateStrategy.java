@@ -554,10 +554,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   private void affectSealedClass(DifferentiateContext context, JvmNodeReferenceID sealedClassId, String affectReason, Utils utils, boolean affectSubclassUsages) {
     // for sealed classes all direct subclasses must be affected too
-    Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
-      id -> flat(map(utils.getNodes(id, JvmClass.class), n -> KJvmUtils.isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
-    Set<NodeSource> sourcesToAffect = collect(flat(map(recurse(sealedClassId, withSubclassesIfSealed, true), id -> utils.getNodeSources(id))), new HashSet<>());
-    
+    Set<NodeSource> sourcesToAffect = collect(flat(map(KJvmUtils.withAllSubclassesIfSealed(utils, sealedClassId), utils::getNodeSources)), new HashSet<>());
     if (find(sourcesToAffect, src -> !context.isCompiled(src)) != null) {
       // only affect if at least one file in the set is not yet compiled in this session
       affectSources(context, sourcesToAffect, affectReason, true);
@@ -588,13 +585,4 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     ));
   }
 
-  //@Override
-  //protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, Utils utils, boolean forceAffect) {
-  //  // for sealed classes all direct subclasses must be affected too
-  //  Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
-  //    id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
-  //  for (ReferenceID id : recurse(clsId, withSubclassesIfSealed, true)) {
-  //    super.affectNodeSources(context, id, affectReason, utils, !id.equals(clsId) || forceAffect);
-  //  }
-  //}
 }

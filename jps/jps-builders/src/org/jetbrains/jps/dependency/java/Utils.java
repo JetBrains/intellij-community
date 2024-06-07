@@ -164,6 +164,10 @@ public final class Utils {
     });
   }
 
+  public Iterable<ReferenceID> allDirectSupertypes(ReferenceID classId) {
+    return classId instanceof JvmNodeReferenceID? map(allDirectSupertypes((JvmNodeReferenceID)classId), id -> id) : Collections.emptyList();
+  }
+
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
     // return only those direct supertypes that exist in the graph as Nodes
     return unique(flat(map(getNodes(classId, JvmClass.class), cl -> flat(map(cl.getSuperTypes(), st -> map(getNodes(new JvmNodeReferenceID(st), JvmClass.class), JvmClass::getReferenceID))))));
