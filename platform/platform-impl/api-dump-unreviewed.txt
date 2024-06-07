@@ -15996,7 +15996,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:setEditor(com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite,Z):V
 - f:setFilePinned(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setForegroundAt(I,java.awt.Color):V
-- f:setSelectedComposite(com.intellij.openapi.fileEditor.impl.EditorComposite):V
 - f:setSelectedComposite(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V
 - f:setSelectedComposite(com.intellij.openapi.vfs.VirtualFile,Z):V
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.impl.EditorComposite,Z):V

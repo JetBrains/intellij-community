@@ -4,7 +4,6 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.CloseAction.CloseTarget
 import com.intellij.ide.actions.MaximizeEditorInSplitAction
@@ -38,7 +37,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
@@ -129,25 +127,14 @@ class EditorTabbedContainer internal constructor(
       .setTabDraggingEnabled(true)
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().globalScheme.defaultBackground).setPaintFocus(false).jbTabs
-      .addListener(object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          val oldEditor = oldSelection?.let { window.manager.getSelectedEditor((it.`object` as VirtualFile)) }
-          oldEditor?.deselectNotify()
-          val newFile = (newSelection ?: return).`object` as VirtualFile
-          val newEditor = newFile.let { window.manager.getSelectedEditor(newFile) }
-          newEditor?.selectNotify()
-          if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
-            VfsUtil.markDirtyAndRefresh(true, false, false, newFile)
-          }
-        }
-      })
       .setSelectionChangeHandler { _, _, doChangeSelection ->
         if (window.isDisposed) {
           return@setSelectionChangeHandler ActionCallback.DONE
         }
         val result = ActionCallback()
+        val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
         CommandProcessor.getInstance().executeCommand(project, {
-          IdeDocumentHistory.getInstance(project).onSelectionChanged()
+          ideDocumentHistory.onSelectionChanged()
           result.notify(doChangeSelection.run())
         }, "EditorChange", null)
         result

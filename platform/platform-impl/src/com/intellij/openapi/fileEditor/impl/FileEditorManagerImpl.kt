@@ -216,24 +216,32 @@ open class FileEditorManagerImpl(
       throw IllegalStateException("Using of FileEditorManagerImpl is forbidden for a light test. Creation stack: $creationStack")
     }
 
+    coroutineScope.launch {
+      splitterFlow
+        .flatMapLatest { it.currentWindowFlow }
+        .flatMapLatest { editorWindow ->
+          if (editorWindow == null) {
+            return@flatMapLatest emptyFlow()
+          }
+
+          editorWindow.currentCompositeFlow.filterNotNull().map { it.file to editorWindow }
+        }
+        .collect { item ->
+          // addRecord not in EDT and do not depend on file editor creation
+          selectionHistory.addRecord(item)
+        }
+    }
+
     val selectionFlow: StateFlow<SelectionState?> = splitterFlow
-      .flatMapLatest { it.currentWindowFlow }
-      .flatMapLatest { editorWindow ->
-        if (editorWindow == null) {
+      .flatMapLatest { it.currentCompositeFlow }
+      .flatMapLatest { composite ->
+        if (composite == null) {
           return@flatMapLatest flowOf(null)
         }
 
-        editorWindow.currentCompositeFlow.flatMapLatest { composite ->
-          @Suppress("IfThenToElvis")
-          if (composite == null) {
-            flowOf(null)
-          }
-          else {
-            composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
-              fileEditorWithProvider?.let {
-                SelectionState(composite = composite, window = editorWindow, fileEditorProvider = it)
-              }
-            }
+        composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
+          fileEditorWithProvider?.let {
+            SelectionState(composite = composite, fileEditorProvider = it)
           }
         }
       }
@@ -250,9 +258,10 @@ open class FileEditorManagerImpl(
           }
 
           val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-
+          val ideDocumentHistory = project.serviceAsync<IdeDocumentHistory>()
           // expected in EDT
           withContext(Dispatchers.EDT) {
+            ideDocumentHistory.onSelectionChanged()
             runCatching {
               fireSelectionChanged(
                 newState = state,
@@ -1764,11 +1773,6 @@ open class FileEditorManagerImpl(
       FileEditorCollector.logAlternativeFileEditorSelected(project = project, file = newState!!.composite.file, editor = newEditor)
       (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).providerSelected(newState.composite)
     }
-    project.serviceAsync<IdeDocumentHistory>().onSelectionChanged()
-
-    if (newState != null) {
-      selectionHistory.addRecord(file = newState.composite.file, window = newState.window)
-    }
 
     publisher.selectionChanged(FileEditorManagerEvent(
       manager = this,
@@ -2261,8 +2265,8 @@ private class SelectionHistory {
   private val history = ObjectLinkedOpenHashSet<kotlin.Pair<VirtualFile, EditorWindow>>()
 
   @Synchronized
-  fun addRecord(file: VirtualFile, window: EditorWindow) {
-    history.addAndMoveToFirst(file to window)
+  fun addRecord(entry: kotlin.Pair<VirtualFile, EditorWindow>) {
+    history.addAndMoveToFirst(entry)
   }
 
   @Synchronized
@@ -2296,7 +2300,6 @@ private class SelectionHistory {
 
 private class SelectionState(
   @JvmField val composite: EditorComposite,
-  @JvmField val window: EditorWindow,
   @JvmField val fileEditorProvider: FileEditorWithProvider,
 )
 

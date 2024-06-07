@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -196,20 +198,16 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     tabbedPane.tabs.addListener(object : TabsListener {
       override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+        if (newSelection != null) {
+          val newFile = newSelection.`object` as VirtualFile
+          if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
+            VfsUtil.markDirtyAndRefresh(true, false, false, newFile)
+          }
+        }
+
         _currentCompositeFlow.value = newSelection?.composite
       }
     })
-
-    coroutineScope.launch {
-      _currentCompositeFlow.collect { composite ->
-        withContext(Dispatchers.EDT) {
-          // select a composite in a tabbed pane and then focus on a composite if needed
-          tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
-            tabbedPane.editorTabs.select(info = it, requestFocus = false)
-          }
-        }
-      }
-    }
   }
 
   internal enum class RelativePosition(@JvmField val swingConstant: Int) {
@@ -304,10 +302,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
   }
 
-  fun setSelectedComposite(composite: EditorComposite) {
-    _currentCompositeFlow.value = composite
-  }
-
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #setComposite(EditorComposite, boolean)}",
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
@@ -388,7 +382,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
     }
 
     if (options.selectAsCurrent) {
-      _currentCompositeFlow.value = composite
+      setCurrentCompositeAndSelectTab(composite)
+
       owner.setCurrentWindow(window = this@EditorWindow)
       // If you invoke action via context menu, then on mouse release we will process focus event,
       // and EditorSplitters.MyFocusWatcher will focus the old editor window.
@@ -415,6 +410,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
     updateTabsVisibility()
     owner.validate()
+  }
+
+  // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
+  @RequiresEdt
+  private fun setCurrentCompositeAndSelectTab(composite: EditorComposite) {
+    tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
+      tabbedPane.editorTabs.select(info = it, requestFocus = false)
+    }
+    _currentCompositeFlow.value = composite
   }
 
   @RequiresEdt
@@ -506,7 +510,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
 
       // we set selectAsCurrent to false, but the newly created window should have some selected composite
       if (composite is EditorComposite) {
-        newWindow.setSelectedComposite(composite)
+        newWindow.setCurrentCompositeAndSelectTab(composite)
       }
     }
     component.revalidate()
