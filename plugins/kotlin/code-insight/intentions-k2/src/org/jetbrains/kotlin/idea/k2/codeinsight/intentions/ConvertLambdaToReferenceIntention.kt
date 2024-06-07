@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -130,6 +132,12 @@ internal class ConvertLambdaToReferenceIntention :
                 }
                 appendNonFormattedText(referenceName)
                 appendFixedText(")")
+            }
+
+            outerCallExpression.typeArgumentList?.let {
+                if (areTypeArgumentsRedundant(it)) {
+                    it.delete()
+                }
             }
             return Context(newArgumentList.createSmartPointer(), null, renderedTypeArguments)
         }
@@ -387,7 +395,21 @@ private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpress
         is KaClassOrObjectSymbol -> containingSymbol.getMemberScope()
         else -> lambdaArgument.containingKtFile.getScopeContextForPosition(lambdaArgument).getCompositeScope()
     }
-    return scope.getCallableSymbols(name).filterIsInstance<KaFunctionSymbol>().toList()
+
+    val symbols = scope.getCallableSymbols(name).filterIsInstance<KaFunctionSymbol>().toList()
+
+    val function = psi ?: return symbols
+    if (!function.isPhysical) {
+        val copy = function.containingFile
+        val originalFile = copy.originalFile
+        return symbols.filter { s ->
+            s == this@overloadedFunctions || // same symbol
+                    s.psi?.containingFile != originalFile || // symbol in unrelated file
+                    PsiTreeUtil.findSameElementInCopy(s.psi, copy) != function // symbol in the original file, but different
+        }
+    }
+
+    return symbols
 }
 
 context(KaSession)

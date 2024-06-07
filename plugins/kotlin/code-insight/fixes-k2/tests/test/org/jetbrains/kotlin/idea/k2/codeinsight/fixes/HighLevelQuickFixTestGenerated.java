@@ -3593,6 +3593,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeAddition/noExplicitTypeInApiMode.kt");
         }
 
+        @TestMetadata("privatePropertyReference.kt")
+        public void testPrivatePropertyReference() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeAddition/privatePropertyReference.kt");
+        }
+
         @TestMetadata("propertyHasType.kt")
         public void testPropertyHasType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeAddition/propertyHasType.kt");

@@ -17378,6 +17378,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/typeAddition/noExplicitTypeInApiMode.kt");
         }
 
+        @TestMetadata("privatePropertyReference.kt")
+        public void testPrivatePropertyReference() throws Exception {
+            runTest("testData/quickfix/typeAddition/privatePropertyReference.kt");
+        }
+
         @TestMetadata("propertyHasType.kt")
         public void testPropertyHasType() throws Exception {
             runTest("testData/quickfix/typeAddition/propertyHasType.kt");
