@@ -28,6 +28,7 @@ import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -36,6 +37,8 @@ import kotlin.io.path.name
 @RunWith(JUnit4::class)
 internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
   private lateinit var session: BlockTerminalSession
+
+  private val separator: Char = File.separatorChar
 
   override fun setUp() {
     Assume.assumeTrue("This test is supposed to be run only on Windows", SystemInfo.isWindows)
@@ -88,14 +91,29 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
   }
 
   @Test
-  fun `Complete files`() {
+  fun `Complete files after typing OS path separator`() {
     val tempDirectory = createTempDir().apply {
       createFile("file.txt")
       createDirectory("dir")
       createFile(".hidden")
     }
-    val completions = getCompletionsForCommand("ls $tempDirectory\\<caret>")
+    val completions = getCompletionsForCommand("ls $tempDirectory$separator<caret>")
     val expected = tempDirectory.listDirectoryEntries().map { it.name }
+    assertSameCompletions(completions, expected)
+  }
+
+  @Test
+  fun `Complete files after typing opposite path separator`() {
+    val tempDirectory = createTempDir().apply {
+      createDirectory("dir").apply {
+        createFile("file.txt")
+        createDirectory("subDir")
+        createFile(".hidden")
+      }
+    }
+    val oppositeSeparator = if (separator == '/') '\\' else '/'
+    val completions = getCompletionsForCommand("ls $tempDirectory${separator}dir$oppositeSeparator<caret>")
+    val expected = tempDirectory.resolve("dir").listDirectoryEntries().map { it.name }
     assertSameCompletions(completions, expected)
   }
 
@@ -141,9 +159,9 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
       createDirectory(dirName)
       createFile("someFile.txt")
     }
-    val completions = getCompletionsForCommand("ls $tempDirectory\\<caret>")
+    val completions = getCompletionsForCommand("ls $tempDirectory$separator<caret>")
     assertFalse("Completions are null or empty", completions.isNullOrEmpty())
-    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName\\<caret>'")
+    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory$separator$dirName$separator<caret>'")
   }
 
   @Test
@@ -153,9 +171,9 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
       createDirectory(dirName)
       createFile("someFile.txt")
     }
-    val completions = getCompletionsForCommand("ls '$tempDirectory\\<caret>'")
+    val completions = getCompletionsForCommand("ls '$tempDirectory$separator<caret>'")
     assertFalse("Completions are null or empty", completions.isNullOrEmpty())
-    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName\\<caret>'")
+    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory$separator$dirName$separator<caret>'")
   }
 
   private fun getCompletionsForCommand(command: String): List<String>? {

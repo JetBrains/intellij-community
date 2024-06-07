@@ -70,9 +70,11 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     // we need to shorten the prefix to show completion popup near the last file path part.
     // Also, we need to adjust the values of completion items, leaving only the filename part.
     // And remember the initial value to properly replace the prefix on completion.
-    val (prefix, completionItems) = if (initialPrefix.contains(File.separatorChar)) {
-      val shortenedPrefix = initialPrefix.substringAfterLast(File.separatorChar)
+    val separatorIndex = initialPrefix.lastIndexOfAny(charArrayOf('/', '\\'))  // User can type any path separator
+    val (prefix, completionItems) = if (separatorIndex != -1) {
+      val shortenedPrefix = initialPrefix.substring(separatorIndex + 1)
       shortenedPrefix to completionResult.matches.map {
+        // Completion items should have path separator of the OS, so use it here.
         val lookupString = it.value.removeSurrounding("'").removeSurrounding("\"").substringAfterLast(File.separatorChar)
         CompletionItemInfo(lookupString, it.presentableText, it.type, actualReplaceIndex, replacementString = it.value)
       }
