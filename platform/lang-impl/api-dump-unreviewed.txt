@@ -14160,6 +14160,7 @@ f:com.intellij.ide.actions.searcheverywhere.PreviewActionKt
 f:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
 - sf:INSTANCE:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
 - f:isExperimentEnabled():Z
+- f:isExperimentEnabled2024_1():Z
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon
