@@ -150,8 +150,9 @@ public abstract class CoverageEngine {
    * @param psiFile file
    * @return false if coverage N/A for given file
    */
-  @ApiStatus.Internal
-  public abstract boolean coverageEditorHighlightingApplicableTo(@NotNull final PsiFile psiFile);
+  public boolean coverageEditorHighlightingApplicableTo(@NotNull final PsiFile psiFile) {
+    return true;
+  }
 
   /**
    * Checks whether file is accepted by coverage filters or not. Is used in Project View Nodes annotator.
@@ -160,8 +161,9 @@ public abstract class CoverageEngine {
    * @param suite   Coverage suite
    * @return true if included in coverage
    */
-  @ApiStatus.Internal
-  public abstract boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite);
+  public boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite) {
+    return true;
+  }
 
   /**
    * E.g., all *.class files for java source file with several classes
@@ -204,9 +206,10 @@ public abstract class CoverageEngine {
    * (The concept of "qualified name" is specific to each coverage engine, but it should be
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
    */
-  @ApiStatus.Internal
   @NotNull
-  public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
+  public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
+    return Collections.emptySet();
+  }
 
   /**
    * Decide to include a file or not in a coverage report if coverage data isn't available for the file.

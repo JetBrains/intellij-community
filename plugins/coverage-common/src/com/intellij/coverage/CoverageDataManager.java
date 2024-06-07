@@ -86,12 +86,12 @@ public abstract class CoverageDataManager {
 
   public abstract void closeSuitesBundle(@NotNull CoverageSuitesBundle suite);
 
-  abstract void coverageGathered(@NotNull CoverageSuite suite);
+  public abstract void coverageGathered(@NotNull CoverageSuite suite);
 
   /**
    * Called each time after a coverage suite is completely processed: data is loaded and accumulated
    */
-  void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
+  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
 
   /**
    * Remove suite

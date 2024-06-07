@@ -284,7 +284,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  void coverageGathered(@NotNull CoverageSuite suite) {
+  public void coverageGathered(@NotNull CoverageSuite suite) {
     fireCoverageGathered(suite);
     CoverageSuitesBundle bundle = myActiveBundles.get(suite.getCoverageEngine());
     if (bundle == null) {
@@ -427,7 +427,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
+  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
     fireCoverageDataCalculated(suitesBundle);
   }
 
