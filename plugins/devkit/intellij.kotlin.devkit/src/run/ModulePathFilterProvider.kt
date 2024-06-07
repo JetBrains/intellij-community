@@ -1,0 +1,72 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.kotlin.run
+
+import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.OpenFileHyperlinkInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.util.text.findTextRange
+import org.jetbrains.idea.devkit.util.PsiUtil
+
+/**
+ * @see [com.intellij.ideaProjectStructure.fast.KotlinModuleConsistencyTest].
+ */
+internal class ModulePathFilterProvider : ConsoleFilterProvider {
+
+  init {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode
+        || application.isHeadlessEnvironment
+        || !application.isInternal)
+      throw ExtensionNotApplicableException.create()
+  }
+
+  override fun getDefaultFilters(project: Project): Array<Filter> =
+    if (PsiUtil.isIdeaProject(project))
+      arrayOf(ModulePathFilter(project))
+    else
+      emptyArray()
+
+  private class ModulePathFilter(private val project: Project) : Filter {
+
+    override fun applyFilter(
+      line: String,
+      entireLength: Int,
+    ): Filter.Result? {
+      val textStartOffset = entireLength - line.length
+
+      val moduleManager = ModuleManager.getInstance(project)
+      val items = line.splitToSequence("->")
+        .map { it.trim('\n', ' ', '\'') }
+        .mapNotNull { moduleManager.findModuleByName(it) }
+        .mapNotNull { module ->
+          val textRange = line.findTextRange(module.name)
+                          ?: return@mapNotNull null
+
+          val moduleFile = module.moduleFile
+                           ?: return@mapNotNull null
+
+          Filter.ResultItem(
+            /* highlightStartOffset = */ textStartOffset + textRange.startOffset,
+            /* highlightEndOffset = */ textStartOffset + textRange.endOffset,
+            /* hyperlinkInfo = */
+            OpenFileHyperlinkInfo(
+              /* project = */ project,
+              /* file = */ moduleFile,
+              /* documentLine = */ 0,
+              /* documentColumn = */ 0,
+              /* isUseBrowser = */ false,
+            ),
+          )
+        }.toList()
+
+      return if (items.isNotEmpty())
+        Filter.Result(items)
+      else
+        null
+    }
+  }
+}
