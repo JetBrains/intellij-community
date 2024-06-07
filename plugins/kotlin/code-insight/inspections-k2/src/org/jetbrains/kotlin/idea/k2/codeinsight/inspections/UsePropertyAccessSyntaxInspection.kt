@@ -29,11 +29,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
@@ -560,7 +560,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KtAnalysisSession)
     private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KtCallableSymbol>): Boolean {
         for (overriddenSymbol in allOverriddenSymbols) {
-            if (overriddenSymbol.origin == KtSymbolOrigin.JAVA) {
+            if (overriddenSymbol.origin.isJavaSourceOrLibrary()) {
                 val symbolAnnotations = overriddenSymbol.annotationsList.annotations
                 if (symbolAnnotations.any { it.classId?.asFqNameString()?.equals(JAVA_LANG_OVERRIDE) == true }) {
                     // This is Java's @Override, continue searching for Java method but not overridden

@@ -14,7 +14,10 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
@@ -142,7 +145,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
     }
 
     private fun processCallable(symbol: KtCallableSymbol) {
-        if (symbol.origin == KtSymbolOrigin.JAVA) {
+        if (symbol.origin == KaSymbolOrigin.JAVA_SOURCE || symbol.origin == KaSymbolOrigin.JAVA_LIBRARY) {
             val javaMethod = symbol.psiSafe<PsiMethod>() ?: return
             for (type in javaMethod.throwsList.referencedTypes) {
                 val classId = type.resolve()?.classIdIfNonLocal

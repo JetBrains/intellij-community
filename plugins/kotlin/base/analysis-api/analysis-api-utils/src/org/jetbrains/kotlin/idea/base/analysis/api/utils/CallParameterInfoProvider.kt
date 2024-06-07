@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -140,7 +139,7 @@ object CallParameterInfoProvider {
     ): Boolean {
         if (!currentArgument.isInsideAnnotationEntryArgumentList()) return false
 
-        if (signature.symbol.origin != KtSymbolOrigin.JAVA) return false
+        if (!signature.symbol.origin.isJavaSourceOrLibrary()) return false
 
         val parameter = argumentMapping[currentArgument.getArgumentExpression()] ?: return false
         return parameter.name != JvmAnnotationNames.DEFAULT_ANNOTATION_MEMBER_NAME

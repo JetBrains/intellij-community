@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractAnonymousSuperMacro
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -29,7 +29,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
                             when (symbol.classKind) {
                                 KtClassKind.CLASS -> symbol.modality in listOf(Modality.OPEN, Modality.ABSTRACT)
                                 KtClassKind.INTERFACE -> true
-                                KtClassKind.ANNOTATION_CLASS -> symbol.origin != KtSymbolOrigin.JAVA
+                                KtClassKind.ANNOTATION_CLASS -> !symbol.origin.isJavaSourceOrLibrary()
                                 else -> false
                             }
                         }

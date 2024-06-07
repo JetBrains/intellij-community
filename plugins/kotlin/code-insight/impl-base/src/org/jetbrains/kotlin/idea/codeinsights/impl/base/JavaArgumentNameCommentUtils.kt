@@ -11,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -56,7 +56,7 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
     // Use `unwrapFakeOverrides` to handle `SUBSTITUTION_OVERRIDE` and `INTERSECTION_OVERRIDE` callee symbols. Also see the test
     // `genericSuperTypeMethodCall.kt`.
     val calleeSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-    if (calleeSymbol.unwrapFakeOverrides.origin != KtSymbolOrigin.JAVA) return null
+    if (!calleeSymbol.unwrapFakeOverrides.origin.isJavaSourceOrLibrary()) return null
 
     return arguments
         .mapNotNull { argument ->

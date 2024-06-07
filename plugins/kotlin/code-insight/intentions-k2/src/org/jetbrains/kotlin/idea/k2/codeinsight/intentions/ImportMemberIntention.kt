@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -109,7 +110,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
 context(KtAnalysisSession)
 private fun canBeImported(symbol: KtCallableSymbol): Boolean {
     if (symbol is KtEnumEntrySymbol) return true
-    if (symbol.origin == KtSymbolOrigin.JAVA) {
+    if (symbol.origin.isJavaSourceOrLibrary()) {
         return when (symbol) {
             is KtFunctionSymbol -> symbol.isStatic
             is KtPropertySymbol -> symbol.isStatic

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -55,7 +56,7 @@ internal class ImportAllMembersIntention :
         val actualReference = element.actualReference
         val target = actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
         val classId = target.classId ?: return null
-        if (target.origin != KtSymbolOrigin.JAVA &&
+        if (!target.origin.isJavaSourceOrLibrary() &&
             (target.classKind == KtClassKind.OBJECT ||
                     // One cannot use on-demand import for properties or functions declared inside objects
                     isReferenceToObjectMemberOrUnresolved(element))
