@@ -13,177 +13,125 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test;
+package git4idea.test
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitLocalBranch;
-import git4idea.GitVcs;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
-import git4idea.repo.*;
-import git4idea.status.GitStagingAreaHolder;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.GitLocalBranch
+import git4idea.GitVcs
+import git4idea.branch.GitBranchesCollection
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder
+import git4idea.repo.*
+import git4idea.status.GitStagingAreaHolder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 
-import java.util.Collection;
-
-public class MockGitRepository implements GitRepository {
-
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final Project myProject;
-
-  public MockGitRepository(@NotNull Project project, @NotNull VirtualFile root) {
-    myRoot = root;
-    myProject = project;
+class MockGitRepository(private val project: Project, private val root: VirtualFile) : GitRepository {
+  override fun getGitDir(): VirtualFile {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public VirtualFile getGitDir() {
-    throw new UnsupportedOperationException();
+  override fun getRepositoryFiles(): GitRepositoryFiles {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public GitRepositoryFiles getRepositoryFiles() {
-    throw new UnsupportedOperationException();
+  override fun getStagingAreaHolder(): GitStagingAreaHolder {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @NotNull GitStagingAreaHolder getStagingAreaHolder() {
-    throw new UnsupportedOperationException();
+  override fun getUntrackedFilesHolder(): GitUntrackedFilesHolder {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public GitUntrackedFilesHolder getUntrackedFilesHolder() {
-    throw new UnsupportedOperationException();
+  override fun getInfo(): GitRepoInfo {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public GitRepoInfo getInfo() {
-    throw new UnsupportedOperationException();
+  override fun getCurrentBranch(): GitLocalBranch? {
+    throw UnsupportedOperationException()
   }
 
-  @Nullable
-  @Override
-  public GitLocalBranch getCurrentBranch() {
-    throw new UnsupportedOperationException();
+  override fun getBranches(): GitBranchesCollection {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public GitBranchesCollection getBranches() {
-    throw new UnsupportedOperationException();
+  override fun getRemotes(): Collection<GitRemote> {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public Collection<GitRemote> getRemotes() {
-    throw new UnsupportedOperationException();
+  override fun getBranchTrackInfos(): Collection<GitBranchTrackInfo> {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-    throw new UnsupportedOperationException();
+  override fun getBranchTrackInfo(localBranchName: String): GitBranchTrackInfo? {
+    throw UnsupportedOperationException()
   }
 
-  @Nullable
-  @Override
-  public GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
-    throw new UnsupportedOperationException();
+  override fun isRebaseInProgress(): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isRebaseInProgress() {
-    throw new UnsupportedOperationException();
+  override fun isOnBranch(): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isOnBranch() {
-    throw new UnsupportedOperationException();
+  override fun getRoot(): VirtualFile {
+    return root
   }
 
-  @NotNull
-  @Override
-  public VirtualFile getRoot() {
-    return myRoot;
+  override fun getPresentableUrl(): String {
+    return root.presentableUrl
   }
 
-  @NotNull
-  @Override
-  public String getPresentableUrl() {
-    return myRoot.getPresentableUrl();
+  override fun getProject(): Project {
+    return project
   }
 
-  @NotNull
-  @Override
-  public Project getProject() {
-    return myProject;
+  override fun getState(): Repository.State {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public State getState() {
-    throw new UnsupportedOperationException();
+  override fun getCurrentBranchName(): String? {
+    throw UnsupportedOperationException()
   }
 
-  @Nullable
-  @Override
-  public String getCurrentBranchName() {
-    throw new UnsupportedOperationException();
+  override fun getVcs(): GitVcs {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public GitVcs getVcs() {
-    throw new UnsupportedOperationException();
+  override fun getSubmodules(): Collection<GitSubmoduleInfo> {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public Collection<GitSubmoduleInfo> getSubmodules() {
-    throw new UnsupportedOperationException();
+  override fun getCurrentRevision(): String? {
+    throw UnsupportedOperationException()
   }
 
-  @Nullable
-  @Override
-  public String getCurrentRevision() {
-    throw new UnsupportedOperationException();
+  override fun isFresh(): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isFresh() {
-    throw new UnsupportedOperationException();
+  override fun update() {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void update() {
-    throw new UnsupportedOperationException();
+  override fun toLogString(): String {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public String toLogString() {
-    throw new UnsupportedOperationException();
+  override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
-    throw new UnsupportedOperationException();
+  override fun getCoroutineScope(): CoroutineScope {
+    return GlobalScope
   }
 
-  @Override
-  public @NotNull CoroutineScope getCoroutineScope() {
-    return myProject.getCoroutineScope();
+  override fun getTagHolder(): GitTagHolder {
+    return GitTagHolder(this)
   }
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
   }
 }
