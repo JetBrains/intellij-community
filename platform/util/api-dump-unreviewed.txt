@@ -1304,6 +1304,7 @@ f:com.intellij.openapi.util.UserDataHolderExKt
 - sf:getOrCreateUserData(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:nullableLazyValue(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
 com.intellij.openapi.util.ValueKey
+- sf:Companion:com.intellij.openapi.util.ValueKey$Companion
 - a:getName():java.lang.String
 - match():com.intellij.openapi.util.ValueKey$BeforeIf
 - s:match(java.lang.String):com.intellij.openapi.util.ValueKey$BeforeIf
@@ -1316,6 +1317,8 @@ com.intellij.openapi.util.ValueKey$BeforeThen
 - a:or(com.intellij.openapi.util.ValueKey):com.intellij.openapi.util.ValueKey$BeforeThen
 - a:then(java.lang.Object):com.intellij.openapi.util.ValueKey$BeforeIf
 - a:thenGet(java.util.function.Supplier):com.intellij.openapi.util.ValueKey$BeforeIf
+f:com.intellij.openapi.util.ValueKey$Companion
+- f:match(java.lang.String):com.intellij.openapi.util.ValueKey$BeforeIf
 c:com.intellij.openapi.util.Version
 - java.io.Serializable
 - java.lang.Comparable
