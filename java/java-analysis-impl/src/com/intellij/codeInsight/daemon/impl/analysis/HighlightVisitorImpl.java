@@ -361,7 +361,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (functionalInterfaceType != null) {
         add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
         if (!hasErrorResults()) {
-          String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType);
+          String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(expression, functionalInterfaceType);
           if (notFunctionalMessage != null) {
             add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
                   .descriptionAndTooltip(notFunctionalMessage));
@@ -1446,7 +1446,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       if (!hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
-        if (!isFunctional) {
+        if (!isFunctional && !(IncompleteModelUtil.isIncompleteModel(expression) && 
+                               IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
           String description =
             JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
           add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description));
@@ -1530,6 +1531,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
         else if (description == null) {
           if (results.length > 1) {
+            if (IncompleteModelUtil.isIncompleteModel(expression) &&
+                IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
+              return;
+            }
             String t1 = HighlightUtil.format(Objects.requireNonNull(results[0].getElement()));
             String t2 = HighlightUtil.format(Objects.requireNonNull(results[1].getElement()));
             description = JavaErrorBundle.message("ambiguous.reference", expression.getReferenceName(), t1, t2);

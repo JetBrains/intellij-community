@@ -3498,6 +3498,11 @@ public final class HighlightUtil {
       JavaResolveResult[] results = ref.multiResolve(true);
       String description;
       if (results.length > 1) {
+        if (ref instanceof PsiMethodReferenceExpression methodRef &&
+            IncompleteModelUtil.isIncompleteModel(ref) &&
+            IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
+          return null;
+        }
         String t1 = format(Objects.requireNonNull(results[0].getElement()));
         String t2 = format(Objects.requireNonNull(results[1].getElement()));
         description = JavaErrorBundle.message("ambiguous.reference", refName.getText(), t1, t2);
