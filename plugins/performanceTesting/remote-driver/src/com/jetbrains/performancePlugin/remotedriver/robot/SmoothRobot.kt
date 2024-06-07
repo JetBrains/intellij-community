@@ -4,6 +4,8 @@ package com.jetbrains.performancePlugin.remotedriver.robot
 
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.jetbrains.performancePlugin.remotedriver.waitFor
 import org.assertj.swing.awt.AWT.translate
 import org.assertj.swing.awt.AWT.visibleCenterOf
@@ -65,7 +67,7 @@ internal class SmoothRobot : Robot {
     click(component, MouseButton.LEFT_BUTTON)
   }
 
-  private fun RemoteMouseButton.toAssertJ() = when(this) {
+  private fun RemoteMouseButton.toAssertJ() = when (this) {
     RemoteMouseButton.LEFT -> MouseButton.LEFT_BUTTON
     RemoteMouseButton.MIDDLE -> MouseButton.MIDDLE_BUTTON
     RemoteMouseButton.RIGHT -> MouseButton.RIGHT_BUTTON
@@ -74,6 +76,7 @@ internal class SmoothRobot : Robot {
   fun click(component: Component, mouseButton: RemoteMouseButton) {
     click(component, mouseButton.toAssertJ())
   }
+
   override fun click(component: Component, mouseButton: MouseButton) {
     click(component, mouseButton, 1)
   }
@@ -81,13 +84,17 @@ internal class SmoothRobot : Robot {
   fun click(component: Component, mouseButton: RemoteMouseButton, counts: Int) {
     click(component, mouseButton.toAssertJ(), counts)
   }
+
   override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
+    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
     if (useInputEvents()) {
       postClickEvent(component, mouseButton, counts)
-    } else {
+    }
+    else {
       moveMouse(component)
       basicRobot.click(component, mouseButton, counts)
     }
+    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
   }
 
   override fun click(component: Component, point: Point) {
@@ -134,6 +141,7 @@ internal class SmoothRobot : Robot {
   fun pressMouse(mouseButton: RemoteMouseButton) {
     pressMouse(mouseButton.toAssertJ())
   }
+
   override fun pressMouse(mouseButton: MouseButton) {
     basicRobot.pressMouse(mouseButton)
   }
@@ -146,6 +154,7 @@ internal class SmoothRobot : Robot {
   fun pressMouse(component: Component, point: Point, mouseButton: RemoteMouseButton) {
     pressMouse(component, point, mouseButton.toAssertJ())
   }
+
   override fun pressMouse(component: Component, point: Point, mouseButton: MouseButton) {
     moveMouse(component, point)
     basicRobot.pressMouse(component, point, mouseButton)
@@ -154,6 +163,7 @@ internal class SmoothRobot : Robot {
   fun pressMouse(point: Point, mouseButton: RemoteMouseButton) {
     pressMouse(point, mouseButton.toAssertJ())
   }
+
   override fun pressMouse(point: Point, mouseButton: MouseButton) {
     moveMouse(point)
     basicRobot.pressMouse(point, mouseButton)
@@ -185,6 +195,7 @@ internal class SmoothRobot : Robot {
   fun releaseMouse(mouseButton: RemoteMouseButton) {
     releaseMouse(mouseButton.toAssertJ())
   }
+
   override fun releaseMouse(mouseButton: MouseButton) {
     basicRobot.releaseMouse(mouseButton)
   }
@@ -193,7 +204,7 @@ internal class SmoothRobot : Robot {
     basicRobot.pressKey(p0)
   }
 
-  fun doubleKey(p0:Int) {
+  fun doubleKey(p0: Int) {
     fastRobot.keyPress(p0)
     fastRobot.keyRelease(p0)
     Thread.sleep(10)
@@ -214,7 +225,8 @@ internal class SmoothRobot : Robot {
   override fun rightClick(component: Component) {
     if (useInputEvents()) {
       postClickEvent(component, button = MouseButton.RIGHT_BUTTON)
-    } else {
+    }
+    else {
       moveMouse(component)
       basicRobot.rightClick(component)
     }
@@ -307,10 +319,12 @@ internal class SmoothRobot : Robot {
   fun click(c: Component, where: Point, button: RemoteMouseButton, times: Int) {
     click(c, where, button.toAssertJ(), times)
   }
+
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
     if (useInputEvents()) {
       postClickEvent(c, button, times, where)
-    } else {
+    }
+    else {
       moveMouseAndClick(c, where, button, times)
     }
   }
@@ -319,6 +333,7 @@ internal class SmoothRobot : Robot {
   fun click(where: Point, button: RemoteMouseButton, times: Int) {
     click(where, button.toAssertJ(), times)
   }
+
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouseAndClick(null, where, button, times)
   }
