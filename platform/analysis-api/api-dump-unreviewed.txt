@@ -1684,6 +1684,7 @@ com.intellij.codeInspection.lang.GlobalInspectionContextExtension
 - a:cleanup():V
 - a:getID():com.intellij.openapi.util.Key
 - a:performPostRunActivities(java.util.List,com.intellij.codeInspection.GlobalInspectionContext):V
+- performPreInitToolsActivities(java.util.List,com.intellij.codeInspection.GlobalInspectionContext):V
 - a:performPreRunActivities(java.util.List,java.util.List,com.intellij.codeInspection.GlobalInspectionContext):V
 com.intellij.codeInspection.lang.HTMLComposerExtension
 - a:appendLocation(com.intellij.codeInspection.reference.RefEntity,java.lang.StringBuilder):V
