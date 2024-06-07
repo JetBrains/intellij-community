@@ -119,10 +119,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   };
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
+  @ApiStatus.Internal
   public StubUpdatingIndex() {
     this(StubForwardIndexExternalizer.getIdeUsedExternalizer(), SerializationManagerEx.getInstanceEx());
   }
 
+  @ApiStatus.Internal
   public StubUpdatingIndex(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
                            @NotNull SerializationManagerEx serializationManager) {
     myStubIndexesExternalizer = stubIndexesExternalizer;

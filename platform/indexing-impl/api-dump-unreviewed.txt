@@ -193,13 +193,6 @@ f:com.intellij.psi.impl.search.TodoItemImpl
 - getPattern():com.intellij.psi.search.TodoPattern
 - getTextRange():com.intellij.openapi.util.TextRange
 - hashCode():I
-com.intellij.psi.stubs.PrebuiltStubsProvider
-- a:findStub(com.intellij.util.indexing.FileContent):com.intellij.psi.stubs.SerializedStubTree
-f:com.intellij.psi.stubs.SerializedStubTreeDataExternalizer
-- com.intellij.util.io.DataExternalizer
-- <init>(com.intellij.psi.stubs.StubTreeSerializer,com.intellij.psi.stubs.StubForwardIndexExternalizer):V
-- read(java.io.DataInput):com.intellij.psi.stubs.SerializedStubTree
-- save(java.io.DataOutput,com.intellij.psi.stubs.SerializedStubTree):V
 f:com.intellij.psi.stubs.ShareableStubTreeSerializer
 - com.intellij.psi.stubs.StubTreeSerializer
 - <init>():V
@@ -218,22 +211,6 @@ a:com.intellij.psi.stubs.StubForwardIndexExternalizer
 - pa:readStubIndexKey(java.io.DataInput,java.lang.Object):com.intellij.util.indexing.ID
 - f:save(java.io.DataOutput,java.util.Map):V
 - pa:writeStubIndexKey(java.io.DataOutput,com.intellij.psi.stubs.StubIndexKey,java.lang.Object):V
-f:com.intellij.psi.stubs.StubIdExternalizer
-- com.intellij.util.io.DataExternalizer
-- sf:INSTANCE:com.intellij.psi.stubs.StubIdExternalizer
-- <init>():V
-- read(java.io.DataInput):com.intellij.psi.stubs.StubIdList
-- save(java.io.DataOutput,com.intellij.psi.stubs.StubIdList):V
-f:com.intellij.psi.stubs.StubProcessingHelper
-- com.intellij.psi.stubs.StubProcessingHelperBase
-- <init>():V
-- retrieveStubIdList(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.psi.stubs.StubIdList
-a:com.intellij.psi.stubs.StubProcessingHelperBase
-- psf:LOG:com.intellij.openapi.diagnostic.Logger
-- <init>():V
-- ps:getFileTypeInfo(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
-- pa:onInternalError(com.intellij.openapi.vfs.VirtualFile):V
-- processStubsInFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.stubs.StubIdList,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,java.lang.Class,com.intellij.openapi.util.Computable):Z
 com.intellij.psi.stubs.StubTreeSerializer
 - a:deserialize(java.io.InputStream):com.intellij.psi.stubs.Stub
 - a:serialize(com.intellij.psi.stubs.Stub,java.io.OutputStream):V
@@ -242,8 +219,6 @@ f:com.intellij.psi.stubs.StubUpdatingIndex
 - com.intellij.util.indexing.CustomImplementationFileBasedIndexExtension
 - sf:INDEX_ID:com.intellij.util.indexing.ID
 - sf:USE_SNAPSHOT_MAPPINGS:Z
-- <init>():V
-- <init>(com.intellij.psi.stubs.StubForwardIndexExternalizer,com.intellij.psi.stubs.SerializationManagerEx):V
 - s:canHaveStub(com.intellij.openapi.vfs.VirtualFile):Z
 - createIndexImplementation(com.intellij.util.indexing.FileBasedIndexExtension,com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout):com.intellij.util.indexing.UpdatableIndex
 - enableWal():Z
@@ -282,18 +257,6 @@ f:com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup
 - updateRequired():Z
 - s:valueOf(java.lang.String):com.intellij.util.indexing.FileIndexingState
 - s:values():com.intellij.util.indexing.FileIndexingState[]
-f:com.intellij.util.indexing.IndexDataComparer
-- sf:INSTANCE:com.intellij.util.indexing.IndexDataComparer
-- f:areIndexedDataOfFileTheSame(com.intellij.util.indexing.FileBasedIndexExtension,java.util.Map,java.util.Map):Z
-- f:areStubTreesTheSame(com.intellij.psi.stubs.SerializedStubTree,com.intellij.psi.stubs.SerializedStubTree):Z
-- f:areValuesTheSame(com.intellij.util.indexing.FileBasedIndexExtension,java.lang.Object,java.lang.Object):Z
-f:com.intellij.util.indexing.IndexDataPresenter
-- sf:INSTANCE:com.intellij.util.indexing.IndexDataPresenter
-- f:getPresentableIndexKey(java.lang.Object):java.lang.String
-- f:getPresentableIndexValue(java.lang.Object):java.lang.String
-- f:getPresentableKeyValueMap(java.util.Map):java.lang.String
-- f:getPresentableSerializedStubTree(com.intellij.psi.stubs.SerializedStubTree):java.lang.String
-- f:getPresentableStub(com.intellij.psi.stubs.Stub):java.lang.String
 f:com.intellij.util.indexing.IndexInfrastructure
 - s:getIndexRootDir(com.intellij.util.indexing.ID):java.nio.file.Path
 - s:getInputIndexStorageFile(com.intellij.util.indexing.ID):java.nio.file.Path
