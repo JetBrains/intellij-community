@@ -15,12 +15,12 @@ import java.io.File
 
 abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVisitorTest() {
     override fun doTest(filePath: String) {
-        myFixture.configureByCodeFragment(filePath)
+        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
         checkHighlighting(filePath)
     }
 
-    fun doTestWithImport(filePath: String) {
-        myFixture.configureByCodeFragment(filePath)
+    protected open fun doTestWithImport(filePath: String) {
+        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
 
         project.executeWriteCommand("Imports insertion") {
             val fileText = FileUtil.loadFile(File(filePath), true)

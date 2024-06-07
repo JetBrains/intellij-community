@@ -9,7 +9,7 @@ import kotlin.test.assertNull
 
 abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisitorTest() {
     override fun doTest(filePath: String) {
-        myFixture.configureByCodeFragment(filePath)
+        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
         myFixture.doHighlighting()
 
         val importFix = myFixture.availableIntentions.singleOrNull { it.familyName == "Import" }

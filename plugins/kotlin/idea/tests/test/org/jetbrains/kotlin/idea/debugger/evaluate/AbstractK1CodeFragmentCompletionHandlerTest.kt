@@ -11,13 +11,14 @@ abstract class AbstractCodeFragmentCompletionHandlerTest : AbstractCompletionHan
     override fun setUpFixture(testPath: String) {
         myFixture.configureByCodeFragment(dataFile(testPath).path)
     }
+}
 
+abstract class AbstractK1CodeFragmentCompletionHandlerTest : AbstractCodeFragmentCompletionHandlerTest() {
     override fun doTest(testPath: String) {
         super.doTest(testPath)
 
+        // TODO move to the superclass to cover K2 once imports start working there (IDEA-354710)
         val fragment = myFixture.file as KtCodeFragment
         fragment.checkImports(File(testPath))
     }
 }
-
-abstract class AbstractK1CodeFragmentCompletionHandlerTest : AbstractCodeFragmentCompletionHandlerTest()

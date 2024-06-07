@@ -1,0 +1,2 @@
+@Suppress("INVISIBLE_MEMBER")
+"${MyClass().privateFun(1)} ${MyClass().<error descr="[INVISIBLE_REFERENCE] Cannot access 'fun <T> privateFun(i: T): T': it is private in '/MyClass'.">privateFun</error><Int>("s")}"

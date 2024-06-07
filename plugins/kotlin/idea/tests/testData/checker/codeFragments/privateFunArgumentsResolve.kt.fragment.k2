@@ -1,0 +1,2 @@
+@Suppress("INVISIBLE_MEMBER")
+MyClass().<error descr="[INVISIBLE_REFERENCE] Cannot access 'fun privateFun(i: Int): Int': it is private in '/MyClass'.">privateFun</error>("s")

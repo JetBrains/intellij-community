@@ -14,3 +14,5 @@ fun <T> Collection<T>.isAny(predicate: (T) -> Boolean): Boolean {
 
     return false
 }
+
+// IGNORE_K2

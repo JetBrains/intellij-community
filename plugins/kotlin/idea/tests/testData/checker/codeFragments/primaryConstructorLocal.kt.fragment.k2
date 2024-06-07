@@ -1,0 +1,7 @@
+local + a <error descr="[OVERLOAD_RESOLUTION_AMBIGUITY] Overload resolution ambiguity between candidates:
+@IntrinsicConstEvaluation() fun plus(other: Byte): Int
+@IntrinsicConstEvaluation() fun plus(other: Double): Double
+@IntrinsicConstEvaluation() fun plus(other: Float): Float
+@IntrinsicConstEvaluation() fun plus(other: Int): Int
+@IntrinsicConstEvaluation() fun plus(other: Long): Long
+@IntrinsicConstEvaluation() fun plus(other: Short): Int">+</error> <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'c'.">c</error> + <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'd'.">d</error> + <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'e'.">e</error>
