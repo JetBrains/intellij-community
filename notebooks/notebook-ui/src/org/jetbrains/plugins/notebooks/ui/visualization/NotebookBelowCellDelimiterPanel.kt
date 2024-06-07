@@ -21,7 +21,7 @@ class NotebookBelowCellDelimiterPanel(
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   // same as in the [org.jetbrains.plugins.notebooks.ui.visualization.NotebookAboveCellDelimiterPanelNew]
-  private val standardDelimiterHeight = editor.notebookAppearance.CELL_BORDER_HEIGHT / 4
+  private val standardDelimiterHeight = editor.notebookAppearance.cellBorderHeight / 4
   private var isCollapsed = getCollapsed()
 
   init {

@@ -47,24 +47,24 @@ interface NotebookEditorAppearanceSizes {
   val CODE_AND_CODE_TOP_GRAY_HEIGHT: Int
   val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT: Int
   val INNER_CELL_TOOLBAR_HEIGHT: Int
-  val CELL_BORDER_HEIGHT: Int
   val SPACER_HEIGHT: Int
   val EXECUTION_TIME_HEIGHT: Int
   val SPACE_BELOW_CELL_TOOLBAR: Int
   val CELL_TOOLBAR_TOTAL_HEIGHT: Int
   val PROGRESS_STATUS_HEIGHT: Int
-
   val JUPYTER_CELL_SPACERS_INLAY_PRIORITY: Int
+
   val JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY: Int
   val JUPYTER_CELL_TOOLBAR_INLAY_PRIORITY: Int
   val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int
-
   val EXTRA_PADDING_EXECUTION_COUNT: Int
+
+  val cellBorderHeight: Int
+  val aboveFirstCellDelimiterHeight: Int
 
   fun getCellLeftLineWidth(editor: Editor): Int
   fun getCellLeftLineHoverWidth(): Int
   fun getLeftBorderWidth(): Int
-  val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT: Int
 }
 
 
@@ -113,8 +113,9 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CODE_AND_CODE_TOP_GRAY_HEIGHT = JBUI.scale(6)
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = JBUI.scale(6)
   override val INNER_CELL_TOOLBAR_HEIGHT = JBUI.scale(24)
-  override val CELL_BORDER_HEIGHT = JBUI.scale(20)
-  override val SPACER_HEIGHT = JBUI.scale(CELL_BORDER_HEIGHT / 2)
+  override val cellBorderHeight = JBUI.scale(20)
+  override val aboveFirstCellDelimiterHeight = JBUI.scale(24)
+  override val SPACER_HEIGHT = JBUI.scale(cellBorderHeight / 2)
   override val EXECUTION_TIME_HEIGHT = JBUI.scale(SPACER_HEIGHT + 14)
   override val SPACE_BELOW_CELL_TOOLBAR = JBUI.scale(4)
   override val CELL_TOOLBAR_TOTAL_HEIGHT = JBUI.scale(INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR)
@@ -126,7 +127,6 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = 5
 
   override val EXTRA_PADDING_EXECUTION_COUNT = JBUI.scale(20)
-  override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = JBUI.scale(0)
 
   override fun getCellLeftLineWidth(editor: Editor): Int = EDIT_MODE_CELL_LEFT_LINE_WIDTH
   override fun getCellLeftLineHoverWidth(): Int = COMMAND_MODE_CELL_LEFT_LINE_WIDTH

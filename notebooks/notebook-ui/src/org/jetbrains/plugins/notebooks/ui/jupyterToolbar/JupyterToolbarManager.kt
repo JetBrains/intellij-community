@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle
@@ -135,7 +136,7 @@ class JupyterToolbarManager(
 
   companion object {
     private const val TOOLBAR_HIDE_DELAY = 800
-    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.CELL_BORDER_HEIGHT / 2
+    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.cellBorderHeight / 2
 
     fun calculateToolbarBounds(
       editor: EditorImpl,

@@ -18,7 +18,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   init {
     if (!editor.editorKind.isDiff()) {
       isOpaque = false
-      border = JBUI.Borders.empty(editor.notebookAppearance.CELL_BORDER_HEIGHT)
+      border = JBUI.Borders.empty(editor.notebookAppearance.cellBorderHeight)
       addComponentListeners()
       recreateToolbar()
     }
