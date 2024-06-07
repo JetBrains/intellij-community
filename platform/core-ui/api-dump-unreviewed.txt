@@ -256,8 +256,6 @@ c:com.intellij.ui.OverlaidOffsetIconsIcon
 f:com.intellij.ui.RightAlignedLabelUI
 - javax.swing.plaf.basic.BasicLabelUI
 - <init>():V
-- s:layoutCompoundLabel(java.awt.FontMetrics,java.lang.String,javax.swing.Icon,I,I,I,I,java.awt.Rectangle,java.awt.Rectangle,java.awt.Rectangle,I):java.lang.String
-- s:layoutCompoundLabel(javax.swing.JComponent,java.awt.FontMetrics,java.lang.String,javax.swing.Icon,I,I,I,I,java.awt.Rectangle,java.awt.Rectangle,java.awt.Rectangle,I):java.lang.String
 *f:com.intellij.ui.RoundedIcon
 - com.intellij.util.ui.JBScalableIcon
 - com.intellij.ui.icons.DarkIconProvider
