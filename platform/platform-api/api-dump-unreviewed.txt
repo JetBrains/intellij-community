@@ -6371,6 +6371,7 @@ c:com.intellij.ui.ContextHelpLabel
 - s:create(java.lang.String):com.intellij.ui.ContextHelpLabel
 - s:create(java.lang.String,java.lang.String):com.intellij.ui.ContextHelpLabel
 - s:createFromTooltip(com.intellij.ide.HelpTooltip):com.intellij.ui.ContextHelpLabel
+- s:createWithBrowserLink(java.lang.String,java.lang.String,java.lang.String,java.net.URL):com.intellij.ui.ContextHelpLabel
 - s:createWithLink(java.lang.String,java.lang.String,java.lang.String,java.lang.Runnable):com.intellij.ui.ContextHelpLabel
 - s:createWithLink(java.lang.String,java.lang.String,java.lang.String,Z,java.lang.Runnable):com.intellij.ui.ContextHelpLabel
 - removeNotify():V
