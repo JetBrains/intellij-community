@@ -33,7 +33,7 @@ object IncompleteDependenciesModeStatisticsCollector : CounterUsagesCollector() 
     activity?.finished { listOf(EventPair(REQUESTOR, requestor), EventPair(STATE_BEFORE, stateBefore), EventPair(STATE_AFTER, stateAfter)) }
   }
 
-  val GROUP: EventLogGroup = EventLogGroup("incomplete.dependencies.mode", 2)
+  val GROUP: EventLogGroup = EventLogGroup("incomplete.dependencies.mode", 3)
 
   @JvmField
   val STATE_BEFORE: EnumEventField<DependenciesState> = EventFields.Enum("state_before", DependenciesState::class.java)
@@ -48,7 +48,8 @@ object IncompleteDependenciesModeStatisticsCollector : CounterUsagesCollector() 
   val INCOMPLETE_DEPENDENCIES_MODE_SUBTASK_ACTIVITY: IdeActivityDefinition = GROUP.registerIdeActivity("incomplete_dependencies_mode_subtask",
                                                                                                        arrayOf(REQUESTOR, STATE_BEFORE, STATE_AFTER),
                                                                                                        arrayOf(REQUESTOR, STATE_BEFORE, STATE_AFTER),
-                                                                                                       parentActivity = INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY)
+                                                                                                       parentActivity = INCOMPLETE_DEPENDENCIES_MODE_ACTIVITY,
+                                                                                                       subStepWithStepId = true)
 
   override fun getGroup(): EventLogGroup = GROUP
 }

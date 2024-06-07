@@ -44,11 +44,16 @@ class IncompleteDependenciesModeStatisticsCollectorTest : LightPlatformTestCase(
     assertThat(events.last().event.data["duration_ms"] as Long).isGreaterThanOrEqualTo(minimumDuration)
 
     val activityEvents = events.drop(1).dropLast(1)
+    val seenIds = mutableSetOf<Int>()
     val ids = mutableSetOf<Int>()
     for (event in activityEvents) {
-      val id = event.event.data["ide_activity_id"] as Int
+      val id = event.event.data["step_id"] as Int
       if (ids.contains(id)) ids.remove(id)
-      else ids.add(id)
+      else {
+        assertThat(seenIds).doesNotContain(id)
+        seenIds.add(id)
+        ids.add(id)
+      }
 
       assertThat(event.event.data["requestor"]).isEqualTo(IncompleteDependenciesModeStatisticsCollectorTest::class.java.name)
     }
