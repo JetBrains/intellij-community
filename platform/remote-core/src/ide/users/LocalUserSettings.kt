@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.users
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.SystemProperties
 
 object LocalUserSettings {
 
   private const val userNameKey = "local.user.name"
   private const val userNameObsoleteKey = "code.with.me.user.name"
-  private const val userNameDefault = "User"
 
   var userName: String
     get() {
@@ -22,20 +21,10 @@ object LocalUserSettings {
         }
       }
       if (!value.isNullOrBlank()) return value
-      return getDefaultSystemUserName()
+      return SystemProperties.getUserName()
     }
     set(value) {
       PropertiesComponent.getInstance().setValue(userNameKey, value)
     }
 
-  fun getDefaultSystemUserName(): String {
-    try {
-      return System.getProperty("user.name")
-    }
-    catch (ex: Throwable) {
-      Logger.getInstance(LocalUserSettings::class.java).error(ex)
-    }
-
-    return userNameDefault
-  }
 }
