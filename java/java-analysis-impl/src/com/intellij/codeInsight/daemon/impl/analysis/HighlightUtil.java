@@ -2416,6 +2416,9 @@ public final class HighlightUtil {
                                                                             @Nullable PsiType initializerType,
                                                                             @NotNull PsiType componentType) {
     if (initializerType == null) {
+      if (IncompleteModelUtil.isIncompleteModel(initializer) && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(initializer)) {
+        return null;
+      }
       String description = JavaErrorBundle.message("illegal.initializer", JavaHighlightUtil.formatType(componentType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(description);
     }
