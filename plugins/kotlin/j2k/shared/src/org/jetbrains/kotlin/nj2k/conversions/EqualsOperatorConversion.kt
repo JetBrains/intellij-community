@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 
+/**
+ * Tries to convert `equals` method calls to `==` operator binary expressions, where applicable.
+ */
 class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -29,13 +32,13 @@ class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveConve
 
             else -> return recurse(element)
         }
-        left.detach(left.parent!!)
-        right.detach(right.parent!!)
 
         val leftType = left.calculateType(typeFactory)?.asPrimitiveType()
         val rightType = right.calculateType(typeFactory)?.asPrimitiveType()
         if (leftType?.isFloatingPoint() == true || rightType?.isFloatingPoint() == true) return recurse(element)
 
+        left.detach(left.parent!!)
+        right.detach(right.parent!!)
         return recurse(JKParenthesizedExpression(equalsExpression(left, right, typeFactory)))
     }
 }
