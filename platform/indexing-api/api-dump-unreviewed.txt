@@ -607,17 +607,6 @@ com.intellij.util.gist.VirtualFileGist
 - a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Supplier
 com.intellij.util.gist.VirtualFileGist$GistCalculator
 - a:calcData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
-com.intellij.util.hash.ContentHashEnumerator
-- com.intellij.util.io.CleanableStorage
-- com.intellij.util.io.DataEnumeratorEx
-- com.intellij.util.io.DurableDataEnumerator
-- sf:SIGNATURE_LENGTH:I
-- a:enumerate(B[]):I
-- a:enumerateEx(B[]):I
-- s:getVersion():I
-- s:open(java.nio.file.Path):com.intellij.util.hash.ContentHashEnumerator
-- s:open(java.nio.file.Path,com.intellij.util.io.StorageLockContext):com.intellij.util.hash.ContentHashEnumerator
-- a:valueOf(I):B[]
 *a:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - <init>():V
 - a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
