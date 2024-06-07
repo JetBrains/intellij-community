@@ -10,8 +10,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.LibraryJarUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageCollector"/>
-    <internal.statistic.libraryUsageImportProcessor language="JAVA" implementationClass="com.intellij.internal.statistic.libraryUsage.JavaLibraryUsageImportProcessor"/>
+    <internal.statistic.libraryUsageImportProcessor
+      language="JAVA" implementationClass="com.intellij.internal.statistic.libraryUsage.JavaLibraryUsageImportProcessor"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.LibraryNameValidationRule"/>
+
+    <fileTypeUsageSchemaDescriptor schema="spring" implementationClass="com.intellij.internal.statistic.SpringFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="micronaut" implementationClass="com.intellij.internal.statistic.MicronautFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="quarkus" implementationClass="com.intellij.internal.statistic.QuarkusFileTypeUsageDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="ktor" implementationClass="com.intellij.internal.statistic.KtorFileTypeUsageDescriptor"/>
   </extensions>
 
   <projectListeners>
