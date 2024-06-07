@@ -256,9 +256,9 @@ private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done | '(' | '
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {pin=1}
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}
 simple_command_element ::= simple_command_element_inner
-private simple_command_element_inner ::=  literal assignment_command?
+private simple_command_element_inner ::= redirection
+                                        | literal assignment_command?
                                         | not_lvalue
-                                        | redirection
                                         | composed_var
                                         | heredoc
                                         | conditional_command

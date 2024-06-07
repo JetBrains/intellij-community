@@ -59,7 +59,10 @@ public class ShParserUtil extends GeneratedParserUtilBase {
     int startOffset = b.getCurrentOffset();
     PsiBuilder.Marker mark = b.mark();
     while (true) {
-      if (!parser.parse(b, level) || ShTokenTypes.whitespaceTokens.contains(b.rawLookup(0)) || b.eof()) {
+      if (!parser.parse(b, level) ||
+          ShTokenTypes.whitespaceTokens.contains(b.rawLookup(0)) ||
+          ShTokenTypes.whitespaceTokens.contains(b.rawLookup(-1)) || //sometimes w consumes whitespace as well as non-whitespace string
+          b.eof()) {
         mark.drop();
         return b.getCurrentOffset() > startOffset;
       }

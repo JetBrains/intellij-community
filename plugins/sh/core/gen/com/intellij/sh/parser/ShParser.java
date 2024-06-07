@@ -2368,9 +2368,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // literal assignment_command?
+  // redirection
+  //                                         | literal assignment_command? 
   //                                         | not_lvalue
-  //                                         | redirection
   //                                         | composed_var
   //                                         | heredoc
   //                                         | conditional_command
@@ -2381,9 +2381,9 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "simple_command_element_inner")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = simple_command_element_inner_0(b, l + 1);
+    r = redirection(b, l + 1);
+    if (!r) r = simple_command_element_inner_1(b, l + 1);
     if (!r) r = not_lvalue(b, l + 1);
-    if (!r) r = redirection(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
     if (!r) r = heredoc(b, l + 1);
     if (!r) r = conditional_command(b, l + 1);
@@ -2395,20 +2395,20 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   // literal assignment_command?
-  private static boolean simple_command_element_inner_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "simple_command_element_inner_0")) return false;
+  private static boolean simple_command_element_inner_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_element_inner_1")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = literal(b, l + 1);
     p = r; // pin = 1
-    r = r && simple_command_element_inner_0_1(b, l + 1);
+    r = r && simple_command_element_inner_1_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // assignment_command?
-  private static boolean simple_command_element_inner_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "simple_command_element_inner_0_1")) return false;
+  private static boolean simple_command_element_inner_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_command_element_inner_1_1")) return false;
     assignment_command(b, l + 1);
     return true;
   }
