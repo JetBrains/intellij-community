@@ -9,7 +9,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.StartBuildEvent
-import com.intellij.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID
+import com.intellij.compiler.charts.jps.ChartsBuilderService.*
 import com.intellij.compiler.charts.jps.CompileStatisticBuilderMessage.*
 import com.intellij.compiler.charts.ui.CompilationChartsBuildEvent
 import com.intellij.compiler.server.CustomBuilderMessageHandler
@@ -24,7 +24,6 @@ import java.util.*
 class CompilationChartsProjectActivity : ProjectActivity {
   companion object {
     private val LOG: Logger = Logger.getInstance(CompilationChartsProjectActivity::class.java)
-    const val COMPILATION_CHARTS_KEY: String = "compilation.charts"
   }
 
   override suspend fun execute(project: Project) {
@@ -43,9 +42,9 @@ class CompilationChartsProjectActivity : ProjectActivity {
           val title = event.buildDescriptor.title.lowercase()
           if (title.contains("up-to-date") || title.startsWith("worksheet")) return@BuildProgressListener
 
-          val chartEvent = CompilationChartsBuildEvent(project, buildId)
-          view.onEvent(buildId, chartEvent)
-          handler.addState(chartEvent.vm())
+          CompilationChartsBuildEvent(project, view, buildId).also { chartEvent ->
+            handler.addState(chartEvent)
+          }
         }
         is FinishBuildEvent -> handler.removeState()
       }
@@ -54,11 +53,12 @@ class CompilationChartsProjectActivity : ProjectActivity {
 
   private class CompilationChartsMessageHandler : CustomBuilderMessageHandler {
     private val json = ObjectMapper(JsonFactory())
-    private val states: Queue<CompilationChartsViewModel> = ArrayDeque()
-    private var currentState: CompilationChartsViewModel? = null
+    private val states: Queue<CompilationChartsBuildEvent> = ArrayDeque()
+    private var currentState: CompilationChartsBuildEvent? = null
+    private val defaultUUID: UUID = UUID.randomUUID()
 
-    fun addState(vm: CompilationChartsViewModel) {
-      states.add(vm)
+    fun addState(event: CompilationChartsBuildEvent) {
+      states.add(event)
       if (currentState == null) removeState()
     }
 
@@ -67,20 +67,37 @@ class CompilationChartsProjectActivity : ProjectActivity {
     }
 
     override fun messageReceived(builderId: String?, messageType: String?, messageText: String?) {
-      if (builderId != COMPILATION_STATISTIC_BUILDER_ID) return
+      messageReceived(defaultUUID, builderId, messageType, messageText)
+    }
+
+    override fun messageReceived(sessionId: UUID, builderId: String?, messageType: String?, messageText: String?) {
+      when (builderId) {
+        COMPILATION_STATUS_BUILDER_ID -> status(messageType)
+        COMPILATION_STATISTIC_BUILDER_ID -> statistic(messageType, messageText)
+      }
+    }
+
+    private fun status(messageType: String?) {
+      when (messageType) {
+        "START" -> currentState?.run { view.onEvent(buildId, this) }
+        "FINISH" -> {}
+      }
+    }
+
+    fun statistic(messageType: String?, messageText: String?) {
       try {
         when (messageType) {
           "STARTED" -> {
             val values = json.readValue(messageText, object : TypeReference<List<StartTarget>>() {})
-            currentState?.started(values)
+            currentState?.run { vm().started(values) }
           }
           "FINISHED" -> {
             val values = json.readValue(messageText, object : TypeReference<List<FinishTarget>>() {})
-            currentState?.finished(values)
+            currentState?.run { vm().finished(values) }
           }
           "STATISTIC" -> {
             val value = json.readValue(messageText, CpuMemoryStatistics::class.java)
-            currentState?.statistic(value)
+            currentState?.run { vm().statistic(value) }
           }
         }
       }

@@ -2,6 +2,7 @@
 package com.intellij.compiler.charts.jps;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.management.OperatingSystemMXBean;
@@ -20,10 +21,17 @@ import java.util.concurrent.TimeUnit;
 
 public class ChartsBuilderService extends BuilderService {
   public static final String COMPILATION_STATISTIC_BUILDER_ID = "jps.compile.statistic";
+  public static final String COMPILATION_STATUS_BUILDER_ID = "jps.compile.status";
+  public static final String COMPILATION_CHARTS_KEY = "compilation.charts";
 
   @Override
   public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return List.of(new ChartsModuleLevelBuilder());
+    if (Registry.is(COMPILATION_CHARTS_KEY)) {
+      return List.of(new ChartsModuleLevelBuilder());
+    }
+    else {
+      return List.of();
+    }
   }
 
   private static class ChartsModuleLevelBuilder extends ModuleLevelBuilder {
@@ -62,6 +70,8 @@ public class ChartsBuilderService extends BuilderService {
       final MemoryMXBean memory = ManagementFactory.getMemoryMXBean();
       final OperatingSystemMXBean os = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
 
+      context.processMessage(new CompilationStatusBuilderMessage("START"));
+
       myStatisticsRunnable = () -> context.processMessage(CompileStatisticBuilderMessage.create(memory, os));
       myStatisticsReporter = AppExecutorUtil.createBoundedScheduledExecutorService("IncProjectBuilder metrics reporter", 1)
         .scheduleWithFixedDelay(myStatisticsRunnable, 0, 100, TimeUnit.MILLISECONDS);
@@ -69,6 +79,8 @@ public class ChartsBuilderService extends BuilderService {
 
     @Override
     public void buildFinished(@NotNull CompileContext context) {
+      context.processMessage(new CompilationStatusBuilderMessage("FINISH"));
+
       if (myStatisticsRunnable != null) {
         myStatisticsRunnable.run();
         myStatisticsRunnable = null;

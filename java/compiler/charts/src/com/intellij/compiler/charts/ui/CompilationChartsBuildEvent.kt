@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.charts.ui
 
+import com.intellij.build.BuildViewManager
 import com.intellij.build.events.BuildEventPresentationData
 import com.intellij.build.events.PresentableBuildEvent
 import com.intellij.build.events.impl.AbstractBuildEvent
@@ -14,7 +15,7 @@ import com.intellij.openapi.rd.createLifetime
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class CompilationChartsBuildEvent(project: Project, buildId: Any) :
+class CompilationChartsBuildEvent(project: Project, val view: BuildViewManager, val buildId: Any) :
   AbstractBuildEvent(Any(), buildId, System.currentTimeMillis(), CompilationChartsBundle.message("charts.tab.name")),
   PresentableBuildEvent {
 
