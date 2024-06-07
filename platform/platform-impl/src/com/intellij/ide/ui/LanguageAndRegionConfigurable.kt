@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
@@ -26,6 +27,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.RestartDialog
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.net.URL
 import java.util.*
 
 /**
@@ -82,7 +84,6 @@ class LanguageAndRegionUi {
 
       panel.row(IdeBundle.message("combobox.region")) {
         val helpUrl = (HelpManager.getInstance() as HelpManagerImpl).getHelpUrl("preferences.language.and.region")
-        val comment = IdeBundle.message("combobox.region.comment", helpUrl)
 
         val model = CollectionComboBoxModel(Region.entries, RegionSettings.getRegion())
         val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
@@ -106,12 +107,13 @@ class LanguageAndRegionUi {
           connection.subscribe(RegionSettings.UPDATE_TOPIC, Runnable { model.selectedItem = RegionSettings.getRegion() })
 
           regionBox.gap(RightGap.SMALL)
-          contextHelp(comment)
+          cell(ContextHelpLabel.createWithBrowserLink(null, IdeBundle.message("combobox.region.hint"),
+                                                      IdeBundle.message("combobox.region.hint.link"), URL(helpUrl)))
         }
         else {
           regionBox.bindItem({ RegionSettings.getRegion() }, { RegionSettings.setRegion(it ?: Region.NOT_SET) })
 
-          regionBox.comment(comment)
+          regionBox.comment(IdeBundle.message("combobox.region.comment", helpUrl))
         }
 
         val regionComponent = regionBox.component
