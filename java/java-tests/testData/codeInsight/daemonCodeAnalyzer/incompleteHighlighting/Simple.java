@@ -89,6 +89,10 @@ public class Simple {
     if (<error descr="Operator '==' cannot be applied to 'char', 'boolean'">c == b</error>) {}
   }
   
+  void testAssign(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
+    u.<info descr="Not resolved until the project is fully loaded">field</info> = 2;
+  }
+  
   void callOnArray(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
     u.<info descr="Not resolved until the project is fully loaded">foo</info>()[0].<info descr="Not resolved until the project is fully loaded">blah</info>();
   }

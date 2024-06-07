@@ -353,7 +353,10 @@ public final class HighlightUtil {
     else {
       lValue = null;
     }
-    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression)) {
+    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression) &&
+        !(IncompleteModelUtil.isIncompleteModel(expression) && 
+          PsiUtil.skipParenthesizedExprDown(lValue) instanceof PsiReferenceExpression ref &&
+          IncompleteModelUtil.canBePendingReference(ref))) {
       String description = JavaErrorBundle.message("variable.expected");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lValue).descriptionAndTooltip(description);
     }
