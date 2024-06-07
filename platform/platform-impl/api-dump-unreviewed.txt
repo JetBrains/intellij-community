@@ -4297,13 +4297,6 @@ f:com.intellij.ide.actions.ActivateToolWindowAction$Companion
 f:com.intellij.ide.actions.ActivateToolWindowAction$Manager
 - sf:INSTANCE:com.intellij.ide.actions.ActivateToolWindowAction$Manager
 - sf:getActionIdForToolWindow(java.lang.String):java.lang.String
-f:com.intellij.ide.actions.BackAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.BaseNavigateToSourceAction
 - com.intellij.openapi.project.DumbAwareAction
 - p:<init>(Z):V
