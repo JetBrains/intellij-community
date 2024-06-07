@@ -42,7 +42,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
   }
 
   protected fun shouldCreateModuleFor(project: MavenProject): Boolean {
-    return if (myProjectsTree.isIgnored(project)) false else !project.isAggregator || myImportingSettings.isCreateModulesForAggregators
+    return !myProjectsTree.isIgnored(project)
   }
 
   private class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {

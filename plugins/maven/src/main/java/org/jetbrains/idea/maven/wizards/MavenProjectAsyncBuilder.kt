@@ -76,7 +76,6 @@ class MavenProjectAsyncBuilder {
 
     if (isVeryNewProject) {
       blockingContext { ExternalProjectsManagerImpl.setupCreatedProject(project) }
-      MavenProjectsManager.setupCreatedMavenProject(importingSettings)
     }
 
     if (createDummyModule) {

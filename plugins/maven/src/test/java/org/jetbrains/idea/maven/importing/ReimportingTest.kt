@@ -100,59 +100,6 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testRemovingAndCreatingModulesForAggregativeProjects() = runBlocking {
-    createModulePom("m1", """
-      <groupId>test</groupId>
-      <artifactId>m1</artifactId>
-      <version>1</version>
-      <packaging>pom</packaging>
-      """.trimIndent())
-    importProjectAsync()
-
-    assertModules("project", "m1", "m2")
-
-    waitForImportWithinTimeout {
-      mavenImporterSettings.setCreateModulesForAggregators(false)
-    }
-    assertModules("project", "m1", "m2")
-
-    waitForImportWithinTimeout {
-      mavenImporterSettings.setCreateModulesForAggregators(true)
-    }
-    assertModules("project", "m1", "m2")
-  }
-
-  @Test
-  fun testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() = runBlocking {
-    waitForImportWithinTimeout {
-      mavenImporterSettings.setCreateModulesForAggregators(false)
-    }
-
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <packaging>pom</packaging>
-                       <version>1</version>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                         <module>m3</module>
-                       </modules>
-                       """.trimIndent())
-
-    createModulePom("m3", """
-      <groupId>test</groupId>
-      <artifactId>m3</artifactId>
-      <version>1</version>
-      <packaging>pom</packaging>
-      """.trimIndent())
-
-    updateAllProjects()
-
-    assertModules("project", "m1", "m2", "m3")
-  }
-
-  @Test
   fun testReimportingWithProfiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>

@@ -4,7 +4,10 @@ package org.jetbrains.idea.maven.project
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -190,24 +193,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
-
-  override fun listenForSettingsChanges() {
-    importingSettings.addListener(object : MavenImportingSettings.Listener {
-      override fun createModuleForAggregatorsChanged() {
-        cs.launch {
-          reapplyModelStructureOnly {
-            doImportMavenProjects(emptyMap(), null, it)
-          }
-        }
-      }
-
-      override fun updateAllProjectStructure() {
-        cs.launch {
-          importAllProjects()
-        }
-      }
-    })
-  }
 
   private suspend fun importAllProjects() {
     val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })

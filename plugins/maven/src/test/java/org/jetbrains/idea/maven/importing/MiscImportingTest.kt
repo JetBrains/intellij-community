@@ -3,9 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -19,7 +17,6 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 import java.io.File
@@ -191,37 +188,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
     myEventsTestHelper.assertRootsChanged(0)
     myEventsTestHelper.assertWorkspaceModelChanges(0)
-  }
-
-  @Test
-  fun testSetExternalSourceForExistingLibrary() = runBlocking {
-    /* this test checks that the external source will be restored if it wasn't saved due to the bug (IDEA-264750);
-       the bug isn't relevant for Workspace Import because it is actual only if "Store generated files under project root" is switched on */
-    MavenProjectsManager.getInstance(project).importingSettings.setWorkspaceImportEnabled(false)
-    val libraryName = "Maven: junit:junit:4.0"
-    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-    writeAction {
-      val model = libraryTable.getModifiableModel()
-      model.createLibrary(libraryName)
-      model.commit()
-    }
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <dependencies>
-                      <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.0</version>
-                      </dependency>
-                    </dependencies>
-                    """.trimIndent())
-    importProjectAsync()
-    assertModules("project")
-    val library = getModuleLibDep("project", libraryName).getLibrary()
-    assertNotNull(library)
-    assertNotNull(library!!.getExternalSource())
   }
 
   @Test

@@ -389,9 +389,6 @@
     <registryKey key="maven.shade.plugin.generate.uber.jar" defaultValue="false"
                  description="During sync, generate uber jars for Maven projects that use Maven Shade plugin"/>
 
-    <registryKey key="maven.legacy.import.available" defaultValue="false"
-                 description="Set to true to enable legacy Maven import. If the value is false, only 'fast' Maven import is available. Legacy import will be removed completely in one of the upcoming releases"/>
-
     <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
                  description="Refresh resolved artifacts after Maven sync"/>
 
@@ -415,7 +412,6 @@
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix"/>
 
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
-    <openapi.externalSystem.projectSetupExtension implementation="org.jetbrains.idea.maven.starters.MavenStarterProjectConfigurator"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
