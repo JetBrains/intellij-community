@@ -7,6 +7,7 @@ import com.intellij.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import java.util.function.Predicate
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.properties.Delegates
 
 data class DataModel(private val charts: Charts) {
   internal val chart: ChartModel = ChartModel()
@@ -46,16 +47,15 @@ class UsageModel {
 
   internal var start: Long = Long.MAX_VALUE
   internal var end: Long = Long.MIN_VALUE
+  internal var maximum by Delegates.notNull<Long>()
 
-  internal var maximum: Long = 0
-
-  fun data(data: MutableSet<StatisticData>) {
+  fun data(data: MutableSet<StatisticData>, maximum: Long) {
     model = data
+    this.maximum = maximum
 
     data.forEach {
       start = min(start, it.time)
       end = max(end, it.time)
-      maximum = max(maximum, it.data)
     }
   }
 }

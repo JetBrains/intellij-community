@@ -113,7 +113,10 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
           filter = modules.filter
         }
         usage(usages[cpuMemory]!!) {
-          data(stats[cpuMemory]!!.getAndClean())
+          data(stats[cpuMemory]!!.getAndClean(), when(cpuMemory) {
+            MEMORY -> vm.statistics.maxMemory
+            CPU -> 100
+          })
         }
       }.draw(g2d, this) {
         val size = Dimension(width().toInt(), height().toInt())

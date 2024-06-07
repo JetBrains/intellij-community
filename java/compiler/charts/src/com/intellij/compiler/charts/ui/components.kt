@@ -168,7 +168,7 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     path.moveTo(x0, y0)
     data.forEachIndexed { i, statistic ->
       val px = zoom.toPixels(statistic.time - settings.duration.from)
-      val py = y0 - (statistic.data.toDouble() / state.maximum * clip.height) + 5
+      val py = y0 - (statistic.data.toDouble() / state.maximum * clip.height)
       neighborhood.shiftLeftByTwo(px, py)
       path.curveTo(neighborhood)
     }

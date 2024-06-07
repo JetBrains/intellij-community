@@ -46,11 +46,11 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   }
 
   fun statistic(value: CpuMemoryStatistics) {
-    if (statistics.maxMemory < value.heapUsed) statistics.maxMemory = value.heapUsed
+    statistics.maxMemory = listOf(statistics.maxMemory, value.heapUsed, value.heapMax).max()
     if (statistics.start > value.time) statistics.start = value.time
     if (statistics.end < value.time) statistics.end = value.time
 
-    statistics.cpu.add(StatisticData(value.time, value.cpu.toLong()))
+    statistics.cpu.add(StatisticData(value.time, value.cpu))
     statistics.memoryMax.add(StatisticData(value.time, value.heapMax))
     statistics.memoryUsed.add(StatisticData(value.time, value.heapUsed))
   }

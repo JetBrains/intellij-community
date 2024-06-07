@@ -57,7 +57,7 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     statistics.heapMax = Math.max(memory.getHeapMemoryUsage().getMax(), 0);
     statistics.nonHeapUsed = Math.max(memory.getNonHeapMemoryUsage().getUsed(), 0);
     statistics.nonHeapMax = Math.max(memory.getNonHeapMemoryUsage().getMax(), 0);
-    statistics.cpu = Math.max(os.getProcessCpuLoad() * 100, 0);
+    statistics.cpu = Math.max((long)(os.getSystemCpuLoad() * 100), 0);
     return new CompileStatisticBuilderMessage("STATISTIC", JSON.toJson(statistics));
   }
 
@@ -81,7 +81,7 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     public long heapMax;
     public long nonHeapUsed;
     public long nonHeapMax;
-    public double cpu;
+    public long cpu;
     public long time = System.nanoTime();
   }
 }

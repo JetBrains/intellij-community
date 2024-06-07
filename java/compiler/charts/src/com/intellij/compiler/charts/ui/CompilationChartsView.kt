@@ -51,8 +51,8 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       if (statistics !is IViewableList.Event.Add) return@advise
       diagrams.stats[CPU]!!.add(statistics.newValue)
 
-      diagrams.statistic.time(statistics.newValueOpt?.time)
       diagrams.statistic.cpu(statistics.newValueOpt?.data)
+      diagrams.statistic.time(statistics.newValueOpt?.time)
 
       if (vm.cpuMemory.value == CPU) diagrams.updateView()
     }
@@ -62,6 +62,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.stats[MEMORY]!!.add(statistics.newValue)
 
       diagrams.statistic.memory(statistics.newValueOpt?.data)
+      diagrams.statistic.maxMemory = vm.statistics.maxMemory
       diagrams.statistic.time(statistics.newValueOpt?.time)
 
       if (vm.cpuMemory.value == MEMORY) diagrams.updateView()
@@ -79,7 +80,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
   }
 }
 
-data class Statistic(var start: Long, var end: Long, var maxMemory: Long, var threadCount: Int, var maxCpu: Long) {
+data class Statistic(var start: Long, var end: Long, var maxMemory: Long, var threadCount: Int, var maxCpu: Long = 100) {
   constructor() : this(Long.MAX_VALUE, 0, 0, 0, 0)
 
   fun time(time: Long?) {
