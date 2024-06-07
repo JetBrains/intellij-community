@@ -228,7 +228,6 @@ c:com.intellij.ui.LayeredIcon
 - f:setIcon(javax.swing.Icon,I,I):V
 - f:setIcon(javax.swing.Icon,I,I,I):V
 - f:setLayerEnabled(I,Z):V
-- pf:updateSize(javax.swing.Icon[]):V
 - withIconPreScaled(Z):com.intellij.ui.LayeredIcon
 f:com.intellij.ui.LayeredIcon$Companion
 - f:create(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
