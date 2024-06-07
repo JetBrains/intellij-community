@@ -191,7 +191,6 @@ a:com.intellij.ui.IconDeferrer
 f:com.intellij.ui.IconDeferrer$Companion
 - f:getInstance():com.intellij.ui.IconDeferrer
 f:com.intellij.ui.IconDescriptionBundleEP
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - resourceBundle:java.lang.String
 - <init>():V
 c:com.intellij.ui.LayeredIcon
