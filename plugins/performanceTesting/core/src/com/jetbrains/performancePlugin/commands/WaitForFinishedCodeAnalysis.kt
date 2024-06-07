@@ -44,6 +44,9 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
             delay(500)
           }
           else {
+            // added delay to ensure time till opening editors is covered because `isHandlingFinished`
+            // now happens on the frame becoming interactive or all events written: IJPL-156308
+            delay(500)
             return@launch
           }
         }
