@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
@@ -39,7 +40,7 @@ import kotlin.math.min
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl
-) : NotebookIntervalPointerFactory.ChangeListener {
+) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
   private val notebookCellLines = NotebookCellLines.get(editor)
   private val viewportQueue = MergingUpdateQueue("NotebookCellInlayManager Viewport Update", 100, true, null, editor.disposable, null, true)
 
@@ -57,6 +58,8 @@ class NotebookCellInlayManager private constructor(
   var changedListener: InlaysChangedListener? = null
 
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
+
+  override fun dispose() {}
 
   fun getCellForInterval(interval: NotebookCellLines.Interval): EditorCell =
     _cells[interval.ordinal]
@@ -223,20 +226,21 @@ class NotebookCellInlayManager private constructor(
   private fun handleRefreshedDocument() {
     ThreadingAssertions.softAssertReadAccess()
     _cells.forEach {
-      it.dispose()
+      Disposer.dispose(it)
     }
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
     _cells = notebookCellLines.intervals.map { interval ->
       createCell(pointerFactory.create(interval))
     }.toMutableList()
+
     cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
     addHighlighters(notebookCellLines.intervals)
     inlaysChanged()
   }
 
   private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, interval) { cell ->
-    EditorCellView(editor, notebookCellLines, cell)
-  }
+    EditorCellView(editor, notebookCellLines, cell).also { Disposer.register(cell, it) }
+  }.also { Disposer.register(this, it) }
 
   private fun ensureInlaysAndHighlightersExist(matchingCellsBeforeChange: List<NotebookCellLines.Interval>, logicalLines: IntRange) {
     val interestingRange =
@@ -337,7 +341,7 @@ class NotebookCellInlayManager private constructor(
   companion object {
     @JvmStatic
     fun install(editor: EditorImpl) {
-      val notebookCellInlayManager = NotebookCellInlayManager(editor)
+      val notebookCellInlayManager = NotebookCellInlayManager(editor).also { Disposer.register(editor.disposable, it) }
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, editor.disposable)
       notebookCellInlayManager.initialize()
@@ -374,7 +378,7 @@ class NotebookCellInlayManager private constructor(
         is NotebookIntervalPointersEvent.OnRemoved -> {
           change.subsequentPointers.reversed().forEach {
             val removed = _cells.removeAt(it.interval.ordinal)
-            removed.dispose()
+            Disposer.dispose(removed)
             events.add(CellRemoved(removed))
           }
           start = minOf(start, change.subsequentPointers.first().interval.lines.first)

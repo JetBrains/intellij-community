@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
@@ -13,7 +14,7 @@ class EditorCell(
   private val editor: EditorEx,
   internal var intervalPointer: NotebookIntervalPointer,
   private val viewFactory: (EditorCell) -> EditorCellView
-) : UserDataHolder by UserDataHolderBase() {
+) : Disposable, UserDataHolder by UserDataHolderBase() {
 
   val source: String
     get() {
@@ -58,7 +59,7 @@ class EditorCell(
   fun show() {
     _visible = true
     if (view == null) {
-      view = viewFactory(this)
+      view = viewFactory(this).also { Disposer.register(this, it) }
       view?.updateSelection(_selected)
       gutterAction?.let { view?.setGutterAction(it) }
     }
@@ -68,7 +69,7 @@ class EditorCell(
     view?.updatePositions()
   }
 
-  fun dispose() {
+  override fun dispose() {
     view?.let { Disposer.dispose(it) }
   }
 
