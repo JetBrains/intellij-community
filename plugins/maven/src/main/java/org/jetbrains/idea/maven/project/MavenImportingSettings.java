@@ -150,12 +150,7 @@ public class MavenImportingSettings implements Cloneable {
     return myDependencyTypesAsSet;
   }
 
-  @ApiStatus.Internal
-  public boolean isWorkspaceImportEnabled() {
-    return true;
-  }
-
-  /**
+ /**
    * @deprecated source folders are always kept
    */
   @Deprecated(forRemoval = true)

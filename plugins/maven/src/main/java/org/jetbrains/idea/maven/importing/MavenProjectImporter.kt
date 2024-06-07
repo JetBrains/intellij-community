@@ -30,9 +30,6 @@ interface MavenProjectImporter {
                              importingSettings: MavenImportingSettings,
                              parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
 
-      if (!isImportToWorkspaceModelEnabled(project)) {
-        throw IllegalStateException("Static sync is available only if fast import is enabled")
-      }
       val importer = StaticWorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
                                                     importingSettings, modelsProvider, project)
       return wrapWithFUS(project, parentImportingActivity, importer)
@@ -116,32 +113,14 @@ interface MavenProjectImporter {
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
                                previewModule: Module?): MavenProjectImporter {
-      if (isImportToWorkspaceModelEnabled(project)) {
-        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
-                                        importingSettings, modelsProvider, project)
-      }
-
-      return MavenProjectLegacyImporter(project, projectsTree,
-                                        projectsToImportWithChanges,
-                                        modelsProvider, importingSettings,
-                                        previewModule)
+      return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges, importingSettings, modelsProvider, project)
     }
 
     @JvmStatic
     fun tryUpdateTargetFolders(project: Project) {
-      if (isImportToWorkspaceModelEnabled(project)) {
-        WorkspaceProjectImporter.updateTargetFolders(project)
-      }
-      else {
-        MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
-      }
+      WorkspaceProjectImporter.updateTargetFolders(project)
     }
 
     private val importingInProgress = AtomicInteger()
-
-    @JvmStatic
-    fun isImportToWorkspaceModelEnabled(project: Project): Boolean {
-      return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
-    }
   }
 }

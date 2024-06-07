@@ -52,11 +52,6 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
                          visitor: MavenStructureProjectVisitor,
                          parentActivity: StructuredIdeActivity,
                          commit: Boolean): PreimportResult {
-
-    if (!MavenProjectImporter.isImportToWorkspaceModelEnabled(project)) {
-      return PreimportResult.empty(project)
-    }
-
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
     val statisticsData = StatisticsData(project, rootProjectFiles.size)
     try {
