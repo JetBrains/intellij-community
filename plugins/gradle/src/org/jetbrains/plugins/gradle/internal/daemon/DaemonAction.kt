@@ -1,47 +1,40 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.internal.daemon;
+package org.jetbrains.plugins.gradle.internal.daemon
 
-import org.gradle.initialization.BuildLayoutParameters;
-import org.gradle.internal.logging.events.OutputEvent;
-import org.gradle.internal.logging.events.OutputEventListener;
-import org.gradle.internal.service.ServiceRegistry;
-import org.gradle.launcher.daemon.client.DaemonClientFactory;
-import org.gradle.launcher.daemon.configuration.DaemonParameters;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
+import org.gradle.initialization.BuildLayoutParameters
+import org.gradle.internal.service.ServiceRegistry
+import org.gradle.launcher.daemon.client.DaemonClientFactory
+import org.gradle.launcher.daemon.protocol.Command
+import java.io.ByteArrayInputStream
+import java.io.File
 
 /**
  * @author Vladislav.Soroka
  */
-public abstract class DaemonAction {
-  private final String myServiceDirectoryPath;
+abstract class DaemonAction(private val myServiceDirectoryPath: String?) {
 
-  public DaemonAction(String serviceDirectoryPath) {
-    myServiceDirectoryPath = serviceDirectoryPath;
+  protected fun getDaemonServices(daemonClientFactory: DaemonClientFactory): ServiceRegistry {
+    val layout = BuildLayoutParameters()
+    if (!myServiceDirectoryPath.isNullOrEmpty()) {
+      layout.setGradleUserHomeDir(File(myServiceDirectoryPath))
+    }
+    val daemonParameters = getDaemonParameters(layout)
+    return daemonClientFactory.createBuildClientServices(
+      { },
+      daemonParameters,
+      ByteArrayInputStream(ByteArray(0))
+    )
   }
 
-  protected ServiceRegistry getDaemonServices(DaemonClientFactory daemonClientFactory) {
-    BuildLayoutParameters layout = new BuildLayoutParameters();
-    if (myServiceDirectoryPath != null && !myServiceDirectoryPath.isEmpty()) {
-      layout.setGradleUserHomeDir(new File(myServiceDirectoryPath));
-    }
-    DaemonParameters daemonParameters = GradleDaemonParametersFactory.getDaemonParameters(layout);
-    return daemonClientFactory.createBuildClientServices(new OutputEventListener() {
-      @Override
-      public void onOutput(OutputEvent event) { }
-    }, daemonParameters, new ByteArrayInputStream(new byte[0]));
-  }
-
-  @NotNull
-  protected static <T> T createCommand(Class<T> commandClass, Object id, byte[] token) {
-    try {
-      //noinspection unchecked
-      return (T)commandClass.getConstructors()[0].newInstance(id, token);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
+  companion object {
+    @JvmStatic
+    protected fun <T: Command> createCommand(commandClass: Class<T>, id: Any, token: ByteArray?): T {
+      try {
+        return commandClass.constructors[0].newInstance(id, token) as T
+      }
+      catch (e: Exception) {
+        throw RuntimeException(e)
+      }
     }
   }
 }

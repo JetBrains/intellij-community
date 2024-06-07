@@ -1,123 +1,57 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.internal.daemon;
+package org.jetbrains.plugins.gradle.internal.daemon
 
-import java.io.File;
-import java.io.Serializable;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
+import java.io.File
+import java.io.Serializable
+import java.text.DateFormat
+import java.util.*
 
 /**
  * @author Vladislav.Soroka
  */
-public class DaemonState implements Serializable {
-  private final Long myPid;
-  private final byte[] myToken;
-  private final String myVersion;
-  private final String myStatus;
-  private final String myReason;
-  private final long myTimestamp;
-  private final String myDaemonExpirationStatus;
-  private final List<String> myDaemonOpts;
-  private final File myJavaHome;
-  private final Integer myIdleTimeout;
-  private final File myRegistryDir;
+class DaemonState(val pid: Long?,
+                  val token: ByteArray?,
+                  val version: String?,
+                  val status: String,
+                  val reason: String?,
+                  val timestamp: Long,
+                  val daemonExpirationStatus: String?,
+                  val daemonOpts: List<String>?,
+                  val javaHome: File?,
+                  val idleTimeout: Int?,
+                  val registryDir: File?) : Serializable {
 
-  public DaemonState(Long pid,
-                     byte[] token,
-                     String version,
-                     String status,
-                     String reason,
-                     long timestamp,
-                     String daemonExpirationStatus,
-                     List<String> daemonOpts,
-                     File javaHome,
-                     Integer idleTimeout,
-                     File registryDir) {
-    myPid = pid;
-    myToken = token;
-    myVersion = version;
-    myStatus = status;
-    myReason = reason;
-    myTimestamp = timestamp;
-    myDaemonExpirationStatus = daemonExpirationStatus;
-    myDaemonOpts = daemonOpts;
-    myJavaHome = javaHome;
-    myIdleTimeout = idleTimeout;
-    myRegistryDir = registryDir;
-  }
+  val description: String by lazy { calculateDescription() }
 
-  public Long getPid() {
-    return myPid;
-  }
-
-  public byte[] getToken() {
-    return myToken;
-  }
-
-  public String getVersion() {
-    return myVersion;
-  }
-
-  public String getStatus() {
-    return myStatus;
-  }
-
-  public String getReason() {
-    return myReason;
-  }
-
-  public long getTimestamp() {
-    return myTimestamp;
-  }
-
-  public String getDaemonExpirationStatus() {
-    return myDaemonExpirationStatus;
-  }
-
-  public List<String> getDaemonOpts() {
-    return myDaemonOpts;
-  }
-
-  public File getJavaHome() {
-    return myJavaHome;
-  }
-
-  public Integer getIdleTimeout() {
-    return myIdleTimeout;
-  }
-
-  public File getRegistryDir() {
-    return myRegistryDir;
-  }
-
-  public String getDescription() {
-    StringBuilder info = new StringBuilder();
-    info.append(myPid).append(" ")
-      .append(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT ).format(new Date(myTimestamp))).append(" ")
-      .append(myStatus).append(" ");
-    if(myVersion != null && !myVersion.isEmpty()) {
-      info.append("Gradle version: ").append(myVersion);
+  private fun calculateDescription(): String {
+    val info = StringBuilder()
+    info
+      .append(pid).append(" ")
+      .append(timestamp.asFormattedTimestamp()).append(" ")
+      .append(status).append(" ")
+    if (!version.isNullOrEmpty()) {
+      info.append("Gradle version: ").append(version)
     }
-    if(myDaemonExpirationStatus != null && !myDaemonExpirationStatus.isEmpty()) {
-      info.append("\nExpiration status: ").append(myDaemonExpirationStatus);
+    if (!daemonExpirationStatus.isNullOrEmpty()) {
+      info.append("\nExpiration status: ").append(daemonExpirationStatus)
     }
-    if(myReason != null && !myReason.isEmpty()) {
-      info.append("\nStop reason: ").append(myReason);
+    if (!reason.isNullOrEmpty()) {
+      info.append("\nStop reason: ").append(reason)
     }
-    if(myRegistryDir != null) {
-      info.append("\nDaemons dir: ").append(myRegistryDir);
+    if (registryDir != null) {
+      info.append("\nDaemons dir: ").append(registryDir)
     }
-    if(myJavaHome != null) {
-      info.append("\nJava home: ").append(myJavaHome.getPath());
+    if (javaHome != null) {
+      info.append("\nJava home: ").append(javaHome.path)
     }
-    if(myDaemonOpts != null && !myDaemonOpts.isEmpty()) {
-      info.append("\nDaemon options: ").append(myDaemonOpts);
+    if (!daemonOpts.isNullOrEmpty()) {
+      info.append("\nDaemon options: ").append(daemonOpts)
     }
-    if(myIdleTimeout != null) {
-      info.append("\nIdle timeout: ").append(myIdleTimeout);
+    if (idleTimeout != null) {
+      info.append("\nIdle timeout: ").append(idleTimeout)
     }
-
-    return info.toString();
+    return info.toString()
   }
+
+  private fun Long.asFormattedTimestamp() = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(this))
 }
