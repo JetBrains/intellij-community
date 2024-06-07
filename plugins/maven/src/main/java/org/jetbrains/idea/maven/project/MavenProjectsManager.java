@@ -352,7 +352,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Path getProjectsTreeFile() {
-    return getProjectsTreesDir().resolve(myProject.getLocationHash()).resolve("tree.dat");
+    return getProjectCacheDir().resolve("tree.dat");
+  }
+
+  @ApiStatus.Internal
+  public Path getProjectCacheDir() {
+    return getProjectsTreesDir().resolve(myProject.getLocationHash());
   }
 
   @NotNull
