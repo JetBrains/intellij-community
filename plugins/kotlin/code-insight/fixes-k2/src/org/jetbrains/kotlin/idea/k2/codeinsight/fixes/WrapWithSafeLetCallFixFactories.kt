@@ -277,7 +277,7 @@ object WrapWithSafeLetCallFixFactories {
         return when {
             parent is KtProperty && expression == parent.initializer -> {
                 if (parent.typeReference == null) return true
-                val symbol = parent.getSymbol()
+                val symbol = parent.symbol
                 (symbol as? KaCallableSymbol)?.returnType?.isMarkedNullable ?: true
             }
             parent is KtValueArgument && expression == parent.getArgumentExpression() -> {

@@ -6,8 +6,8 @@ package org.jetbrains.kotlin.idea.base.codeInsight.compiler
 
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacilityMixIn
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -23,7 +23,7 @@ interface KotlinCompilerIdeAllowedErrorFilter : (KtDiagnostic) -> Boolean {
 }
 
 @ApiStatus.Internal
-fun KtCompilerFacilityMixIn.compileToDirectory(
+fun KaSession.compileToDirectory(
     file: KtFile,
     configuration: CompilerConfiguration,
     target: KtCompilerTarget,
@@ -42,7 +42,7 @@ fun KtCompilerFacilityMixIn.compileToDirectory(
 }
 
 @ApiStatus.Internal
-fun KtCompilerFacilityMixIn.compileToJar(
+fun KaSession.compileToJar(
     file: KtFile,
     configuration: CompilerConfiguration,
     target: KtCompilerTarget,

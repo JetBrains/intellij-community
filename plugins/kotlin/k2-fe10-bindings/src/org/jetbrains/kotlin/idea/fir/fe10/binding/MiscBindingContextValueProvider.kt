@@ -67,7 +67,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         val classSymbol = classDescriptor.ktSymbol
 
         val copyFunction: KaCallableSymbol? = context.withAnalysisSession {
-            classSymbol.getMemberScope().getCallableSymbols(Name.identifier("copy")).singleOrNull {
+            classSymbol.memberScope.getCallableSymbols(Name.identifier("copy")).singleOrNull {
                 it.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
             }
         }
@@ -77,7 +77,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
 
     private fun getExpectedExpressionType(ktExpression: KtExpression): KotlinType? =
         context.withAnalysisSession {
-            ktExpression.getExpectedType()
+            ktExpression.expectedType
         }?.toKotlinType(context)
 
     private fun getLabelTarget(ktExpression: KtReferenceExpression): PsiElement? {

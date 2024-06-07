@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
 fun KaSession.getExplicitLambdaSignature(element: KtLambdaExpression): String? {
-    val lambdaSymbol = element.functionLiteral.getSymbol() as KaFunctionLikeSymbol
+    val lambdaSymbol = element.functionLiteral.symbol as KaFunctionLikeSymbol
     val valueParameters = lambdaSymbol.valueParameters
     if (valueParameters.any { it.returnType is KtErrorType } ) return null
     return valueParameters.joinToString { param ->

@@ -43,7 +43,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
             null
         } else {
             analyze(callableDeclaration) {
-                val annotation = callableDeclaration.getSymbol().findAnnotation<LanguageAnnotation>() ?: return null
+                val annotation = callableDeclaration.symbol.findAnnotation<LanguageAnnotation>() ?: return null
                 injectionInfoByAnnotation(annotation)
             }
         }

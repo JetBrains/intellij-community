@@ -132,7 +132,7 @@ fun generateMember(
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
-            val containingSymbol = targetClass?.getSymbol() as? KaClassOrObjectSymbol
+            val containingSymbol = targetClass?.symbol as? KaClassOrObjectSymbol
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(

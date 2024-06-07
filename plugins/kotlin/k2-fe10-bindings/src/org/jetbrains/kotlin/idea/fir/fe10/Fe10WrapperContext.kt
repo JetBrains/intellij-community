@@ -86,14 +86,14 @@ fun KaFunctionLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): K
         is KaAnonymousFunctionSymbol -> KtSymbolBasedAnonymousFunctionDescriptor(this, context)
         is KaConstructorSymbol -> {
             val ktConstructorSymbol = this
-            val ktClassOrObject = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() as KaNamedClassOrObjectSymbol }
+            val ktClassOrObject = context.withAnalysisSession { ktConstructorSymbol.containingSymbol as KaNamedClassOrObjectSymbol }
             KtSymbolBasedConstructorDescriptor(ktConstructorSymbol, KtSymbolBasedClassDescriptor(ktClassOrObject, context))
         }
         else -> error("Unexpected kind of KaFunctionLikeSymbol: ${this.javaClass}")
     }
 
 fun KaValueParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): KtSymbolBasedValueParameterDescriptor {
-    val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.getContainingSymbol() }
+    val containingSymbol = context.withAnalysisSession { this@toDeclarationDescriptor.containingSymbol }
     check(containingSymbol is KaFunctionLikeSymbol) {
         "Unexpected containing symbol = $containingSymbol"
     }

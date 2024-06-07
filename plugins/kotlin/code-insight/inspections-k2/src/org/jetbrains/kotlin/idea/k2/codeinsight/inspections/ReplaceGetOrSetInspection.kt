@@ -76,7 +76,7 @@ internal class ReplaceGetOrSetInspection :
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtSuperExpression || receiverExpression.getKtType()?.isUnit != false) return null
 
-        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression()) return null
+        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression) return null
 
         val problemHighlightType = if (functionSymbol.isExplicitOperator()) GENERIC_ERROR_OR_WARNING else INFORMATION
 
@@ -109,6 +109,6 @@ internal class ReplaceGetOrSetInspection :
     context(KaSession)
     private fun KaFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
-        return hasOperatorKeyword() || getAllOverriddenSymbols().any { it.hasOperatorKeyword() }
+        return hasOperatorKeyword() || allOverriddenSymbols.any { it.hasOperatorKeyword() }
     }
 }

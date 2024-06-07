@@ -209,7 +209,7 @@ internal class FirWhenWithSubjectConditionContributor(
             classSymbol: KaNamedClassOrObjectSymbol,
             destination: MutableSet<KaNamedClassOrObjectSymbol>
         ) {
-            classSymbol.getSealedClassInheritors().forEach { inheritor ->
+            classSymbol.sealedClassInheritors.forEach { inheritor ->
                 destination += inheritor
                 if (inheritor.modality == Modality.SEALED) {
                     getAllSealedInheritorsTo(inheritor, destination)
@@ -245,7 +245,7 @@ internal class FirWhenWithSubjectConditionContributor(
             val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KaEnumEntrySymbol
             resolvesTo?.name
         }
-        val allEnumEntrySymbols = classSymbol.getEnumEntries()
+        val allEnumEntrySymbols = classSymbol.enumEntries
         allEnumEntrySymbols
             .filter { it.name !in handledCasesNames }
             .filter { visibilityChecker.isVisible(it) }

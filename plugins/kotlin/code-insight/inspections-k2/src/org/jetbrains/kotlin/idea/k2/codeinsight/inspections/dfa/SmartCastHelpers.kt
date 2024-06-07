@@ -23,16 +23,16 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
         .filterIsInstance(KtExpression::class.java)
         .any { e ->
             if (e is KtReferenceExpression) {
-                val info = e.getSmartCastInfo()
+                val info = e.smartCastInfo
                 if (info != null) {
-                    val expectedType = (if (e.parent is KtThisExpression) e.parent else e).getExpectedType()
+                    val expectedType = (if (e.parent is KtThisExpression) e.parent else e).expectedType
                     val ktType = values[e.mainReference.resolveToSymbol()]
                     return@any ktType != null && !info.smartCastType.isEqualTo(ktType)
                             && (expectedType == null || !ktType.isSubTypeOf(expectedType))
                 }
             }
 
-            val implicitReceiverSmartCastList = e.getImplicitReceiverSmartCast()
+            val implicitReceiverSmartCastList = e.implicitReceiverSmartCasts
             if (implicitReceiverSmartCastList.isNotEmpty()) {
                 val symbol = e.resolveCallOld()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 if (symbol != null) {

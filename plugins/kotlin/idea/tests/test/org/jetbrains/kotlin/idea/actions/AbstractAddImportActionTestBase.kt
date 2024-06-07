@@ -112,7 +112,7 @@ private class MockAutoImportCallableWeigher : KotlinAutoImportCallableWeigher {
     ): Int {
         val symbolAnnotated = symbolToBeImported.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
         val receiverAnnotated =
-            unresolvedReferenceExpression.parentOfType<KtFunction>()?.getSymbol()?.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+            unresolvedReferenceExpression.parentOfType<KtFunction>()?.symbol?.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
         return if (symbolAnnotated && receiverAnnotated == true) 1 else 0
     }
 

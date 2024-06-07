@@ -45,7 +45,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
 
     private inline fun <reified T : Any> PsiElement.getKtSymbolOfTypeOrNull(): T? =
         this@ToDescriptorBindingContextValueProviders.context.withAnalysisSession {
-            this@getKtSymbolOfTypeOrNull.safeAs<KtDeclaration>()?.getSymbol().safeAs<T>()
+            this@getKtSymbolOfTypeOrNull.safeAs<KtDeclaration>()?.symbol.safeAs<T>()
         }
 
     private fun getClass(key: PsiElement): ClassDescriptor? {
@@ -66,7 +66,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
 
     private fun getConstructor(key: PsiElement): ConstructorDescriptor? {
         val ktConstructorSymbol = key.getKtSymbolOfTypeOrNull<KaConstructorSymbol>() ?: return null
-        val containerClass = context.withAnalysisSession { ktConstructorSymbol.getContainingSymbol() }
+        val containerClass = context.withAnalysisSession { ktConstructorSymbol.containingSymbol }
         check(containerClass is KaNamedClassOrObjectSymbol) {
             "Unexpected contained for Constructor symbol: $containerClass, ktConstructorSymbol = $ktConstructorSymbol"
         }

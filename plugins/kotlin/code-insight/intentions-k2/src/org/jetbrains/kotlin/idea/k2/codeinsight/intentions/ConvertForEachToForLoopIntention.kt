@@ -73,7 +73,7 @@ internal class ConvertForEachToForLoopIntention
     context(KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
-        if (element.isUsedAsExpression()) return null
+        if (element.isUsedAsExpression) return null
 
         val returnsToReplace = computeReturnsToReplace(element) ?: return null
 
@@ -96,7 +96,7 @@ internal class ConvertForEachToForLoopIntention
     private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? {
         val lambda = element.getSingleLambdaArgument() ?: return null
         val lambdaBody = lambda.bodyExpression ?: return null
-        val functionLiteralSymbol = lambda.functionLiteral.getSymbol()
+        val functionLiteralSymbol = lambda.functionLiteral.symbol
         return buildList {
             lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
                 if (returnExpression.getReturnTargetSymbol() == functionLiteralSymbol) {

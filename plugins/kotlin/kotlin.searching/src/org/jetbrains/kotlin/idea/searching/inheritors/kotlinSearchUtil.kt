@@ -71,8 +71,8 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
                     }
                     if (withFullHierarchy) {
                         analyze(currentMethod) {
-                            val ktCallableSymbol = currentMethod.getSymbol() as? KaCallableSymbol ?: return@analyze
-                            ktCallableSymbol.getDirectlyOverriddenSymbols()
+                            val ktCallableSymbol = currentMethod.symbol as? KaCallableSymbol ?: return@analyze
+                            ktCallableSymbol.directlyOverriddenSymbols
                                 .mapNotNull { it.psi }
                                 .forEach { queue.offer(it) }
                         }

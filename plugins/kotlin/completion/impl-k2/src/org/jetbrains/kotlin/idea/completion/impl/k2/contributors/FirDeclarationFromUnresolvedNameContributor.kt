@@ -82,7 +82,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         } else {
             unresolvedRef.getReceiverForSelector()
         }
-        return when (val symbol = currentDeclaration.getSymbol()) {
+        return when (val symbol = currentDeclaration.symbol) {
             is KaCallableSymbol -> when {
                 refExprParent is KtUserType -> false
 
@@ -121,7 +121,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
 
     context(KaSession)
     private fun getReceiverType(symbol: KaCallableSymbol): KtType? {
-        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.getDispatchReceiverType()
+        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.dispatchReceiverType
     }
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {

@@ -26,7 +26,7 @@ class KotlinResolveExtensionGeneratedSourcesFilter : GeneratedSourcesFilter() {
     override fun getOriginalElements(element: PsiElement): List<PsiElement> {
         if (element !is KtElement || !element.hasAnalysisExtensionContext) return emptyList()
         return analyze(element) {
-            element.getResolveExtensionNavigationElements().toList()
+            element.resolveExtensionNavigationElements.toList()
         }
     }
 }

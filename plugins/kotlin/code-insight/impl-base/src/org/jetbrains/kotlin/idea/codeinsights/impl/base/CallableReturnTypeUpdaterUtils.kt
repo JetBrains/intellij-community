@@ -140,9 +140,10 @@ object CallableReturnTypeUpdaterUtils {
     @ApiStatus.Internal
     fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KtType, Sequence<KtType>, Boolean) -> T?): T? {
         val declarationType = declaration.getReturnKtType()
-        val overriddenTypes = (declaration.getSymbol() as? KaCallableSymbol)?.getDirectlyOverriddenSymbols()
+        val overriddenTypes = (declaration.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols
             ?.map { it.returnType }
             ?.distinct()
+            ?.toList()
             ?: emptyList()
         val cannotBeNull = overriddenTypes.any { !it.canBeNull }
         val allTypes = (listOf(declarationType) + overriddenTypes)

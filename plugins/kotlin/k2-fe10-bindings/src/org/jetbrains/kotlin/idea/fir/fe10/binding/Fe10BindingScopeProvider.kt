@@ -141,7 +141,7 @@ private class Fe10BindingLexicalScopeForCallableDeclaration(
     context: Fe10WrapperContext
 ): Fe10BindingLexicalScope(context) {
     override val ownerDescriptor: CallableDescriptor = run {
-        context.withAnalysisSession { ktDeclaration.getSymbol() }.toDeclarationDescriptor(context) as CallableDescriptor
+        context.withAnalysisSession { ktDeclaration.symbol }.toDeclarationDescriptor(context) as CallableDescriptor
     }
 
     override val parent: HierarchicalScope
@@ -166,7 +166,7 @@ private class Fe10BindingLexicalScopeForClassLikeElement(
         SCOPE_FOR_COMPANION // all companion objects except mine and the last one -- same class with OUTER_CLASS
     }
 
-    private val ktClassSymbol = context.withAnalysisSession { ktClassOrObject.getSymbol() } as KaClassOrObjectSymbol
+    private val ktClassSymbol = context.withAnalysisSession { ktClassOrObject.symbol } as KaClassOrObjectSymbol
 
     override val ownerDescriptor: ClassDescriptor = ktClassSymbol.toDeclarationDescriptor(context)
 

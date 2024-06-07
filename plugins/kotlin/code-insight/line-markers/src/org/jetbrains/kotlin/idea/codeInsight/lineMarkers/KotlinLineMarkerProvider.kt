@@ -101,11 +101,11 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         }
 
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return
+            var callableSymbol = declaration.symbol as? KaCallableSymbol ?: return
             if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return
             }
-            val allOverriddenSymbols = callableSymbol.getAllOverriddenSymbols()
+            val allOverriddenSymbols = callableSymbol.allOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return
             val implements = callableSymbol is KaSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
                     allOverriddenSymbols.all { it is KaSymbolWithModality && it.modality == Modality.ABSTRACT }
@@ -237,11 +237,11 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KaCallableSymbol ?: return null
+            var callableSymbol = declaration.symbol as? KaCallableSymbol ?: return null
             if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return null
             }
-            val allOverriddenSymbols = callableSymbol.getDirectlyOverriddenSymbols()
+            val allOverriddenSymbols = callableSymbol.directlyOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return ""
             val isAbstract = callableSymbol is KaSymbolWithModality && callableSymbol.modality == Modality.ABSTRACT
             val abstracts = hashSetOf<PsiElement>()

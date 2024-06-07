@@ -30,7 +30,7 @@ internal object ChangeToStarProjectionFixFactory {
 
         // We don't suggest this quick-fix for array instance checks because there is ConvertToIsArrayOfCallFix
         if (element.parent is KtIsExpression
-            && diagnostic.type.isArrayOrPrimitiveArray()
+            && diagnostic.type.isArrayOrPrimitiveArray
             && element.isOnJvm()
         ) return@ModCommandBased emptyList()
 
@@ -47,7 +47,7 @@ internal object ChangeToStarProjectionFixFactory {
             if (parent is KtCallableDeclaration
                 && parent.typeReference.typeArguments().any { it.projectionKind != KtProjectionKind.STAR }
                 && typeReference.typeArguments().isNotEmpty()
-                && binaryExpr.isUsedAsExpression()
+                && binaryExpr.isUsedAsExpression
             ) return null
 
             val type = when (parent) {

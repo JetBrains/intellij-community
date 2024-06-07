@@ -208,7 +208,7 @@ fun KtDeclaration.isExpectDeclaration(): Boolean {
 
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     return analyze(declaration) {
-        val symbol: KaDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.symbol
         symbol.getExpectsForActual().isNotEmpty()
     }
 }
@@ -220,7 +220,7 @@ fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPoin
 internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     return analyze(this) {
-        val symbol: KaDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.symbol
         (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration)?.createSmartPointer() })
     }
 }

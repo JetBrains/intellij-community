@@ -31,7 +31,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
 
     withAllowedResolve {
         analyze(file) {
-            val scope = file.getImportingScopeContext().getCompositeScope()
+            val scope = file.importingScopeContext.compositeScope()
             if (!scope.mayContainName(nameToImport.shortName())) return false
 
             val anyCallableSymbolMatches = scope

@@ -6,7 +6,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
@@ -78,7 +77,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {
         return analyze(data.commonParent) {
-            ktNamedDeclaration.getSymbol().render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
+            ktNamedDeclaration.symbol.render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
         }
     }
 

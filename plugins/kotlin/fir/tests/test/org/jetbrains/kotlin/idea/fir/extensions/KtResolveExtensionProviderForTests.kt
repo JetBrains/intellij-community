@@ -100,7 +100,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
                 element.parentsWithSelf
                     .filterIsInstance<KtDeclaration>()
                     .firstNotNullOfOrNull { declaration ->
-                        val fqNameParts = when (val symbol = declaration.getSymbol()) {
+                        val fqNameParts = when (val symbol = declaration.symbol) {
                             is KaFunctionSymbol -> {
                                 val callableId = symbol.callableId
                                     ?: return@firstNotNullOfOrNull null

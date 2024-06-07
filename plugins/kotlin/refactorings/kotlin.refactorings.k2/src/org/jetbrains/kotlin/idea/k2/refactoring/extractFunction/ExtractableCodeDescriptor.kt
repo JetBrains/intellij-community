@@ -68,7 +68,7 @@ data class ExtractableCodeDescriptor(
 
                 }
                 val printer = PrettyPrinter()
-                filteredRenderer.renderAnnotations(analysisSession, container.getSymbol(), printer)
+                filteredRenderer.renderAnnotations(analysisSession, container.symbol, printer)
                 printer.toString() + "\n"
             }
         }

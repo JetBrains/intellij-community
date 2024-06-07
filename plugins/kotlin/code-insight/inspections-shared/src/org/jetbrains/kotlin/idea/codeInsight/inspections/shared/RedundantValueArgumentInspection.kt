@@ -75,7 +75,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
 
         val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol
         if (targetFunctionSymbol is KaFunctionSymbol && targetFunctionSymbol.isOverride) {
-            for (baseFunctionSymbol in targetFunctionSymbol.getAllOverriddenSymbols()) {
+            for (baseFunctionSymbol in targetFunctionSymbol.allOverriddenSymbols) {
                 if (baseFunctionSymbol is KaFunctionSymbol && !baseFunctionSymbol.isOverride) {
                     return baseFunctionSymbol.valueParameters.singleOrNull { it.name == targetParameterSymbol.name }
                 }

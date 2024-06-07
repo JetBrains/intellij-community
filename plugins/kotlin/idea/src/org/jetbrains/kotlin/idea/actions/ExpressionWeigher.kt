@@ -215,7 +215,7 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
     private fun calculateCallExtensionsWeight(namedFunction: KtNamedFunction): Int {
         return allowAnalysisOnEdt {
             analyze(element) {
-                val callableSymbol = namedFunction.getSymbol() as? KaCallableSymbol
+                val callableSymbol = namedFunction.symbol as? KaCallableSymbol
                 if (callableSymbol != null) {
                     with(KotlinAutoImportCallableWeigher) { weigh(callableSymbol, element) }
                 } else {

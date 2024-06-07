@@ -46,13 +46,13 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
         analyze(this) {
-            val symbol = getSymbol() as? KaFunctionSymbol  ?: return emptyList()
+            val symbol = symbol as? KaFunctionSymbol ?: return emptyList()
             if (symbol.isActual && symbol.getExpectsForActual().isNotEmpty()) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(
-                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),
-                (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.getDeclaredMemberScope(),
-                symbol.receiverParameter?.type?.expandedSymbol?.getDeclaredMemberScope()
+                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.packageScope,
+                (symbol.containingSymbol as? KaClassOrObjectSymbol)?.declaredMemberScope,
+                symbol.receiverParameter?.type?.expandedSymbol?.declaredMemberScope
             ).flatMapTo(result) { scope ->
                 scope.getCallableSymbols(name).mapNotNull {
                     it.psi as? KtNamedFunction

@@ -23,7 +23,7 @@ abstract class AbstractAdditionalKDocResolutionProviderTest : AbstractFirReferen
             with(analysisSession) {
                 return contextElement.containingKtFile.declarations
                     .filter { it.name == fqName.shortName().asString() }
-                    .map { it.getSymbol() }
+                    .map { it.symbol }
             }
         }
     }

@@ -184,8 +184,8 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
             for (existingDeclaration in existingDeclarations) {
                 val node: DoublyLinkedNode<MemberEntry> = DoublyLinkedNode(MemberEntry.ExistingEntry(existingDeclaration))
                 sentinelTailNode.prepend(node)
-                val callableSymbol = existingDeclaration.getSymbol() as? KaCallableSymbol ?: continue
-                for (overriddenSymbol in callableSymbol.getAllOverriddenSymbols()) {
+                val callableSymbol = existingDeclaration.symbol as? KaCallableSymbol ?: continue
+                for (overriddenSymbol in callableSymbol.allOverriddenSymbols) {
                     put(overriddenSymbol.psi ?: continue, node)
                 }
             }

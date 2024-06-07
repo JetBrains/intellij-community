@@ -622,7 +622,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         is KtIntersectionType -> kotlinType.conjuncts.find { it is KtTypeParameterType }
                         else -> null
                     }
-                    if (typeParameterType != null && expression.getExpectedType() == typeParameterType) {
+                    if (typeParameterType != null && expression.expectedType == typeParameterType) {
                         // Do not report always-null when an expected expression type is the same type parameter
                         // as it's not possible to replace it with a null literal without an unchecked cast 
                         return true
@@ -658,7 +658,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             if (isCompilationWarning(expression)) {
                 return true
             }
-            return !expression.isUsedAsExpression()
+            return !expression.isUsedAsExpression
         }
 
         context(KaSession)

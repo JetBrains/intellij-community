@@ -148,7 +148,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
 
 context(KaSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
-    val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
+    val containingSymbol = ktDeclaration.symbol.containingSymbol
     val fqName = (containingSymbol as? KaClassLikeSymbol)?.classId?.asFqNameString()
         ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
 
@@ -199,7 +199,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val symbol = referenceExpression.resolveCallOld()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
-                val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol
+                val containingClass = symbol.containingSymbol as? KaClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement
@@ -258,7 +258,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
             return
         }
 
-        val symbol = symbolFinder(declaration.getSymbol())
+        val symbol = symbolFinder(declaration.symbol)
         if (symbol !is KaDeclarationSymbol) return
 
         renderKotlinSymbol(symbol, declaration, onlyDefinition, true, preBuild)
@@ -282,7 +282,7 @@ private fun renderKDoc(
         }
     } else if (declaration is KtFunction &&
         symbol is KaCallableSymbol &&
-        symbol.getAllOverriddenSymbols().any { it.psi is PsiMethod }) {
+        symbol.allOverriddenSymbols.any { it.psi is PsiMethod }) {
         LightClassUtil.getLightClassMethod(declaration)?.let {
             stringBuilder.insert(KDocTemplate.DescriptionBodyTemplate.FromJava()) {
                 body = generateJavadoc(it)
@@ -299,7 +299,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     }
 
     if (symbol is KaCallableSymbol) {
-        symbol.getAllOverriddenSymbols().forEach { overrider ->
+        symbol.allOverriddenSymbols.forEach { overrider ->
             findKDoc(overrider)?.let {
                 return it
             }
@@ -307,7 +307,7 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     }
 
     if (symbol is KaValueParameterSymbol) {
-        val containingSymbol = symbol.getContainingSymbol() as? KaFunctionSymbol
+        val containingSymbol = symbol.containingSymbol as? KaFunctionSymbol
         if (containingSymbol != null) {
             val idx = containingSymbol.valueParameters.indexOf(symbol)
             containingSymbol.getExpectsForActual().filterIsInstance<KaFunctionSymbol>().mapNotNull { expectFunction ->

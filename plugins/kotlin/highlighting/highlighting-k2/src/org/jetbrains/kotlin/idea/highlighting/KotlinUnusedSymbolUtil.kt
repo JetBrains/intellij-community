@@ -122,7 +122,7 @@ object KotlinUnusedSymbolUtil {
 
   context(KaSession)
   fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
-      val symbol = declaration.getSymbol()
+      val symbol = declaration.symbol
       if (declaration.languageVersionSettings.getFlag(
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.visibility?.isPublicAPI == true) {
           return null
@@ -632,7 +632,7 @@ object KotlinUnusedSymbolUtil {
   private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KaDeclarationSymbol?): Boolean {
       return when {
           symbol is KaConstructorSymbol -> {
-              val classSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return false
+              val classSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol ?: return false
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
@@ -662,11 +662,11 @@ object KotlinUnusedSymbolUtil {
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {
-                  val overridingCallableSymbol = element.getClassOrObjectSymbol()?.getMemberScope()
+                  val overridingCallableSymbol = element.getClassOrObjectSymbol()?.memberScope
                       ?.getCallableSymbols { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.unwrapFakeOverrides == callableSymbol
                       }?.singleOrNull() ?: return@any false
-                  overridingCallableSymbol != callableSymbol && overridingCallableSymbol.getIntersectionOverriddenSymbols()
+                  overridingCallableSymbol != callableSymbol && overridingCallableSymbol.intersectionOverriddenSymbols
                       .any { it != callableSymbol }
               }
               is PsiClass ->

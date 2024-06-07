@@ -248,8 +248,8 @@ object K2SemanticMatcher {
 
         context(KaSession)
         fun associateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) {
-            val targetSymbol = targetDeclaration.getSymbol()
-            val patternSymbol = patternDeclaration.getSymbol()
+            val targetSymbol = targetDeclaration.symbol
+            val patternSymbol = patternDeclaration.symbol
 
             if (targetSymbol is KtDestructuringDeclarationSymbol && patternSymbol is KtDestructuringDeclarationSymbol) {
                 for ((targetEntry, patternEntry) in targetSymbol.entries.zip(patternSymbol.entries)) {

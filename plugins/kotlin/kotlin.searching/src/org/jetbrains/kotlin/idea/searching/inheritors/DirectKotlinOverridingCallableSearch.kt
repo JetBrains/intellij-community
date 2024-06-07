@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCall
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 object DirectKotlinOverridingCallableSearch {
@@ -75,13 +76,13 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
 
                     analyze(classOrObject) {
                         val superFunction = superDeclarationPointer.element ?: return@runReadAction false
-                        val symbolWithMembers = classOrObject.getSymbol().getSymbolContainingMemberDeclarations() ?: return@runReadAction true
+                        val symbolWithMembers = classOrObject.symbol.getSymbolContainingMemberDeclarations() ?: return@runReadAction true
 
-                        symbolWithMembers.getDeclaredMemberScope()
+                        symbolWithMembers.declaredMemberScope
                             .getCallableSymbols(ktCallableDeclarationName)
                             .all { overridingSymbol ->
                                 val function = overridingSymbol.psi
-                                if (function != null && overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction }) {
+                                if (function != null && overridingSymbol.directlyOverriddenSymbols.any { it.psi == superFunction }) {
                                     consumer.process(function)
                                 } else {
                                     true

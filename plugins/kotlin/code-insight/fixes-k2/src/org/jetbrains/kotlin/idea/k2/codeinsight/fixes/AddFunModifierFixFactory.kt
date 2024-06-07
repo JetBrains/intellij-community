@@ -74,7 +74,7 @@ internal object AddFunModifierFixFactory {
 context(KaSession)
 private fun KaNamedClassOrObjectSymbol.isSamInterface(): Boolean {
     if (classKind != KaClassKind.INTERFACE) return false
-    val singleAbstractMember = getMemberScope()
+    val singleAbstractMember = memberScope
         .getCallableSymbols()
         .filterIsInstance<KaSymbolWithModality>()
         .filter { it.modality == Modality.ABSTRACT }

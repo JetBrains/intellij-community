@@ -29,7 +29,7 @@ internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        val ownerSymbol = positionContext.typeParametersOwner.getSymbol() as? KaSymbolWithTypeParameters ?: return
+        val ownerSymbol = positionContext.typeParametersOwner.symbol as? KaSymbolWithTypeParameters ?: return
         ownerSymbol.typeParameters.forEach { typeParameter ->
             val name = typeParameter.name
             val icon = getIconFor(typeParameter)

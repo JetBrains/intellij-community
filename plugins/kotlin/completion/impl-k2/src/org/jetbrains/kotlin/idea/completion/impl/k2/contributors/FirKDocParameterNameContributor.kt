@@ -35,7 +35,7 @@ internal open class FirKDocParameterNameContributor(
         val alreadyDocumentedParameters = section.findTagsByName(PARAMETER_TAG_NAME).map { it.getSubjectName() }.toSet()
 
         val ownerDeclaration = positionContext.nameExpression.getContainingDoc().owner ?: return
-        val ownerDeclarationSymbol = ownerDeclaration.getSymbol()
+        val ownerDeclarationSymbol = ownerDeclaration.symbol
 
         getParametersForKDoc(ownerDeclarationSymbol)
             .filter { (it.symbol as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
@@ -67,7 +67,7 @@ internal open class FirKDocParameterNameContributor(
             is KaFunctionLikeSymbol -> ownerDeclarationSymbol.valueParameters
 
             is KaNamedClassOrObjectSymbol -> {
-                val primaryConstructor = ownerDeclarationSymbol.getDeclaredMemberScope().constructors.firstOrNull { it.isPrimary }
+                val primaryConstructor = ownerDeclarationSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary }
                 primaryConstructor?.valueParameters.orEmpty()
             }
 

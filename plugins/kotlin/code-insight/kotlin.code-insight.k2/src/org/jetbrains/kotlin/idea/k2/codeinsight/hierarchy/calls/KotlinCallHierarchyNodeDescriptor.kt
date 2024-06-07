@@ -141,13 +141,13 @@ class KotlinCallHierarchyNodeDescriptor(
                     return null
                 }
                 else -> {
-                    var declarationSymbol = element.getSymbol()
+                    var declarationSymbol = element.symbol
                     val elementText: String?
                     when (element) {
                         is KtClassOrObject -> {
                             when {
                                 element is KtObjectDeclaration && element.isCompanion() -> {
-                                    val containingDescriptor = declarationSymbol.getContainingSymbol()
+                                    val containingDescriptor = declarationSymbol.containingSymbol
                                     if (containingDescriptor !is KaClassOrObjectSymbol) return null
                                     declarationSymbol = containingDescriptor
                                     elementText = renderClassOrObject(declarationSymbol)
@@ -176,7 +176,7 @@ class KotlinCallHierarchyNodeDescriptor(
 
                     if (elementText == null) return null
                     var containerText: String? = null
-                    var containerDescriptor = declarationSymbol.getContainingSymbol()
+                    var containerDescriptor = declarationSymbol.containingSymbol
                     while (containerDescriptor != null) {
                         if (containerDescriptor is KaPackageSymbol) {
                             break
@@ -186,7 +186,7 @@ class KotlinCallHierarchyNodeDescriptor(
                             val identifier = name.identifier
                             containerText = if (containerText != null) "$identifier.$containerText" else identifier
                         }
-                        containerDescriptor = containerDescriptor.getContainingSymbol()
+                        containerDescriptor = containerDescriptor.containingSymbol
                     }
                     return if (containerText != null) "$containerText.$elementText" else elementText
                 }
@@ -195,7 +195,7 @@ class KotlinCallHierarchyNodeDescriptor(
 
         context(KaSession)
         fun renderNamedFunction(symbol: KaFunctionLikeSymbol): String? {
-            val name = ((symbol as? KaFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.getContainingSymbol() as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
+            val name = ((symbol as? KaFunctionSymbol)?.name ?: ((symbol as? KaConstructorSymbol)?.containingSymbol as? KaClassOrObjectSymbol)?.name)?.asString() ?: return null
             val paramTypes =
                 StringUtil.join(
                     symbol.valueParameters,

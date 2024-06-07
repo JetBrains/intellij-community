@@ -78,7 +78,7 @@ internal class KotlinSuspendFunctionWrapper(
     private fun isCoroutineContextAvailable(from: PsiElement): Boolean {
         return analyze(from.parentOfType<KtElement>(withSelf = true) ?: return false) {
             from.parentsOfType<KtNamedFunction>().any {
-                (it.getSymbol() as? KaFunctionSymbol)?.isSuspend ?: false
+                (it.symbol as? KaFunctionSymbol)?.isSuspend ?: false
             } || from.parentsOfType<KtLambdaExpression>().any {
                 (it.getKtType() as? KtFunctionalType)?.isSuspend ?: false
             }

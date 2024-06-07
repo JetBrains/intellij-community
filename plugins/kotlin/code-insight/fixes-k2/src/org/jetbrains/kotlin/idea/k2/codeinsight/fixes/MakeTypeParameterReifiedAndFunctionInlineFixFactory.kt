@@ -20,7 +20,7 @@ internal object MakeTypeParameterReifiedAndFunctionInlineFixFactory {
         val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
         val function = typeReference.getStrictParentOfType<KtNamedFunction>() ?: return@ModCommandBased emptyList()
         val typeParameter = function.typeParameterList?.parameters?.firstOrNull {
-            it.getSymbol() == (diagnostic.type as? KtTypeParameterType)?.symbol
+            it.symbol == (diagnostic.type as? KtTypeParameterType)?.symbol
         } ?: return@ModCommandBased emptyList()
         listOf(MakeTypeParameterReifiedAndFunctionInlineFix(typeParameter))
     }

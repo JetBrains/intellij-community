@@ -119,7 +119,7 @@ private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpre
     context(KaSession)
     private fun isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
         val functionParent = expression.parentOfType<KtFunction>(withSelf = true) ?: return false
-        val symbol = functionParent.getSymbol() as? KaFunctionSymbol ?: return false
+        val symbol = functionParent.symbol as? KaFunctionSymbol ?: return false
         return symbol.isSuspend
     }
 

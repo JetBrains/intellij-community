@@ -64,14 +64,14 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     private fun callReceiverRefersToCompanionObject(call: KaCall, companionObject: KtObjectDeclaration): Boolean {
         if (call !is KaCallableMemberCall<*, *>) return false
         val implicitReceivers = call.getImplicitReceivers()
-        val companionObjectSymbol = companionObject.getSymbol()
+        val companionObjectSymbol = companionObject.symbol
         return companionObjectSymbol in implicitReceivers.map { it.symbol }
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(declaration) ?: analyzeInModalWindow(declaration, KotlinBundle.message(
           "find.usages.prepare.dialog.progress")) {
-            declaration.getSymbol().render(noAnnotationsShortNameRenderer())
+            declaration.symbol.render(noAnnotationsShortNameRenderer())
         }
     }
 
@@ -85,7 +85,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
 
     override fun renderDeclaration(method: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            method.getSymbol().render(noAnnotationsShortNameRenderer())
+            method.symbol.render(noAnnotationsShortNameRenderer())
         }
     }
 
@@ -107,7 +107,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
                 is KaFunctionCall<*> -> {
                     val constructorSymbol = call.symbol as? KaConstructorSymbol ?: return@withResolvedCall false
                     val constructedClassSymbol =
-                        constructorSymbol.getContainingSymbol() as? KaClassLikeSymbol ?: return@withResolvedCall false
+                        constructorSymbol.containingSymbol as? KaClassLikeSymbol ?: return@withResolvedCall false
                     val classOrObjectSymbol = ktClassOrObject.getClassOrObjectSymbol()
 
                     fun KaClassLikeSymbol.getExpectsOrSelf(): List<KaDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
@@ -124,7 +124,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return emptyList()
         return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
-            (declaration.getSymbol() as? KaCallableSymbol)?.getAllOverriddenSymbols()?.mapNotNull { it.psi }?.toList().orEmpty()
+            (declaration.symbol as? KaCallableSymbol)?.allOverriddenSymbols?.mapNotNull { it.psi }?.toList().orEmpty()
         }
     }
 

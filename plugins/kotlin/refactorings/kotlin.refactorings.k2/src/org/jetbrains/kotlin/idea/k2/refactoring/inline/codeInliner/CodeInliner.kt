@@ -79,7 +79,7 @@ class CodeInliner(
             && !codeToInline.alwaysKeepMainExpression
             && assignment == null
             && elementToBeReplaced is KtExpression
-            && !analyze(elementToBeReplaced) { elementToBeReplaced.isUsedAsExpression() }
+            && !analyze(elementToBeReplaced) { elementToBeReplaced.isUsedAsExpression }
             && !codeToInline.mainExpression.shouldKeepValue(usageCount = 0)
             && elementToBeReplaced.getStrictParentOfType<KtAnnotationEntry>() == null
         ) {
@@ -150,7 +150,7 @@ class CodeInliner(
             namer = { it.nameAsSafeName },
             typeRetriever = {
                 analyze(callableForParameters) {
-                    call.resolveCallOld()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.getSymbol())
+                    call.resolveCallOld()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.symbol)
                 }
             },
             renderType = {
@@ -160,7 +160,7 @@ class CodeInliner(
             },
             isArrayType = {
                 analyze(call) {
-                    it.getArrayElementType() != null
+                    it.arrayElementType != null
                 }
             },
             renderClassifier = {
@@ -216,7 +216,7 @@ class CodeInliner(
             importDescriptors.firstOrNull { it.fqName?.shortName()?.asString() == nameExpression.text } as? KtNamedFunction ?: return
 
         analyze(function) {
-            if ((function.getSymbol() as? KaFunctionSymbol)?.isInfix != true) return
+            if ((function.symbol as? KaFunctionSymbol)?.isInfix != true) return
         }
         val argument = call.valueArguments.singleOrNull() ?: return
         if (argument.isNamed()) return

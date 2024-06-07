@@ -37,7 +37,7 @@ internal object AddDataModifierFixFactory {
 
         val modality = classSymbol.modality
         if (modality != Modality.FINAL || classSymbol.isInner) return@ModCommandBased emptyList()
-        val constructors = classSymbol.getDeclaredMemberScope().constructors
+        val constructors = classSymbol.declaredMemberScope.constructors
         val ctorParams = constructors.firstOrNull { it.isPrimary }?.valueParameters ?: return@ModCommandBased emptyList()
         if (ctorParams.isEmpty()) return@ModCommandBased emptyList()
 

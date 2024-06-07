@@ -82,7 +82,7 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
 private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration): Boolean {
     val declaration = this
     return declaration.isEffectivelyActual() && analyze(declaration) {
-        val symbol: KaDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.symbol
         return symbol.getExpectsForActual().any { it.psi == expectDeclaration }
     }
 }

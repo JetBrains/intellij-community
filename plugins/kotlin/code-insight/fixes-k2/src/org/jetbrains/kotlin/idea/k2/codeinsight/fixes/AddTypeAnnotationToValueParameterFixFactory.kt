@@ -35,12 +35,12 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     private fun getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
         val type = defaultValue.getKtType() ?: return null
 
-        if (type.isArrayOrPrimitiveArray()) {
+        if (type.isArrayOrPrimitiveArray) {
             if (element.hasModifier(KtTokens.VARARG_KEYWORD)) {
-                val elementType = type.getArrayElementType() ?: return null
+                val elementType = type.arrayElementType ?: return null
                 return getTypeName(elementType)
             } else if (defaultValue is KtCollectionLiteralExpression) {
-                val elementType = type.getArrayElementType()
+                val elementType = type.arrayElementType
                 if (elementType?.isPrimitive == true) {
                     val classId = (elementType as KtNonErrorClassType).classId
                     val arrayTypeName = "${classId.shortClassName}Array"

@@ -27,7 +27,7 @@ class KotlinK2ExpectActualSupport: ExpectActualSupport {
         if (declaration.isExpectDeclaration()) return declaration
         if (!declaration.isEffectivelyActual()) return null
         return analyze(declaration) {
-            val symbol: KaDeclarationSymbol = declaration.getSymbol()
+            val symbol: KaDeclarationSymbol = declaration.symbol
             (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration) }).firstOrNull()
         }
     }

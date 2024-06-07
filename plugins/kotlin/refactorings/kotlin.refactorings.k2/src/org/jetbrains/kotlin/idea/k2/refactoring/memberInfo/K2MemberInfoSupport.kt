@@ -25,8 +25,8 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
 
     override fun getOverrides(member: KtNamedDeclaration): Boolean? {
         analyze(member) {
-            val memberSymbol = (member.getSymbol() as? KaCallableSymbol) ?: return null
-            val allOverriddenSymbols = memberSymbol.getAllOverriddenSymbols().filterIsInstance<KaSymbolWithModality>()
+            val memberSymbol = (member.symbol as? KaCallableSymbol) ?: return null
+            val allOverriddenSymbols = memberSymbol.allOverriddenSymbols.filterIsInstance<KaSymbolWithModality>().toList()
             if (allOverriddenSymbols.isNotEmpty()) return allOverriddenSymbols.any { it.modality != Modality.ABSTRACT }
             return null
         }
@@ -34,7 +34,7 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
 
     override fun renderMemberInfo(member: KtNamedDeclaration): String {
         analyze(member) {
-            val memberSymbol = member.getSymbol()
+            val memberSymbol = member.symbol
             return memberSymbol.render(renderer)
         }
     }

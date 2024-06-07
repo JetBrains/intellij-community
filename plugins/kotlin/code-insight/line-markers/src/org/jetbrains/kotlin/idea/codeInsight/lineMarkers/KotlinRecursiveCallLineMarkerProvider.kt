@@ -78,7 +78,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             dispatchReceiver = dispatchReceiver.original
         }
 
-        val containingClass = target.symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
+        val containingClass = target.symbol.containingSymbol as? KaClassOrObjectSymbol ?: return true
 
         if (dispatchReceiver is KaExplicitReceiverValue) {
             if (dispatchReceiver.isSafeNavigation) {
@@ -92,7 +92,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
                         receiverSymbol.isOperator
                                 && receiverSymbol.name.asString() == "invoke"
                                 && containingClass.classKind.isObject
-                                && receiverSymbol.getContainingSymbol() == containingClass
+                                && receiverSymbol.containingSymbol == containingClass
                     }
                     is KaClassOrObjectSymbol -> {
                         receiverSymbol.classKind.isObject

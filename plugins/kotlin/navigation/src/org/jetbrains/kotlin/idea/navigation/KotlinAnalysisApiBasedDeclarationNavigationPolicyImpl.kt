@@ -232,7 +232,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         allowAnalysisFromWriteAction {
             analyze(declaration) {
                 buildString {
-                    val symbol = declaration.getSymbol() as KaCallableSymbol
+                    val symbol = declaration.symbol as KaCallableSymbol
                     symbol.receiverType?.let { receiverType ->
                         append(receiverType.render(renderer, position = Variance.INVARIANT))
                         append('.')

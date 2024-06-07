@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 context(KaSession)
 @ApiStatus.Internal
 fun isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KaCallableSymbol): Boolean {
-    val enumClassSymbol = (symbol.getContainingSymbol() as? KaClassOrObjectSymbol) ?: return false
+    val enumClassSymbol = (symbol.containingSymbol as? KaClassOrObjectSymbol) ?: return false
     return isSoftDeprecatedEnumValuesMethod(symbol, enumClassSymbol) &&
             getEntriesPropertyOfEnumClass(enumClassSymbol) != null
 }
@@ -32,7 +32,7 @@ fun isSoftDeprecatedEnumValuesMethod(
 context(KaSession)
 @ApiStatus.Internal
 fun getEntriesPropertyOfEnumClass(enumClassSymbol: KaClassOrObjectSymbol): KaCallableSymbol? =
-    enumClassSymbol.getStaticMemberScope().getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()
+    enumClassSymbol.staticMemberScope.getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()
 
 @ApiStatus.Internal
 fun PsiElement.isEnumValuesSoftDeprecateEnabled(): Boolean = languageVersionSettings.isEnumValuesSoftDeprecateEnabled()

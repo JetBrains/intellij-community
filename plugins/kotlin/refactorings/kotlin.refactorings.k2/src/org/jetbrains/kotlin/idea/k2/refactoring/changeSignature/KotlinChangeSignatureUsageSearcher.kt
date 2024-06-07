@@ -94,7 +94,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                     if (partiallyAppliedSymbol != null) {
                         val receiverValue = partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver
                         val symbol = partiallyAppliedSymbol.symbol
-                        val containingSymbol = symbol.getContainingSymbol()
+                        val containingSymbol = symbol.containingSymbol
                         if (receiverValue != null) {
                             val receiverExpression = (receiverValue as? KaExplicitReceiverValue)?.expression
                                 ?: ((receiverValue as? KaSmartCastedReceiverValue)?.original as? KaExplicitReceiverValue)?.expression

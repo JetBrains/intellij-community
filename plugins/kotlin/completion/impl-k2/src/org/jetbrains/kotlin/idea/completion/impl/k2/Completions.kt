@@ -149,7 +149,7 @@ internal object Completions {
         positionContext: KotlinRawPositionContext
     ): WeighingContext = when (positionContext) {
         is KotlinSuperReceiverNameReferencePositionContext -> {
-            val expectedType = positionContext.nameExpression.getExpectedType()
+            val expectedType = positionContext.nameExpression.expectedType
             val receiver = positionContext.superExpression
 
             // Implicit receivers do not match for this position completion context.
@@ -185,7 +185,7 @@ internal object Completions {
             // about expected type at all
             // TODO: calculate actual types for callable references correctly and use information about expected type
             is KotlinCallableReferencePositionContext -> null
-            else -> positionContext.nameExpression.getExpectedType()
+            else -> positionContext.nameExpression.expectedType
         }
         val receiver = positionContext.explicitReceiver
         val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers

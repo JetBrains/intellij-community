@@ -108,7 +108,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
         analyze(callableReferenceExpression) {
 
-            val expectedType = callableReferenceExpression.singleExpression()?.getExpectedType()
+            val expectedType = callableReferenceExpression.singleExpression()?.expectedType
             if (expectedType?.isFunctionType != true && expectedType?.isFunctionalInterfaceType != true) return
 
             val symbol = mainReferenceOfCallableReference.resolveToSymbol() ?: return
@@ -214,7 +214,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                         returnType.isMarkedNullable,
                         returnType.render(position = Variance.OUT_VARIANCE)
                     )
-                } else if (callExpression.isUsedAsExpression()) {
+                } else if (callExpression.isUsedAsExpression) {
                     return
                 }
             } else {
@@ -226,7 +226,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                 // Check that synthetic property won't be an expression for a new property with the same name like `val x = x`
                 // Topical only for references
                 if (expressionParent !is KtDotQualifiedExpression &&
-                    callExpression.isUsedAsExpression() && (expressionParent as? KtProperty)?.name.equals(syntheticPropertyName)
+                    callExpression.isUsedAsExpression && (expressionParent as? KtProperty)?.name.equals(syntheticPropertyName)
                 ) {
                     // Can't offer synthetic properties as right part of property in case names are same: like `val x = x`
                     return
@@ -399,7 +399,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         receiverType: KtType,
         propertyName: String
     ): Boolean {
-        val allOverriddenSymbols = listOf(symbol) + symbol.getAllOverriddenSymbols()
+        val allOverriddenSymbols = listOf(symbol) + symbol.allOverriddenSymbols
         if (functionOriginateNotFromJava(allOverriddenSymbols)) return false
         if (functionNameIsInNotPropertiesList(symbol, callExpression)) return false
 
@@ -423,7 +423,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KtType, propertyName: String): Boolean {
-        val fieldWithSameName = receiverType.getTypeScope()?.getDeclarationScope()?.getCallableSymbols()
+        val fieldWithSameName = receiverType.scope?.declarationScope?.getCallableSymbols()
             ?.filter { it is KtJavaFieldSymbol && it.name.toString() == propertyName && !it.visibility.isPrivateOrPrivateToThis() }
             ?.singleOrNull()
         return fieldWithSameName != null
@@ -436,7 +436,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         receiverType: KtType
     ): KtSyntheticJavaPropertySymbol? {
 
-        val syntheticJavaPropertiesScope = receiverType.getSyntheticJavaPropertiesScope() ?: return null
+        val syntheticJavaPropertiesScope = receiverType.syntheticJavaPropertiesScope ?: return null
 
         val syntheticProperties = syntheticJavaPropertiesScope.getCallableSignatures(SCOPE_NAME_FILTER)
 
@@ -468,7 +468,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         propertyAccessorKind: PropertyAccessorKind
     ): Boolean {
         val propertyExpectedType = if (propertyAccessorKind is PropertyAccessorKind.Setter) {
-            propertyAccessorKind.valueArgumentExpression.getExpectedType() ?: return false
+            propertyAccessorKind.valueArgumentExpression.expectedType ?: return false
         } else {
             callReturnType
         }

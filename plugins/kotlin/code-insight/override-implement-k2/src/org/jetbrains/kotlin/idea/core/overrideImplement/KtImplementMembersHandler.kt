@@ -45,7 +45,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
         context(KaSession)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassOrObjectSymbol): List<KaCallableSymbol> {
             return buildList {
-                classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
+                classWithUnimplementedMembers.memberScope.getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
                     when (symbol.getImplementationStatus(classWithUnimplementedMembers)) {
                         ImplementationStatus.NOT_IMPLEMENTED -> add(symbol)
@@ -60,7 +60,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                             //
                             // `Foo` does not need to implement `foo` since it inherits the implementation from `B`. But in the dialog, we should
                             // allow user to choose `foo` to implement.
-                            symbol.getIntersectionOverriddenSymbols()
+                            symbol.intersectionOverriddenSymbols
                                 .filter { (it as? KaSymbolWithModality)?.modality == Modality.ABSTRACT }
                                 .forEach { add(it) }
                         }

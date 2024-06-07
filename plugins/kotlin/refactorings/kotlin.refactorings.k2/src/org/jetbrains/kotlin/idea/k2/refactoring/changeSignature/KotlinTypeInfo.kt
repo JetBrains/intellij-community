@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -61,7 +60,7 @@ internal fun KtPsiFactory.createType(
                     if (baseFunction is PsiMethod) {
                         val substitutor = if (inheritedCallable is KtFunctionLiteral) {
                             val containingClass = baseFunction.containingClass
-                            val functionalType = inheritedCallable.getExpectedType()?.asPsiType(inheritedCallable, true)
+                            val functionalType = inheritedCallable.expectedType?.asPsiType(inheritedCallable, true)
                             if (containingClass != null && functionalType is PsiClassType)
                                 TypeConversionUtil.getSuperClassSubstitutor(containingClass, functionalType) else null
                         } else {
@@ -95,11 +94,11 @@ internal fun KtPsiFactory.createType(
 
 context(KaSession)
 private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction: PsiElement): KaSubstitutor? {
-    val inheritorCallable = inheritorDeclaration.getSymbol()
-    val baseCallable = (baseFunction as? KtCallableDeclaration)?.getSymbol()
-        ?: (baseFunction as? PsiMember)?.getCallableSymbol() ?: return null
-    val inheritor = inheritorCallable.getContainingSymbol()
-    val base = baseCallable.getContainingSymbol()
+    val inheritorCallable = inheritorDeclaration.symbol
+    val baseCallable = (baseFunction as? KtCallableDeclaration)?.symbol
+        ?: (baseFunction as? PsiMember)?.callableSymbol ?: return null
+    val inheritor = inheritorCallable.containingSymbol
+    val base = baseCallable.containingSymbol
     return if (inheritor is KaClassOrObjectSymbol && base is KaClassOrObjectSymbol) {
         createInheritanceTypeSubstitutor(inheritor, base)?.let { iSubstitutor ->
             buildSubstitutor {

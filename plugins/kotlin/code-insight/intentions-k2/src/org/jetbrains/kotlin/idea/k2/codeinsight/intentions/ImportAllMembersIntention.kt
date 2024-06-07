@@ -153,7 +153,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
         else -> return false
     } as? KaSymbolWithKind ?: return true
     if (referencedSymbol is KaConstructorSymbol) return false
-    return (referencedSymbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind?.isObject ?: true
+    return (referencedSymbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
 
 private fun KaDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassOrObjectSymbol>()?.classKind == KaClassKind.ENUM_CLASS

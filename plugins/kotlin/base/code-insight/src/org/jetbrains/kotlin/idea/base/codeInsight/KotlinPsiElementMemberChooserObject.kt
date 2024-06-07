@@ -49,7 +49,7 @@ class KotlinPsiElementMemberChooserObject(
         @JvmStatic
         fun getKotlinMemberChooserObject(declaration: KtDeclaration): KotlinPsiElementMemberChooserObject {
             return analyze(declaration) {
-                val symbol = declaration.getSymbol()
+                val symbol = declaration.symbol
                 val text = getChooserText(symbol)
                 val icon = getChooserIcon(declaration, symbol)
                 KotlinPsiElementMemberChooserObject(declaration, text, icon)

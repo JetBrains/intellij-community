@@ -340,7 +340,7 @@ class ImportQuickFix(
         }
 
         context(KaSession)
-        private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KaNamedClassOrObjectSymbol
+        private fun KaNamedClassOrObjectSymbol.isNested(): Boolean = containingSymbol is KaNamedClassOrObjectSymbol
 
         context(KaSession)
         private fun KaDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {

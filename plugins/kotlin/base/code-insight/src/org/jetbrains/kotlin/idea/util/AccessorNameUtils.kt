@@ -20,7 +20,7 @@ fun KtCallableDeclaration.getAccessorNames(): List<String> {
     if (KtPsiUtil.isLocal(ktDeclaration)) return Collections.emptyList()
 
     analyze(ktDeclaration) {
-        val symbol = ktDeclaration.getSymbol()
+        val symbol = ktDeclaration.symbol
         val probablePropertySymbol = if (symbol is KaValueParameterSymbol) {
             symbol.generatedPrimaryConstructorProperty
         } else {

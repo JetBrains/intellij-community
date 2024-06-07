@@ -95,7 +95,7 @@ sealed class ChangeVisibilityModifierIntention(
         if (modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
             val callableDescriptor = symbol as? KaCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
-            if (callableDescriptor.getAllOverriddenSymbols()
+            if (callableDescriptor.allOverriddenSymbols
                     .map { (it as? KaSymbolWithVisibility)?.visibility?.compareTo(targetVisibility) }
                     .any { it == null || it > 0 }
             ) return null

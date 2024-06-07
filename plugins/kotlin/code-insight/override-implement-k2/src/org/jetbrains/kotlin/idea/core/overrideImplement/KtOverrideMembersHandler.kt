@@ -45,12 +45,12 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
     context(KaSession)
 private fun getOverridableMembers(classOrObjectSymbol: KaClassOrObjectSymbol): List<OverrideMember> {
         return buildList {
-            classOrObjectSymbol.getMemberScope().getCallableSymbols().forEach { symbol ->
+            classOrObjectSymbol.memberScope.getCallableSymbols().forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
                 val implementationStatus = symbol.getImplementationStatus(classOrObjectSymbol) ?: return@forEach
                 if (!implementationStatus.isOverridable) return@forEach
 
-                val intersectionSymbols = symbol.getIntersectionOverriddenSymbols()
+                val intersectionSymbols = symbol.intersectionOverriddenSymbols
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {

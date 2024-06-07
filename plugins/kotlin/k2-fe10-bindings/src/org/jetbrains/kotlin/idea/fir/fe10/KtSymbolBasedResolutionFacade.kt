@@ -43,7 +43,7 @@ class KtSymbolBasedResolutionFacade(
 
     override fun resolveToDescriptor(declaration: KtDeclaration, bodyResolveMode: BodyResolveMode): DeclarationDescriptor {
         val ktSymbol = context.withAnalysisSession {
-            declaration.getSymbol()
+            declaration.symbol
         }
         return ktSymbol.toDeclarationDescriptor(context)
     }

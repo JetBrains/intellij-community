@@ -175,7 +175,7 @@ class ExpressionReplacementPerformer(
                 val canDropElementToBeReplaced = allowAnalysisFromWriteAction {
                     allowAnalysisOnEdt {
                         analyze(stub) {
-                            !stub.isUsedAsExpression()
+                            !stub.isUsedAsExpression
                         }
                     }
                 }

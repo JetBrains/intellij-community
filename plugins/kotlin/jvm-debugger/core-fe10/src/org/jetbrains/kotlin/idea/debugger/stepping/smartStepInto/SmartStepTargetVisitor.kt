@@ -110,7 +110,7 @@ class SmartStepTargetVisitor(
             val property = symbol.psi as? KtProperty ?: return false
             val delegate = property.delegate ?: return false
             val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false
-            val delegatedSymbol = delegatedMethod.getSymbol() as? KaFunctionLikeSymbol ?: return false
+            val delegatedSymbol = delegatedMethod.symbol as? KaFunctionLikeSymbol ?: return false
             val methodInfo = CallableMemberInfo(delegatedSymbol, countExistingMethodCalls(delegatedMethod))
             val label = propertyAccessLabel(symbol, delegatedSymbol)
             appendPropertyFilter(methodInfo, delegatedMethod, label, expression, lines)
@@ -235,7 +235,7 @@ class SmartStepTargetVisitor(
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
         return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
             val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
-            val scope = samClassSymbol.getMemberScope()
+            val scope = samClassSymbol.memberScope
             val funMethodSymbol = scope.getCallableSymbols()
                 .filterIsInstance<KaFunctionSymbol>()
                 .singleOrNull { it.modality == Modality.ABSTRACT }
@@ -387,7 +387,7 @@ class SmartStepTargetVisitor(
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1
         if (symbol !is KaFunctionSymbol) return null
-        return symbol.getAllOverriddenSymbols().firstNotNullOfOrNull { it.psi }
+        return symbol.allOverriddenSymbols.firstNotNullOfOrNull { it.psi }
     }
 
     private fun checkLineRangeFits(lineRange: IntRange?): Boolean =

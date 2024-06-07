@@ -201,7 +201,7 @@ context(KaSession)
 private fun KaCallableSymbol.isAnyEquals(): Boolean {
     val overriddenSymbols = sequence {
         yield(this@isAnyEquals)
-        yieldAll(this@isAnyEquals.getAllOverriddenSymbols())
+        yieldAll(this@isAnyEquals.allOverriddenSymbols)
     }
     return overriddenSymbols.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }

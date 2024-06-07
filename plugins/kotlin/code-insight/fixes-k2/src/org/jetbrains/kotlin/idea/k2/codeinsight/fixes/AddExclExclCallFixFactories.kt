@@ -83,7 +83,7 @@ object AddExclExclCallFixFactories {
         //   if (nullableInt == null) {
         //     val x = nullableInt.length  // No AddExclExclCallFix here
         //   }
-        if (target?.safeAs<KtExpression>()?.isDefinitelyNull() == true) {
+        if (target?.safeAs<KtExpression>()?.isDefinitelyNull == true) {
             return emptyList()
         }
 
@@ -101,7 +101,7 @@ object AddExclExclCallFixFactories {
 
         // NOTE: This is different from FE1.0 in that we offer the fix even if the function does NOT have the `operator` modifier.
         // Adding `!!` will then surface the error that `operator` should be added (with corresponding fix).
-        val typeScope = type.getTypeScope()?.getDeclarationScope()
+        val typeScope = type.scope?.declarationScope
             ?: return@IntentionBased emptyList()
         val hasValidIterator = typeScope.getCallableSymbols(OperatorNameConventions.ITERATOR)
             .filter { it is KaFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null

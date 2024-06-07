@@ -54,20 +54,20 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             analyze(ktModule) {
                 val ktSymbol = when (element) {
                     is KtParameter -> {
-                        if (element.hasValOrVar()) element.getSymbol() else null
+                        if (element.hasValOrVar()) element.symbol else null
                     }
                     is KtCallableDeclaration -> {
-                        element.getSymbol()
+                        element.symbol
                     }
                     is KtClass -> {
-                        element.primaryConstructor?.getSymbol()
-                            ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
+                        element.primaryConstructor?.symbol
+                            ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.symbol else null
                     }
                     is KtReferenceExpression -> {
                         val symbol = element.mainReference.resolveToSymbol()
                         when {
                           symbol is KaValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
-                          symbol is KaConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
+                          symbol is KaConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.containingSymbol
                           else -> symbol
                         }
                     }

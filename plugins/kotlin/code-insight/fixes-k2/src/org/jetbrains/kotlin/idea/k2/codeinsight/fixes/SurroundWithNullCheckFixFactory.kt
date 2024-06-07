@@ -84,7 +84,7 @@ internal object SurroundWithNullCheckFixFactory {
         val expressionTarget = expressionParent.getParentOfTypesAndPredicate(
             strict = false, parentClasses = arrayOf(KtExpression::class.java)
         ) {
-            !it.isUsedAsExpression() && it.hasAcceptableParent()
+            !it.isUsedAsExpression && it.hasAcceptableParent()
         } ?: return emptyList()
         // Surround declaration (even of local variable) with null check is generally a bad idea
         if (expressionTarget is KtDeclaration) return emptyList()

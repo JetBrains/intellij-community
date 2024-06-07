@@ -614,12 +614,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
                 continue
             }
-            if (curType != null && curType.isArrayOrPrimitiveArray()) {
+            if (curType != null && curType.isArrayOrPrimitiveArray) {
                 if (indexType.canBeNull()) {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
                 val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
-                val elementType = curType.getArrayElementType()
+                val elementType = curType.arrayElementType
                 if (lastIndex && storedValue != null) {
                     processExpression(storedValue)
                     addImplicitConversion(storedValue.getKotlinType(), curType.getJvmAwareArrayElementType())
@@ -1149,7 +1149,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             if (dfVar != null) {
                                 val sf = when {
                                     kotlinType.isSubTypeOf(StandardClassIds.Collection) -> SpecialField.COLLECTION_SIZE
-                                    kotlinType.isArrayOrPrimitiveArray() -> SpecialField.ARRAY_LENGTH
+                                    kotlinType.isArrayOrPrimitiveArray -> SpecialField.ARRAY_LENGTH
                                     else -> null
                                 }
                                 if (sf != null) {
@@ -1225,7 +1225,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         type ?: return null
         return when {
             type.isEnum() -> SpecialField.ENUM_ORDINAL
-            type.isArrayOrPrimitiveArray() -> SpecialField.ARRAY_LENGTH
+            type.isArrayOrPrimitiveArray -> SpecialField.ARRAY_LENGTH
             type.isSubTypeOf(StandardClassIds.Collection) ||
                     type.isSubTypeOf(StandardClassIds.Map) -> SpecialField.COLLECTION_SIZE
 

@@ -282,7 +282,7 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
-        val packageScope = packageSymbol.getPackageScope()
+        val packageScope = packageSymbol.packageScope
         val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         return packageScope
@@ -315,7 +315,7 @@ internal open class FirCallableCompletionContributor(
         )
         yieldAll(callablesWithMetadata)
 
-        val smartCastInfo = explicitReceiver.getSmartCastInfo()
+        val smartCastInfo = explicitReceiver.smartCastInfo
         if (smartCastInfo?.isStable == false) {
             // Collect members available from unstable smartcast as well.
             val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
@@ -621,9 +621,9 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     protected fun KaNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KtScope = buildList {
         if (withCompanionScope) {
-            addIfNotNull(companionObject?.getMemberScope())
+            addIfNotNull(companionObject?.memberScope)
         }
-        add(getStaticMemberScope())
+        add(staticMemberScope)
     }.asCompositeScope()
 }
 
@@ -772,13 +772,13 @@ internal class FirKDocCallableCompletionContributor(
             when (parentSymbol) {
                 is KtPackageSymbol -> {
                     val packageScopeKind = KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
-                    listOf(KtScopeWithKind(parentSymbol.getPackageScope(), packageScopeKind, token))
+                    listOf(KtScopeWithKind(parentSymbol.packageScope, packageScopeKind, token))
                 }
 
                 is KaNamedClassOrObjectSymbol -> buildList {
                     val type = parentSymbol.buildSelfClassType()
 
-                    type.getTypeScope()?.getDeclarationScope()?.let { typeScope ->
+                    type.scope?.declarationScope?.let { typeScope ->
                         val typeScopeKind = KaScopeKind.TypeScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                         add(KtScopeWithKind(typeScope, typeScopeKind, token))
                     }

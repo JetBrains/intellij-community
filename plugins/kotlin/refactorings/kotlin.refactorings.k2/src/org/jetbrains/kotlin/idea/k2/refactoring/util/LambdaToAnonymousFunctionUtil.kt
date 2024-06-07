@@ -49,7 +49,7 @@ object LambdaToAnonymousFunctionUtil {
             }
         }
 
-        val functionSymbol = functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return null
+        val functionSymbol = functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return null
         return KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
             typeParams()
             functionSymbol.receiverType?.let {

@@ -122,7 +122,7 @@ class KotlinParameterInfo(
             allowAnalysisFromWriteAction {
                 allowAnalysisOnEdt {
                     analyze(inheritedCallable) {
-                        val expectedType = inheritedCallable.getExpectedType()
+                        val expectedType = inheritedCallable.expectedType
                         return expectedType == null || expectedType is KtFunctionalType
                     }
                 }
@@ -206,14 +206,14 @@ class KotlinParameterInfo(
 
             analyze(expression) {
                 val target = ref.resolveToSymbol()
-                val declarationSymbol = callableDeclaration.getSymbol() as? KaCallableSymbol ?: return null
+                val declarationSymbol = callableDeclaration.symbol as? KaCallableSymbol ?: return null
                 if (target is KaValueParameterSymbol) {
-                    if (declarationSymbol is KaFunctionLikeSymbol && target.getContainingSymbol() == declarationSymbol) {
+                    if (declarationSymbol is KaFunctionLikeSymbol && target.containingSymbol == declarationSymbol) {
                         return declarationSymbol.valueParameters.indexOf(target) + (if ((callableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
                     }
 
                     if (declarationSymbol.receiverParameter != null &&
-                        (target.getContainingSymbol() as? KaConstructorSymbol)?.getContainingSymbol() == declarationSymbol.receiverParameter?.type?.expandedSymbol
+                        (target.containingSymbol as? KaConstructorSymbol)?.containingSymbol == declarationSymbol.receiverParameter?.type?.expandedSymbol
                     ) {
                         return Int.MAX_VALUE
                     }
@@ -234,10 +234,10 @@ class KotlinParameterInfo(
 
                 val symbol = expression.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
-                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.getContainingSymbol() }
+                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingSymbol }
                     ?.let { return Int.MAX_VALUE }
                 (symbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
-                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.getContainingSymbol() }
+                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingSymbol }
                     ?.let { return Int.MAX_VALUE }
 
                 if (expression.parent is KtThisExpression && declarationSymbol.receiverParameter == null) {

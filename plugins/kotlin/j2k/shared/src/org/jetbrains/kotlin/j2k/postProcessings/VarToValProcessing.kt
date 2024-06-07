@@ -59,7 +59,7 @@ class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProp
     private fun isApplicableToByAnalyze(element: KtProperty): Boolean {
         val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
 
-        val overriddenSymbols = symbol.getAllOverriddenSymbols()
+        val overriddenSymbols = symbol.allOverriddenSymbols
         if (overriddenSymbols.any { (it as? KtVariableSymbol)?.isVal == false }) return false
 
         val annotationClassIds = symbol.backingFieldSymbol?.annotationClassIds.orEmpty()

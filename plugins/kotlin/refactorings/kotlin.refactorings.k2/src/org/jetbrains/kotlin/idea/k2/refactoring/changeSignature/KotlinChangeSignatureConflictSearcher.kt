@@ -160,7 +160,7 @@ class KotlinChangeSignatureConflictSearcher(
                     candidateSymbol.receiverType,
                     newParameterTypes,
                     candidateSymbol.valueParameters.map { it.returnType }, //todo currently context receiver can't be changed
-                    (function.getSymbol() as? KaFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
+                    (function.symbol as? KaFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
                     candidateSymbol.contextReceivers
                 )
     }

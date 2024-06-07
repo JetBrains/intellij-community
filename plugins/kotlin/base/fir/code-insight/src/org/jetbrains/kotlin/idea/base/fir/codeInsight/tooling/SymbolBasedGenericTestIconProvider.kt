@@ -20,7 +20,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
         return analyze(declaration) {
             val symbol = when (declaration) {
                 is KtClassOrObject -> declaration.getClassOrObjectSymbol()
-                is KtNamedFunction -> declaration.getSymbol()
+                is KtNamedFunction -> declaration.symbol
                 else -> null
             } ?: return false
             isTestDeclaration(symbol)
@@ -33,7 +33,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
             isIgnored(symbol) -> false
             (symbol as? KaSymbolWithVisibility)?.visibility != Visibilities.Public -> false
             symbol.hasAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
-            symbol is KaClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getCallableSymbols().any { isTestDeclaration(it) }
+            symbol is KaClassOrObjectSymbol -> symbol.declaredMemberScope.getCallableSymbols().any { isTestDeclaration(it) }
             else -> false
         }
     }
@@ -44,7 +44,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
             return true
         }
 
-        val containingSymbol = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return false
+        val containingSymbol = symbol.containingSymbol as? KaClassOrObjectSymbol ?: return false
         return isIgnored(containingSymbol)
     }
 }

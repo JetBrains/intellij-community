@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -97,7 +96,7 @@ object ChangeTypeQuickFixFactories {
             else -> return candidateType
         }
         val returnedExpressions = if (functionOrGetter != null) {
-            val declarationSymbol = functionOrGetter.getSymbol()
+            val declarationSymbol = functionOrGetter.symbol
             functionOrGetter
                 .collectDescendantsOfType<KtReturnExpression> { it.getReturnTargetSymbol() == declarationSymbol }
                 .mapNotNull { it.returnedExpression }
@@ -232,7 +231,7 @@ object ChangeTypeQuickFixFactories {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
                 val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
-                val componentFunction = classSymbol.getMemberScope()
+                val componentFunction = classSymbol.memberScope
                     .getCallableSymbols(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration
                     ?: return@buildList

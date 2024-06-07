@@ -64,7 +64,7 @@ internal class IfThenToSafeAccessInspection :
     override fun prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
         val data = IfThenTransformationUtils.buildTransformationData(element) as IfThenTransformationData
 
-        if (data.negatedClause == null && data.baseClause.isUsedAsExpression()) return null
+        if (data.negatedClause == null && data.baseClause.isUsedAsExpression) return null
 
         // every usage is expected to have smart cast info;
         // if smart cast is unstable, replacing usage with `it` can break code logic
@@ -109,7 +109,7 @@ internal class IfThenToSafeAccessInspection :
             is KtThisExpression -> instanceReference
             else -> this
         }
-        return expressionToCheck.getSmartCastInfo()?.isStable != true
+        return expressionToCheck.smartCastInfo?.isStable != true
     }
 
 

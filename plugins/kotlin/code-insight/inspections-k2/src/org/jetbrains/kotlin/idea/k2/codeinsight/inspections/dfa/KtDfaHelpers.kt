@@ -139,8 +139,8 @@ internal fun KtExpression.getKotlinType(): KtType? {
 
 context(KaSession)
 internal fun KtType.getJvmAwareArrayElementType(): KtType? {
-    if (!isArrayOrPrimitiveArray()) return null
-    val type = getArrayElementType() ?: return null
+    if (!isArrayOrPrimitiveArray) return null
+    val type = arrayElementType ?: return null
     if (this.isClassTypeWithClassId(StandardClassIds.Array) && type.isPrimitive) {
         return type.withNullability(KtTypeNullability.NULLABLE)
     }

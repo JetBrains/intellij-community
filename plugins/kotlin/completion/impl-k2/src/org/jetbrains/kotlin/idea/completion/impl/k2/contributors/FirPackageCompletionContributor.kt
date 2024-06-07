@@ -37,7 +37,7 @@ internal class FirPackageCompletionContributor(
 
         val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
 
-        rootSymbol.getPackageScope()
+        rootSymbol.packageScope
             .getPackageSymbols(scopeNameFilter)
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
             .forEach { packageSymbol ->

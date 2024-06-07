@@ -185,7 +185,7 @@ private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
 context(KaSession)
 private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.getFileSymbol() ?: return false
-    val symbol = getSymbol()
+    val symbol = symbol
     if (symbol !is KaSymbolWithVisibility) return false
     return isVisible(symbol, file, position = usage)
 }
@@ -252,7 +252,7 @@ private fun checkVisibilityConflictForNonMovedUsages(
 fun KtNamedDeclaration.isMemberThatCanBeSkipped(): Boolean {
     if (containingClass() == null) return false
     analyze(this) {
-        val symbol = getSymbol() as? KaSymbolWithVisibility ?: return false
+        val symbol = symbol as? KaSymbolWithVisibility ?: return false
         val visibility = symbol.visibility
         if (visibility == Visibilities.Public || visibility == Visibilities.Protected) return true
     }

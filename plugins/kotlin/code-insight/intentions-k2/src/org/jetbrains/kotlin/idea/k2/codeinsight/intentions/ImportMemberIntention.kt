@@ -119,7 +119,7 @@ private fun canBeImported(symbol: KaCallableSymbol): Boolean {
         }
     } else {
         if ((symbol as? KaSymbolWithKind)?.symbolKind == KaSymbolKind.TOP_LEVEL) return true
-        val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
+        val containingClass = symbol.containingSymbol as? KaClassOrObjectSymbol ?: return true
         return containingClass.classKind == KaClassKind.OBJECT || containingClass.classKind == KaClassKind.COMPANION_OBJECT
     }
 }

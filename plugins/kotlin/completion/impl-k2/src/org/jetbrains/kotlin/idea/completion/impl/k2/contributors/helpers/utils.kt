@@ -101,7 +101,7 @@ internal fun collectNonExtensionsForType(
     indexInTower: Int? = null,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
-    val typeScope = type.getTypeScope() ?: return emptySequence()
+    val typeScope = type.scope ?: return emptySequence()
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .applyIf(!sessionParameters.allowSyntheticJavaProperties) { filter { it.symbol !is KtSyntheticJavaPropertySymbol } }
@@ -110,7 +110,7 @@ internal fun collectNonExtensionsForType(
         }
 
     val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassOrObjectSymbol>().filter { it.isInner }
-    val innerClassesConstructors = innerClasses.flatMap { it.getDeclaredMemberScope().constructors }.map { it.asSignature() }
+    val innerClassesConstructors = innerClasses.flatMap { it.declaredMemberScope.constructors }.map { it.asSignature() }
 
     val nonExtensionsFromType = (callables + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
 
@@ -133,7 +133,7 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
     scopeNameFilter: (Name) -> Boolean,
     symbolFilter: (KaCallableSymbol) -> Boolean
 ): Sequence<KtCallableSignature<*>> {
-    val syntheticJavaPropertiesTypeScope = type.getSyntheticJavaPropertiesScope() ?: return this
+    val syntheticJavaPropertiesTypeScope = type.syntheticJavaPropertiesScope ?: return this
     val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .filterNonExtensions(visibilityChecker, symbolFilter)
         .filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
@@ -196,5 +196,5 @@ private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
     return symbol is KtPropertySymbol &&
             symbol.isStatic &&
             symbol.callableId?.callableName == StandardNames.ENUM_ENTRIES &&
-            (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ENUM_CLASS
+            (symbol.containingSymbol as? KaClassOrObjectSymbol)?.classKind == KaClassKind.ENUM_CLASS
 }

@@ -16,7 +16,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -78,7 +77,7 @@ object K2CreateFunctionFromUsageUtil {
 
     context (KaSession)
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
-        var expectedType = getExpectedType()
+        var expectedType = expectedType
         if (expectedType == null) {
             val parent = this.parent
             expectedType = when {
@@ -88,16 +87,16 @@ object K2CreateFunctionFromUsageUtil {
                     val variable = parent.parent as KtProperty
                     val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
                     val ktType = variable.getReturnKtType()
-                    val symbol = variable.getSymbol() as? KaCallableSymbol
-                    val parameterType = symbol?.receiverType ?: (variable.getSymbol()
-                        .getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.nullableAny
+                    val symbol = variable.symbol as? KaCallableSymbol
+                    val parameterType = symbol?.receiverType ?: (variable.symbol
+                        .containingSymbol as? KaNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.nullableAny
                     buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
                         argument(parameterType)
                         argument(ktType)
                     }
                 }
                 parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
-                    (parent.getExpectedType() as? KtFunctionalType)?.returnType
+                    (parent.expectedType as? KtFunctionalType)?.returnType
                 }
                 else -> null
             }
@@ -139,7 +138,7 @@ object K2CreateFunctionFromUsageUtil {
             e=e.parent
         }
         if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
-            return e.getExpectedType() ?: withValidityAssertion { analysisSession.builtinTypes.any }
+            return e.expectedType ?: withValidityAssertion { analysisSession.builtinTypes.any }
         }
         return null
     }

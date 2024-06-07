@@ -97,7 +97,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     @OptIn(KaAllowAnalysisOnEdt::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable.getSymbol() as? KaSymbolWithVisibility)?.visibility ?: Visibilities.Public
+            (callable.symbol as? KaSymbolWithVisibility)?.visibility ?: Visibilities.Public
         }
     }
 

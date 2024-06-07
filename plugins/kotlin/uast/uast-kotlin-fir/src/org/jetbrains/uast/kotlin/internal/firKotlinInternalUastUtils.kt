@@ -7,7 +7,6 @@ import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -90,7 +89,7 @@ internal fun toPsiMethod(
         (functionSymbol as? KaFunctionSymbol)?.isInline == true &&
         functionSymbol.typeParameters.any { it.isReified }
     ) {
-        functionSymbol.getContainingJvmClassName()?.let { fqName ->
+        functionSymbol.containingJvmClassName?.let { fqName ->
             JavaPsiFacade.getInstance(context.project)
                 .findClass(fqName, context.resolveScope)
                 ?.let { containingClass ->
@@ -249,7 +248,7 @@ private fun toPsiMethodForDeserialized(
     } else if (functionSymbol is KaFunctionSymbol) {
         // Lint/UAST CLI: attempt to find the binary class
         //   with the facade fq name from the resolved symbol
-        functionSymbol.getContainingJvmClassName()?.let { fqName ->
+        functionSymbol.containingJvmClassName?.let { fqName ->
             JavaPsiFacade.getInstance(context.project)
                 .findClass(fqName, context.resolveScope)
                 ?.lookup()
@@ -373,7 +372,7 @@ internal fun nullability(ktType: KtType?): KtTypeNullability? {
 
 context(KaSession)
 internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
-    return (ktCallableDeclaration.getSymbol() as? KaCallableSymbol)?.returnType
+    return (ktCallableDeclaration.symbol as? KaCallableSymbol)?.returnType
 }
 
 /**

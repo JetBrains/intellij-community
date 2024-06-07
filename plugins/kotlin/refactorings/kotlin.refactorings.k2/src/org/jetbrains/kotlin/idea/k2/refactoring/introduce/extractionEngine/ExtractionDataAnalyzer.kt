@@ -167,7 +167,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
             val typeOfDefaultFlow = defaultExpressionInfo?.type?.takeIf {
                 //extract as Unit function if the last expression is not used afterward
-                !extractionData.options.inferUnitTypeForUnusedValues || defaultExpressionInfo.expression.isUsedAsExpression()
+                !extractionData.options.inferUnitTypeForUnusedValues || defaultExpressionInfo.expression.isUsedAsExpression
             }
 
             val scope = extractionData.targetSibling
@@ -276,7 +276,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
 
     val propagatingMarkerDescriptors = mutableListOf<KtAnnotationApplicationWithArgumentsInfo>()
     val optInMarkerNames = mutableListOf<FqName>()
-    for (annotationEntry in container.getSymbol().annotations) {
+    for (annotationEntry in container.symbol.annotations) {
         val fqName = annotationEntry.classId?.asSingleFqName() ?: continue
 
         if (fqName in FqNames.OptInFqNames.OPT_IN_FQ_NAMES) {

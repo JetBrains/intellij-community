@@ -24,7 +24,7 @@ abstract class KotlinStatementsSurrounder : ModCommandSurrounder() {
             val expr = elements[0] as KtExpression
             if (!isApplicableWhenUsedAsExpression) {
                 allowAnalysisOnEdt {
-                    if (analyze(expr) { expr.isUsedAsExpression() }) {
+                    if (analyze(expr) { expr.isUsedAsExpression }) {
                         return false
                     }
                 }

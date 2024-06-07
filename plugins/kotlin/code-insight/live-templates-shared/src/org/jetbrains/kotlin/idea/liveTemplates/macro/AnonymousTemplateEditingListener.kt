@@ -59,7 +59,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
                 if (symbol is KaNamedClassOrObjectSymbol) {
                     yield(symbol)
                 } else if (symbol is KaConstructorSymbol) {
-                    val containingClassSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol
+                    val containingClassSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol
                     if (containingClassSymbol != null) {
                         yield(containingClassSymbol)
                     }
@@ -70,7 +70,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
         val referencedClass = referencedClasses.firstOrNull() ?: return null
 
         val hasZeroParameterConstructors = referencedClass
-            .getDeclaredMemberScope()
+            .declaredMemberScope
             .constructors
             .any { ctor ->
                 val parameters = ctor.valueParameters

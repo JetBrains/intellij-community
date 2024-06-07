@@ -118,7 +118,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
         fun PsiElement.hasSmartCast(element: KtProperty): Boolean {
             return anyDescendantOfType<KtNameReferenceExpression> {
-                it.text == declarationName && it.reference?.resolve() == element && it.getSmartCastInfo() != null
+                it.text == declarationName && it.reference?.resolve() == element && it.smartCastInfo != null
             }
         }
 
@@ -349,7 +349,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
-        val declarationName = (element.getSymbol() as? KaPossiblyNamedSymbol)?.name.toString()
+        val declarationName = (element.symbol as? KaPossiblyNamedSymbol)?.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
             it.text == declarationName && it.reference?.isReferenceTo(element) ?: false
         }

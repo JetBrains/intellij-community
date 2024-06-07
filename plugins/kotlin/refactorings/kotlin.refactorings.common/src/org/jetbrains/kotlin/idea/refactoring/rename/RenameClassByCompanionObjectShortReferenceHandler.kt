@@ -24,7 +24,7 @@ class RenameClassByCompanionObjectShortReferenceHandler : AbstractReferenceSubst
         if (refExpr.getReferencedName() == symbol.name?.asString()) {
           return null
         }
-        val containingSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol ?: return null
+        val containingSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol ?: return null
         if (containingSymbol.companionObject != symbol) return null
         return containingSymbol.psi
       }

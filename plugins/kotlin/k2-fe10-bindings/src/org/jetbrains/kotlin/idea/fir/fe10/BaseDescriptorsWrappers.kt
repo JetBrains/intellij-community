@@ -95,7 +95,7 @@ private fun KtAnnotationValue.toConstantValue(context: Fe10WrapperContext): Cons
                         var unwrappedType: KtNonErrorClassType = type
                         var arrayDimensions = 0
                         while (unwrappedType.classId == StandardClassIds.Array) {
-                            val elementType = unwrappedType.getArrayElementType()?.lowerBoundIfFlexible() as? KtNonErrorClassType ?: break
+                            val elementType = unwrappedType.arrayElementType?.lowerBoundIfFlexible() as? KtNonErrorClassType ?: break
                             unwrappedType = elementType
                             arrayDimensions += 1
                         }
@@ -151,7 +151,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: Fe10WrapperContex
 
     override fun getContainingDeclaration(): DeclarationDescriptor {
         val containerSymbol = context.withAnalysisSession {
-            ktSymbol.getContainingSymbol()
+            ktSymbol.containingSymbol
         }
         if (containerSymbol != null)
             return containerSymbol.toDeclarationDescriptor(context)
@@ -273,12 +273,12 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KaNamedClassOrObjectSy
     override fun getOriginal(): ClassDescriptor = this
 
     override fun getUnsubstitutedPrimaryConstructor(): ClassConstructorDescriptor? = context.withAnalysisSession {
-        ktSymbol.getDeclaredMemberScope().constructors.firstOrNull { it.isPrimary }
+        ktSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary }
             ?.let { KtSymbolBasedConstructorDescriptor(it, this@KtSymbolBasedClassDescriptor) }
     }
 
     override fun getConstructors(): Collection<ClassConstructorDescriptor> = context.withAnalysisSession {
-        ktSymbol.getDeclaredMemberScope().constructors.map {
+        ktSymbol.declaredMemberScope.constructors.map {
             KtSymbolBasedConstructorDescriptor(it, this@KtSymbolBasedClassDescriptor)
         }.toList()
     }
@@ -387,7 +387,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KaFunctionSymbol, c
 
     override fun getOverriddenDescriptors(): Collection<FunctionDescriptor> {
         val overriddenKtSymbols = context.withAnalysisSession {
-            ktSymbol.getAllOverriddenSymbols()
+            ktSymbol.allOverriddenSymbols.toList()
         }
 
         return overriddenKtSymbols.map { KtSymbolBasedFunctionDescriptor(it as KaFunctionSymbol, context) }
@@ -498,7 +498,7 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
 }
 
 private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KaCallableSymbol): ReceiverParameterDescriptor? {
-    val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.getDispatchReceiverType() } ?: return null
+    val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.dispatchReceiverType } ?: return null
     return KtSymbolStubDispatchReceiverParameterDescriptor(ktDispatchTypeAndAnnotations, context)
 }
 
@@ -645,7 +645,7 @@ abstract class AbstractKtSymbolBasedPropertyDescriptor(
 
     override fun getOverriddenDescriptors(): Collection<PropertyDescriptor> {
         val overriddenKtSymbols = context.withAnalysisSession {
-            ktSymbol.getAllOverriddenSymbols()
+            ktSymbol.allOverriddenSymbols.toList()
         }
 
         return overriddenKtSymbols.map { it.toDeclarationDescriptor(context) as PropertyDescriptor }

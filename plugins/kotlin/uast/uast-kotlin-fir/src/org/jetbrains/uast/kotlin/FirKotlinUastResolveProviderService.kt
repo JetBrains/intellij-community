@@ -9,8 +9,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -676,7 +674,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun hasTypeForValueClassInSignature(ktDeclaration: KtDeclaration): Boolean {
         analyzeForUast(ktDeclaration) {
-            val symbol = ktDeclaration.getSymbol() as? KaCallableSymbol ?: return false
+            val symbol = ktDeclaration.symbol as? KaCallableSymbol ?: return false
             if (symbol.returnType.typeForValueClass) return true
             if (symbol.receiverType?.typeForValueClass == true) return true
             if (symbol is KaFunctionLikeSymbol) {
@@ -691,7 +689,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         containingLightDeclaration: PsiModifierListOwner?,
     ): PsiType? {
         analyzeForUast(suspendFunction) {
-            val symbol = suspendFunction.getSymbol() as? KaFunctionSymbol ?: return null
+            val symbol = suspendFunction.symbol as? KaFunctionSymbol ?: return null
             if (!symbol.isSuspend) return null
             val continuationType = buildClassType(StandardClassIds.Continuation) { argument(symbol.returnType) }
             return toPsiType(
@@ -713,7 +711,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
         val sourcePsi = uLambdaExpression.sourcePsi
         analyzeForUast(sourcePsi) {
-            val samType = sourcePsi.getExpectedType()
+            val samType = sourcePsi.expectedType
                 ?.takeIf { it !is KtErrorType && it.isFunctionalInterfaceType }
                 ?.lowerBoundIfFlexible()
                 ?: return null
@@ -735,7 +733,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun modality(ktDeclaration: KtDeclaration): Modality? {
         analyzeForUast(ktDeclaration) {
-            return (ktDeclaration.getSymbol() as? KaSymbolWithModality)?.modality
+            return (ktDeclaration.symbol as? KaSymbolWithModality)?.modality
         }
     }
 

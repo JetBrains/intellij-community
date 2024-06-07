@@ -47,7 +47,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
 
         sink.whenOptionEnabled(SHOW_RETURN_EXPRESSIONS.name) {
             val isUsedAsExpression = analyze(lambdaExpression) {
-                expression.isUsedAsExpression()
+                expression.isUsedAsExpression
             }
             if (!isUsedAsExpression) return@whenOptionEnabled
 
@@ -94,7 +94,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
 
         sink.whenOptionEnabled(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name) {
             analyze(functionLiteral) {
-                val anonymousFunctionSymbol = functionLiteral.getSymbol() as? KaAnonymousFunctionSymbol ?: return@whenOptionEnabled
+                val anonymousFunctionSymbol = functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return@whenOptionEnabled
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
                     sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hasBackground = true) {
                         text("this: ")

@@ -39,7 +39,7 @@ private fun KtType.renderFullyQualifiedName() = render(KtTypeRendererForSource.W
 internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
     override fun KtFunction.matchParameters(vararg parameterTypes: String): Boolean {
         analyze(this) {
-            val symbol = getSymbol() as? KaFunctionSymbol ?: return false
+            val symbol = symbol as? KaFunctionSymbol ?: return false
             val valueParameterSymbols = symbol.valueParameters
 
             if (valueParameterSymbols.size != parameterTypes.size) return false
@@ -56,7 +56,7 @@ internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
     }
 
     override fun KtFunction.matchReceiver(receiverFqName: String): Boolean = analyze(this) {
-        val symbol = getSymbol() as? KaFunctionSymbol ?: return false
+        val symbol = symbol as? KaFunctionSymbol ?: return false
         val receiverType = symbol.receiverType ?: return false
         receiverType.renderFullyQualifiedName() == receiverFqName
     }

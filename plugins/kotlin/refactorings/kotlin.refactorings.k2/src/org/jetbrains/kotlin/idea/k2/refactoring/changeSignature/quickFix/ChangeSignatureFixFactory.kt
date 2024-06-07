@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -341,7 +340,7 @@ object ChangeSignatureFixFactory {
         element: PsiElement,
     ): List<ParameterQuickFix> {
         if (symbol !is KtParameterSymbol) return emptyList()
-        val containingSymbol = symbol.getContainingSymbol() as? KaFunctionLikeSymbol ?: return emptyList()
+        val containingSymbol = symbol.containingSymbol as? KaFunctionLikeSymbol ?: return emptyList()
         if (containingSymbol is KaFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
             containingSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
             containingSymbol.origin == KtSymbolOrigin.LIBRARY
@@ -410,7 +409,7 @@ internal fun getDeclarationName(functionLikeSymbol: KaFunctionLikeSymbol): Strin
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
-            if ((constructorSymbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol)?.isInline == true) {
+            if ((constructorSymbol.containingSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassId?.shortClassName
         }

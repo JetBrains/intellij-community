@@ -32,7 +32,7 @@ class KotlinSmartStepTargetFilterer(
 
     fun visitInlineFunction(function: KtNamedFunction) {
         val label = analyze(function) {
-            val symbol = function.getSymbol()
+            val symbol = function.symbol
             KotlinMethodSmartStepTarget.calcLabel(symbol)
         }
         val currentCount = functionCounter.increment(label) - 1
@@ -87,7 +87,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
         analyze(declaration) {
-            val symbol = declaration.getSymbol() as? KaFunctionLikeSymbol ?: return false
+            val symbol = declaration.symbol as? KaFunctionLikeSymbol ?: return false
             return owner == symbol.getJvmInternalClassName() && signature == symbol.getJvmSignature()
         }
     }

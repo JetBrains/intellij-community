@@ -25,7 +25,7 @@ class KotlinExpectOrActualGotoRelatedProvider : GotoRelatedProvider() {
         val targets = when {
             declaration.isExpectDeclaration() -> declaration.actualsForExpected()
             declaration.isEffectivelyActual() -> analyze(declaration) {
-                declaration.getSymbol().getExpectsForActual().mapNotNull { it.psi }
+                declaration.symbol.getExpectsForActual().mapNotNull { it.psi }
             }
 
             else -> emptyList()

@@ -268,7 +268,7 @@ internal class KotlinIdeDeclarationRenderer(
                 symbol is KaClassOrObjectSymbol -> !(symbol.classKind == KaClassKind.INTERFACE && symbol.modality == Modality.ABSTRACT || symbol.classKind.isObject && symbol.modality == Modality.FINAL)
 
                 symbol is KaCallableSymbol -> {
-                    symbol.modality == Modality.OPEN || symbol.getContainingSymbol() != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
+                    symbol.modality == Modality.OPEN || symbol.containingSymbol != null && symbol.modality == Modality.FINAL || symbol.modality == Modality.ABSTRACT
                 }
 
                 else -> false
@@ -440,7 +440,7 @@ internal class KotlinIdeDeclarationRenderer(
                 }
                 val qName = when (owner) {
                     is KtNonErrorClassType -> owner.classId.asSingleFqName()
-                    is KtTypeParameterType -> owner.symbol.getContainingSymbol()?.getFqNameIfPackageOrNonLocal()?.child(name)
+                    is KtTypeParameterType -> owner.symbol.containingSymbol?.getFqNameIfPackageOrNonLocal()?.child(name)
                         ?: FqName.topLevel(name)
 
                     else -> FqName.topLevel(name)
@@ -512,7 +512,7 @@ internal class KotlinIdeDeclarationRenderer(
                             if (callableSymbol is KaNamedSymbol) {
                                 declarationRenderer.nameRenderer.renderName(analysisSession, callableSymbol, declarationRenderer, printer)
                             } else if (callableSymbol is KaConstructorSymbol) {
-                                (callableSymbol.getContainingSymbol() as? KaNamedSymbol)?.let {
+                                (callableSymbol.containingSymbol as? KaNamedSymbol)?.let {
                                     printer.append(highlight(it.name.renderName()) {
                                         asClassName
                                     })
@@ -674,7 +674,7 @@ internal class KotlinIdeDeclarationRenderer(
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
                 if (symbol is KaClassOrObjectSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
-                    val className = (symbol.getContainingSymbol() as? KaClassOrObjectSymbol)?.name
+                    val className = (symbol.containingSymbol as? KaClassOrObjectSymbol)?.name
                     if (className != null) {
                         printer.append(highlight("of ") { asInfo } )
                         printer.append(highlight(className.renderName()) { asClassName } )
@@ -707,7 +707,7 @@ internal class KotlinIdeDeclarationRenderer(
                 })
 
                 if (symbol is KaNamedClassOrObjectSymbol && symbol.isData) {
-                    val primaryConstructor = symbol.getDeclaredMemberScope().constructors.firstOrNull { it.isPrimary }
+                    val primaryConstructor = symbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary }
                     if (primaryConstructor != null) {
                         declarationRenderer.valueParametersRenderer.renderValueParameters(
                             analysisSession,

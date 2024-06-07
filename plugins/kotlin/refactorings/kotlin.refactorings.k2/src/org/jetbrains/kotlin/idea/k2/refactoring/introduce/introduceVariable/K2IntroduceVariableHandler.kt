@@ -133,7 +133,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private fun KtExpression.shouldReplaceOccurrence(container: PsiElement?): Boolean {
         val effectiveParent = (parent as? KtScriptInitializer)?.parent ?: parent
         return container != effectiveParent || analyzeInModalWindow(this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            isUsedAsExpression()
+            isUsedAsExpression
         }
     }
 

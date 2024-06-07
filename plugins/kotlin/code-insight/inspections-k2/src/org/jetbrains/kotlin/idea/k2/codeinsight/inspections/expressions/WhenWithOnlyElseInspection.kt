@@ -85,7 +85,7 @@ internal class WhenWithOnlyElseInspection
     override fun prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
-        val isWhenUsedAsExpression = element.isUsedAsExpression()
+        val isWhenUsedAsExpression = element.isUsedAsExpression
         val subjectVariableInfo = element.subjectVariable?.let {
             val initializer = it.initializer
             WhenSubjectVariableInfo(

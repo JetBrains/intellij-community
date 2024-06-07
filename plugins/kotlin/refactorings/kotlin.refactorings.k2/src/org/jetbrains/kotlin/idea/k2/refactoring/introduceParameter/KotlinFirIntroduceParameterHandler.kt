@@ -84,7 +84,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                         super.visitKtElement(element)
 
                         val symbol = element.resolveCallOld()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                        val callableSymbol = targetParent.getSymbol() as? KaCallableSymbol
+                        val callableSymbol = targetParent.symbol as? KaCallableSymbol
                         if (callableSymbol != null) {
                             if ((symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter || (symbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol == callableSymbol.receiverParameter) {
                                 usages.putValue(receiverTypeRef, element)
