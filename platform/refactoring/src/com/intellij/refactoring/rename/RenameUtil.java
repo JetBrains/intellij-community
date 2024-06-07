@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -361,8 +361,10 @@ public final class RenameUtil {
     }
   }
 
-  public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
-    if (newName == null || newName.length() == 0) {
+  public static boolean isValidName(@Nullable final Project project,
+                                    @NotNull final PsiElement psiElement,
+                                    @Nullable final String newName) {
+    if (StringUtil.isEmpty(newName)) {
       return false;
     }
     final Condition<String> inputValidator = RenameInputValidatorRegistry.getInputValidator(psiElement);
