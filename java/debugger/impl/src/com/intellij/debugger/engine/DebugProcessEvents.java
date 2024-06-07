@@ -863,6 +863,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           // There are some errors in evaluation-resume-suspend logic
           debugProcess.logError("This means resuming thead " + thread + " to the running state for " + suspendContext);
         }
+        LOG.warn("Yet another thread has been stopped: " + suspendContext);
         suspendManager.voteResume(suspendContext);
         debugProcess.notifyStoppedOtherThreads();
       }
