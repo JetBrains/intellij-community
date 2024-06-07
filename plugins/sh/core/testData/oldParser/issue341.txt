@@ -103,9 +103,8 @@ SHELL_SCRIPT
                 PsiElement(CLOSE_QUOTE)('"')
               LITERAL
                 PsiElement(word)('/..')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PIPELINE_COMMAND_LIST
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
             GENERIC_COMMAND_DIRECTIVE
               LITERAL
                 PsiElement(word)('pwd')
@@ -146,9 +145,8 @@ SHELL_SCRIPT
                   PsiElement(CLOSE_QUOTE)('"')
                 LITERAL
                   PsiElement(word)('/..')
-            PsiElement(;)(';')
-            PsiWhiteSpace(' ')
-            PIPELINE_COMMAND_LIST
+              PsiElement(;)(';')
+              PsiWhiteSpace(' ')
               GENERIC_COMMAND_DIRECTIVE
                 LITERAL
                   PsiElement(word)('pwd')

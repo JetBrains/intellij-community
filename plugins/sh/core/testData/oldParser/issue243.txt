@@ -19,15 +19,13 @@ SHELL_SCRIPT
                 VARIABLE
                   PsiElement(var)('$1')
                 PsiElement(CLOSE_QUOTE)('"')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PIPELINE_COMMAND_LIST
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
             GENERIC_COMMAND_DIRECTIVE
               LITERAL
                 PsiElement(word)('shift')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PIPELINE_COMMAND_LIST
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
             WHILE_COMMAND
               PsiElement(while)('while')
               PsiWhiteSpace(' ')
@@ -93,9 +91,8 @@ SHELL_SCRIPT
                       PsiElement(;;)(';;')
                       PsiWhiteSpace(' ')
                       PsiElement(esac)('esac')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('shift')

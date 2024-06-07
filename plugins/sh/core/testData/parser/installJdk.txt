@@ -1764,9 +1764,8 @@ SHELL_SCRIPT
                           PsiElement(})('}')
                         PsiElement(STRING_CONTENT)('_bin.tar.gz')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('return')
@@ -1799,9 +1798,8 @@ SHELL_SCRIPT
                           PsiElement(})('}')
                         PsiElement(STRING_CONTENT)('_bin.tar.gz')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('return')
@@ -1834,9 +1832,8 @@ SHELL_SCRIPT
                           PsiElement(})('}')
                         PsiElement(STRING_CONTENT)('_bin.tar.gz')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('return')
@@ -1869,9 +1866,8 @@ SHELL_SCRIPT
                           PsiElement(})('}')
                         PsiElement(STRING_CONTENT)('_bin.tar.gz')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('return')
@@ -1904,9 +1900,8 @@ SHELL_SCRIPT
                           PsiElement(})('}')
                         PsiElement(STRING_CONTENT)('_bin.tar.gz')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('return')
@@ -2423,9 +2418,8 @@ SHELL_SCRIPT
                   PsiElement(=)('=')
                   STRING
                     PsiElement(RAW_STRING)(''--quiet'')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PIPELINE_COMMAND_LIST
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
             IF_COMMAND
               PsiElement(if)('if')
               PsiWhiteSpace(' ')
@@ -3600,9 +3594,8 @@ SHELL_SCRIPT
                               PsiElement(word)('target')
                               PsiElement(})('}')
                             PsiElement(CLOSE_QUOTE)('"')
-                      PsiElement(;)(';')
-                      PsiWhiteSpace(' ')
-                      PIPELINE_COMMAND_LIST
+                        PsiElement(;)(';')
+                        PsiWhiteSpace(' ')
                         GENERIC_COMMAND_DIRECTIVE
                           LITERAL
                             PsiElement(word)('pwd')

@@ -218,6 +218,7 @@ private compound_list_recover ::= !(elif | else | then | fi)
 
 pipeline_command_list ::= pipeline_command (
                                              ('|' | '|&' | '&&' | '||') newlines pipeline_command
+                                             | ('&' | ';') pipeline_command
                                            )* {pin=1} // todo with pin
 
 function_definition ::= &(function | word '(') function_definition_inner {

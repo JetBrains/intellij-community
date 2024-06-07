@@ -246,9 +246,8 @@ SHELL_SCRIPT
               PsiWhiteSpace(' ')
               LITERAL
                 PsiElement(word)(':')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PIPELINE_COMMAND_LIST
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
             SIMPLE_COMMAND
               GENERIC_COMMAND_DIRECTIVE
                 LITERAL
@@ -449,9 +448,8 @@ SHELL_SCRIPT
                           PsiElement(=)('=')
                           NUMBER
                             PsiElement(int)('0')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SHELL_COMMAND
                       ARITHMETIC_EXPANSION
                         PsiElement(()('(')
@@ -469,9 +467,8 @@ SHELL_SCRIPT
                                 PsiElement(int)('1')
                         PsiElement())(')')
                         PsiElement())(')')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -840,9 +837,8 @@ SHELL_SCRIPT
                           PsiElement(>&)('>&')
                           NUMBER
                             PsiElement(int)('2')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -1082,10 +1078,9 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('Not enough arguments passed')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiWhiteSpace(' ')
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -1386,10 +1381,9 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('Function not specified')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiWhiteSpace('    ')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiWhiteSpace('    ')
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -1433,10 +1427,9 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('Name not passed')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiWhiteSpace('           ')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiWhiteSpace('           ')
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -1482,10 +1475,9 @@ SHELL_SCRIPT
                         VARIABLE
                           PsiElement(var)('$name')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiWhiteSpace(' ')
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -1531,10 +1523,9 @@ SHELL_SCRIPT
                         VARIABLE
                           PsiElement(var)('$name')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiWhiteSpace('   ')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiWhiteSpace('   ')
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -1823,10 +1814,9 @@ SHELL_SCRIPT
                                   PsiElement(var)('$varname')
                                 PsiElement(STRING_CONTENT)(' unset')
                                 PsiElement(CLOSE_QUOTE)('"')
-                          PsiWhiteSpace(' ')
-                          PsiElement(;)(';')
-                          PsiWhiteSpace(' ')
-                          PIPELINE_COMMAND_LIST
+                            PsiWhiteSpace(' ')
+                            PsiElement(;)(';')
+                            PsiWhiteSpace(' ')
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
                                 LITERAL

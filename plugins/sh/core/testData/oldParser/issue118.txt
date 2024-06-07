@@ -70,9 +70,8 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('match .gz')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     ASSIGNMENT_COMMAND
                       LITERAL
                         PsiElement(word)('FNAME')
@@ -89,9 +88,8 @@ SHELL_SCRIPT
                           PsiElement(word)('(z|Z|gz)')
                           PsiElement(})('}')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
@@ -101,9 +99,8 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('after fname')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     ASSIGNMENT_COMMAND
                       LITERAL
                         PsiElement(word)('DECOMPRESSOR')
@@ -112,9 +109,8 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('gzip -dc')
                         PsiElement(CLOSE_QUOTE)('"')
-                  PsiElement(;)(';')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND_LIST
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL

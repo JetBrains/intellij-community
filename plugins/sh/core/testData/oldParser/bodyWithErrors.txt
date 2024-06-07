@@ -56,9 +56,8 @@ SHELL_SCRIPT
                   NUMBER
                     PsiElement(int)('1')
                   PsiElement(})('}')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PIPELINE_COMMAND_LIST
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
             GENERIC_COMMAND_DIRECTIVE
               LITERAL
                 PsiElement(word)('echo')
