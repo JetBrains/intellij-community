@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor
 
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-sealed interface K2MoveSourceDescriptor<T : KtElement> {
+sealed interface K2MoveSourceDescriptor<T : PsiElement> {
     val elements: Set<T>
 
-    class FileSource(override val elements: Set<KtFile>) : K2MoveSourceDescriptor<KtFile>
+    class FileSource(override val elements: Set<PsiFile>) : K2MoveSourceDescriptor<PsiFile>
 
     class ElementSource(override val elements: Set<KtNamedDeclaration>) : K2MoveSourceDescriptor<KtNamedDeclaration>
 }

@@ -149,4 +149,9 @@ public class K2MoveFileTestGenerated extends AbstractK2MoveFileTest {
     public void testKotlin_withoutUsages_WithoutUsages() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/withoutUsages/withoutUsages.test");
     }
+
+    @TestMetadata("mixed/moveClass/moveClass.test")
+    public void testMixed_moveClass_MoveClass() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/mixed/moveClass/moveClass.test");
+    }
 }

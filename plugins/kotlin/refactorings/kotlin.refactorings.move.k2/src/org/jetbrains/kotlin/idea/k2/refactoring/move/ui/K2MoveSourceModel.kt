@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
@@ -16,12 +18,10 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDesc
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
 
-sealed interface K2MoveSourceModel<T : KtElement> {
+sealed interface K2MoveSourceModel<T : PsiElement> {
     val elements: Set<T>
 
     fun toDescriptor(): K2MoveSourceDescriptor<T>?
@@ -29,8 +29,8 @@ sealed interface K2MoveSourceModel<T : KtElement> {
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
-    class FileSource(files: Set<KtFile>) : K2MoveSourceModel<KtFile> {
-        override var elements: Set<KtFile> = files
+    class FileSource(files: Set<PsiFile>) : K2MoveSourceModel<PsiFile> {
+        override var elements: Set<PsiFile> = files
             internal set
 
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
@@ -39,7 +39,7 @@ sealed interface K2MoveSourceModel<T : KtElement> {
         override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
-            class PresentableFile(val file: KtFile, val presentation: TargetPresentation)
+            class PresentableFile(val file: PsiFile, val presentation: TargetPresentation)
 
             val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
                 elements.map { file ->

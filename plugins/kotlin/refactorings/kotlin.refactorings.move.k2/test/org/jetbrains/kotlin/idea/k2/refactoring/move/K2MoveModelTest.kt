@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
@@ -99,6 +100,24 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
         assert(firstElem.name == "Foo.kt")
+        val lastElem = moveFilesModel.source.elements.last()
+        assert(lastElem.name == "Bar.kt")
+    }
+
+    fun `test java class and kotlin classfrom source directory without target move`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.java", """
+            public class Foo { }
+        """.trimIndent()) as PsiFile
+        val barClass = (myFixture.addFileToProject("Bar.kt", """
+            object Bar { }
+        """.trimIndent()) as KtFile).declarations.single()
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)
+        assertInstanceOf<K2MoveModel.Files>(moveModel)
+        val moveFilesModel = moveModel as K2MoveModel.Files
+        assertSize(2, moveFilesModel.source.elements)
+        val firstElem = moveFilesModel.source.elements.first()
+        assert(firstElem.name == "Foo.java")
         val lastElem = moveFilesModel.source.elements.last()
         assert(lastElem.name == "Bar.kt")
     }

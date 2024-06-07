@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.fail
 
 abstract class AbstractK2MoveFileTest : AbstractMultifileMoveRefactoringTest() {
@@ -54,7 +53,7 @@ internal object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
             val fileNames = config.getAsJsonArray("filesToMove")?.map { it.asString }
                 ?: listOfNotNull(config.getString("mainFile"))
             if (fileNames.isEmpty()) fail("No file name specified")
-            val files = fileNames.map { path -> rootDir.findFileByRelativePath(path)?.toPsiFile(project) as KtFile }.toSet()
+            val files = fileNames.map { path -> rootDir.findFileByRelativePath(path)?.toPsiFile(project) as PsiFile }.toSet()
             val sourceDescriptor = K2MoveSourceDescriptor.FileSource(files)
             val targetPackage = config.getNullableString("targetPackage")
             val targetDir = config.getNullableString("targetDirectory")
