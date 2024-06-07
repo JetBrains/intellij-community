@@ -20,6 +20,7 @@ internal class K8sFileTypeUsageDescriptor : ImportantFileTypeUsageDescriptor(Imp
 internal class OpenapiFileTypeUsageDescriptor : ImportantFileTypeUsageDescriptor(ImportantSchema.OPENAPI)
 internal class SwaggerFileTypeUsageDescriptor : ImportantFileTypeUsageDescriptor(ImportantSchema.SWAGGER)
 internal class DockerComposeFileTypeUsageDescriptor : ImportantFileTypeUsageDescriptor(ImportantSchema.DOCKER_COMPOSE)
+internal class CloudFormationFileTypeUsageDescriptor : ImportantFileTypeUsageDescriptor(ImportantSchema.CLOUD_FORMATION)
 
 internal open class ImportantFileTypeUsageDescriptor(private val schema: ImportantSchema) : FileTypeUsageSchemaDescriptor {
   override fun describes(project: Project, file: VirtualFile): Boolean {
@@ -37,6 +38,7 @@ internal open class ImportantFileTypeUsageDescriptor(private val schema: Importa
 }
 
 internal enum class ImportantSchema {
+  CLOUD_FORMATION,
   DOCKER_COMPOSE,
   KUBERNETES,
   OPENAPI,
@@ -71,6 +73,7 @@ internal class YamlFileTypeUsageDetector {
     var hasSwagger = false
 
     var hasServices = false
+    var hasResources = false
 
     var schema: ImportantSchema? = null
 
@@ -81,6 +84,7 @@ internal class YamlFileTypeUsageDetector {
         "openapi" -> hasOpenapi = true
         "swagger" -> hasSwagger = true
         "services" -> hasServices = true
+        "Resources" -> hasResources = true
       }
 
       schema = when {
@@ -88,6 +92,7 @@ internal class YamlFileTypeUsageDetector {
         hasSwagger -> ImportantSchema.SWAGGER
         hasApiVersion && hasKind -> ImportantSchema.KUBERNETES
         hasServices -> ImportantSchema.DOCKER_COMPOSE
+        hasResources -> ImportantSchema.CLOUD_FORMATION
         else -> null
       }
 
