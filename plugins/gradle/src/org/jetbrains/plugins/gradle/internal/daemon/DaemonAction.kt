@@ -28,7 +28,7 @@ abstract class DaemonAction(private val myServiceDirectoryPath: String?) {
 
   companion object {
     @JvmStatic
-    protected fun <T: Command> createCommand(commandClass: Class<T>, id: Any, token: ByteArray?): T {
+    fun <T : Command> createCommand(commandClass: Class<T>, id: Any, token: ByteArray?): T {
       try {
         return commandClass.constructors[0].newInstance(id, token) as T
       }
