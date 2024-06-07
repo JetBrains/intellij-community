@@ -11,6 +11,6 @@ internal object MakeClassAnAnnotationClassFixFactory : KotlinSingleIntentionActi
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val typeReference = diagnostic.psiElement.getNonStrictParentOfType<KtAnnotationEntry>()?.typeReference ?: return null
         val klass = typeReference.classForRefactor() ?: return null
-        return MakeClassAnAnnotationClassFix(klass)
+        return MakeClassAnAnnotationClassFix(klass).asIntention()
     }
 }
