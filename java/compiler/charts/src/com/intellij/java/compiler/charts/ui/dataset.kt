@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts.ui
+package com.intellij.java.compiler.charts.ui
 
-import com.intellij.compiler.charts.CompilationChartsViewModel.*
-import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.compiler.charts.CompilationChartsViewModel.Modules.EventKey
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.*
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import java.util.function.Predicate
 import kotlin.math.max
 import kotlin.math.min

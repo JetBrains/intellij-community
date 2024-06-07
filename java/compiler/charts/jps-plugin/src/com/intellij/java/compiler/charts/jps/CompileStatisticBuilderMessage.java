@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts.jps;
+package com.intellij.java.compiler.charts.jps;
 
 import com.google.gson.Gson;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import static com.intellij.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID;
+import static com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID;
 
 public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
   private static final Gson JSON = new Gson();

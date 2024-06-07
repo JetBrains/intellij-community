@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts
+package com.intellij.java.compiler.charts
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -9,10 +9,10 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.StartBuildEvent
-import com.intellij.compiler.charts.jps.ChartsBuilderService.*
-import com.intellij.compiler.charts.jps.CompileStatisticBuilderMessage.*
-import com.intellij.compiler.charts.ui.CompilationChartsBuildEvent
 import com.intellij.compiler.server.CustomBuilderMessageHandler
+import com.intellij.java.compiler.charts.jps.ChartsBuilderService.*
+import com.intellij.java.compiler.charts.jps.CompileStatisticBuilderMessage.*
+import com.intellij.java.compiler.charts.ui.CompilationChartsBuildEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity

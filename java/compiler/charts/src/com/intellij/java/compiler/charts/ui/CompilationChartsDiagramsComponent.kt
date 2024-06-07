@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts.ui
+package com.intellij.java.compiler.charts.ui
 
-import com.intellij.compiler.charts.CompilationChartsViewModel
-import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
-import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
-import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.java.compiler.charts.CompilationChartsViewModel
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil

@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts.ui
+package com.intellij.java.compiler.charts.ui
 
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.BuildEventPresentationData
 import com.intellij.build.events.PresentableBuildEvent
 import com.intellij.build.events.impl.AbstractBuildEvent
-import com.intellij.compiler.charts.CompilationChartsBundle
-import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.icons.AllIcons
+import com.intellij.java.compiler.charts.CompilationChartsBundle
+import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime

@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts
+package com.intellij.java.compiler.charts
 
-import com.intellij.compiler.charts.CompilationChartsViewModel.Modules.EventKey
-import com.intellij.compiler.charts.jps.CompileStatisticBuilderMessage.*
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
+import com.intellij.java.compiler.charts.jps.CompileStatisticBuilderMessage.*
 import com.jetbrains.rd.framework.impl.RdList
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdProperty

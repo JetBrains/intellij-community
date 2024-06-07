@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compiler.charts.ui
+package com.intellij.java.compiler.charts.ui
 
-import com.intellij.compiler.charts.CompilationChartsViewModel.Modules.*
-import com.intellij.compiler.charts.CompilationChartsViewModel.StatisticData
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.*
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
 import com.intellij.openapi.util.text.Formats
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
