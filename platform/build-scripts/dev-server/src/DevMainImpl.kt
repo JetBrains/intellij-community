@@ -60,9 +60,10 @@ fun buildDevMain(): Collection<Path> {
             newClassPath = classPath
             homePath = runDir.toString().replace(File.separator, "/")
 
+            val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
             val systemProperties = System.getProperties()
             for ((name, value) in getIdeSystemProperties(runDir).map) {
-              if (!systemProperties.containsKey(name)) {
+              if (exceptions.contains(name) || !systemProperties.containsKey(name)) {
                 systemProperties.setProperty(name, value)
               }
             }
