@@ -31,6 +31,7 @@ object CodeReviewTabs {
       .launchIn(this)
   }
 
+  @Deprecated("Deprecated with the move to the new design")
   fun CoroutineScope.bindTabUi(
     tabs: JBTabsImpl,
     tab: TabInfo,

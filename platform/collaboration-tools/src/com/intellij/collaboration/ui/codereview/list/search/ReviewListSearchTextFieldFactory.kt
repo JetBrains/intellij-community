@@ -18,7 +18,7 @@ import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JTextField
 
-class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow<String?>) {
+internal class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow<String?>) {
 
   fun create(viewScope: CoroutineScope, chooseFromHistory: suspend (RelativePoint) -> Unit): JTextField {
     val searchField = ExtendableTextField()

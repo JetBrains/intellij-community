@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Font
 import java.awt.event.ActionListener
@@ -34,6 +35,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
   suspend fun show(vm: VM, parentComponent: Component, above: Boolean = false) {
     withContext(Dispatchers.Main) {

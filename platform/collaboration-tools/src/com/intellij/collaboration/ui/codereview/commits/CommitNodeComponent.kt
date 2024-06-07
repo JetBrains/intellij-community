@@ -6,6 +6,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
 import com.intellij.vcs.log.paint.PaintParameters
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -14,6 +15,7 @@ import java.awt.geom.Ellipse2D
 import java.awt.geom.Rectangle2D
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 open class CommitNodeComponent : JComponent() {
 
   var type = SINGLE

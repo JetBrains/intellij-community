@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -117,6 +118,7 @@ object TimelineDiffComponentFactory {
     DiffDrawUtil.createHighlighter(this, lineRange.start, lineRange.end, AnchorLine, false)
   }
 
+  @ApiStatus.Internal
   object AnchorLine : TextDiffType {
     override fun getName() = "Comment Anchor Line"
 
@@ -127,6 +129,7 @@ object TimelineDiffComponentFactory {
     override fun getMarkerColor(editor: Editor?) = getColor(editor)
   }
 
+  @ApiStatus.Internal
   const val DIFF_CONTEXT_SIZE = 3
 
   private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {

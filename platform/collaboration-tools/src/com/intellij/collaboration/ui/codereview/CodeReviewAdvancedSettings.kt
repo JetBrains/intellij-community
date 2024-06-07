@@ -32,7 +32,7 @@ object CodeReviewAdvancedSettings {
   }
 }
 
-class CodeReviewCombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {
+internal class CodeReviewCombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
     if (id == CodeReviewAdvancedSettings.COMBINED_DIFF_SETTING_ID) {
       for (project in ProjectManager.getInstance().openProjects) {

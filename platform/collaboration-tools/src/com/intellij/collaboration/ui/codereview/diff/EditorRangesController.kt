@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSets
 
+@Deprecated("Deprecated with the move to ViewModel-based approach")
 open class EditorRangesController(private val gutterIconRendererFactory: DiffEditorGutterIconRendererFactory,
                                   private val editor: EditorEx) {
   private val commentableLines = IntSets.synchronize(IntOpenHashSet())

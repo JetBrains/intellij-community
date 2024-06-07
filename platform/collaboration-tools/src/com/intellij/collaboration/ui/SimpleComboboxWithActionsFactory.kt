@@ -8,10 +8,12 @@ import com.intellij.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
 import javax.swing.JList
 
+@ApiStatus.Internal
 class SimpleComboboxWithActionsFactory<T : Any>(
   private val mappingsState: StateFlow<Collection<T>>,
   private val selectionState: MutableStateFlow<T?>

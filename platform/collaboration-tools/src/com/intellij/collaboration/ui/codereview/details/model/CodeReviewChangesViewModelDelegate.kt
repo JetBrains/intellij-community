@@ -15,12 +15,6 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
   changesContainer: Flow<Result<CodeReviewChangesContainer>>,
   private val vmProducer: CoroutineScope.(CodeReviewChangesContainer, CodeReviewChangeList) -> T
 ) {
-  constructor(
-    cs: CoroutineScope,
-    changesContainer: Flow<Result<CodeReviewChangesContainer>>,
-    vmProducer: CoroutineScope.(CodeReviewChangeList) -> T
-  ) : this(cs, changesContainer, { _, changeList -> vmProducer(changeList) })
-
   private val selectionRequests = MutableSharedFlow<ChangesRequest>()
 
   private val _selectedCommit = MutableStateFlow<String?>(null)

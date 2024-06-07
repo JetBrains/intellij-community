@@ -10,7 +10,7 @@ import java.awt.Graphics2D
 import java.awt.Insets
 import javax.swing.border.Border
 
-class SimpleFocusBorder : Border {
+internal class SimpleFocusBorder : Border {
   override fun paintBorder(c: Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
     if (c?.hasFocus() == true && g is Graphics2D) {
       DarculaUIUtil.paintFocusBorder(g, width, height, 0f, true)

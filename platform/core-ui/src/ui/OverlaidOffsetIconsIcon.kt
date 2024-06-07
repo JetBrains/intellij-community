@@ -3,7 +3,6 @@ package com.intellij.ui
 
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Component
 import java.awt.Graphics
@@ -17,8 +16,7 @@ import kotlin.math.roundToInt
  * Paints [icons] in a stack - one over the other with a slight offset
  * Assumes that icons all have the same size
  */
-@ApiStatus.NonExtendable
-open class OverlaidOffsetIconsIcon(
+class OverlaidOffsetIconsIcon(
   private val icons: List<Icon>,
   private val offsetRate: Float = 0.4f
 ) : Icon {

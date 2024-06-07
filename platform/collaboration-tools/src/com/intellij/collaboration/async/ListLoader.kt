@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents some list of data we need to fetch and maintain to show in UI.
@@ -20,6 +21,7 @@ import kotlinx.coroutines.sync.withLock
  * 4. 'update' when a client-side update should be applied on the client immediately, but refresh
  *     might later override it.
  */
+@ApiStatus.Internal
 interface ListLoader<V> {
   data class State<V>(
     val list: List<V>?,
@@ -44,20 +46,29 @@ interface ListLoader<V> {
  * represented as a [Result]: [Result.failure] if there is some error
  * present in the current state, [Result.success] otherwise.
  */
+@get:ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 val <V> ListLoader<V>.resultOrErrorFlow: Flow<Result<List<V>>>
   get() = stateFlow
     .mapLatest { if (it.list == null) null else it.error?.let { Result.failure(it) } ?: Result.success(it.list) }
     .filterNotNull()
 
+@ApiStatus.Internal
 sealed interface Change<V>
+@ApiStatus.Internal
 data class AddedFirst<V>(val value: V) : Change<V>
+@ApiStatus.Internal
 data class AddedLast<V>(val value: V) : Change<V>
+@ApiStatus.Internal
 data class AddedAllLast<V>(val values: List<V>) : Change<V>
+@ApiStatus.Internal
 open class Deleted<V>(val isDeleted: (V) -> Boolean) : Change<V>
+@ApiStatus.Internal
 class AllDeleted<V> : Deleted<V>({ true })
+@ApiStatus.Internal
 data class Updated<V>(val updater: (V) -> V) : Change<V>
 
+@ApiStatus.Internal
 abstract class MutableListLoader<V> : ListLoader<V> {
   /**
    * Mutable version of the state flow. To be directly modified only by calls to [update].
@@ -101,6 +112,7 @@ abstract class MutableListLoader<V> : ListLoader<V> {
   }
 }
 
+@ApiStatus.Internal
 interface ReloadableListLoader {
   /**
    * Empty any existing list, cancel any existing refresh requests.
@@ -124,6 +136,7 @@ interface ReloadableListLoader {
   suspend fun refresh()
 }
 
+@ApiStatus.Internal
 interface PotentiallyInfiniteListLoader {
   /**
    * Loads a new 'page' worth of items and adds them to the list.
@@ -140,9 +153,11 @@ interface PotentiallyInfiniteListLoader {
   suspend fun loadAll()
 }
 
+@ApiStatus.Internal
 interface ReloadablePotentiallyInfiniteListLoader<V>
   : ListLoader<V>, ReloadableListLoader, PotentiallyInfiniteListLoader
 
+@ApiStatus.Internal
 abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
   cs: CoroutineScope,
 

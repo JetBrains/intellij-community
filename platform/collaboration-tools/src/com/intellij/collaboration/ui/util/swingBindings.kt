@@ -58,10 +58,10 @@ fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                           items: Flow<Collection<T>>,
-                                           selectionState: MutableStateFlow<T?>,
-                                           sortComparator: Comparator<T>) {
+internal fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                    items: Flow<Collection<T>>,
+                                                    selectionState: MutableStateFlow<T?>,
+                                                    sortComparator: Comparator<T>) {
   scope.launchNow {
     items.collect {
       this@bindIn.items = it.sortedWith(sortComparator)
@@ -79,11 +79,11 @@ fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                           items: Flow<Collection<T>>,
-                                           selectionState: MutableStateFlow<T?>,
-                                           actions: Flow<List<Action>>,
-                                           sortComparator: Comparator<T>) {
+internal fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                    items: Flow<Collection<T>>,
+                                                    selectionState: MutableStateFlow<T?>,
+                                                    actions: Flow<List<Action>>,
+                                                    sortComparator: Comparator<T>) {
   bindIn(scope, items, selectionState, sortComparator)
 
   scope.launchNow {

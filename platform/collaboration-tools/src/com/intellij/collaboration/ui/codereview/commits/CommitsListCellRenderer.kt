@@ -13,7 +13,7 @@ import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayoutPanel() {
+internal class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayoutPanel() {
   private val nodeComponent = CommitNodeComponent().apply {
     foreground = service<DefaultColorGenerator>().getColor(1)
   }

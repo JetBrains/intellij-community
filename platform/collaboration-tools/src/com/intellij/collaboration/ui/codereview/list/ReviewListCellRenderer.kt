@@ -28,7 +28,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
 
-class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPresentation)
+internal class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPresentation)
   : ListCellRenderer<T>, SelectablePanel(null) {
 
   private val toolTipManager

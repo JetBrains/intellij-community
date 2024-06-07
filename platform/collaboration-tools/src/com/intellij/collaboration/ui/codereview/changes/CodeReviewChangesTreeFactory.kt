@@ -13,10 +13,12 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.SelectionSaver
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 
+@Obsolete
 class CodeReviewChangesTreeFactory(private val project: Project,
                                    private val changesModel: SingleValueModel<out Collection<Change>>) {
 

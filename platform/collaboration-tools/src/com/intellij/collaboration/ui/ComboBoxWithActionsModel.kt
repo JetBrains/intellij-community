@@ -12,13 +12,13 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
-fun <T : Any> MutableCollectionComboBoxModel<T>.setItems(value: List<T>) {
+internal fun <T : Any> MutableCollectionComboBoxModel<T>.setItems(value: List<T>) {
   val delta = CollectionDelta(items, value)
   delta.removedItems.forEach { removeElement(it) }
   delta.newItems.forEach { addElement(it) }
 }
 
-class ComboBoxWithActionsModel<T>
+internal class ComboBoxWithActionsModel<T>
   : ComboBoxModel<ComboBoxWithActionsModel.Item<T>> {
 
   private val itemsModel = MutableCollectionComboBoxModel<Item.Wrapper<T>>()

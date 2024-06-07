@@ -9,7 +9,7 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 
 // Taken from com.jetbrains.rd.platform.codeWithMe.control.icons.CircleIcon
-class UnreadDotIcon(
+internal class UnreadDotIcon(
   private val unscaledDiameter: Int = DEFAULT_UNSCALED_DIAMETER,
 ) : Icon {
   companion object {

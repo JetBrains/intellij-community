@@ -246,7 +246,7 @@ f:com.intellij.ui.OffsetIcon
 - s:getOriginalIcon(javax.swing.Icon):javax.swing.Icon
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-c:com.intellij.ui.OverlaidOffsetIconsIcon
+f:com.intellij.ui.OverlaidOffsetIconsIcon
 - javax.swing.Icon
 - <init>(java.util.List,F):V
 - b:<init>(java.util.List,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V

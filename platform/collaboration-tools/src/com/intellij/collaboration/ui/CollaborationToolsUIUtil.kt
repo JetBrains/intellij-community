@@ -51,7 +51,7 @@ import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
-  val COMPONENT_SCOPE_KEY: Key<CoroutineScope> = Key.create("Collaboration.Component.Coroutine.Scope")
+  internal val COMPONENT_SCOPE_KEY: Key<CoroutineScope> = Key.create("Collaboration.Component.Coroutine.Scope")
 
   val animatedLoadingIcon: Icon = AnimatedIcon.Default.INSTANCE
 

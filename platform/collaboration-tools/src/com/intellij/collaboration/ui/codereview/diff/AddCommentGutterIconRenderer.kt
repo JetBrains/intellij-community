@@ -12,9 +12,12 @@ import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+@Deprecated("Deprecated with the move to ViewModel-based approach")
+@ApiStatus.Internal
 abstract class LineGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
 
   abstract val line: Int
@@ -50,6 +53,7 @@ abstract class LineGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposa
   }
 }
 
+@Deprecated("Deprecated with the move to ViewModel-based approach")
 abstract class AddCommentGutterIconRenderer : LineGutterIconRenderer() {
   override var visibleIcon: Icon = AllIcons.General.InlineAdd
 

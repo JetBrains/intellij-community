@@ -6,7 +6,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.util.containers.ComparatorUtil.min
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
@@ -35,8 +34,7 @@ private val notLoadedIcon: Icon
 //TODO: handle HTML props - h/vspace, h/valign
 //TODO: handle CSS props - max-width/height to control the resize behavior
 //TODO: handle hidpi (ensureHiDpi does not work with ToolkitImage/ImageObserver)
-@ApiStatus.Experimental
-class ResizingHtmlImageView(element: Element) : View(element) {
+internal class ResizingHtmlImageView(element: Element) : View(element) {
 
   private var _loader: ImageLoader? = null
     set(value) {
