@@ -7,4 +7,8 @@ class X {
     test(() -> {});
     test(System.out::println);
   }
+  
+  void unknownMethod() {
+    <info descr="Not resolved until the project is fully loaded">Util</info>.<info descr="Not resolved until the project is fully loaded">foo</info>(x -> x == 5 ? 1 : 2);
+  }
 }
