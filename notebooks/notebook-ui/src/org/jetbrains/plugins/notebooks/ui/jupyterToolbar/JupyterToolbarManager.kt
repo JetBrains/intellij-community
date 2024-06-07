@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
-import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle

@@ -63,8 +63,4 @@ class NotebookAboveCellDelimiterPanel(
       roofPanel?.background = cellRoofColor
     }
   }
-
-  companion object {
-    private val FIRST_CELL_DELIMITER_HEIGHT = JBUIScale.scale(24)  // see figma PY-66455
-  }
 }
