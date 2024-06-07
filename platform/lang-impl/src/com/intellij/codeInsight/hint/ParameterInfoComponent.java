@@ -261,6 +261,7 @@ public final class ParameterInfoComponent extends JPanel {
     private int i;
     private Function<? super String, String> myEscapeFunction;
     private final ParameterInfoControllerBase.Model result = new ParameterInfoControllerBase.Model();
+    private boolean isVisible = true;
 
     MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
@@ -346,6 +347,16 @@ public final class ParameterInfoComponent extends JPanel {
       setEnabled(i, enabled);
     }
 
+    @Override
+    public void setUIComponentVisible(boolean visible) {
+      isVisible = visible;
+    }
+
+    @Override
+    public boolean isUIComponentVisible() {
+      return isVisible;
+    }
+
     public boolean isLastParameterOwner() {
       return i == myPanels.length - 1;
     }
@@ -397,13 +408,14 @@ public final class ParameterInfoComponent extends JPanel {
         setVisible(i, false);
       }
       else {
+        setVisible(i, true);
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
           try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305563, EA-819694")) {
             myParameterInfoControllerData.getHandler().updateUI(o, context);
           }
         });
 
-        setVisible(i, isEnabled(i));
+        setVisible(i, context.isUIComponentVisible());
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {

@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.parameterInfo.ParameterFlag;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -36,8 +35,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   private boolean hideOverloads = true;
   private int myRealOffset = -1;
-  private Editor myEditor;
-  private Object[] myObjectsToShow = null;
+  private CreateParameterInfoContext myCreateContext;
+  private Object[] myObjectsToShow;
   private PyArgumentList myArgumentList;
 
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
@@ -48,7 +47,6 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   @Override
   public @Nullable PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
-    myEditor = context.getEditor();
     PsiFile file = context.getFile();
     int offset = context.getOffset();
     final PyArgumentList argumentList = PyParameterInfoUtils.findArgumentList(file, offset, -1);
@@ -79,6 +77,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   @Override
   public void showParameterInfo(@NotNull PyArgumentList element, @NotNull CreateParameterInfoContext context) {
     // Show all overloads on second shortcut hit at the same offset
+    myCreateContext = context;
     int actualOffset = getRealCaretOffset(context.getEditor());
     if (actualOffset == myRealOffset) {
       hideOverloads = !hideOverloads;
@@ -119,7 +118,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   @Override
   public void updateUI(@NotNull PyParameterInfoUtils.CallInfo description,
                        @NotNull ParameterInfoUIContext context) {
-    context.setUIComponentEnabled(description.isVisible);
+    context.setUIComponentVisible(description.isVisible());
     final int currentParamOffset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
     ParameterHints parameterHints = PyParameterInfoUtils.buildParameterHints(description.getCallandCalleePair(), currentParamOffset);
     if (parameterHints == null) return;
@@ -171,15 +170,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     JLabel shortCut = new JLabel(showMoreShortCut);
 
     ActionLink actionLink = new ActionLink(getActionLinkText(numOfOverloads), event -> {
-      hideOverloads = !hideOverloads;
-      if (myEditor != null) {
-        ParameterInfoControllerBase controller =
-          ParameterInfoControllerBase.findControllerAtOffset(myEditor, myArgumentList.getOriginalElement().getTextOffset());
-        if (controller != null) {
-          setDisplayAllOverloadsState(myObjectsToShow, hideOverloads);
-          controller.setDescriptors(myObjectsToShow);
-          controller.updateComponent();
-        }
+      if (myArgumentList != null && myCreateContext != null) {
+        showParameterInfo(myArgumentList, myCreateContext);
       }
     });
 
@@ -223,6 +215,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   @Override
   public void dispose(@NotNull DeleteParameterInfoContext context) {
     resetDisplayState();
+    myCreateContext = null;
+    myArgumentList = null;
     ParameterInfoHandler.super.dispose(context);
   }
 
