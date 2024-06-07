@@ -177,7 +177,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
           }
 
           editorsToRelease.addAll(editors)
-          IntentionPreviewEditorsPanel(mutableListOf<EditorEx>().apply { addAll<EditorEx>(editors) })
+          IntentionPreviewEditorsPanel(editors.toMutableList())
         }
       }
       is Html -> IntentionPreviewComponent.createHtmlPanel(result)
