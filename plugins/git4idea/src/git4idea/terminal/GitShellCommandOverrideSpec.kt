@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("HardCodedStringLiteral")
-
 package git4idea.terminal
 
 import com.intellij.openapi.vcs.LocalFilePath
@@ -10,6 +8,7 @@ import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellArgumentContext
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
@@ -45,7 +44,9 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
         val remoteLineParts = line.split("\t")
         if (line.isEmpty() || remoteLineParts.isEmpty()) return@mapNotNull null
 
-        val description = remoteLineParts.getOrNull(1)?.split(" ")?.firstOrNull() ?: ""
+        @Suppress("HardCodedStringLiteral")
+        val description: @Nls String = remoteLineParts.getOrNull(1)?.split(" ")?.firstOrNull() ?: ""
+
         ShellCompletionSuggestion(
           name = remoteLineParts.first(),
           description = description
@@ -61,14 +62,14 @@ private fun postProcessBranchesFromCommandLine(lines: List<String>, insertWithou
 
     // Current branch
     if (line.startsWith("*")) {
-      return@map ShellCompletionSuggestion(name, description = "Current branch", priority = 100)
+      return@map ShellCompletionSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
     }
 
     // Remote branches
     if (name.startsWith("remotes/")) {
       return@map ShellCompletionSuggestion(
         if (insertWithoutRemotes) name.removePrefix("remotes/") else name,
-        description = "Remote branch"
+        description = GitTerminalBundle.message("branch.remote")
       )
     }
 
@@ -85,7 +86,7 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
     branches.localBranches.map { branch ->
       ShellCompletionSuggestion(
         branch.name,
-        description = if (branch == currentBranch) "Current branch" else "Branch",
+        description = if (branch == currentBranch) GitTerminalBundle.message("branch.current") else GitTerminalBundle.message("branch"),
         priority = if (branch == currentBranch) 100 else 50
       )
     }
@@ -108,7 +109,7 @@ private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletion
     (branches.localBranches + branches.remoteBranches).map { branch ->
       ShellCompletionSuggestion(
         branch.name,
-        description = if (branch == currentBranch) "Current branch" else if (branch is GitRemoteBranch) "Remote branch" else "Branch",
+        description = if (branch == currentBranch) GitTerminalBundle.message("branch.current") else if (branch is GitRemoteBranch) GitTerminalBundle.message("branch.remote") else GitTerminalBundle.message("branch"),
         priority = if (branch == currentBranch) 100 else 50
       )
     }
@@ -130,7 +131,7 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
     branches.remoteBranches.map { branch ->
       ShellCompletionSuggestion(
         branch.name,
-        description = "Remote branch",
+        description = GitTerminalBundle.message("branch.remote"),
         priority = 50
       )
     }
@@ -158,13 +159,13 @@ private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<Shell
 
 private fun ShellCommandContext.trackingOptions() {
   option("-t", "--track") {
-    description("When creating a new branch, set up 'upstream' configuration")
+    description(GitTerminalBundle.message("option.track.description"))
     argument {
-      displayName("branch")
+      displayName(GitTerminalBundle.message("option.track.arg1.name"))
       suggestions(localBranchesGenerator)
     }
     argument {
-      displayName("start point")
+      displayName(GitTerminalBundle.message("option.track.arg2.name"))
       isOptional = true
     }
     exclusiveOn = listOf(
@@ -172,7 +173,7 @@ private fun ShellCommandContext.trackingOptions() {
     )
   }
   option("--no-track") {
-    description("Do not set up 'upstream' configuration, even if the branch.autoSetupMerge configuration variable is true")
+    description(GitTerminalBundle.message("option.notrack.description"))
     argument {
       suggestions(localBranchesGenerator)
     }
@@ -189,8 +190,8 @@ private fun ShellCommandContext.trackingOptions() {
 private fun ShellArgumentContext.addHeadSuggestions() {
   suggestions {
     listOf(
-      ShellCompletionSuggestion("HEAD", description = "The most recent commit"),
-      ShellCompletionSuggestion("HEAD~<N>", description = "A specific number of commits", insertValue = "HEAD~")
+      ShellCompletionSuggestion("HEAD", description = GitTerminalBundle.message("suggestion.head.description")),
+      ShellCompletionSuggestion("HEAD~<N>", description = GitTerminalBundle.message("suggestion.headn.description"), insertValue = "HEAD~")
     )
   }
 }
@@ -201,7 +202,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
   subcommands {
     subcommand("diff") {
       argument {
-        displayName("commit or file")
+        displayName(GitTerminalBundle.message("diff.name"))
 
         addHeadSuggestions()
 
@@ -214,7 +215,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
 
     subcommand("reset") {
       argument {
-        displayName("commit or file")
+        displayName(GitTerminalBundle.message("reset.arg1.name"))
 
         addHeadSuggestions()
 
@@ -227,37 +228,38 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
 
     subcommand("rebase") {
       argument {
-        displayName("new base")
+        displayName(GitTerminalBundle.message("rebase.arg1.name"))
         suggestions {
-          listOf(ShellCompletionSuggestion("-", description = "Use the last ref as the base"))
+          listOf(ShellCompletionSuggestion("-", description = GitTerminalBundle.message("rebase.arg1.opt-minus.description")))
         }
         suggestions(allBranchesGenerator)
         suggestions(remotesGenerator)
         isOptional = true
       }
       argument {
-        displayName("branch to rebase")
+        displayName(GitTerminalBundle.message("rebase.arg2.name"))
         suggestions(localBranchesGenerator)
         isOptional = true
       }
     }
     subcommand("push") {
       argument {
-        displayName("remote")
+        displayName(GitTerminalBundle.message("push.arg1.name"))
         suggestions(remotesGenerator)
         isOptional = true
       }
       argument {
-        displayName("branch")
+        displayName(GitTerminalBundle.message("push.arg2.name"))
         suggestions(localBranchesGenerator)
         isOptional = true
       }
     }
     subcommand("pull") {
       option("--rebase") {
-        description("Fetch the remote’s copy of current branch and rebases it into the local copy")
+        separator = "="
+        description(GitTerminalBundle.message("pull.opt-rebase.description"))
         argument {
-          displayName("remote")
+          displayName(GitTerminalBundle.message("pull.opt-rebase.arg1.name"))
           suggestions("false", "true", "merges", "preserve", "interactive")
           suggestions(remotesGenerator)
           isOptional = true
@@ -265,12 +267,12 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
       }
 
       argument {
-        displayName("remote")
+        displayName(GitTerminalBundle.message("pull.arg1.name"))
         suggestions(remotesGenerator)
         isOptional = true
       }
       argument {
-        displayName("branch")
+        displayName(GitTerminalBundle.message("pull.arg2.name"))
         suggestions(localBranchesGenerator)
         isOptional = true
       }
@@ -279,36 +281,36 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
       subcommands {
         subcommand("rm", "remove") {
           argument {
-            displayName("remote")
+            displayName(GitTerminalBundle.message("remote.remove.arg1.name"))
             suggestions(remotesGenerator)
           }
         }
 
         subcommand("rename") {
-          description("Renames given remote [name]") // Seems it's currently wrong in the JSON
+          description(GitTerminalBundle.message("remote.rename.description")) // Seems it's currently wrong in the JSON
           argument {
-            displayName("old remote")
+            displayName(GitTerminalBundle.message("remote.rename.arg1.name"))
             suggestions(remotesGenerator)
           }
           argument {
-            displayName("new remote name")
+            displayName(GitTerminalBundle.message("remote.rename.arg2.name"))
           }
         }
       }
     }
     subcommand("fetch") {
       argument {
-        displayName("remote")
+        displayName(GitTerminalBundle.message("fetch.arg1.name"))
         suggestions(remotesGenerator)
         isOptional = true
       }
       argument {
-        displayName("branch")
+        displayName(GitTerminalBundle.message("fetch.arg2.name"))
         suggestions(localBranchesGenerator)
         isOptional = true
       }
       argument {
-        displayName("refspec")
+        displayName(GitTerminalBundle.message("fetch.arg3.name"))
         isOptional = true
       }
     }
@@ -316,11 +318,11 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
       subcommands {
         subcommand("branch") {
           argument {
-            displayName("branch")
+            displayName(GitTerminalBundle.message("stash.branch.arg1.name"))
             suggestions(localBranchesGenerator)
           }
           argument {
-            displayName("stash")
+            displayName(GitTerminalBundle.message("stash.branch.arg2.name"))
             isOptional = true
           }
         }
@@ -328,12 +330,12 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
     }
     subcommand("branch") {
       option("-D") {
-        description("Delete branch (even if not merged)")
+        description(GitTerminalBundle.message("branch.opt-force-delete.description"))
         argument {
           suggestions {
             listOf(
-              ShellCompletionSuggestion("-r", description = "Deletes the remote-tracking branches"),
-              ShellCompletionSuggestion("--remotes", description = "Deletes the remote-tracking branches")
+              ShellCompletionSuggestion("-r", description = GitTerminalBundle.message("option.delete.remote.description")),
+              ShellCompletionSuggestion("--remotes", description = GitTerminalBundle.message("option.delete.remote.description"))
             )
           }
           suggestions(localOrRemoteBranchesGenerator)
@@ -341,12 +343,12 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         }
       }
       option("-d", "--delete") {
-        description("Delete fully merged branch")
+        description(GitTerminalBundle.message("branch.opt-delete.description"))
         argument {
           suggestions {
             listOf(
-              ShellCompletionSuggestion("-r", description = "Deletes the remote-tracking branches"),
-              ShellCompletionSuggestion("--remotes", description = "Deletes the remote-tracking branches")
+              ShellCompletionSuggestion("-r", description = GitTerminalBundle.message("option.delete.remote.description")),
+              ShellCompletionSuggestion("--remotes", description = GitTerminalBundle.message("option.delete.remote.description"))
             )
           }
           suggestions(localOrRemoteBranchesGenerator)
@@ -354,7 +356,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         }
       }
       option("-m", "--move") {
-        description("Move/rename a branch and its reflog")
+        description(GitTerminalBundle.message("branch.opt-move.description"))
         argument {
           suggestions(localBranchesGenerator)
         }
@@ -371,32 +373,32 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         }
       }
       option("--edit-description") {
-        description("Edit the description for the branch")
+        description(GitTerminalBundle.message("branch.opt-edit-description.description"))
         argument {
           suggestions(localBranchesGenerator)
         }
       }
       option("-u") {
-        description("Sets branch to upstream provided")
+        description(GitTerminalBundle.message("branch.opt-set-upstream.description"))
         argument {
-          displayName("upstream")
+          displayName(GitTerminalBundle.message("branch.opt-set-upstream.arg1.name"))
           suggestions(allBranchesGenerator)
           isOptional = true
         }
       }
       option("--set-upstream-to") {
-        description("Sets branch to upstream provided")
+        description(GitTerminalBundle.message("branch.opt-set-upstream.description"))
         separator = "="
         argument {
-          displayName("upstream")
+          displayName(GitTerminalBundle.message("branch.opt-set-upstream.arg1.name"))
           suggestions(allBranchesGenerator)
           isOptional = true
         }
       }
       option("--unset-upstream") {
-        description("Removes the upstream information")
+        description(GitTerminalBundle.message("branch.opt-unset-upstream.description"))
         argument {
-          displayName("upstream")
+          displayName(GitTerminalBundle.message("branch.opt-unset-upstream.arg1.name"))
           suggestions(localBranchesGenerator)
           isOptional = true
         }
@@ -405,12 +407,12 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
     }
     subcommand("checkout") {
       argument {
-        displayName("branch, file, tag or commit")
+        displayName(GitTerminalBundle.message("checkout.arg1.name"))
 
         suggestions {
           listOf(
-            ShellCompletionSuggestion("-", description = "Switch to the last used branch"),
-            ShellCompletionSuggestion("--", description = "Do not interpret more arguments as options") // TODO: hidden?
+            ShellCompletionSuggestion("-", description = GitTerminalBundle.message("suggestion.switch.previous-branch")),
+            ShellCompletionSuggestion("--", description = GitTerminalBundle.message("suggestion.no-more-options")) // TODO: hidden?
           )
         }
 
@@ -422,7 +424,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         isOptional = true
       }
       argument {
-        displayName("pathspec")
+        displayName(GitTerminalBundle.message("checkout.arg2.name"))
 
         suggestions(ShellDataGenerators.fileSuggestionsGenerator(false))
 
@@ -432,10 +434,10 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
     }
     subcommand("merge") {
       argument {
-        displayName("branch")
+        displayName(GitTerminalBundle.message("merge.arg1.name"))
 
         suggestions {
-          listOf(ShellCompletionSuggestion("-", description = "Shorthand for the previous branch"))
+          listOf(ShellCompletionSuggestion("-", description = GitTerminalBundle.message("merge.arg1.suggest-minus.description")))
         }
 
         suggestions(allBranchesGenerator)
@@ -447,17 +449,17 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
     subcommand("switch") {
       trackingOptions()
       argument {
-        displayName("branch name")
+        displayName(GitTerminalBundle.message("switch.arg1.name"))
 
         suggestions {
-          listOf(ShellCompletionSuggestion("-", description = "Switch to the last used branch"))
+          listOf(ShellCompletionSuggestion("-", description = GitTerminalBundle.message("suggestion.switch.previous-branch")))
         }
 
         suggestions(localBranchesGenerator)
         // TODO: Maybe add low-priority commit hash suggestions
       }
       argument {
-        displayName("start point")
+        displayName(GitTerminalBundle.message("switch.arg2.name"))
         isOptional = true
       }
     }
