@@ -28,10 +28,10 @@ SHELL_SCRIPT
               LITERAL
                 PsiElement(word)('HEAD')
               PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('2')
               SIMPLE_COMMAND_ELEMENT
                 REDIRECTION
+                  NUMBER
+                    PsiElement(int)('2')
                   PsiElement(>)('>')
                   PsiElement(word)('/dev/null')
         PsiElement())(')')

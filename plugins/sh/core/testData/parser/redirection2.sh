@@ -8,3 +8,4 @@ cat - <<< stdin file.txt
 &> x echo out
 # at eof
 echo >out
+echo >/dev/null 2>&1

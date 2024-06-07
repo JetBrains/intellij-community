@@ -1110,10 +1110,10 @@ SHELL_SCRIPT
                   PsiElement(var)('$TEMPFILE')
                 PsiElement(CLOSE_QUOTE)('"')
               PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('2')
               SIMPLE_COMMAND_ELEMENT
                 REDIRECTION
+                  NUMBER
+                    PsiElement(int)('2')
                   PsiElement(>)('>')
                   PsiElement(word)('/dev/null')
             PsiWhiteSpace(' \\n            ')

@@ -275,11 +275,11 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('2')
-      PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('2')
+          PsiWhiteSpace(' ')
           PsiElement(>>)('>>')
           PsiWhiteSpace(' ')
           PsiElement(word)('/dev/null')
@@ -321,11 +321,11 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('1')
-      PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('1')
+          PsiWhiteSpace(' ')
           PsiElement(>>)('>>')
           PsiWhiteSpace(' ')
           PsiElement(word)('/dev/null')

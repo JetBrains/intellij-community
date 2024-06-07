@@ -497,10 +497,10 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('exec')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('10')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('10')
           PsiElement(<&)('<&')
           NUMBER
             PsiElement(int)('0')

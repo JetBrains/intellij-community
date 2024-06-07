@@ -399,10 +399,10 @@ SHELL_SCRIPT
                         LITERAL
                           PsiElement(word)('-s')
                         PsiWhiteSpace(' ')
-                        NUMBER
-                          PsiElement(int)('2')
                         SIMPLE_COMMAND_ELEMENT
                           REDIRECTION
+                            NUMBER
+                              PsiElement(int)('2')
                             PsiElement(>)('>')
                             PsiElement(word)('/dev/null')
                   PsiElement(CLOSE_BACKQUOTE)('`')
@@ -978,10 +978,10 @@ SHELL_SCRIPT
               LITERAL
                 PsiElement(word)('DEBUGGING')
               PsiWhiteSpace(' ')
-              NUMBER
-                PsiElement(int)('1')
               SIMPLE_COMMAND_ELEMENT
                 REDIRECTION
+                  NUMBER
+                    PsiElement(int)('1')
                   PsiElement(>&)('>&')
                   NUMBER
                     PsiElement(int)('2')
