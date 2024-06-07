@@ -274,7 +274,7 @@
     {
       "id": "C++",
       "experimentBucketsCount": 4,
-      "includeGroups": [7, 8, 22, 24],
+      "includeGroups": [7, 22],
       "shouldLogElementFeatures": false
     },
     {
