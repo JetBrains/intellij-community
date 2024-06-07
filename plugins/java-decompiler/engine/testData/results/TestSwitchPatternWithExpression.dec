@@ -1,0 +1,432 @@
+public class TestSwitchPatternWithExpression {
+   public static void main(String[] args) {
+      new A("4265111111");// 15
+   }// 16
+
+   private static String getX(I i) {
+      String var11;
+      switch (i) {
+         case A(String a):
+            var11 = a;
+            break;// 20
+         case B(String a):
+            var11 = a;
+            break;
+      }
+
+      return var11;// 19
+   }
+
+   private static String getX8(I i) {
+      switch (i) {// 26
+         case A(String a):
+            return a;// 28
+         case B(String a):
+            return a;// 31
+      }
+   }
+
+   private static String getX0(AA i) {
+      String var16;
+      switch (i) {
+         case AA(A(String a)):
+            var16 = a;
+            break;// 38
+         case AA(B(String a)):
+            var16 = a;
+      }
+
+      return var16;// 37
+   }
+
+   private static void getX11(AA i) {
+      String var17;
+      switch (i) {// 44
+         case AA(A(String a)):
+            var17 = a;
+            break;// 45
+         case AA(B(String a)):
+            var17 = a;
+      }
+
+      String aa = var17;// 46
+      System.out.println(aa + "1");// 48
+      return;
+   }
+
+   private static String getX4(I i) {
+      String var11;
+      switch (i) {// 52
+         case A(String a):
+            var11 = a;
+            break;// 53
+         case B(String a):
+            var11 = a;
+            break;
+      }
+
+      String string = var11;// 54
+      return string;// 56
+   }
+
+   private static void getX10(I i) {
+      String var11;
+      switch (i) {// 60
+         case A(String a):
+            var11 = a;
+            break;// 61
+         case B(String a):
+            var11 = a;
+            break;
+      }
+
+      String string = var11;// 62
+      System.out.println(string + "2");// 64
+   }
+
+   private static String getX5(I i) {
+      String var11;
+      switch (i) {// 68
+         case A(String a):
+            var11 = a + "1";// 69
+            break;
+         case B(String a):
+            var11 = a;
+            break;
+      }
+
+      String string = var11;// 70
+      return string;// 72
+   }
+
+   private static void getX9(I i) {
+      String var11;
+      switch (i) {// 76
+         case A(String a):
+            var11 = a + "1";// 77
+            break;
+         case B(String a):
+            var11 = a;
+            break;
+      }
+
+      String string = var11;// 78
+      System.out.println(string + "2");// 80
+   }
+
+   private static String getX3(I i) {
+      String var11;
+      switch (i) {
+         case A(String a):
+            System.out.println(a);// 86
+            var11 = a;
+            break;// 87
+         case B(String a):
+            System.out.println(a);// 90
+            var11 = a;
+            break;
+      }
+
+      return var11;// 84
+   }
+
+   private static String getX6(I i) {
+      String var11;
+      switch (i) {
+         case A(String a):
+            System.out.println(a);// 100
+            var11 = a;
+            break;// 101
+         case B(String a):
+            System.out.println(a);// 104
+            var11 = a + "1";// 105
+            break;
+      }
+
+      return var11;// 98
+   }
+
+   private static String getX7(I i) {
+      String var11;
+      switch (i) {
+         case A(String a):
+            System.out.println(a);// 113
+            System.out.println(a);// 114
+            System.out.println(a + "1");// 115
+            var11 = a;
+            break;// 116
+         case B(String a):
+            System.out.println(a);// 119
+            var11 = a + "1";// 120
+            break;
+      }
+
+      return var11;// 111
+   }
+
+   private static String getX2(I i) {
+      switch (i) {// 126
+         case A(String a):
+            return a;// 128
+         case B(String a):
+            return a;// 130
+         default:
+            throw new IllegalArgumentException();// 132
+      }
+   }
+
+   static record A(String a) implements I {
+      A(String a) {
+         this.a = a;
+      }
+
+      public String a() {
+         return this.a;// 5
+      }
+   }
+
+   static record B(String a) implements I {
+      B(String a) {
+         this.a = a;
+      }
+
+      public String a() {
+         return this.a;// 8
+      }
+   }
+
+   static record AA(I i) {
+      AA(I i) {
+         this.i = i;
+      }
+
+      public I i() {
+         return this.i;// 11
+      }
+   }
+
+   sealed interface I permits TestSwitchPatternWithExpression.A, TestSwitchPatternWithExpression.B {
+   }
+}
+
+class 'TestSwitchPatternWithExpression' {
+   method 'main ([Ljava/lang/String;)V' {
+      4      2
+      a      3
+   }
+
+   method 'getX (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      7
+      47      10
+      5d      16
+   }
+
+   method 'getX8 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      20
+      47      22
+      5b      24
+   }
+
+   method 'getX0 (LTestSwitchPatternWithExpression$AA;)Ljava/lang/String;' {
+      10      30
+      70      33
+      8f      38
+   }
+
+   method 'getX11 (LTestSwitchPatternWithExpression$AA;)V' {
+      10      43
+      74      46
+      93      51
+      94      52
+      98      52
+      9d      52
+      a0      53
+   }
+
+   method 'getX4 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      58
+      49      61
+      5f      67
+      61      68
+   }
+
+   method 'getX10 (LTestSwitchPatternWithExpression$I;)V' {
+      10      73
+      49      76
+      5f      82
+      60      83
+      64      83
+      69      83
+      6c      84
+   }
+
+   method 'getX5 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      88
+      49      90
+      4e      91
+      64      97
+      66      98
+   }
+
+   method 'getX9 (LTestSwitchPatternWithExpression$I;)V' {
+      10      103
+      49      105
+      4e      106
+      64      112
+      65      113
+      69      113
+      6e      113
+      71      114
+   }
+
+   method 'getX3 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      118
+      45      120
+      4a      120
+      4f      122
+      63      124
+      68      124
+      6d      129
+   }
+
+   method 'getX6 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      134
+      45      136
+      4a      136
+      4f      138
+      63      140
+      68      140
+      6d      141
+      72      145
+   }
+
+   method 'getX7 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      150
+      45      152
+      4a      152
+      4d      153
+      52      153
+      55      154
+      5a      154
+      5f      154
+      64      156
+      78      158
+      7d      158
+      82      159
+      87      163
+   }
+
+   method 'getX2 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      10      167
+      3d      169
+      51      171
+      59      173
+   }
+}
+
+class 'TestSwitchPatternWithExpression$A' {
+   method '<init> (Ljava/lang/String;)V' {
+      6      179
+      9      180
+   }
+
+   method 'a ()Ljava/lang/String;' {
+      1      183
+      4      183
+   }
+}
+
+class 'TestSwitchPatternWithExpression$B' {
+   method '<init> (Ljava/lang/String;)V' {
+      6      189
+      9      190
+   }
+
+   method 'a ()Ljava/lang/String;' {
+      1      193
+      4      193
+   }
+}
+
+class 'TestSwitchPatternWithExpression$AA' {
+   method '<init> (LTestSwitchPatternWithExpression$I;)V' {
+      6      199
+      9      200
+   }
+
+   method 'i ()LTestSwitchPatternWithExpression$I;' {
+      1      203
+      4      203
+   }
+}
+
+Lines mapping:
+5 <-> 184
+8 <-> 194
+11 <-> 204
+15 <-> 3
+16 <-> 4
+19 <-> 17
+20 <-> 11
+26 <-> 21
+28 <-> 23
+31 <-> 25
+37 <-> 39
+38 <-> 34
+44 <-> 44
+45 <-> 47
+46 <-> 52
+48 <-> 53
+52 <-> 59
+53 <-> 62
+54 <-> 68
+56 <-> 69
+60 <-> 74
+61 <-> 77
+62 <-> 83
+64 <-> 84
+68 <-> 89
+69 <-> 91
+70 <-> 98
+72 <-> 99
+76 <-> 104
+77 <-> 106
+78 <-> 113
+80 <-> 114
+84 <-> 130
+86 <-> 121
+87 <-> 123
+90 <-> 125
+98 <-> 146
+100 <-> 137
+101 <-> 139
+104 <-> 141
+105 <-> 142
+111 <-> 164
+113 <-> 153
+114 <-> 154
+115 <-> 155
+116 <-> 157
+119 <-> 159
+120 <-> 160
+126 <-> 168
+128 <-> 170
+130 <-> 172
+132 <-> 174
+Not mapped:
+21
+27
+30
+39
+49
+65
+81
+85
+89
+91
+99
+103
+112
+118
+127
+129

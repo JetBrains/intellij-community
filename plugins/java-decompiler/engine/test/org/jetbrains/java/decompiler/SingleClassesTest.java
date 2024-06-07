@@ -242,6 +242,11 @@ public class SingleClassesTest {
   @Test public void testInstanceofWithPattern() {
     doTest("patterns/TestInstanceofWithPattern");
   }
+  //it is not actual expressions, but convert expressions into statements
+  @Test public void testSwitchPatternWithExpression() {
+    doTest("patterns/TestSwitchPatternWithExpression");
+  }
+
   @Test public void testInstanceofVarNotSupported() {
     // the bytecode version of this test data doesn't support patterns in `instanceof`, so no modifications regarding that are applied
     doTest("patterns/TestInstanceofPatternNotSupported");
