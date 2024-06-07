@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
@@ -154,6 +155,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private fun AdvancedSettingBean.isApplicable(): Boolean =
     when (id) {
       "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
+      "search.everywhere.send.search.history.statistics" -> ApplicationManager.getApplication().isEAP && ApplicationManager.getApplication().isInternal
       else -> true
     }
 
