@@ -97,6 +97,9 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
 
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED",
+                                JavaBundle.message("checkbox.spaces.inside.block.braces.when.body.is.presented"), groupName);
+
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_DECONSTRUCTION_LIST", JavaBundle.message(
         "checkbox.spaces.before.deconstruction.list"), getInstance().SPACES_BEFORE_PARENTHESES);
     }

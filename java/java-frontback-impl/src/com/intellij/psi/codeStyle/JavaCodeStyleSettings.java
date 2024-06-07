@@ -131,6 +131,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
   public boolean SPACE_INSIDE_ONE_LINE_ENUM_BRACES = false;
 
+  public boolean SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENTED = false;
   public boolean NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
 
   public boolean useFqNamesInJavadocAlways() {
