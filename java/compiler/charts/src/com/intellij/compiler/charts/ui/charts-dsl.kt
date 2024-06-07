@@ -6,7 +6,10 @@ import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil.FontSize
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.RenderingHints
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
@@ -141,11 +144,12 @@ internal data class MaxSize(val width: Double, val height: Double) {
   constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.state.threads + 1) * progress.height)
 }
 
-class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, private val component: Component) : MouseAdapter() {
+class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, private val component: CompilationChartsDiagramsComponent) : MouseAdapter() {
   private val components: MutableList<Index> = mutableListOf()
   private var currentPopup: JPopupMenu? = null
 
   override fun mouseClicked(e: MouseEvent) {
+    component.setFocus()
     val info = search(e.point)?.info ?: return
     val popupMenu = JPopupMenu().apply {
       add(JLabel(CompilationChartsBundle.message("charts.module.info", info["name"], info["duration"]))) // TODO

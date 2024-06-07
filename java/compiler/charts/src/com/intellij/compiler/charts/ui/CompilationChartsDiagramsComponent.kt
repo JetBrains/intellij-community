@@ -5,21 +5,23 @@ import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
-import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentSkipListSet
+import javax.swing.JButton
 import javax.swing.JViewport
+import javax.swing.SwingUtilities
 import kotlin.math.exp
-
 
 class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewModel,
                                          private val zoom: Zoom,
-                                         private val viewport: JViewport) : JBTable() {
+                                         private val viewport: JViewport) : JBPanelWithEmptyText(BorderLayout()) {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
   }
@@ -34,9 +36,14 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
   private val mouseAdapter: CompilationChartsMouseAdapter
   private var image: BufferedImage? = null
   private val charts: Charts
-  private val emptyText = object : StatusText(this) {
-    override fun isStatusVisible() = false
+  private val focusableEmptyButton = JButton().apply {
+    preferredSize = Dimension(0, 0)
+    isFocusable = true
+    isOpaque = false
+    isContentAreaFilled = false
+    isBorderPainted = false
   }
+
   private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
     MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
       unit = "MB"
@@ -54,6 +61,7 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
     })
 
   init {
+    add(focusableEmptyButton, BorderLayout.NORTH)
     addMouseWheelListener { e ->
       if (e.isControlDown) {
         zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
@@ -113,7 +121,7 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
           filter = modules.filter
         }
         usage(usages[cpuMemory]!!) {
-          data(stats[cpuMemory]!!.getAndClean(), when(cpuMemory) {
+          data(stats[cpuMemory]!!.getAndClean(), when (cpuMemory) {
             MEMORY -> vm.statistics.maxMemory
             CPU -> 100
           })
@@ -128,7 +136,6 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
       }
     }
   }
-  override fun getEmptyText() = emptyText
 
   private fun cached(g2d: Graphics2D, init: () -> BufferedImage) {
     if (!shouldRepaint) {
@@ -146,4 +153,16 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
     revalidate()
     repaint()
   }
+
+  internal fun setFocus() {
+    SwingUtilities.invokeLater {
+      focusableEmptyButton.requestFocusInWindow()
+    }
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    setFocus()
+  }
+
 }

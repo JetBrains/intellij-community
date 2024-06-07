@@ -9,22 +9,14 @@ import kotlin.math.min
 
 class Zoom {
   private var userScale = -1.0
-  private var dynamicScale = 0.0
+  private var dynamicScale = 24.0
 
   private var correctionDuration: Long = 0
   private var lastCorrectionTime: Long = System.currentTimeMillis()
 
-  constructor() {
-    this.dynamicScale = 24.0 //5.5e7 / NANOS
-  }
-
-  constructor(seconds: Double) {
-    this.userScale = 24.0 //5.5e7 / (seconds * NANOS)
-  }
-
   fun toPixels(duration: Long): Double = toPixels(duration.toDouble(), scale())
   fun toPixels(duration: Double): Double = toPixels(duration, scale())
-  fun toPixels(duration: Double, scale: Double): Double = (duration / NANOS) * scale
+  private fun toPixels(duration: Double, scale: Double): Double = (duration / NANOS) * scale
 
   fun toDuration(pixels: Int): Long = toDuration(pixels.toDouble(), scale())
   private fun toDuration(pixels: Double, scale: Double): Long = Math.round(pixels / scale * NANOS)
