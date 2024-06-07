@@ -161,14 +161,16 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
 
   private fun path(data: MutableSet<StatisticData>, settings: ChartSettings): Path2D {
     val neighborhood = DoubleArray(8) { Double.NaN }
+    val border = 5
+    val height = clip.height - border
     val x0 = 0.0
-    val y0 = clip.y + clip.height
+    val y0 = clip.y + height + border
 
     val path = Path2D.Double()
     path.moveTo(x0, y0)
     data.forEachIndexed { i, statistic ->
       val px = zoom.toPixels(statistic.time - settings.duration.from)
-      val py = y0 - (statistic.data.toDouble() / state.maximum * clip.height)
+      val py = y0 - (statistic.data.toDouble() / state.maximum * height)
       neighborhood.shiftLeftByTwo(px, py)
       path.curveTo(neighborhood)
     }
