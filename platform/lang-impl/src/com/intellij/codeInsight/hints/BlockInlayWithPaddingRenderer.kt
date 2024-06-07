@@ -87,7 +87,8 @@ open class BlockInlayWithPaddingRenderer(
     inlay.update()
   }
 
-  private var padding: Padding = Padding(0, 0, 0, 0)
+  var padding: Padding = Padding(0, 0, 0, 0)
+    private set
 
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
     padding = paddingProvider.updateVerticalPadding(inlay, padding)
