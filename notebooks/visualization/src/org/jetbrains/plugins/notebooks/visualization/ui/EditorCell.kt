@@ -21,6 +21,7 @@ class EditorCell(
       val document = editor.document
       val startOffset = document.getLineStartOffset(interval.lines.first + 1)
       val endOffset = document.getLineEndOffset(interval.lines.last)
+      if (startOffset >= endOffset) return ""  // possible for empty cells
       return document.getText(TextRange(startOffset, endOffset))
     }
   val type: NotebookCellLines.CellType get() = interval.type
