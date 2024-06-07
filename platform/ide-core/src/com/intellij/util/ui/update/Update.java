@@ -86,6 +86,12 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     return false;
   }
 
+  /**
+   * Is called if the update was submitted to the queue but is not going to be executed because of various reasons; for example:
+   * - it was eaten by another Update
+   * - this update has gotten expired
+   * - someone has canceled all updates
+   */
   public void setRejected() {
     myRejected = true;
   }
