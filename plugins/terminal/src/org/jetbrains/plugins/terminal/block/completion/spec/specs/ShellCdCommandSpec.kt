@@ -18,9 +18,9 @@ internal fun cdCommandSpec() = ShellCommandSpec("cd") {
 
     val generator = ShellRuntimeDataGenerator(
       debugName = "cd suggestions",
-      getCacheKey = { "cd suggestions:${getParentPath(it.typedPrefix)}" }
+      getCacheKey = { "cd suggestions:${getParentPath(it.typedPrefix, it.shellName)}" }
     ) { context ->
-      val path = getParentPath(context.typedPrefix)
+      val path = getParentPath(context.typedPrefix, context.shellName)
       val directories = context.getChildFiles(path, onlyDirectories = true)
       val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
       val suggestions = directories.flatMap {

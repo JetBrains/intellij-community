@@ -11,12 +11,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
@@ -66,7 +67,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val prefix = allTokens.last().substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
-    val elements = suggestions.map { it.toLookupElement() }
+    val elements = suggestions.map { it.toLookupElement(session.shellIntegration.shellType) }
     resultSet.addAllElements(elements)
 
     if (elements.isNotEmpty()) {
@@ -131,7 +132,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
   }
 
-  private fun ShellCompletionSuggestion.toLookupElement(): LookupElement {
+  private fun ShellCompletionSuggestion.toLookupElement(shellType: ShellType): LookupElement {
     val actualIcon = icon ?: findIconForSuggestion(name, type)
     val realInsertValue = insertValue?.replace("{cursor}", "")
     val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
@@ -149,14 +150,27 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       .withPresentableText(displayName ?: name)
       .withTailText(nextSuggestions, true)
       .withIcon(actualIcon)
-      .withInsertHandler(MyInsertHandler(this, appendPathSeparator))
+      .withInsertHandler(MyInsertHandler(this, appendPathSeparator, shellType))
     val adjustedPriority = priority.coerceIn(0, 100)
     return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
   }
 
-  private class MyInsertHandler(private val suggestion: ShellCompletionSuggestion,
-                                private val appendPathSeparator: Boolean) : InsertHandler<LookupElement> {
+  private class MyInsertHandler(
+    private val suggestion: ShellCompletionSuggestion,
+    private val appendPathSeparator: Boolean,
+    private val shellType: ShellType
+  ) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
+      // PowerShell consider both slash and backslash as valid path separators.
+      // But after suggestion insertion, it is replacing wrong path separators with OS path separators.
+      // Here we are emulating the same behavior.
+      if (shellType == ShellType.POWERSHELL && (suggestion.type == ShellSuggestionType.FOLDER || suggestion.type == ShellSuggestionType.FILE)) {
+        val pathStartOffset = context.startOffset - suggestion.prefixReplacementIndex
+        val pathText = context.document.immutableCharSequence.substring(pathStartOffset, context.tailOffset)
+        val wrongSeparator = if (File.separatorChar == '/') '\\' else '/'
+        val adjustedPathText = pathText.replace(wrongSeparator, File.separatorChar)
+        context.document.replaceString(pathStartOffset, context.tailOffset, adjustedPathText)
+      }
       if (appendPathSeparator) {
         val tailOffset = context.tailOffset
         context.document.insertString(tailOffset, File.separator)
