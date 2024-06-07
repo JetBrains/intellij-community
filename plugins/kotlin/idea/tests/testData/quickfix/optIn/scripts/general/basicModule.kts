@@ -1,5 +1,4 @@
 // "Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'" "true"
-// PRIORITY: LOW
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'basicModule.kts'
 // ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
@@ -28,4 +27,4 @@ class Bar {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFileLevelFixesFactory$LowPriorityMakeModuleOptInFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeModuleOptInFix

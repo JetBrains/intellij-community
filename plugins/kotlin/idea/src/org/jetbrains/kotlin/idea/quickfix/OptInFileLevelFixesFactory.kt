@@ -55,12 +55,11 @@ internal object OptInFileLevelFixesFactory : KotlinIntentionActionsFactory() {
         )
 
         if (module != null) {
-            result.add(LowPriorityMakeModuleOptInFix(containingFile, module, annotationFqName))
+            result.add(MakeModuleOptInFix(containingFile, module, annotationFqName))
         }
 
         return result
     }
-
 
     // Find the existing file-level annotation of the specified class if it exists
     private fun findFileAnnotation(file: KtFile, annotationFqName: FqName): KtAnnotationEntry? {
@@ -69,11 +68,4 @@ internal object OptInFileLevelFixesFactory : KotlinIntentionActionsFactory() {
             context.get(BindingContext.ANNOTATION, entry)?.fqName == annotationFqName
         }
     }
-
-    private class LowPriorityMakeModuleOptInFix(
-        file: KtFile,
-        module: Module,
-        annotationFqName: FqName
-    ) : MakeModuleOptInFix(file, module, annotationFqName), LowPriorityAction
-
 }
