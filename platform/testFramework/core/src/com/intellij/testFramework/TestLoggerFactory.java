@@ -96,7 +96,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static @NotNull int getRethrowErrorNumber() {
+  public static int getRethrowErrorNumber() {
     return myRethrowErrorsNumber.get();
   }
 
