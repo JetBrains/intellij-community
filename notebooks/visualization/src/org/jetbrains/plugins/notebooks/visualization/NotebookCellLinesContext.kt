@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.util.asSafely
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -30,11 +31,9 @@ private class NotebookCellLinesIntervalDataRule : GetDataRule {
       }
 }
 
-private class EditorsWithOffsetsDataRule : EdtDataRule {
-  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
-    // TODO Simplify. The code below is overcomplicated
-    val contextComponent = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT]
-    val editor = snapshot[PlatformDataKeys.EDITOR]
+@ApiStatus.Internal
+object EditorsWithOffsetsUtils {
+  fun getEditorsWithOffsets(editor: Editor?, contextComponent: Component?): List<Pair<Editor, Int>> {
 
     val result = mutableListOf<Pair<Editor, Int>>()
 
@@ -71,7 +70,8 @@ private class EditorsWithOffsetsDataRule : EdtDataRule {
     if (editor != null && NotebookCellLinesProvider.get(editor.document) != null) {
       result += editor to editor.getOffsetFromCaretImpl()
     }
-    sink[EDITORS_WITH_OFFSETS_DATA_KEY] = result.takeIf(List<*>::isNotEmpty)
+
+    return result
   }
 
   private fun Editor.getOffsetFromCaretImpl(): Int =
@@ -89,4 +89,14 @@ private class EditorsWithOffsetsDataRule : EdtDataRule {
         val point = SwingUtilities.convertPoint(child, 0, 0, editor.contentComponent)
         editor to editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
       }
+}
+
+private class EditorsWithOffsetsDataRule : EdtDataRule {
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    // TODO Simplify. The code below is overcomplicated
+    val contextComponent = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT]
+    val editor = snapshot[PlatformDataKeys.EDITOR]
+    val result = EditorsWithOffsetsUtils.getEditorsWithOffsets(editor, contextComponent)
+    sink[EDITORS_WITH_OFFSETS_DATA_KEY] = result.takeIf(List<*>::isNotEmpty)
+  }
 }

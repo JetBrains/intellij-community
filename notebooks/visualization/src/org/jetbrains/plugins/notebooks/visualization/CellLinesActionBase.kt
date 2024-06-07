@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -31,11 +32,12 @@ abstract class CellLinesActionBase : DumbAwareAction() {
   }
 }
 
-fun DataContext.getAnyEditor(): EditorImpl? =
-  getData(EDITORS_WITH_OFFSETS_DATA_KEY)
+fun DataContext.getAnyEditor(): EditorImpl? {
+  return getData(EDITORS_WITH_OFFSETS_DATA_KEY)
     ?.firstOrNull()
     ?.first
-    ?.asSafely<EditorImpl>()
+    ?.asSafely<EditorImpl>() ?: getData(CommonDataKeys.EDITOR).asSafely<EditorImpl>()
+}
 
 fun isEditingAllowed(e: AnActionEvent): Boolean {
   val virtualFile = e.dataContext.getData(PlatformCoreDataKeys.FILE_EDITOR)?.file ?: return false
