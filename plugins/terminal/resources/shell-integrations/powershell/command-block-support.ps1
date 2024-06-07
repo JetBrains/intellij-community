@@ -4,8 +4,13 @@ if ([string]::IsNullOrEmpty($Env:INTELLIJ_TERMINAL_COMMAND_BLOCKS)) {
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-function Global:__JetBrainsIntellijEncode([string]$value) {
-  $Bytes = [System.Text.Encoding]::UTF8.GetBytes($value)
+function Global:__JetBrainsIntellijEncode([object]$value) {
+  # Value that we need to encode is not always a string.
+  # Generator result can be an array of objects, for example, type of the `git config --get-regexp "^alias"` command output is Object[].
+  # So, we need to use Out-String cmdlet to transform the Object[] to the string like in the terminal output.
+  # Otherwise GetBytes call will transform it in some other way and we will lose the line brakes.
+  $ValueAsString = if ($value -is [string]) { $value } else { ($value | Out-String).trim() }
+  $Bytes = [System.Text.Encoding]::UTF8.GetBytes($ValueAsString)
   return [System.BitConverter]::ToString($Bytes).Replace("-", "")
 }
 
