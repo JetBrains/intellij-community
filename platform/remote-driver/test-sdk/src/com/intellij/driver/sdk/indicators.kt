@@ -38,7 +38,7 @@ private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duratio
   var smartLongEnoughStart: Instant? = null
 
   waitFor(timeout) {
-    if (!isProjectOpened() || areIndicatorsVisible(projectGet.invoke())) {
+    if (!isProjectOpened() || runCatching { areIndicatorsVisible(projectGet.invoke()) }.getOrElse { false }) {
       smartLongEnoughStart = null
       return@waitFor false
     }
