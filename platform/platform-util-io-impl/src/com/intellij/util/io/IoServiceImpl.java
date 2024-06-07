@@ -5,6 +5,8 @@ import com.github.markusbernhardt.proxy.ProxySearch;
 import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
 import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
 import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
+import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.ProxySelector;
 
@@ -13,17 +15,25 @@ public class IoServiceImpl implements IoService {
   public ProxySelector getProxySelector(String pacUrlForUse) {
     ProxySelector newProxySelector;
     if (pacUrlForUse == null) {
-      ProxySearch proxySearch = new ProxySearch();
-      proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
-      proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
-      proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
-      // cache 32 urls for up to 10 min
-      proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
+      final ProxySearch proxySearch = getDefaultProxySearchStrategy();
       newProxySelector = proxySearch.getProxySelector();
     }
     else {
       newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
     }
     return newProxySelector;
+  }
+
+  private static @NotNull ProxySearch getDefaultProxySearchStrategy() {
+    ProxySearch proxySearch = new ProxySearch();
+    proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
+    proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
+    if (SystemInfo.isWindows) { // for some (likely legacy) reasons, system proxy settings can only be detected using the search for IE
+      proxySearch.addStrategy(ProxySearch.Strategy.IE);
+    }
+    proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
+    // cache 32 urls for up to 10 min
+    proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
+    return proxySearch;
   }
 }
