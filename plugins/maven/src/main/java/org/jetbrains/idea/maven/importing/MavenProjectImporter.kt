@@ -141,9 +141,6 @@ interface MavenProjectImporter {
 
     @JvmStatic
     fun isImportToWorkspaceModelEnabled(project: Project): Boolean {
-      val property = System.getProperty("maven.import.to.workspace.model")
-      if ("true" == property) return true
-      if ("false" == property) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
     }
   }
