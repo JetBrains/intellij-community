@@ -3,6 +3,7 @@ package com.intellij.ide.actionsOnSave
 
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.components.Service
@@ -131,8 +132,8 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
   }
 
   private fun checkResult(doc1: Document, doc1ExpectedText: String, doc2: Document, doc2ExpectedText: String) {
-    assertEquals(doc1ExpectedText, doc1.text)
-    assertEquals(doc2ExpectedText, doc2.text)
+    assertEquals(file1Name, doc1ExpectedText, doc1.text)
+    assertEquals(file2Name, doc2ExpectedText, doc2.text)
 
     val doc1ExpectedSaved = doc1ExpectedText == textAfterAllActions
     val doc2ExpectedSaved = doc2ExpectedText == textAfterAllActions
@@ -156,6 +157,23 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
     val doc2ExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nmanual typing"
     doTestWithTwoFiles(textAfterAllActions, doc2ExpectedText) {
       if (isDocument2(it)) typeInDocumentAfterDelay(it, 50)
+    }
+  }
+
+  fun testBothFilesEditedBeforeBgtActionsGetChance() {
+    val docExpectedText = "initial text\nEdtActionOnSave1\nEdtActionOnSave2\nmanual typing"
+    var typed = false
+    doTestWithTwoFiles(docExpectedText, docExpectedText) {
+      if (typed) return@doTestWithTwoFiles
+      typed = true
+
+      val (doc1, doc2) = readAction {
+        val manager = FileDocumentManager.getInstance()
+        val parentDir = manager.getFile(it)!!.parent
+        manager.getDocument(parentDir.findChild(file1Name)!!)!! to manager.getDocument(parentDir.findChild(file2Name)!!)!!
+      }
+      typeInDocumentAfterDelay(doc1, 0)
+      typeInDocumentAfterDelay(doc2, 0)
     }
   }
 

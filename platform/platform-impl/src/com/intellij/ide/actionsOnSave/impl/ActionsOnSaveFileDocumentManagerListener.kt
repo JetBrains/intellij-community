@@ -81,11 +81,17 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
     abstract val presentableName: String
 
     /**
+     * Checks applicability and runs the Action on Save for the [document] if needed.
+     *
+     * Implementations should be cancellation-friendly because the Platform cancels the job
+     * if the processed [document] is updated before Actions on Save are completed.
+     * For example, typing in the document cancels Actions on Save for this document.
+     * Actions on Save for other documents keep running.
+     *
      * Typical implementation:
      *
      *    override suspend fun updateDocument(project: Project, document: Document) {
-     *      // To support cancellability, implementations of `prepareChange()`
-     *      // should call `checkCanceled()` directly or indirectly often enough.
+     *      if (!isApplicable(project, document) return
      *      val changeInfo = prepareChange(project, document)
      *      writeCommandAction(project, "Format file") {
      *        applyChange(project, document, changeInfo)
@@ -95,9 +101,8 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
      * Another example for the case when a `readAction` is needed to calculate the document change:
      *
      *    override suspend fun updateDocument(project: Project, document: Document) {
+     *      if (!isApplicable(project, document) return
      *      readAndWriteAction {
-     *        // To support cancellability, implementations of `prepareChange()`
-     *        // should call `checkCanceled()` directly or indirectly often enough.
      *        val changeInfo = prepareChange(project, document)
      *        writeAction {
      *          executeCommand(project, "Format file") {
@@ -320,8 +325,11 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
       document.addDocumentListener(documentListener)
 
       // Check if the document has been already edited before the DocumentListener has been added and cancel Actions on Save if so.
-      if (document.modificationStamp != modStamp) {
-        documentScope.cancel()
+      // Read action is needed to make sure we are not in the middle of a write action (when the doc has been already updated, bug modStamp - not yet).
+      readAction {
+        if (document.modificationStamp != modStamp) {
+          documentScope.cancel()
+        }
       }
 
       reportProgress(size = actionsOnSave.size) { progressReporter ->
