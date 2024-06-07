@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.junit.Assume
 import org.junit.Test
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
@@ -371,7 +370,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -416,7 +414,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWhenDeleteModuleInProjectStructureThenChangeModuleDependencyToLibraryDependency() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -500,7 +497,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

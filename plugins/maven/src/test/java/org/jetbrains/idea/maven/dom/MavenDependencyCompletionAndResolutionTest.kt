@@ -17,7 +17,6 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
@@ -1237,7 +1236,6 @@ $libPath<caret></systemPath>
 
   @Test
   fun testImportDependencyChainedProperty() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

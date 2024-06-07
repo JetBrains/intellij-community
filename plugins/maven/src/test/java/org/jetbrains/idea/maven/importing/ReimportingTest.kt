@@ -102,12 +102,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
 
     importProjectAsync()
-    if (supportsKeepingModulesFromPreviousImport()) {
-      assertModules("project", "m1", "m2")
-    }
-    else {
-      assertModules("project", "m1")
-    }
+    assertModules("project", "m1")
   }
 
   @Test
@@ -131,14 +126,14 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
     }
-    assertEquals(if (supportsKeepingModulesFromPreviousImport()) 1 else 0, counter.get())
+    assertEquals(0, counter.get())
 
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
     importProjectAsync()
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
     }
-    assertEquals(if (supportsKeepingModulesFromPreviousImport()) 1 else 0, counter.get())
+    assertEquals(0, counter.get())
   }
 
   @Test
@@ -172,12 +167,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     waitForImportWithinTimeout {
       mavenImporterSettings.setCreateModulesForAggregators(false)
     }
-    if (supportsCreateAggregatorOption()) {
-      assertModules(mn("project", "m2"))
-    }
-    else {
-      assertModules("project", "m1", "m2")
-    }
+    assertModules("project", "m1", "m2")
 
     waitForImportWithinTimeout {
       mavenImporterSettings.setCreateModulesForAggregators(true)
@@ -214,12 +204,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     updateAllProjects()
 
-    if (supportsCreateAggregatorOption()) {
-      assertModules("m1", "m2")
-    }
-    else {
-      assertModules("project", "m1", "m2", "m3")
-    }
+    assertModules("project", "m1", "m2", "m3")
   }
 
   @Test

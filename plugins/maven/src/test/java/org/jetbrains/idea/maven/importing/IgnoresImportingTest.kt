@@ -81,8 +81,6 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotAskTwiceToRemoveIgnoredModule() = runBlocking {
-    if (!supportsKeepingModulesFromPreviousImport()) return@runBlocking
-
     val p1 = createModulePom("project1",
                              """
                                        <groupId>test</groupId>

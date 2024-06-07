@@ -13,11 +13,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.utils.vfs.createFile
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.junit.Assume
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -586,8 +583,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDependenciesInPerSourceTypeModule() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
-
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -650,8 +645,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testTestDependencyOnPerSourceTypeModule() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
-
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -1959,13 +1952,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    if (supportsKeepingManualChanges()) {
-      assertProjectLibraries("Maven: group:lib1:1",
-                             "Maven: group:lib2:1")
-    }
-    else {
-      assertProjectLibraries()
-    }
+    assertProjectLibraries()
   }
 
   @Test
@@ -1980,9 +1967,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertProjectLibraries("lib")
     addLibraryRoot("lib", OrderRootType.CLASSES, "file://" + repositoryPath + "/foo/bar.jar!/")
-    if (supportsKeepingManualChanges()) {
-      assertModuleLibDeps("project", "lib")
-    }
 
     createProjectPom("""
                     <groupId>test</groupId>
@@ -1993,12 +1977,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertProjectLibraries("lib")
 
-    if (supportsKeepingManualChanges()) {
-      assertModuleLibDeps("project", "lib")
-    }
-    else {
-      assertModuleLibDeps("project")
-    }
+    assertModuleLibDeps("project")
   }
 
   @Test
@@ -2293,7 +2272,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDependencyToIgnoredProject() = runBlocking {
-    assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -2557,19 +2535,11 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
         modifiableModel.addInvalidLibrary("Maven: AnotherLibrary", LibraryTablesRegistrar.PROJECT_LEVEL)
         modifiableModel.commit()
       }
-      if (supportsKeepingManualChanges()) {
-        assertModuleLibDeps("project", "Maven: junit:junit:4.0", "SomeLibrary", "Maven: AnotherLibrary")
-      }
 
       // incremental sync doesn't update module if effective pom dependencies haven't changed
       updateAllProjectsFullSync()
 
-      if (supportsKeepingManualChanges()) {
-        assertModuleLibDeps("project", "SomeLibrary", "Maven: junit:junit:4.0")
-      }
-      else {
-        assertModuleLibDeps("project", "Maven: junit:junit:4.0")
-      }
+      assertModuleLibDeps("project", "Maven: junit:junit:4.0")
     }
     finally {
       value.resetToDefault()

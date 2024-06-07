@@ -7,14 +7,12 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiJavaModule
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class MavenJarManifestImportingTest : MavenMultiVersionImportingTestCase() {
   
   @Test
   fun `test jar manifest automatic module name`() = runBlocking {
-    assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

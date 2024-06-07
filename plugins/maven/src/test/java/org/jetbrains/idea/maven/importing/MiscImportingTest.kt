@@ -21,7 +21,6 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -71,7 +70,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testFallbackToSlowWorkspaceCommit() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     try {
       WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = true
       importProjectAsync("""
@@ -160,12 +158,11 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     myEventsTestHelper.assertRootsChanged(1)
-    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
+    myEventsTestHelper.assertWorkspaceModelChanges(1)
   }
 
   @Test
   fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -179,7 +176,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     </dependencies>
                     """.trimIndent())
     myEventsTestHelper.assertRootsChanged(1)
-    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
+    myEventsTestHelper.assertWorkspaceModelChanges(1)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -229,7 +226,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSendWorkspaceEventsOnlyForChangedEntities() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -309,7 +305,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     myEventsTestHelper.assertRootsChanged(1)
-    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
+    myEventsTestHelper.assertWorkspaceModelChanges(1)
   }
 
   @Test

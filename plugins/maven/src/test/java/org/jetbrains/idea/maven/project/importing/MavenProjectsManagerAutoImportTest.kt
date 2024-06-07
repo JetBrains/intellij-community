@@ -16,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
@@ -457,7 +456,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testAddingManagedFileAndChangingAggregation() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
