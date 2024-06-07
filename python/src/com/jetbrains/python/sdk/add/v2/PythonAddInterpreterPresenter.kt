@@ -34,7 +34,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 
-private val emptyContext: UserDataHolder by lazy { UserDataHolderBase() }
+val emptyContext: UserDataHolder by lazy { UserDataHolderBase() }
 
 internal fun PythonAddInterpreterPresenter.tryGetVirtualFile(pathOnTarget: FullPathOnTarget): VirtualFile? {
   val mapper = targetEnvironmentConfiguration?.let { PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(it) }
@@ -61,7 +61,10 @@ internal fun PythonAddInterpreterPresenter.setupVirtualenv(venvPath: Path, proje
  * @param state is the model for this presented in Model-View-Presenter pattern
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val uiContext: CoroutineContext) {
+open class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val uiContext: CoroutineContext) {
+
+  lateinit var controller: PythonAddInterpreterModel
+
   val scope: CoroutineScope
     get() = state.scope
 
@@ -234,7 +237,7 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
   data class ProjectPathWithContext(val projectPath: String, val context: ProjectLocationContext)
 
   companion object {
-    private val LOG = logger<PythonAddInterpreterPresenter>()
+    val LOG = logger<PythonAddInterpreterPresenter>()
 
     private fun MutableStateFlow<List<PyDetectedSdk>>.addDetectedSdk(targetPath: String,
                                                                      targetEnvironmentConfiguration: TargetEnvironmentConfiguration?) {

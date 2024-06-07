@@ -13,10 +13,7 @@ import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -49,18 +46,9 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
   private var _projectVenv = propertyGraph.booleanProperty(selectedMode, PROJECT_VENV)
   private var _baseConda = propertyGraph.booleanProperty(selectedMode, BASE_CONDA)
   private var _custom = propertyGraph.booleanProperty(selectedMode, CUSTOM)
-
-  private val allExistingSdks = propertyGraph.property<List<Sdk>>(emptyList())
-  private val basePythonSdks = propertyGraph.property<List<Sdk>>(emptyList())
-  private val installableSdks = propertyGraph.property<List<Sdk>>(emptyList())
-  private val pythonBaseVersion = propertyGraph.property<Sdk?>(null)
-  private val selectedVenv = propertyGraph.property<Sdk?>(null)
-
-  private val condaExecutable = propertyGraph.property("")
   private var venvHint = propertyGraph.property("")
 
-  private lateinit var pythonBaseVersionComboBox: ComboBox<Sdk?>
-
+  private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox
   private var initialized = false
 
   private fun updateVenvLocationHint() {
@@ -69,23 +57,18 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
-  val state = PythonAddInterpreterState(propertyGraph,
-                                        projectPath,
-                                        service<PythonAddSdkService>().coroutineScope,
-                                        basePythonSdks,
-                                        allExistingSdks,
-                                        installableSdks,
-                                        selectedVenv,
-                                        condaExecutable)
-
-  private lateinit var presenter: PythonAddInterpreterPresenter
   private lateinit var custom: PythonAddCustomInterpreter
-
+  private lateinit var model: PythonMutableTargetAddInterpreterModel
 
   fun buildPanel(outerPanel: Panel) {
-    presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
-    presenter.navigator.selectionMode = selectedMode
-    custom = PythonAddCustomInterpreter(presenter)
+    //presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
+    model = PythonLocalAddInterpreterModel(service<PythonAddSdkService>().coroutineScope,
+                                           Dispatchers.EDT + ModalityState.current().asContextElement(), projectPath)
+    model.navigator.selectionMode = selectedMode
+    //presenter.controller = model
+
+    custom = PythonAddCustomInterpreter(model)
+
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
 
@@ -98,27 +81,26 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
       }
 
       row(message("sdk.create.python.version")) {
-        pythonBaseVersionComboBox = pythonInterpreterComboBox(pythonBaseVersion,
-                                                              presenter,
-                                                              presenter.basePythonSdksFlow,
-                                                              presenter::addBasePythonInterpreter)
+        pythonBaseVersionComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
+                                                              model,
+                                                              model::addInterpreter,
+                                                              model.interpreterLoading)
           .align(AlignX.FILL)
           .component
       }.visibleIf(_projectVenv)
 
       rowsRange {
-        executableSelector(state.condaExecutable,
+        executableSelector(model.state.condaExecutable,
                            validationRequestor,
                            message("sdk.create.conda.executable.path"),
                            message("sdk.create.conda.missing.text"),
-                           createInstallCondaFix(presenter))
-          .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
+                           createInstallCondaFix(model))
+          //.displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)
-
 
       row("") {
         comment("").bindText(venvHint)
-      }.visibleIf(_projectVenv or (_baseConda and state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE)))
+      }.visibleIf(_projectVenv or (_baseConda and model.state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE)))
 
       rowsRange {
         custom.buildPanel(this, validationRequestor)
@@ -133,28 +115,27 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
     if (!initialized) {
       initialized = true
       val modalityState = ModalityState.current().asContextElement()
-      state.scope.launch(Dispatchers.EDT + modalityState) {
-        val existingSdks = PyConfigurableInterpreterList.getInstance(null).getModel().sdks.toList()
-        val allValidSdks = withContext(Dispatchers.IO) {
-          ProjectSpecificSettingsStep.getValidPythonSdks(existingSdks)
-        }
-        allExistingSdks.set(allValidSdks)
-        installableSdks.set(getSdksToInstall())
+      model.scope.launch(Dispatchers.EDT + modalityState) {
+        model.initialize()
+        pythonBaseVersionComboBox.setItems(model.baseInterpreters)
+        custom.onShown()
+
         updateVenvLocationHint()
       }
 
-      custom.onShown()
-      presenter.navigator.restoreLastState(onlyAllowedSelectionModes = allowedInterpreterTypes)
+      // todo don't forget allowedEnvs
+      model.navigator.restoreLastState()
     }
   }
 
   fun getSdk(): Sdk? {
-    presenter.navigator.saveLastState()
+    model.navigator.saveLastState()
     return when (selectedMode.get()) {
-      PROJECT_VENV -> presenter.setupVirtualenv(Path.of(projectPath.get(), ".venv"),
-                                                projectPath.get(),
-                                                pythonBaseVersion.get()!!)
-      BASE_CONDA -> presenter.selectCondaEnvironment(presenter.baseConda!!.envIdentity)
+      PROJECT_VENV -> model.setupVirtualenv(Path.of(projectPath.get(), ".venv"), // todo just keep venv path, all the rest is in the model
+                                            projectPath.get(),
+                                                //pythonBaseVersion.get()!!)
+                                            model.state.baseInterpreter.get()!!)
+      BASE_CONDA -> model.selectCondaEnvironment(model.state.baseCondaEnv.get()!!.envIdentity)
       CUSTOM -> custom.getSdk()
     }
   }
@@ -166,14 +147,16 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
                                               false,
                                               false,
                                               false,
-                                              presenter.projectLocationContext is WslContext,
+                                              //presenter.projectLocationContext is WslContext,
+                                              false,
                                               InterpreterCreationMode.SIMPLE)
     BASE_CONDA -> InterpreterStatisticsInfo(InterpreterType.BASE_CONDA,
                                             InterpreterTarget.LOCAL,
                                             false,
                                             false,
                                             true,
-                                            presenter.projectLocationContext is WslContext,
+                                            //presenter.projectLocationContext is WslContext,
+                                            false,
                                             InterpreterCreationMode.SIMPLE)
     CUSTOM -> custom.createStatisticsInfo()
   }

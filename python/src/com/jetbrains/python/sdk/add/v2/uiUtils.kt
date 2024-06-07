@@ -21,14 +21,12 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
@@ -53,6 +51,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import java.nio.file.Paths
 import javax.swing.JList
 import javax.swing.JPanel
@@ -67,7 +66,7 @@ internal fun <T> PropertyGraph.booleanProperty(dependency: ObservableProperty<T>
   lazyProperty { dependency.get() == value }.apply { dependsOn(dependency) { dependency.get() == value } }
 
 class PythonNewEnvironmentDialogNavigator {
-  lateinit var selectionMode: ObservableMutableProperty<PythonInterpreterSelectionMode>
+  var selectionMode: ObservableMutableProperty<PythonInterpreterSelectionMode>? = null
   lateinit var selectionMethod: ObservableMutableProperty<PythonInterpreterSelectionMethod>
   lateinit var newEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
   lateinit var existingEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
@@ -75,7 +74,7 @@ class PythonNewEnvironmentDialogNavigator {
   fun navigateTo(newMode: PythonInterpreterSelectionMode? = null,
                  newMethod: PythonInterpreterSelectionMethod? = null,
                  newManager: PythonSupportedEnvironmentManagers? = null) {
-    newMode?.let { selectionMode.set(it) }
+    newMode?.let { selectionMode?.set(it) }
     newMethod?.let { method ->
       selectionMethod.set(method)
     }
@@ -88,11 +87,16 @@ class PythonNewEnvironmentDialogNavigator {
     }
   }
 
+  // todo think about whether i need to save state in regular dialog
   fun saveLastState() {
     val properties = PropertiesComponent.getInstance()
 
-    val mode = selectionMode.get()
-    properties.setValue(FAV_MODE, mode.toString())
+    val mode = selectionMode?.let {
+      val mode = selectionMode!!.get()
+      properties.setValue(FAV_MODE, it.get().toString())
+      mode
+    } ?: VIRTUALENV
+
     if (mode == CUSTOM) {
       val method = selectionMethod.get()
       val manager = if (method == CREATE_NEW) newEnvManager.get() else existingEnvManager.get()
@@ -116,7 +120,7 @@ class PythonNewEnvironmentDialogNavigator {
     val modeString = properties.getValue(FAV_MODE) ?: return
     val mode = PythonInterpreterSelectionMode.valueOf(modeString)
     if (mode !in onlyAllowedSelectionModes) return
-    selectionMode.set(mode)
+    selectionMode?.set(mode)
 
     if (mode == CUSTOM) {
       val method = PythonInterpreterSelectionMethod.valueOf(properties.getValue(FAV_METHOD) ?: return)
@@ -134,31 +138,39 @@ class PythonNewEnvironmentDialogNavigator {
   }
 }
 
-internal fun SimpleColoredComponent.customizeForPythonSdk(sdk: Sdk) {
-  when (sdk) {
-    is PyDetectedSdk -> {
+
+internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: PythonSelectableInterpreter) {
+  when (interpreter) {
+    is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
       icon = IconLoader.getTransparentIcon(PythonPsiApiIcons.Python)
-      append(sdk.homePath!!)
+      append(interpreter.homePath)
       append(" " + message("sdk.rendering.detected.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
-    is PySdkToInstall -> {
+    is InstallableSelectableInterpreter -> {
       icon = AllIcons.Actions.Download
-      append(sdk.name)
+      append(interpreter.sdk.name)
       append(" " + message("sdk.rendering.installable.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
-    else -> {
+    is ExistingSelectableInterpreter -> {
       icon = PythonPsiApiIcons.Python
-      append(sdk.versionString!!)
-      append(" " + sdk.homePath!!, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      append(interpreter.sdk.versionString!!)
+      append(" " + interpreter.homePath, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
+    is InterpreterSeparator -> return
+    else -> error("Unknown PythonSelectableInterpreter type")
   }
 }
 
 
 class PythonSdkComboBoxListCellRenderer : ColoredListCellRenderer<Any>() {
+
+  override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean): Component {
+    if (value is InterpreterSeparator) return TitledSeparator(value.text).apply { setLabelFocusable(false) }
+    return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+  }
+
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    if (value !is Sdk) error("Not an Sdk")
-    customizeForPythonSdk(value)
+    if (value is PythonSelectableInterpreter) customizeForPythonInterpreter(value)
   }
 }
 
@@ -190,30 +202,97 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
   }
 }
 
-internal fun Row.pythonInterpreterComboBox(selectedSdkProperty: ObservableMutableProperty<Sdk?>,
-                                           presenter: PythonAddInterpreterPresenter,
-                                           sdksFlow: StateFlow<List<Sdk>>,
-                                           onPathSelected: (String) -> Unit): Cell<ComboBox<Sdk?>> =
-  comboBox<Sdk?>(emptyList(), PythonSdkComboBoxListCellRenderer())
+internal fun Row.pythonInterpreterComboBox(selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
+                                           model: PythonAddInterpreterModel,
+                                           onPathSelected: (String) -> Unit, busyState: StateFlow<Boolean>? = null): Cell<PythonInterpreterComboBox> {
+
+  val comboBox = PythonInterpreterComboBox(selectedSdkProperty, model, onPathSelected)
+  val cell = cell(comboBox)
     .bindItem(selectedSdkProperty)
     .applyToComponent {
       preferredHeight = 30
       isEditable = true
-      editor = PythonSdkComboBoxWithBrowseButtonEditor(this, presenter, onPathSelected)
+    }
 
-      presenter.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-        sdksFlow.collectLatest { sdks ->
-          withContext(presenter.uiContext) {
-            removeAllItems()
-            sdks.forEach(this@applyToComponent::addItem)
-
-            val pathToSelect = tryGetAndRemovePathToSelectAfterModelUpdate() as? String
-            val newValue = if (pathToSelect != null) sdks.find { it.homePath == pathToSelect } else findPrioritySdk(sdks)
-            selectedSdkProperty.set(newValue)
-          }
+  model.scope.launch(model.uiContext, start = CoroutineStart.UNDISPATCHED) {
+    busyState?.collectLatest { currentValue ->
+      withContext(model.uiContext) {
+        comboBox.setBusy(currentValue)
+        if (currentValue) {
+          // todo disable cell
         }
       }
     }
+  }
+  return cell
+
+
+}
+
+class PythonInterpreterComboBox(val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
+                                val controller: PythonAddInterpreterModel,
+                                val onPathSelected: (String) -> Unit) : ComboBox<PythonSelectableInterpreter?>() {
+
+  private lateinit var itemsFlow: StateFlow<List<PythonSelectableInterpreter>>
+  val items: List<PythonSelectableInterpreter>
+    get() = itemsFlow.value
+
+  private val interpreterToSelect = controller.propertyGraph.property<String?>(null)
+
+  init {
+    renderer = PythonSdkComboBoxListCellRenderer()
+    val newOnPathSelected: (String) -> Unit = {
+      interpreterToSelect.set(it)
+      onPathSelected(it)
+    }
+    editor = PythonSdkComboBoxWithBrowseButtonEditor(this, controller, newOnPathSelected)
+
+  }
+
+  fun setItems(flow: StateFlow<List<PythonSelectableInterpreter>>) {
+    itemsFlow = flow
+    controller.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      flow.collectLatest { interpreters ->
+        withContext(controller.uiContext) {
+          with(this@PythonInterpreterComboBox) {
+            val currentlySelected = selectedItem as PythonSelectableInterpreter?
+            removeAllItems()
+            interpreters.forEach(this::addItem)
+
+            val newPath = interpreterToSelect.get()
+            val newValue = if (newPath != null) {
+              val newItem = interpreters.find { it.homePath == newPath }
+              if (newItem == null) error("path but no item")
+              interpreterToSelect.set(null)
+              newItem
+            }
+            else if (currentlySelected == null || currentlySelected !in interpreters) {
+              interpreters.firstOrNull() // todo is there better fallback value?
+            }
+            else {
+              currentlySelected
+            }
+
+
+            //val newValue = if (newPath != null) {
+            //  val newItem = interpreters.find { it.homePath == newPath }
+            //  newPath = null
+            //  newItem ?: currentlySelected
+            //} else currentlySelected
+
+
+            backingProperty.set(newValue) // todo do I even need to set it?
+          }
+
+        }
+      }
+    }
+  }
+
+  fun setBusy(busy: Boolean) {
+    (editor as PythonSdkComboBoxWithBrowseButtonEditor).setBusy(busy)
+  }
+}
 
 private fun findPrioritySdk(sdkList: List<Sdk>): Sdk? {
   val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
@@ -374,12 +453,15 @@ fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
   return textFieldCell!!
 }
 
-internal fun createInstallCondaFix(presenter: PythonAddInterpreterPresenter): ActionLink {
+internal fun createInstallCondaFix(model: PythonAddInterpreterModel): ActionLink {
   return ActionLink(message("sdk.create.conda.install.fix")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
-    presenter.scope.launch(presenter.uiContext) {
-      presenter.reloadConda(presenter.projectLocationContext)
+    model.scope.launch(model.uiContext) {
+      model.condaEnvironmentsLoading.value = true
+      model.detectCondaExecutable()
+      model.detectCondaEnvironments()
+      model.condaEnvironmentsLoading.value = false
     }
   }
 }

@@ -23,17 +23,19 @@ class PythonLocalEnvironmentCreator(val presenter: PythonAddInterpreterPresenter
   private val newInterpreterManager = propertyGraph.property(VIRTUALENV)
   private val existingInterpreterManager = propertyGraph.property(PYTHON)
 
-  private val newInterpreterCreators = mapOf(
-    VIRTUALENV to PythonNewVirtualenvCreator(presenter),
-    CONDA to CondaNewEnvironmentCreator(presenter),
-    PIPENV to PipEnvNewEnvironmentCreator(presenter),
-    POETRY to PoetryNewEnvironmentCreator(presenter),
-  )
+  private val newInterpreterCreators = emptyMap<Any, PythonAddEnvironment>()
+  //private val newInterpreterCreators = mapOf(
+  //  VIRTUALENV to PythonNewVirtualenvCreator(presenter),
+  //  CONDA to CondaNewEnvironmentCreator(presenter),
+  //  PIPENV to PipEnvNewEnvironmentCreator(presenter),
+  //  POETRY to PoetryNewEnvironmentCreator(presenter),
+  //)
 
-  private val existingInterpreterSelectors = mapOf(
-    PYTHON to PythonExistingEnvironmentSelector(presenter),
-    CONDA to CondaExistingEnvironmentSelector(presenter),
-  )
+  private val existingInterpreterSelectors = emptyMap<Any, PythonAddEnvironment>()
+  //private val existingInterpreterSelectors = mapOf(
+  //  PYTHON to PythonExistingEnvironmentSelector(presenter),
+  //  CONDA to CondaExistingEnvironmentSelector(presenter),
+  //)
 
   private val currentSdkManager: PythonAddEnvironment
     get() {
@@ -68,33 +70,33 @@ class PythonLocalEnvironmentCreator(val presenter: PythonAddInterpreterPresenter
 
       row(message("sdk.create.custom.type")) {
         comboBox(newInterpreterCreators.keys, PythonEnvironmentComboBoxRenderer())
-          .bindItem(newInterpreterManager)
+          //.bindItem(newInterpreterManager)
           .widthGroup("env_aligned")
           .visibleIf(_createNew)
 
         comboBox(existingInterpreterSelectors.keys, PythonEnvironmentComboBoxRenderer())
-          .bindItem(existingInterpreterManager)
+          //.bindItem(existingInterpreterManager)
           .widthGroup("env_aligned")
           .visibleIf(_selectExisting)
       }
 
-      newInterpreterCreators.forEach { (type, creator) ->
-        rowsRange {
-          creator.buildOptions(this,
-                               validationRequestor
-                                 and WHEN_PROPERTY_CHANGED(selectionMethod)
-                                 and WHEN_PROPERTY_CHANGED(newInterpreterManager))
-        }.visibleIf(_createNew and newInterpreterManager.equalsTo(type))
-      }
-
-      existingInterpreterSelectors.forEach { (type, selector) ->
-        rowsRange {
-          selector.buildOptions(this,
-                                validationRequestor
-                                  and WHEN_PROPERTY_CHANGED(selectionMethod)
-                                  and WHEN_PROPERTY_CHANGED(existingInterpreterManager))
-        }.visibleIf(_selectExisting and existingInterpreterManager.equalsTo(type))
-      }
+      //newInterpreterCreators.forEach { (type, creator) ->
+      //  rowsRange {
+      //    creator.buildOptions(this,
+      //                         validationRequestor
+      //                           and WHEN_PROPERTY_CHANGED(selectionMethod)
+      //                           and WHEN_PROPERTY_CHANGED(newInterpreterManager))
+      //  }.visibleIf(_createNew and newInterpreterManager.equalsTo(type))
+      //}
+      //
+      //existingInterpreterSelectors.forEach { (type, selector) ->
+      //  rowsRange {
+      //    selector.buildOptions(this,
+      //                          validationRequestor
+      //                            and WHEN_PROPERTY_CHANGED(selectionMethod)
+      //                            and WHEN_PROPERTY_CHANGED(existingInterpreterManager))
+      //  }.visibleIf(_selectExisting and existingInterpreterManager.equalsTo(type))
+      //}
     }
   }
 

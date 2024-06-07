@@ -29,7 +29,7 @@ class PyAddTargetBasedSdkDialog private constructor(private val project: Project
     centerPanel = PyAddTargetBasedSdkPanel(project, module, existingSdks, targetEnvironmentConfiguration?.let { { it } },
                                            config = PythonLanguageRuntimeConfiguration(),
                                            introspectable = null).apply {
-                                             Disposer.register(disposable, this)
+      Disposer.register(disposable, this)
     }
   }
 

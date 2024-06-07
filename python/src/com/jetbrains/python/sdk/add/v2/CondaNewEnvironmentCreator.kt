@@ -20,9 +20,8 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import java.io.File
 
-class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
+class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
 
-  private val envName = propertyGraph.property("")
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
 
@@ -36,34 +35,36 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
       }
       row(message("sdk.create.custom.conda.env.name")) {
         textField()
-          .bindText(envName)
+          .bindText(model.state.newCondaEnvName)
       }
 
-      executableSelector(state.condaExecutable,
+      executableSelector(model.state.condaExecutable,
                          validationRequestor,
                          message("sdk.create.conda.executable.path"),
                          message("sdk.create.conda.missing.text"),
-                         createInstallCondaFix(presenter))
-        .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
+                         createInstallCondaFix(model))
+        .displayLoaderWhen(model.condaEnvironmentsLoading, scope = model.scope, uiContext = model.uiContext)
     }
   }
 
   override fun onShown() {
-    envName.set(state.projectPath.get().substringAfterLast(File.separator))
+    model.state.newCondaEnvName.set(model.projectPath.get().substringAfterLast(File.separator))
   }
 
   override fun getOrCreateSdk(): Sdk? {
-    return presenter.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), envName.get()))
+    return model.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.state.newCondaEnvName.get()))
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    val statisticsTarget = target.toStatisticsField() // todo fix for wsl
     return InterpreterStatisticsInfo(InterpreterType.CONDAVENV,
                                      statisticsTarget,
                                      false,
                                      false,
                                      false,
-                                     presenter.projectLocationContext is WslContext,
+                                     //presenter.projectLocationContext is WslContext,
+                                     false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }
 }

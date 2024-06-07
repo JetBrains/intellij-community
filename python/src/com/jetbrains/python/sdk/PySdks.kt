@@ -65,6 +65,19 @@ private suspend fun detectSystemWideSdksSuspended(module: Module?,
                                          { it.homePath }).reversed())
 }
 
+private suspend fun detectSystemWideInterpreters(module: Module?,
+                                                  existingSdks: List<Sdk>,
+                                                  target: TargetEnvironmentConfiguration? = null,
+                                                  context: UserDataHolder): List<Sdk> {
+  if (module != null && module.isDisposed) return emptyList()
+  val effectiveTarget = target ?: module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }?.asTargetConfig
+  val baseDirFromContext = context.getUserData(BASE_DIR)
+  return service<PySdks>().getOrDetectSdks(effectiveTarget, baseDirFromContext)
+    .filter { detectedSdk -> existingSdks.none(detectedSdk::isSameAs) }
+    .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
+                                         { it.homePath }).reversed())
+}
+
 private fun Sdk.isSameAs(another: Sdk): Boolean =
   targetEnvConfiguration == another.targetEnvConfiguration && homePath == another.homePath
 
@@ -127,7 +140,7 @@ private fun tryFindBaseSdksOnTarget(targetEnvironmentConfiguration: TargetEnviro
 
 private val PYTHON_INTERPRETER_NAME_UNIX_PATTERN = Pattern.compile("python\\d(\\.\\d+)")
 
-private fun Path.tryFindPythonBinaries(): List<Path> =
+internal fun Path.tryFindPythonBinaries(): List<Path> =
   runCatching { Files.list(this).filter(Path::looksLikePythonBinary).collect(Collectors.toList()) }.getOrElse { emptyList() }
 
 private fun Path.looksLikePythonBinary(): Boolean =

@@ -21,7 +21,7 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 
 
-private val LOG: Logger = logger<Sdks>()
+val LOG: Logger = logger<Sdks>()
 
 
 /**

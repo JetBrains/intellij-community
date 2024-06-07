@@ -25,23 +25,23 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import kotlinx.coroutines.Dispatchers
 
-internal val PythonAddInterpreterPresenter.condaExecutableOnTarget: String
-  @RequiresEdt get() = state.condaExecutable.get().convertToPathOnTarget(targetEnvironmentConfiguration)
+@RequiresEdt
+internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
+  PyCondaCommand(state.condaExecutable.get().convertToPathOnTarget(targetEnvironmentConfiguration),
+                 targetConfig = targetEnvironmentConfiguration)
 
 @RequiresEdt
-internal fun PythonAddInterpreterPresenter.createCondaCommand(): PyCondaCommand =
-  PyCondaCommand(condaExecutableOnTarget, targetConfig = targetEnvironmentConfiguration)
-
-@RequiresEdt
-internal fun PythonAddInterpreterPresenter.createCondaEnvironment(request: NewCondaEnvRequest): Sdk? {
+internal fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Sdk? {
+  val project = ProjectManager.getInstance().defaultProject
+  val existingSdks = this@createCondaEnvironment.existingSdks
   val sdk = runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                          PyBundle.message("sdk.create.custom.conda.create.progress"),
                                          TaskCancellation.nonCancellable()) {
     createCondaCommand()
       .createCondaSdkAlongWithNewEnv(request,
                                      Dispatchers.EDT,
-                                     state.allExistingSdks.get(),
-                                     ProjectManager.getInstance().defaultProject).getOrNull()
+                                     existingSdks,
+                                     project).getOrNull()
   } ?: return null
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
@@ -49,25 +49,25 @@ internal fun PythonAddInterpreterPresenter.createCondaEnvironment(request: NewCo
   return sdk
 }
 
-@RequiresEdt
-internal fun PythonAddInterpreterPresenter.selectCondaEnvironment(identity: PyCondaEnvIdentity): Sdk {
-  val existingSdk = ProjectJdkTable.getInstance().findJdk(identity.userReadableName)
-  if (existingSdk != null && isCondaSdk(existingSdk)) return existingSdk
+//@RequiresEdt
+//internal fun PythonAddInterpreterModel.selectCondaEnvironment(identity: PyCondaEnvIdentity): Sdk {
+//  val existingSdk = ProjectJdkTable.getInstance().findJdk(identity.userReadableName)
+//  if (existingSdk != null && isCondaSdk(existingSdk)) return existingSdk
+//
+//  val sdk = runWithModalProgressBlocking(ModalTaskOwner.guess(),
+//                                         PyBundle.message("sdk.create.custom.conda.create.progress"),
+//                                         TaskCancellation.nonCancellable()) {
+//    createCondaCommand().createCondaSdkFromExistingEnv(identity,
+//                                                       state.allExistingSdks.get(),
+//                                                       ProjectManager.getInstance().defaultProject)
+//  }
+//
+//  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
+//  SdkConfigurationUtil.addSdk(sdk)
+//  return sdk
+//}
 
-  val sdk = runWithModalProgressBlocking(ModalTaskOwner.guess(),
-                                         PyBundle.message("sdk.create.custom.conda.create.progress"),
-                                         TaskCancellation.nonCancellable()) {
-    createCondaCommand().createCondaSdkFromExistingEnv(identity,
-                                                       state.allExistingSdks.get(),
-                                                       ProjectManager.getInstance().defaultProject)
-  }
-
-  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-  SdkConfigurationUtil.addSdk(sdk)
-  return sdk
-}
-
-private fun isCondaSdk(sdk: Sdk): Boolean = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavorAndData?.data is PyCondaFlavorData
+internal fun isCondaSdk(sdk: Sdk): Boolean = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavorAndData?.data is PyCondaFlavorData
 
 @RequiresEdt
 internal fun PythonAddInterpreterPresenter.createExecutor(): TargetCommandExecutor = targetEnvironmentConfiguration.toExecutor()

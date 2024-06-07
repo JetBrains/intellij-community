@@ -67,7 +67,7 @@ import java.nio.file.Paths
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
-private data class TargetAndPath(
+internal data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
   val path: FullPathOnTarget?,
 )
@@ -127,19 +127,24 @@ fun detectSystemWideSdks(
                                          { it.homePath }).reversed())
 }
 
-private fun PythonSdkFlavor<*>.detectSdks(
-  module: Module?,
-  context: UserDataHolder,
-  targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
-  existingPaths: HashSet<TargetAndPath>,
-): List<PyDetectedSdk> =
+private fun PythonSdkFlavor<*>.detectSdks(module: Module?,
+                                          context: UserDataHolder,
+                                          targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
+                                          existingPaths: HashSet<TargetAndPath>): List<PyDetectedSdk> =
+  detectSdkPaths(module, context, targetModuleSitsOn, existingPaths)
+    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
+
+
+internal fun PythonSdkFlavor<*>.detectSdkPaths(module: Module?,
+                                              context: UserDataHolder,
+                                              targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
+                                              existingPaths: HashSet<TargetAndPath>): List<String> =
   suggestLocalHomePaths(module, context)
     .mapNotNull {
       // If module sits on target, this target maps its path.
       if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
     }
     .filter { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it) !in existingPaths }
-    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
 
 fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
@@ -365,7 +370,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   }
 }
 
-private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
+internal fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   // please don't forget to update com.jetbrains.python.inspections.PyInterpreterInspection.Visitor#getSuitableSdkFix
   // after changing this method
 
@@ -385,7 +390,7 @@ private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): 
   return "$baseSdkName ($associatedName)"
 }
 
-private val Sdk.isSystemWide: Boolean
+internal val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !PythonSdkUtil.isVirtualEnv(
     this) && !PythonSdkUtil.isCondaVirtualEnv(this)
 
