@@ -107,7 +107,10 @@ public final class BackgroundUpdateHighlightersUtil {
     setHighlightersInRange(range, new ArrayList<>(highlights), markup, group, session);
   }
 
-  // set highlights inside startOffset,endOffset but outside priorityRange
+  /**
+   * Sets highlights inside restrictedRange (it's the range we're updating), but outside priorityRange.
+   * This method is usually called after {@link #setHighlightersInRange} where we set highlights inside priorityRange.
+   */
   static void setHighlightersOutsideRange(@NotNull List<? extends HighlightInfo> infos,
                                           @NotNull TextRange restrictedRange,
                                           @NotNull TextRange priorityRange,
