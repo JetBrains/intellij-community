@@ -952,17 +952,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     // This method is called by the JDK on macOS, when the IME asks us to replace already committed text.
     // Doing this is a bit complicated, since we have to account for multi-caret.
 
-    String selectedText = myEditor.getDocument().getText(new TextRange(startOffset, endOffset));
+    String selectedText = editor.getDocument().getText(new TextRange(startOffset, endOffset));
 
     int length = endOffset - startOffset;
-    int offsetRelativeToCurrentCaret = startOffset - myEditor.getCaretModel().getCurrentCaret().getOffset();
+    int offsetRelativeToCurrentCaret = startOffset - editor.getCaretModel().getCurrentCaret().getOffset();
 
     boolean allCaretsHaveTheSameText = true;
 
-    for (var caret : myEditor.getCaretModel().getAllCarets()) {
+    for (var caret : editor.getCaretModel().getAllCarets()) {
       var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
       var caretEnd = caretStart + length;
-      String caretText = myEditor.getDocument().getText(new TextRange(caretStart, caretEnd));
+      String caretText = editor.getDocument().getText(new TextRange(caretStart, caretEnd));
       if (!selectedText.equals(caretText)) {
         allCaretsHaveTheSameText = false;
         break;
@@ -970,14 +970,14 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     if (allCaretsHaveTheSameText) {
-      for (var caret : myEditor.getCaretModel().getAllCarets()) {
+      for (var caret : editor.getCaretModel().getAllCarets()) {
         var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
         var caretEnd = caretStart + length;
         caret.setSelection(caretStart, caretEnd);
       }
     } else {
       // Fallback to the default implementation
-      myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
     }
   }
 
@@ -1121,7 +1121,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
    */
   private final class EditorAccessibilityTextUI extends TextUI {
     @Override
-    public @Nullable Rectangle modelToView(JTextComponent tc, int offset) {
+    public @NotNull Rectangle modelToView(JTextComponent tc, int offset) {
       return modelToView(tc, offset, Position.Bias.Forward);
     }
 
@@ -1132,7 +1132,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     @Override
-    public @Nullable Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
+    public @NotNull Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
       LogicalPosition pos = editor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
       LogicalPosition posNext = editor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
         .leanForward(bias != Position.Bias.Forward);
@@ -1167,13 +1167,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     @Override
-    public @Nullable EditorKit getEditorKit(JTextComponent t) {
+    public @NotNull EditorKit getEditorKit(JTextComponent t) {
       notSupported();
       return null;
     }
 
     @Override
-    public @Nullable View getRootView(JTextComponent t) {
+    public @NotNull View getRootView(JTextComponent t) {
       notSupported();
       return null;
     }
