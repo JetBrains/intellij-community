@@ -526,7 +526,6 @@ public final class PyClassRefactoringUtil {
     return placeFile(project, path, filename, null, false);
   }
 
-  //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
   public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content, boolean isNamespace) throws IOException {
     PsiDirectory psiDir = createDirectories(project, path, isNamespace);
     LOG.assertTrue(psiDir != null);

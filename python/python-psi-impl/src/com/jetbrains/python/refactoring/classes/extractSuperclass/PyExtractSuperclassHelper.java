@@ -5,7 +5,6 @@ import com.google.common.base.Predicate;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -218,7 +217,7 @@ public final class PyExtractSuperclassHelper {
       else {
         subdir = resultDir.createChildDirectory(lfs, dirs[i]);
       }
-      if ((subdir.findChild(PyNames.INIT_DOT_PY) == null)&& !isNamespace) {
+      if ((subdir.findChild(PyNames.INIT_DOT_PY) == null) && !isNamespace) {
         subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
       }
       /*
