@@ -6,8 +6,11 @@ import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLoca
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.IncompleteDependenciesService;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.project.IncompleteDependenciesServiceKt.asAutoCloseable;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTestCase {
   static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/incompleteHighlighting";
@@ -23,7 +26,12 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
       doTest(BASE_PATH + "/" + fileName, true, true);
     }
   }
-  
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
+
   public void testSimple() { doTest(); }
   
   public void testModuleInfo() { doTest("module-info.java"); }

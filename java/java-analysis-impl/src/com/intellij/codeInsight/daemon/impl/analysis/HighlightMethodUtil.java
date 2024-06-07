@@ -973,6 +973,10 @@ public final class HighlightMethodUtil {
     String description;
     String toolTip;
     if (methodCandidate2 != null) {
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(list.getExpressions(), e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+        return null;
+      }
       PsiMethod element1 = methodCandidate1.getElement();
       String m1 = PsiFormatUtil.formatMethod(element1,
                                              methodCandidate1.getSubstitutor(false),
