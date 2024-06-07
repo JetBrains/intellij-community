@@ -352,6 +352,10 @@ public final class AnnotationsHighlightUtil {
     PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
+        if (IncompleteModelUtil.isIncompleteModel(expression) && 
+            IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
+          return null;
+        }
         String description = JavaErrorBundle.message("annotation.non.constant.attribute.value");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
       }
