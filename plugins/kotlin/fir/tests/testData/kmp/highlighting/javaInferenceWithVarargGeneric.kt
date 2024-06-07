@@ -30,7 +30,7 @@ public class JavaReference {
         cd.ktFunVarargGeneric(1, jc);
 
         jd.ktFunVarargGeneric(1, "");
-        jd.ktFunVarargGeneric<error descr="'ktFunVarargGeneric(T...)' in 'pack.JvmVarArgDecl' cannot be applied to '(int, pack.CommonClassForVA)'">(1, cc)</error>; // Error is here.
+        jd.ktFunVarargGeneric(1, cc); // Error is here.
         jd.ktFunVarargGeneric(1, jc);
     }
 }

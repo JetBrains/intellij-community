@@ -97,7 +97,7 @@ public final class GenericsUtil {
 
       PsiClass[] supers = getLeastUpperClasses(aClass, bClass);
       if (supers.length == 0) {
-        return PsiType.getJavaLangObject(manager, aClass.getResolveScope());
+        return PsiType.getJavaLangObject(manager, type1.getResolveScope());
       }
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());

@@ -15,6 +15,6 @@ public class Ktij28461 {
     }
 
     public static void cstOfJavaPrimitiveAndCommonClass(CommonClass cc) {
-        jGeneric<error descr="'jGeneric(K, K)' in 'pack.Ktij28461' cannot be applied to '(int, pack.CommonClass)'">(1, cc)</error>;
+        jGeneric(1, cc);
     }
 }
