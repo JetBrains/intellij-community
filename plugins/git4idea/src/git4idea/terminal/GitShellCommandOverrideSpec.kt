@@ -14,6 +14,11 @@ import org.jetbrains.plugins.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellArgumentContext
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
 
+internal const val GET_REMOTES_COMMAND = "git --no-optional-locks remote -v"
+internal const val GET_LOCAL_BRANCHES_COMMAND = "git --no-optional-locks branch --no-color --sort=-committerdate"
+internal const val GET_REMOTE_BRANCHES_COMMAND = "git --no-optional-locks branch -r --no-color --sort=-committerdate"
+internal const val GET_ALL_BRANCHES_COMMAND = "git --no-optional-locks branch -a --no-color --sort=-committerdate"
+
 internal val ShellRuntimeContext.repository: GitRepository?
   get() = GitUtil.getRepositoryManager(project)
     .getRepositoryForFileQuick(LocalFilePath(currentDirectory, true))
@@ -32,7 +37,7 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
     }
   }
   else {
-    val result = context.runShellCommand("git --no-optional-locks remote -v")
+    val result = context.runShellCommand(GET_REMOTES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
     result.output.lines()
@@ -76,7 +81,8 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
 
   if (repository != null) {
     val currentBranch = repository.currentBranch
-    repository.info.localBranchesWithHashes.map { (branch, _) ->
+    val branches = repository.branches
+    branches.localBranches.map { branch ->
       ShellCompletionSuggestion(
         branch.name,
         description = if (branch == currentBranch) "Current branch" else "Branch",
@@ -85,7 +91,7 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
     }
   }
   else {
-    val result = context.runShellCommand("git --no-optional-locks branch --no-color --sort=-committerdate")
+    val result = context.runShellCommand(GET_LOCAL_BRANCHES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
     postProcessBranchesFromCommandLine(result.output.lines(), insertWithoutRemotes = true)
@@ -108,7 +114,7 @@ private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletion
     }
   }
   else {
-    val result = context.runShellCommand("git --no-optional-locks branch -a --no-color --sort=-committerdate")
+    val result = context.runShellCommand(GET_ALL_BRANCHES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
     postProcessBranchesFromCommandLine(result.output.lines(), insertWithoutRemotes = true)
@@ -130,7 +136,7 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
     }
   }
   else {
-    val result = context.runShellCommand("git --no-optional-locks branch -r --no-color --sort=-committerdate")
+    val result = context.runShellCommand(GET_REMOTE_BRANCHES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
     postProcessBranchesFromCommandLine(result.output.lines(), insertWithoutRemotes = true)
@@ -140,11 +146,12 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
 // if a -r or --remotes flag is used, get only remote branches, otherwise local
 // TODO: Fix this after there's some 'parsedOptions' or something in context to check for here.
 // TODO: Maybe show all branches for the time being?
-// Problem is that 'git branch -r -d {caret}' will not know about '-r'
+// Problem is that completion for 'git branch -d -r {caret}' will not know about '-r'
 private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
   if (context.typedPrefix.contains("-r") || context.typedPrefix.contains("--remotes")) {
     remoteBranchesGenerator.generate(context)
-  } else {
+  }
+  else {
     localBranchesGenerator.generate(context)
   }
 }

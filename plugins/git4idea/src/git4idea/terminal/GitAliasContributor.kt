@@ -7,6 +7,8 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellAliasSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
 
+internal const val GET_ALIASES_COMMAND = "git config --get-regexp \"^alias\""
+
 /**
  * Parses a Git alias string of the general format 'alias.{alias name} [!]{replacement}' into its parts.
  *
@@ -28,7 +30,7 @@ internal fun parseGitAlias(line: String): Pair<String, String>? {
 
 internal fun aliasGenerator(): ShellRuntimeDataGenerator<List<ShellAliasSuggestion>> =
   ShellRuntimeDataGenerator("git-aliases") { context ->
-    val result = context.runShellCommand("git config --get-regexp \"^alias\"")
+    val result = context.runShellCommand(GET_ALIASES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
     result.output.lines()
