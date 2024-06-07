@@ -2019,7 +2019,9 @@ public final class HighlightUtil {
     for (int i = 1; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       PsiType rType = operand.getType();
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false)) {
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false) &&
+          !(IncompleteModelUtil.isIncompleteModel(expression) &&
+            IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
         PsiJavaToken token = expression.getTokenBeforeOperand(operand);
         assert token != null : expression;
         String message = JavaErrorBundle.message("binary.operator.not.applicable", token.getText(),

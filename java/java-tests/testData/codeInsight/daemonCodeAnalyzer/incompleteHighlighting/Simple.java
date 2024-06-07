@@ -82,6 +82,13 @@ public class Simple {
     if (<error descr="Inconvertible types; cannot cast 'java.lang.String' to 'Unknown'">s instanceof <info descr="Not resolved until the project is fully loaded">Unknown</info></error>) {}
   }
   
+  void testEquality(<info descr="Not resolved until the project is fully loaded">Unknown</info> u, <info descr="Not resolved until the project is fully loaded">Unknown2</info> u2,
+                    char c, boolean b) {
+    if (u == u2) {}
+    if (u != u2) {}
+    if (<error descr="Operator '==' cannot be applied to 'char', 'boolean'">c == b</error>) {}
+  }
+  
   void callOnArray(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
     u.<info descr="Not resolved until the project is fully loaded">foo</info>()[0].<info descr="Not resolved until the project is fully loaded">blah</info>();
   }
