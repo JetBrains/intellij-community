@@ -22,6 +22,5 @@ class ChangeObjectToClassFix(
     ) {
         val psiFactory = KtPsiFactory(actionContext.project)
         element.getObjectKeyword()?.replace(psiFactory.createClassKeyword())
-        element.replace(psiFactory.createClass(element.text))
     }
 }
