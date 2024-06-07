@@ -150,13 +150,7 @@ data class ExtractMethodTemplateBuilder(
   }
 
   private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean) {
-    setupValidatorForAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE, templateState, validator)
-    setupValidatorForAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM, templateState, validator)
-  }
-
-  private fun setupValidatorForAction(actionName: String,
-                                      templateState: TemplateState,
-                                      validator: (TextRange) -> Boolean) {
+    val actionName = IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE
     val manager = EditorActionManager.getInstance()
     val defaultHandler = manager.getActionHandler(actionName)
     Disposer.register(templateState) { manager.setActionHandler(actionName, defaultHandler) }
