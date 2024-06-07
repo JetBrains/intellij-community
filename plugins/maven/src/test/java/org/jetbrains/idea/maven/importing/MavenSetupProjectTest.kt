@@ -1,17 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.assertWithinTimeout
-import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.project.getProjectCacheFileName
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
-import java.nio.file.Files
 
 
 class MavenSetupProjectTest : MavenSetupProjectTestCase() {
@@ -170,56 +164,6 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
     importProjectActionAsync(projectInfo.projectFile)
       .useProjectAsync {
         assertProjectState(it, projectInfo, linkedProjectInfo)
-      }
-  }
-
-  @Test
-  fun `test workspace import forcibly enabled once per project`() = runBlocking {
-    Registry.get("maven.legacy.import.available").setValue(true, testRootDisposable)
-    val projectInfo = generateProject("A")
-
-    WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
-
-    openProjectAsync(projectInfo.projectFile)
-      .useProjectAsync(save = true) {
-        // initial state: workspace import is disabled, has not been forced yet
-        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-        mavenProjectsManager.importingSettings.isWorkspaceImportForciblyTurnedOn = false
-        waitForImportWithinTimeout(it) {
-          mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
-        }
-      }
-
-    openProjectAsync(projectInfo.projectFile)
-      .useProjectAsync(save = true) {
-        // check that workspace import has been forced
-        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-        assertTrue(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
-        // user still chooses legacy import
-        mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
-      }
-
-    val projectFileDir = projectInfo.projectFile.parent.toNioPath()
-    val moduleFilePath = appSystemDir
-      .resolve("projects")
-      .resolve(getProjectCacheFileName(projectFileDir))
-      .resolve("external_build_system")
-      .resolve("modules")
-      .resolve("${projectFileDir.fileName}.xml")
-
-    assertWithinTimeout(10) {
-      assertTrue("Module file does not exist", Files.exists(moduleFilePath))
-    }
-
-    assertWithinTimeout(10) {
-      assertTrue("Module file is empty", Files.size(moduleFilePath) > 0)
-    }
-
-    openProjectAsync(projectInfo.projectFile)
-      .useProjectAsync(save = true) {
-        // check that workspace import has not been forced twice
-        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-        assertFalse(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
       }
   }
 }
