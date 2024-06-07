@@ -5882,7 +5882,6 @@ f:com.intellij.ide.actionsOnSave.ActionsOnSaveSearchableOptionsContributor
 - processOptions(com.intellij.ide.ui.search.SearchableOptionProcessor):V
 f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener
 - com.intellij.openapi.fileEditor.FileDocumentManagerListener
-- <init>():V
 - beforeAllDocumentsSaving():V
 - beforeDocumentSaving(com.intellij.openapi.editor.Document):V
 a:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave
@@ -5896,10 +5895,12 @@ a:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$D
 - f:processDocuments(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document[]):V
 - a:updateDocument(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
-- <init>(kotlinx.coroutines.CoroutineScope):V
+- sf:Companion:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager$Companion
 - *f:awaitPendingActions(kotlin.coroutines.Continuation):java.lang.Object
 - *f:hasPendingActions():Z
 - f:waitForTasks():V
+f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 c:com.intellij.ide.browsers.BrowserSelector
 - <init>():V
 - <init>(com.intellij.openapi.util.Condition):V

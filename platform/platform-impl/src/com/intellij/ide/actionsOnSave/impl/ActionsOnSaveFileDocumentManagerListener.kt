@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgress
@@ -36,7 +35,7 @@ import kotlin.coroutines.CoroutineContext
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
-class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
+class ActionsOnSaveFileDocumentManagerListener private constructor(private val project: Project) : FileDocumentManagerListener {
   /**
    * **Note:** If the Action on Save is going to update file contents, for example, to format a file on save,
    * then extend [DocumentUpdatingActionOnSave].
@@ -118,7 +117,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
   }
 
   override fun beforeDocumentSaving(document: Document) {
-    if (!actionsOnSaveManager.runningSaveDocumentAction) {
+    if (!ActionsOnSaveManager.getInstance(project).runningSaveDocumentAction) {
       // There are hundreds of places in IntelliJ codebase where saveDocument() is called. IDE and plugins may decide to save some specific
       // document at any time. Sometimes a document is saved on typing (com.intellij.openapi.vcs.ex.LineStatusTrackerKt.saveDocumentWhenUnchanged).
       // Running Actions on Save on each document save might be unexpected and frustrating (Actions on Save might take noticeable time to run, they may
@@ -127,12 +126,10 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       return
     }
 
-    for (project in ProjectManager.getInstance().openProjects) {
-      for (saveAction in EP_NAME.extensionList) {
-        if (saveAction.isEnabledForProject(project)) {
-          actionsOnSaveManager.scheduleDocumentsProcessing(arrayOf(document))
-          return
-        }
+    for (saveAction in EP_NAME.extensionList) {
+      if (saveAction.isEnabledForProject(project)) {
+        ActionsOnSaveManager.getInstance(project).scheduleDocumentsProcessing(arrayOf(document))
+        return
       }
     }
   }
@@ -143,19 +140,21 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       return
     }
 
-    for (project in ProjectManager.getInstance().openProjects) {
-      for (saveAction in EP_NAME.extensionList) {
-        if (saveAction.isEnabledForProject(project)) {
-          actionsOnSaveManager.scheduleDocumentsProcessing(documents)
-          return
-        }
+    for (saveAction in EP_NAME.extensionList) {
+      if (saveAction.isEnabledForProject(project)) {
+        ActionsOnSaveManager.getInstance(project).scheduleDocumentsProcessing(documents)
+        return
       }
     }
   }
 }
 
-@Service(Service.Level.APP)
-class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
+@Service(Service.Level.PROJECT)
+class ActionsOnSaveManager private constructor(private val project: Project, private val coroutineScope: CoroutineScope) {
+  companion object {
+    fun getInstance(project: Project) = project.service<ActionsOnSaveManager>()
+  }
+
   /**
    * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but not yet performed.
    */
@@ -178,30 +177,24 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
     val documentsAndModStamps = documentsToProcess.associateWith { it.modificationStamp }
     documentsToProcess.clear()
 
-    for (project in ProjectManager.getInstance().openProjects) {
-      if (project.isDisposed) {
-        continue
+    val index = ProjectFileIndex.getInstance(project)
+    val projectDocuments = withContext(Dispatchers.Default) {
+      readAction {
+        documentsAndModStamps.mapNotNull {
+          val document = it.key
+          val modStamp = it.value
+          if (document.modificationStamp != modStamp) return@mapNotNull null // already edited after save
+          val file = FileDocumentManager.getInstance().getFile(document) ?: return@mapNotNull null
+          if (index.isInContent(file)) document else null
+        }.toMutableList()
       }
+    }
 
-      val index = ProjectFileIndex.getInstance(project)
-      val projectDocuments = withContext(Dispatchers.Default) {
-        readAction {
-          documentsAndModStamps.mapNotNull {
-            val document = it.key
-            val modStamp = it.value
-            if (document.modificationStamp != modStamp) return@mapNotNull null // already edited after save
-            val file = FileDocumentManager.getInstance().getFile(document) ?: return@mapNotNull null
-            if (index.isInContent(file)) document else null
-          }.toMutableList()
-        }
-      }
+    // filter out documents that have been already manually edited after save
+    projectDocuments.removeAll { it.modificationStamp != documentsAndModStamps[it] }
 
-      // filter out documents that have been already manually edited after save
-      projectDocuments.removeAll { it.modificationStamp != documentsAndModStamps[it] }
-
-      if (!project.isDisposed && projectDocuments.isNotEmpty()) {
-        runActionsOnSave(project, projectDocuments)
-      }
+    if (!project.isDisposed && projectDocuments.isNotEmpty()) {
+      runActionsOnSave(projectDocuments)
     }
   }
 
@@ -221,7 +214,7 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
    * This API is preferred for actions that update the saved file contents, for example, format files on save.
    */
   @RequiresEdt
-  private suspend fun runActionsOnSave(project: Project, projectDocuments: List<Document>) {
+  private suspend fun runActionsOnSave(projectDocuments: List<Document>) {
     val projectActionsOnSave = EP_NAME.extensionList.filter { it.isEnabledForProject(project) }
 
     projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
@@ -231,7 +224,7 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
       // Document saving in this `if` branch is not needed because they will be saved in `runDocumentUpdatingActionsOnSaveAndSaveDocument`
       val documentsToModStamps = projectDocuments.associateWith { it.modificationStamp }
       withContext(Dispatchers.Default) {
-        runDocumentUpdatingActionsOnSave(project, documentUpdatingActionsOnSave, documentsToModStamps)
+        runDocumentUpdatingActionsOnSave(documentUpdatingActionsOnSave, documentsToModStamps)
       }
     }
     else {
@@ -256,7 +249,6 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
    */
   @RequiresBackgroundThread
   private suspend fun runDocumentUpdatingActionsOnSave(
-    project: Project,
     actionsOnSave: List<DocumentUpdatingActionOnSave>,
     documentsToModStamps: Map<Document, Long>,
   ) {
@@ -271,7 +263,7 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
             val documentJob = launch(ActionOnSaveContextElement) {
               val document = documentToModStamp.key
               val modStamp = documentToModStamp.value
-              runDocumentUpdatingActionsOnSaveAndSaveDocument(project, actionsOnSave, document, modStamp, documentScope = this)
+              runDocumentUpdatingActionsOnSaveAndSaveDocument(actionsOnSave, document, modStamp, documentScope = this)
             }
 
             // Given that there may be a lot of documents
@@ -304,7 +296,6 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
    */
   @RequiresBackgroundThread
   private suspend fun runDocumentUpdatingActionsOnSaveAndSaveDocument(
-    project: Project,
     actionsOnSave: List<DocumentUpdatingActionOnSave>,
     document: Document,
     modStamp: Long,
@@ -381,14 +372,16 @@ class ActionsOnSaveManager(private val coroutineScope: CoroutineScope) {
 
 private class CurrentActionListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    if (action is SaveDocumentAction) {
-      actionsOnSaveManager.runningSaveDocumentAction = true
+    val project = event.project
+    if (project != null && action is SaveDocumentAction) {
+      ActionsOnSaveManager.getInstance(project).runningSaveDocumentAction = true
     }
   }
 
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    actionsOnSaveManager.runningSaveDocumentAction = false
+    val project = event.project
+    if (project != null) {
+      ActionsOnSaveManager.getInstance(project).runningSaveDocumentAction = false
+    }
   }
 }
-
-private val actionsOnSaveManager get() = service<ActionsOnSaveManager>()

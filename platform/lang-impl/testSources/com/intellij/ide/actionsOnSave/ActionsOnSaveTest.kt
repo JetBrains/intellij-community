@@ -124,7 +124,7 @@ class ActionsOnSaveTest : BasePlatformTestCase() {
     FileDocumentManager.getInstance().saveAllDocuments()
 
     testService.cs.launch {
-      service<ActionsOnSaveManager>().awaitPendingActions()
+      ActionsOnSaveManager.getInstance(project).awaitPendingActions()
     }
     waitCoroutinesBlocking(testService.cs)
 

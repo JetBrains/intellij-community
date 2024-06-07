@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.blockingContext
@@ -231,7 +230,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         fireBeforeCommitChecksEnded(sessionInfo, result)
 
         if (result.shouldCommit) {
-          if (service<ActionsOnSaveManager>().hasPendingActions()) {
+          if (ActionsOnSaveManager.getInstance(project).hasPendingActions()) {
             logger<AbstractCommitWorkflow>().warn("Couldn't wait for 'Actions on Save' on commit")
           }
 
