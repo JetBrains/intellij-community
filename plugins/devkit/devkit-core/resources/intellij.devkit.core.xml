@@ -237,6 +237,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"
                      key="inspection.stateful.ep.display.name"/>
+    <localInspection language="UAST" shortName="UastHintedVisitorAdapterHints"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UastHintedVisitorAdapterHintsInspection"
+                     key="inspection.uast.hinted.visitor.adapter.hints.problem.display.name"/>
     <localInspection language="UAST" shortName="UElementAsPsi"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
