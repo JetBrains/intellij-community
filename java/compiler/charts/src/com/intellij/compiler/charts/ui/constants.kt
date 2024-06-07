@@ -41,4 +41,6 @@ const val AXIS_MARKERS_COUNT: Int = 10
 const val AXIS_TEXT_PADDING: Int = 2
 
 const val MIN_ZOOM_SECONDS = 0.2
-const val MAX_ZOOM_SECONDS = 200_000.0
+const val MAX_ZOOM_SECONDS = 1_000.0
+
+const val MAX_WIDTH = 10_000.0

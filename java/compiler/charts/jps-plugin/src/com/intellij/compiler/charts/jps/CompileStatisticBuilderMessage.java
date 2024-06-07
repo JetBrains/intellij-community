@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.management.OperatingSystemMXBean;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -28,15 +29,15 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
   @NotNull
   public static CompileStatisticBuilderMessage create(@NotNull Set<? extends BuildTarget<?>> targets,
                                                       @NotNull String event) {
-    List<CompileStatisticBuilderMessage.TargetEvent>
+    List<TargetEvent>
       events = ContainerUtil.map(targets, target -> map(target, event.equals("STARTED")
-                                                                ? CompileStatisticBuilderMessage.StartTarget::new
-                                                                : CompileStatisticBuilderMessage.FinishTarget::new));
+                                                                ? StartTarget::new
+                                                                : FinishTarget::new));
     return new CompileStatisticBuilderMessage(event, JSON.toJson(events));
   }
 
   @NotNull
-  private static <T extends CompileStatisticBuilderMessage.TargetEvent> T map(@NotNull BuildTarget<?> target,
+  private static <T extends TargetEvent> T map(@NotNull BuildTarget<?> target,
                                                                               @NotNull Supplier<T> event) {
     T data = event.get();
     data.name = target instanceof ModuleBasedTarget
@@ -49,15 +50,22 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     return data;
   }
 
-  @NotNull
+  @Nullable
   public static BuildMessage create(@NotNull MemoryMXBean memory, @NotNull OperatingSystemMXBean os) {
-    CompileStatisticBuilderMessage.CpuMemoryStatistics
-      statistics = new CompileStatisticBuilderMessage.CpuMemoryStatistics();
-    statistics.heapUsed = Math.max(memory.getHeapMemoryUsage().getUsed(), 0);
-    statistics.heapMax = Math.max(memory.getHeapMemoryUsage().getMax(), 0);
-    statistics.nonHeapUsed = Math.max(memory.getNonHeapMemoryUsage().getUsed(), 0);
-    statistics.nonHeapMax = Math.max(memory.getNonHeapMemoryUsage().getMax(), 0);
-    statistics.cpu = Math.max((long)(os.getSystemCpuLoad() * 100), 0);
+    CpuMemoryStatistics statistics = new CpuMemoryStatistics();
+    statistics.heapUsed = memory.getHeapMemoryUsage().getUsed();
+    statistics.heapMax = memory.getHeapMemoryUsage().getMax();
+    statistics.nonHeapUsed = memory.getNonHeapMemoryUsage().getUsed();
+    statistics.nonHeapMax = memory.getNonHeapMemoryUsage().getMax();
+
+    double cpuLoad = 0;
+    int maxRetries = 5;
+    while (maxRetries --> 0 && cpuLoad <= 0) {
+      cpuLoad = os.getSystemCpuLoad();
+    }
+    if (cpuLoad < 0) return null;
+    statistics.cpu = (long)(cpuLoad * 100);
+
     return new CompileStatisticBuilderMessage("STATISTIC", JSON.toJson(statistics));
   }
 
@@ -70,10 +78,10 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     public long thread = Thread.currentThread().getId();
   }
 
-  public static class StartTarget extends CompileStatisticBuilderMessage.TargetEvent {
+  public static class StartTarget extends TargetEvent {
   }
 
-  public static class FinishTarget extends CompileStatisticBuilderMessage.TargetEvent {
+  public static class FinishTarget extends TargetEvent {
   }
 
   public static class CpuMemoryStatistics {

@@ -27,7 +27,11 @@ class Zoom {
 
     val currentTimeUnderCursor = toDuration(xPosition) + correctionDuration
 
-    userScale = scale() * delta
+    val potentialScale = scale() * delta
+    val potentialWidth = toPixels(currentTimeUnderCursor.toDouble(), potentialScale) - localX
+
+    userScale = if (potentialWidth < MAX_WIDTH) potentialScale
+    else MAX_WIDTH / (currentTimeUnderCursor - localX) * NANOS
 
     val newViewPositionX = toPixels(currentTimeUnderCursor) - localX
     val correctedViewPositionX = correctedViewPosition(newViewPositionX, localX, currentTimeUnderCursor)

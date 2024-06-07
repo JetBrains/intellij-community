@@ -8,10 +8,12 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.management.OperatingSystemMXBean;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -72,9 +74,13 @@ public class ChartsBuilderService extends BuilderService {
 
       context.processMessage(new CompilationStatusBuilderMessage("START"));
 
-      myStatisticsRunnable = () -> context.processMessage(CompileStatisticBuilderMessage.create(memory, os));
+      myStatisticsRunnable = () -> send(context, CompileStatisticBuilderMessage.create(memory, os));
       myStatisticsReporter = AppExecutorUtil.createBoundedScheduledExecutorService("IncProjectBuilder metrics reporter", 1)
-        .scheduleWithFixedDelay(myStatisticsRunnable, 0, 100, TimeUnit.MILLISECONDS);
+        .scheduleWithFixedDelay(myStatisticsRunnable, 0, 1, TimeUnit.SECONDS);
+    }
+
+    private void send(@NotNull CompileContext context, @Nullable BuildMessage msg) {
+      if (msg != null) context.processMessage(msg);
     }
 
     @Override
