@@ -216,6 +216,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
     popupWindow?.isVisible = selectedComponent != IntentionPreviewComponent.NO_PREVIEW_LABEL || justActivated
     justActivated = false
     component.stopLoading()
+    // Need to set previewComponent before select, as multiPanel.create expects previewComponent to be initialized 
     component.previewComponent = previewComponent
     component.multiPanel.select(index, true)
 

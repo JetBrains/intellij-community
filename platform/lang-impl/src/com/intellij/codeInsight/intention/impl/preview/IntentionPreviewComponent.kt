@@ -25,7 +25,7 @@ internal class IntentionPreviewComponent(parent: Disposable) :
     override fun create(key: Int): JComponent {
       return when (key) {
         LOADING_PREVIEW -> LOADING_LABEL
-        else -> previewComponent!!
+        else -> previewComponent!! // It's set in IntentionPreviewPopupUpdateProcessor#select 
       }
     }
   }
