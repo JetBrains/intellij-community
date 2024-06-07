@@ -84,7 +84,18 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
                 LibraryDependencies.coroutinesJvm,
                 LibraryDependencies.jbAnnotationsJvm,
             ),
-        ),
+        ) {
+            private val javaSourceRoot: String = "src_jvm_java"
+            fun javaSourceRoot(): VirtualFile? = findRoot(javaSourceRoot)
+
+            override fun additionalModuleConfiguration(module: Module, model: ModifiableRootModel) {
+                val sourceRoot = createSourceRoot(module, javaSourceRoot)
+                model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
+            }
+
+            override fun selectSourceRootByFilePath(filePath: String): VirtualFile? =
+                if (filePath.endsWith(".java")) javaSourceRoot() else sourceRoot()
+        },
         JS(
             moduleName = "Js",
             targetPlatform = JsPlatforms.defaultJsPlatform,
@@ -170,10 +181,13 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
 
         fun sourceRoot(): VirtualFile? = findRoot(sourceRootName)
 
-        private fun findRoot(rootName: String?): VirtualFile? =
+        protected fun findRoot(rootName: String?): VirtualFile? =
             if (rootName == null) null
             else TempFileSystem.getInstance().findFileByPath("/${rootName}")
                 ?: throw IllegalStateException("Cannot find temp:///${rootName}")
+
+        open fun additionalModuleConfiguration(module: Module, model: ModifiableRootModel) = Unit
+        open fun selectSourceRootByFilePath(filePath: String): VirtualFile? = sourceRoot()
     }
 
     override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -248,6 +262,8 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
             pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
         )
+
+        descriptor.additionalModuleConfiguration(module, model)
     }
 
     private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {

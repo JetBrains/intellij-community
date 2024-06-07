@@ -31,17 +31,17 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
     /**
      * Configures the module structure based on the given file.
      *
-     * File is expected to have the following structure:
-     * // PLATFORM: <platform descriptor name> [org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor]
-     * files
-     *
-     * // FILE: relativePath.kt (relative to the platform's source root)
+     * The file is expected to have the following structure:
+     * ```
+     * // PLATFORM: <platform descriptor name>
+     * // FILE: relativePath.kt (relative to the platform's source root, multiple files can be declared per PLATFORM, `.java` files in JVM are allowed).
      * // MAIN (if this file should be configured in the editor)
      * file content
+     * ```
+     * Platform descriptor names come from  [org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor].
+     * Each file is added to the platform module declared before it.
      *
-     * Each file is added to the test project's platform module.
-     *
-     * Returns a list of all files and a file which was marked as `MAIN` or `null` if it's absent.
+     * @return a list of all files and a file which was marked as `MAIN` (or `null` if it's absent).
      */
     fun configureModuleStructure(abstractFilePath: String): TestProjectFiles {
         val map = ModuleStructureSplitter.splitPerModule(File(abstractFilePath))
@@ -53,7 +53,9 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
                                  PlatformDescriptor.entries.joinToString(prefix = "[", postfix = "]") { it.moduleName })
 
             for (testFile in files) {
-                val virtualFile = VfsTestUtil.createFile(platformDescriptor.sourceRoot()!!, testFile.relativePath, testFile.text)
+                val virtualFile = VfsTestUtil.createFile(
+                    platformDescriptor.selectSourceRootByFilePath(testFile.relativePath)!!, testFile.relativePath, testFile.text,
+                )
                 allFiles.add(virtualFile)
                 if (testFile.isMain) {
                     mainFile = virtualFile
