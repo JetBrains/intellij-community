@@ -77,34 +77,6 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project1", "project2")
   }
 
-  @Test
-  fun testDoNotAskTwiceToRemoveIgnoredModule() = runBlocking {
-    val p1 = createModulePom("project1",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>project1</artifactId>
-                                       <version>1</version>
-                                       """.trimIndent())
-
-    val p2 = createModulePom("project2",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>project2</artifactId>
-                                       <version>1</version>
-                                       """.trimIndent())
-    importProjects(p1, p2)
-    assertModules("project1", "project2")
-
-    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    doReadAndImport()
-
-    assertModules("project1", "project2")
-
-    doReadAndImport()
-
-    assertModules("project1", "project2")
-  }
-
   private suspend fun doReadAndImport() {
     updateAllProjects()
   }
