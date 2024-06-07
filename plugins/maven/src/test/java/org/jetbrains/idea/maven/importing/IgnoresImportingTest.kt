@@ -65,12 +65,10 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project1", "project2")
 
     setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     doReadAndImport()
     assertModules("project2")
 
     setIgnoredFilesPathForNextImport(listOf(p2.getPath()))
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     doReadAndImport()
     assertModules("project1")
 
@@ -98,12 +96,10 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project1", "project2")
 
     setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
     doReadAndImport()
 
     assertModules("project1", "project2")
 
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
     doReadAndImport()
 
     assertModules("project1", "project2")

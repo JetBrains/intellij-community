@@ -27,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.statistics.MavenImportCollector;
@@ -271,17 +270,6 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
         myModuleModel.disposeModule(each);
       }
     }
-  }
-
-  @TestOnly
-  // this is legacy code anyway
-  public static void setAnswerToDeleteObsoleteModulesQuestion(boolean answer) {
-    answerToDeleteObsoleteModulesQuestion = answer;
-  }
-
-  @TestOnly
-  public static Boolean getAnswerToDeleteObsoleteModulesQuestion() {
-    return answerToDeleteObsoleteModulesQuestion;
   }
 
   private static Boolean answerToDeleteObsoleteModulesQuestion = null;

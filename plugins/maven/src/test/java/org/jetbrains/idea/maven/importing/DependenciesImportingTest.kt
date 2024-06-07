@@ -2056,9 +2056,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-
     importProjectAsync()
     assertProjectLibraries("Maven: group:lib1:1")
   }
@@ -2306,10 +2303,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project", "m1", "m2")
     assertModuleModuleDeps("m1", "m2")
-
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-
 
     setIgnoredFilesPathForNextImport(listOf(m2.getPath()))
 

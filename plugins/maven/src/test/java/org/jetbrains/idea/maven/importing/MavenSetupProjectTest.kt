@@ -178,7 +178,6 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
     Registry.get("maven.legacy.import.available").setValue(true, testRootDisposable)
     val projectInfo = generateProject("A")
 
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
 
     openProjectAsync(projectInfo.projectFile)

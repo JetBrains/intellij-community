@@ -9,7 +9,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.junit.Assert
@@ -78,8 +77,6 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     assertModules("project", "module")
     replaceDocumentString(projectPom, "<modules><module>module</module></modules>", "")
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWait()
     assertModules("project")
   }

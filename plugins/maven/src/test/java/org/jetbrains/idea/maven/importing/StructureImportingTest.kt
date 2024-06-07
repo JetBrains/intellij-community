@@ -229,9 +229,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     assertMavenizedModule("m1")
     assertNotMavenizedModule("userModule")
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

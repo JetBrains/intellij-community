@@ -14,7 +14,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.io.File
@@ -252,8 +251,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModules("project", mn("project", "m"))
     runWriteAction<IOException> { m.delete(this) }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitAsync()
     assertModules("project")
   }
@@ -285,8 +282,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val dir = projectRoot.findChild("dir")
     WriteCommandAction.writeCommandAction(project).run<IOException> { dir!!.delete(null) }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitAsync()
     assertEquals(1, MavenProjectsManager.getInstance(project).getProjects().size)
   }
@@ -532,9 +527,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
     WriteCommandAction.writeCommandAction(project).run<IOException> { m2.delete(this) }
 
-
-    //configConfirmationForYesAnswer();// should update deps even if module is not removed
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitAsync()
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
@@ -560,8 +552,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertEquals(1, projectsTree.rootProjects.size)
     WriteCommandAction.writeCommandAction(project).run<IOException> { projectPom.delete(this) }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     importProjectAsync()
     assertEquals(0, projectsTree.rootProjects.size)
     createProjectPom("""
@@ -596,8 +586,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertEquals(2, projectsTree.rootProjects.size)
     runWriteAction<IOException> { p2.rename(this, "foo.bar") }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitWithoutCheckFloatingBar()
     assertEquals(1, projectsTree.rootProjects.size)
     runWriteAction<IOException> { p2.rename(this, "pom.xml") }
@@ -626,8 +614,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertEquals(2, projectsTree.rootProjects.size)
     runWriteAction<IOException> { p2.move(this, newDir) }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitWithoutCheckFloatingBar()
     assertEquals(1, projectsTree.rootProjects.size)
     runWriteAction<IOException> { p2.move(this, oldDir) }
@@ -668,8 +654,6 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
       m.move(this, projectRoot.createChildDirectory(this, "xxx"))
     }
 
-    //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     scheduleProjectImportAndWaitWithoutCheckFloatingBar()
     waitForImportWithinTimeout {
       projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
