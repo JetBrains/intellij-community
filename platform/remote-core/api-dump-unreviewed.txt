@@ -90,11 +90,6 @@ com.intellij.ide.passwordSafe.PasswordStorage
 - getPassword(com.intellij.openapi.project.Project,java.lang.Class,java.lang.String):java.lang.String
 - a:set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
 - storePassword(com.intellij.openapi.project.Project,java.lang.Class,java.lang.String,java.lang.String):V
-f:com.intellij.ide.users.LocalUserSettings
-- sf:INSTANCE:com.intellij.ide.users.LocalUserSettings
-- f:getDefaultSystemUserName():java.lang.String
-- f:getUserName():java.lang.String
-- f:setUserName(java.lang.String):V
 e:com.intellij.remote.AuthType
 - java.lang.Enum
 - sf:KEY_PAIR:com.intellij.remote.AuthType

@@ -1,10 +1,10 @@
 package com.intellij.remoteDev.ui
 
-import com.intellij.ide.users.LocalUserSettings
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.impl.welcomeScreen.ActionPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.remoteDev.RemoteDevUtilBundle
+import com.intellij.remoteDev.util.LocalUserSettings
 import com.intellij.remoteDev.util.UrlUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField

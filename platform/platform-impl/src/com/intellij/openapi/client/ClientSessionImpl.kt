@@ -6,7 +6,7 @@ import com.intellij.codeWithMe.asContextElement2
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.users.LocalUserSettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
@@ -24,6 +24,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.util.SystemProperties
 import com.intellij.util.messages.MessageBus
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
@@ -246,7 +247,8 @@ open class ClientProjectSessionImpl(
 @ApiStatus.Internal
 open class LocalAppSessionImpl(application: ApplicationImpl) : ClientAppSessionImpl(ClientId.localId, ClientType.LOCAL, application) {
   override val name: String
-    get() = LocalUserSettings.userName
+    // see `com.intellij.remoteDev.util.LocalUserSettings`
+    get() = PropertiesComponent.getInstance().getValue("local.user.name", SystemProperties.getUserName())
 }
 
 @ApiStatus.Experimental
