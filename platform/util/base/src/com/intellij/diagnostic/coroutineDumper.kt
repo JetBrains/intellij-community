@@ -159,22 +159,29 @@ private fun jobTrees(scope: CoroutineScope? = null): Sequence<JobTree> {
 
   return sequence {
     for (job in rootJobs) {
-      yieldAll(buildJobTrees(job, jobToStack))
+      yieldAll(buildJobTrees(job, jobToStack, hashSetOf()))
     }
   }
 }
 
 private fun buildJobTrees(
   job: Job,
-  jobToStack: Map<Job, DebugCoroutineInfo>
+  jobToStack: Map<Job, DebugCoroutineInfo>,
+  visited: MutableSet<Job>
 ): List<JobTree> {
-  val info = jobToStack[job]
-  if (info === null && job is ScopeCoroutine<*>) {
-    // don't yield ScopeCoroutine without info, such as `coroutineScope` or `withContext`
-    return job.children.flatMap { buildJobTrees(it, jobToStack) }.toList()
-  }
-  else {
-    return listOf(JobTree(job, info, job.children.flatMap { buildJobTrees(it, jobToStack) }.toList()))
+  return visited.withElement(job) { notSeenThisJob ->
+    if (notSeenThisJob) {
+      val info = jobToStack[job]
+      if (info === null && job is ScopeCoroutine<*>) {
+        // don't yield ScopeCoroutine without info, such as `coroutineScope` or `withContext`
+        job.children.flatMap { buildJobTrees(it, jobToStack, visited) }.toList()
+      }
+      else {
+        listOf(JobTree(job, info, job.children.flatMap { buildJobTrees(it, jobToStack, visited) }.toList()))
+      }
+    } else {
+      listOf(JobTree(RecursiveJob(job), null, emptyList()))
+    }
   }
 }
 
@@ -308,4 +315,20 @@ private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<Sta
     return stripCoroutineTrace(trace)
   }
   return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)
+}
+
+private fun <T, R> MutableSet<T>.withElement(elem: T, body: (added: Boolean) -> R): R {
+  val added = add(elem)
+  try {
+    return body(added)
+  }
+  finally {
+    if (added) remove(elem)
+  }
+}
+
+private class RecursiveJob(private val originalJob: Job) : Job by originalJob {
+  override fun toString(): String {
+    return "CIRCULAR REFERENCE: $originalJob"
+  }
 }
