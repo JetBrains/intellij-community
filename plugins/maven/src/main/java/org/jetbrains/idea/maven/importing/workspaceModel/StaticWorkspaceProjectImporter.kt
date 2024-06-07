@@ -45,6 +45,6 @@ internal class StaticWorkspaceProjectImporter(
                                                                        importers)
       }
     }
-    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
+    MavenProjectImporterUtil.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 }
