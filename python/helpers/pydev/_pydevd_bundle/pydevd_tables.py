@@ -68,7 +68,8 @@ def __get_table_provider(output):
     type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
-                               'geopandas.geoseries.GeoSeries']:
+                               'geopandas.geoseries.GeoSeries',
+                               'pandera.typing.pandas.DataFrame']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
     elif type_qualified_name in ['numpy.ndarray',
