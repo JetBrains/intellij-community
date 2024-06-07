@@ -122,6 +122,12 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
 
   @Contract(pure = true)
+  fun scaledIcon(icon: Icon, scaleFactor: Float): InlayPresentation
+  {
+    return ScaledIconWithCustomFactorPresentation(textMetricsStorage, false, icon, editor.component, scaleFactor)
+  }
+
+  @Contract(pure = true)
   override fun smallScaledIcon(icon: Icon): InlayPresentation
   {
     val iconWithoutBox = InsetPresentation(ScaledIconPresentation(textMetricsStorage, true, icon, editor.component), top = 1, down = 1)
