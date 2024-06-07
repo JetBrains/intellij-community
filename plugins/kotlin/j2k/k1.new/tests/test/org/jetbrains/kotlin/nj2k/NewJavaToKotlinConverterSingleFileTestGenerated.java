@@ -2873,6 +2873,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/formatting/chainedCall.java");
         }
 
+        @TestMetadata("equalsCallToEqEqOperator.java")
+        public void testEqualsCallToEqEqOperator() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/formatting/equalsCallToEqEqOperator.java");
+        }
+
         @TestMetadata("lineBreaksBetweenArguments.java")
         public void testLineBreaksBetweenArguments() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/formatting/lineBreaksBetweenArguments.java");

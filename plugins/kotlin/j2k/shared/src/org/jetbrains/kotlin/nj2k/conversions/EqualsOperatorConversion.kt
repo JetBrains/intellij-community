@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.equalsExpression
+import org.jetbrains.kotlin.nj2k.parenthesize
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
@@ -39,6 +40,7 @@ class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveConve
 
         left.detach(left.parent!!)
         right.detach(right.parent!!)
-        return recurse(JKParenthesizedExpression(equalsExpression(left, right, typeFactory)))
+        val result = equalsExpression(left, right, typeFactory).parenthesize().withFormattingFrom(element)
+        return recurse(result)
     }
 }
