@@ -1,0 +1,38 @@
+{
+  "language": "Java",
+  "projectPath": "../../ml-eval/keycloak",
+  "outputDir": "ml-eval-code-generation-java-output",
+  "strategy": {
+    "model": "",
+    "mode": "",
+    "collectContextOnly": false,
+    "userPrompts": {
+      "METHOD": [
+        "cover this method with logging",
+        "simplify the following method",
+        "add exception handling",
+        "add comments to the code"
+      ]
+    }
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 5,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
