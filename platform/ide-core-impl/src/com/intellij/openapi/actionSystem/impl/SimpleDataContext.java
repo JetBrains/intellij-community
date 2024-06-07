@@ -81,7 +81,7 @@ public final class SimpleDataContext extends CustomizedDataContext {
       return this;
     }
 
-    public @NotNull <T> Builder addNull(@NotNull DataKey<? super T> dataKey) {
+    public @NotNull Builder addNull(@NotNull DataKey<?> dataKey) {
       if (myMap == null) myMap = new HashMap<>();
       myMap.put(dataKey.getName(), EXPLICIT_NULL);
       return this;

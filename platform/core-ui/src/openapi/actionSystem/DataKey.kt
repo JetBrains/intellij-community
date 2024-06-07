@@ -1,75 +1,57 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.actionSystem
 
-package com.intellij.openapi.actionSystem;
-
-import com.intellij.openapi.util.ValueKey;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import com.intellij.openapi.util.ValueKey
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 /**
  * Type-safe named key.
- * <p/>
- * Mainly used via {@link AnActionEvent#getData(DataKey)} calls and {@link DataProvider#getData(String)} implementations.
- * <p/>
- * Corresponding data for given {@code name} is provided by {@link DataProvider} implementations.
- * Globally available data can be provided via {@link com.intellij.ide.impl.dataRules.GetDataRule} extension point.
+ *
+ *
+ * Mainly used via [AnActionEvent.getData] calls and [DataProvider.getData] implementations.
+ *
+ *
+ * Corresponding data for given `name` is provided by [DataProvider] implementations.
+ * Globally available data can be provided via [com.intellij.ide.impl.dataRules.GetDataRule] extension point.
  *
  * @param <T> Data type.
  * @see CommonDataKeys
+ *
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ *
  * @see LangDataKeys
  */
-public final class DataKey<T> implements ValueKey<T> {
-  private static final ConcurrentMap<String, DataKey<?>> ourDataKeyIndex = new ConcurrentHashMap<>();
-
-  private final String myName;
-
-  private DataKey(@NotNull String name) {
-    myName = name;
-  }
-
-  public static @NotNull <T> DataKey<T> create(@NotNull @NonNls String name) {
-    //noinspection unchecked
-    return (DataKey<T>)ourDataKeyIndex.computeIfAbsent(name, DataKey::new);
-  }
-
-  @ApiStatus.Internal
-  public static DataKey<?> @NotNull [] allKeys() {
-    return ourDataKeyIndex.values().toArray(new DataKey[0]);
-  }
-
-  @ApiStatus.Internal
-  public static int allKeysCount() {
-    return ourDataKeyIndex.size();
-  }
-
-  @Override
-  public @NotNull @NonNls String getName() {
-    return myName;
-  }
-
+@Suppress("UNCHECKED_CAST")
+class DataKey<out T> private constructor(override val name: String) : ValueKey<T> {
   /**
-   * For short notation, use {@code MY_KEY.is(dataId)} instead of {@code MY_KEY.getName().equals(dataId)}.
+   * For short notation, use `MY_KEY.is(dataId)` instead of `MY_KEY.getName().equals(dataId)`.
    *
    * @param dataId key name
-   * @return {@code true} if name of DataKey equals to {@code dataId}, {@code false} otherwise
+   * @return `true` if name of DataKey equals to `dataId`, `false` otherwise
    */
-  public boolean is(String dataId) {
-    return myName.equals(dataId);
-  }
+  fun `is`(dataId: String?): Boolean = name == dataId
 
-  public @Nullable T getData(@NotNull DataContext dataContext) {
-    //noinspection unchecked
-    return (T)dataContext.getData(myName);
-  }
+  fun getData(dataContext: DataContext): T? = dataContext.getData(name) as T?
 
-  public @Nullable T getData(@NotNull DataProvider dataProvider) {
-    //noinspection unchecked
-    return (T)dataProvider.getData(myName);
+  fun getData(dataProvider: DataProvider): T? = dataProvider.getData(name) as T?
+
+  companion object {
+    private val ourDataKeyIndex: ConcurrentMap<String, DataKey<*>> = ConcurrentHashMap()
+
+    @JvmStatic
+    fun <T> create(name: @NonNls String): DataKey<T> {
+      return ourDataKeyIndex.computeIfAbsent(name) { name: String -> DataKey<Any>(name) } as DataKey<T>
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun allKeys(): Array<DataKey<*>> = ourDataKeyIndex.values.toTypedArray()
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun allKeysCount(): Int = ourDataKeyIndex.size
   }
 }
