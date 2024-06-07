@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
-import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
@@ -110,6 +109,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -328,6 +328,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   public void toggleEverywhereFilter() {
     myHeader.toggleEverywhere();
+  }
+
+  @ApiStatus.Internal
+  public void changeScope(@NotNull BiFunction<? super ScopeDescriptor, ? super List<ScopeDescriptor>, @Nullable ScopeDescriptor> processor) {
+    myHeader.changeScope(processor);
   }
 
   public void switchToTab(@NotNull String tabID) {
