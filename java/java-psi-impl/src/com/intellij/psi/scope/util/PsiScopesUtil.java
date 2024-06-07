@@ -2,6 +2,7 @@
 
 package com.intellij.psi.scope.util;
 
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
@@ -21,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -247,7 +249,8 @@ public final class PsiScopesUtil {
               throw new MethodProcessorSetupFailedException("Can't resolve class for super expression");
             }
 
-            final PsiClass superClass = aClass.getSuperClass();
+            JvmReferenceType type = aClass.getSuperClassType();
+            final PsiClass superClass = type == null ? null : ObjectUtils.tryCast(type.resolve(), PsiClass.class);
             if (superClass != null) {
               PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
               PsiClass runSuper = superClass;
