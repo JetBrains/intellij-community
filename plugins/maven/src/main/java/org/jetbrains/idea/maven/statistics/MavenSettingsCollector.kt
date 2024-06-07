@@ -66,7 +66,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(IS_DIRECTORY_BASED_PROJECT.metric(project.isDirectoryBased))
     usages.add(AUTO_DETECT_COMPILER.metric(importingSettings.isAutoDetectCompiler))
     usages.add(CREATE_MODULES_FOR_AGGREGATORS.metric(true))
-    usages.add(KEEP_SOURCE_FOLDERS.metric(importingSettings.isKeepSourceFolders))
+    usages.add(KEEP_SOURCE_FOLDERS.metric(true))
     usages.add(EXCLUDE_TARGET_FOLDER.metric(importingSettings.isExcludeTargetFolder))
     usages.add(USE_MAVEN_OUTPUT.metric(importingSettings.isUseMavenOutput))
 

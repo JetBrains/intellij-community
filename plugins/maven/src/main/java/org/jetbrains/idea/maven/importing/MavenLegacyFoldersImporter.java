@@ -88,9 +88,6 @@ class MavenLegacyFoldersImporter {
 
   private void config(boolean updateTargetFoldersOnly) {
     if (!updateTargetFoldersOnly) {
-      if (!myImportingSettings.isKeepSourceFolders()) {
-        myModel.clearSourceFolders();
-      }
       configSourceFolders();
       configOutputFolders();
     }
@@ -114,9 +111,6 @@ class MavenLegacyFoldersImporter {
   }
 
   public void configMainAndTest(StandardMavenModuleType type) {
-    if (!myImportingSettings.isKeepSourceFolders()) {
-      myModel.clearSourceFolders();
-    }
     boolean isTest = type == StandardMavenModuleType.TEST_ONLY;
     Map<String, JpsModuleSourceRootType<?>> sourceFolders = isTest
                                                             ? getTestSourceFolders(myMavenProject)

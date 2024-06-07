@@ -50,7 +50,6 @@ public class MavenImportingSettings implements Cloneable {
 
   private boolean importAutomatically = false;
   private boolean excludeTargetFolder = true;
-  private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
   @NlsSafe private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
@@ -156,12 +155,19 @@ public class MavenImportingSettings implements Cloneable {
     return true;
   }
 
+  /**
+   * @deprecated source folders are always kept
+   */
+  @Deprecated(forRemoval = true)
   public boolean isKeepSourceFolders() {
-    return keepSourceFolders;
+    return true;
   }
 
+  /**
+   * @deprecated source folders are always kept
+   */
+  @Deprecated(forRemoval = true)
   public void setKeepSourceFolders(boolean keepSourceFolders) {
-    this.keepSourceFolders = keepSourceFolders;
   }
 
   public boolean isExcludeTargetFolder() {
@@ -265,7 +271,6 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (autoDetectCompiler != that.autoDetectCompiler) return false;
     //if (lookForNested != that.lookForNested) return false;
-    if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
@@ -286,8 +291,6 @@ public class MavenImportingSettings implements Cloneable {
 
     //if (lookForNested) result++;
     //result <<= 1;
-    if (keepSourceFolders) result++;
-    result <<= 1;
     if (useMavenOutput) result++;
     result <<= 1;
     if (downloadSourcesAutomatically) result++;

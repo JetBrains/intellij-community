@@ -169,7 +169,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
     assertSources("project", "src1")
-    mavenImporterSettings.isKeepSourceFolders = false
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -180,7 +179,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     resolveFoldersAndImport()
     assertSources("project", "src2")
-    mavenImporterSettings.isKeepSourceFolders = true
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
