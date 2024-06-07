@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -24,6 +25,11 @@ import java.util.stream.Stream
 @ApiStatus.Experimental
 @Suppress("DEPRECATION")
 interface MavenWorkspaceConfigurator {
+
+  companion object {
+    @JvmField
+    val EXTENSION_POINT_NAME: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create("org.jetbrains.idea.maven.importing.workspaceConfigurator")
+  }
 
   /**
    * Called for each imported project in order to add

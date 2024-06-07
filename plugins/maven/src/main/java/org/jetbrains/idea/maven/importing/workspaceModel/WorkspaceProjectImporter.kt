@@ -51,8 +51,6 @@ import java.nio.file.Path
 import java.util.function.Function
 import kotlin.coroutines.cancellation.CancellationException
 
-val WORKSPACE_CONFIGURATOR_EP: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create(
-  "org.jetbrains.idea.maven.importing.workspaceConfigurator")
 internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportConfigurator> = ExtensionPointName.create(
   "org.jetbrains.idea.maven.importing.afterImportConfigurator")
 
@@ -76,7 +74,7 @@ internal open class WorkspaceProjectImporter(
   private val createdModulesList = java.util.ArrayList<Module>()
 
   protected open fun workspaceConfigurators(): List<MavenWorkspaceConfigurator> {
-    return WORKSPACE_CONFIGURATOR_EP.extensionList
+    return MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList
   }
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
@@ -599,7 +597,7 @@ internal open class WorkspaceProjectImporter(
                                              workspaceModel.getVirtualFileUrlManager(),
                                              mavenManager.importingSettings,
                                              folderImportingContext,
-                                             WORKSPACE_CONFIGURATOR_EP.extensionList)
+                                             MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList)
 
       var numberOfModules = 0
       readMavenExternalSystemData(builder).forEach { data ->
