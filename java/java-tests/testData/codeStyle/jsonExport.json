@@ -236,6 +236,7 @@
       "spaces_around_shift_operators": true,
       "spaces_around_type_bounds_in_type_parameters": true,
       "spaces_around_unary_operator": false,
+      "spaces_inside_block_braces_when_body_is_presented": false,
       "spaces_within_angle_brackets": false,
       "spaces_within_annotation_parentheses": false,
       "spaces_within_array_initializer_braces": false,
