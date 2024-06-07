@@ -204,6 +204,18 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
     "jaxb-api",
   ))
 
+  layout.withProjectLibraries(listOf(
+    "org.codehaus.groovy:groovy",
+    "org.codehaus.groovy:groovy-jsr223",
+    "org.codehaus.groovy:groovy-json",
+    "org.codehaus.groovy:groovy-templates",
+    "org.codehaus.groovy:groovy-xml",
+  ), "groovy.jar")
+  // ultimate only
+  if (context.project.libraryCollection.findLibrary("org.apache.ivy") != null) {
+    layout.withProjectLibrary("org.apache.ivy", "groovy.jar", reason = "ivy workaround")
+  }
+
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
