@@ -5,8 +5,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.gradle.AbstractGradleFullSyncCodeInsightTest
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit3RunnerWithInners::class)
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/versionCatalog/findUsages")
-class KotlinGradleVersionCatalogFindUsagesTest : AbstractGradleCodeInsightTest() {
+class KotlinGradleVersionCatalogFindUsagesTest : AbstractGradleFullSyncCodeInsightTest() {
 
     @TestMetadata("tomlVersionUsageInBuildGradleKts.test")
     fun testTomlVersionUsageInBuildGradleKts() {

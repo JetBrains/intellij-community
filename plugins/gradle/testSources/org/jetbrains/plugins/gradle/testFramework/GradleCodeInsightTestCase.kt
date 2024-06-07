@@ -5,19 +5,15 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findDocument
-import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testFramework.utils.editor.commitToPsi
-import com.intellij.testFramework.utils.editor.reloadFromDisk
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 
-abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
+@GradleProjectTestApplication
+abstract class GradleCodeInsightTestCase : AbstractGradleCodeInsightBaseTestCase(), ExpressionTest {
 
   fun testBuildscript(context: String, expression: String, test: () -> Unit) {
     if (context.isEmpty()) {
@@ -128,20 +124,6 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
       isGradleAtLeast("5.0") -> "org.gradle.api.publish.internal.DefaultPublishingExtension"
       else -> "org.gradle.api.publish.internal.DeferredConfigurablePublishingExtension"
     }
-  }
-
-  fun writeTextAndCommit(relativePath: String, text: String) {
-    val file = findOrCreateFile(relativePath)
-    runWriteActionAndWait {
-      file.writeTextAndCommit(text)
-    }
-  }
-
-  @RequiresWriteLock
-  private fun VirtualFile.writeTextAndCommit(text: String) {
-    findDocument()?.reloadFromDisk()
-    writeText(text)
-    findDocument()?.commitToPsi(project)
   }
 
   companion object {

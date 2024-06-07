@@ -1,9 +1,10 @@
 // FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "tasks.register("myKotlinPluginKotlinSrcTask")"
 plugins {
-    id("<caret>com.example.my-plugin")
+    id("<caret>com.example.my-kotlin-plugin-kotlin-src")
 }
 
-tasks.named("myPluginTask") {
+tasks.named("myKotlinPluginKotlinSrcTask") {
     doLast{
         println("The task from plugin is available in the build script")
     }
@@ -19,9 +20,8 @@ repositories {
     mavenCentral()
 }
 
-// FILE: buildSrc/src/main/kotlin/com/example/my-plugin.gradle.kts
-// EXPECTED
+// FILE: buildSrc/src/main/kotlin/com/example/my-kotlin-plugin-kotlin-src.gradle.kts
 // This plugin is located in buildSrc, so it should be available in build scripts
 package com.example
 
-tasks.register("myPluginTask")
+tasks.register("myKotlinPluginKotlinSrcTask")

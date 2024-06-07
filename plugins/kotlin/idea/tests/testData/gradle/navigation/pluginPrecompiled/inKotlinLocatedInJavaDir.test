@@ -1,12 +1,12 @@
 // Case when a plugin in Kotlin is located in `src/main/java/..` (not in `src/main/kotlin/..`).
 // Gradle doesn't throw an error in such case, so the navigation to plugin from its id also should work
-
+// "EXPECTED-NAVIGATION-SUBSTRING": "tasks.register("myKotlinPluginJavaSrcTask")"
 // FILE: build.gradle.kts
 plugins {
     id("<caret>my-plugin")
 }
 
-tasks.named("myPluginTask") {
+tasks.named("myKotlinPluginJavaSrcTask") {
     doLast{
         println("The task from plugin is available in the build script")
     }
@@ -21,7 +21,6 @@ repositories {
     mavenCentral()
 }
 
-// FILE: buildSrc/src/main/java/my-plugin.gradle.kts
-// EXPECTED
+// FILE: buildSrc/src/main/java/my-kotlin-plugin-java-src.gradle.kts
 // To make this plugin available in a build script, its module should be included in a composite build (see settings.gradle.kts)
-tasks.register("myPluginTask")
+tasks.register("myKotlinPluginJavaSrcTask")

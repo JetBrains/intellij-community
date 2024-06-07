@@ -681,7 +681,7 @@ public final class KotlinTestUtils {
     }
 
     @Nullable
-    private static String getMethodMetadata(Method method) {
+    public static String getMethodMetadata(Method method) {
         TestMetadata testMetadata = method.getAnnotation(TestMetadata.class);
         return (testMetadata != null) ? testMetadata.value() : null;
     }

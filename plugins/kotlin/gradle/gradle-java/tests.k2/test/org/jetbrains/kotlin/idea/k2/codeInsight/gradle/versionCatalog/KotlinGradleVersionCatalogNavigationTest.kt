@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.versionCatalog
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.kotlin.gradle.AbstractGradleFullSyncCodeInsightTest
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit3RunnerWithInners::class)
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/versionCatalog/navigation")
-class KotlinGradleVersionCatalogNavigationTest : AbstractGradleCodeInsightTest() {
+class KotlinGradleVersionCatalogNavigationTest : AbstractGradleFullSyncCodeInsightTest() {
 
     @TestMetadata("fromVersionUsageToItsDeclarationInToml.test")
     fun testVersionCatalogFromVersionUsageToItsDeclarationInToml() {

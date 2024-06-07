@@ -6,11 +6,15 @@ import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
+import com.intellij.testFramework.utils.editor.commitToPsi
+import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.testFramework.utils.vfs.getFile
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
@@ -60,6 +64,21 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
       file.writeText(text)
     }
     return file
+  }
+
+
+  fun writeTextAndCommit(relativePath: String, text: String) {
+    val file = findOrCreateFile(relativePath)
+    runWriteActionAndWait {
+      file.writeTextAndCommit(text)
+    }
+  }
+
+  @RequiresWriteLock
+  private fun VirtualFile.writeTextAndCommit(text: String) {
+    findDocument()?.reloadFromDisk()
+    writeText(text)
+    findDocument()?.commitToPsi(project)
   }
 
   fun appendText(relativePath: String, text: String): VirtualFile {

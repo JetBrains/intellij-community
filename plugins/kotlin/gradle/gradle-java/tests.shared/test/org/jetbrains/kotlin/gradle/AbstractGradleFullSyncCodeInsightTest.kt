@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
+package org.jetbrains.kotlin.gradle
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -16,7 +16,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.AbstractGradleCodeInsightTest.TestFile
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
@@ -28,7 +27,7 @@ import java.nio.charset.StandardCharsets
 
 private const val SCRIPTING_ENABLED_FLAG = "kotlin.k2.scripting.enabled"
 
-abstract class AbstractGradleCodeInsightTest: GradleImportingTestCase(), ExpectedPluginModeProvider {
+abstract class AbstractGradleFullSyncCodeInsightTest: GradleImportingTestCase(), ExpectedPluginModeProvider {
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
