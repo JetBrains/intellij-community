@@ -1022,22 +1022,24 @@ public final class IndexLookupTimingsReporting {
     private IndexOperationToOTelMetricsReporter() {
       final Meter meter = TelemetryManager.getInstance().getMeter(Indexes);
 
-      //RC: It is important to use 'gauge', NOT 'counter' for the metrics below -- even for lookups count, which seems
-      //    very 'counter'-like. This is because 'counters' requires reporting cumulative total since the _session start_,
-      //    while we report values accumulated only _between_ the reporting points, not accumulated since JVM start
-      //    -- i.e. we reset all the accumulators to 0 in .drainValuesToOTel().
+      //RC: It is important to use 'gauge', NOT 'counter' for the metrics below. This is because 'counters' requires
+      //    reporting cumulative total since the _session start_, while we report values accumulated only _between_
+      //    the reporting points, not accumulated since JVM start -- i.e. we reset most of the accumulators to 0
+      //    in .drainValuesToOTel().
+      //    The only exception is xxxLookups counters -- we don't reset them, keep the value accumulating since session
+      //    start -- i.e. it is the natural Counter (AT-534)
 
-      allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").ofLongs().buildObserver();
+      allKeysTotalLookups = meter.counterBuilder("Indexes.allKeys.lookups").buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();
       allKeysLookupDuration90P = meter.gaugeBuilder("Indexes.allKeys.lookupDuration90PMs").buildObserver();
       allKeysLookupDurationMax = meter.gaugeBuilder("Indexes.allKeys.lookupDurationMaxMs").buildObserver();
 
-      entriesTotalLookups = meter.gaugeBuilder("Indexes.entries.lookups").ofLongs().buildObserver();
+      entriesTotalLookups = meter.counterBuilder("Indexes.entries.lookups").buildObserver();
       entriesLookupDurationAvg = meter.gaugeBuilder("Indexes.entries.lookupDurationAvgMs").buildObserver();
       entriesLookupDuration90P = meter.gaugeBuilder("Indexes.entries.lookupDuration90PMs").buildObserver();
       entriesLookupDurationMax = meter.gaugeBuilder("Indexes.entries.lookupDurationMaxMs").buildObserver();
 
-      stubsTotalLookups = meter.gaugeBuilder("Indexes.stubs.lookups").ofLongs().buildObserver();
+      stubsTotalLookups = meter.counterBuilder("Indexes.stubs.lookups").buildObserver();
       stubsLookupDurationAvg = meter.gaugeBuilder("Indexes.stubs.lookupDurationAvgMs").buildObserver();
       stubsLookupDuration90P = meter.gaugeBuilder("Indexes.stubs.lookupDuration90PMs").buildObserver();
       stubsLookupDurationMax = meter.gaugeBuilder("Indexes.stubs.lookupDurationMaxMs").buildObserver();
@@ -1052,25 +1054,28 @@ public final class IndexLookupTimingsReporting {
 
     //cached interval histograms:
     private transient Histogram allKeysIntervalHisto;
+    private long allKeysLookups = 0;
     private transient Histogram entriesIntervalHisto;
+    private long entriesLookups = 0;
     private transient Histogram stubsIntervalHisto;
+    private long stubsLookups = 0;
 
 
     private void drainValuesToOTel() {
       allKeysIntervalHisto = allKeysLookupDurationMsHisto.getIntervalHistogram(allKeysIntervalHisto);
-      allKeysTotalLookups.record(allKeysIntervalHisto.getTotalCount());
+      allKeysTotalLookups.record(allKeysLookups);
       allKeysLookupDurationAvg.record(allKeysIntervalHisto.getMean());
       allKeysLookupDuration90P.record(allKeysIntervalHisto.getValueAtPercentile(90));
       allKeysLookupDurationMax.record(allKeysIntervalHisto.getMaxValue());
 
       entriesIntervalHisto = entriesLookupDurationsMsHisto.getIntervalHistogram(entriesIntervalHisto);
-      entriesTotalLookups.record(entriesIntervalHisto.getTotalCount());
+      entriesTotalLookups.record(entriesLookups);
       entriesLookupDurationAvg.record(entriesIntervalHisto.getMean());
       entriesLookupDuration90P.record(entriesIntervalHisto.getValueAtPercentile(90));
       entriesLookupDurationMax.record(entriesIntervalHisto.getMaxValue());
 
       stubsIntervalHisto = stubEntriesLookupDurationsMsHisto.getIntervalHistogram(stubsIntervalHisto);
-      stubsTotalLookups.record(stubsIntervalHisto.getTotalCount());
+      stubsTotalLookups.record(stubsLookups);
       stubsLookupDurationAvg.record(stubsIntervalHisto.getMean());
       stubsLookupDuration90P.record(stubsIntervalHisto.getValueAtPercentile(90));
       stubsLookupDurationMax.record(stubsIntervalHisto.getMaxValue());
@@ -1078,14 +1083,17 @@ public final class IndexLookupTimingsReporting {
 
     public void reportAllKeysLookup(final long clampedDurationMs) {
       allKeysLookupDurationMsHisto.recordValue(clampedDurationMs);
+      allKeysLookups++;
     }
 
     public void reportEntryLookup(final long clampedDurationMs) {
       entriesLookupDurationsMsHisto.recordValue(clampedDurationMs);
+      entriesLookups++;
     }
 
     public void recordStubEntryLookup(final long clampedDurationMs) {
       stubEntriesLookupDurationsMsHisto.recordValue(clampedDurationMs);
+      stubsLookups++;
     }
 
     @Override
