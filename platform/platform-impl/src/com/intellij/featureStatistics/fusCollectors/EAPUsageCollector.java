@@ -63,11 +63,16 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     }
     return Collections.emptySet();
   }
+  
+  public static boolean isJBTeam(@NotNull LicensingFacade licensingFacade) {
+    String licensedToMessage = licensingFacade.getLicensedToMessage();
+    return licensedToMessage != null && licensedToMessage.contains("JetBrains Team");
+  }
 
   private static @NotNull MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
     List<EventPair<?>> data = new ArrayList<>();
-    String licensedToMessage = licensingFacade.getLicensedToMessage();
-    if (licensedToMessage != null && licensedToMessage.contains("JetBrains Team")) {
+
+    if (isJBTeam(licensingFacade)) {
       data.add(IS_JB_TEAM.with(true));
     }
     String metadata = licensingFacade.metadata;

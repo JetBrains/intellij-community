@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,7 +69,7 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   @Override
   public boolean isInternal() {
-    return StatisticsUploadAssistant.isTestStatisticsEnabled();
+    return EventLogMetadataSettingsPersistence.getInstance().isInternal();
   }
 
   @Override

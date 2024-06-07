@@ -149,6 +149,8 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
 
+    <backgroundPostStartupActivity implementation="com.intellij.featureStatistics.InternalFlagDetection"/>
+
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
 

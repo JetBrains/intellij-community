@@ -27,12 +27,12 @@ class IntelliJProjectUsageCollector : ProjectUsagesCollector() {
       }
     }
   }
+}
 
-  private fun isIdeaProject(project: Project): Boolean {
-    if (Registry.`is`(RegistryApplicationUsagesCollector.DISABLE_INTELLIJ_PROJECT_ANALYTICS)) return false
+fun isIdeaProject(project: Project): Boolean {
+  if (Registry.`is`(RegistryApplicationUsagesCollector.DISABLE_INTELLIJ_PROJECT_ANALYTICS)) return false
 
-    val moduleManager = ModuleManager.getInstance(project)
-    return moduleManager.findModuleByName("intellij.platform.commercial") != null
-           && moduleManager.findModuleByName("intellij.platform.commercial.verifier") != null
-  }
+  val moduleManager = ModuleManager.getInstance(project)
+  return moduleManager.findModuleByName("intellij.platform.commercial") != null
+         && moduleManager.findModuleByName("intellij.platform.commercial.verifier") != null
 }
