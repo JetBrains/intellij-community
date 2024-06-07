@@ -2,6 +2,7 @@
 package com.intellij.util.proxy
 
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus
 import java.net.Authenticator
 import java.net.ProxySelector
@@ -25,8 +26,16 @@ object CommonProxyCompatibility {
                registerCustomProxySelector: (ProxySelector) -> AccessToken,
                registerCustomAuthenticator: (Authenticator) -> AccessToken) {
     if (mainProxySelector != null) {
-      CommonProxy.LOG.error("multiple registration of main proxy selector",
-                            RuntimeException("current main proxy selector=$mainProxySelector, registration=$proxySelector"))
+      if (mainProxySelector === proxySelector && mainAuthenticator === authenticator) {
+        if (ApplicationManager.getApplication()?.isUnitTestMode == true) {
+          return
+        }
+        CommonProxy.LOG.warn("multiple registration of main proxy selector",
+                             RuntimeException("current main proxy selector=$mainProxySelector, registration=$proxySelector"))
+      } else {
+        CommonProxy.LOG.error("multiple registration of main proxy selector",
+                              RuntimeException("current main proxy selector=$mainProxySelector, registration=$proxySelector"))
+      }
     }
     else {
       mainProxySelector = proxySelector
