@@ -1,5 +1,3 @@
-import java.lang.Exception
-
 fun test() {
     try {
         "foo"
