@@ -340,10 +340,10 @@ public final class PyParameterInfoUtils {
 
   public static class ParameterDescription {
 
-    String name = "";
-    String annotation = "";
-    boolean isLast = false;
-    String fullRepresentation = "";
+    private String name = "";
+    private String annotation = "";
+    private boolean isLast = false;
+    private String fullRepresentation = "";
 
     public ParameterDescription() { }
 
@@ -351,6 +351,18 @@ public final class PyParameterInfoUtils {
       this.name = name;
       this.annotation = annotation;
       this.isLast = isLast;
+    }
+
+    public void setFullRepresentation(String fullRepresentation) {
+      this.fullRepresentation = fullRepresentation;
+    }
+
+    public String getAnnotation() {
+      return annotation;
+    }
+
+    public void setAnnotation(String annotation) {
+      this.annotation = annotation;
     }
 
     public String getFullRepresentation(boolean showHints) {
@@ -375,24 +387,12 @@ public final class PyParameterInfoUtils {
       }
       return stringBuilder.toString();
     }
-
-    public void setFullRepresentation(String fullRepresentation) {
-      this.fullRepresentation = fullRepresentation;
-    }
-
-    public String getAnnotation() {
-      return annotation;
-    }
-
-    public void setAnnotation(String annotation) {
-      this.annotation = annotation;
-    }
   }
 
   public static class CallInfo {
-    public PyCallExpression call;
-    public PyCallableType callee;
-    public boolean isVisible;
+    private final PyCallExpression call;
+    private final PyCallableType callee;
+    private boolean isVisible;
 
     public CallInfo(PyCallExpression call, PyCallableType callee, boolean isVisible) {
       this.call = call;
@@ -402,6 +402,10 @@ public final class PyParameterInfoUtils {
 
     public void setVisible(boolean visible) {
       this.isVisible = visible;
+    }
+
+    public boolean isVisible() {
+      return this.isVisible;
     }
 
     public Pair<PyCallExpression, PyCallableType> getCallandCalleePair() {
