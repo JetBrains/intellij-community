@@ -186,7 +186,7 @@ private class MapIndexStorageCaffeineCache<Key, Value>(valueReader: Function<Key
     cache = Caffeine.newBuilder()
       .maximumSize(cacheSize.toLong())
       .executor(evictionExecutor)
-      .evictionListener(onEvict)
+      .removalListener(onEvict)
       .build(valuesLoader)
   }
 
