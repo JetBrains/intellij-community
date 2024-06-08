@@ -45,7 +45,12 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenProjectToModuleName: Map<MavenProject, String>,
               packagingModel: PackagingModel,
               postTasks: MutableList<MavenProjectsProcessorTask>,
-              userDataHolder: UserDataHolderEx) {
+              userDataHolder: UserDataHolderEx) = process(storage, module, project, mavenProject)
+
+  fun process(storage: MutableEntityStorage,
+              module: ModuleEntity,
+              project: Project,
+              mavenProject: MavenProject) {
   }
 
   private fun isFacetDetectionDisabled(context: Context<*>): Boolean {
