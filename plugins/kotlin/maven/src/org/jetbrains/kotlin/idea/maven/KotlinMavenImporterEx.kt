@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.project.Project
-import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
@@ -68,8 +67,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         storage: MutableEntityStorage,
         module: ModuleEntity,
         project: Project,
-        mavenProject: MavenProject,
-        artifactModel: ModifiableArtifactModel
+        mavenProject: MavenProject
     ) {
         if (!isMigratedToConfigurator) return
         storage.modifyModuleEntity(module) {

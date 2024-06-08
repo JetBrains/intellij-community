@@ -32,9 +32,9 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                  module: ModuleEntity,
                  project: Project,
                  mavenProject: MavenProject,
-                 artifactModel: ModifiableArtifactModel) = preProcess(storage, module)
+                 artifactModel: ModifiableArtifactModel) = preProcess(storage, module, project, mavenProject)
 
-  fun preProcess(storage: MutableEntityStorage, module: ModuleEntity) {
+  fun preProcess(storage: MutableEntityStorage, module: ModuleEntity, project: Project, mavenProject: MavenProject) {
   }
 
   fun process(storage: MutableEntityStorage,
