@@ -73,7 +73,9 @@ internal class YamlFileTypeUsageDetector {
     var hasSwagger = false
 
     var hasServices = false
+
     var hasResources = false
+    var hasAwsFormat = false
 
     var schema: ImportantSchema? = null
 
@@ -85,6 +87,7 @@ internal class YamlFileTypeUsageDetector {
         "swagger" -> hasSwagger = true
         "services" -> hasServices = true
         "Resources" -> hasResources = true
+        "AWSTemplateFormatVersion" -> hasAwsFormat = true
       }
 
       schema = when {
@@ -92,7 +95,7 @@ internal class YamlFileTypeUsageDetector {
         hasSwagger -> ImportantSchema.SWAGGER
         hasApiVersion && hasKind -> ImportantSchema.KUBERNETES
         hasServices -> ImportantSchema.DOCKER_COMPOSE
-        hasResources -> ImportantSchema.CLOUD_FORMATION
+        hasResources || hasAwsFormat -> ImportantSchema.CLOUD_FORMATION
         else -> null
       }
 
