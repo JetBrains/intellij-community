@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesCollector
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -17,10 +18,10 @@ internal class StickyLinesPassFactory : TextEditorHighlightingPassFactoryRegistr
   }
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    val project = editor.project ?: return null
-    val virtualFile = editor.virtualFile ?: return null
-    if (editor.settings.areStickyLinesShown()) {
-      return StickyLinesPass(project, editor.document, virtualFile, psiFile)
+    if (editor.project !=  null && !editor.isDisposed && editor.settings.areStickyLinesShown()) {
+      if (StickyLinesCollector.isModStampChanged(psiFile)) {
+        return StickyLinesPass(editor.document, psiFile)
+      }
     }
     return null
   }
