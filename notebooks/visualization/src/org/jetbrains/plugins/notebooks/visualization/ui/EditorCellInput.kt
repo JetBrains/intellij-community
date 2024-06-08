@@ -24,6 +24,10 @@ class EditorCellInput(
 
   private var foldRegion: FoldRegion? = null
   private val runCellButton = EditorCellRunButton(editor)
+  private val delimiterPanelSize: Int = when (interval.ordinal) {
+    0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
+    else -> editor.notebookAppearance.cellBorderHeight / 2
+  }
 
   val bounds: Rectangle
     get() {
@@ -65,7 +69,7 @@ class EditorCellInput(
   }.also {
     cellEventListeners.addListener(object : EditorCellViewComponentListener {
       override fun componentBoundaryChanged(location: Point, size: Dimension) {
-        it.updatePosition(location.y, size.height)
+        it.updatePosition(location.y + delimiterPanelSize, size.height - delimiterPanelSize)
       }
     })
   }
