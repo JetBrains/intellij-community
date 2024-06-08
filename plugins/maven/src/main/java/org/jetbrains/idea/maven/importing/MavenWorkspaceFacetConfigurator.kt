@@ -6,9 +6,6 @@ import com.intellij.openapi.externalSystem.service.project.ArtifactExternalDepen
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.packaging.artifacts.ArtifactModel
-import com.intellij.packaging.elements.PackagingElementResolvingContext
-import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
@@ -43,7 +40,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
               artifactModel: ImporterModifiableArtifactModel,
-              packagingResolvingContext: PackagingElementResolvingContext,
               artifactDependenciesImporter: ArtifactExternalDependenciesImporter,
               postTasks: MutableList<MavenProjectsProcessorTask>,
               userDataHolder: UserDataHolderEx) = process(storage, module, project, mavenProject)
@@ -82,11 +78,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
 
     val project = context.project
     val artifactModel = ARTIFACT_MODEL_KEY[context]
-    val resolvingContext = object : DefaultPackagingElementResolvingContext(project) {
-      override fun getArtifactModel(): ArtifactModel {
-        return artifactModel
-      }
-    }
     val artifactDependenciesImporter: ArtifactExternalDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
     val mavenProjectsWithModules = context.mavenProjectsWithModules
     val storage = context.storage
@@ -122,7 +113,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenTree,
                   mavenProjectToModuleName,
                   artifactModel,
-                  resolvingContext,
                   artifactDependenciesImporter,
                   postTasks,
                   context)
