@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.collections.set
 
@@ -111,8 +112,9 @@ internal class ImporterModifiableArtifact(private val project: Project,
 
 }
 
-internal class ImporterModifiableArtifactModel(private val project: Project,
-                                               private val storage: MutableEntityStorage) : ModifiableArtifactModel {
+@Internal
+class ImporterModifiableArtifactModel(private val project: Project,
+                                      private val storage: MutableEntityStorage) : ModifiableArtifactModel {
   private val artifacts = mutableListOf<ImporterModifiableArtifact>()
 
   override fun getArtifacts(): Array<Artifact> = artifacts.toTypedArray()

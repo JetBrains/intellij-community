@@ -2,13 +2,11 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.externalSystem.project.ArtifactExternalDependenciesImporter
-import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.externalSystem.service.project.ArtifactExternalDependenciesImporterImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ArtifactModel
-import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.PackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -16,6 +14,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
+import org.jetbrains.idea.maven.importing.workspaceModel.ImporterModifiableArtifactModel
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
@@ -32,7 +31,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                  module: ModuleEntity,
                  project: Project,
                  mavenProject: MavenProject,
-                 artifactModel: ModifiableArtifactModel) = preProcess(storage, module, project, mavenProject)
+                 artifactModel: ImporterModifiableArtifactModel) = preProcess(storage, module, project, mavenProject)
 
   fun preProcess(storage: MutableEntityStorage, module: ModuleEntity, project: Project, mavenProject: MavenProject) {
   }
@@ -43,7 +42,9 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenProject: MavenProject,
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
-              packagingModel: PackagingModel,
+              artifactModel: ImporterModifiableArtifactModel,
+              packagingResolvingContext: PackagingElementResolvingContext,
+              artifactDependenciesImporter: ArtifactExternalDependenciesImporter,
               postTasks: MutableList<MavenProjectsProcessorTask>,
               userDataHolder: UserDataHolderEx) = process(storage, module, project, mavenProject)
 
@@ -86,7 +87,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
         return artifactModel
       }
     }
-    val packagingModel: PackagingModel = FacetPackagingModel(artifactModel, resolvingContext)
+    val artifactDependenciesImporter: ArtifactExternalDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
     val mavenProjectsWithModules = context.mavenProjectsWithModules
     val storage = context.storage
     val mavenTree = context.mavenProjectsTree
@@ -120,28 +121,13 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenProject,
                   mavenTree,
                   mavenProjectToModuleName,
-                  packagingModel,
+                  artifactModel,
+                  resolvingContext,
+                  artifactDependenciesImporter,
                   postTasks,
                   context)
         }
       }
-    }
-  }
-
-  class FacetPackagingModel(private val myArtifactModel: ModifiableArtifactModel,
-                            private val myResolvingContext: PackagingElementResolvingContext) : PackagingModel {
-    private val myDependenciesImporter: ArtifactExternalDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
-
-    override fun getModifiableArtifactModel(): ModifiableArtifactModel {
-      return myArtifactModel
-    }
-
-    override fun getPackagingElementResolvingContext(): PackagingElementResolvingContext {
-      return myResolvingContext
-    }
-
-    override fun getArtifactExternalDependenciesImporter(): ArtifactExternalDependenciesImporter {
-      return myDependenciesImporter
     }
   }
 }
