@@ -2,15 +2,14 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.java.analysis.JavaAnalysisBundle
-import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
+import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -59,8 +58,7 @@ internal fun KtFile.updatePackageDirective(pkgName: FqName) {
 }
 
 internal fun KtFile.updatePackageDirective(destination: PsiDirectory) {
-    val newPackageName = JavaDirectoryService.getInstance().getPackage(destination)?.kotlinFqName ?: return
-    updatePackageDirective(newPackageName)
+    updatePackageDirective(destination.getFqNameWithImplicitPrefixOrRoot())
 }
 
 @JvmOverloads

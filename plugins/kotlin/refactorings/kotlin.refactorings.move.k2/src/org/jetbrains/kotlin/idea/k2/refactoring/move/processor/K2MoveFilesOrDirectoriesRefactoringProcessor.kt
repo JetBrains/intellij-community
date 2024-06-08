@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -16,10 +15,10 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
+import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -65,7 +64,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
         return if (psiFile.requiresPackageUpdate) {
-            val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
+            val newPkgName = newParent.getFqNameWithImplicitPrefix() ?: return emptyList()
             psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
         } else emptyList() // don't need to update usages when package doesn't change
     }
@@ -76,7 +75,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
         usages: Array<out UsageInfo>,
         targetDirectory: PsiDirectory
     ) {
-        val targetPkgFqn = JavaDirectoryService.getInstance().getPackage(targetDirectory)?.kotlinFqName ?: FqName.ROOT
+        val targetPkgFqn = targetDirectory.getFqNameWithImplicitPrefixOrRoot()
         conflicts.putAllValues(findAllMoveConflicts(
             elementsToMove.filterIsInstance<KtFile>().toSet(),
             targetDirectory,
@@ -96,9 +95,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     private val KtFile.requiresPackageUpdate: Boolean
         get() {
-            val containingDirectory = containingDirectory ?: return true
-            val directoryPkg = JavaDirectoryService.getInstance().getPackage(containingDirectory)
-            return directoryPkg?.kotlinFqName == packageFqName
+            return containingDirectory?.getFqNameWithImplicitPrefix() == packageFqName
         }
 
     override fun updateMovedFile(file: PsiFile) {}
