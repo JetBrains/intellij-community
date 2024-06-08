@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -17,8 +18,12 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.removeUserData
 import com.intellij.util.asSafely
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.setMode
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
@@ -297,6 +302,44 @@ class EditorCellView(
     updateCellHighlight()
   }
 
+  fun disableMarkdownRenderingIfEnabled() {  // PY-73017 point 1
+    val markdownController = controllers.filterIsInstance<MarkdownInlayRenderingController>().firstOrNull()
+    markdownController?.let {  // exists iff this is a rendered markdown cell
+      it.stopRendering()
+      editor.setMode(NotebookEditorMode.EDIT)
+
+      val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
+      val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+      val foldingModel = editor.foldingModel
+      val foldRegion: FoldRegion? = foldingModel.getFoldRegion(startOffset, endOffset)
+
+      foldRegion?.let {  // to avoid clash with folding created by EditorCellInput.toggleTextFolding
+        foldingModel.runBatchFoldingOperation {
+          foldingModel.removeFoldRegion(it)
+        }
+      }
+
+      update(true)
+      cell.putUserData(wasFoldedInRenderedState, true)
+    }
+  }
+
+  fun enableMarkdownRenderingIfNeeded() {
+    // Making use of [org.jetbrains.plugins.notebooks.editor.JupyterMarkdownEditorCaretListener]
+    // The idea was to force rendering of md cells that were folded in the rendered state.
+    // This was a temporary solution written on rush, since we cannot use NotebookMarkdownEditorManager here directly.
+    // todo: a refactor will be required as part of the ongoing reorganization of Jupyter modules
+    cell.getUserData(wasFoldedInRenderedState) ?: return
+    val document = editor.document
+    val caretModel = editor.caretModel
+    val oldPosition = caretModel.offset
+    val startLine = cell.interval.lines.first
+    val startOffset = document.getLineEndOffset(startLine)
+    caretModel.moveToOffset(startOffset)
+    caretModel.moveToOffset(oldPosition)
+    cell.removeUserData(wasFoldedInRenderedState)
+  }
+
   private fun updateFolding() {
     input.updateSelection(selected)
     outputs?.updateSelection(selected)
@@ -365,5 +408,6 @@ class EditorCellView(
 
   companion object {
     private val LOG = logger<EditorCell>()
+    val wasFoldedInRenderedState = Key<Boolean>("jupyter.markdown.folding.was.rendered")
   }
 }

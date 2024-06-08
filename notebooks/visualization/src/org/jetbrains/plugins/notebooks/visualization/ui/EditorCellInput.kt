@@ -93,6 +93,7 @@ class EditorCellInput(
     val foldingModel = editor.foldingModel
     val currentFoldingRegion = foldRegion
     if (currentFoldingRegion == null) {
+      if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.disableMarkdownRenderingIfEnabled()
       foldingModel.runBatchFoldingOperation {
         val text = editor.document.getText(TextRange(startOffset, endOffset))
         val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
@@ -105,6 +106,7 @@ class EditorCellInput(
         foldingModel.removeFoldRegion(currentFoldingRegion)
         foldRegion = null
       }
+      if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.enableMarkdownRenderingIfNeeded()
     }
   }
 
