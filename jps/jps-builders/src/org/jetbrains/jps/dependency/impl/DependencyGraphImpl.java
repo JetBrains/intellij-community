@@ -50,7 +50,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
-    List<Node<?, ?>> deletedNodes = collect(filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
+    List<Node<?, ?>> deletedNodes = nodesBefore.isEmpty()? Collections.emptyList() : collect(filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
     if (!params.isCalculateAffected()) {
       return new DifferentiateResult() {
