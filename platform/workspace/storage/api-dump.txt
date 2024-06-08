@@ -619,7 +619,6 @@ com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getFileName():java.lang.String
 - a:getParent():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getPresentableUrl():java.lang.String
-- a:getSubTreeFileUrls():java.util.List
 - a:getUrl():java.lang.String
 com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - a:findEntitiesByUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):kotlin.sequences.Sequence
