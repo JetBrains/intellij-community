@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.externalSystem.project.ArtifactExternalDependenciesImporter
-import com.intellij.openapi.externalSystem.service.project.ArtifactExternalDependenciesImporterImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
@@ -40,7 +38,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
               artifactModel: ImporterModifiableArtifactModel,
-              artifactDependenciesImporter: ArtifactExternalDependenciesImporter,
               postTasks: MutableList<MavenProjectsProcessorTask>,
               userDataHolder: UserDataHolderEx) = process(storage, module, project, mavenProject)
 
@@ -78,7 +75,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
 
     val project = context.project
     val artifactModel = ARTIFACT_MODEL_KEY[context]
-    val artifactDependenciesImporter: ArtifactExternalDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
     val mavenProjectsWithModules = context.mavenProjectsWithModules
     val storage = context.storage
     val mavenTree = context.mavenProjectsTree
@@ -113,7 +109,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenTree,
                   mavenProjectToModuleName,
                   artifactModel,
-                  artifactDependenciesImporter,
                   postTasks,
                   context)
         }
