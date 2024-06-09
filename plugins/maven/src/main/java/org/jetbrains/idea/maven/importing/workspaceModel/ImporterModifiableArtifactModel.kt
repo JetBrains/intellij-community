@@ -109,7 +109,6 @@ internal class ImporterModifiableArtifact(private val project: Project,
   override fun toString(): String {
     return "ImporterModifiableArtifact(name='$name')"
   }
-
 }
 
 @Internal
@@ -117,7 +116,8 @@ class ImporterModifiableArtifactModel(private val project: Project, private val 
   private val artifacts = mutableListOf<ImporterModifiableArtifact>()
 
   fun findArtifact(name: String): ModifiableArtifact? = artifacts.firstOrNull { it.name == name }
-  fun getArtifactsByType(type: ArtifactType): MutableCollection<out Artifact> = artifacts.filter { it.artifactType == type }.toMutableList()
+
+  fun getArtifactsByType(type: ArtifactType): Collection<Artifact> = artifacts.filter { it.artifactType == type }
 
   private fun generateUniqueName(baseName: String): String {
     return UniqueNameGenerator.generateUniqueName(baseName) { findArtifact(it) == null }
@@ -142,10 +142,6 @@ class ImporterModifiableArtifactModel(private val project: Project, private val 
 
   fun removeArtifact(artifact: Artifact) {
     artifacts.remove(artifact)
-  }
-
-  fun getOrCreateModifiableArtifact(artifact: Artifact): ModifiableArtifact {
-    return artifact as ModifiableArtifact
   }
 
   // TODO: Could we apply the changes to the storage directly?
