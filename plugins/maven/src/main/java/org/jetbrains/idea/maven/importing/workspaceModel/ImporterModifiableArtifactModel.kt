@@ -22,6 +22,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.util.JpsPathUtil
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.set
 
 internal class ImporterModifiableArtifact(private val project: Project,
@@ -114,6 +115,7 @@ internal class ImporterModifiableArtifact(private val project: Project,
 @Internal
 class ImporterModifiableArtifactModel(private val project: Project, private val storage: MutableEntityStorage) {
   private val artifacts = mutableListOf<ImporterModifiableArtifact>()
+  val currentProcessors = AtomicInteger()
 
   fun findArtifact(name: String): ModifiableArtifact? = artifacts.firstOrNull { it.name == name }
 
@@ -148,7 +150,9 @@ class ImporterModifiableArtifactModel(private val project: Project, private val 
   // This way we could probably replace this old-style modifiable model API with a couple of utility methods
   // and don't overload MavenWorkspaceConfigurator with artifact-specific knowledge.
   // (And also avoid keeping intermediate data in memory)
-  fun applyToStorage() {
+  fun applyToStorageIfProcessed() {
+    if (currentProcessors.get() > 0) return
+
     for (artifact in artifacts) {
       val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, artifact.externalSource)
       val rootElement = artifact.rootElement
@@ -189,6 +193,8 @@ class ImporterModifiableArtifactModel(private val project: Project, private val 
         }
       }
     }
+
+    artifacts.clear()
   }
 
   private fun ArtifactProperties<*>.propertiesTag(): String? {

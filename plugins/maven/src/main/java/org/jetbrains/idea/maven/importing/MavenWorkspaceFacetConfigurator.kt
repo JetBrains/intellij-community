@@ -8,8 +8,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
-import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
-import org.jetbrains.idea.maven.importing.workspaceModel.ImporterModifiableArtifactModel
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import java.util.concurrent.ConcurrentHashMap
@@ -25,7 +23,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                  module: ModuleEntity,
                  project: Project,
                  mavenProject: MavenProject,
-                 artifactModel: ImporterModifiableArtifactModel) = preProcess(storage, module, project, mavenProject)
+                 userDataHolder: UserDataHolderEx) = preProcess(storage, module, project, mavenProject)
 
   fun preProcess(storage: MutableEntityStorage, module: ModuleEntity, project: Project, mavenProject: MavenProject) {
   }
@@ -36,7 +34,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenProject: MavenProject,
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
-              artifactModel: ImporterModifiableArtifactModel,
               userDataHolder: UserDataHolderEx) = process(storage, module, project, mavenProject)
 
   fun process(storage: MutableEntityStorage,
@@ -63,7 +60,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
       val moduleType = moduleWithType.type
       if (moduleType.containsCode) {
         val module = moduleWithType.module
-        preProcess(context.storage, module, project, mavenProject, ARTIFACT_MODEL_KEY[context])
+        preProcess(context.storage, module, project, mavenProject, context)
       }
     }
   }
@@ -72,7 +69,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     if (isFacetDetectionDisabled(context)) return
 
     val project = context.project
-    val artifactModel = ARTIFACT_MODEL_KEY[context]
     val mavenProjectsWithModules = context.mavenProjectsWithModules
     val storage = context.storage
     val mavenTree = context.mavenProjectsTree
@@ -105,7 +101,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenProject,
                   mavenTree,
                   mavenProjectToModuleName,
-                  artifactModel,
                   context)
         }
       }
