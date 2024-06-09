@@ -6,7 +6,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
@@ -234,19 +233,14 @@ fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KaS
 }
 
 fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KotlinCallTargetProcessor) {
+    process(elements.asSequence(), processor)
+}
+
+fun KotlinCallProcessor.process(elements: Sequence<PsiElement>, processor: KotlinCallTargetProcessor) {
     for (element in elements) {
         ProgressManager.checkCanceled()
         if (!process(element, processor)) {
             return
         }
     }
-}
-
-fun KotlinCallProcessor.processExpressionsRecursively(element: PsiElement, processor: KaSession.(CallTarget) -> Unit) {
-    processExpressionsRecursively(element, processor.toCallTargetProcessor())
-}
-
-fun KotlinCallProcessor.processExpressionsRecursively(element: PsiElement, processor: KotlinCallTargetProcessor) {
-    val allExpressions = element.descendantsOfType<KtExpression>().toList()
-    process(allExpressions, processor)
 }
