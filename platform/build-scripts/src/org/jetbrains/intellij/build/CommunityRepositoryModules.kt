@@ -367,7 +367,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.app-inspection.inspectors.database", "android.jar")
       spec.withModule("intellij.android.debuggers", "android.jar")
       spec.withModule("intellij.android.deploy", "android.jar")
-      spec.withModule("intellij.android.device-file-explorer-toolwindow", "android.jar")
       spec.withModule("intellij.android.device-explorer", "android.jar")
       spec.withModule("intellij.android.device-explorer-files", "android.jar")
       spec.withModule("intellij.android.device-explorer-monitor", "android.jar")
@@ -378,6 +377,7 @@ object CommunityRepositoryModules {
       // Packaged as a gradle-dsl plugin
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
+      //spec.withModule("intellij.android.gradle.dsl.declarative", "android.jar")
       //spec.withModule("intellij.android.gradle.dsl.toml", "android.jar")
       spec.withModule("intellij.android.lang-databinding", "android.jar")
       spec.withModule("intellij.android.lang", "android.jar")
@@ -390,7 +390,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.nav.safeargs.common", "android.jar")
       spec.withModule("intellij.android.nav.safeargs.common.gradle", "android.jar")
       spec.withModule("intellij.android.nav.safeargs.k1", "android.jar")
-      spec.withModule("intellij.android.newProjectWizard", "android.jar")
+      spec.withModule("intellij.android.nav.safeargs.k2", "android.jar")
       spec.withModule("intellij.android.android-material", "android.jar")
       spec.withModule("intellij.android.observable.ui", "android.jar")
       spec.withModule("intellij.android.observable", "android.jar")
@@ -400,6 +400,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.preview-elements", "android.jar")
       spec.withModule("intellij.android.profilersAndroid", "android.jar")
       spec.withModule("intellij.android.profilersAndroid.gradle", "android.jar")
+      spec.withModule("intellij.android.projectSystem.apk", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.repositorySearch", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.upgrade", "android.jar")
@@ -408,9 +409,9 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.render-resources", "android.jar")
       spec.withModule("intellij.android.rendering", "android.jar")
       spec.withModule("intellij.android.room", "android.jar")
+      spec.withModule("intellij.android.samples-browser", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
-      spec.withModule("intellij.android.testRetention", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
       spec.withModule("intellij.android.wear-pairing", "android.jar")
       spec.withModule("intellij.android.wear-whs", "android.jar")
@@ -425,36 +426,17 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.server-flags", "android.jar")
       spec.withModule("intellij.android.codenavigation", "android.jar")
       spec.withModule("intellij.android.execution.common", "android.jar")
-      spec.withModule("intellij.android.explainer", "android.jar")
-
 
       spec.withModule("intellij.android.safemode", "android.jar")
 
+      spec.withModule("intellij.android.preview-fast-compile", "android.jar")
+      spec.withModule("intellij.android.completion", "android.jar")
+
       // artwork.jar
       spec.withModule("intellij.android.artwork", "artwork.jar")
-
+      spec.withModule("intellij.android.artwork-compose", "artwork.jar")
       // build-common.jar
       spec.withModule("intellij.android.buildCommon", "build-common.jar")
-
-      // data-binding.jar
-
-
-
-
-
-      // game-tools.jar
-      //tools/vendor/google/game-tools/main:android.game-tools.main <= REMOVED
-
-      // google-analytics-library.jar
-
-
-      //tools/analytics-library/publisher:analytics-publisher <= REMOVED
-
-
-      // google-login.jar
-      // We don't bundle Google Login with IDEA
-
-
 
       // inspectors-common.jar
       spec.withModule("intellij.android.inspectors-common.api", "inspectors-common.jar")
@@ -476,58 +458,8 @@ object CommunityRepositoryModules {
       // memory-usage.jar
       spec.withModule("intellij.android.memory-usage", "memory-usage.jar")
 
-      // pixelprobe.jar
-
-
-
-      // repository.jar
-
-
-      // sdk-common.jar
-
-
-
-      // sdk-tools.jar
-
-
-
-
-
-      //tools/base/build-system/builder-test-api:studio.android.sdktools.builder-test-api <= API for testing. Nice to have in IDEA.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      // sdklib.jar
-
-
       // utp.jar
       spec.withModule("intellij.android.utp", "utp.jar")
-
-      // wizard-template.jar
-
-
 
       // libs:
       spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
@@ -593,10 +525,22 @@ object CommunityRepositoryModules {
 
       spec.withModule("intellij.android.streaming")
 
-      //tools/adt/idea/.idea/libraries:ffmpeg-platform <= FIXME
-      //tools/adt/idea/.idea/libraries:firebase_java_proto <= REMOVED
+      // Library that aggregates all libraries and modules from `tools/base` directory
+      spec.withProjectLibrary("studio-platform")
+
+      // Used in intellij.android.app-quality-insights.api module which currently isn't bundled in IJ IDEA
+      //spec.withProjectLibrary("gradle-shared-proto")
+      //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
+      /**
+       * TODO Check if needed since following modules reference it:
+       * - intellij.android.app-inspection.inspectors.database
+       * - intellij.android.app-inspection.inspectors.database.tests
+       */
+      //spec.withProjectLibrary("sqlite-inspector-proto")
       // We do not bundle Google API client in IJ
       //spec.withProjectLibrary("google-api-client")
+      spec.withProjectLibrary("aapt-proto")
+      spec.withProjectLibrary("google-baksmali")
       spec.withProjectLibrary("google-dexlib2")
       //spec.withProjectLibrary("gradle-shared-proto")
       spec.withProjectLibrary("HdrHistogram")
