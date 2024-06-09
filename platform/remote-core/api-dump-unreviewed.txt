@@ -141,8 +141,6 @@ f:com.intellij.remote.PresentableId
 - java.lang.Cloneable
 - clone():com.intellij.remote.PresentableId
 - s:createId(java.lang.String,java.lang.String):com.intellij.remote.PresentableId
-- s:createMergedId(com.intellij.remote.PresentableId,java.lang.String):com.intellij.remote.PresentableId
-- s:createMergedName(com.intellij.remote.PresentableId,java.lang.String):com.intellij.remote.PresentableId
 - equals(java.lang.Object):Z
 - getId():java.lang.String
 - getName():java.lang.String
