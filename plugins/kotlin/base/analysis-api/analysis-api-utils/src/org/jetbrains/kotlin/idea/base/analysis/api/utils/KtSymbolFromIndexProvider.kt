@@ -45,8 +45,6 @@ class KtSymbolFromIndexProvider private constructor(
         name: Name,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
     ): Sequence<KaClassLikeSymbol> {
-        val isCommon = useSiteModule.platform.isCommon()
-
         val valueFilter: (KtClassLikeDeclaration) -> Boolean = { psiFilter(it) && useSiteFilter(it) }
         val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
 
@@ -62,8 +60,6 @@ class KtSymbolFromIndexProvider private constructor(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
     ): Sequence<KaClassLikeSymbol> {
-        val isCommon = useSiteModule.platform.isCommon()
-
         val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
         val valueFilter: (KtClassLikeDeclaration) -> Boolean = { psiFilter(it) && useSiteFilter(it) }
         val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
@@ -146,7 +142,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (callableDeclaration in values) {
-                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KaCallableSymbol>())
+                yieldIfNotNull(callableDeclaration.getSymbol() as? KaCallableSymbol)
             }
             yieldAll(
                 getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(name)
@@ -190,7 +186,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (callableDeclaration in values) {
-                yieldIfNotNull(callableDeclaration.getSymbolOfTypeSafe<KaCallableSymbol>())
+                yieldIfNotNull(callableDeclaration.getSymbol() as? KaCallableSymbol)
             }
             yieldAll(
                 getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(nameFilter).filter { !it.isExtension }
@@ -230,7 +226,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (extension in values) {
-                yieldIfNotNull(extension.getSymbolOfTypeSafe<KaCallableSymbol>())
+                yieldIfNotNull(extension.getSymbol() as? KaCallableSymbol)
             }
             val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
             yieldAll(resolveExtensionScope.getCallableSymbols(name).filterExtensionsByReceiverTypes(receiverTypes))
@@ -256,7 +252,7 @@ class KtSymbolFromIndexProvider private constructor(
 
         return sequence {
             for (extension in values) {
-                yieldIfNotNull(extension.getSymbolOfTypeSafe<KaCallableSymbol>())
+                yieldIfNotNull(extension.getSymbol() as? KaCallableSymbol)
             }
             val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
             yieldAll(resolveExtensionScope.getCallableSymbols(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
