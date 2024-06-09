@@ -11,7 +11,6 @@ import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.importing.workspaceModel.ARTIFACT_MODEL_KEY
 import org.jetbrains.idea.maven.importing.workspaceModel.ImporterModifiableArtifactModel
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import java.util.concurrent.ConcurrentHashMap
 
@@ -38,7 +37,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
               mavenTree: MavenProjectsTree,
               mavenProjectToModuleName: Map<MavenProject, String>,
               artifactModel: ImporterModifiableArtifactModel,
-              postTasks: MutableList<MavenProjectsProcessorTask>,
               userDataHolder: UserDataHolderEx) = process(storage, module, project, mavenProject)
 
   fun process(storage: MutableEntityStorage,
@@ -78,7 +76,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     val mavenProjectsWithModules = context.mavenProjectsWithModules
     val storage = context.storage
     val mavenTree = context.mavenProjectsTree
-    val postTasks = mutableListOf<MavenProjectsProcessorTask>()
 
     fun mavenModuleTypeOrder(type: MavenModuleType): Int = when (type) {
       StandardMavenModuleType.SINGLE_MODULE -> 0
@@ -109,7 +106,6 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
                   mavenTree,
                   mavenProjectToModuleName,
                   artifactModel,
-                  postTasks,
                   context)
         }
       }
