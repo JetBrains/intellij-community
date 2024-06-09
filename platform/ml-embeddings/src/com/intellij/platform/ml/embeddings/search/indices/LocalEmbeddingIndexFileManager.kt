@@ -31,6 +31,8 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     get() = field.also { Files.createDirectories(field) }
   private val idsPath
     get() = rootPath.resolve(IDS_FILENAME)
+  private val sourceTypesPath
+    get() = rootPath.resolve(SOURCE_TYPES_FILENAME)
   private val embeddingsPath
     get() = rootPath.resolve(EMBEDDINGS_FILENAME)
 
@@ -91,9 +93,11 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
 
   suspend fun loadIndex(): LoadedIndex? = coroutineScope {
     lock.read {
-      if (!idsPath.exists() || !embeddingsPath.exists()) return@read null
+      if (!idsPath.exists() || !sourceTypesPath.exists() || !embeddingsPath.exists()) return@read null
       try {
-        val ids = mapper.readValue<List<EntityId>>(idsPath.toFile()).map { EntityId(it.id.intern(), it.sourceType) }.toMutableList()
+        val rawIds = mapper.readValue<List<String>>(idsPath.toFile())
+        val sourceTypes = mapper.readValue<List<EntitySourceType>>(sourceTypesPath.toFile())
+        val ids = (rawIds zip sourceTypes).map { EntityId(id = it.first, sourceType = it.second) }
 
         val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
         val embeddings = embeddingsPath.inputStream().buffered().use { input ->
@@ -123,9 +127,16 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
 
   suspend fun saveIndex(ids: List<EntityId>, embeddings: List<FloatTextEmbedding>) {
     lock.write {
+      val rawIds = ids.map { it.id }
       withNotEnoughSpaceCheck {
         idsPath.outputStream().buffered().use { output ->
-          mapper.writer(prettyPrinter).writeValue(output, ids)
+          mapper.writer(prettyPrinter).writeValue(output, rawIds)
+        }
+      }
+      val sourceTypesId = ids.map { it.sourceType }
+      withNotEnoughSpaceCheck {
+        sourceTypesPath.outputStream().buffered().use { output ->
+          mapper.writer(prettyPrinter).writeValue(output, sourceTypesId)
         }
       }
       val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
@@ -162,6 +173,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     const val EMBEDDING_ELEMENT_SIZE = 4
 
     private const val IDS_FILENAME = "ids.json"
+    private const val SOURCE_TYPES_FILENAME = "sourceTypes.json"
     private const val EMBEDDINGS_FILENAME = "embeddings.bin"
   }
 }
