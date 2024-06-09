@@ -374,7 +374,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     DataSnapshot snapshot = new DataSnapshot() {
       /** @noinspection unchecked */
       @Override
-      public <T> @Nullable T get(@NotNull DataKey<? extends @NotNull T> key) {
+      public <T> @Nullable T get(@NotNull DataKey<T> key) {
         if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT) return (T)component;
         for (ProviderData map : cachedData) {
           Object answer = map.uiSnapshot.get(key.getName());
@@ -409,7 +409,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     FList<ProviderData> cachedDataForRules;
 
     @Override
-    public <T> void set(@NotNull DataKey<? extends @NotNull T> key, @Nullable T data) {
+    public <T> void set(@NotNull DataKey<T> key, @Nullable T data) {
       if (data == null) return;
       if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
           key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
@@ -439,7 +439,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
-    public <T> void setNull(@NotNull DataKey<? extends @NotNull T> key) {
+    public <T> void setNull(@NotNull DataKey<T> key) {
       if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
           key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
           key == PlatformDataKeys.MODALITY_STATE) {
@@ -450,7 +450,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
-    public <T> void lazy(@NotNull DataKey<? extends @NotNull T> key, @NotNull Function0<? extends @Nullable T> data) {
+    public <T> void lazy(@NotNull DataKey<T> key, @NotNull Function0<? extends @Nullable T> data) {
       set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, new MyLazy<>(key, data));
     }
 
@@ -501,10 +501,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   }
 
   private static class MyLazy<T> implements DataProvider, DataValidators.SourceWrapper {
-    final DataKey<? extends @NotNull T> key;
+    final DataKey<T> key;
     final Function0<? extends @Nullable T> supplier;
 
-    MyLazy(@NotNull DataKey<? extends @NotNull T> key, @NotNull Function0<? extends @Nullable T> supplier) {
+    MyLazy(@NotNull DataKey<T> key, @NotNull Function0<? extends @Nullable T> supplier) {
       this.key = key;
       this.supplier = supplier;
     }

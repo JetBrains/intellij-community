@@ -10,22 +10,17 @@ import java.util.concurrent.ConcurrentMap
 /**
  * Type-safe named key.
  *
- *
  * Mainly used via [AnActionEvent.getData] calls and [DataProvider.getData] implementations.
  *
- *
  * Corresponding data for given `name` is provided by [DataProvider] implementations.
- * Globally available data can be provided via [com.intellij.ide.impl.dataRules.GetDataRule] extension point.
+ * Globally available data can be provided via [GetDataRule] extension point.
  *
- * @param <T> Data type.
  * @see CommonDataKeys
- *
- * @see com.intellij.openapi.actionSystem.PlatformDataKeys
- *
+ * @see PlatformDataKeys
  * @see LangDataKeys
  */
 @Suppress("UNCHECKED_CAST")
-class DataKey<out T> private constructor(override val name: String) : ValueKey<T> {
+class DataKey<T> private constructor(override val name: String) : ValueKey<T> {
   /**
    * For short notation, use `MY_KEY.is(dataId)` instead of `MY_KEY.getName().equals(dataId)`.
    *
