@@ -167,7 +167,6 @@ c:com.intellij.remote.RemoteConnectionCredentialsWrapper
 - save(org.jdom.Element):V
 - setCredentials(com.intellij.openapi.util.Key,java.lang.Object):V
 - switchType(com.intellij.remote.ext.CredentialsCase[]):V
-- s:unknownConnectionType():java.lang.IllegalStateException
 c:com.intellij.remote.RemoteCredentialException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V

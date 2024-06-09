@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.Key;
@@ -28,10 +28,6 @@ public class RemoteConnectionCredentialsWrapper {
 
   public void save(final Element rootElement) {
     getTypeHandler().save(rootElement);
-  }
-
-  public static IllegalStateException unknownConnectionType() {
-    return new IllegalStateException("Unknown connection type"); //TODO
   }
 
   public void copyTo(final RemoteConnectionCredentialsWrapper copy) {
@@ -68,7 +64,7 @@ public class RemoteConnectionCredentialsWrapper {
     }
     final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.getCredentials(myCredentialsTypeHolder);
     if (credentials != null) return Pair.create(credentials, CredentialsType.UNKNOWN);
-    throw unknownConnectionType();
+    throw new IllegalStateException("Unknown connection type");
   }
 
   /**
