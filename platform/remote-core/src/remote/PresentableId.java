@@ -3,7 +3,6 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -41,9 +40,8 @@ public final class PresentableId implements Cloneable {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PresentableId id = (PresentableId) o;
-    return Objects.equals(myId, id.myId) &&
-            Objects.equals(myName, id.myName);
+    PresentableId id = (PresentableId)o;
+    return Objects.equals(myId, id.myId) && Objects.equals(myName, id.myName);
   }
 
   @Override
@@ -54,28 +52,22 @@ public final class PresentableId implements Cloneable {
   @Override
   public PresentableId clone() {
     try {
-      return (PresentableId) super.clone();
-    } catch (CloneNotSupportedException e) {
+      return (PresentableId)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
   }
 
   @Override
-  @NonNls
   public String toString() {
-    return "PresentableId{" +
-            "myId='" + myId + '\'' +
-            ", myName='" + myName + '\'' +
-            '}';
+    return "PresentableId{myId='" + myId + "', myName='" + myName + "'}";
   }
 
   @Contract("_, !null->!null")
   public static @Nullable PresentableId createId(@Nullable String id, @Nullable String name) {
     id = StringUtil.nullize(id);
     name = StringUtil.nullize(name);
-    if (id == null && name == null) {
-      return null;
-    }
-    return new PresentableId(id, name);
+    return id == null && name == null ? null : new PresentableId(id, name);
   }
 }
