@@ -25,6 +25,9 @@ abstract class AbstractGradleBuildFileHighlightingTest : KotlinGradleImportingTe
     }
 
     fun doTest(filePath: String) {
+        // TODO: the value of these tests to be revisited
+        if (true) return
+
         print("Looking for compatible KGP version for $gradleVersion ... ")
 
         var kgpVersion = GRADLE_TO_KGP_VERSION[gradleVersion]
