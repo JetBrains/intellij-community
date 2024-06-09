@@ -31,8 +31,8 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
   private val isInternal by lazy { ApplicationManager.getApplication().isInternal }
   private val isEAP by lazy { ApplicationManager.getApplication().isEAP }
 
-  private val enabledInClassesTabFlow = MutableStateFlow(enabledInClassesTab)
-  private val enabledInSymbolsTabFlow = MutableStateFlow(enabledInSymbolsTab)
+  private val enabledInClassesTabFlow by lazy { MutableStateFlow(enabledInClassesTab) }
+  private val enabledInSymbolsTabFlow by lazy { MutableStateFlow(enabledInSymbolsTab) }
 
   override fun getEnabledInClassesTabState(): StateFlow<Boolean> = enabledInClassesTabFlow.asStateFlow()
   override fun getEnabledInSymbolsTabState(): StateFlow<Boolean> = enabledInSymbolsTabFlow.asStateFlow()
