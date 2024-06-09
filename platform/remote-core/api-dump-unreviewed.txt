@@ -150,7 +150,6 @@ f:com.intellij.remote.PresentableId
 f:com.intellij.remote.RemoteBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.remote.RemoteCancelledException
 - com.intellij.remote.RemoteSdkException
 - <init>(java.lang.String):V
