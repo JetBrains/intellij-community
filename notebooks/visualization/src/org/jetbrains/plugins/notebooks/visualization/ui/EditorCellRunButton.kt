@@ -17,9 +17,9 @@ class EditorCellRunButton(private val editor: EditorEx) {
     if (interval.type != NotebookCellLines.CellType.CODE) return
     val linesRange = interval.lines
 
-    val sourceStartOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
+    val sourceStartOffset = editor.document.getLineEndOffset(interval.lines.first)
     val sourceEndOffset = editor.document.getLineEndOffset(interval.lines.last)
-    if (sourceStartOffset >= sourceEndOffset) return  // PY-72785 don't show for empty cells
+    if (sourceStartOffset + 1 == sourceEndOffset) return  // PY-72785 don't show for empty cells
 
     cellRangeHighlighter = editor.markupModel.addRangeHighlighter(
       sourceStartOffset,
