@@ -113,25 +113,20 @@ internal class ImporterModifiableArtifact(private val project: Project,
 }
 
 @Internal
-class ImporterModifiableArtifactModel(private val project: Project,
-                                      private val storage: MutableEntityStorage) : ModifiableArtifactModel {
+class ImporterModifiableArtifactModel(private val project: Project, private val storage: MutableEntityStorage) {
   private val artifacts = mutableListOf<ImporterModifiableArtifact>()
 
-  override fun getArtifacts(): Array<Artifact> = artifacts.toTypedArray()
-  override fun findArtifact(name: String): ModifiableArtifact? = artifacts.firstOrNull { it.name == name }
-  override fun getArtifactByOriginal(artifact: Artifact): Artifact = artifact
-  override fun getOriginalArtifact(artifact: Artifact): Artifact = artifact
-  override fun getArtifactsByType(type: ArtifactType): MutableCollection<out Artifact> = artifacts.filter { it.artifactType == type }.toMutableList()
-  override fun getAllArtifactsIncludingInvalid(): MutableList<out Artifact> = artifacts
+  fun findArtifact(name: String): ModifiableArtifact? = artifacts.firstOrNull { it.name == name }
+  fun getArtifactsByType(type: ArtifactType): MutableCollection<out Artifact> = artifacts.filter { it.artifactType == type }.toMutableList()
 
   private fun generateUniqueName(baseName: String): String {
     return UniqueNameGenerator.generateUniqueName(baseName) { findArtifact(it) == null }
   }
 
-  override fun addArtifact(name: String,
-                           artifactType: ArtifactType,
-                           rootElement: CompositePackagingElement<*>,
-                           externalSource: ProjectModelExternalSource?): ModifiableArtifact {
+  fun addArtifact(name: String,
+                  artifactType: ArtifactType,
+                  rootElement: CompositePackagingElement<*>,
+                  externalSource: ProjectModelExternalSource?): ModifiableArtifact {
     val uniqueName = generateUniqueName(name)
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
@@ -145,26 +140,12 @@ class ImporterModifiableArtifactModel(private val project: Project,
     return artifact
   }
 
-  override fun removeArtifact(artifact: Artifact) {
+  fun removeArtifact(artifact: Artifact) {
     artifacts.remove(artifact)
   }
 
-  override fun getOrCreateModifiableArtifact(artifact: Artifact): ModifiableArtifact {
+  fun getOrCreateModifiableArtifact(artifact: Artifact): ModifiableArtifact {
     return artifact as ModifiableArtifact
-  }
-
-  override fun getModifiableCopy(artifact: Artifact): Artifact {
-    return artifact
-  }
-
-  override fun addListener(listener: ArtifactListener) {
-  }
-
-  override fun removeListener(listener: ArtifactListener) {
-  }
-
-  override fun isModified(): Boolean {
-    return true
   }
 
   // TODO: Could we apply the changes to the storage directly?
@@ -223,11 +204,4 @@ class ImporterModifiableArtifactModel(private val project: Project,
     }
     else null
   }
-
-  override fun commit() {
-  }
-
-  override fun dispose() {
-  }
-
 }
