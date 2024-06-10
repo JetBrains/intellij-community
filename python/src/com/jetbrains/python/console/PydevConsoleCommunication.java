@@ -728,7 +728,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
-          GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
+          GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getEvaluationExpression(), rowOffset, colOffset, rows, cols, format);
           return createArrayChunk(ret, this);
         },
         true,
