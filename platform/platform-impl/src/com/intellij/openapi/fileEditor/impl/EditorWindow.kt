@@ -47,6 +47,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
@@ -349,7 +350,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, @JvmField i
       )
 
       composite.coroutineScope.launch {
-        composite.selectedEditorWithProvider.collect {
+        composite.selectedEditorWithProvider.drop(1).collect {
           tab.setTabPaneActions(it?.fileEditor?.tabActions)
         }
       }

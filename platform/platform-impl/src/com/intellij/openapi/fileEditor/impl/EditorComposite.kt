@@ -724,6 +724,7 @@ open class EditorComposite internal constructor(
       isPreview = isPreview,
       providers = stateMap,
       tabTitle = null,
+      tabIcon = null,
       pinned = false,
       currentInTab = false,
       ideFingerprint = null,

@@ -3,16 +3,20 @@
 
 package com.intellij.platform.fileEditor
 
+import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.IdeFingerprint
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
+import java.util.*
 
 private const val PINNED: @NonNls String = "pinned"
 private const val CURRENT_IN_TAB = "current-in-tab"
 
 internal class FileEntry(
-  @JvmField val tabTitle: String?,
+  @NlsSafe @JvmField val tabTitle: String?,
+  @JvmField val tabIcon: ByteArray?,
   @JvmField val pinned: Boolean,
   @JvmField val currentInTab: Boolean,
   @JvmField val url: String,
@@ -23,6 +27,7 @@ internal class FileEntry(
 )
 
 private const val TAB_TITLE = "tabTitle"
+private const val TAB_ICON = "tabIcon"
 
 internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFingerprint): FileEntry {
   val historyElement = fileElement.getChild(HistoryEntry.TAG)
@@ -41,6 +46,7 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
 
   return FileEntry(
     tabTitle = fileElement.getAttributeValue(TAB_TITLE),
+    tabIcon = fileElement.getAttributeValue(TAB_ICON)?.let { Base64.getDecoder().decode(it) },
     pinned = fileElement.getAttributeBooleanValue(PINNED),
     currentInTab = fileElement.getAttributeBooleanValue(CURRENT_IN_TAB),
     isPreview = historyElement.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
@@ -73,6 +79,10 @@ internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: M
     }
 
     fileElement.setAttribute(TAB_TITLE, tab.text)
+
+    tab.icon?.let { findCachedImageIcon(it) }?.let {
+      fileElement.setAttribute(TAB_ICON, Base64.getEncoder().withoutPadding().encodeToString(it.encodeToByteArray()))
+    }
     result.addContent(fileElement)
   }
 }

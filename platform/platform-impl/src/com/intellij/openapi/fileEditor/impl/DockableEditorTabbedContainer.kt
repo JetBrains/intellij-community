@@ -34,6 +34,7 @@ import com.intellij.util.ui.update.Activatable
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
@@ -46,6 +47,7 @@ import javax.swing.JLabel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
+@Internal
 class DockableEditorTabbedContainer internal constructor(
   @JvmField internal val splitters: EditorsSplitters,
   private val disposeWhenEmpty: Boolean,
@@ -72,13 +74,13 @@ class DockableEditorTabbedContainer internal constructor(
     return editors
   }
 
-  fun fireContentClosed(file: VirtualFile) {
+  internal fun fireContentClosed(file: VirtualFile) {
     for (each in listeners) {
       each.contentRemoved(file)
     }
   }
 
-  fun fireContentOpen(file: VirtualFile) {
+  internal fun fireContentOpen(file: VirtualFile) {
     for (each in listeners) {
       each.contentAdded(file)
     }

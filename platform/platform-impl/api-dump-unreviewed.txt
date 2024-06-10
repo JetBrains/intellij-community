@@ -15834,28 +15834,6 @@ com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 - s:getInstance():com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
-f:com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
-- com.intellij.openapi.Disposable
-- com.intellij.ui.docking.DockContainer$Persistent
-- com.intellij.util.ui.update.Activatable
-- add(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):V
-- addListener(com.intellij.ui.docking.DockContainer$Listener,com.intellij.openapi.Disposable):V
-- f:close(com.intellij.openapi.vfs.VirtualFile):V
-- closeAll():V
-- dispose():V
-- f:fireContentClosed(com.intellij.openapi.vfs.VirtualFile):V
-- f:fireContentOpen(com.intellij.openapi.vfs.VirtualFile):V
-- getAcceptArea():com.intellij.ui.awt.RelativeRectangle
-- getContainerComponent():javax.swing.JComponent
-- getContentResponse(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):com.intellij.ui.docking.DockContainer$ContentResponse
-- f:getCurrentDropSide():I
-- getDockContainerType():java.lang.String
-- getState():org.jdom.Element
-- isDisposeWhenEmpty():Z
-- isEmpty():Z
-- processDropOver(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):java.awt.Image
-- resetDropOver(com.intellij.ui.docking.DockableContent):V
-- showNotify():V
 c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.fileEditor.FileEditorComposite

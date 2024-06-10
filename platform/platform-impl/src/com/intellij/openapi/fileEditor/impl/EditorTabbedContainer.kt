@@ -14,6 +14,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
@@ -32,10 +34,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LO
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
@@ -231,19 +230,32 @@ class EditorTabbedContainer internal constructor(
     val tab = createTabInfo(
       component = component,
       file = file,
-      icon = icon,
-      tooltip = tooltip,
       parentDisposable = parentDisposable,
-      selectedEditor = selectedEditor,
-      coroutineScope = coroutineScope,
       window = window,
       editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup"),
+      customizer = {
+        it.setText(file.presentableName)
+        it.setTooltipText(tooltip)
+        if (UISettings.getInstance().showFileIconInTabs) {
+          it.setIcon(icon)
+        }
+      }
     )
+    selectedEditor?.tabActions?.let {
+      tab.setTabPaneActions(it)
+    }
 
     coroutineScope.launch {
       val title = EditorTabPresentationUtil.getEditorTabTitle(window.manager.project, file)
       withContext(Dispatchers.EDT) {
         tab.setText(title)
+      }
+    }
+    val project = window.manager.project
+    coroutineScope.launch {
+      val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        tab.setTabColor(color)
       }
     }
 
@@ -495,35 +507,17 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
 internal fun createTabInfo(
   component: JComponent,
   file: VirtualFile,
-  icon: Icon?,
-  tooltip: @NlsContexts.Tooltip String?,
   parentDisposable: Disposable,
-  selectedEditor: FileEditor?,
-  coroutineScope: CoroutineScope,
   window: EditorWindow,
   editorActionGroup: AnAction,
+  customizer: (TabInfo) -> Unit,
 ): TabInfo {
-  val tab = TabInfo(component)
-    .setText(file.presentableName)
-    .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
-    .setTooltipText(tooltip)
-    .setObject(file)
+  val tab = TabInfo(component).setObject(file)
+  customizer(tab)
   tab.setTestableUi { it.put("editorTab", tab.text) }
 
-  val project = window.manager.project
-  coroutineScope.launch {
-    val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
-    withContext(Dispatchers.EDT) {
-      tab.setTabColor(color)
-    }
-  }
-
   val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
-  val group = DefaultActionGroup(editorActionGroup, closeTab)
-  tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
-  selectedEditor?.tabActions?.let {
-    tab.setTabPaneActions(it)
-  }
+  tab.setTabLabelActions(DefaultActionGroup(editorActionGroup, closeTab), ActionPlaces.EDITOR_TAB)
   return tab
 }
 

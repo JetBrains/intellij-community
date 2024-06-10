@@ -7,7 +7,6 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.lightEdit.LightEdit
@@ -87,7 +86,6 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.*
@@ -111,6 +109,7 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
+import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<FileEditorManagerImpl>()
@@ -2106,20 +2105,25 @@ open class FileEditorManagerImpl(
     }
   }
 
-  internal fun openFilesOnStartup(
-    items: List<FileToOpen?>,
+  internal suspend fun openFilesOnStartup(
+    items: List<FileToOpen>,
     window: EditorWindow,
     requestFocus: Boolean,
     isLazyComposite: Boolean,
     windowAdded: suspend () -> Unit
   ) {
-    val template = AllIcons.FileTypes.Text
-    val placeholderIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
-    val tabs = mutableListOf<TabInfo>()
+    if (items.isEmpty()) {
+      LOG.warn("no files to reopen")
+      return
+    }
+
     val uiSettings = UISettings.getInstance()
-    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
+
+    val tabs = mutableListOf<TabInfo>()
+    val editorActionGroup = serviceAsync<ActionManager>().getAction("EditorTabActionGroup")
+
     for (item in items) {
-      val fileEntry = (item ?: continue).fileEntry
+      val fileEntry = item.fileEntry
       val file = item.file
       val composite = createCompositeByEditorWithModel(
         file = file,
@@ -2148,28 +2152,20 @@ open class FileEditorManagerImpl(
       val tab = createTabInfo(
         component = composite.component,
         file = file,
-        icon = placeholderIcon,
-        tooltip = null,
         parentDisposable = composite,
-        selectedEditor = null,
-        coroutineScope = composite.coroutineScope,
         window = window,
         editorActionGroup = editorActionGroup,
+        customizer = item.customizer,
       )
 
+      val project = window.manager.project
       composite.coroutineScope.launch {
-        val icon = item.icon.await()
+        val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          tab.setIcon(decorateFileIcon(composite = composite, baseIcon = icon, uiSettings = uiSettings))
+          tab.setTabColor(color)
         }
       }
-      composite.coroutineScope.launch(ModalityState.any().asContextElement()) {
-        val title = item.tabTitle.await()
-        withContext(Dispatchers.EDT) {
-          tab.setText(title)
-          tab.setTooltipText(if (uiSettings.showTabsTooltips) getFileTooltipText(composite.file, composite) else null)
-        }
-      }
+
       composite.coroutineScope.launch(ModalityState.any().asContextElement()) {
         splitters.updateFileColor(file = file, compositeAndTab = composite to tab)
       }
@@ -2189,39 +2185,33 @@ open class FileEditorManagerImpl(
 
     window.tabbedPane.setTabs(tabs)
 
-    for ((index, item) in items.withIndex()) {
-      if (item == null) {
-        continue
-      }
+    val tab = tabs.get(max(items.indexOfFirst { it.fileEntry.currentInTab }, 0))
+    val composite = tab.composite
+    window.selectTabOnStartup(tabToSelect = tab, composite = composite)
 
-      val tab = tabs.get(index)
-      val composite = tab.composite
-
-      if (item.fileEntry.currentInTab) {
-        window.selectTabOnStartup(tabToSelect = tab, composite = composite)
-
-        if (requestFocus) {
-          composite.coroutineScope.launch {
-            // well, we cannot focus if component is not added
-            windowAdded()
-            // wait for the file editor
-            composite.waitForAvailable()
-            if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-                focusEditorOnComposite(composite = composite, splitters = splitters, toFront = false)
-              }) {
-              // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
-              splitters.updateFrameTitle()
-            }
-          }
-        }
-        composite.coroutineScope.launch {
-          composite.selectedEditorWithProvider.collect {
-            tab.setTabPaneActions(it?.fileEditor?.tabActions)
-          }
+    if (requestFocus) {
+      composite.coroutineScope.launch {
+        // well, we cannot focus if component is not added
+        windowAdded()
+        // wait for the file editor
+        composite.waitForAvailable()
+        if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            focusEditorOnComposite(composite = composite, splitters = splitters, toFront = false)
+          }) {
+          // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
+          splitters.updateFrameTitle()
         }
       }
+    }
 
-      splitters.afterFileOpen(file = composite.file)
+    for (item in items) {
+      splitters.afterFileOpen(file = item.file)
+
+      composite.coroutineScope.launch {
+        composite.selectedEditorWithProvider.drop(1).collect {
+          tab.setTabPaneActions(it?.fileEditor?.tabActions)
+        }
+      }
     }
   }
 

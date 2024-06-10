@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView
@@ -8,28 +9,29 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
-import com.intellij.ui.icons.IconReplacer
-import com.intellij.ui.icons.ReplaceableIcon
-import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.Component
-import java.awt.Graphics
 import javax.swing.Icon
 import kotlin.math.min
 
 internal fun getIconData(icon: Icon?): CachedIconPresentation? {
-  if (icon == null) return null
+  return findCachedImageIcon(icon)?.getCoords()?.let {
+    getIconData(it)
+  }
+}
+
+@Internal
+fun findCachedImageIcon(icon: Icon?): CachedImageIcon? {
   return when (icon) {
-    is LayeredIcon -> getIconData(getBiggestLayer(icon))
-    is RowIcon -> getIconData(getBiggestRow(icon))
-    is RetrievableIcon -> getIconData(icon.retrieveIcon())
-    is CachedImageIcon -> getIconData(icon.getCoords())
+    null -> null
+    is LayeredIcon -> findCachedImageIcon(getBiggestLayer(icon))
+    is RowIcon -> findCachedImageIcon(getBiggestRow(icon))
+    is RetrievableIcon -> findCachedImageIcon(icon.retrieveIcon())
+    is CachedImageIcon -> icon
     else -> null
   }
 }
 
-private fun getIconData(iconCoords: Pair<String, ClassLoader>?): CachedIconPresentation? {
-  if (iconCoords == null) return null
+private fun getIconData(iconCoords: Pair<String, ClassLoader>): CachedIconPresentation {
   val path = iconCoords.first
   val classLoader = iconCoords.second
   val iconManager = IconManager.getInstance()
@@ -37,8 +39,7 @@ private fun getIconData(iconCoords: Pair<String, ClassLoader>?): CachedIconPrese
   return CachedIconPresentation(path, classLoaderCoords.first, classLoaderCoords.second)
 }
 
-private fun getBiggestLayer(icon: LayeredIcon): Icon? =
-  icon.allLayers.asSequence().filterNotNull().maxByOrNull { it.size }
+private fun getBiggestLayer(icon: LayeredIcon): Icon? = icon.allLayers.asSequence().filterNotNull().maxByOrNull { it.size }
 
 private fun getBiggestRow(icon: RowIcon): Icon? =
   icon.allIcons.maxByOrNull { it.size }

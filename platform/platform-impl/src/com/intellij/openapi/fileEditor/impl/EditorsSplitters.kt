@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -56,6 +55,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.icons.decodeCachedImageIconFromByteArray
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
@@ -951,6 +951,9 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       editorWindow
     }
 
+    val delayedTasks = mutableListOf<Job>()
+    val placeholderIcon by lazy { EmptyIcon.create(AllIcons.FileTypes.Text) }
+
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     // resolve virtual files
     val items = coroutineScope {
@@ -965,30 +968,77 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             isLazy = !fileEntry.currentInTab && isLazyComposite,
           )
 
+          val tabTitleTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+            readAction {
+              EditorTabPresentationUtil.getEditorTabTitle(fileEditorManager.project, file)
+            }
+          }
+          val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
+            compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+              readAction {
+                computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
+              }
+            }
+          }
+          else {
+            null
+          }
+
+          val initialTabTitle = if (!fileEntry.tabTitle.isNullOrEmpty() && fileEntry.ideFingerprint == ideFingerprint()) {
+            delayedTasks.add(tabTitleTask)
+            fileEntry.tabTitle
+          }
+          else {
+            tabTitleTask.start()
+            file.presentableName
+          }
+
+          val initialTabIcon = if (tabIconTask == null) {
+            null
+          }
+          else {
+            val cachedIcon = fileEntry.tabIcon
+              ?.takeIf { fileEntry.ideFingerprint == ideFingerprint() }
+              ?.let { decodeCachedImageIconFromByteArray(it) }
+            if (cachedIcon == null) {
+              tabIconTask.start()
+            }
+            else {
+              delayedTasks.add(tabIconTask)
+            }
+
+            cachedIcon ?: placeholderIcon
+          }
+
           FileToOpen(
             fileEntry = fileEntry,
             scope = compositeCoroutineScope,
             file = file,
             model = model,
-            icon = compositeCoroutineScope.async {
-              readAction {
-                computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = splitters.manager.project)
-              }
-            },
-            tabTitle = if (!fileEntry.tabTitle.isNullOrEmpty() && fileEntry.ideFingerprint == ideFingerprint()) {
-              CompletableDeferred(fileEntry.tabTitle)
-            }
-            else {
-              compositeCoroutineScope.async {
-                readAction {
-                  EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, file)
+            customizer = { tab ->
+              tab.setText(initialTabTitle)
+              tab.setIcon(initialTabIcon)
+
+              compositeCoroutineScope.launch {
+                val title = tabTitleTask.await()
+                withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                  tab.setText(title)
+                  tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) fileEditorManager.getFileTooltipText(file, tab.composite) else null)
                 }
               }
-            }
+              if (tabIconTask != null) {
+                compositeCoroutineScope.launch {
+                  val icon = tabIconTask.await()
+                  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                    tab.setIcon(decorateFileIcon(composite = tab.composite, baseIcon = icon, uiSettings = UISettings.getInstance()))
+                  }
+                }
+              }
+            },
           )
         }
       }
-    }.map { it.getCompleted() }
+    }.mapNotNull { it.getCompleted() }
 
     span("file opening in EDT", Dispatchers.EDT) {
       var window: EditorWindow? = null
@@ -1002,6 +1052,12 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           isLazyComposite = isLazyComposite,
           windowAdded = suspend { windowAddedDeferred.await() },
         )
+
+        window.coroutineScope.launch {
+          for (delayedTask in delayedTasks) {
+            delayedTask.start()
+          }
+        }
       }
       finally {
         splitters.insideChange--
@@ -1026,9 +1082,8 @@ internal data class FileToOpen(
   @JvmField val scope: CoroutineScope,
   @JvmField val file: VirtualFile,
   @JvmField val model: Flow<EditorCompositeModel>,
-  @JvmField val icon: Deferred<Icon>,
-  @JvmField val tabTitle: Deferred<@NlsSafe String>,
   @JvmField val fileEntry: FileEntry,
+  @JvmField val customizer: (TabInfo) -> Unit,
 )
 
 private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEntry: FileEntry): VirtualFile? {
