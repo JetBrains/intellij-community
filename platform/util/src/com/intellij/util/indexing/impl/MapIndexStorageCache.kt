@@ -91,10 +91,6 @@ object MapIndexStorageCacheSlruProvider : MapIndexStorageCacheProvider {
     }
     else {
       throw AssertionError("'slru'/'caffeine' are the only cache implementations available now")
-      //FIXME RC: MapIndexStoragePassThroughCache is an incorrect implementation -- it doesn't use evictionListener, hence
-      //          any changes done to the ValueContainers obtained through this cache -- will not be saved. It could be
-      //          used for _some_ testing scenarios (if you know that you're doing), but in general it is erroneous
-      //MapIndexStoragePassThroughCache(keyReader, evictionListener, hashingStrategy, cacheSize)
     }
   }
 
@@ -106,19 +102,6 @@ object MapIndexStorageCacheSlruProvider : MapIndexStorageCacheProvider {
 }
 
 @Obsolete
-private class MapIndexStoragePassThroughCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
-                                                          val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-                                                          hashingStrategy: EqualityPolicy<Key>,
-                                                          cacheSize: Int) : MapIndexStorageCache<Key, Value> {
-  override fun read(key: Key): ChangeTrackingValueContainer<Value> = valueReader.apply(key)
-
-  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = null
-
-  override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = emptyList()
-
-  override fun invalidateAll() = Unit
-}
-
 private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                                    val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                                    hashingStrategy: EqualityPolicy<Key>,
