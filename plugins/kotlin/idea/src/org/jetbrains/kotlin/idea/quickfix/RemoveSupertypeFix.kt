@@ -2,31 +2,14 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RemoveSupertypeFix(superClass: KtSuperTypeListEntry) : KotlinQuickFixAction<KtSuperTypeListEntry>(superClass) {
-    override fun getFamilyName() = KotlinBundle.message("remove.supertype")
-
-    override fun getText() = familyName
-
-    public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        element.getStrictParentOfType<KtClassOrObject>()?.removeSuperTypeListEntry(element)
-    }
-
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtSuperTypeListEntry>? {
-            val superClass = diagnostic.psiElement.getNonStrictParentOfType<KtSuperTypeListEntry>() ?: return null
-            return RemoveSupertypeFix(superClass)
-        }
+internal object RemoveSupertypeFixFactory : KotlinSingleIntentionActionFactory() {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val superClass = diagnostic.psiElement.getStrictParentOfType<KtSuperTypeListEntry>() ?: return null
+        return RemoveSupertypeFix(superClass).asIntention()
     }
 }
