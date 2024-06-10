@@ -47,7 +47,7 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
         null,
       ),
       Triple(
-        "-Xbootclasspath/a:out/classes/production/intellij.platform.core.nio.fs",
+        "-Xbootclasspath/a:out/tests/classes/production/intellij.platform.core.nio.fs", //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
         "",
         null,
       ),
