@@ -253,6 +253,8 @@ lineDiff.tokenize = function(value, options) {
     linesAndNewlines.pop();
   }
 
+  console.log("Original Lines and Newlines:", linesAndNewlines);
+
   for (let i = 0; i < linesAndNewlines.length; i++) {
     let line = linesAndNewlines[i];
 
@@ -262,6 +264,8 @@ lineDiff.tokenize = function(value, options) {
       retLines.push(line);
     }
   }
+
+  console.log("Tokenized Lines:", retLines);
 
   return retLines;
 };
@@ -508,11 +512,17 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
   const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
 
+  console.log("Original Text:", originalText);
+  console.log("Suggestions Text:", suggestionsText);
+
   const unifiedDiff = unifiedSlideDiff(originalText, suggestionsText, 1);
+
+  console.log("Unified Diff:", unifiedDiff);
 
   unifiedDiff.forEach(line => {
     const lineDiv = document.createElement("DIV");
     lineDiv.textContent = line.content;
+    lineDiv.style.whiteSpace = "pre"; // Ensure indentation is preserved
     if (line.type === "added") {
       lineDiv.style.color = "green";
     } else if (line.type === "removed") {
