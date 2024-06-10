@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 
@@ -8,7 +9,7 @@ class EditorCellFolding(editor: EditorEx, toggleListener: () -> Unit) {
   private val foldingBar: EditorCellFoldingBar?
 
   init {
-    val isFoldingEnabled = editor.getUserData(isFoldingEnabledKey) ?: false
+    val isFoldingEnabled = (editor.getUserData(isFoldingEnabledKey) ?: false && editor.editorKind != EditorKind.DIFF)
     if (isFoldingEnabled) {
       foldingBar = EditorCellFoldingBar(editor, toggleListener)
     }

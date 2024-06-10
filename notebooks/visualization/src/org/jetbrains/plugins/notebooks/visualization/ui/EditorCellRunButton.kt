@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -12,9 +13,10 @@ class EditorCellRunButton(private val editor: EditorEx) {
   private var cellRangeHighlighter: RangeHighlighter? = null
 
   fun showRunButton(interval: NotebookCellLines.Interval) {
+    if (editor.editorKind == EditorKind.DIFF) return
     hideRunButton()
 
-    if (interval.type != NotebookCellLines.CellType.CODE) return
+    if (interval.type != NotebookCellLines.CellType.CODE) return  // PY-73182
     val linesRange = interval.lines
 
     val sourceStartOffset = editor.document.getLineEndOffset(interval.lines.first)
