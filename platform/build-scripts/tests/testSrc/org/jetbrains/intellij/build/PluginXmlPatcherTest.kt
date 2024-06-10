@@ -194,6 +194,8 @@ class PluginXmlPatcherTest {
       <description>The Database Tools and SQL plugin for WebStorm and RustRover allows you to query, create, and manage databases and provides full SQL language support.
             &lt;br&gt;&lt;br&gt;
             The plugin provides all the same features as &lt;a href=&quot;https://www.jetbrains.com/datagrip/&quot;&gt;DataGrip&lt;/a&gt;, the standalone JetBrains IDE for databases.
+    Owners of an active DataGrip subscription can download the plugin for free.
+    The plugin is also included in &lt;a href=&quot;https://www.jetbrains.com/all/&quot;&gt;All Products Pack&lt;/a&gt; and &lt;a href=&quot;https://www.jetbrains.com/community/education/&quot;&gt;Student Pack&lt;/a&gt;.
             &lt;br&gt;&lt;br&gt;</description>
     </idea-plugin>
     """.trimIndent(),

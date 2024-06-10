@@ -142,8 +142,20 @@ fun doPatchPluginXml(
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
     pluginName.text = "Database Tools and SQL for WebStorm & RustRover"
     val description = rootElement.getChild("description")
-    val replaced = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm and RustRover")
-    check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
+    val replaced1 = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm and RustRover")
+    check(replaced1) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
+
+    val oldText = "The plugin provides all the same features as <a href=\"https://www.jetbrains.com/datagrip/\">DataGrip</a>, the standalone JetBrains IDE for databases."
+    val replaced2 = replaceInElementText(
+      element = description,
+      oldText = oldText,
+      newText = """
+        The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
+        Owners of an active DataGrip subscription can download the plugin for free.
+        The plugin is also included in <a href="https://www.jetbrains.com/all/">All Products Pack</a> and <a href="https://www.jetbrains.com/community/education/">Student Pack</a>.
+      """.trimIndent()
+    )
+    check(replaced2) { "Could not find \'$oldText\' in plugin description of $pluginModuleName" }
   }
   return rootElement
 }
