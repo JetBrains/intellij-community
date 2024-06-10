@@ -40,6 +40,7 @@ public final class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection exte
         final PsiExpression arg = getZeroArgument(expression.getArgumentList());
         if (arg == null) return;
         final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) return;
         final TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(qualifier));
         final PsiType type = constraint.getPsiType(expression.getProject());
         if (!TypeUtils.typeEquals(SCHEDULED_THREAD_POOL_EXECUTOR_CLASS_NAME, type)) return;
