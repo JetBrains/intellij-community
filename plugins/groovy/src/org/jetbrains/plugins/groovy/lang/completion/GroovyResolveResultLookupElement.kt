@@ -9,9 +9,8 @@ import javax.swing.Icon
 class GroovyResolveResultLookupElement(private val typeText: String?, private val tailText: String?, builder: LookupElementBuilder) : LookupElementDecorator<LookupElementBuilder>(builder) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    val otherDecorator = other as? GroovyResolveResultLookupElement ?: return false
-    return delegate.lookupString == otherDecorator.delegate.lookupString && typeText == otherDecorator.typeText && tailText == otherDecorator.tailText
+    if (other !is GroovyResolveResultLookupElement) return false
+    return delegate.lookupString == other.delegate.lookupString && typeText == other.typeText && tailText == other.tailText
   }
 
   fun withIcon(icon: Icon): GroovyResolveResultLookupElement = GroovyResolveResultLookupElement(typeText, tailText, delegate.withIcon(icon))

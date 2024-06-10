@@ -299,7 +299,7 @@ public final class GroovyCompletionUtil {
       }
     }
 
-    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() :   element.getText();
+    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.getText();
     if (name == null || !matcher.prefixMatches(name)) {
       return Collections.emptyList();
     }
@@ -337,7 +337,10 @@ public final class GroovyCompletionUtil {
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
-    return Collections.singletonList(setupLookupBuilder(element, substitutor, builder, null));
+    String typeText = getTypeText(element, substitutor, null);
+    String tailText = getTailText(element, substitutor);
+    GroovyResolveResultLookupElement groovyResolveResultLookupElement = new GroovyResolveResultLookupElement(typeText, tailText, setupLookupBuilder(element, setupLookupBuilder(element, builder, tailText, typeText), tailText, typeText));
+    return Collections.singletonList(groovyResolveResultLookupElement);
   }
 
   public static LookupElement createLookupElement(PsiNamedElement o) {
