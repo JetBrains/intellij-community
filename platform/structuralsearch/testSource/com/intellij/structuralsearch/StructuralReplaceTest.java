@@ -478,7 +478,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s65 = "'_Type '_Variable = '_Value; // '_Comment";
     String s66 = """
       /**
-       *$Comment$
+       * $Comment$
        */
       $Type$ $Variable$ = $Value$;""";
     String expectedResult23 = """
@@ -2105,7 +2105,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s2 = "try { '_TryStatement; } catch('_ExceptionType '_ExceptionDcl) { /* '_CommentContent */ }";
     String replacement =
       "try { $TryStatement$; } catch($ExceptionType$ $ExceptionDcl$) { _logger.warning(\"$CommentContent$\", $ExceptionDcl$); }";
-    String expected = "try { em.persist(p); } catch(PersistenceException e) { _logger.warning(\" good\", e); }";
+    String expected = "try { em.persist(p); } catch(PersistenceException e) { _logger.warning(\"good\", e); }";
 
     assertEquals(expected, replace(s1, s2, replacement));
 

@@ -72,16 +72,19 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final MatchingHandler handler = comment.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler substitutionHandler) {
-      final IElementType tokenType = other.getTokenType();
-      final int length = other.getTextLength();
-      final int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
-      final int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
       final RegExpPredicate predicate = substitutionHandler.findPredicate(RegExpPredicate.class);
       if (predicate != null) {
         predicate.setNodeTextGenerator(e -> JavaMatchUtil.getCommentText((PsiComment)e).trim());
         myMatchingVisitor.setResult(substitutionHandler.handle(other, myMatchingVisitor.getMatchContext()));
       }
       else {
+        final String text = other.getText();
+        final int length = text.length();
+        final IElementType tokenType = other.getTokenType();
+        int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
+        while (start < length && text.charAt(start) == ' ') start++;
+        int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
+        while (end > 0 && text.charAt(end - 1) == ' ') end--;
         myMatchingVisitor.setResult(substitutionHandler.handle(other, start, end, myMatchingVisitor.getMatchContext()));
       }
     }
