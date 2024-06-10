@@ -1834,16 +1834,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - sf:setName(javax.swing.Action,java.lang.String):V
 - sf:swingAction(java.lang.String,kotlin.jvm.functions.Function1):javax.swing.AbstractAction
 - sf:toAnAction(javax.swing.Action):com.intellij.openapi.actionSystem.AnAction
-*f:com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-- com.intellij.util.ui.update.Activatable
-- <init>():V
-- <init>(kotlin.jvm.functions.Function0):V
-- b:<init>(kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:activateWith(javax.swing.JComponent):V
-- f:doInScope(kotlin.jvm.functions.Function1):V
-- hideNotify():V
-- f:launchInScope(kotlin.jvm.functions.Function2):V
-- showNotify():V
 *f:com.intellij.collaboration.ui.util.CodeReviewColorUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil
 *f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Branch

@@ -24,6 +24,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.*
@@ -368,6 +369,8 @@ fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: Mutabl
 
 private typealias Block = CoroutineScope.() -> Unit
 
+@ApiStatus.Internal
+@Deprecated("It is much better to pass a proper scope where needed")
 class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
   : Activatable {
 

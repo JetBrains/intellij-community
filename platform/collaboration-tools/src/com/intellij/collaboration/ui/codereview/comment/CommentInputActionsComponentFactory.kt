@@ -113,6 +113,7 @@ object CommentInputActionsComponentFactory {
     val submitHint: StateFlow<@Nls String>
   )
 
+  @Deprecated("Use a version with CoroutineScope")
   fun attachActions(component: JComponent, cfg: Config): JComponent {
     return VerticalListPanel().apply {
       add(component)
