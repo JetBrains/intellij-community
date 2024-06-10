@@ -326,6 +326,6 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     private val LOG = Logger.getInstance(UnindexedFilesScannerExecutor::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl = project.service<UnindexedFilesScannerExecutor>() as UnindexedFilesScannerExecutorImpl
+    fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl = UnindexedFilesScannerExecutor.getInstance(project) as UnindexedFilesScannerExecutorImpl
   }
 }

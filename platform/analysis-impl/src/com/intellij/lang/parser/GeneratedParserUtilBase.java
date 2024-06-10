@@ -588,7 +588,7 @@ public class GeneratedParserUtilBase {
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
-        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
+        extend_marker_impl(latestDoneMarker);
       }
       state.suppressErrors = false;
       if (errorReported || result) {
@@ -644,7 +644,7 @@ public class GeneratedParserUtilBase {
               state.typeExtends(last.getTokenType(), elementType) &&
               wasAutoSkipped(builder, builder.rawTokenIndex() - last.getEndIndex())) {
             elementType = last.getTokenType();
-            ((PsiBuilder.Marker)last).drop();
+            last.drop();
           }
         }
         if ((frame.modifiers & _UPPER_) != 0) {
@@ -792,7 +792,7 @@ public class GeneratedParserUtilBase {
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
-        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
+        extend_marker_impl(latestDoneMarker);
       }
     }
     else {

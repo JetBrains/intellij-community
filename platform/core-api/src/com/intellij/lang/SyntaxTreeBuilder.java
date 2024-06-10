@@ -191,7 +191,7 @@ public interface SyntaxTreeBuilder {
 
     default int getStartIndex() {
       throw new UnsupportedOperationException("not implemented for this kind of markers");
-    };
+    }
 
     default int getEndIndex() {
       throw new UnsupportedOperationException("not implemented for this kind of markers");
@@ -200,7 +200,7 @@ public interface SyntaxTreeBuilder {
     @NlsContexts.DetailedDescription
     @Nullable default String getErrorMessage() {
       return null;
-    };
+    }
 
     default boolean isCollapsed() {
       return false;
