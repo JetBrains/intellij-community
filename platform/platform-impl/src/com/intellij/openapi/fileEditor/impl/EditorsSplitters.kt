@@ -567,7 +567,7 @@ open class EditorsSplitters internal constructor(
       window.closeFile(
         file = file,
         composite = composite,
-        disposeIfNeeded = FileEditorManagerImpl.isSingletonFileEditor(composite.selectedEditor),
+        disposeIfNeeded = isSingletonFileEditor(composite.selectedEditor),
       )
       if (isProjectOpen &&
           window.tabCount == 0 &&
