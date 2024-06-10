@@ -311,10 +311,14 @@ public final class GitUpdateProcess {
       }
     }
 
-    for (GitRepository repository : mySubmodulesInDetachedHead.keySet()) {
-      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodulesInDetachedHead.get(repository).getParent(), repository,
+    for (GitSubmodule submodule : mySubmodulesInDetachedHead.values()) {
+      GitRepository submoduleRepository = submodule.getRepository();
+      GitRepository parentRepository = submodule.getParent();
+      if (mySubmodulesInDetachedHead.containsKey(parentRepository)) continue; // updated recursively
+
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, parentRepository, submoduleRepository,
                                                    myProgressIndicator, myUpdatedFiles);
-      updaters.put(repository, updater);
+      updaters.put(submoduleRepository, updater);
     }
 
     LOG.info("Updaters: " + updaters);
