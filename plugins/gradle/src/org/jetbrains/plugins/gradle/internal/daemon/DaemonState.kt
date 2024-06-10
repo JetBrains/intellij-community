@@ -16,7 +16,7 @@ class DaemonState(val pid: Long?,
                   val reason: String?,
                   val timestamp: Long,
                   val daemonExpirationStatus: String?,
-                  val daemonOpts: List<String>?,
+                  val daemonOpts: Collection<String>?,
                   val javaHome: File?,
                   val idleTimeout: Int?,
                   val registryDir: File?) : Serializable {

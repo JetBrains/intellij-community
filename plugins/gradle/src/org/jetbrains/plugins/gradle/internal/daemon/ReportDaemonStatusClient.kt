@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.internal.daemon
 
 import com.intellij.DynamicBundle
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import org.gradle.internal.id.IdGenerator
 import org.gradle.launcher.daemon.client.DaemonClientConnection
 import org.gradle.launcher.daemon.client.DaemonConnector
@@ -122,7 +123,24 @@ class ReportDaemonStatusClient(private val daemonRegistry: DaemonRegistry,
 
   private fun DaemonInfo.getIdleTimeout() = context.idleTimeout
 
-  private fun DaemonInfo.getDaemonOpts() = context.daemonOpts
+  /**
+   *  In Gradle 8.8, the signature of the `getDaemonOpts` method was changed.
+   *  Before version 8.8 the return type was `List<String>`, after version 8.8 the return was changed to `Collection<String>`.
+   *  As the result, non-reflectional invocation of `getDaemonOpts` results in a `MethodNotFoundException`,
+   *  because there is no method with this signature.
+   */
+  private fun DaemonInfo.getDaemonOpts(): Collection<String> {
+    try {
+      return GradleReflectionUtil.reflectiveCall(
+        context,
+        "getDaemonOpts",
+        java.util.Collection::class.java
+      ) as Collection<String>
+    }
+    catch (t: Throwable) {
+      return emptyList()
+    }
+  }
 
   private fun DaemonInfo.getLastBusyTimestamp() = lastBusy.time
 
