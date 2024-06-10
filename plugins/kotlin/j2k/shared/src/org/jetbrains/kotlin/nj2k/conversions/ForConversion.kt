@@ -96,15 +96,14 @@ private class ForToForeachConverter(
             if (context.converter.settings.specifyLocalVariableTypeByDefault || loopVar.type.hasAnnotations)
                 JKJavaPrimitiveType.INT
             else JKNoType
-        val loopVarDeclaration =
-            JKForLoopVariable(
+        val loopParameter =
+            JKForLoopParameter(
                 JKTypeElement(explicitType, loopVar.type::annotationList.detached()),
                 loopVar::name.detached(),
-                JKStubExpression(),
                 loopVar::annotationList.detached()
             )
 
-        return JKForInStatement(loopVarDeclaration, range, loop::body.detached())
+        return JKForInStatement(loopParameter, range, loop::body.detached())
     }
 
     private fun JKExpression.incrementOrDecrementOperator(variable: JKLocalVariable): JKOperator? {

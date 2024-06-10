@@ -112,7 +112,7 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
 
         override fun visitForInStatementRaw(forInStatement: JKForInStatement) {
             printer.print("for (")
-            forInStatement.variable.accept(this)
+            forInStatement.parameter.accept(this)
             printer.printWithSurroundingSpaces("in")
             forInStatement.iterationExpression.accept(this)
             printer.print(") ")
@@ -325,18 +325,18 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
             printer.print("]")
         }
 
-        override fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) {
-            forLoopVariable.annotationList.accept(this)
-            forLoopVariable.name.accept(this)
-            if (!forLoopVariable.type.isPresent() || forLoopVariable.type.type is JKContextType) return
+        override fun visitForLoopParameterRaw(forLoopParameter: JKForLoopParameter) {
+            forLoopParameter.annotationList.accept(this)
+            forLoopParameter.name.accept(this)
+            if (!forLoopParameter.type.isPresent() || forLoopParameter.type.type is JKContextType) return
 
             val needExplicitType = isK1Mode() || // for K1 nullability inference
                     settings.specifyLocalVariableTypeByDefault ||
-                    forLoopVariable.type.annotationList.annotations.isNotEmpty()
+                    forLoopParameter.type.annotationList.annotations.isNotEmpty()
 
             if (needExplicitType) {
                 printer.print(": ")
-                forLoopVariable.type.accept(this)
+                forLoopParameter.type.accept(this)
             }
         }
 

@@ -961,12 +961,13 @@ class JavaToJKTreeBuilder(
                 if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList())
                 else rawType.asTypeElement(typeElement.annotationList())
             val name = if (nameIdentifier != null) nameIdentifier.toJK() else JKNameIdentifier(name)
-            return JKParameter(
-                type,
-                name,
-                isVarArgs,
-                annotationList = annotationList(null)
-            ).also {
+
+            val parameter = if (parent is PsiForeachStatement) {
+                JKForLoopParameter(type, name, annotationList = annotationList(null))
+            } else {
+                JKParameter(type, name, isVarArgs, annotationList = annotationList(null))
+            }
+            return parameter.also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this
                 it.updateNullability()
@@ -1043,7 +1044,7 @@ class JavaToJKTreeBuilder(
 
                 is PsiForeachStatement ->
                     JKForInStatement(
-                        iterationParameter.toJK().asForLoopVariable(),
+                        iterationParameter.toJK() as JKForLoopParameter,
                         with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
                         body?.toJK() ?: blockStatement()
                     )
@@ -1305,11 +1306,3 @@ class JavaToJKTreeBuilder(
 
 private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
 private const val NO_NAME_PROVIDED = "NO_NAME_PROVIDED"
-
-private fun JKParameter.asForLoopVariable() =
-    JKForLoopVariable(
-        JKTypeElement(type.type, type::annotationList.detached()),
-        ::name.detached(),
-        JKStubExpression(),
-        ::annotationList.detached()
-    )

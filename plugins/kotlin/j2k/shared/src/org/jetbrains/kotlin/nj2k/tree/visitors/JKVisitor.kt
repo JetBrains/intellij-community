@@ -10,7 +10,7 @@ abstract class JKVisitor {
     open fun visitClass(klass: JKClass) = visitDeclaration(klass)
     open fun visitVariable(variable: JKVariable) = visitDeclaration(variable)
     open fun visitLocalVariable(localVariable: JKLocalVariable) = visitVariable(localVariable)
-    open fun visitForLoopVariable(forLoopVariable: JKForLoopVariable) = visitVariable(forLoopVariable)
+    open fun visitForLoopParameter(forLoopParameter: JKForLoopParameter) = visitParameter(forLoopParameter)
     open fun visitParameter(parameter: JKParameter) = visitVariable(parameter)
     open fun visitDestructuringDeclaration(destructuringDeclaration: JKKtDestructuringDeclaration) = visitVariable(destructuringDeclaration)
     open fun visitDestructuringDeclarationEntry(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) = visitVariable(destructuringDeclarationEntry)
