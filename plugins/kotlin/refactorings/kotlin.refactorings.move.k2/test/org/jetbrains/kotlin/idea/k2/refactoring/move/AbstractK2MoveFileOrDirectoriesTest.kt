@@ -6,11 +6,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
+import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
@@ -68,8 +68,7 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                     if (targetPackage != null) {
                         K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), targetDirectory)
                     } else {
-                        val pkgFqn = JavaDirectoryService.getInstance().getPackage(targetDirectory)?.qualifiedName
-                        K2MoveTargetDescriptor.SourceDirectory(if (pkgFqn == null) FqName.ROOT else FqName(pkgFqn), targetDirectory)
+                        K2MoveTargetDescriptor.SourceDirectory(targetDirectory.getFqNameWithImplicitPrefixOrRoot(), targetDirectory)
                     }
                 }
 
