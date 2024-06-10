@@ -73,7 +73,7 @@ private fun createOnboardingTipComment(start: PsiComment, visitedComments: Mutab
   var current: PsiElement = start
   while(true) {
     var nextSibling = current.nextSibling
-    if (nextSibling is PsiWhiteSpace) nextSibling = nextSibling.nextSibling
+    while (nextSibling is PsiWhiteSpace) nextSibling = nextSibling.nextSibling
     if (nextSibling?.node?.elementType != commentTokenType) break
     visitedComments.add(nextSibling)
     current = nextSibling
