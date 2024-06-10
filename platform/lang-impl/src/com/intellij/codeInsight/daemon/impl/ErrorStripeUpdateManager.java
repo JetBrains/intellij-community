@@ -58,13 +58,15 @@ public final class ErrorStripeUpdateManager implements Disposable {
       return;
     }
 
-    EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
-    markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
-    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
-    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-    if (psiFile != null) {
-      setOrRefreshErrorStripeRenderer(markup, psiFile);
-    }
+    ReadAction.run(() -> {
+      EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
+      markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
+      markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
+      markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
+      if (psiFile != null) {
+        setOrRefreshErrorStripeRenderer(markup, psiFile);
+      }
+    });
   }
 
   @RequiresEdt
