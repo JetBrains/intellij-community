@@ -57,9 +57,6 @@ object MapIndexStorageCacheSlruProvider : MapIndexStorageCacheProvider {
   /** Offload ValueContainer safe to Dispatchers.IO */
   private val CAFFEINE_OFFLOAD_IO = getBooleanProperty("idea.indexes.cache.offload-io", false)
 
-  /** For debug/testing: skip actual save - i.e. just drop data evicted from cache, without saving */
-  private val SKIP_SAVING = getBooleanProperty("idea.indexes.cache.skip-saving", false)
-
   init {
     val logger = logger<MapIndexStorageCacheProvider>()
     if (USE_SLRU) {
@@ -71,33 +68,21 @@ object MapIndexStorageCacheSlruProvider : MapIndexStorageCacheProvider {
     else {
       logger.warn("Unrecognized cache impl is configured for indexes! ('slru' and 'caffeine' are the supported impls)")
     }
-
-    if (SKIP_SAVING) {
-      logger.warn("SKIP_SAVING is true: index data won't be actually saved! (option for debugging/testing)")
-    }
   }
 
   override fun <Key, Value> createCache(keyReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                         evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                         hashingStrategy: EqualityPolicy<Key>,
                                         cacheSize: Int): MapIndexStorageCache<Key, Value> {
-    val actualEvictionListener = if (SKIP_SAVING) fakeEvictionListener() else evictionListener
-
     return if (USE_SLRU) {
-      MapIndexStorageSlruCache(keyReader, actualEvictionListener, hashingStrategy, cacheSize)
+      MapIndexStorageSlruCache(keyReader, evictionListener, hashingStrategy, cacheSize)
     }
     else if (USE_CAFFEINE) {
-      MapIndexStorageCaffeineCache(keyReader, actualEvictionListener, CAFFEINE_OFFLOAD_IO, hashingStrategy, cacheSize)
+      MapIndexStorageCaffeineCache(keyReader, evictionListener, CAFFEINE_OFFLOAD_IO, hashingStrategy, cacheSize)
     }
     else {
       throw AssertionError("'slru'/'caffeine' are the only cache implementations available now")
     }
-  }
-
-  /** Eviction listener that does nothing */
-  @JvmStatic
-  private fun <Key, Value> fakeEvictionListener(): BiConsumer<Key, ChangeTrackingValueContainer<Value>> {
-    return BiConsumer<Key, ChangeTrackingValueContainer<Value>> { key, container -> }
   }
 }
 
@@ -181,7 +166,10 @@ private class MapIndexStorageCaffeineCache<Key, Value>(valueReader: Function<Key
 
   override fun invalidateAll() = cache.invalidateAll()
 
-  /** equals/hashCode is given by equalityPolicy */
+  /**
+   * Caffeine doesn't allow to customize equals/hashCode evaluation strategy, hence we need to create a wrapper around
+   * the actual Key, and customize equals/hashCode via equalityPolicy in the wrapper.
+   */
   private class KeyWithCustomEquality<K>(val key: K,
                                          private val equality: EqualityPolicy<K>) {
     override fun equals(other: Any?): Boolean {

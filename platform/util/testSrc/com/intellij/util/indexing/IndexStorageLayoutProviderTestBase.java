@@ -16,7 +16,6 @@ import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import it.unimi.dsi.fastutil.bytes.K;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
