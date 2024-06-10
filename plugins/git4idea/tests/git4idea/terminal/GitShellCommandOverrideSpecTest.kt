@@ -29,80 +29,98 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     fun finish() = assertions.assertAll()
   }
 
-  fun `test command completions contain local branches`(): Unit = runBlocking {
-    val commandsThatShouldCompleteWithLocalBranches = listOf(
-      "git rebase origin ",
-      "git fetch ",
-      "git fetch origin ",
-      "git push ", // Should not happen, but there's no way to indicate optional + ordered args
-      "git push origin ",
-      "git pull ",
-      "git pull origin ",
-      "git stash branch ",
-      "git branch -d ",
-      "git branch --track ",
-      "git branch --no-track ",
-      "git branch --no-track main ",
-      "git branch -m ",
-      "git branch -m main ",
-      "git branch -M ",
-      "git branch -M main ",
-      "git branch --edit-description ",
-      "git branch --unset-upstream ",
-      "git switch "
-    )
+  private val commandsThatShouldCompleteWithLocalBranches = listOf(
+    "git rebase origin ",
+    "git fetch ",
+    "git fetch origin ",
+    "git push ", // Should not happen, but there's no way to indicate optional + ordered args
+    "git push origin ",
+    "git pull ",
+    "git pull origin ",
+    "git stash branch ",
+    "git branch -d ",
+    "git branch --track ",
+    "git branch --no-track ",
+    "git branch --no-track main ",
+    "git branch -m ",
+    "git branch -m main ",
+    "git branch -M ",
+    "git branch -M main ",
+    "git branch --edit-description ",
+    "git branch --unset-upstream ",
+    "git switch "
+  )
 
-    val test = MultiTestFixture(createFixtureAndRepository())
+  fun `test command completions contain local branches for repository-based generator`(): Unit = runBlocking {
+    val test = MultiTestFixture(createGitRepositoryFixture())
+    commandsThatShouldCompleteWithLocalBranches.forEach { test.localBranchesCompleteFor(it) }
+    test.finish()
+  }
+
+  fun `test command completions contain local branches for commandline-based generator`(): Unit = runBlocking {
+    val test = MultiTestFixture(createGitCommandLineFixture())
     commandsThatShouldCompleteWithLocalBranches.forEach { test.localBranchesCompleteFor(it) }
     test.finish()
   }
 
   // Ignored, needs context changes to be able to find -r/--remotes in prefix
   fun `_test command completions contain remote branches`(): Unit = runBlocking {
-    val test = MultiTestFixture(createFixtureAndRepository())
+    val test = MultiTestFixture(createGitRepositoryFixture())
     test.remoteBranchesCompleteFor("git branch -D -r ")
     test.remoteBranchesCompleteFor("git branch -d --remotes ")
     test.finish()
   }
 
-  fun `test command completions contain all branches`(): Unit = runBlocking {
-    val commandsThatShouldCompleteWithAllBranches = listOf(
-      "git diff main ",
-      "git diff ",
-      "git reset ",
-      "git reset main ",
-      "git rebase ",
-      "git branch -u ",
-      "git branch --set-upstream-to ",
-      "git checkout ",
-      "git merge ",
-    )
+  private val commandsThatShouldCompleteWithAllBranches = listOf(
+    "git diff main ",
+    "git diff ",
+    "git reset ",
+    "git reset main ",
+    "git rebase ",
+    "git branch -u ",
+    "git branch --set-upstream-to ",
+    "git checkout ",
+    "git merge ",
+  )
 
-    val test = MultiTestFixture(createFixtureAndRepository())
+  fun `test command completions contain all branches for repository-based generator`(): Unit = runBlocking {
+    val test = MultiTestFixture(createGitRepositoryFixture())
     commandsThatShouldCompleteWithAllBranches.forEach { test.allBranchesCompleteFor(it) }
     test.finish()
   }
 
-  fun `test command completions contain all remotes`(): Unit = runBlocking {
-    val commandsThatShouldCompleteWithRemotes = listOf(
-      "git rebase ",
-      "git push ",
-      "git pull ",
-      "git pull --rebase ", // iffy, what does a remote here mean?
-      "git pull main --rebase ",
-      "git remote rm ",
-      "git remote rename ",
-      "git fetch ",
-    )
+  fun `test command completions contain all branches for commandline-based generator`(): Unit = runBlocking {
+    val test = MultiTestFixture(createGitCommandLineFixture())
+    commandsThatShouldCompleteWithAllBranches.forEach { test.allBranchesCompleteFor(it) }
+    test.finish()
+  }
 
-    val test = MultiTestFixture(createFixtureAndRepository())
+  private val commandsThatShouldCompleteWithRemotes = listOf(
+    "git rebase ",
+    "git push ",
+    "git pull ",
+    "git pull --rebase ", // iffy, what does a remote here mean?
+    "git pull main --rebase ",
+    "git remote rm ",
+    "git remote rename ",
+    "git fetch ",
+  )
+
+  fun `test command completions contain all remotes for repository-based generator`(): Unit = runBlocking {
+    val test = MultiTestFixture(createGitRepositoryFixture())
+    commandsThatShouldCompleteWithRemotes.forEach { test.remotesCompleteFor(it) }
+    test.finish()
+  }
+
+  fun `test command completions contain all remotes for commandline-based generator`(): Unit = runBlocking {
+    val test = MultiTestFixture(createGitCommandLineFixture())
     commandsThatShouldCompleteWithRemotes.forEach { test.remotesCompleteFor(it) }
     test.finish()
   }
 
   // depends on `test command completions contain local branches` to pass
   fun `test current branch is a higher priority completion than others`(): Unit = runBlocking {
-    val fixture = createFixtureAndRepository(localBranches = ALL_LOCAL_BRANCHES, currentBranch = BRANCH_C)
+    val fixture = createGitRepositoryFixture(localBranches = ALL_LOCAL_BRANCHES, currentBranch = BRANCH_C)
     val completions = fixture.getCompletions("git branch -d ")
 
     val currentBranchCompletion = completions.find { it.name == BRANCH_C.name }
@@ -152,7 +170,38 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
       .map<String> { it.name }.containsAll(expectedRemotes.map { it.name })
   }
 
-  private fun createFixtureAndRepository(
+  private fun createGitCommandLineFixture(
+    currentBranch: GitLocalBranch = MAIN,
+    localBranches: List<GitLocalBranch> = ALL_LOCAL_BRANCHES,
+    remoteBranches: List<GitRemoteBranch> = ALL_REMOTE_BRANCHES,
+    remotes: List<GitRemote> = ALL_REMOTES
+  ): ShellCompletionTestFixture = ShellCompletionTestFixture.builder(project)
+    .mockShellCommandResults { command ->
+      if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
+        return@mockShellCommandResults ShellCommandResult.create("file1\nfile2", exitCode = 0)
+      }
+      if (!command.startsWith("git")) error("Unknown command: $command")
+      when (command) {
+        GET_LOCAL_BRANCHES_COMMAND ->
+          ShellCommandResult.create(localBranches.joinToString("\n") { it.toCommandResult(currentBranch) }, exitCode = 0)
+        GET_REMOTE_BRANCHES_COMMAND ->
+          ShellCommandResult.create(remoteBranches.joinToString("\n") { it.toCommandResult(currentBranch) }, exitCode = 0)
+        GET_ALL_BRANCHES_COMMAND ->
+          ShellCommandResult.create((localBranches + remoteBranches).joinToString("\n") { it.toCommandResult(currentBranch) }, exitCode = 0)
+        GET_REMOTES_COMMAND ->
+          ShellCommandResult.create(remotes.joinToString("\n") {
+            (it.urls.map { url -> "${it.name}\t${url} (fetch)" } +
+             it.pushUrls.map { url -> "${it.name}\t${url} (push)" })
+              .joinToString("\n")
+          }, exitCode = 0)
+        GET_ALIASES_COMMAND ->
+          ShellCommandResult.create("", exitCode = 0)
+        else -> error("Unknown command: $command")
+      }
+    }
+    .build()
+
+  private fun createGitRepositoryFixture(
     currentBranch: GitLocalBranch = MAIN,
     localBranches: List<GitLocalBranch> = ALL_LOCAL_BRANCHES,
     remoteBranches: List<GitRemoteBranch> = ALL_REMOTE_BRANCHES,
@@ -179,18 +228,6 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
         }
         if (!command.startsWith("git")) error("Unknown command: $command")
         when (command) {
-          GET_LOCAL_BRANCHES_COMMAND ->
-            ShellCommandResult.create(localBranches.joinToString("\n") { it.name }, exitCode = 0)
-          GET_REMOTE_BRANCHES_COMMAND ->
-            ShellCommandResult.create(remoteBranches.joinToString("\n") { it.name }, exitCode = 0)
-          GET_ALL_BRANCHES_COMMAND ->
-            ShellCommandResult.create((localBranches + remoteBranches).joinToString("\n") { it.name }, exitCode = 0)
-          GET_REMOTES_COMMAND ->
-            ShellCommandResult.create(remotes.joinToString("\n") {
-              (it.urls.map { url -> "${it.name}  ${url} (fetch)" } +
-               it.pushUrls.map { url -> "${it.name}  ${url} (push)" })
-                .joinToString("\n")
-            }, exitCode = 0)
           GET_ALIASES_COMMAND ->
             ShellCommandResult.create("", exitCode = 0)
           else -> error("Unknown command: $command")
@@ -200,6 +237,13 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
 
     return fixture
   }
+
+  private fun GitBranch.toCommandResult(currentBranch: GitLocalBranch): String =
+    when (this) {
+      is GitRemoteBranch -> "remotes/${name}$COLUMN_SPLIT_CHARACTER"
+      is GitLocalBranch -> "heads/${name}$COLUMN_SPLIT_CHARACTER" + if (this == currentBranch) "*" else ""
+      else -> error("unknown branch type: $this")
+    }
 
   companion object {
     private val ORIGIN = GitRemote("origin", listOf("https://origin.com/some/repo"), listOf("https://origin.com/some/repo"), listOf(),

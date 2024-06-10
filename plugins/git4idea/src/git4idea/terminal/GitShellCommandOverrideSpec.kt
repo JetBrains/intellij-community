@@ -13,10 +13,12 @@ import org.jetbrains.plugins.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellArgumentContext
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
 
+internal const val COLUMN_SPLIT_CHARACTER = '\t'
+
 internal const val GET_REMOTES_COMMAND = "git --no-optional-locks remote -v"
-internal const val GET_LOCAL_BRANCHES_COMMAND = "git --no-optional-locks branch --no-color --sort=-committerdate"
-internal const val GET_REMOTE_BRANCHES_COMMAND = "git --no-optional-locks branch -r --no-color --sort=-committerdate"
-internal const val GET_ALL_BRANCHES_COMMAND = "git --no-optional-locks branch -a --no-color --sort=-committerdate"
+internal const val GET_ALL_BRANCHES_COMMAND = "git --no-optional-locks for-each-ref --no-color --sort=-committerdate --format=\"%(refname:strip=1)$COLUMN_SPLIT_CHARACTER%(HEAD)\""
+internal const val GET_LOCAL_BRANCHES_COMMAND = "$GET_ALL_BRANCHES_COMMAND \"refs/heads/**\""
+internal const val GET_REMOTE_BRANCHES_COMMAND = "$GET_ALL_BRANCHES_COMMAND \"refs/remotes/**\""
 
 internal val ShellRuntimeContext.repository: GitRepository?
   get() = GitUtil.getRepositoryManager(project)
@@ -58,10 +60,12 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
 
 private fun postProcessBranchesFromCommandLine(lines: List<String>, insertWithoutRemotes: Boolean = true): List<ShellCompletionSuggestion> =
   lines.map { line ->
-    val name = line.trim().removePrefix("+").removePrefix("*").trim()
+    val splits = line.split(COLUMN_SPLIT_CHARACTER)
+    val name = splits.firstOrNull()!!.removePrefix("heads/").trim()
+    val isCurrentBranch = splits.getOrNull(1) == "*"
 
     // Current branch
-    if (line.startsWith("*")) {
+    if (isCurrentBranch) {
       return@map ShellCompletionSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
     }
 
@@ -235,6 +239,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         suggestions(allBranchesGenerator)
         suggestions(remotesGenerator)
         isOptional = true
+        isVariadic = false
       }
       argument {
         displayName(GitTerminalBundle.message("rebase.arg2.name"))
