@@ -529,6 +529,7 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
   unifiedDiff.forEach(line => {
     const lineDiv = document.createElement("DIV");
     lineDiv.textContent = line.content;
+    lineDiv.style.whiteSpace = "pre"; // Ensure indentation is preserved
 
     const oldLineNumberSpan = document.createElement("span");
     oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
