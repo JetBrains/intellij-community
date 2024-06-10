@@ -216,7 +216,7 @@
       <!--        <option bundle="messages.KotlinBundle"-->
       <!--              optionId="hints.parameters.blacklisted"-->
       <!--              enabledByDefault="false"-->
-      <!--              nameKey="hints.settings.parameters.blacklisted"-->
+      <!--              nameKey="hints.settings.excluded.parameters"-->
       <!--              descriptionKey="inlay.kotlin.parameters.hints.blacklisted"/>-->
     </codeInsight.declarativeInlayProvider>
 
