@@ -25,7 +25,6 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   val project: Project get() = gradleFixture.project
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
   val projectPath: String get() = projectRoot.path
-  val gradleVersion: GradleVersion get() = gradleFixture.gradleVersion
 
   fun isGradleAtLeast(version: String): Boolean = GradleVersionUtil.isGradleAtLeast(gradleVersion, version)
   fun isGradleOlderThan(version: String): Boolean = GradleVersionUtil.isGradleOlderThan(gradleVersion, version)

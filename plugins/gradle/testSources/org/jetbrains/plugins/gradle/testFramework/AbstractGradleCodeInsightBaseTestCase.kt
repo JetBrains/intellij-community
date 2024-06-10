@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -13,24 +12,11 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.testFramework.junit5.TestDisposable
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.groovy.util.BaseTest
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.TestInfo
 
 abstract class AbstractGradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest {
-
-  @TestDisposable
-  protected lateinit var testRootDisposable: Disposable
-
-  protected lateinit var testInfo: TestInfo
-
-  @BeforeEach
-  fun init(testInfo: TestInfo) {
-    this.testInfo = testInfo
-  }
 
   private var _codeInsightFixture: JavaCodeInsightTestFixture? = null
   val codeInsightFixture: JavaCodeInsightTestFixture

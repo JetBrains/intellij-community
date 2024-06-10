@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -8,8 +9,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.getPsiFile
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getMethodMetadata
@@ -18,14 +19,25 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import org.jetbrains.kotlin.idea.test.TestFiles
 import org.jetbrains.plugins.gradle.testFramework.AbstractGradleCodeInsightBaseTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 import java.io.File
 import java.lang.reflect.Method
 
 abstract class AbstractGradleCodeInsightTest: AbstractGradleCodeInsightBaseTestCase() {
 
     protected open val filesBasedTest: Boolean = true
+
+    @TestDisposable
+    protected lateinit var testRootDisposable: Disposable
+
+    protected lateinit var testInfo: TestInfo
+
+    @BeforeEach
+    fun init(testInfo: TestInfo) {
+        this.testInfo = testInfo
+    }
 
     private var _testDataFiles: List<TestFile>? = null
     val testDataFiles: List<TestFile>
@@ -40,6 +52,17 @@ abstract class AbstractGradleCodeInsightTest: AbstractGradleCodeInsightBaseTestC
 
     val mainTestDataPsiFile: PsiFile
         get() = runReadAction { getFile(mainTestDataFile.path).getPsiFile(project) }
+
+    override fun setUp() {
+        assumeThatKotlinIsSupported(gradleVersion)
+
+        super.setUp()
+
+        loadTestDataFiles()
+        testDataFiles.forEach {
+            writeTextAndCommit(it.path, it.content)
+        }
+    }
 
     override fun tearDown() {
         runAll(
@@ -91,17 +114,6 @@ abstract class AbstractGradleCodeInsightTest: AbstractGradleCodeInsightBaseTestC
                 }
             }
         )
-    }
-
-    override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-        assumeThatKotlinIsSupported(gradleVersion)
-        super.test(gradleVersion, fixtureBuilder) {
-            loadTestDataFiles()
-            testDataFiles.forEach {
-                writeTextAndCommit(it.path, it.content)
-            }
-            test()
-        }
     }
 
     class TestFile internal constructor(val path: String, val content: String)
