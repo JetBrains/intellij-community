@@ -30,7 +30,7 @@ inline fun <reified T> classAsCoroutineName() = CoroutineName(T::class.java.name
 /**
  * Prefer creating a service to supply a parent scope
  */
-@ApiStatus.Obsolete
+@Deprecated("Prefer creating a service to supply a parent scope")
 @Suppress("FunctionName")
 fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
   return MainScope().also {
@@ -46,7 +46,7 @@ fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 /**
  * Prefer creating a service to supply a parent scope
  */
-@ApiStatus.Obsolete
+@Deprecated("Prefer creating a service to supply a parent scope")
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = CoroutineScope(context).also {
   Disposer.register(this) {
     it.cancel()
