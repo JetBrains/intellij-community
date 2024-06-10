@@ -43,6 +43,13 @@
                           bundleName="messages.IndexingBundle"
                           providerClass="com.intellij.util.indexing.memory.InMemoryStorageLayoutProvider"
                           version="0"/>
+    <!-- fake storage, saves nothing, for benchmarks/testing/debugging -->
+    <fileBasedIndexLayout id="fake-storage"
+                          priority="-1"
+                          presentableNameKey="ide.indexes.fake-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.storage.fake.FakeStorageLayoutProvider"
+                          version="0"/>
 
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
   </extensions>
