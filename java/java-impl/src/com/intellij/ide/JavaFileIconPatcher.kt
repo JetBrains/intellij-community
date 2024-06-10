@@ -1,50 +1,49 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide
 
-import javax.swing.*;
+import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.FileIndexUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiManager
+import com.intellij.psi.SyntheticElement
+import com.intellij.util.PlatformIcons
+import javax.swing.Icon
 
-
-public final class JavaFileIconPatcher implements FileIconPatcher {
-  @Override
-  public @NotNull Icon patchIcon(@NotNull Icon icon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
+private class JavaFileIconPatcher : FileIconPatcher {
+  override fun patchIcon(icon: Icon, file: VirtualFile, flags: Int, project: Project?): Icon {
     if (project == null) {
-      return icon;
+      return icon
     }
 
-    FileType fileType = file.getFileType();
-    if (fileType == JavaFileType.INSTANCE && !FileIndexUtil.isJavaSourceFile(project, file)) {
-      return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON;
+    if (file.fileType === JavaFileType.INSTANCE && !FileIndexUtil.isJavaSourceFile(project, file)) {
+      return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON
     }
 
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile instanceof PsiClassOwner && psiFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
-      PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
-      if (classes.length > 0) {
-        // prefer icon of the class named after file
-        String fileName = file.getNameWithoutExtension();
-        for (PsiClass aClass : classes) {
-          if (aClass instanceof SyntheticElement) {
-            return icon;
-          }
-          if (Comparing.strEqual(aClass.getName(), fileName)) {
-            return aClass.getIcon(flags);
-          }
-        }
-        return classes[classes.length - 1].getIcon(flags);
+    val psiFile = PsiManager.getInstance(project).findFile(file)
+    if (psiFile !is PsiClassOwner || psiFile.getViewProvider().baseLanguage !== JavaLanguage.INSTANCE) {
+      return icon
+    }
+
+    val classes = psiFile.classes
+    if (classes.isEmpty()) {
+      return icon
+    }
+
+    // prefer icon of the class named after file
+    val fileName = file.nameWithoutExtension
+    for (aClass in classes) {
+      if (aClass is SyntheticElement) {
+        return icon
+      }
+      if (aClass.name == fileName) {
+        return aClass.getIcon(flags)
       }
     }
-    return icon;
+    return classes.last().getIcon(flags)
   }
 }

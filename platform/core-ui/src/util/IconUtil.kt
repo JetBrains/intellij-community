@@ -556,8 +556,8 @@ object IconUtil {
 @Internal
 fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
   @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
-  val providerIcon = FileIconUtil.getIconFromProviders(file, flags, project)
-  var icon = providerIcon ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
+  var icon = FileIconUtil.getIconFromProviders(file, flags, project) ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
+
   // render without a locked icon patch since we are going to apply it later anyway
   icon = FileIconUtil.patchIconByIconPatchers(
     icon = icon,
@@ -565,6 +565,7 @@ fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon 
     flags = flags and Iconable.ICON_FLAG_READ_STATUS.inv(),
     project = project,
   )
+
   if (file.`is`(VFileProperty.SYMLINK)) {
     icon = PredefinedIconOverlayService.getInstanceOrNull()?.createSymlinkIcon(icon) ?: icon
   }
@@ -578,16 +579,17 @@ fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon 
 }
 
 private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {
-  var icon = TypePresentationService.getService().getIcon(vFile)
-  if (icon != null) {
-    return icon
+  TypePresentationService.getService().getIcon(vFile)?.let {
+    return it
   }
+
   val fileType = if (onlyFastChecks) FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.name) else vFile.fileType
   if (vFile.isDirectory && fileType !is DirectoryFileType) {
     return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON)
   }
-  icon = fileType.icon
-  return icon ?: IconUtil.getEmptyIcon(false)
+  else {
+    return fileType.icon ?: EmptyIcon.create(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class))
+  }
 }
 
 private class IconSizeWrapper(private val icon: Icon?, private val width: Int, private val height: Int) : Icon {

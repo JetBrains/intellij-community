@@ -36,7 +36,7 @@ object FileIconUtil {
   fun patchIconByIconPatchers(icon: Icon, file: VirtualFile, flags: Int, project: Project?): Icon {
     var patched = icon
     for (extension in FileIconPatcher.EP_NAME.filterableLazySequence()) {
-      patched = kotlin.runCatching {
+      patched = runCatching {
         extension.instance?.patchIcon(patched, file, flags, project)
       }.getOrLogException {
         if (it !is IndexNotReadyException) {
