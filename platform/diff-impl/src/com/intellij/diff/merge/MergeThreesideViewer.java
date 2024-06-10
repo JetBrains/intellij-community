@@ -48,7 +48,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -63,9 +62,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -92,6 +89,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.diff.merge.MergeImportUtil.getPsiFile;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
@@ -113,6 +111,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected boolean myInitialRediffFinished;
   protected boolean myContentModified;
   protected boolean myResolveImportConflicts;
+
+  private List<PsiFile> myPsiFiles = new ArrayList<>();
 
   private final Action myCancelResolveAction;
   private final Action myLeftResolveAction;
@@ -400,11 +400,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       IgnorePolicy ignorePolicy = myTextDiffProvider.getIgnorePolicy();
 
       List<DocumentContent> contents = myMergeRequest.getContents();
-
       MergeRange importRange = ReadAction.compute(() -> {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
         if (getTextSettings().isAutoResolveImportConflicts()) {
-          return MergeImportUtil.getImportMergeRange(myProject, myMergeRequest);
+          initPsiFiles();
+          return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
         }
         return null;
       });
@@ -452,6 +452,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     List<MergeLineFragment> fragments = manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2),
                                                            ignorePolicy.getComparisonPolicy(), indicator);
     return new MergeLineFragmentsWithImportMetadata(fragments);
+  }
+
+  private void initPsiFiles() {
+    if (myProject == null) return;
+    ArrayList<PsiFile> files = new ArrayList<>();
+    for (ThreeSide value : ThreeSide.values()) {
+      files.add(getPsiFile(value, myProject, myMergeRequest));
+    }
+    myPsiFiles = files;
   }
 
 
@@ -900,22 +909,19 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                   @NotNull List<? extends TextMergeChange> changes,
                                   @NotNull List<RangeMarker> newRanges) {
     try {
-      if (myProject == null || !getTextSettings().isAutoResolveImportConflicts()) {
+      List<PsiFile> files = myPsiFiles;
+      if (myProject == null ||
+          !getTextSettings().isAutoResolveImportConflicts() ||
+          files.size() != 3 ||
+          ContainerUtil.exists(files, file -> !file.isValid())) {
         return;
       }
-      Map<Side, PsiFile> filesCache = new HashMap<>();
       for (int i = 0; i < changes.size(); i++) {
         TextMergeChange change = changes.get(i);
         Side sourceSide = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
         ThreeSide sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         Document sourceDocument = getContent(sourceThreeSide).getDocument();
-        PsiFile psiFile = filesCache.computeIfAbsent(sourceSide, it -> {
-          VirtualFile file = FileDocumentManager.getInstance().getFile(sourceDocument);
-          return file == null ? null : PsiManager.getInstance(myProject).findFile(file);
-        });
-        if (psiFile == null) {
-          continue;
-        }
+        PsiFile psiFile = sourceSide.select(files.get(0), files.get(2));
         int startOffset = sourceDocument.getLineStartOffset(change.getStartLine(sourceThreeSide));
         int endOffset = sourceDocument.getLineEndOffset(change.getEndLine(sourceThreeSide) - 1);
         List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, startOffset, endOffset);

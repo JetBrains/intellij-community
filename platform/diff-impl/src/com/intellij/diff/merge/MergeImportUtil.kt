@@ -12,7 +12,6 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.ThreeSide
-import com.intellij.idea.ActionsBundle
 import com.intellij.lang.imports.ImportBlockRangeProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -64,12 +63,12 @@ class MergeImportUtil {
     }
 
     @JvmStatic
-    fun getImportMergeRange(project: Project?, mergeRequest: TextMergeRequest): MergeRange? {
+    fun getImportMergeRange(project: Project?, psiFiles: MutableList<PsiFile>): MergeRange? {
       if (project == null) return null
 
       val ranges = ArrayList<LineRange>()
       for (side in ThreeSide.entries) {
-        val psiFile = getPsiFile(side, project, mergeRequest) ?: return null
+        val psiFile = side.select(psiFiles) ?: return null
         val importRange = getImportLineRange(psiFile) ?: return null
         ranges.add(importRange)
       }
@@ -78,7 +77,8 @@ class MergeImportUtil {
                         ranges[2].start, ranges[2].end)
     }
 
-    private fun getPsiFile(side: ThreeSide, project: Project, mergeRequest: TextMergeRequest): PsiFile? {
+    @JvmStatic
+    fun getPsiFile(side: ThreeSide, project: Project, mergeRequest: TextMergeRequest): PsiFile? {
       val sourceDocument = side.select(mergeRequest.contents).document
       val file = FileDocumentManager.getInstance().getFile(sourceDocument)
       if (file == null) return null
