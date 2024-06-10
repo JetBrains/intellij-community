@@ -452,11 +452,6 @@ data class BuildOptions(
   var bundledRuntimePrefix: String? = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
-   * Used to produce distribution with a small number of bundled plugins.
-   */
-  var isMinimalBuild: Boolean = System.getProperty("intellij.build.minimal") == "true"
-
-  /**
    * Enables "fastdebug" runtime.
    */
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
