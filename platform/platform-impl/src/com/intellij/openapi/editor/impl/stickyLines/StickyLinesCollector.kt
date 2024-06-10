@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -25,20 +29,31 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class StickyLinesCollector(private val project: Project, private val document: Document) {
 
   companion object {
+    private val LOG = logger<StickyLinesCollector>()
+
     private val STICKY_LINES_MOD_STAMP_KEY: Key<Long> = Key.create("editor.sticky.lines.mod.stamp")
 
     fun isModStampChanged(psiFile: PsiFile): Boolean {
       val prevModStamp = psiFile.getUserData(STICKY_LINES_MOD_STAMP_KEY)
       val currModStamp = psiFile.modificationStamp
+      LOG.trace {
+        "file: ${psiFile.name}, modStampChanged: ${prevModStamp != currModStamp}, prev: $prevModStamp, curr: $currModStamp"
+      }
       return prevModStamp != currModStamp
     }
 
     fun updatesModStamp(psiFile: PsiFile) {
       psiFile.putUserData(STICKY_LINES_MOD_STAMP_KEY, psiFile.modificationStamp)
+      LOG.trace {
+        "psiFile: ${psiFile.name}, updateStamp: ${psiFile.modificationStamp}"
+      }
     }
 
     fun resetModStamp(psiFile: PsiFile) {
       psiFile.putUserData(STICKY_LINES_MOD_STAMP_KEY, null)
+      LOG.trace {
+        "psiFile: ${psiFile.name}, resetStamp"
+      }
     }
   }
 
@@ -48,8 +63,13 @@ class StickyLinesCollector(private val project: Project, private val document: D
     ThreadingAssertions.assertReadAccess()
     ThreadingAssertions.assertBackgroundThread()
 
-    PsiDocumentManager.getInstance(project).getCachedPsiFile(document)?.let { psiFile ->
+    val psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document)
+    if (psiFile != null) {
       resetModStamp(psiFile)
+    } else {
+      LOG.debug {
+        "file: ${fileName()}, forceCollect: failed"
+      }
     }
   }
 
@@ -74,6 +94,9 @@ class StickyLinesCollector(private val project: Project, private val document: D
         ))
       }
     }
+    LOG.debug {
+      "file: ${vFile.name}, collectedInfos: ${infos.size}"
+    }
     return infos
   }
 
@@ -89,6 +112,9 @@ class StickyLinesCollector(private val project: Project, private val document: D
     }
     for (toAdd: StickyLineInfo in linesToAdd) {
       stickyModel.addStickyLine(toAdd.textOffset, toAdd.endOffset, toAdd.debugText)
+    }
+    LOG.debug {
+      "file: ${fileName()}, appliedLines: ${lines.size}, added: ${linesToAdd.size}, outdated: ${outdatedLines.size}"
     }
     stickyModel.notifyListeners()
   }
@@ -107,6 +133,10 @@ class StickyLinesCollector(private val project: Project, private val document: D
       true
     }
     return outdatedLines
+  }
+
+  private fun fileName(): String {
+    return FileDocumentManager.getInstance().getFile(document)?.name ?: "UNKNOWN"
   }
 
   private fun debugText(element: PsiElement): String? {
