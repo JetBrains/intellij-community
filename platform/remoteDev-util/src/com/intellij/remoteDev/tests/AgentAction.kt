@@ -9,6 +9,6 @@ import kotlin.time.Duration
  */
 @ApiStatus.Internal
 class AgentAction(val timeout: Duration,
-                  val coroutineContext: CoroutineContext,
+                  val coroutineContextGetter: () -> CoroutineContext,
                   val requestFocusBeforeStart: Boolean? = null,
                   val action: suspend (AgentContext).(List<String>?) -> String?)

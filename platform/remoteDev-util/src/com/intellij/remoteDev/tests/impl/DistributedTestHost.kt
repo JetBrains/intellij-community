@@ -178,7 +178,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
               LOG.info("'$actionTitle': received action execution request")
 
-              return@setSuspendPreserveClientId withContext(action.coroutineContext) {
+              return@setSuspendPreserveClientId withContext(action.coroutineContextGetter.invoke()) {
                 if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(actionTitle)
                 }
