@@ -27,6 +27,10 @@ import java.util.StringJoiner;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * The FileStatusMap class represents a map that stores the status of files' analysis in a project.
+ * It is mostly used to keep track of dirty regions. See {@link FileStatus} for the whole data.
+ */
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
