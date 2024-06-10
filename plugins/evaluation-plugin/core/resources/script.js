@@ -1,24 +1,29 @@
 const favoriteFeatures = getFavoriteFeaturesFromCookie()
-isCompletionGolf = false
+let isCompletionGolf = false;
 
 const prefix = "ep@"
 const LC_KEYS = {
   delimiter: prefix + "delimiter"
 }
 
-function Diff() {}
-
-Diff.prototype = {
+class Diff {
   diff(oldString, newString, options = {}) {
-    let self = this;
+    let callback = options.callback;
+    if (typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
 
-    console.log("Old String:", oldString);
-    console.log("New String:", newString);
+    let self = this;
 
     function done(value) {
       value = self.postProcess(value, options);
-      console.log("Post Processed Value:", value);
-      return value;
+      if (callback) {
+        setTimeout(function() { callback(value); }, 0);
+        return true;
+      } else {
+        return value;
+      }
     }
 
     oldString = this.castInput(oldString, options);
@@ -27,20 +32,18 @@ Diff.prototype = {
     oldString = this.removeEmpty(this.tokenize(oldString, options));
     newString = this.removeEmpty(this.tokenize(newString, options));
 
-    console.log("Tokenized Old String:", oldString);
-    console.log("Tokenized New String:", newString);
-
     let newLen = newString.length, oldLen = oldString.length;
     let editLength = 1;
     let maxEditLength = newLen + oldLen;
+    if(options.maxEditLength != null) {
+      maxEditLength = Math.min(maxEditLength, options.maxEditLength);
+    }
     const maxExecutionTime = options.timeout ?? Infinity;
     const abortAfterTimestamp = Date.now() + maxExecutionTime;
 
     let bestPath = [{ oldPos: -1, lastComponent: undefined }];
 
     let newPos = this.extractCommon(bestPath[0], newString, oldString, 0, options);
-    console.log("Best Path Initial:", bestPath);
-
     if (bestPath[0].oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
       return done(buildValues(self, bestPath[0].lastComponent, newString, oldString, self.useLongestToken));
     }
@@ -48,9 +51,11 @@ Diff.prototype = {
     let minDiagonalToConsider = -Infinity, maxDiagonalToConsider = Infinity;
 
     function execEditLength() {
-      for (let diagonalPath = Math.max(minDiagonalToConsider, -editLength);
-           diagonalPath <= Math.min(maxDiagonalToConsider, editLength);
-           diagonalPath += 2) {
+      for (
+        let diagonalPath = Math.max(minDiagonalToConsider, -editLength);
+        diagonalPath <= Math.min(maxDiagonalToConsider, editLength);
+        diagonalPath += 2
+      ) {
         let basePath;
         let removePath = bestPath[diagonalPath - 1],
           addPath = bestPath[diagonalPath + 1];
@@ -94,57 +99,66 @@ Diff.prototype = {
       editLength++;
     }
 
-    while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
-      let ret = execEditLength();
-      if (ret) {
-        console.log("Exec Edit Length Result:", ret);
-        return ret;
+    if (callback) {
+      (function exec() {
+        setTimeout(function() {
+          if (editLength > maxEditLength || Date.now() > abortAfterTimestamp) {
+            return callback();
+          }
+
+          if (!execEditLength()) {
+            exec();
+          }
+        }, 0);
+      }());
+    } else {
+      while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
+        let ret = execEditLength();
+        if (ret) {
+          return ret;
+        }
       }
     }
-  },
+  }
 
   addToPath(path, added, removed, oldPosInc, options) {
     let last = path.lastComponent;
-    let result;
     if (last && !options.oneChangePerToken && last.added === added && last.removed === removed) {
-      result = {
+      return {
         oldPos: path.oldPos + oldPosInc,
-        lastComponent: { count: last.count + 1, added: added, removed: removed, previousComponent: last.previousComponent }
+        lastComponent: {count: last.count + 1, added: added, removed: removed, previousComponent: last.previousComponent }
       };
     } else {
-      result = {
+      return {
         oldPos: path.oldPos + oldPosInc,
-        lastComponent: { count: 1, added: added, removed: removed, previousComponent: last }
+        lastComponent: {count: 1, added: added, removed: removed, previousComponent: last }
       };
     }
-    console.log("Add To Path Result:", result);
-    return result;
-  },
+  }
 
   extractCommon(basePath, newString, oldString, diagonalPath, options) {
     let newLen = newString.length,
       oldLen = oldString.length,
       oldPos = basePath.oldPos,
       newPos = oldPos - diagonalPath,
-
       commonCount = 0;
+
     while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(oldString[oldPos + 1], newString[newPos + 1], options)) {
       newPos++;
       oldPos++;
       commonCount++;
       if (options.oneChangePerToken) {
-        basePath.lastComponent = { count: 1, previousComponent: basePath.lastComponent, added: false, removed: false };
+        basePath.lastComponent = {count: 1, previousComponent: basePath.lastComponent, added: false, removed: false};
       }
     }
 
     if (commonCount && !options.oneChangePerToken) {
-      basePath.lastComponent = { count: commonCount, previousComponent: basePath.lastComponent, added: false, removed: false };
+      basePath.lastComponent = {count: commonCount, previousComponent: basePath.lastComponent, added: false, removed: false};
     }
 
     basePath.oldPos = oldPos;
-    console.log("Extract Common:", basePath);
     return newPos;
-  },
+  }
 
   equals(left, right, options) {
     if (options.comparator) {
@@ -152,7 +166,7 @@ Diff.prototype = {
     } else {
       return left === right || (options.ignoreCase && left.toLowerCase() === right.toLowerCase());
     }
-  },
+  }
 
   removeEmpty(array) {
     let ret = [];
@@ -162,24 +176,24 @@ Diff.prototype = {
       }
     }
     return ret;
-  },
+  }
 
   castInput(value) {
     return value;
-  },
+  }
 
   tokenize(value) {
     return Array.from(value);
-  },
+  }
 
   join(chars) {
     return chars.join('');
-  },
+  }
 
   postProcess(changeObjects) {
     return changeObjects;
   }
-};
+}
 
 function buildValues(diff, lastComponent, newString, oldString, useLongestToken) {
   const components = [];
@@ -206,11 +220,13 @@ function buildValues(diff, lastComponent, newString, oldString, useLongestToken)
           let oldValue = oldString[oldPos + i];
           return oldValue.length > value.length ? oldValue : value;
         });
+
         component.value = diff.join(value);
       } else {
         component.value = diff.join(newString.slice(newPos, newPos + component.count));
       }
       newPos += component.count;
+
       if (!component.added) {
         oldPos += component.count;
       }
@@ -219,20 +235,131 @@ function buildValues(diff, lastComponent, newString, oldString, useLongestToken)
       oldPos += component.count;
     }
   }
+
   return components;
 }
 
-function diffArrays(oldArr, newArr, callback) {
-  const diffInstance = new Diff();
-  console.log("Old Array:", oldArr);
-  console.log("New Array:", newArr);
-  const result = diffInstance.diff(oldArr, newArr, { callback });
-  console.log("Diff Result:", result);
-  return result;
+const lineDiff = new Diff();
+
+lineDiff.tokenize = function(value, options) {
+  if (options.stripTrailingCr) {
+    value = value.replace(/\r\n/g, '\n');
+  }
+
+  let retLines = [],
+    linesAndNewlines = value.split(/(\n|\r\n)/);
+
+  if (!linesAndNewlines[linesAndNewlines.length - 1]) {
+    linesAndNewlines.pop();
+  }
+
+  for (let i = 0; i < linesAndNewlines.length; i++) {
+    let line = linesAndNewlines[i];
+
+    if (i % 2 && !options.newlineIsToken) {
+      retLines[retLines.length - 1] += line;
+    } else {
+      retLines.push(line);
+    }
+  }
+
+  return retLines;
+};
+
+lineDiff.equals = function(left, right, options) {
+  if (options.ignoreWhitespace) {
+    if (!options.newlineIsToken || !left.includes('\n')) {
+      left = left.trim();
+    }
+    if (!options.newlineIsToken || !right.includes('\n')) {
+      right = right.trim();
+    }
+  }
+  return Diff.prototype.equals.call(this, left, right, options);
+};
+
+function diffLines(oldStr, newStr, callback) {
+  return lineDiff.diff(oldStr, newStr, callback);
 }
 
+function diffTrimmedLines(oldStr, newStr, callback) {
+  let options = generateOptions(callback, {ignoreWhitespace: true});
+  return lineDiff.diff(oldStr, newStr, options);
+}
 
+function generateOptions(options, defaults) {
+  if (typeof options === 'function') {
+    defaults.callback = options;
+  } else if (options) {
+    for (let name in options) {
+      if (options.hasOwnProperty(name)) {
+        defaults[name] = options[name];
+      }
+    }
+  }
+  return defaults;
+}
 
+function myDiff(oldCode, newCode) {
+  const changes = diffLines(oldCode || "", newCode);
+
+  let oldIndex = -1;
+  return changes.map(({ value, count, removed, added }) => {
+    const lines = value.split(/\r\n|\r|\n/);
+    const lastLine = lines.pop();
+    if (lastLine) {
+      lines.push(lastLine);
+    }
+    const result = {
+      oldIndex,
+      lines,
+      count,
+      removed,
+      added
+    };
+    if (!added) {
+      oldIndex += count || 0;
+    }
+    return result;
+  });
+}
+
+function unifiedSlideDiff(prevCode, currCode, slideIndex) {
+  console.log("prevCode:")
+  console.log(prevCode)
+  console.log("currCode:")
+  console.log(currCode)
+
+  const changes = myDiff(prevCode, currCode);
+  const unifiedDiff = [];
+
+  changes.forEach(change => {
+    const { lines, added, removed } = change;
+    lines.forEach(line => {
+      if (added) {
+        unifiedDiff.push({
+          content: `+ ${line}`,
+          type: "added",
+          slideIndex
+        });
+      } else if (removed) {
+        unifiedDiff.push({
+          content: `- ${line}`,
+          type: "removed",
+          slideIndex
+        });
+      } else {
+        unifiedDiff.push({
+          content: `  ${line}`,
+          type: "unchanged",
+          slideIndex
+        });
+      }
+    });
+  });
+
+  return unifiedDiff;
+}
 
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
@@ -374,90 +501,30 @@ function updatePopup(sessionDiv) {
   sessionDiv.appendChild(popup)
 }
 
-// Function to add diff view
+// Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
   const diffDiv = document.createElement("DIV");
   diffDiv.setAttribute("class", "diffView");
 
   const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
-  console.log("Original Text:", originalText);
-  console.log("Suggestions Text:", suggestionsText);
 
-  const diffContent = createUnifiedDiffView(originalText, suggestionsText);
+  const unifiedDiff = unifiedSlideDiff(originalText, suggestionsText, 1);
 
-  diffDiv.innerHTML = diffContent;
-  popup.appendChild(diffDiv);
-}
-
-function escapeHtml(str) {
-  if (!str) {
-    return '';
-  }
-  console.log("Escaping string:", str);
-  const escapedStr = str.replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-  console.log("Escaped string:", escapedStr);
-  return escapedStr;
-}
-
-
-function createUnifiedDiffView(originalText, modifiedText) {
-  const originalLines = originalText.split('\n');
-  const modifiedLines = modifiedText.split('\n');
-  const diff = diffArrays(originalLines, modifiedLines);
-
-  console.log("Generated Diff:", diff);
-
-  return renderDiff(diff);
-}
-
-function renderDiff(diff) {
-  let html = '<div class="diff-view">';
-
-  diff.forEach((chunk, index) => {
-    if (index === 0 || (diff[index - 1].type === 'context' && chunk.type !== 'context')) {
-      html += `<div class="diff-chunk-header">@@ -${chunk.oldLine || 0} +${chunk.newLine || 0} @@</div>`;
-    }
-
-    let lineClass = 'diff-line ';
-    if (chunk.type === 'added') {
-      lineClass += 'added';
-    } else if (chunk.type === 'removed') {
-      lineClass += 'removed';
+  unifiedDiff.forEach(line => {
+    const lineDiv = document.createElement("DIV");
+    lineDiv.textContent = line.content;
+    if (line.type === "added") {
+      lineDiv.style.color = "green";
+    } else if (line.type === "removed") {
+      lineDiv.style.color = "red";
     } else {
-      lineClass += 'context';
+      lineDiv.style.color = "black";
     }
-
-    let oldLineClass = chunk.removed ? 'removed-line' : 'line-number';
-    let newLineClass = chunk.added ? 'added-line' : 'line-number';
-
-    // Ensure chunk.value is a string before calling escapeHtml
-    let chunkValue = chunk.value ? escapeHtml(chunk.value) : '';
-    console.log("Chunk value before escaping:", chunk.value);
-    console.log("Chunk value after escaping:", chunkValue);
-
-    html += `<div class="${lineClass}">`;
-    html += `<span class="diff-line-number ${oldLineClass}">${chunk.oldLine || '&nbsp;'}</span>`;
-    html += `<span class="diff-line-number ${newLineClass}">${chunk.newLine || '&nbsp;'}</span>`;
-    html += `<span class="diff-line-content">${chunkValue}</span>`;
-    html += '</div>';
+    diffDiv.appendChild(lineDiv);
   });
 
-  html += '</div>';
-  return html;
+  popup.appendChild(diffDiv);
 }
-
-// Usage example
-document.addEventListener("DOMContentLoaded", function () {
-  const originalText = "Your original text here...";
-  const suggestionsText = "Your suggestions text here...";
-  const diffContainer = document.getElementById("diff-container");
-  const diffContent = createUnifiedDiffView(originalText, suggestionsText);
-  diffContainer.innerHTML = diffContent;
-});
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
