@@ -49,6 +49,10 @@ class OriginalModuleRepositoryImpl(private val context: CompilationContext) : Or
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
         return context.findFileInModuleSources(context.findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
       }
+
+      override fun toString(): String {
+        return "source file based resolver for '${context.paths.projectHome}' project"
+      }
     }
     return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString,
                                                                           resolver)

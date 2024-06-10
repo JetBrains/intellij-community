@@ -33,7 +33,11 @@ interface ResourceFileResolver {
       return object : ResourceFileResolver {
         override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
           return moduleRepository.getModule(moduleId).readFile(relativePath)
-        }  
+        }
+
+        override fun toString(): String {
+          return "default resolver"
+        }
       }
     } 
   }

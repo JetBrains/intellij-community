@@ -67,6 +67,10 @@ private fun loadProductModules(moduleRepository: RuntimeModuleRepository, projec
     override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
       return resourceFileFinder.findResourceFile(moduleId.stringId, relativePath)?.inputStream()
     }
+
+    override fun toString(): String {
+      return "source file based resolver for '$projectHome' project"
+    }
   }
   val productModulesPath = "META-INF/$rootModuleName/product-modules.xml"
   val productModulesXmlStream = resourceFileResolver.readResourceFile(RuntimeModuleId.module(rootModuleName), productModulesPath)
