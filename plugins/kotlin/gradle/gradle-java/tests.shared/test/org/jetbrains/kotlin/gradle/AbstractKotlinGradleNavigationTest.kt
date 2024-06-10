@@ -104,6 +104,16 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 withKotlinJvmPlugin()
                 withMavenCentral()
             }
+            withFile(
+                "gradle/libs.versions.toml",
+                /* language=TOML */
+                """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
+                [versions]
+                test_library-version = "1.0"
+                """.trimIndent()
+            )
             withDirectory("src/main/kotlin")
         }
     }

@@ -3,39 +3,56 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.versionCatalog
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.gradle.AbstractGradleFullSyncCodeInsightTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
+import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
+import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.TestMetadata
-import org.junit.runner.RunWith
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.params.ParameterizedTest
 
 /**
  * @see org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinGradleVersionCatalogGotoDeclarationHandler
  */
+@UseK2PluginMode
+@GradleProjectTestApplication
+@AssertKotlinPluginMode
 @TestRoot("gradle/gradle-java/tests.k2")
-@RunWith(JUnit3RunnerWithInners::class)
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/versionCatalog/navigation")
-class KotlinGradleVersionCatalogNavigationTest : AbstractGradleFullSyncCodeInsightTest() {
+class KotlinGradleVersionCatalogNavigationTest : AbstractGradleCodeInsightTest() {
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("fromVersionUsageToItsDeclarationInToml.test")
-    fun testVersionCatalogFromVersionUsageToItsDeclarationInToml() {
-        verifyNavigationFromCaretToExpected()
+    fun testVersionCatalogFromVersionUsageToItsDeclarationInToml(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("fromLibraryUsageToItsDeclarationInToml.test")
-    fun testVersionCatalogFromLibraryUsageToItsDeclarationInToml() {
-        verifyNavigationFromCaretToExpected()
+    fun testVersionCatalogFromLibraryUsageToItsDeclarationInToml(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("fromLibraryUsageWithGetToItsDeclarationInToml.test")
-    fun testVersionCatalogFromLibraryUsageWithGetToItsDeclarationInToml() {
-        verifyNavigationFromCaretToExpected()
+    fun testVersionCatalogFromLibraryUsageWithGetToItsDeclarationInToml(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
     }
 
-    private fun verifyNavigationFromCaretToExpected() {
-        fixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
-        val text = document.text
-        assertTrue("Actual text:\n\n$text", text.startsWith("# EXPECTED"))
+    private fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
+        test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
+            codeInsightFixture.configureFromExistingVirtualFile(mainTestDataPsiFile.virtualFile)
+            fixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
+            val text = document.text
+            assertTrue(text.startsWith("# EXPECTED"), "Actual text:\n\n$text")
+        }
     }
 }

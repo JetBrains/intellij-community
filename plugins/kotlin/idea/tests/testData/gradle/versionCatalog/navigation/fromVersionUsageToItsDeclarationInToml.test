@@ -1,7 +1,7 @@
 // FILE: build.gradle.kts
-val myVersion = libs.versions.aaa.b<caret>bb.ccc
+val myVersion = libs.versions.test.l<caret>ibrary.version
 
 // FILE: gradle/libs.versions.toml
 # EXPECTED
 [versions]
-aaa_bbb-ccc = "1.0.5"
+test_library-version = "1.0.5"

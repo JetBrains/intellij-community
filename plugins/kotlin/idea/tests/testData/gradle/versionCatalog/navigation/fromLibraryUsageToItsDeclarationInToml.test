@@ -6,10 +6,10 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    testImplementation(libs.aaa.b<caret>bb.ccc)
+    testImplementation(libs.some.t<caret>est.library)
 }
 
 // FILE: gradle/libs.versions.toml
 # EXPECTED
 [libraries]
-aaa_bbb-ccc = { module = "org.junit.jupiter:junit-jupiter"}
+some_test-library = { module = "org.junit.jupiter:junit-jupiter"}

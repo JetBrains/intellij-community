@@ -1,9 +1,9 @@
 // FILE: gradle/libs.versions.toml
 [libraries]
-aaa_bb<caret>b-ccc = { module = "org.junit.jupiter:junit-jupiter"}
+some_te<caret>st-library = { module = "org.junit.jupiter:junit-jupiter"}
 
 [bundles]
-mybundle = ["aaa_bbb-ccc"]
+mybundle = ["some_test-library"]
 
 // FILE: build.gradle.kts
 plugins {
@@ -13,5 +13,5 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    testImplementation(libs.aaa.bbb.ccc)
+    testImplementation(libs.some.test.library)
 }
