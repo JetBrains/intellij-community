@@ -1286,9 +1286,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       String description = super.getAccessibleDescription();
       if (description == null && StringUtil.isEmpty(getText())) {
         //noinspection HardCodedStringLiteral
-        String emptyText = getEditor().getPlaceholder().toString();
-        if (!emptyText.isEmpty()) {
-          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        CharSequence emptyText = getEditor().getPlaceholder();
+        if (emptyText != null && !emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText.toString());
         }
       }
       return description;
