@@ -8,12 +8,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.text.findTextRange
 import org.jetbrains.idea.devkit.util.PsiUtil
 
-/**
- * @see [com.intellij.ideaProjectStructure.fast.KotlinModuleConsistencyTest].
- */
+private val ModulePattern = """(intellij|kotlin|fleet|android)(.[-\w]+)+""".toRegex()
+
 internal class ModulePathFilterProvider : ConsoleFilterProvider {
 
   init {
@@ -36,32 +34,33 @@ internal class ModulePathFilterProvider : ConsoleFilterProvider {
       line: String,
       entireLength: Int,
     ): Filter.Result? {
+      val matchResult = ModulePattern.findAll(line)
       val textStartOffset = entireLength - line.length
-
       val moduleManager = ModuleManager.getInstance(project)
-      val items = line.splitToSequence("->")
-        .map { it.trim('\n', ' ', '\'') }
-        .mapNotNull { moduleManager.findModuleByName(it) }
-        .mapNotNull { module ->
-          val textRange = line.findTextRange(module.name)
-                          ?: return@mapNotNull null
 
-          val moduleFile = module.moduleFile
-                           ?: return@mapNotNull null
+      val items = matchResult.mapNotNull { resultItem ->
+        val moduleName = resultItem.value
 
-          Filter.ResultItem(
-            /* highlightStartOffset = */ textStartOffset + textRange.startOffset,
-            /* highlightEndOffset = */ textStartOffset + textRange.endOffset,
-            /* hyperlinkInfo = */
-            OpenFileHyperlinkInfo(
-              /* project = */ project,
-              /* file = */ moduleFile,
-              /* documentLine = */ 0,
-              /* documentColumn = */ 0,
-              /* isUseBrowser = */ false,
-            ),
-          )
-        }.toList()
+        val module = moduleManager.findModuleByName(moduleName)
+                     ?: return@mapNotNull null
+
+        val moduleFile = module.moduleFile
+                         ?: return@mapNotNull null
+
+        val textRange = resultItem.range
+        Filter.ResultItem(
+          /* highlightStartOffset = */ textStartOffset + textRange.first,
+          /* highlightEndOffset = */ textStartOffset + textRange.last + 1,
+          /* hyperlinkInfo = */
+          OpenFileHyperlinkInfo(
+            /* project = */ project,
+            /* file = */ moduleFile,
+            /* documentLine = */ 0,
+            /* documentColumn = */ 0,
+            /* isUseBrowser = */ false,
+          ),
+        )
+      }.toList()
 
       return if (items.isNotEmpty())
         Filter.Result(items)
