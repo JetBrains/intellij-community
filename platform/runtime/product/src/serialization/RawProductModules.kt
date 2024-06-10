@@ -29,7 +29,7 @@ interface ResourceFileResolver {
      * Returns the default variant of [ResourceFileResolver] which load files from module classes roots specified in [moduleRepository]. 
      */
     @JvmStatic
-    fun default(moduleRepository: RuntimeModuleRepository): ResourceFileResolver {
+    fun createDefault(moduleRepository: RuntimeModuleRepository): ResourceFileResolver {
       return object : ResourceFileResolver {
         override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
           return moduleRepository.getModule(moduleId).readFile(relativePath)
