@@ -144,10 +144,10 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertTrue(text.startsWith("""
-                                 Run 'Main.main()'
-                                 Debug 'Main.main()'
-                                 Run 'Main.main()' with Coverage"""));
+    assertTrue(text, text.startsWith("""
+                                       Run 'Main.main()'
+                                       Debug 'Main.main()'
+                                       Run 'Main.main()' with Coverage"""));
   }
 
   public void testTooltipWithUnderscores() {
@@ -161,10 +161,10 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertTrue(text.startsWith("""
-                                 Run 'Main_class_test.main()'
-                                 Debug 'Main_class_test.main()'
-                                 Run 'Main_class_test.main()' with Coverage"""));
+    assertTrue(text, text.startsWith("""
+                                       Run 'Main_class_test.main()'
+                                       Debug 'Main_class_test.main()'
+                                       Run 'Main_class_test.main()' with Coverage"""));
   }
 
   public void testEditConfigurationAction() {
@@ -217,9 +217,9 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertTrue(text.startsWith("""
-                                 Run 'Main.main()'
-                                 Debug 'Main.main()'
-                                 Run 'Main.main()' with Coverage"""));
+    assertTrue(text, text.startsWith("""
+                                       Run 'Main.main()'
+                                       Debug 'Main.main()'
+                                       Run 'Main.main()' with Coverage"""));
   }
 }
