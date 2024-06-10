@@ -113,7 +113,7 @@ object ChangeTypeQuickFixFactories {
         val property = this as? KtProperty
         val returnTypes = buildList {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
-                (property?.let { it.getPropertyInitializerType() } ?: returnExpr.getKtType())?.let { getActualType(it) }
+                (property?.getPropertyInitializerType() ?: returnExpr.getKtType())?.let { getActualType(it) }
             })
             if (!candidateType.isUnit) {
                 add(candidateType)
