@@ -12,6 +12,9 @@ import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.idea.AppExitCodes;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ConfigBackup;
+import com.intellij.openapi.application.CustomConfigMigrationOption;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -124,11 +127,17 @@ public final class StartupErrorReporter {
     catch (Throwable ignore) { }
 
     try {
-      var options = new String[]{BootstrapBundle.message("bootstrap.error.option.close"), BootstrapBundle.message("bootstrap.error.option.support"), BootstrapBundle.message("bootstrap.error.option.report")};
+      var options = new String[]{
+        BootstrapBundle.message("bootstrap.error.option.close"),
+        BootstrapBundle.message("bootstrap.error.option.reset"),
+        BootstrapBundle.message("bootstrap.error.option.report"),
+        BootstrapBundle.message("bootstrap.error.option.support")
+      };
       var choice = JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
       switch (choice) {
-        case 1 -> supportCenter();
+        case 1 -> cleanStart();
         case 2 -> reportProblem(title, message);
+        case 3 -> supportCenter();
       }
     }
     catch (Throwable t) {
@@ -158,6 +167,18 @@ public final class StartupErrorReporter {
     catch (Throwable t) {
       showBrowserError(t);
     }
+  }
+
+  private static void cleanStart() {
+    try {
+      var backupPath = ConfigBackup.Companion.getNextBackupPath(PathManager.getConfigDir());
+      CustomConfigMigrationOption.StartWithCleanConfig.INSTANCE.writeConfigMarkerFile();
+      var message = BootstrapBundle.message("bootstrap.error.message.reset", backupPath);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.INFORMATION_MESSAGE);
+    }
+    catch (Throwable t) {
+      var message = BootstrapBundle.message("bootstrap.error.message.reset.failed", t);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);    }
   }
 
   private static void showBrowserError(Throwable t) {

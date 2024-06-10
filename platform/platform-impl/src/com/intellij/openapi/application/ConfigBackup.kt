@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
@@ -81,6 +81,7 @@ class ConfigBackup(private val configDir: Path) {
     private val LOG = logger<ConfigBackup>()
     private const val DATE_FORMAT = "yyyy-MM-dd-HH-mm"
 
+    @JvmOverloads
     fun getNextBackupPath(configDir: Path, currentDate: LocalDateTime = LocalDateTime.now()): Path {
       val format = DateTimeFormatter.ofPattern(DATE_FORMAT)
       val date = currentDate.format(format)
