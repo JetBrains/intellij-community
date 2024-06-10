@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * {@code UIController} contains methods for filling inspection widget popup and
  * reacting to changes in the popup.
- * Created lazily only when needed and once for every {@code AnalyzerStatus} instance.
+ * Created lazily only when needed and once for every {@link AnalyzerStatus} instance.
  */
 @ApiStatus.Internal
 public interface UIController {
