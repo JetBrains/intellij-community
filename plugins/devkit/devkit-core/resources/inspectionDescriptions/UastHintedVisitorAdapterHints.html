@@ -13,8 +13,6 @@ Reports missing or redundant hints in <code>UastHintedVisitorAdapter</code> crea
 
 <h3>Examples</h3>
 
-<h4>Kotlin</h4>
-
 <pre><code lang="kotlin">
 return UastHintedVisitorAdapter.create(
   language,
@@ -49,45 +47,6 @@ UastHintedVisitorAdapter.create(
     UDoWhileExpression::class.java // Bad: visiting UDoWhileExpression is not implemented
   )
 )
-</code></pre>
-
-<h4>Java</h4>
-
-<pre><code lang="kotlin">
-UastHintedVisitorAdapter.create(
-  language,
-  new AbstractUastNonRecursiveVisitor() {
-    @Override
-    public boolean visitForExpression(UForExpression node) {
-      inspectLoopExpression();
-      return true;
-    }
-    @Override
-    public boolean visitDoWhileExpression(UDoWhileExpression node) { // unused at runtime
-      inspectLoopExpression();
-      return true;
-    }
-    //...
-  },
-  new Class[]{UForExpression.class} // Bad: missing UDoWhileExpression.class
-);
-</code></pre>
-<pre><code lang="kotlin">
-UastHintedVisitorAdapter.create(
-  language,
-  new AbstractUastNonRecursiveVisitor() {
-    @Override
-    public boolean visitForExpression(UForExpression node) {
-      inspectLoopExpression();
-      return true;
-    }
-    //...
-  },
-  new Class[]{
-    UForExpression.class,
-    UDoWhileExpression.class // Bad: visiting UDoWhileExpression is not implemented
-  }
-);
 </code></pre>
 
 <!-- tooltip end -->
