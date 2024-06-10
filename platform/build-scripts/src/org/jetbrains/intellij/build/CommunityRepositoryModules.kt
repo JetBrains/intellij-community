@@ -413,6 +413,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
+      spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.wear-pairing", "android.jar")
       spec.withModule("intellij.android.wear-whs", "android.jar")
       spec.withModule("intellij.android.wizard.model", "android.jar")
