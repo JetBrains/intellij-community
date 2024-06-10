@@ -76,8 +76,8 @@
                  restartRequired="false"/>
 
     <registryKey key="kotlin.k2.scripting.enabled"
-                 description="Enable scripting support in the Kotlin K2 plugin"
-                 defaultValue="false"
+                 description="Enable scripting support in the K2 mode"
+                 defaultValue="true"
                  restartRequired="true"/>
 
     <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
