@@ -38,12 +38,54 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
       """.trimIndent())
   }
 
+  fun `test option doesn't affect code blocks when SPACES_WITHIN_BRACES is enabled`() {
+    settings.SPACE_WITHIN_BRACES = true
+    settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true
+    val expected =
+    """
+    class A {
+        static class B {}
+    
+        void emptyMethod() {}
 
+        void simpleMethod() {int x = 10;}
+  
+        void complexMethod() {
+          try {} catch (IOException e) {}
+          try {int x = 10;} catch (IOException e) {int y = 20;}
+          
+          Runnable r = () -> {};
+          Runnable v = () -> {int x = 10;};
+        }
+    }
+    """.trimIndent()
+    val actual =
+    """
+    class A {
+        static class B { }
+    
+        void emptyMethod() { }
 
-  fun `test should not add spaces inside braces when block body is empty`() {
+        void simpleMethod() { int x = 10; }
+  
+        void complexMethod() {
+            try { } catch (IOException e) { }
+            try { int x = 10; } catch (IOException e) { int y = 20; }
+
+            Runnable r = () -> { };
+            Runnable v = () -> { int x = 10; };
+        }
+    }
+    """.trimIndent()
+
+    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
+    doTextTest(expected, actual)
     javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
-    doTextTest(
-      """
+    doTextTest(expected, actual)
+  }
+
+  fun `test option doesn't affect code blocks with empty body`() {
+    val expected = """
       class A {
       public void simpleMethod() {}
       
@@ -53,8 +95,8 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
          Runnable r = () -> {};
       }
       }
-      """.trimIndent(),
-      """
+      """.trimIndent()
+    val actual = """
       class A {
           public void simpleMethod() {}
       
@@ -64,7 +106,11 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
               Runnable r = () -> {};
           }
       }
-      """.trimIndent())
+      """.trimIndent()
+    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
+    doTextTest(expected, actual)
+    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
+    doTextTest(expected, actual)
   }
 
   fun `test should not add spaces inside braces when block body is present and option is disabled`() {
@@ -95,7 +141,7 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
   }
 
   fun `test non empty simple class is always formatted to a new line`() {
-    settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true
     doTextTest(
       """
       class A {
