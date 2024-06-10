@@ -45,6 +45,16 @@ open class FileComparisonFailedError @JvmOverloads constructor(
     return getFileText(expected)
   }
 
+  private class PresentableFileInfo(
+    path: String,
+    contents: ByteArray
+  ) : FileInfo(path, contents) {
+
+    override fun toString(): String {
+      return getContentsAsString(CONTENT_CHARSET)
+    }
+  }
+
   companion object {
 
     private val CONTENT_CHARSET = StandardCharsets.UTF_8
@@ -52,7 +62,7 @@ open class FileComparisonFailedError @JvmOverloads constructor(
     private fun createFileInfo(text: String, path: String?): ValueWrapper {
       val contents = text.toByteArray(CONTENT_CHARSET)
       if (path != null) {
-        val fileInfo = FileInfo(path, contents)
+        val fileInfo = PresentableFileInfo(path, contents)
         return ValueWrapper.create(fileInfo)
       }
       return ValueWrapper.create(text)
