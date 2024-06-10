@@ -643,6 +643,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
     });
 
+    if (ExperimentalUI.isNewUI()) {
+      SwingUtilities.invokeLater(() -> {
+        JBColor bg = JBColor.namedColor("Editor.SearchField.background", JBColor.background());
+        innerTextComponent.setBackground(bg);
+        outerComponent.setBackground(bg);
+        setBackground(bg);
+      });
+    }
+
     myCloseAction.registerOn(outerComponent);
     return true;
   }
