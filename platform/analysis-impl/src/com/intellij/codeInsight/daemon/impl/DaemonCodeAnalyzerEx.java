@@ -84,8 +84,11 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
+
   public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
+
   abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
+
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
     getFileStatusMap().markFileScopeDirty(document, new TextRange(0, document.getTextLength()), document.getTextLength(), reason);
   }
@@ -96,6 +99,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   }
 
   abstract boolean cutOperationJustHappened();
+
   abstract boolean isEscapeJustPressed();
 
   abstract protected void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
