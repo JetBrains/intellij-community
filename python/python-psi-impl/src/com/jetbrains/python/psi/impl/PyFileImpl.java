@@ -28,7 +28,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
-import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -701,7 +700,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public String extractDeprecationMessage() {
     if (canHaveDeprecationMessage(getText())) {
-      return PyAstFunction.extractDeprecationMessage(getStatements());
+      return PyFunction.extractDeprecationMessage(getStatements());
     }
     else {
       return null;
