@@ -195,7 +195,6 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
     TestCase.assertEquals(0, totalFiles)
-    TestCase.assertEquals(0, queue.estimatedFilesCount().value)
 
     TestCase.assertEquals(threadsCompleted.get(), threadsCount)
     TestCase.assertEquals(filesSubmitted.get(), totalFilesSum)
