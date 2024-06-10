@@ -8,7 +8,10 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,8 +29,9 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -1694,6 +1698,30 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testSimpleWithNullableDirectlyBeforeType() throws Exception {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
+    try {
+      doTest();
+    }
+    finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
+  }
+
+  public void testSimpleWithNullableDirectlyBeforeKeyword() throws Exception {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
+    try {
+      doTest();
+    }
+    finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
@@ -1900,5 +1928,15 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
 
     return true;
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
+      @Override
+      protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+        DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
+      }
+    };
   }
 }

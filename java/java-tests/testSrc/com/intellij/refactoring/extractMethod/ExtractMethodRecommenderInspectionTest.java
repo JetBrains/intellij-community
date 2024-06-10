@@ -5,9 +5,15 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.pom.java.LanguageLevel.JDK_21_PREVIEW;
 
 public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testExtractMethodRecommender() {
@@ -17,7 +23,7 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
-  
+
   public void testImplicitClass() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
     myFixture.enableInspections(inspection);
@@ -49,9 +55,9 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
   }
 
   /**
-   *  Based on {@link ExtractMethodRecommenderInspectionTest#testExtractMethodRecommender()}
-   *  when the suggestion is placed on comments, even though this place is not really convenient.
-   *  This method checks that quickfix works even for this place
+   * Based on {@link ExtractMethodRecommenderInspectionTest#testExtractMethodRecommender()}
+   * when the suggestion is placed on comments, even though this place is not really convenient.
+   * This method checks that quickfix works even for this place
    */
   public void testCallExtractFirstNotDeclaration() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
@@ -67,11 +73,17 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return new ProjectDescriptor(JDK_21_PREVIEW){
+      @Override
+      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
+        addJetBrainsAnnotationsWithTypeUse(model);
+      }
+    };
   }
 
   @Override
   public String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/extractMethodRecommender";
-  } 
+  }
 }

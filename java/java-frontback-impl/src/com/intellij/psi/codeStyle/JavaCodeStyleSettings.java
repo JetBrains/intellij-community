@@ -52,6 +52,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public String VISIBILITY = "public";
 
   public boolean USE_EXTERNAL_ANNOTATIONS;
+  public boolean GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
   public boolean REPEAT_SYNCHRONIZED = true;

@@ -34,6 +34,7 @@ import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleT
 
 public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
   private static final String JETBRAINS_ANNOTATIONS_COORDINATES = "org.jetbrains:annotations-java5:24.0.0";
+  private static final String JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8 = "org.jetbrains:annotations:24.0.0";
   private @Nullable Supplier<? extends Sdk> customSdk;
   private final List<RequiredLibrary> mavenLibraries = new ArrayList<>();
 
@@ -84,6 +85,10 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
   
   public DefaultLightProjectDescriptor withJetBrainsAnnotations() {
     return withRepositoryLibrary(JETBRAINS_ANNOTATIONS_COORDINATES);
+  }
+
+  public static void addJetBrainsAnnotationsWithTypeUse(ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8);
   }
 
   /**

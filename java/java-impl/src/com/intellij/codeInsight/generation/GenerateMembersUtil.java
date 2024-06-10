@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -21,15 +22,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.ModifierListUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -339,11 +343,57 @@ public final class GenerateMembersUtil {
         }
       }
       substituteThrows(factory, resultMethod.getThrowsList(), collisionResolvedSubstitutor, sourceMethod, thrownTypes);
+      sortModifiers(resultMethod, sourceMethod);
       return resultMethod;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
       return sourceMethod;
+    }
+  }
+
+  /**
+   * Sorts the modifiers of the source method based on the order of the modifiers in the target method.
+   *
+   * @param targetMethod The target method whose modifier order will be used.
+   * @param sourceMethod The source method whose modifiers will be sorted.
+   */
+  public static void sortModifiers(@NotNull PsiMethod targetMethod, @Nullable PsiMethod sourceMethod) {
+    if (targetMethod instanceof LightMethod ||
+        !targetMethod.isWritable() ||
+        targetMethod.getLanguage() != JavaLanguage.INSTANCE) {
+      return;
+    }
+    PsiModifierList newList = targetMethod.getModifierList();
+    Map<@NotNull String, @NotNull PsiAnnotation> oldAnnotations = new HashMap<>();
+    if (sourceMethod != null) {
+      PsiModifierList oldList = sourceMethod.getModifierList();
+      for (@NotNull PsiElement child : oldList.getChildren()) {
+        if (child instanceof PsiAnnotation psiAnnotation) {
+          String annotationQualifiedName = psiAnnotation.getQualifiedName();
+          if (annotationQualifiedName != null) {
+            oldAnnotations.put(annotationQualifiedName, psiAnnotation);
+          }
+        }
+      }
+    }
+    Comparator<PsiElement> comparator = (o1, o2) -> {
+      if (!(o1 instanceof PsiAnnotation a1) || !(o2 instanceof PsiAnnotation a2)) {
+        return 0;
+      }
+      String q1 = a1.getQualifiedName();
+      String q2 = a2.getQualifiedName();
+      if (q1 == null || q2 == null) return 0;
+      PsiAnnotation oldA1 = oldAnnotations.get(q1);
+      PsiAnnotation oldA2 = oldAnnotations.get(q2);
+      if (oldA1 != null && oldA2 != null) {
+        return oldA1.getTextRange().getStartOffset() - oldA2.getTextRange().getStartOffset();
+      }
+      return 0;
+    };
+    PsiModifierList newList2 = ModifierListUtil.createSortedModifierList(newList, comparator, false);
+    if (newList2 != null) {
+      new CommentTracker().replace(newList, newList2);
     }
   }
 
@@ -478,7 +528,7 @@ public final class GenerateMembersUtil {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
       PsiElement declarationScope = parameter.getDeclarationScope();
-      PsiType substituted = declarationScope instanceof PsiTypeParameterListOwner ? substituteType(substitutor, parameterType, (PsiTypeParameterListOwner)declarationScope, parameter.getModifierList()) 
+      PsiType substituted = declarationScope instanceof PsiTypeParameterListOwner ? substituteType(substitutor, parameterType, (PsiTypeParameterListOwner)declarationScope, parameter.getModifierList())
                                                                                   : parameterType;
       String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;

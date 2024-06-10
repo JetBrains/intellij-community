@@ -636,7 +636,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     private @Nullable Sdk mySdk;
     private @NotNull Map<OrderRootType, List<String>> mySdkRoots;
 
-    SimpleLightProjectDescriptor(@NotNull String moduleTypeId, @Nullable Sdk sdk) {
+    protected SimpleLightProjectDescriptor(@NotNull String moduleTypeId, @Nullable Sdk sdk) {
       myModuleTypeId = moduleTypeId;
       mySdk = sdk;
       mySdkRoots = new HashMap<>();

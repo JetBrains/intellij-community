@@ -15,6 +15,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -399,6 +400,270 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     invokeAction(true);
     PsiTestUtil.checkStubsMatchText(getFile());
     assertTrue(getFile().getText().contains("run()"));
+  }
+
+  public void testTypeAnnotationsAfterKeyword() {
+    OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
+      @Override
+      public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"TA"}; }
+    };
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+
+    myFixture.addClass(
+      """
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE_USE, ElementType.METHOD})
+        public @interface TA {
+        }
+        """.stripIndent());
+
+    myFixture.configureByText("test.java", """
+      import java.util.*;
+
+      interface I {
+          @TA
+          public List<String> i(String p1, int[] p2) throws IllegalArgumentException;
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent());
+
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        import java.util.*;
+        
+        interface I {
+            @TA
+            public List<String> i(String p1, int[] p2) throws IllegalArgumentException;
+        }
+        
+        class C implements I {
+            @Override
+            public @TA List<String> i(String p1, int[] p2) throws IllegalArgumentException {
+                return Collections.emptyList();
+            }
+        }""".stripIndent());
+  }
+
+  public void testTypeAnnotationsAfterKeywordWithGenerationBefore() {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
+
+    try {
+      OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
+        @Override
+        public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"TA"}; }
+      };
+      OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+
+      myFixture.addClass(
+        """
+          import java.lang.annotation.*;
+          @Target({ElementType.TYPE_USE, ElementType.METHOD})
+          public @interface TA {
+          }
+          """.stripIndent());
+
+      myFixture.configureByText("test.java", """
+      import java.util.*;
+      
+      interface I {
+          @TA
+          public List<String> i(String p1, int[] p2) throws IllegalArgumentException;
+      }
+      
+      class C implements I {
+          <caret>
+      }""".stripIndent());
+
+      invokeAction(true);
+
+      myFixture.checkResult(
+        """
+          import java.util.*;
+          
+          interface I {
+              @TA
+              public List<String> i(String p1, int[] p2) throws IllegalArgumentException;
+          }
+          
+          class C implements I {
+              @TA
+              @Override
+              public List<String> i(String p1, int[] p2) throws IllegalArgumentException {
+                  return Collections.emptyList();
+              }
+          }""".stripIndent());
+    }finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
+  }
+
+  public void testSeveralAnnotations() {
+    OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
+      @Override
+      public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"R1", "R2", "R3", "R4"}; }
+    };
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+
+    myFixture.configureByText("test.java", """
+      import java.lang.annotation.*;
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R2 {
+          boolean test();
+      }
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R1 {
+          boolean test();
+      }
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R3 {
+          boolean test();
+      }
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R4 {
+          boolean test();
+      }
+      abstract public class AAA {
+          @R1(test = true)
+          @R3(test = true)
+          abstract public @R2(test = false) @R4(test = false) Object test();
+      }
+      class BBB extends AAA {
+          <caret>
+      }""".stripIndent());
+
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        import java.lang.annotation.*;
+        @Retention(RetentionPolicy.RUNTIME)
+        @Target({ElementType.METHOD, ElementType.TYPE_USE})
+        @interface R2 {
+            boolean test();
+        }
+        @Retention(RetentionPolicy.RUNTIME)
+        @Target({ElementType.METHOD, ElementType.TYPE_USE})
+        @interface R1 {
+            boolean test();
+        }
+        @Retention(RetentionPolicy.RUNTIME)
+        @Target({ElementType.METHOD, ElementType.TYPE_USE})
+        @interface R3 {
+            boolean test();
+        }
+        @Retention(RetentionPolicy.RUNTIME)
+        @Target({ElementType.METHOD, ElementType.TYPE_USE})
+        @interface R4 {
+            boolean test();
+        }
+        abstract public class AAA {
+            @R1(test = true)
+            @R3(test = true)
+            abstract public @R2(test = false) @R4(test = false) Object test();
+        }
+        class BBB extends AAA {
+            @Override
+            public @R1(test = true) @R3(test = true) @R2(test = false) @R4(test = false) Object test() {
+                return null;
+            }
+        }""".stripIndent());
+  }
+
+  public void testSeveralAnnotationsWithGenerationBefore() {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
+    try {
+      OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
+        @Override
+        public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"R1", "R2", "R3", "R4"}; }
+      };
+      OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+
+      myFixture.configureByText("test.java", """
+      import java.lang.annotation.*;
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R2 {
+          boolean test();
+      }
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R1 {
+          boolean test();
+      }
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R3 {
+          boolean test();
+      }
+      @Retention(RetentionPolicy.RUNTIME)
+      @Target({ElementType.METHOD, ElementType.TYPE_USE})
+      @interface R4 {
+          boolean test();
+      }
+      abstract public class AAA {
+          @R1(test = true)
+          @R3(test = true)
+          abstract public @R2(test = false) @R4(test = false) Object test();
+      }
+      class BBB extends AAA {
+          <caret>
+      }""".stripIndent());
+
+      invokeAction(true);
+
+      myFixture.checkResult(
+        """
+          import java.lang.annotation.*;
+          @Retention(RetentionPolicy.RUNTIME)
+          @Target({ElementType.METHOD, ElementType.TYPE_USE})
+          @interface R2 {
+              boolean test();
+          }
+          @Retention(RetentionPolicy.RUNTIME)
+          @Target({ElementType.METHOD, ElementType.TYPE_USE})
+          @interface R1 {
+              boolean test();
+          }
+          @Retention(RetentionPolicy.RUNTIME)
+          @Target({ElementType.METHOD, ElementType.TYPE_USE})
+          @interface R3 {
+              boolean test();
+          }
+          @Retention(RetentionPolicy.RUNTIME)
+          @Target({ElementType.METHOD, ElementType.TYPE_USE})
+          @interface R4 {
+              boolean test();
+          }
+          abstract public class AAA {
+              @R1(test = true)
+              @R3(test = true)
+              abstract public @R2(test = false) @R4(test = false) Object test();
+          }
+          class BBB extends AAA {
+              @R1(test = true)
+              @R3(test = true)
+              @R2(test = false)
+              @R4(test = false)
+              @Override
+              public Object test() {
+                  return null;
+              }
+          }""".stripIndent());
+    }finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
   }
 
   private void doTest(boolean toImplement) {

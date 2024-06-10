@@ -257,6 +257,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(Override.class.getName(), PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
     }
     OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(overridden, targetClass, method);
+    GenerateMembersUtil.sortModifiers(method, overridden);
   }
 
   public static void annotate(@NotNull PsiMethod result, @NotNull String fqn, String @NotNull ... annosToRemove) throws IncorrectOperationException {

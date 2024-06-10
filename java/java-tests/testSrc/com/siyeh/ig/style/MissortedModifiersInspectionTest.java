@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -55,14 +56,21 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
     checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
+    if (getTestName(false).contains("TypeUseWithType")) {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
+    }
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
     MissortedModifiersInspection inspection = new MissortedModifiersInspection();
-    if (getTestName(false).contains("TypeUseWithType")) {
-      inspection.typeUseWithType = true;
-    }
-    else if (getTestName(false).contains("IgnoreAnnotations")) {
+    if (getTestName(false).contains("IgnoreAnnotations")) {
       inspection.m_requireAnnotationsFirst = false;
     }
     return inspection;

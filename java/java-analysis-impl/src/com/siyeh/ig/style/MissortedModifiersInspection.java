@@ -18,12 +18,12 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.refactoring.ModifierListUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -31,9 +31,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Comparator;
@@ -59,7 +57,7 @@ public final class MissortedModifiersInspection extends BaseInspection implement
   protected String buildErrorString(Object... infos) {
     final PsiModifierList modifierList = (PsiModifierList)infos[0];
     final List<String> modifiers = getModifiers(modifierList);
-    final List<String> sortedModifiers = getSortedModifiers(modifierList);
+    final List<String> sortedModifiers = ModifierListUtil.getSortedModifiers(modifierList, null, !typeUseWithType);
     final List<String> missortedModifiers = stripCommonPrefixSuffix(modifiers, sortedModifiers);
     return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor", String.join(" ", missortedModifiers));
   }
@@ -108,8 +106,11 @@ public final class MissortedModifiersInspection extends BaseInspection implement
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("m_requireAnnotationsFirst", InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
-               checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"))));
+      checkbox("m_requireAnnotationsFirst", InspectionGadgetsBundle.message("missorted.modifiers.require.option"))
+        .description(InspectionGadgetsBundle.message("missorted.modifiers.require.option.description")),
+      checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.allowed.place"))
+        .description(InspectionGadgetsBundle.message("missorted.modifiers.allowed.place.description"))
+    );
   }
 
   private class SortModifiersFix extends PsiUpdateModCommandQuickFix {
@@ -127,72 +128,23 @@ public final class MissortedModifiersInspection extends BaseInspection implement
         if (!(element instanceof PsiModifierList)) return;
       }
       final PsiModifierList modifierList = (PsiModifierList)element;
-      @NonNls final String text = String.join(" ", getSortedModifiers(modifierList));
-      PsiModifierList newModifierList = createNewModifierList(modifierList, text);
+      PsiModifierList newModifierList = ModifierListUtil.createSortedModifierList(modifierList, null, !typeUseWithType);
       if (newModifierList != null) {
         new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
       }
     }
-
-    @Nullable
-    private static PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(oldModifierList.getProject());
-      PsiElement parent = oldModifierList.getParent();
-      if (parent instanceof PsiRequiresStatement) {
-        String text = "requires " + newModifiersText + " x;";
-        PsiRequiresStatement statement = (PsiRequiresStatement) factory.createModuleStatementFromText(text, oldModifierList);
-        return statement.getModifierList();
-      }
-      else if (parent instanceof PsiClass) {
-        PsiDeclarationStatement declarationStatement =
-          (PsiDeclarationStatement)factory.createStatementFromText(newModifiersText + " class X {}", oldModifierList);
-        return ((PsiClass)declarationStatement.getDeclaredElements()[0]).getModifierList();
-      }
-      else {
-        PsiMethod method = factory.createMethodFromText(newModifiersText + " void x() {}", oldModifierList);
-        return method.getModifierList();
-      }
-    }
   }
 
-  private static List<String> getModifiers(PsiModifierList modifierList) {
+  private static List<String> getModifiers(@NotNull PsiModifierList modifierList) {
     return Stream.of(modifierList.getChildren())
       .filter(e -> e instanceof PsiJavaToken || e instanceof PsiAnnotation)
       .map(PsiElement::getText)
       .collect(Collectors.toList());
   }
 
-  private List<String> getSortedModifiers(PsiModifierList modifierList) {
-    final List<String> modifiers = new SmartList<>();
-    final List<String> typeAnnotations = new SmartList<>();
-    final List<String> annotations = new SmartList<>();
-    for (PsiElement child : modifierList.getChildren()) {
-      if (child instanceof PsiJavaToken) {
-        modifiers.add(child.getText());
-      }
-      else if (child instanceof PsiAnnotation annotation) {
-        if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
-          final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-          if (typeUseWithType || !modifiers.isEmpty() ||
-              AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
-            typeAnnotations.add(child.getText());
-            continue;
-          }
-        }
-        annotations.add(child.getText());
-      }
-    }
-    modifiers.sort(new ModifierComparator());
-    final List<String> result = new SmartList<>();
-    result.addAll(annotations);
-    result.addAll(modifiers);
-    result.addAll(typeAnnotations);
-    return result;
-  }
-
   private class MissortedModifiersVisitor extends BaseInspectionVisitor {
 
-    private final Comparator<String> modifierComparator = new ModifierComparator();
+    private final Comparator<String> modifierComparator = new ModifierListUtil.ModifierComparator();
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -271,10 +223,10 @@ public final class MissortedModifiersInspection extends BaseInspection implement
         }
         if (child instanceof PsiAnnotation annotation) {
           if (m_requireAnnotationsFirst) {
-            if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
+            if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !ModifierListUtil.isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type
               // see e.g. https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html
-              if (typeUseWithType || !modifiers.isEmpty()) {
+              if (ModifierListUtil.isTypeAnnotationAlwaysUseWithType(annotation) || !modifiers.isEmpty()) {
                 typeAnnotation = annotation;
               }
               final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
@@ -294,47 +246,6 @@ public final class MissortedModifiersInspection extends BaseInspection implement
         }
       }
       return null;
-    }
-  }
-
-  static boolean isMethodWithVoidReturnType(PsiElement element) {
-    return element instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)element).getReturnType());
-  }
-
-  private static class ModifierComparator implements Comparator<String> {
-
-    @NonNls private static final String[] s_modifierOrder =
-      {
-        PsiModifier.PUBLIC,
-        PsiModifier.PROTECTED,
-        PsiModifier.PRIVATE,
-        PsiModifier.ABSTRACT,
-        PsiModifier.DEFAULT,
-        PsiModifier.STATIC,
-        PsiModifier.FINAL,
-        PsiModifier.TRANSIENT,
-        PsiModifier.VOLATILE,
-        PsiModifier.SYNCHRONIZED,
-        PsiModifier.NATIVE,
-        PsiModifier.STRICTFP,
-        PsiModifier.TRANSITIVE,
-        PsiModifier.SEALED,
-        PsiModifier.NON_SEALED
-      };
-    
-
-    @Override
-    public int compare(String modifier1, String modifier2) {
-      if (modifier1.equals(modifier2)) return 0;
-      for (String modifier : s_modifierOrder) {
-        if (modifier.equals(modifier1)) {
-          return -1;
-        }
-        else if (modifier.equals(modifier2)) {
-          return 1;
-        }
-      }
-      return modifier1.compareTo(modifier2);
     }
   }
 }

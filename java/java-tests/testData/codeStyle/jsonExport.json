@@ -102,6 +102,7 @@
       "for_statement_wrap": "off",
       "generate_final_locals": false,
       "generate_final_parameters": false,
+      "generate_use_type_annotation_before_type": true,
       "if_brace_force": "never",
       "imports_layout": [
         "*",
