@@ -54,7 +54,7 @@ private val ENTITIES: List<TipEntity> = ApplicationInfo.getInstance().let { appI
     TipEntity("settingsPath", CommonBundle.settingsActionPath()))
 }
 
-object TipUtils {
+internal object TipUtils {
   fun getTip(feature: FeatureDescriptor?): TipAndTrickBean? {
     if (feature == null) {
       return null

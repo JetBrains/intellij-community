@@ -27,7 +27,7 @@ import java.util.Map;
 
 import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 
-public final class TipDialog extends DialogWrapper {
+final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
   private final boolean myShowingOnStartup;
   private final boolean myShowActions;

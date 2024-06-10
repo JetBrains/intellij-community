@@ -13,12 +13,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
 
 @Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
-@ApiStatus.Internal
-open class DumpInvalidTipsAction : AnAction() {
+internal open class DumpInvalidTipsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     runBackgroundableTask("Analyzing tips", e.getData(CommonDataKeys.PROJECT)) {
       val registry = ProductivityFeaturesRegistry.getInstance() ?: error("ProductivityFeaturesRegistry is not created")
@@ -74,8 +72,7 @@ open class DumpInvalidTipsAction : AnAction() {
 }
 
 @Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
-@ApiStatus.Internal
-class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
+internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
