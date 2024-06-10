@@ -16,9 +16,11 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Point
 
+@ApiStatus.Internal
 open class ProjectWidgetStep : NewUiOnboardingStep {
   protected open val headerText: @Nls String
     get() = NewUiOnboardingBundle.message("project.widget.step.header")

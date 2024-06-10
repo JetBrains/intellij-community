@@ -16,8 +16,10 @@ import com.intellij.util.ui.JBPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 
+@ApiStatus.Internal
 open class RunWidgetStep : NewUiOnboardingStep {
   private val ideHelpTopic = "run-debug-configuration.html"
 

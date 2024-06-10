@@ -15,7 +15,9 @@ import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class NavigationBarStep : NewUiOnboardingStep {
   protected open val stepText: String
     get() {

@@ -12,9 +12,11 @@ import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.net.URL
 
+@ApiStatus.Internal
 open class ToolWindowLayoutsStep : NewUiOnboardingStep {
   protected open val ideHelpTopic: String? = "tool-windows.html"
 
