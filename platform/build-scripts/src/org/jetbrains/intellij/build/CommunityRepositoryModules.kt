@@ -373,7 +373,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.device-explorer-common", "android.jar")
       spec.withModule("intellij.android.device-manager", "android.jar")
       spec.withModule("intellij.android.device-manager-v2", "android.jar")
-      //spec.withModule("intellij.android.ml-api", "android.jar")
+      spec.withModule("intellij.android.ml-api", "android.jar")
       // Packaged as a gradle-dsl plugin
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
