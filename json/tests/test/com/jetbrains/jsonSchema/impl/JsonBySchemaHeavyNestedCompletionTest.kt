@@ -368,7 +368,7 @@ private inline fun File.createTemporarilyWithContent(content: String, block: () 
 }
 
 
-internal val open1ThenOpen2Then3Schema
+val open1ThenOpen2Then3Schema
   get() = assertThatSchema("""
      {
        "properties": {

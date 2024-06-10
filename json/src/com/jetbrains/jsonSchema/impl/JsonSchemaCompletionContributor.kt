@@ -398,7 +398,9 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
 
       val builder = LookupElementBuilder.create(propertyKey)
-        .withPresentableText(completionPath?.let { it.prefix() + "." + key } ?: propertyKey)
+        .withPresentableText(completionPath?.let { it.prefix() + "." + key }
+                             ?: key.takeIf { psiWalker?.requiresNameQuotes() == false }
+                             ?: propertyKey)
         .withLookupStrings(listOf(propertyKey) + completionPath?.accessor().orEmpty())
         .withTypeText(getDocumentationOrTypeName(schemaObject), true)
         .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
