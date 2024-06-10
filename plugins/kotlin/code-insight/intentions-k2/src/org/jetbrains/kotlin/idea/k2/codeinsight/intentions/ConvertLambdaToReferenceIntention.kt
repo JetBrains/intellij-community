@@ -400,6 +400,8 @@ private fun KaFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpress
 
     val function = psi ?: return symbols
     if (!function.isPhysical) {
+        // when it's called from apply on a copy, both original file declarations and declarations from copy co-exists
+        // until https://youtrack.jetbrains.com/issue/KT-68929 is fixed, we have to filter all original file declarations manually
         val copy = function.containingFile
         val originalFile = copy.originalFile
         return symbols.filter { s ->
